@@ -1,20 +1,57 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# Lifelong2 Front
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+Frontend application for the Lifelong2 project, built with Quasar Framework, Vue 3, TypeScript, and Pinia.
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+## Requirements
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+- Node.js `>=22.22.0`
+- npm `>=11.0.0`
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+The generated Quasar tooling requires Node `22.22.0` or newer. Node `22.15.0` is not enough for `quasar prepare`.
+
+## Setup
+
+```bash
+npm install
+```
+
+`npm install` also runs Husky through the `prepare` script so Git hooks are ready after dependencies are installed.
+
+## Development
+
+```bash
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Quality Checks
+
+```bash
+npm run lint
+npm run format
+```
+
+Before committing, staged `src/**/*.{ts,vue}` files are checked by `lint-staged`. Commit messages are validated with Conventional Commits, for example:
+
+```bash
+feat(frontend): setup quasar app
+```
+
+## Project Structure
+
+- `src/assets` stores static assets.
+- `src/boot` stores client-side initialization files.
+- `src/components/base` stores reusable base UI components.
+- `src/composables` stores shared Composition API logic.
+- `src/css` stores global Sass styles.
+- `src/layouts` stores Quasar layouts.
+- `src/pages` stores route pages.
+- `src/router` stores route definitions.
+- `src/stores` stores Pinia state that is shared across the app.
+- `src/types` stores TypeScript interfaces and types.
+- `src/utils` stores helper functions.
