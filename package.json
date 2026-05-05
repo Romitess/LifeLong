@@ -17,15 +17,19 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.16.4",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "pinia": "^3.0.1",
     "quasar": "^2.16.0",
     "vue": "^3.5.22",
+    "vue-i18n": "^11.4.0",
     "vue-router": "^5.0.3"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^20.5.3",
     "@eslint/js": "^9.39.4",
+    "@intlify/unplugin-vue-i18n": "^11.0.0",
     "@quasar/app-vite": "^2.5.1",
     "@types/node": "^22.19.11",
     "@vue/eslint-config-prettier": "^10.2.0",

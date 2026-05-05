@@ -1,1 +1,88 @@
 // app global css
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+*,
+body,
+.q-app {
+  font-family: 'Noto Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+}
+
+body {
+  background-color: #f8f9fa;
+}
+
+.section-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.section-title-underline {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  border-bottom: 3px solid $primary;
+  padding-bottom: 8px;
+  display: inline-block;
+}
+
+// ── GLOBAL BUTTON STYLES ────────────────────────────────────
+// ── GLOBAL BUTTON & COMPONENT STYLES ────────────────────────
+// บังคับสไตล์ให้ "ทุกปุ่ม" มีขอบและเด้งตามที่กำหนด
+body .q-btn {
+  border-radius: 12px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  
+  // สถานะปกติ: สีเทาอมน้ำเงินจางๆ
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+  box-shadow: none !important; // ปิดเงาเดิมเพื่อให้ขอบชัด
+  
+  // สถานะตอนเอาเมาส์ชี้ (Hover): เด้งเฉพาะปุ่มที่กดได้ (ไม่ disabled)
+  &:not(:disabled):not(.disabled):hover {
+    transform: translateY(-4px) !important;
+    border-color: rgba($primary, 0.6) !important;
+    box-shadow: 0 16px 32px rgba(17, 24, 39, 0.12) !important;
+  }
+
+  &:active {
+    transform: translateY(-1px) !important;
+  }
+}
+
+// ข้อยกเว้นสำหรับปุ่มในปฏิทิน (Reset Calendar Buttons)
+.q-date .q-btn {
+  border: none !important;
+  border-radius: 50% !important;
+  transform: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+  
+  &:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+  }
+}
+
+// บังคับสไตล์ให้การ์ดและกล่องข้อมูลต่างๆ
+.q-card:not(.base-info-strip), .profile-stat-card, .feature-strip-item, .course-reg-card {
+  border: none !important;
+  border-radius: 14px !important;
+  // ใช้ box-shadow สร้างขอบแทน เพื่อความคมชัด
+  box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.12), 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+}
+
+// ข้อยกเว้นสำหรับกล่องสถิติบนพื้นหลังเข้ม (Profile Hero)
+.profile-hero .profile-stat-card {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+  background: rgba(255, 255, 255, 0.08);
+  
+  &:hover {
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.4), 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+    background: rgba(255, 255, 255, 0.12);
+  }
+}

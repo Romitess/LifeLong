@@ -2,8 +2,9 @@
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
 import { defineConfig } from '#q-app/wrappers';
+import { fileURLToPath } from 'node:url';
 
-export default defineConfig((/* ctx */) => {
+export default defineConfig((ctx) => {
   return {
     // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
     // preFetch: true,
@@ -11,8 +12,7 @@ export default defineConfig((/* ctx */) => {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
-    boot: [
-    ],
+    boot: ['i18n'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
     css: [
@@ -23,7 +23,7 @@ export default defineConfig((/* ctx */) => {
     extras: [
       // 'ionicons-v4',
       // 'mdi-v7',
-      // 'fontawesome-v6',
+      'fontawesome-v6',
       // 'eva-icons',
       // 'themify',
       // 'line-awesome',
@@ -62,17 +62,35 @@ export default defineConfig((/* ctx */) => {
       // polyfillModulePreload: true,
       // distDir
 
-      // extendViteConf (viteConf) {},
+      extendViteConf(viteConf) {
+        viteConf.build ??= {};
+        viteConf.build.rolldownOptions ??= {};
+        viteConf.build.rolldownOptions.checks = {
+          ...viteConf.build.rolldownOptions.checks,
+          pluginTimings: false,
+        };
+      },
       // viteVuePluginOptions: {},
 
       vitePlugins: [
-        ['vite-plugin-checker', {
-          vueTsc: true,
-          eslint: {
-            lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
-            useFlatConfig: true
-          }
-        }, { server: false }]
+        [
+          '@intlify/unplugin-vue-i18n/vite',
+          {
+            ssr: ctx.modeName === 'ssr',
+            include: [fileURLToPath(new URL('./src/i18n', import.meta.url))],
+          },
+        ],
+        [
+          'vite-plugin-checker',
+          {
+            vueTsc: true,
+            eslint: {
+              lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
+              useFlatConfig: true,
+            },
+          },
+          { server: false },
+        ],
       ]
     },
 
@@ -97,7 +115,7 @@ export default defineConfig((/* ctx */) => {
       // directives: [],
 
       // Quasar plugins
-      plugins: []
+      plugins: ['Dialog', 'Notify', 'Loading']
     },
 
     // animations: 'all', // --- includes all animations
@@ -105,17 +123,9 @@ export default defineConfig((/* ctx */) => {
     animations: [],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#sourcefiles
-    // sourceFiles: {
-    //   rootComponent: 'src/App.vue',
-    //   router: 'src/router/index',
-    //   store: 'src/store/index',
-    //   pwaRegisterServiceWorker: 'src-pwa/register-service-worker',
-    //   pwaServiceWorker: 'src-pwa/custom-service-worker',
-    //   pwaManifestFile: 'src-pwa/manifest.json',
-    //   electronMain: 'src-electron/electron-main',
-    //   electronPreload: 'src-electron/electron-preload'
-    //   bexManifestFile: 'src-bex/manifest.json
-    // },
+    sourceFiles: {
+      router: 'src/router/index',
+    },
 
     // https://v2.quasar.dev/quasar-cli-vite/developing-ssr/configuring-ssr
     ssr: {
