@@ -3,7 +3,7 @@
     <q-layout
       view="lHh Lpr lFf"
       container
-      style="height: calc(100vh - 68px); overflow-y: scroll"
+      style="height: calc(100vh - 72px)"
       class="learning-layout shadow-2"
     >
       <!-- Course Toolbar (Header) -->
@@ -1007,7 +1007,7 @@ const navigateToActivity = (lesson: Lesson) => {
 
 <style lang="scss" scoped>
 .course-page {
-  height: calc(100vh - 68px);
+  height: calc(100vh - 72px);
   overflow: hidden;
   background-color: #f8f9fa;
 }

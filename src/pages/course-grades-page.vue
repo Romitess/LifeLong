@@ -3,7 +3,7 @@
     <q-layout
       view="lHh Lpr lFf"
       container
-      style="height: calc(100vh - 68px)"
+      style="height: calc(100vh - 72px)"
       class="learning-layout"
     >
       <!-- Course Toolbar (Header) -->
@@ -530,7 +530,7 @@ const totalPercentage = computed(() => {
 
 <style lang="scss" scoped>
 .grades-page {
-  height: calc(100vh - 68px);
+  height: calc(100vh - 72px);
   overflow: hidden;
 }
 
