@@ -97,26 +97,26 @@
 
                 <!-- Course Modules -->
                 <q-expansion-item
-                  v-for="(module, mIdx) in getModulesForCourse(course.id)"
+                  v-for="(module, mIdx) in course.modules"
                   :key="mIdx"
                   dense
                   header-class="module-expansion-header"
                   class="module-expansion"
-                  :class="{ 'active-module': isModuleActive(module, course.id) }"
-                  :default-opened="isModuleActive(module, course.id)"
+                  :class="{ 'active-module': module.isActive }"
+                  :default-opened="module.isActive"
                   hide-expand-icon
                 >
                   <template v-slot:header>
                     <q-item-section avatar>
                       <q-icon
-                        :name="isModuleActive(module, course.id) ? 'expand_more' : 'chevron_right'"
+                        :name="module.isActive ? 'expand_more' : 'chevron_right'"
                         size="18px"
                       />
                     </q-item-section>
                     <q-item-section>
                       <q-item-label
                         :class="{
-                          'text-primary text-weight-bold': isModuleActive(module, course.id),
+                          'text-primary text-weight-bold': module.isActive,
                         }"
                       >
                         {{ module.title }}
@@ -125,19 +125,19 @@
                   </template>
                   <q-list class="lesson-sub-list">
                     <q-item
-                      v-for="(lesson, lIdx) in module.lessons"
+                      v-for="(lesson, lIdx) in module.lessonsWithState"
                       :key="lIdx"
                       clickable
                       v-ripple
                       class="lesson-sub-item"
                       @click="navigateToLesson(lesson, course.id)"
-                      :active="isLessonActive(lesson, course.id)"
+                      :active="lesson.isActive"
                     >
                       <q-item-section avatar>
                         <q-icon
                           :name="getLessonIcon(lesson.type)"
                           size="14px"
-                          :color="isLessonActive(lesson, course.id) ? 'primary' : 'grey-6'"
+                          :color="lesson.isActive ? 'primary' : 'grey-6'"
                         />
                       </q-item-section>
                       <q-item-section>
@@ -157,7 +157,7 @@
 
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import { getCourseStructure, type Lesson, type CourseModule } from 'src/data/course-structure';
+import { getCourseStructure, type Lesson } from 'src/data/course-structure';
 import { useMyRegisteredCourses } from 'src/composables/use-my-registered-courses';
 import { computed } from 'vue';
 
@@ -165,13 +165,39 @@ const route = useRoute();
 const router = useRouter();
 const { myRegisteredCourseEntries } = useMyRegisteredCourses();
 
-const myCourses = computed(() => {
-  return myRegisteredCourseEntries.value.map((entry) => entry.course);
+const currentRouteCourseId = computed(() => String(route.params.id));
+const activeLessonTitle = computed(() => {
+  return decodeURIComponent(
+    (route.params.videoId as string) || (route.params.quizId as string) || '',
+  );
 });
 
-const getModulesForCourse = (cid: string) => {
-  return getCourseStructure(cid);
-};
+const myCourses = computed(() => {
+  return myRegisteredCourseEntries.value.map((entry) => {
+    const course = entry.course;
+    const modules = getCourseStructure(course.id);
+
+    const modulesWithState = modules.map((module) => {
+      const isCourseActive = course.id === currentRouteCourseId.value;
+      const isModActive =
+        isCourseActive && module.lessons.some((l) => l.title === activeLessonTitle.value);
+
+      return {
+        ...module,
+        isActive: isModActive,
+        lessonsWithState: module.lessons.map((lesson) => ({
+          ...lesson,
+          isActive: isCourseActive && lesson.title === activeLessonTitle.value,
+        })),
+      };
+    });
+
+    return {
+      ...course,
+      modules: modulesWithState,
+    };
+  });
+});
 
 const navigateToLesson = (lesson: Lesson, cid?: string) => {
   const courseId = cid || String(route.params.id);
@@ -196,20 +222,6 @@ const getLessonIcon = (type: string) => {
     default:
       return 'circle';
   }
-};
-
-const isLessonActive = (lesson: Lesson, cid?: string) => {
-  const currentCourseId = String(route.params.id);
-  if (cid && cid !== currentCourseId) return false;
-  return (
-    decodeURIComponent(
-      (route.params.videoId as string) || (route.params.quizId as string) || '',
-    ) === lesson.title
-  );
-};
-
-const isModuleActive = (module: CourseModule, cid?: string) => {
-  return module.lessons.some((l: Lesson) => isLessonActive(l, cid));
 };
 </script>
 

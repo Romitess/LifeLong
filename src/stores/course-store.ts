@@ -296,15 +296,7 @@ export const useCourseStore = defineStore('course', {
       this.init();
       const detail = this.courseDetails[id];
       if (detail) {
-        const mockDetail = MOCK_COURSE_DETAILS[id];
-        const mergedDetail = mockDetail
-          ? (mergeStoredCourseDetails({ [id]: mockDetail }, { [id]: detail })[id] ?? detail)
-          : detail;
-
-        const ownedDetail = ensureCourseDetailInstructorOwner(mergedDetail);
-        this.courseDetails[id] = ownedDetail;
-        writeStoredCourseDetails(this.courseDetails);
-        return ownedDetail;
+        return detail;
       }
 
       const course = this.courses.find((candidate) => candidate.id === id);

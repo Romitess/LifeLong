@@ -312,9 +312,9 @@
 
               <q-list class="course-list-modern">
                 <q-expansion-item
-                  v-for="(module, index) in courseModules"
+                  v-for="(module, index) in courseModulesWithProgress"
                   :key="index"
-                  v-model="module.expanded"
+                  v-model="courseModules[index]!.expanded"
                   class="module-item-modern q-mb-md"
                   header-class="module-header-modern q-pa-lg"
                   expand-icon-class="text-primary"
@@ -348,11 +348,11 @@
                           >{{ module.lessons.length }} {{ $t('learning.lessons') }}</span
                         >
                         <q-circular-progress
-                          v-if="getModuleProgress(module) !== undefined"
-                          :value="getModuleProgress(module)"
+                          v-if="module.progress !== undefined"
+                          :value="module.progress"
                           size="28px"
                           :thickness="0.3"
-                          :color="getModuleProgress(module) === 100 ? 'positive' : 'primary'"
+                          :color="module.progress === 100 ? 'positive' : 'primary'"
                           track-color="grey-2"
                         />
                       </div>
@@ -378,11 +378,7 @@
                                   ? 'help_outline'
                                   : 'article'
                             "
-                            :color="
-                              progressStore.isLessonCompleted(courseId || '', lesson.title)
-                                ? 'positive'
-                                : 'grey-5'
-                            "
+                            :color="lesson.isCompleted ? 'positive' : 'grey-5'"
                             size="sm"
                           />
                         </q-item-section>
@@ -391,14 +387,8 @@
                           <q-item-label
                             class="text-subtitle1"
                             :class="{
-                              'text-grey-5 text-strike': progressStore.isLessonCompleted(
-                                courseId || '',
-                                lesson.title,
-                              ),
-                              'text-dark text-weight-medium': !progressStore.isLessonCompleted(
-                                courseId || '',
-                                lesson.title,
-                              ),
+                              'text-grey-5 text-strike': lesson.isCompleted,
+                              'text-dark text-weight-medium': !lesson.isCompleted,
                             }"
                           >
                             {{ lesson.title }}
@@ -414,16 +404,8 @@
                             flat
                             round
                             dense
-                            :icon="
-                              progressStore.isLessonCompleted(courseId || '', lesson.title)
-                                ? 'check_circle'
-                                : 'panorama_fish_eye'
-                            "
-                            :color="
-                              progressStore.isLessonCompleted(courseId || '', lesson.title)
-                                ? 'positive'
-                                : 'grey-4'
-                            "
+                            :icon="lesson.isCompleted ? 'check_circle' : 'panorama_fish_eye'"
+                            :color="lesson.isCompleted ? 'positive' : 'grey-4'"
                             @click.stop="
                               progressStore.toggleLessonCompletion(courseId || '', lesson.title)
                             "
@@ -451,21 +433,10 @@ import SidebarNavigation from 'components/navigation/SidebarNavigation.vue';
 import { getCourseDetailById } from 'src/data/mock-courses';
 import { getCourseStructure, type CourseModule, type Lesson } from 'src/data/course-structure';
 import { useMyRegisteredCourses } from 'src/composables/use-my-registered-courses';
-
-// interface NavItem {
-//   name: string;
-//   label: string;
-//   icon: string;
-//   to?: string;
-//   link?: string;
-// }
+import { useUiStore } from 'src/stores/ui-store';
 
 const router = useRouter();
 const route = useRoute();
-// const $q = useQuasar();
-// const courseStore = useCourseStore();
-// const authStore = useAuthStore();
-// const { t } = useI18n({ useScope: 'global' });
 const progressStore = useCourseProgressStore();
 const { myRegisteredCourseEntries } = useMyRegisteredCourses();
 
@@ -489,12 +460,13 @@ const activeNav = ref('this-course');
 const leftDrawerOpen = ref(false);
 const myCoursesMenu = ref(false);
 const thisCourseMenu = ref(false);
-import { useUiStore } from 'src/stores/ui-store';
+
 const uiStore = useUiStore();
 const isFullscreen = computed({
   get: () => uiStore.isCourseFullscreen,
   set: (val) => uiStore.setCourseFullscreen(val),
 });
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let menuTimer: any = null;
 
@@ -542,6 +514,33 @@ watch(
   { immediate: true },
 );
 
+const courseModulesWithProgress = computed(() => {
+  const cid = courseId.value;
+  if (!cid) return [];
+
+  return courseModules.value.map((module) => {
+    const total = module.lessons.length;
+    let completedCount = 0;
+
+    const lessonsWithProgress = module.lessons.map((lesson) => {
+      const isCompleted = progressStore.isLessonCompleted(cid, lesson.title);
+      if (isCompleted) completedCount++;
+      return {
+        ...lesson,
+        isCompleted,
+      };
+    });
+
+    const progress = total === 0 ? 0 : Math.round((completedCount / total) * 100);
+
+    return {
+      ...module,
+      lessons: lessonsWithProgress,
+      progress,
+    };
+  });
+});
+
 const allExpanded = computed(() => {
   return courseModules.value.every((m) => m.expanded);
 });
@@ -564,17 +563,6 @@ const navigateToLesson = async (lesson: Lesson) => {
   } else if (lesson.type === 'quiz') {
     await router.push(`/course/${courseIdValue}/quiz/${lessonId}`);
   }
-};
-
-const getModuleProgress = (module: CourseModule) => {
-  const cid = courseId.value;
-  if (!cid) return 0;
-  const total = module.lessons.length;
-  if (total === 0) return 0;
-  const completed = module.lessons.filter((l) =>
-    progressStore.isLessonCompleted(cid, l.title),
-  ).length;
-  return Math.round((completed / total) * 100);
 };
 </script>
 
