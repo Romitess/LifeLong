@@ -240,9 +240,9 @@
                 icon="notifications"
                 :aria-label="$t('notifications')"
               >
-                <q-badge floating rounded color="negative" class="nav-notification-badge"
-                  >5</q-badge
-                >
+                <q-badge floating rounded color="negative" class="nav-notification-badge">
+                  {{ notificationUnreadCount }}
+                </q-badge>
                 <q-tooltip>{{ $t('notifications') }}</q-tooltip>
                 <q-menu
                   anchor="bottom right"
@@ -255,11 +255,13 @@
                     <div class="notification-preview__header">
                       <div>
                         <div class="notification-preview__title">แจ้งเตือน</div>
-                        <div class="notification-preview__subtitle">รายการสำคัญสำหรับผู้สอน</div>
+                        <div class="notification-preview__subtitle">
+                          {{ notificationPreviewSubtitle }}
+                        </div>
                       </div>
-                      <q-badge rounded color="negative" class="notification-preview__count">
-                        5 ใหม่
-                      </q-badge>
+                      <q-badge rounded color="negative" class="notification-preview__count"
+                        >{{ notificationUnreadCount }} ใหม่</q-badge
+                      >
                     </div>
 
                     <q-separator />
@@ -439,6 +441,10 @@ import { useRoute, useRouter } from 'vue-router';
 import { useCourseStore } from 'src/stores/course-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { MOCK_COURSES } from 'src/data/mock-courses';
+import {
+  getNotificationItemsForRole,
+  isTeachingRole as isTeachingNotificationRole,
+} from 'src/data/mock-notifications';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import AppFooter from 'components/AppFooter.vue';
@@ -460,7 +466,7 @@ const $q = useQuasar();
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
 const { t } = useI18n({ useScope: 'global' });
-const isTeachingRole = computed(() => ['teach', 'instructor'].includes(authStore.user?.role ?? ''));
+const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
 
 const showNavBar = computed(() => {
   const excludedPaths = ['/learn', '/grades', '/video', '/quiz', '/course-home'];
@@ -570,38 +576,15 @@ let pageSwitchLoadingTimer: ReturnType<typeof setTimeout> | null = null;
 const PAGE_SWITCH_LOADING_MS = 450;
 const pageSwitchLoadingPaths = new Set(['/main', '/profile']);
 
-const notificationPreviewItems = [
-  {
-    id: 1,
-    title: 'เหลือเวลาอีก 2 วัน',
-    message: 'ครบกำหนดให้คะแนนใบงานวิเคราะห์กรณีศึกษา',
-    time: 'วันนี้ 09:00',
-    icon: 'alarm',
-    iconBg: '#ffebee',
-    iconColor: '#c62828',
-    action: '/instructor/grading',
-  },
-  {
-    id: 2,
-    title: 'รอตรวจ 18 รายการ',
-    message: 'แบบทดสอบปลายบทที่ 3 ปิดรับคำตอบแล้ว',
-    time: '1 ชั่วโมงที่แล้ว',
-    icon: 'rate_review',
-    iconBg: '#fff3e0',
-    iconColor: '#ef6c00',
-    action: '/instructor/grading',
-  },
-  {
-    id: 3,
-    title: 'นิสิตส่งงานใหม่ 6 รายการ',
-    message: 'มีไฟล์รายงานใหม่จากรายวิชาที่กำลังเปิดสอน',
-    time: '3 ชั่วโมงที่แล้ว',
-    icon: 'upload_file',
-    iconBg: '#e3f2fd',
-    iconColor: '#1565c0',
-    action: '/instructor/notifications',
-  },
-];
+const notificationPreviewItems = computed(() =>
+  getNotificationItemsForRole(authStore.user?.role).slice(0, 3),
+);
+const notificationUnreadCount = computed(
+  () => getNotificationItemsForRole(authStore.user?.role).filter((item) => !item.read).length,
+);
+const notificationPreviewSubtitle = computed(() =>
+  isTeachingRole.value ? 'รายการสำคัญสำหรับผู้สอน' : 'ข่าวสารและกิจกรรมการเรียนของคุณ',
+);
 
 type AuthPath = '/login' | '/register';
 
@@ -707,8 +690,8 @@ async function goToNotifications() {
   await router.push('/notifications');
 }
 
-async function openNotificationPreview(notification: { action: string }) {
-  if (isTeachingRole.value) {
+async function openNotificationPreview(notification: { action?: string }) {
+  if (isTeachingRole.value && notification.action) {
     await router.push(notification.action);
     return;
   }

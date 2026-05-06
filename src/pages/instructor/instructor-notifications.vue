@@ -4,10 +4,8 @@
       <div class="notifications-header">
         <div>
           <div class="text-overline text-primary text-weight-bold">Instructor Notifications</div>
-          <h1 class="notifications-title">แจ้งเตือนสำหรับผู้สอน</h1>
-          <p class="notifications-subtitle">
-            รวมเรื่องที่ต้องติดตาม เช่น งานที่ใกล้ครบกำหนดให้คะแนน งานที่รอตรวจ และประกาศจากระบบ
-          </p>
+          <h1 class="notifications-title">{{ notificationPageTitle }}</h1>
+          <p class="notifications-subtitle">{{ notificationPageSubtitle }}</p>
         </div>
 
         <q-btn
@@ -52,7 +50,7 @@
           >
             <q-tab name="all" label="ทั้งหมด" />
             <q-tab name="urgent" label="เร่งด่วน" />
-            <q-tab name="grading" label="ให้คะแนน" />
+            <q-tab name="grading" :label="primaryWorkFilterLabel" />
             <q-tab name="system" label="ระบบ" />
           </q-tabs>
 
@@ -144,148 +142,110 @@
 import { computed, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from 'src/stores/auth-store';
+import {
+  STUDENT_NOTIFICATION_ITEMS,
+  TEACHER_NOTIFICATION_ITEMS,
+  isTeachingRole as isTeachingNotificationRole,
+  type AppNotification,
+} from 'src/data/mock-notifications';
 
 type NotificationFilter = 'all' | 'urgent' | 'grading' | 'system';
-type NotificationType = 'deadline' | 'grading' | 'activity' | 'system';
-type NotificationPriority = 'urgent' | 'normal';
-
-interface InstructorNotification {
-  id: number;
-  type: NotificationType;
-  priority: NotificationPriority;
-  title: string;
-  message: string;
-  course: string;
-  time: string;
-  dueDate?: string;
-  badge: string;
-  badgeColor: string;
-  icon: string;
-  iconBg: string;
-  iconColor: string;
-  read: boolean;
-  action?: string;
-}
 
 const $q = useQuasar();
 const router = useRouter();
+const authStore = useAuthStore();
 const activeFilter = ref<NotificationFilter>('all');
 const searchText = ref('');
 
-const notifications = ref<InstructorNotification[]>([
-  {
-    id: 1,
-    type: 'deadline',
-    priority: 'urgent',
-    title: 'เหลือเวลาอีก 2 วันก่อนครบกำหนดให้คะแนน',
-    message: 'ใบงานวิเคราะห์กรณีศึกษา มีงานที่ส่งแล้ว 9 รายการที่ยังไม่ได้ให้คะแนน',
-    course: 'GEM201 การคิดเชิงวิเคราะห์',
-    time: 'แจ้งเตือนวันนี้ 09:00',
-    dueDate: 'ครบกำหนด 8 พ.ค. 2569',
-    badge: 'เร่งด่วน',
-    badgeColor: 'negative',
-    icon: 'alarm',
-    iconBg: '#ffebee',
-    iconColor: '#c62828',
-    read: false,
-    action: '/instructor/grading',
-  },
-  {
-    id: 2,
-    type: 'grading',
-    priority: 'urgent',
-    title: 'มีคำตอบแบบทดสอบรอตรวจ 18 รายการ',
-    message: 'แบบทดสอบปลายบทที่ 3 ปิดรับคำตอบแล้ว ผู้สอนสามารถเริ่มตรวจและประกาศคะแนนได้',
-    course: 'LLL102 Digital Learning',
-    time: '1 ชั่วโมงที่แล้ว',
-    dueDate: 'ควรตรวจภายใน 10 พ.ค. 2569',
-    badge: 'ให้คะแนน',
-    badgeColor: 'warning',
-    icon: 'rate_review',
-    iconBg: '#fff3e0',
-    iconColor: '#ef6c00',
-    read: false,
-    action: '/instructor/grading',
-  },
-  {
-    id: 3,
-    type: 'activity',
-    priority: 'normal',
-    title: 'นิสิตส่งงานใหม่ 6 รายการ',
-    message: 'มีไฟล์รายงานใหม่จากนิสิตในรายวิชาที่กำลังเปิดสอน',
-    course: 'SCI305 Research Skills',
-    time: '3 ชั่วโมงที่แล้ว',
-    badge: 'งานใหม่',
-    badgeColor: 'primary',
-    icon: 'upload_file',
-    iconBg: '#e3f2fd',
-    iconColor: '#1565c0',
-    read: false,
-  },
-  {
-    id: 4,
-    type: 'deadline',
-    priority: 'normal',
-    title: 'ใกล้ถึงวันปิดรับงานโครงงานย่อย',
-    message: 'เหลือเวลา 5 วันก่อนปิดรับงาน นิสิต 12 คนยังไม่ได้ส่งงาน',
-    course: 'BUS210 Business Model',
-    time: 'เมื่อวานนี้',
-    dueDate: 'ปิดรับ 11 พ.ค. 2569',
-    badge: 'ติดตาม',
-    badgeColor: 'info',
-    icon: 'event',
-    iconBg: '#e8f5e9',
-    iconColor: '#2e7d32',
-    read: true,
-  },
-  {
-    id: 5,
-    type: 'system',
-    priority: 'normal',
-    title: 'ระบบจะปิดปรับปรุงชั่วคราว',
-    message: 'ระบบจัดการรายวิชาจะปิดปรับปรุงเพื่ออัปเดตบริการส่งคะแนน',
-    course: 'ประกาศจากระบบ',
-    time: '2 วันที่แล้ว',
-    dueDate: '7 พ.ค. 2569 เวลา 22:00 - 23:30 น.',
-    badge: 'ระบบ',
-    badgeColor: 'blue-grey',
-    icon: 'info',
-    iconBg: '#eceff1',
-    iconColor: '#455a64',
-    read: true,
-  },
-]);
+const teacherNotifications = ref<AppNotification[]>(
+  TEACHER_NOTIFICATION_ITEMS.map((item) => ({ ...item })),
+);
+const studentNotifications = ref<AppNotification[]>(
+  STUDENT_NOTIFICATION_ITEMS.map((item) => ({ ...item })),
+);
+const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
+const notifications = computed(() =>
+  isTeachingRole.value ? teacherNotifications.value : studentNotifications.value,
+);
+const notificationPageTitle = computed(() =>
+  isTeachingRole.value ? 'แจ้งเตือนสำหรับผู้สอน' : 'การแจ้งเตือนของฉัน',
+);
+const notificationPageSubtitle = computed(() =>
+  isTeachingRole.value
+    ? 'รวมเรื่องที่ต้องติดตาม เช่น งานที่ใกล้ครบกำหนดให้คะแนน งานที่รอตรวจ และประกาศจากระบบ'
+    : 'รวมข่าวสารรายวิชา บทเรียนใหม่ กำหนดส่งงาน เอกสาร และประกาศที่เกี่ยวกับการเรียนของคุณ',
+);
+const primaryWorkFilterLabel = computed(() => (isTeachingRole.value ? 'ให้คะแนน' : 'การเรียน'));
 
-const summaries = computed(() => [
-  {
-    label: 'แจ้งเตือนยังไม่อ่าน',
-    value: notifications.value.filter((item) => !item.read).length,
-    icon: 'notifications_active',
-    color: '#1565c0',
-    bg: '#e3f2fd',
-  },
-  {
-    label: 'งานเร่งด่วน',
-    value: notifications.value.filter((item) => item.priority === 'urgent').length,
-    icon: 'priority_high',
-    color: '#c62828',
-    bg: '#ffebee',
-  },
-  {
-    label: 'รายการรอให้คะแนน',
-    value: 27,
-    icon: 'fact_check',
-    color: '#ef6c00',
-    bg: '#fff3e0',
-  },
-  {
-    label: 'กำหนดส่งใกล้มาถึง',
-    value: 3,
-    icon: 'event_available',
-    color: '#2e7d32',
-    bg: '#e8f5e9',
-  },
-]);
+const summaries = computed(() => {
+  const unreadCount = notifications.value.filter((item) => !item.read).length;
+  const urgentCount = notifications.value.filter((item) => item.priority === 'urgent').length;
+
+  if (!isTeachingRole.value) {
+    return [
+      {
+        label: 'ยังไม่ได้อ่าน',
+        value: unreadCount,
+        icon: 'notifications_active',
+        color: '#1565c0',
+        bg: '#e3f2fd',
+      },
+      {
+        label: 'ใกล้ครบกำหนด',
+        value: urgentCount,
+        icon: 'event_available',
+        color: '#c62828',
+        bg: '#ffebee',
+      },
+      {
+        label: 'ข่าวสารรายวิชา',
+        value: notifications.value.filter((item) => item.type === 'course').length,
+        icon: 'menu_book',
+        color: '#2e7d32',
+        bg: '#e8f5e9',
+      },
+      {
+        label: 'เอกสารของฉัน',
+        value: notifications.value.filter((item) => item.type === 'payment').length,
+        icon: 'receipt_long',
+        color: '#ef6c00',
+        bg: '#fff3e0',
+      },
+    ];
+  }
+
+  return [
+    {
+      label: 'แจ้งเตือนยังไม่ได้อ่าน',
+      value: unreadCount,
+      icon: 'notifications_active',
+      color: '#1565c0',
+      bg: '#e3f2fd',
+    },
+    {
+      label: 'งานเร่งด่วน',
+      value: urgentCount,
+      icon: 'priority_high',
+      color: '#c62828',
+      bg: '#ffebee',
+    },
+    {
+      label: 'รายการรอให้คะแนน',
+      value: notifications.value.filter((item) => item.type === 'grading').length,
+      icon: 'fact_check',
+      color: '#ef6c00',
+      bg: '#fff3e0',
+    },
+    {
+      label: 'กำหนดส่งใกล้มาถึง',
+      value: notifications.value.filter((item) => item.type === 'deadline').length,
+      icon: 'event_available',
+      color: '#2e7d32',
+      bg: '#e8f5e9',
+    },
+  ];
+});
 
 const filteredNotifications = computed(() => {
   const query = searchText.value.trim().toLowerCase();
@@ -295,7 +255,11 @@ const filteredNotifications = computed(() => {
       activeFilter.value === 'all' ||
       (activeFilter.value === 'urgent' && notification.priority === 'urgent') ||
       (activeFilter.value === 'grading' &&
-        (notification.type === 'grading' || notification.type === 'deadline')) ||
+        (isTeachingRole.value
+          ? notification.type === 'grading' || notification.type === 'deadline'
+          : notification.type === 'course' ||
+            notification.type === 'deadline' ||
+            notification.type === 'payment')) ||
       (activeFilter.value === 'system' && notification.type === 'system');
 
     if (!matchesFilter) {
@@ -314,7 +278,9 @@ const filteredNotifications = computed(() => {
 });
 
 function markAllAsRead() {
-  notifications.value = notifications.value.map((notification) => ({
+  const targetNotifications = isTeachingRole.value ? teacherNotifications : studentNotifications;
+
+  targetNotifications.value = targetNotifications.value.map((notification) => ({
     ...notification,
     read: true,
   }));
@@ -327,7 +293,7 @@ function markAllAsRead() {
   });
 }
 
-function openNotification(notification: InstructorNotification) {
+function openNotification(notification: AppNotification) {
   notification.read = true;
 
   if (notification.action) {
