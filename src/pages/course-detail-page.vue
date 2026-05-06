@@ -651,6 +651,15 @@ const isCourseRegistered = computed<boolean>(() => {
   return courseRegistrationStore.isRegistered(course.value.id);
 });
 
+const courseRegistration = computed(() => {
+  if (!course.value) {
+    return null;
+  }
+  return (
+    courseRegistrationStore.myRegistrations.find((r) => r.courseId === course.value?.id) || null
+  );
+});
+
 const isBookmarked = computed<boolean>(() => {
   if (!course.value) {
     return false;
@@ -689,6 +698,15 @@ const registrationWindowStatus = computed<RegistrationWindowStatus>(() => {
 
 const enrollmentAction = computed<EnrollmentAction>(() => {
   if (isCourseRegistered.value) {
+    if (courseRegistration.value?.paymentStatus === 'pending') {
+      return {
+        label: t('courseDetail.pendingPayment'),
+        icon: 'hourglass_empty',
+        color: 'orange-8',
+        disabled: false,
+      };
+    }
+
     return {
       label: t('courseDetail.enterClass'),
       icon: 'play_circle',
@@ -800,6 +818,11 @@ function onEnrollmentActionClick(): void {
   }
 
   if (isCourseRegistered.value) {
+    if (courseRegistration.value?.paymentStatus === 'pending') {
+      enrollmentDialogCourse.value = course.value;
+      enrollmentDialogOpenKey.value += 1;
+      return;
+    }
     goToLearningPage();
     return;
   }

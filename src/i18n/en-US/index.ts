@@ -283,6 +283,7 @@ export default {
     payments: {
       title: 'Payments & Receipts',
       subtitle: 'All your payment history and receipts',
+      searchPlaceholder: 'Search receipts...',
       listTitle: 'Payment List',
       date: 'Payment Date:',
       method: 'Method:',
@@ -497,6 +498,9 @@ export default {
     phone: 'Phone Number',
     phoneHint: '08X-XXX-XXXX',
     phoneRequired: 'Phone number is required',
+    taxId: 'Tax ID / Citizen ID',
+    taxIdHint: '13-digit identification number',
+    taxIdRequired: 'Tax ID / Citizen ID is required',
     fee: 'Registration Fee',
     cancel: 'Cancel',
     next: 'Continue to Payment',
@@ -543,6 +547,7 @@ export default {
     regClosed: 'Registration Closed',
     seatsFull: 'Seats Full',
     enrollNow: 'Enroll Now',
+    pendingPayment: 'Pending Payment',
   },
   homepage: {
     mycourse: 'My Courses',

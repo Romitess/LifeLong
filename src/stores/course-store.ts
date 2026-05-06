@@ -210,14 +210,15 @@ export const useCourseStore = defineStore('course', {
       if (this.courses.length > 0) return;
 
       const storedCourses = readStoredCourses() ?? [];
-      const storedIds = new Set(storedCourses.map((c) => c.id));
+      const mockIds = new Set(MOCK_COURSES.map((c) => c.id));
 
-      // Merge new mock courses that are not in storage yet
-      const mergedCourses = [...storedCourses, ...MOCK_COURSES.filter((c) => !storedIds.has(c.id))];
+      // Prioritize MOCK_COURSES and keep user-created courses from storage
+      const mergedCourses = [...MOCK_COURSES, ...storedCourses.filter((c) => !mockIds.has(c.id))];
 
       this.courses = mergedCourses.map(ensureCourseInstructorOwner);
 
       const storedDetails = readStoredCourseDetails() ?? {};
+      // Prioritize MOCK_COURSE_DETAILS over stored details
       this.courseDetails = Object.fromEntries(
         Object.entries(mergeStoredCourseDetails(MOCK_COURSE_DETAILS, storedDetails)).map(
           ([courseId, detail]) => [courseId, ensureCourseDetailInstructorOwner(detail)],

@@ -1,5 +1,6 @@
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import type { CourseDetail } from 'src/types/course-detail';
+import { useAuthStore } from './auth-store';
 
 export interface CoursePaymentRecord {
   id: string;
@@ -12,6 +13,8 @@ export interface CoursePaymentRecord {
   method: string;
   receiptId: string;
   userId: string;
+  taxId?: string;
+  customerName?: string;
 }
 
 interface CoursePaymentState {
@@ -65,22 +68,34 @@ export const useCoursePaymentStore = defineStore('course-payment', {
   }),
 
   getters: {
-    myPayments: (state): CoursePaymentRecord[] =>
-      state.payments
-        .filter((payment) => payment.userId === MOCK_USER_ID)
+    myPayments: (state): CoursePaymentRecord[] => {
+      const authStore = useAuthStore();
+      const currentUserId = authStore.user?.id || MOCK_USER_ID;
+      return state.payments
+        .filter((payment) => payment.userId === currentUserId)
         .slice()
         .sort(
           (left, right) =>
             new Date(right.paymentDate).getTime() - new Date(left.paymentDate).getTime(),
-        ),
+        );
+    },
   },
 
   actions: {
     recordPaidCourse(
       course: CourseDetail,
-      payload: { receiptId: string; paymentDate?: string; method?: string },
+      payload: {
+        receiptId: string;
+        paymentDate?: string;
+        method?: string;
+        taxId?: string;
+        customerName?: string;
+      },
     ): void {
       const paymentDate = payload.paymentDate ?? new Date().toISOString();
+      const authStore = useAuthStore();
+      const currentUserId = authStore.user?.id || MOCK_USER_ID;
+
       const nextPayment: CoursePaymentRecord = {
         id: buildPaymentId(paymentDate),
         courseId: course.id,
@@ -91,13 +106,15 @@ export const useCoursePaymentStore = defineStore('course-payment', {
         status: 'ชำระเงินสำเร็จ',
         method: payload.method ?? 'Thai QR Payment',
         receiptId: payload.receiptId,
-        userId: MOCK_USER_ID,
+        userId: currentUserId,
+        ...(payload.taxId ? { taxId: payload.taxId } : {}),
+        ...(payload.customerName ? { customerName: payload.customerName } : {}),
       };
 
       const nextPayments = [
         nextPayment,
         ...this.payments.filter(
-          (payment) => !(payment.courseId === course.id && payment.userId === MOCK_USER_ID),
+          (payment) => !(payment.courseId === course.id && payment.userId === currentUserId),
         ),
       ];
 

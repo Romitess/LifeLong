@@ -283,6 +283,7 @@ export default {
     payments: {
       title: 'ประวัติการใช้จ่ายและใบเสร็จ',
       subtitle: 'รายการชำระเงินและใบเสร็จรับเงินทั้งหมดของคุณ',
+      searchPlaceholder: 'ค้นหาใบเสร็จ...',
       listTitle: 'รายการชำระเงิน',
       date: 'วันที่ชำระ:',
       method: 'วิธีชำระ:',
@@ -502,6 +503,9 @@ export default {
     phone: 'เบอร์โทรศัพท์',
     phoneHint: '08X-XXX-XXXX',
     phoneRequired: 'กรุณากรอกเบอร์โทรศัพท์',
+    taxId: 'เลขประจำตัวผู้เสียภาษี/เลขบัตรประชาชน',
+    taxIdHint: 'เลขประจำตัว 13 หลัก',
+    taxIdRequired: 'กรุณากรอกเลขประจำตัวผู้เสียภาษี/เลขบัตรประชาชน',
     fee: 'ค่าลงทะเบียน',
     cancel: 'ยกเลิก',
     next: 'ดำเนินการชำระเงิน',
@@ -548,6 +552,7 @@ export default {
     regClosed: 'หมดเขตรับสมัคร',
     seatsFull: 'ที่นั่งเต็มแล้ว',
     enrollNow: 'ลงทะเบียนเรียน',
+    pendingPayment: 'รอชำระเงิน',
   },
   homepage: {
     mycourse: 'วิชาเรียนของฉัน',

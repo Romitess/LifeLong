@@ -5,6 +5,13 @@ import type { CourseDetail } from 'src/types/course-detail';
 
 export type LearnerEligibility = 'student';
 
+export interface RegistrantInfo {
+  fullName: string;
+  email: string;
+  phone: string;
+  taxId?: string;
+}
+
 export interface CourseRegistration {
   id: string;
   courseId: string;
@@ -17,6 +24,8 @@ export interface CourseRegistration {
     backgroundColor: string;
   };
   eligibility: LearnerEligibility;
+  paymentStatus: 'pending' | 'paid' | 'free';
+  registrantInfo?: RegistrantInfo;
   registeredAt: string;
   userId: string;
 }
@@ -51,6 +60,7 @@ function createMockRegistration(
       backgroundColor: course.cover.backgroundColor,
     },
     eligibility: 'student',
+    paymentStatus: course.isFree ? 'free' : 'paid',
     registeredAt,
     userId,
   };
@@ -91,10 +101,13 @@ function readStoredRegistrations(): CourseRegistration[] {
     }
 
     const registrationMap = new Map(
-      [...parsedValue, ...DEFAULT_REGISTRATIONS].map((registration) => [
-        registration.id,
-        registration,
-      ]),
+      [...parsedValue, ...DEFAULT_REGISTRATIONS].map((registration) => {
+        const withPaymentStatus = {
+          ...registration,
+          paymentStatus: registration.paymentStatus || 'paid',
+        };
+        return [withPaymentStatus.id, withPaymentStatus];
+      }),
     );
     const mergedRegistrations = Array.from(registrationMap.values());
     writeStoredRegistrations(mergedRegistrations);
@@ -146,14 +159,45 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
   },
 
   actions: {
-    registerCourse(course: CourseDetail, eligibility: LearnerEligibility): void {
+    registerCourse(
+      course: CourseDetail,
+      eligibility: LearnerEligibility,
+      paymentStatus: 'pending' | 'paid' | 'free' = 'paid',
+      registrantInfo?: RegistrantInfo,
+    ): void {
       const userId = getAuthenticatedUserId();
 
       if (!userId) {
         return;
       }
 
-      if (this.isRegistered(course.id)) {
+      const existingIndex = this.registrations.findIndex(
+        (reg) => reg.courseId === course.id && reg.userId === userId,
+      );
+
+      if (existingIndex !== -1) {
+        const existing = this.registrations[existingIndex];
+        if (existing) {
+          const updated = { ...existing };
+          let changed = false;
+
+          if (existing.paymentStatus !== paymentStatus) {
+            updated.paymentStatus = paymentStatus;
+            changed = true;
+          }
+
+          if (registrantInfo) {
+            updated.registrantInfo = registrantInfo;
+            changed = true;
+          }
+
+          if (changed) {
+            const nextRegistrations = [...this.registrations];
+            nextRegistrations[existingIndex] = updated;
+            this.registrations = nextRegistrations;
+            writeStoredRegistrations(nextRegistrations);
+          }
+        }
         return;
       }
 
@@ -171,6 +215,8 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
             backgroundColor: course.cover.backgroundColor,
           },
           eligibility,
+          paymentStatus: course.isFree ? 'free' : paymentStatus,
+          ...(registrantInfo ? { registrantInfo } : {}),
           registeredAt: new Date().toISOString(),
           userId,
         },
@@ -190,6 +236,36 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
       const nextRegistrations = this.registrations.filter(
         (registration) => !(registration.courseId === courseId && registration.userId === userId),
       );
+
+      this.registrations = nextRegistrations;
+      writeStoredRegistrations(nextRegistrations);
+    },
+
+    updateRegistrationPaymentStatus(courseId: string, status: 'pending' | 'paid' | 'free'): void {
+      const userId = getAuthenticatedUserId();
+
+      if (!userId) {
+        return;
+      }
+
+      const existingIndex = this.registrations.findIndex(
+        (reg) => reg.courseId === courseId && reg.userId === userId,
+      );
+
+      if (existingIndex === -1) {
+        return;
+      }
+
+      const existing = this.registrations[existingIndex];
+      if (!existing) {
+        return;
+      }
+
+      const nextRegistrations = [...this.registrations];
+      nextRegistrations[existingIndex] = {
+        ...existing,
+        paymentStatus: status,
+      };
 
       this.registrations = nextRegistrations;
       writeStoredRegistrations(nextRegistrations);

@@ -217,8 +217,16 @@
                     :registered-at-label="`${$t('profile.courses.registeredAt')} ${formatDate(entry.registration.registeredAt)}`"
                     :progress-percent="entry.progress.progressPercent"
                     :progress-detail-label="entry.progress.detailLabel"
-                    :progress-status-label="entry.progress.statusLabel"
-                    :progress-color="entry.progress.color"
+                    :progress-status-label="
+                      entry.registration.paymentStatus === 'pending'
+                        ? $t('courseDetail.pendingPayment')
+                        : entry.progress.statusLabel
+                    "
+                    :progress-color="
+                      entry.registration.paymentStatus === 'pending'
+                        ? 'warning'
+                        : entry.progress.color
+                    "
                   >
                     <template #actions>
                       <q-btn
@@ -269,6 +277,18 @@
                         class="course-action-btn text-weight-bold"
                       />
                       <q-btn
+                        v-if="entry.registration.paymentStatus === 'pending'"
+                        unelevated
+                        color="primary"
+                        :label="$t('enrollment.next')"
+                        icon="payment"
+                        no-caps
+                        size="md"
+                        class="course-action-btn course-action-btn--primary"
+                        @click="openPendingPayment(entry.registration.courseId)"
+                      />
+                      <q-btn
+                        v-else
                         unelevated
                         color="primary"
                         :label="$t('profile.courses.enterClass')"
@@ -410,6 +430,21 @@
                           class="course-action-btn text-weight-bold"
                         />
                         <q-btn
+                          v-if="
+                            getRegistrationByCourseId(bookmark.courseId)?.paymentStatus ===
+                            'pending'
+                          "
+                          unelevated
+                          color="primary"
+                          :label="$t('enrollment.next')"
+                          icon="payment"
+                          no-caps
+                          size="md"
+                          class="course-action-btn course-action-btn--primary"
+                          @click="openPendingPayment(bookmark.courseId)"
+                        />
+                        <q-btn
+                          v-else
                           unelevated
                           color="primary"
                           :label="$t('profile.courses.enterClass')"
@@ -931,6 +966,18 @@
                       {{ $t('profile.payments.subtitle') }}
                     </div>
                   </div>
+                  <q-input
+                    v-model="paymentSearch"
+                    dense
+                    outlined
+                    rounded
+                    :placeholder="$t('profile.payments.searchPlaceholder')"
+                    class="profile-search-input"
+                  >
+                    <template v-slot:prepend>
+                      <q-icon name="search" color="grey-5" />
+                    </template>
+                  </q-input>
                 </div>
 
                 <div v-if="payments.length > 0" class="course-list-header q-mb-sm">
@@ -1026,7 +1073,7 @@
                   </q-card>
                 </div>
 
-                <!-- Empty State (Hidden if mock data exists) -->
+                <!-- Empty State -->
                 <q-card v-else flat class="text-center empty-state-card q-pa-xl">
                   <div class="empty-state-card__icon-wrap q-mx-auto q-mb-lg">
                     <q-icon name="payments" size="48px" color="primary" />
@@ -1597,6 +1644,7 @@
       :receipt-id="receiptId"
       :issued-at="selectedPayment?.paymentDate ?? null"
       :customer-name="receiptCustomerName"
+      :customer-tax-id="selectedPayment?.taxId ?? ''"
       :show-customer="true"
       :course-title="
         getTranslatedCourseTitleByInfo(selectedPayment?.courseCode, selectedPayment?.courseTitle)
@@ -1736,6 +1784,7 @@ const activeMenu = ref('my-courses');
 const profileContentRef = ref<HTMLElement | null>(null);
 const courseSearch = ref('');
 const savedCourseSearch = ref('');
+const paymentSearch = ref('');
 const showUnregisterDialog = ref(false);
 const showSaveConfirmDialog = ref(false);
 const courseToUnregister = ref<CourseRegistration | null>(null);
@@ -2040,12 +2089,22 @@ const menuItems = computed<MenuItem[]>(() => [
   { label: t('profile.menu.chat'), value: 'chat', icon: 'chat' },
 ]);
 
-const payments = computed<CoursePaymentRecord[]>(() => coursePaymentStore.myPayments);
+const payments = computed<CoursePaymentRecord[]>(() => {
+  if (!paymentSearch.value) return coursePaymentStore.myPayments;
+  const s = paymentSearch.value.toLowerCase();
+  return coursePaymentStore.myPayments.filter(
+    (p) => p.courseCode.toLowerCase().includes(s) || p.courseTitle.toLowerCase().includes(s),
+  );
+});
 const selectedPayment = ref<CoursePaymentRecord | null>(null);
 const showReceiptDialog = ref(false);
 
 const receiptId = computed(() => selectedPayment.value?.receiptId || '');
 const receiptCustomerName = computed(() => {
+  if (selectedPayment.value?.customerName) {
+    return selectedPayment.value.customerName;
+  }
+
   const thaiName = `${form.firstNameTh} ${form.lastNameTh}`.trim();
   const englishName = `${form.firstNameEn} ${form.lastNameEn}`.trim();
 
@@ -2090,6 +2149,14 @@ watch(activeMenu, () => {
 function viewReceipt(payment: CoursePaymentRecord) {
   selectedPayment.value = payment;
   showReceiptDialog.value = true;
+}
+
+function openPendingPayment(courseId: string): void {
+  const course = getCourseDetailById(courseId);
+  if (course) {
+    savedEnrollmentDialogCourse.value = course;
+    savedEnrollmentDialogOpenKey.value += 1;
+  }
 }
 
 function getHeaderHeight(): number {

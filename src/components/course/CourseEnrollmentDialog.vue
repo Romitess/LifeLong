@@ -1,6 +1,11 @@
 <template>
   <!-- 1. Paid Info Dialog -->
-  <q-dialog v-model="showPaidInfoDialog" transition-show="scale" transition-hide="scale">
+  <q-dialog
+    v-model="showPaidInfoDialog"
+    transition-show="scale"
+    transition-hide="scale"
+    @hide="onPaidInfoDialogHide"
+  >
     <q-card class="modern-card paid-info-dialog-card">
       <q-card-section class="modern-header q-pa-lg">
         <div class="text-h6 text-white text-weight-bold">{{ t('enrollment.paidInfoTitle') }}</div>
@@ -11,6 +16,23 @@
 
       <q-card-section class="q-pa-lg">
         <q-form ref="paidInfoFormRef" @submit.prevent="submitPaidInfo" class="q-gutter-y-md">
+          <q-input
+            v-model="userInfo.taxId"
+            :label="t('enrollment.taxId')"
+            :placeholder="t('enrollment.taxIdHint')"
+            outlined
+            rounded
+            dense
+            bg-color="grey-1"
+            mask="#############"
+            unmasked-value
+            :rules="[(val) => !!val || t('enrollment.taxIdRequired')]"
+          >
+            <template v-slot:prepend>
+              <q-icon name="badge" color="primary" />
+            </template>
+          </q-input>
+
           <q-input
             v-model="userInfo.name"
             :label="t('enrollment.fullName')"
@@ -207,6 +229,7 @@
     :receipt-id="receiptId"
     :issued-at="receiptIssuedAt"
     :customer-name="userInfo.name"
+    :customer-tax-id="userInfo.taxId"
     :show-customer="Boolean(enrollingCourse && !enrollingCourse.isFree)"
     :course-title="translatedEnrollingCourseTitle"
     :course-code="enrollingCourse?.code ?? ''"
@@ -255,6 +278,7 @@ const showQrDialog = ref(false);
 const showFreeConfirmDialog = ref(false);
 const showSuccessDialog = ref(false);
 const showReceiptDialog = ref(false);
+const pendingQrOpen = ref(false);
 
 const paidInfoFormRef = ref<FormValidator | null>(null);
 const qrUrl = ref('');
@@ -268,6 +292,7 @@ const userInfo = reactive({
   name: '',
   email: '',
   phone: '',
+  taxId: '',
 });
 
 const priceLabel = computed<string>(() => {
@@ -300,7 +325,19 @@ function openEnrollment(course: CourseDetail): void {
   if (course.isFree) {
     showFreeConfirmDialog.value = true;
   } else {
-    resetPaidInfo();
+    const existingRegistration = courseRegistrationStore.myRegistrations.find(
+      (r) => r.courseId === course.id && r.paymentStatus === 'pending',
+    );
+
+    if (existingRegistration && existingRegistration.registrantInfo) {
+      userInfo.name = existingRegistration.registrantInfo.fullName;
+      userInfo.email = existingRegistration.registrantInfo.email;
+      userInfo.phone = existingRegistration.registrantInfo.phone;
+      userInfo.taxId = existingRegistration.registrantInfo.taxId || '';
+    } else {
+      resetPaidInfo();
+    }
+
     showPaidInfoDialog.value = true;
     void nextTick(() => {
       paidInfoFormRef.value?.resetValidation();
@@ -316,12 +353,21 @@ function resetEnrollmentDialogs(): void {
   showSuccessDialog.value = false;
   showReceiptDialog.value = false;
   receiptIssuedAt.value = null;
+  pendingQrOpen.value = false;
+}
+
+function onPaidInfoDialogHide(): void {
+  if (pendingQrOpen.value) {
+    pendingQrOpen.value = false;
+    showQrDialog.value = true;
+  }
 }
 
 function resetPaidInfo(): void {
   userInfo.name = '';
   userInfo.email = '';
   userInfo.phone = '';
+  userInfo.taxId = '';
   paidInfoFormRef.value?.resetValidation();
 }
 
@@ -343,7 +389,15 @@ async function submitPaidInfo(): Promise<void> {
     return;
   }
 
+  // Close the info dialog first
   showPaidInfoDialog.value = false;
+
+  courseRegistrationStore.registerCourse(enrollingCourse.value, 'student', 'pending', {
+    fullName: userInfo.name,
+    email: userInfo.email,
+    phone: userInfo.phone,
+    taxId: userInfo.taxId,
+  });
 
   const paymentData = encodeURIComponent(
     `PROMPTPAY:${enrollingCourse.value.code}:THB:${enrollingCourse.value.price}`,
@@ -352,7 +406,7 @@ async function submitPaidInfo(): Promise<void> {
     `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${paymentData}` +
     '&bgcolor=ffffff&color=1a237e';
 
-  showQrDialog.value = true;
+  pendingQrOpen.value = true;
 }
 
 function confirmFreeEnroll(): void {
@@ -372,10 +426,12 @@ function onPaymentDone(): void {
   const issuedAt = new Date();
   const nextReceiptId = createReceiptId();
 
-  courseRegistrationStore.registerCourse(enrollingCourse.value, 'student');
+  courseRegistrationStore.registerCourse(enrollingCourse.value, 'student', 'paid');
   coursePaymentStore.recordPaidCourse(enrollingCourse.value, {
     receiptId: nextReceiptId,
     paymentDate: issuedAt.toISOString(),
+    taxId: userInfo.taxId,
+    customerName: userInfo.name,
   });
   emit('enrolled', enrollingCourse.value.id);
 
