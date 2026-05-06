@@ -62,10 +62,41 @@
           </div>
         </div>
 
+        <div class="student-roster-filters row items-center q-gutter-md q-mb-md">
+          <q-input
+            v-model="searchQuery"
+            placeholder="ค้นหาชื่อ หรือ รหัสนิสิต..."
+            outlined
+            dense
+            bg-color="white"
+            class="col-grow custom-filter-input"
+          >
+            <template v-slot:prepend>
+              <q-icon name="search" />
+            </template>
+            <template v-slot:append v-if="searchQuery">
+              <q-icon name="close" @click="searchQuery = ''" class="cursor-pointer" />
+            </template>
+          </q-input>
+
+          <q-select
+            v-model="statusFilter"
+            :options="statusOptions"
+            label="สถานะ"
+            outlined
+            dense
+            bg-color="white"
+            style="min-width: 160px"
+            class="custom-filter-input"
+            emit-value
+            map-options
+          />
+        </div>
+
         <q-table
-          v-if="learners.length > 0"
+          v-if="filteredLearners.length > 0"
           flat
-          :rows="learners"
+          :rows="filteredLearners"
           :columns="learnerColumns"
           row-key="id"
           :pagination="{ rowsPerPage: 10 }"
@@ -116,6 +147,24 @@
             </q-td>
           </template>
         </q-table>
+
+        <div
+          v-if="filteredLearners.length === 0"
+          class="column items-center q-py-xl text-grey-5 border-dashed"
+          style="border: 2px dashed rgba(0, 0, 0, 0.05); border-radius: 12px"
+        >
+          <q-icon name="search_off" size="3rem" class="q-mb-md" />
+          <div class="text-body1">ไม่พบรายชื่อนิสิตที่ตรงกับการค้นหา</div>
+          <q-btn
+            v-if="searchQuery || statusFilter !== 'ทั้งหมด'"
+            flat
+            no-caps
+            label="ล้างการค้นหา"
+            color="primary"
+            class="q-mt-md"
+            @click="clearFilters"
+          />
+        </div>
       </section>
     </div>
 
@@ -227,6 +276,10 @@ courseStore.init();
 const selectedCourseId = ref('');
 const learnerDetailDialogOpen = ref(false);
 const selectedLearner = ref<LearnerRow | null>(null);
+const searchQuery = ref('');
+const statusFilter = ref('ทั้งหมด');
+
+const statusOptions = ['ทั้งหมด', 'เรียนต่อเนื่อง', 'ปกติ', 'ควรติดตาม', 'เสี่ยงหลุด'];
 
 const instructorCourses = computed<Course[]>(() =>
   courseStore.getInstructorCourses(authStore.user),
@@ -319,6 +372,23 @@ const averageProgress = computed(() => {
   return Math.round(total / learners.value.length);
 });
 
+const filteredLearners = computed(() => {
+  let result = learners.value;
+
+  if (statusFilter.value && statusFilter.value !== 'ทั้งหมด') {
+    result = result.filter((l) => l.status === statusFilter.value);
+  }
+
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter(
+      (l) => l.name.toLowerCase().includes(query) || l.studentId.toLowerCase().includes(query),
+    );
+  }
+
+  return result;
+});
+
 const learnerColumns: QTableColumn<LearnerRow>[] = [
   { name: 'name', label: 'นิสิต', field: 'name', align: 'left', sortable: true },
   { name: 'email', label: 'อีเมล', field: 'email', align: 'left' },
@@ -337,6 +407,12 @@ function selectCourse(courseId: string): void {
 function clearSelectedCourse(): void {
   selectedCourseId.value = '';
   selectedLearner.value = null;
+  clearFilters();
+}
+
+function clearFilters(): void {
+  searchQuery.value = '';
+  statusFilter.value = 'ทั้งหมด';
 }
 
 function openLearnerDetail(_event: Event | null, learner: LearnerRow): void {
@@ -599,6 +675,12 @@ function openLearnerDetail(_event: Event | null, learner: LearnerRow): void {
     color: #1f2937;
     font-size: 0.9rem;
     font-weight: 800;
+  }
+}
+
+.student-roster-filters {
+  .custom-filter-input :deep(.q-field__control) {
+    border-radius: 12px !important;
   }
 }
 
