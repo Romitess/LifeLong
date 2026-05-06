@@ -440,11 +440,6 @@ import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useCourseStore } from 'src/stores/course-store';
 import { useAuthStore } from 'src/stores/auth-store';
-import { MOCK_COURSES } from 'src/data/mock-courses';
-import {
-  getNotificationItemsForRole,
-  isTeachingRole as isTeachingNotificationRole,
-} from 'src/data/mock-notifications';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import AppFooter from 'components/AppFooter.vue';
@@ -466,6 +461,80 @@ const $q = useQuasar();
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
 const { t } = useI18n({ useScope: 'global' });
+
+/**
+ * Notification Helper Functions
+ */
+function isTeachingNotificationRole(role: string | undefined): boolean {
+  return ['teach', 'instructor'].includes(role ?? '');
+}
+
+function getNotificationItemsForRole(role: string | undefined) {
+  if (isTeachingNotificationRole(role)) {
+    return [
+      {
+        id: 1,
+        title: 'เหลือเวลาอีก 2 วัน',
+        message: 'ครบกำหนดให้คะแนนใบงานวิเคราะห์กรณีศึกษา',
+        time: 'วันนี้ 09:00',
+        icon: 'alarm',
+        iconBg: '#ffebee',
+        iconColor: '#c62828',
+        action: '/instructor/grading',
+        read: false,
+      },
+      {
+        id: 2,
+        title: 'รอตรวจ 18 รายการ',
+        message: 'แบบทดสอบปลายบทที่ 3 ปิดรับคำตอบแล้ว',
+        time: '1 ชั่วโมงที่แล้ว',
+        icon: 'rate_review',
+        iconBg: '#fff3e0',
+        iconColor: '#ef6c00',
+        action: '/instructor/grading',
+        read: false,
+      },
+      {
+        id: 3,
+        title: 'นิสิตส่งงานใหม่ 6 รายการ',
+        message: 'มีไฟล์รายงานใหม่จากรายวิชาที่กำลังเปิดสอน',
+        time: '3 ชั่วโมงที่แล้ว',
+        icon: 'upload_file',
+        iconBg: '#e3f2fd',
+        iconColor: '#1565c0',
+        action: '/instructor/notifications',
+        read: false,
+      },
+    ];
+  }
+
+  // Student Notifications
+  return [
+    {
+      id: 101,
+      title: 'ยินดีต้อนรับสู่ BUU LLL',
+      message: 'เริ่มเรียนรู้วันนี้เพื่อสะสมหน่วยกิตและวุฒิบัตร',
+      time: 'เมื่อวานนี้',
+      icon: 'celebration',
+      iconBg: '#e8f5e9',
+      iconColor: '#2e7d32',
+      action: '/short-courses',
+      read: false,
+    },
+    {
+      id: 102,
+      title: 'คอร์สใหม่แนะนำ',
+      message: 'มีคอร์สใหม่ในหมวดหมู่ที่คุณสนใจ ลองเข้าไปดูกันเลย!',
+      time: '2 วันที่แล้ว',
+      icon: 'auto_awesome',
+      iconBg: '#f3e5f5',
+      iconColor: '#7b1fa2',
+      action: '/short-courses',
+      read: true,
+    },
+  ];
+}
+
 const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
 
 const showNavBar = computed(() => {
@@ -563,7 +632,7 @@ const categories = computed(() => {
   return CATEGORY_LIST.map((label) => ({
     label,
     labelKey: categoryMap[label] || '',
-    count: MOCK_COURSES.filter((course) => course.category === label).length,
+    count: courseStore.courses.filter((course) => course.category === label).length,
   }));
 });
 
@@ -626,7 +695,8 @@ function syncActiveNavWithRoute(path: string) {
   if (path === '/main' || path === '/') {
     activeNav.value = courseStore.selectedCategory ? 'category' : 'home';
   } else if (path.includes('/short-courses')) {
-    activeNav.value = 'short-courses';
+    // If there's a category in query, highlight 'category' tab, otherwise 'short-courses'
+    activeNav.value = route.query.category ? 'category' : 'short-courses';
   } else if (path.includes('/instructor/dashboard')) {
     activeNav.value = 'dashboard';
   } else if (path.includes('/instructor/courses')) {
@@ -732,11 +802,8 @@ async function onNavClick(nav: NavItem) {
 }
 
 async function onCategoryClick(category: string) {
-  courseStore.setSelectedCategory(category);
   activeNav.value = 'category';
-  if (router.currentRoute.value.path !== '/main') {
-    await router.push('/main');
-  }
+  await router.push(`/short-courses?category=${category}`);
 }
 </script>
 
