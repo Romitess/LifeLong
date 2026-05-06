@@ -54,6 +54,7 @@
       </q-card-section>
 
       <q-card-actions align="center" class="bg-white q-py-md sticky-actions hide-on-print">
+        <q-btn flat color="grey-8" label="ปิด" v-close-popup class="q-px-lg" />
         <q-btn
           unelevated
           color="primary"
@@ -62,7 +63,6 @@
           class="q-px-xl text-weight-bold"
           @click="printCertificate"
         />
-        <q-btn flat color="grey-8" label="ปิดหน้าต่าง" v-close-popup class="q-px-lg" />
       </q-card-actions>
     </q-card>
   </q-dialog>
