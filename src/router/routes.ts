@@ -39,6 +39,10 @@ const routes: RouteRecordRaw[] = [
       },
       { path: 'profile', component: () => import('pages/profile-page.vue') },
       {
+        path: 'notifications',
+        component: () => import('pages/instructor/instructor-notifications.vue'),
+      },
+      {
         path: 'instructor/dashboard',
         component: () => import('pages/instructor/instructor-dashboard.vue'),
         meta: { role: 'teach' },
@@ -56,6 +60,11 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'instructor/students',
         component: () => import('pages/instructor/instructor-students.vue'),
+        meta: { role: 'teach' },
+      },
+      {
+        path: 'instructor/notifications',
+        component: () => import('pages/instructor/instructor-notifications.vue'),
         meta: { role: 'teach' },
       },
       {

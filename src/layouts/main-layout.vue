@@ -240,7 +240,79 @@
                 icon="notifications"
                 :aria-label="$t('notifications')"
               >
+                <q-badge floating rounded color="negative" class="nav-notification-badge"
+                  >5</q-badge
+                >
                 <q-tooltip>{{ $t('notifications') }}</q-tooltip>
+                <q-menu
+                  anchor="bottom right"
+                  self="top right"
+                  class="notification-preview-menu"
+                  transition-show="jump-down"
+                  transition-hide="jump-up"
+                >
+                  <div class="notification-preview">
+                    <div class="notification-preview__header">
+                      <div>
+                        <div class="notification-preview__title">แจ้งเตือน</div>
+                        <div class="notification-preview__subtitle">รายการสำคัญสำหรับผู้สอน</div>
+                      </div>
+                      <q-badge rounded color="negative" class="notification-preview__count">
+                        5 ใหม่
+                      </q-badge>
+                    </div>
+
+                    <q-separator />
+
+                    <q-list separator class="notification-preview__list">
+                      <q-item
+                        v-for="notification in notificationPreviewItems"
+                        :key="notification.id"
+                        clickable
+                        v-ripple
+                        class="notification-preview__item"
+                        @click="openNotificationPreview(notification)"
+                        v-close-popup
+                      >
+                        <q-item-section avatar top>
+                          <div
+                            class="notification-preview__icon"
+                            :style="{
+                              background: notification.iconBg,
+                              color: notification.iconColor,
+                            }"
+                          >
+                            <q-icon :name="notification.icon" size="19px" />
+                          </div>
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label class="notification-preview__item-title">
+                            {{ notification.title }}
+                          </q-item-label>
+                          <q-item-label caption class="notification-preview__item-message">
+                            {{ notification.message }}
+                          </q-item-label>
+                          <q-item-label caption class="notification-preview__item-time">
+                            {{ notification.time }}
+                          </q-item-label>
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+
+                    <div class="notification-preview__footer">
+                      <q-btn
+                        unelevated
+                        color="primary"
+                        icon="notifications"
+                        label="แสดงทั้งหมด"
+                        class="notification-preview__all-btn"
+                        no-caps
+                        @click="goToNotifications"
+                        v-close-popup
+                      />
+                    </div>
+                  </div>
+                </q-menu>
               </q-btn>
             </div>
           </template>
@@ -262,6 +334,9 @@
                 <template v-else>
                   <q-item clickable v-ripple @click="goToProfile">
                     <q-item-section>{{ $t('myProfile') }}</q-item-section>
+                  </q-item>
+                  <q-item v-if="isTeachingRole" clickable v-ripple @click="goToNotifications">
+                    <q-item-section>{{ $t('notifications') }}</q-item-section>
                   </q-item>
                   <q-item clickable v-ripple @click="onLogout">
                     <q-item-section class="text-negative">{{ $t('logout') }}</q-item-section>
@@ -495,6 +570,39 @@ let pageSwitchLoadingTimer: ReturnType<typeof setTimeout> | null = null;
 const PAGE_SWITCH_LOADING_MS = 450;
 const pageSwitchLoadingPaths = new Set(['/main', '/profile']);
 
+const notificationPreviewItems = [
+  {
+    id: 1,
+    title: 'เหลือเวลาอีก 2 วัน',
+    message: 'ครบกำหนดให้คะแนนใบงานวิเคราะห์กรณีศึกษา',
+    time: 'วันนี้ 09:00',
+    icon: 'alarm',
+    iconBg: '#ffebee',
+    iconColor: '#c62828',
+    action: '/instructor/grading',
+  },
+  {
+    id: 2,
+    title: 'รอตรวจ 18 รายการ',
+    message: 'แบบทดสอบปลายบทที่ 3 ปิดรับคำตอบแล้ว',
+    time: '1 ชั่วโมงที่แล้ว',
+    icon: 'rate_review',
+    iconBg: '#fff3e0',
+    iconColor: '#ef6c00',
+    action: '/instructor/grading',
+  },
+  {
+    id: 3,
+    title: 'นิสิตส่งงานใหม่ 6 รายการ',
+    message: 'มีไฟล์รายงานใหม่จากรายวิชาที่กำลังเปิดสอน',
+    time: '3 ชั่วโมงที่แล้ว',
+    icon: 'upload_file',
+    iconBg: '#e3f2fd',
+    iconColor: '#1565c0',
+    action: '/instructor/notifications',
+  },
+];
+
 type AuthPath = '/login' | '/register';
 
 function shouldShowPageSwitchLoading(path: string): boolean {
@@ -542,6 +650,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'my-courses-mgmt';
   } else if (path.includes('/instructor/students')) {
     activeNav.value = 'students-mgmt';
+  } else if (path.includes('/notifications')) {
+    activeNav.value = '';
   } else if (path.includes('/instructor/reports')) {
     activeNav.value = 'reports';
   } else {
@@ -590,6 +700,20 @@ async function onLogoClick() {
 async function goToProfile() {
   drawerOpen.value = false;
   await navigateWithPageLoading('/profile');
+}
+
+async function goToNotifications() {
+  drawerOpen.value = false;
+  await router.push('/notifications');
+}
+
+async function openNotificationPreview(notification: { action: string }) {
+  if (isTeachingRole.value) {
+    await router.push(notification.action);
+    return;
+  }
+
+  await router.push('/notifications');
 }
 
 async function onNavClick(nav: NavItem) {
@@ -716,6 +840,110 @@ async function onCategoryClick(category: string) {
     background: #ffffff !important;
     box-shadow: 0 6px 16px rgba(17, 24, 39, 0.1);
   }
+}
+
+.nav-notification-badge {
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 17px;
+}
+
+.notification-preview-menu {
+  border-radius: 8px;
+  box-shadow: 0 18px 42px rgba(17, 24, 39, 0.18);
+}
+
+.notification-preview {
+  width: min(380px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.notification-preview__header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+
+.notification-preview__title {
+  color: #263238;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.notification-preview__subtitle {
+  margin-top: 2px;
+  color: #78909c;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.notification-preview__count {
+  flex: 0 0 auto;
+  font-weight: 800;
+}
+
+.notification-preview__list {
+  max-height: 318px;
+  background: #ffffff;
+}
+
+.notification-preview__item {
+  min-height: 86px;
+  padding: 12px 14px;
+}
+
+.notification-preview__icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 8px;
+}
+
+.notification-preview__item-title {
+  color: #263238;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.notification-preview__item-message {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 3px;
+  color: #546e7a;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.notification-preview__item-time {
+  margin-top: 5px;
+  color: #90a4ae;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.notification-preview__footer {
+  padding: 12px 14px;
+  background: #fafafa;
+}
+
+.notification-preview__all-btn {
+  width: 100%;
+  min-height: 38px;
+  border-radius: 8px;
+  font-weight: 800;
 }
 
 .nav-actions {
