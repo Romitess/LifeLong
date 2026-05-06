@@ -509,6 +509,8 @@ const BASE_MOCK_COURSES: Course[] = [
 
 export const MOCK_COURSES: Course[] = BASE_MOCK_COURSES.map(applyMockCourseInstructorOwner);
 
+const DEFAULT_PREVIEW_VIDEO_URL = 'https://www.youtube.com/watch?v=AGYgXbt-cq0';
+
 const COURSE_DETAIL_CONTENT: Record<string, CourseDetailContent> = {
   '1': {
     descriptionFull:
@@ -539,6 +541,9 @@ const COURSE_DETAIL_CONTENT: Record<string, CourseDetailContent> = {
     certificateTypeEn: 'Certificate',
     contactEmail: 'gem@buu.ac.th',
     contactPhone: '038-102-222 ต่อ 4001',
+    previewVideoUrl: 'https://www.youtube.com/watch?v=AGYgXbt-cq0',
+    previewPosterUrl:
+      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=80',
     department: 'ภาควิชาอัญมณีศาสตร์และเทคโนโลยี',
     departmentEn: 'Department of Gemology and Technology',
     instructor: {
@@ -1681,6 +1686,8 @@ function createCourseDetails(): Record<string, CourseDetail> {
     details[course.id] = {
       ...course,
       ...content,
+      previewVideoUrl: content.previewVideoUrl ?? DEFAULT_PREVIEW_VIDEO_URL,
+      previewPosterUrl: content.previewPosterUrl ?? course.imageUrl,
       ...(course.instructorId ? { instructorId: course.instructorId } : {}),
       ...(course.instructorEmail ? { instructorEmail: course.instructorEmail } : {}),
       instructor: {

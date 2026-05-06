@@ -51,4 +51,6 @@ export interface CourseDetail extends Course {
   certificateTypeEn?: string;
   contactEmail: string;
   contactPhone: string;
+  previewVideoUrl?: string;
+  previewPosterUrl?: string;
 }

@@ -12,6 +12,8 @@ import {
 
 const STORAGE_KEY = 'lll-courses';
 const DETAIL_STORAGE_KEY = 'lll-course-details';
+const LEGACY_DEMO_PREVIEW_VIDEO_URL =
+  'https://videos.pexels.com/video-files/855734/855734-hd_1920_1080_25fps.mp4';
 
 type CourseInstructorOwner = {
   id?: string;
@@ -59,6 +61,41 @@ function ensureCourseDetailInstructorOwner(detail: CourseDetail): CourseDetail {
       email: instructorEmail,
     },
   };
+}
+
+function mergeStoredCourseDetails(
+  mockDetails: Record<string, CourseDetail>,
+  storedDetails: Record<string, CourseDetail>,
+): Record<string, CourseDetail> {
+  const detailIds = new Set([...Object.keys(mockDetails), ...Object.keys(storedDetails)]);
+
+  return Object.fromEntries(
+    [...detailIds].map((courseId) => {
+      const mockDetail = mockDetails[courseId];
+      const storedDetail = storedDetails[courseId];
+
+      if (!mockDetail) {
+        return [courseId, storedDetail];
+      }
+
+      if (!storedDetail) {
+        return [courseId, mockDetail];
+      }
+
+      return [
+        courseId,
+        {
+          ...mockDetail,
+          ...storedDetail,
+          previewVideoUrl:
+            storedDetail.previewVideoUrl === LEGACY_DEMO_PREVIEW_VIDEO_URL
+              ? mockDetail.previewVideoUrl
+              : (storedDetail.previewVideoUrl ?? mockDetail.previewVideoUrl),
+          previewPosterUrl: storedDetail.previewPosterUrl ?? mockDetail.previewPosterUrl,
+        },
+      ];
+    }),
+  );
 }
 
 function readStoredCourses(): Course[] | null {
@@ -149,6 +186,8 @@ function createFallbackCourseDetail(course: Course): CourseDetail {
     certificateTypeEn: course.status,
     contactEmail: 'gem@buu.ac.th',
     contactPhone: '038-102-222',
+    previewVideoUrl: 'https://www.youtube.com/watch?v=AGYgXbt-cq0',
+    previewPosterUrl: course.imageUrl,
   };
 }
 
@@ -180,10 +219,9 @@ export const useCourseStore = defineStore('course', {
 
       const storedDetails = readStoredCourseDetails() ?? {};
       this.courseDetails = Object.fromEntries(
-        Object.entries({
-          ...MOCK_COURSE_DETAILS,
-          ...storedDetails,
-        }).map(([courseId, detail]) => [courseId, ensureCourseDetailInstructorOwner(detail)]),
+        Object.entries(mergeStoredCourseDetails(MOCK_COURSE_DETAILS, storedDetails)).map(
+          ([courseId, detail]) => [courseId, ensureCourseDetailInstructorOwner(detail)],
+        ),
       );
 
       writeStoredCourses(this.courses);
@@ -258,7 +296,15 @@ export const useCourseStore = defineStore('course', {
       this.init();
       const detail = this.courseDetails[id];
       if (detail) {
-        return detail;
+        const mockDetail = MOCK_COURSE_DETAILS[id];
+        const mergedDetail = mockDetail
+          ? (mergeStoredCourseDetails({ [id]: mockDetail }, { [id]: detail })[id] ?? detail)
+          : detail;
+
+        const ownedDetail = ensureCourseDetailInstructorOwner(mergedDetail);
+        this.courseDetails[id] = ownedDetail;
+        writeStoredCourseDetails(this.courseDetails);
+        return ownedDetail;
       }
 
       const course = this.courses.find((candidate) => candidate.id === id);

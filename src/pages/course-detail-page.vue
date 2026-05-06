@@ -59,6 +59,37 @@
               </div>
             </div>
           </div>
+
+          <div
+            v-if="course.previewVideoUrl"
+            class="detail-hero__preview"
+            @mouseenter="showPreviewControls"
+            @mouseleave="hidePreviewControls"
+            @focusin="showPreviewControls"
+            @focusout="hidePreviewControls"
+          >
+            <iframe
+              v-if="isYoutubeVideoUrl(course.previewVideoUrl)"
+              class="detail-hero__preview-video"
+              :src="getYoutubeEmbedUrl(course.previewVideoUrl, previewControlsVisible)"
+              title="Course preview"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowfullscreen
+            />
+            <video
+              v-else
+              class="detail-hero__preview-video"
+              :src="course.previewVideoUrl"
+              :poster="course.previewPosterUrl || course.imageUrl"
+              autoplay
+              muted
+              loop
+              :controls="previewControlsVisible"
+              playsinline
+              preload="metadata"
+            />
+            <span class="detail-hero__preview-shade" />
+          </div>
         </div>
       </section>
 
@@ -550,6 +581,52 @@ function getTranslatedDeliveryMode(mode: DeliveryMode): string {
   return map[mode] || mode;
 }
 
+function getYoutubeVideoId(videoUrl: string): string | null {
+  try {
+    const url = new URL(videoUrl);
+
+    if (url.hostname.includes('youtu.be')) {
+      return url.pathname.split('/').filter(Boolean)[0] ?? null;
+    }
+
+    if (url.hostname.includes('youtube.com')) {
+      if (url.pathname.startsWith('/embed/')) {
+        return url.pathname.split('/').filter(Boolean)[1] ?? null;
+      }
+
+      return url.searchParams.get('v');
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function isYoutubeVideoUrl(videoUrl: string): boolean {
+  return Boolean(getYoutubeVideoId(videoUrl));
+}
+
+function getYoutubeEmbedUrl(videoUrl: string, showControls: boolean): string {
+  const videoId = getYoutubeVideoId(videoUrl);
+
+  if (!videoId) {
+    return videoUrl;
+  }
+
+  const params = new URLSearchParams({
+    autoplay: '1',
+    controls: showControls ? '1' : '0',
+    loop: '1',
+    mute: '1',
+    playlist: videoId,
+    playsinline: '1',
+    rel: '0',
+  });
+
+  return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
+}
+
 const courseId = computed<string>(getRouteCourseId);
 const { course, recommendedCourses, isLoading, error, fetchCourseDetail } =
   useCourseDetail(courseId);
@@ -557,6 +634,7 @@ const { course, recommendedCourses, isLoading, error, fetchCourseDetail } =
 const enrollmentDialogCourse = ref<CourseDetail | null>(null);
 const enrollmentDialogOpenKey = ref(0);
 const showLoginRequiredDialog = ref(false);
+const previewControlsVisible = ref(false);
 
 const isCourseRegistered = computed<boolean>(() => {
   if (!course.value) {
@@ -728,6 +806,14 @@ function onEnrollmentActionClick(): void {
   enrollmentDialogOpenKey.value += 1;
 }
 
+function showPreviewControls(): void {
+  previewControlsVisible.value = true;
+}
+
+function hidePreviewControls(): void {
+  previewControlsVisible.value = false;
+}
+
 function onToggleBookmark(): void {
   if (!course.value) {
     return;
@@ -783,6 +869,15 @@ watch(
     padding-top: 84px;
     padding-bottom: 48px;
     color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 56px;
+  }
+
+  &__info {
+    flex: 1 1 560px;
+    min-width: 0;
   }
 
   &__badges {
@@ -810,6 +905,38 @@ watch(
     font-size: 0.88rem;
     color: rgba(255, 255, 255, 0.8);
     font-weight: 400;
+  }
+
+  &__preview {
+    position: relative;
+    flex: 0 1 520px;
+    width: min(38vw, 520px);
+    min-width: 360px;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.48);
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.32);
+  }
+
+  &__preview-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    object-fit: cover;
+  }
+
+  &__preview-shade {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0.42)),
+      linear-gradient(135deg, rgba(245, 166, 35, 0.16), transparent 44%);
   }
 }
 
@@ -1320,6 +1447,13 @@ watch(
     &__content {
       padding-top: 76px;
       padding-bottom: 32px;
+      display: block;
+    }
+
+    &__preview {
+      width: 100%;
+      min-width: 0;
+      margin-top: 24px;
     }
   }
 
