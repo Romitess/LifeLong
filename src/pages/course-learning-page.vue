@@ -467,8 +467,7 @@ const isFullscreen = computed({
   set: (val) => uiStore.setCourseFullscreen(val),
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let menuTimer: any = null;
+let menuTimer: ReturnType<typeof setTimeout> | null = null;
 
 const openMenu = () => {
   if (menuTimer) clearTimeout(menuTimer);
@@ -481,8 +480,7 @@ const closeMenu = () => {
   }, 150);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let thisCourseMenuTimer: any = null;
+let thisCourseMenuTimer: ReturnType<typeof setTimeout> | null = null;
 
 const openThisCourseMenu = () => {
   if (thisCourseMenuTimer) clearTimeout(thisCourseMenuTimer);
