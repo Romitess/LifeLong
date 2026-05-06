@@ -76,7 +76,7 @@ export function useMyRegisteredCourses() {
       ...matchedCourse,
       id: registration.courseId,
       code: registration.courseCode,
-      title: registration.courseTitle,
+      title: matchedCourse.title,
       titleEn: matchedCourse.titleEn || registration.courseTitle,
       imageUrl: registration.courseImageUrl || matchedCourse.imageUrl,
       cover: registration.courseCover || matchedCourse.cover,

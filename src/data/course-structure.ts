@@ -33,7 +33,7 @@ export const CANVA_COURSE_STRUCTURE: CourseModule[] = [
     color: 'secondary',
     lessons: [
       { title: 'ภาพรวมของคอร์สเรียน', type: 'video', duration: '5:30 นาที' },
-      { title: 'วิธีการเรียนและการประเมินผล', type: 'article', duration: '3 นาที' },
+      { title: 'วิธีการเรียนและการประเมินผล', type: 'video', duration: '3 นาที' },
     ],
   },
   {
@@ -114,14 +114,14 @@ export const CANVA_COURSE_STRUCTURE: CourseModule[] = [
     color: 'positive',
     lessons: [{ title: 'Post-test วัดผลสัมฤทธิ์ทางการเรียน', type: 'quiz', duration: '20 นาที' }],
   },
-  {
-    title: 'แบบประเมินรายวิชา',
-    icon: 'grade',
-    color: 'amber',
-    lessons: [
-      // { title: 'แบบประเมินความพึงพอใจ', type: 'article', duration: '5 นาที' },
-    ],
-  },
+  // {
+  //   title: 'แบบประเมินรายวิชา',
+  //   icon: 'grade',
+  //   color: 'amber',
+  //   lessons: [
+  //     // { title: 'แบบประเมินความพึงพอใจ', type: 'article', duration: '5 นาที' },
+  //   ],
+  // },
 ];
 
 export const GEMSTONE_COURSE_STRUCTURE: CourseModule[] = [
@@ -176,7 +176,7 @@ export const RECRAFT_COURSE_STRUCTURE: CourseModule[] = [
     title: 'Introduction',
     icon: 'info',
     color: 'info',
-    lessons: [{ title: 'Welcome to Recraft Workflow', type: 'article', duration: '2 นาที' }],
+    lessons: [{ title: 'Welcome to Recraft Workflow', type: 'video', duration: '2 นาที' }],
   },
   {
     title: 'Module 1: Getting Started with Recraft.ai',
@@ -194,7 +194,7 @@ export const RECRAFT_COURSE_STRUCTURE: CourseModule[] = [
     lessons: [
       { title: 'Writing Prompts for Illustration Styles', type: 'video', duration: '15:20 นาที' },
       { title: 'Controlling Color and Detail with AI', type: 'video', duration: '18:10 นาที' },
-      { title: 'Recraft AI Style Presets', type: 'article', duration: '5 นาที' },
+      { title: 'Recraft AI Style Presets', type: 'video', duration: '5 นาที' },
     ],
   },
   {
@@ -212,8 +212,8 @@ export const RECRAFT_COURSE_STRUCTURE: CourseModule[] = [
     icon: 'workspace_premium',
     color: 'gold',
     lessons: [
-      { title: 'Project: Brand Identity Design', type: 'article', duration: '60 นาที' },
-      { title: 'Course Feedback', type: 'article', duration: '5 นาที' },
+      { title: 'Project: Brand Identity Design', type: 'video', duration: '60 นาที' },
+      { title: 'Course Feedback', type: 'video', duration: '5 นาที' },
     ],
   },
 ];

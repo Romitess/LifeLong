@@ -85,8 +85,8 @@ function mergeStoredCourseDetails(
       return [
         courseId,
         {
-          ...mockDetail,
           ...storedDetail,
+          ...mockDetail,
           previewVideoUrl:
             storedDetail.previewVideoUrl === LEGACY_DEMO_PREVIEW_VIDEO_URL
               ? mockDetail.previewVideoUrl
