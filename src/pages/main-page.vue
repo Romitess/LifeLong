@@ -155,7 +155,7 @@
               :label="$t('viewAll')"
               color="primary"
               icon-right="chevron_right"
-              @click="void router.push('/short-courses?active=true')"
+              @click="void router.push('/short-courses?availability=open')"
             />
           </div>
 
@@ -313,8 +313,10 @@ watch(heroSlide, (value) => {
 });
 
 const filteredActiveCourses = computed(() => {
-  if (!courseStore.selectedCategory) return activeCourses.value;
-  return courses.value.filter((c) => c.category === courseStore.selectedCategory);
+  return activeCourses.value.filter((c) => {
+    if (!courseStore.selectedCategory) return true;
+    return c.category === courseStore.selectedCategory;
+  });
 });
 
 const stats = computed<HomeInfoItem[]>(() => [

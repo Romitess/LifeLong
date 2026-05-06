@@ -16,7 +16,16 @@ export function useCourseList(): UseCourseListReturn {
   const error = ref<string | null>(null);
 
   const courses = computed<Course[]>(() => courseStore.courses);
-  const activeCourses = computed<Course[]>(() => courses.value.filter((course) => course.isActive));
+  const activeCourses = computed<Course[]>(() => {
+    const today = new Date().toISOString().substring(0, 10);
+    return courses.value.filter(
+      (course) =>
+        course.isActive &&
+        course.registrationStartDate <= today &&
+        today <= course.registrationEndDate &&
+        course.enrolledCount < course.maxSeats,
+    );
+  });
 
   const fetchCourses = async (): Promise<void> => {
     isLoading.value = true;

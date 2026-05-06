@@ -88,31 +88,32 @@
                     </div>
 
                     <div class="filter-group q-mb-md">
-                      <div class="text-caption text-grey-7 q-mb-xs">สถานะที่นั่ง</div>
+                      <div class="text-caption text-grey-7 q-mb-xs">
+                        {{ $t('registerableCourses') }}
+                      </div>
                       <div class="row q-gutter-xs">
                         <q-btn
                           unelevated
                           dense
-                          :color="filter.availability === 'available' ? 'primary' : 'grey-2'"
-                          :text-color="filter.availability === 'available' ? 'white' : 'dark'"
-                          label="มีที่ว่าง"
+                          :color="filter.availability === 'open' ? 'primary' : 'grey-2'"
+                          :text-color="filter.availability === 'open' ? 'white' : 'dark'"
+                          :label="$t('openRegistration')"
                           class="q-px-md text-caption"
                           no-caps
                           @click="
-                            filter.availability =
-                              filter.availability === 'available' ? null : 'available'
+                            filter.availability = filter.availability === 'open' ? null : 'open'
                           "
                         />
                         <q-btn
                           unelevated
                           dense
-                          :color="filter.availability === 'full' ? 'primary' : 'grey-2'"
-                          :text-color="filter.availability === 'full' ? 'white' : 'dark'"
-                          label="เต็มแล้ว"
+                          :color="filter.availability === 'closed' ? 'primary' : 'grey-2'"
+                          :text-color="filter.availability === 'closed' ? 'white' : 'dark'"
+                          :label="$t('closedRegistration')"
                           class="q-px-md text-caption"
                           no-caps
                           @click="
-                            filter.availability = filter.availability === 'full' ? null : 'full'
+                            filter.availability = filter.availability === 'closed' ? null : 'closed'
                           "
                         />
                       </div>
@@ -387,7 +388,7 @@ const filter = ref({
   search: (route.query.search as string) || '',
   price: null as 'free' | 'paid' | null,
   deliveryMode: null as string | null,
-  availability: null as 'available' | 'full' | null,
+  availability: (route.query.availability as 'open' | 'closed' | null) ?? null,
   startDate: null as string | null,
   endDate: null as string | null,
   onlyActive: route.query.active === 'true',
@@ -400,7 +401,7 @@ const activeFilter = ref({
   search: (route.query.search as string) || '',
   price: null as 'free' | 'paid' | null,
   deliveryMode: null as string | null,
-  availability: null as 'available' | 'full' | null,
+  availability: (route.query.availability as 'open' | 'closed' | null) ?? null,
   startDate: null as string | null,
   endDate: null as string | null,
 });
@@ -424,6 +425,7 @@ function parseDateString(dateStr: string | null): string | null {
 }
 
 const filteredCourses = computed(() => {
+  const today = new Date().toISOString().substring(0, 10);
   return courses.value.filter((c) => {
     // 0. Active only filter (from ?active=true)
     const activeMatch = !filter.value.onlyActive || c.isActive;
@@ -449,12 +451,14 @@ const filteredCourses = computed(() => {
       !filter.value.deliveryMode ||
       (c.deliveryModes && c.deliveryModes.includes(filter.value.deliveryMode as DeliveryMode));
 
-    // 6. Availability
+    // 6. Availability (Registration Status)
+    const isWithinPeriod = c.registrationStartDate <= today && today <= c.registrationEndDate;
+    const hasSeats = c.enrolledCount < c.maxSeats;
+    const canRegister = isWithinPeriod && hasSeats;
+
     const availabilityMatch =
       !filter.value.availability ||
-      (filter.value.availability === 'full'
-        ? c.enrolledCount >= c.maxSeats
-        : c.enrolledCount < c.maxSeats);
+      (filter.value.availability === 'open' ? canRegister : !canRegister);
 
     // 7. Date Range Match
     let dateMatch = true;
@@ -512,8 +516,10 @@ watch(
     filter.value.category = (newQuery.category as string) || null;
     filter.value.search = (newQuery.search as string) || '';
     filter.value.onlyActive = newQuery.active === 'true';
+    filter.value.availability = (newQuery.availability as 'open' | 'closed' | null) ?? null;
     activeFilter.value.category = (newQuery.category as string) || null;
     activeFilter.value.search = (newQuery.search as string) || '';
+    activeFilter.value.availability = (newQuery.availability as 'open' | 'closed' | null) ?? null;
   },
   { immediate: true },
 );
