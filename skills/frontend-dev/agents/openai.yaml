@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Dev"
+  short_description: "Build and refine frontend features"
+  default_prompt: "Use -dev to implement a frontend feature in this codebase."
