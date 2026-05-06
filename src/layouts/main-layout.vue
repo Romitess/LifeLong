@@ -126,32 +126,26 @@
 
         <q-space />
 
-        <div class="gt-sm row items-center q-gutter-sm">
-          <LanguageToggle class="q-mr-sm" />
+        <div class="gt-sm nav-actions">
+          <LanguageToggle class="nav-actions__language" />
 
           <template v-if="!authStore.isLoggedIn">
-            <div class="nav-right-group row items-center q-gutter-x-sm">
-              <q-btn
-                unelevated
-                no-caps
+            <div class="nav-auth-actions">
+              <HeaderAuthButton
+                variant="login"
                 :label="$t('login')"
-                icon-right="login"
-                class="header-auth-btn header-auth-btn--login text-weight-bold"
                 @click="goToAuthPage('/login')"
               />
-              <q-btn
-                unelevated
-                no-caps
+              <HeaderAuthButton
+                variant="register"
                 :label="$t('register')"
-                icon-right="person_add"
-                class="header-auth-btn header-auth-btn--register text-weight-medium"
                 @click="goToAuthPage('/register')"
               />
             </div>
           </template>
           <template v-else>
-            <div class="nav-right-group row items-center q-gutter-x-sm">
-              <div class="column items-end justify-center q-mr-sm gt-xs">
+            <div class="nav-user-group">
+              <div class="nav-profile-summary column items-start justify-center gt-xs">
                 <span class="nav-profile-name"
                   >{{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}</span
                 >
@@ -159,7 +153,12 @@
                   {{ isTeachingRole ? 'Teacher' : authStore.user?.studentId }}
                 </span>
               </div>
-              <q-avatar size="36px" class="nav-profile-avatar cursor-pointer" @click="goToProfile">
+              <q-avatar
+                size="36px"
+                class="nav-profile-avatar cursor-pointer"
+                role="button"
+                tabindex="0"
+              >
                 <img
                   v-if="authStore.user?.avatar"
                   :src="authStore.user.avatar"
@@ -170,17 +169,79 @@
                 />
                 <q-icon v-else name="person" size="20px" color="white" />
                 <q-tooltip>{{ $t('myProfile') }}</q-tooltip>
+                <q-menu
+                  anchor="bottom right"
+                  self="top right"
+                  class="profile-action-menu"
+                  transition-show="jump-down"
+                  transition-hide="jump-up"
+                >
+                  <q-card flat class="profile-action-card">
+                    <div class="profile-action-card__header">
+                      <q-avatar size="42px" class="profile-action-card__avatar">
+                        <img
+                          v-if="authStore.user?.avatar"
+                          :src="authStore.user.avatar"
+                          alt="Profile avatar"
+                          loading="eager"
+                          decoding="sync"
+                        />
+                        <q-icon v-else name="person" size="22px" color="white" />
+                      </q-avatar>
+                      <div class="profile-action-card__identity">
+                        <div class="profile-action-card__name">
+                          {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
+                        </div>
+                        <div class="profile-action-card__role">
+                          {{ isTeachingRole ? 'Teacher' : authStore.user?.studentId }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <q-separator />
+
+                    <q-list dense class="profile-action-card__list">
+                      <q-item
+                        clickable
+                        v-ripple
+                        v-close-popup
+                        class="profile-action-card__item"
+                        @click="goToProfile"
+                      >
+                        <q-item-section avatar class="profile-action-card__item-icon">
+                          <q-icon name="person" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{ $t('myProfile') }}</q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        v-ripple
+                        v-close-popup
+                        class="profile-action-card__item profile-action-card__item--danger"
+                        @click="onLogout"
+                      >
+                        <q-item-section avatar class="profile-action-card__item-icon">
+                          <q-icon name="logout" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{ $t('logout') }}</q-item-label>
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-card>
+                </q-menu>
               </q-avatar>
               <q-btn
-                flat
-                dense
-                no-caps
-                :label="$t('logout')"
-                icon="logout"
-                size="sm"
-                class="logout-btn q-ml-sm"
-                @click="onLogout"
-              />
+                round
+                unelevated
+                class="nav-notification-btn"
+                icon="notifications"
+                :aria-label="$t('notifications')"
+              >
+                <q-tooltip>{{ $t('notifications') }}</q-tooltip>
+              </q-btn>
             </div>
           </template>
         </div>
@@ -307,6 +368,7 @@ import BaseSpinner from 'components/base/BaseSpinner.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import AppFooter from 'components/AppFooter.vue';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
+import HeaderAuthButton from 'components/navigation/header-auth-button.vue';
 import { useI18n } from 'vue-i18n';
 
 interface NavItem {
@@ -619,55 +681,6 @@ async function onCategoryClick(category: string) {
   object-fit: contain;
 }
 
-.logout-btn {
-  border-radius: 8px !important;
-  padding: 4px 12px !important;
-  font-weight: 600;
-  color: #78530a !important;
-  border: none !important;
-
-  &:hover {
-    background: rgba(247, 208, 70, 0.3) !important;
-  }
-}
-
-.header-auth-btn {
-  justify-content: center;
-  white-space: nowrap;
-  border-radius: 10px !important;
-  border: none !important;
-  height: 40px;
-  min-height: 40px;
-  padding: 0 16px !important;
-  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
-
-  &:hover {
-    transform: translateY(-3px);
-  }
-}
-
-.header-auth-btn--login {
-  width: 132px;
-  background: $primary !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba($primary, 0.3) !important;
-
-  &:hover {
-    box-shadow: 0 8px 24px rgba($primary, 0.45) !important;
-  }
-}
-
-.header-auth-btn--register {
-  width: 172px;
-  background: rgba(255, 255, 255, 0.5) !important;
-  color: #5c3d00 !important;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.85) !important;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08) !important;
-  }
-}
-
 .profile-menu-avatar__image {
   display: block;
   width: 100%;
@@ -683,32 +696,186 @@ async function onCategoryClick(category: string) {
   overflow: hidden !important;
   border-radius: 50% !important;
   border: none !important;
+  flex-shrink: 0;
 }
 
-// ── Unified right-side group ──
-.nav-right-group {
+.nav-notification-btn {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  color: #5c3d00 !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  transition:
+    transform 0.22s ease,
+    background-color 0.22s ease,
+    box-shadow 0.22s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    background: #ffffff !important;
+    box-shadow: 0 6px 16px rgba(17, 24, 39, 0.1);
+  }
+}
+
+.nav-actions {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.65);
+  flex: 0 0 460px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  width: 460px;
+  min-width: 0;
+}
+
+.nav-actions__language {
+  flex: 0 0 auto;
+}
+
+.nav-auth-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 8px;
+  justify-content: flex-end;
+  width: 326px;
+}
+
+.nav-user-group {
+  display: grid;
+  grid-template-columns: minmax(0, 172px) 36px 36px;
+  align-items: center;
+  flex: 0 0 auto;
+  column-gap: 10px;
+  justify-content: end;
+  height: 46px;
+  min-height: 46px;
+  width: 326px;
+  padding: 4px 10px 4px 14px;
   border-radius: 14px;
-  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.58);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  height: 52px;
-  min-height: 52px;
+}
+
+.profile-action-menu {
+  border-radius: 14px;
+  box-shadow: 0 16px 38px rgba(17, 24, 39, 0.16);
+}
+
+.nav-profile-summary {
+  justify-self: start;
+  width: 100%;
+  min-width: 0;
+}
+
+.profile-action-card {
+  width: 238px;
+  overflow: hidden;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.profile-action-card__header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(247, 208, 70, 0.16), rgba(255, 255, 255, 0));
+}
+
+.profile-action-card__avatar {
+  outline: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.1);
+  background: $primary;
+}
+
+.profile-action-card__identity {
+  min-width: 0;
+}
+
+.profile-action-card__name {
+  overflow: hidden;
+  color: #3d2600;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-action-card__role {
+  overflow: hidden;
+  margin-top: 2px;
+  color: rgba(61, 38, 0, 0.58);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-action-card__list {
+  padding: 6px;
+}
+
+.profile-action-card__item {
+  min-height: 38px;
+  border-radius: 10px;
+  color: #374151;
+  font-size: 0.82rem;
+  font-weight: 700;
+
+  &:hover {
+    color: #3d2600;
+    background: rgba(247, 208, 70, 0.14);
+  }
+}
+
+.profile-action-card__item-icon {
+  min-width: 34px;
+  padding-right: 8px;
+  color: $primary;
+}
+
+.profile-action-card__item--danger {
+  color: #b91c1c;
+
+  .profile-action-card__item-icon {
+    color: #dc2626;
+  }
+
+  &:hover {
+    color: #991b1b;
+    background: rgba(220, 38, 38, 0.08);
+  }
 }
 
 .nav-profile-name {
-  font-size: 0.82rem;
+  display: block;
+  width: 100%;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #3d2600;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
 }
 
 .nav-profile-role {
+  display: block;
+  width: 100%;
   font-size: 0.65rem;
   font-weight: 600;
   color: rgba(61, 38, 0, 0.55);
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .route-page-loading {
@@ -730,7 +897,7 @@ async function onCategoryClick(category: string) {
   :deep(.q-tab) {
     color: #5c3d00;
     font-weight: 600;
-    padding: 0 20px;
+    padding: 0 8px;
     flex: 0 0 156px;
     width: 156px;
     max-width: 156px;
@@ -771,18 +938,25 @@ async function onCategoryClick(category: string) {
     }
 
     .q-tab__content {
-      width: 100%;
-      justify-content: flex-start;
+      display: inline-grid;
+      grid-template-columns: 20px var(--nav-tab-label-width, 84px);
+      column-gap: 8px;
+      width: max-content;
+      max-width: 100%;
+      justify-content: center;
       align-items: center;
-      min-height: 48px;
-      padding: 0 12px;
+      min-height: 44px;
+      margin: 0 auto;
+      padding: 0;
     }
 
     .q-tab__icon {
+      grid-column: 1;
+      justify-self: center;
       flex: 0 0 20px;
       width: 20px;
       font-size: 1.2rem;
-      margin-right: 6px;
+      margin-right: 0;
       transition: transform 0.3s ease;
       color: #4b5563;
       text-align: center;
@@ -794,6 +968,9 @@ async function onCategoryClick(category: string) {
     }
 
     .q-tab__label {
+      grid-column: 2;
+      justify-self: start;
+      min-width: 0;
       flex: 0 1 auto;
       font-size: 0.95rem;
       text-align: left;
@@ -819,6 +996,15 @@ async function onCategoryClick(category: string) {
   }
 
   :deep(.nav-tab--home),
+  :deep(.nav-tab--about) {
+    --nav-tab-label-width: 78px;
+  }
+
+  :deep(.nav-tab--category) {
+    --nav-tab-label-width: 82px;
+  }
+
+  :deep(.nav-tab--home),
   :deep(.nav-tab--category),
   :deep(.nav-tab--about) {
     flex-basis: 148px;
@@ -828,6 +1014,7 @@ async function onCategoryClick(category: string) {
   }
 
   :deep(.nav-tab--short-courses) {
+    --nav-tab-label-width: 112px;
     flex-basis: 182px;
     width: 182px;
     max-width: 182px;
@@ -835,6 +1022,7 @@ async function onCategoryClick(category: string) {
   }
 
   :deep(.nav-tab--dashboard) {
+    --nav-tab-label-width: 112px;
     flex-basis: 172px;
     width: 172px;
     max-width: 172px;
@@ -843,6 +1031,7 @@ async function onCategoryClick(category: string) {
 
   :deep(.nav-tab--my-courses-mgmt),
   :deep(.nav-tab--students-mgmt) {
+    --nav-tab-label-width: 132px;
     flex-basis: 194px;
     width: 194px;
     max-width: 194px;
@@ -850,6 +1039,7 @@ async function onCategoryClick(category: string) {
   }
 
   :deep(.nav-tab--reports) {
+    --nav-tab-label-width: 96px;
     flex-basis: 160px;
     width: 160px;
     max-width: 160px;

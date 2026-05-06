@@ -86,12 +86,12 @@ withDefaults(defineProps<Props>(), {
     transition: transform 0.24s ease;
 
     &--primary {
-      background: linear-gradient(135deg, $primary, darken($primary, 8%)) !important;
+      background: linear-gradient(135deg, $primary, #d88b0a) !important;
       box-shadow: 0 4px 12px rgba($primary, 0.3);
     }
 
     &--secondary {
-      background: linear-gradient(135deg, $secondary, darken($secondary, 8%)) !important;
+      background: linear-gradient(135deg, $secondary, #111653) !important;
       box-shadow: 0 4px 12px rgba($secondary, 0.3);
     }
 
@@ -101,7 +101,7 @@ withDefaults(defineProps<Props>(), {
     }
 
     &--accent {
-      background: linear-gradient(135deg, $accent, darken($accent, 8%)) !important;
+      background: linear-gradient(135deg, $accent, #bd4300) !important;
       box-shadow: 0 4px 12px rgba($accent, 0.3);
     }
 

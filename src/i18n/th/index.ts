@@ -5,6 +5,7 @@ export default {
   register: 'สมัครเป็นผู้เรียน',
   logout: 'ออกจากระบบ',
   myProfile: 'โปรไฟล์ของฉัน',
+  notifications: 'การแจ้งเตือน',
   language: 'เปลี่ยนภาษา',
   home: 'หน้าหลัก',
   category: 'หมวดหมู่',

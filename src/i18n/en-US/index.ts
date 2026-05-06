@@ -5,6 +5,7 @@ export default {
   register: 'Register',
   logout: 'Logout',
   myProfile: 'My Profile',
+  notifications: 'Notifications',
   language: 'Change language',
   home: 'Home',
   category: 'Category',

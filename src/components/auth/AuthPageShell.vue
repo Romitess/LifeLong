@@ -293,7 +293,7 @@ onBeforeUnmount(() => {
     height: 42px;
     border-radius: 12px;
     color: #ffffff;
-    background: linear-gradient(135deg, $primary, darken($primary, 8%));
+    background: linear-gradient(135deg, $primary, #d88b0a);
     box-shadow: 0 4px 12px rgba($primary, 0.3);
     font-size: 22px;
   }
@@ -390,7 +390,7 @@ onBeforeUnmount(() => {
   height: 44px;
   border-radius: 12px;
   color: #ffffff;
-  background: linear-gradient(135deg, $primary, darken($primary, 8%));
+  background: linear-gradient(135deg, $primary, #d88b0a);
   box-shadow: 0 4px 12px rgba($primary, 0.3);
   font-size: 22px;
 }
