@@ -92,6 +92,12 @@ export default {
     confirm: 'Login',
     cancel: 'Cancel',
   },
+  enterClassDialog: {
+    title: 'Confirm Entering Class',
+    message: 'Do you want to enter the learning content for this course?',
+    confirm: 'Enter Class',
+    cancel: 'Cancel',
+  },
   auth: {
     validation: {
       required: 'This field is required',

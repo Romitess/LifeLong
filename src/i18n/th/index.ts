@@ -93,6 +93,12 @@ export default {
     confirm: 'เข้าสู่ระบบ',
     cancel: 'ยกเลิก',
   },
+  enterClassDialog: {
+    title: 'ยืนยันการเข้าเรียน',
+    message: 'คุณต้องการเข้าสู่บทเรียนสำหรับรายวิชานี้ใช่หรือไม่?',
+    confirm: 'เข้าเรียน',
+    cancel: 'ยกเลิก',
+  },
   auth: {
     validation: {
       required: 'กรุณากรอกข้อมูล',

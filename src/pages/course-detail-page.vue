@@ -447,6 +447,18 @@
         confirm-icon="login"
         @confirm="goToLogin"
       />
+
+      <BaseConfirmDialog
+        v-model="showEnterClassDialog"
+        :title="$t('enterClassDialog.title')"
+        :message="$t('enterClassDialog.message')"
+        :confirm-label="$t('enterClassDialog.confirm')"
+        :cancel-label="$t('enterClassDialog.cancel')"
+        icon="play_circle"
+        confirm-icon="arrow_forward"
+        confirm-color="positive"
+        @confirm="goToLearningPage()"
+      />
     </template>
   </q-page>
 </template>
@@ -641,6 +653,7 @@ const { course, recommendedCourses, isLoading, error, fetchCourseDetail } =
 const enrollmentDialogCourse = ref<CourseDetail | null>(null);
 const enrollmentDialogOpenKey = ref(0);
 const showLoginRequiredDialog = ref(false);
+const showEnterClassDialog = ref(false);
 const previewControlsVisible = ref(false);
 
 const isCourseRegistered = computed<boolean>(() => {
@@ -823,7 +836,7 @@ function onEnrollmentActionClick(): void {
       enrollmentDialogOpenKey.value += 1;
       return;
     }
-    goToLearningPage();
+    showEnterClassDialog.value = true;
     return;
   }
 
