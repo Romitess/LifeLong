@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header class="bg-white shadow-2">
+    <q-header style="background: transparent">
       <!-- Top Bar -->
       <q-toolbar class="top-toolbar">
         <q-btn
@@ -43,7 +43,7 @@
               :name="nav.name"
               :icon="nav.icon"
               :label="nav.label"
-              class="nav-tab"
+              :class="['nav-tab', `nav-tab--${nav.name}`]"
             >
               <q-menu
                 fit
@@ -116,7 +116,7 @@
               :name="nav.name"
               :icon="nav.icon"
               :label="nav.label"
-              class="nav-tab"
+              :class="['nav-tab', `nav-tab--${nav.name}`]"
               @click="onNavClick(nav)"
             />
           </template>
@@ -125,43 +125,39 @@
         <q-space />
 
         <div class="gt-sm row items-center q-gutter-sm">
-          <LanguageToggle class="q-mr-md" />
+          <LanguageToggle class="q-mr-sm" />
 
           <template v-if="!authStore.isLoggedIn">
-            <q-btn
-              unelevated
-              no-caps
-              :label="$t('login')"
-              icon-right="login"
-              color="amber"
-              text-color="white"
-              class="header-auth-btn header-auth-btn--login text-weight-bold"
-              style="border-radius: 8px; padding: 0 16px"
-              @click="goToAuthPage('/login')"
-            />
-            <q-btn
-              outline
-              no-caps
-              :label="$t('register')"
-              icon-right="person_add"
-              color="grey-4"
-              text-color="blue-grey-8"
-              class="header-auth-btn header-auth-btn--register text-weight-medium bg-white"
-              style="border-radius: 8px; padding: 0 16px"
-              @click="goToAuthPage('/register')"
-            />
+            <div class="nav-right-group row items-center q-gutter-x-sm">
+              <q-btn
+                unelevated
+                no-caps
+                :label="$t('login')"
+                icon-right="login"
+                class="header-auth-btn header-auth-btn--login text-weight-bold"
+                @click="goToAuthPage('/login')"
+              />
+              <q-btn
+                unelevated
+                no-caps
+                :label="$t('register')"
+                icon-right="person_add"
+                class="header-auth-btn header-auth-btn--register text-weight-medium"
+                @click="goToAuthPage('/register')"
+              />
+            </div>
           </template>
           <template v-else>
-            <div class="row items-center q-gutter-sm q-mr-md">
-              <div class="column items-end justify-center q-mr-xs gt-xs">
-                <span class="text-caption text-weight-bold text-dark lh-1"
+            <div class="nav-right-group row items-center q-gutter-x-sm">
+              <div class="column items-end justify-center q-mr-sm gt-xs">
+                <span class="nav-profile-name"
                   >{{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}</span
                 >
-                <span class="text-caption text-grey-6 lh-1" style="font-size: 0.65rem">
+                <span class="nav-profile-role">
                   {{ isTeachingRole ? 'Teacher' : authStore.user?.studentId }}
                 </span>
               </div>
-              <q-avatar size="36px" class="cursor-pointer shadow-1" @click="goToProfile">
+              <q-avatar size="36px" class="nav-profile-avatar cursor-pointer" @click="goToProfile">
                 <img
                   v-if="authStore.user?.avatar"
                   :src="authStore.user.avatar"
@@ -173,16 +169,17 @@
                 <q-icon v-else name="person" size="20px" color="white" />
                 <q-tooltip>{{ $t('myProfile') }}</q-tooltip>
               </q-avatar>
+              <q-btn
+                flat
+                dense
+                no-caps
+                :label="$t('logout')"
+                icon="logout"
+                size="sm"
+                class="logout-btn q-ml-sm"
+                @click="onLogout"
+              />
             </div>
-            <q-btn
-              outline
-              no-caps
-              :label="$t('logout')"
-              color="grey-6"
-              size="sm"
-              class="logout-btn q-ml-sm"
-              @click="onLogout"
-            />
           </template>
         </div>
 
@@ -472,7 +469,7 @@ async function goToAuthPage(path: AuthPath): Promise<void> {
 
 function syncActiveNavWithRoute(path: string) {
   if (path === '/main' || path === '/') {
-    activeNav.value = 'home';
+    activeNav.value = courseStore.selectedCategory ? 'category' : 'home';
   } else if (path.includes('/short-courses')) {
     activeNav.value = 'short-courses';
   } else if (path.includes('/instructor/dashboard')) {
@@ -565,6 +562,7 @@ async function onNavClick(nav: NavItem) {
 
 async function onCategoryClick(category: string) {
   courseStore.setSelectedCategory(category);
+  activeNav.value = 'category';
   if (router.currentRoute.value.path !== '/main') {
     await router.push('/main');
   }
@@ -573,20 +571,31 @@ async function onCategoryClick(category: string) {
 
 <style lang="scss" scoped>
 .top-toolbar {
-  padding: 8px 32px;
+  padding: 8px 24px;
   min-height: 72px;
-  background: white;
+  background: rgb(247, 208, 70);
+  border-bottom: none;
 }
 
 .vertical-divider {
   width: 1px;
   height: 28px;
-  background: rgba(17, 24, 39, 0.1);
+  background: rgba(255, 255, 255, 0.5);
   align-self: center;
 }
 
 .logo {
   user-select: none;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 6px 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.24s ease;
+
+  &:hover {
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  }
 
   &__image {
     display: block;
@@ -609,23 +618,52 @@ async function onCategoryClick(category: string) {
 }
 
 .logout-btn {
-  border-radius: 20px;
-  padding: 4px 20px;
+  border-radius: 8px !important;
+  padding: 4px 12px !important;
   font-weight: 600;
-  min-width: 112px;
+  color: #78530a !important;
+  border: none !important;
+
+  &:hover {
+    background: rgba(247, 208, 70, 0.3) !important;
+  }
 }
 
 .header-auth-btn {
   justify-content: center;
   white-space: nowrap;
+  border-radius: 10px !important;
+  border: none !important;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 16px !important;
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+  &:hover {
+    transform: translateY(-3px);
+  }
 }
 
 .header-auth-btn--login {
-  min-width: 104px;
+  width: 132px;
+  background: $primary !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba($primary, 0.3) !important;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba($primary, 0.45) !important;
+  }
 }
 
 .header-auth-btn--register {
-  min-width: 144px;
+  width: 172px;
+  background: rgba(255, 255, 255, 0.5) !important;
+  color: #5c3d00 !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.85) !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08) !important;
+  }
 }
 
 .profile-menu-avatar__image {
@@ -633,6 +671,42 @@ async function onCategoryClick(category: string) {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
+}
+
+.nav-profile-avatar {
+  outline: 2.5px solid #ffffff;
+  outline-offset: 1px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden !important;
+  border-radius: 50% !important;
+  border: none !important;
+}
+
+// ── Unified right-side group ──
+.nav-right-group {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.65);
+  border-radius: 14px;
+  padding: 0 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  height: 52px;
+  min-height: 52px;
+}
+
+.nav-profile-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #3d2600;
+  line-height: 1.2;
+}
+
+.nav-profile-role {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(61, 38, 0, 0.55);
+  line-height: 1.2;
 }
 
 .route-page-loading {
@@ -646,24 +720,34 @@ async function onCategoryClick(category: string) {
 
 .nav-tabs {
   height: 100%;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 14px;
+  padding: 4px;
+
   :deep(.q-tab) {
-    color: #4b5563; // text-grey-700
+    color: #5c3d00;
     font-weight: 600;
     padding: 0 20px;
-    min-width: auto;
-    min-height: 48px;
+    flex: 0 0 156px;
+    width: 156px;
+    max-width: 156px;
+    min-width: 156px;
+    min-height: 44px;
     font-size: 0.95rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 12px;
-    margin: 0 4px;
+    transition:
+      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.18s ease;
+    border-radius: 10px;
+    margin: 0 2px;
     letter-spacing: -0.01em;
 
     &.q-tab--active {
-      color: $primary;
-      background: transparent;
+      color: #3d2600;
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
       .q-tab__label {
         font-weight: 700;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       }
       .q-tab__icon {
         color: $primary;
@@ -676,28 +760,30 @@ async function onCategoryClick(category: string) {
       }
     }
 
-    &:hover {
+    &:hover:not(.q-tab--active) {
+      background: rgba(255, 255, 255, 0.4);
       color: $primary;
-      background: transparent;
-      transform: translateY(-2px);
-      .q-tab__label {
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
       .q-tab__icon {
         color: $primary;
       }
     }
 
     .q-tab__content {
+      width: 100%;
+      justify-content: flex-start;
+      align-items: center;
       min-height: 48px;
-      padding: 0 8px;
+      padding: 0 12px;
     }
 
     .q-tab__icon {
+      flex: 0 0 20px;
+      width: 20px;
       font-size: 1.2rem;
       margin-right: 6px;
-      transition: all 0.3s ease;
+      transition: transform 0.3s ease;
       color: #4b5563;
+      text-align: center;
     }
 
     &:hover .q-tab__icon {
@@ -706,7 +792,12 @@ async function onCategoryClick(category: string) {
     }
 
     .q-tab__label {
+      flex: 0 1 auto;
       font-size: 0.95rem;
+      text-align: left;
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
     }
 
     .q-tab__indicator {
@@ -714,6 +805,53 @@ async function onCategoryClick(category: string) {
       border-radius: 3px 3px 0 0;
       bottom: 4px;
     }
+
+    .q-focus-helper {
+      color: $primary;
+    }
+
+    .q-focus-helper::before,
+    .q-focus-helper::after {
+      background: rgba($primary, 0.1);
+    }
+  }
+
+  :deep(.nav-tab--home),
+  :deep(.nav-tab--category),
+  :deep(.nav-tab--about) {
+    flex-basis: 148px;
+    width: 148px;
+    max-width: 148px;
+    min-width: 148px;
+  }
+
+  :deep(.nav-tab--short-courses) {
+    flex-basis: 182px;
+    width: 182px;
+    max-width: 182px;
+    min-width: 182px;
+  }
+
+  :deep(.nav-tab--dashboard) {
+    flex-basis: 172px;
+    width: 172px;
+    max-width: 172px;
+    min-width: 172px;
+  }
+
+  :deep(.nav-tab--my-courses-mgmt),
+  :deep(.nav-tab--students-mgmt) {
+    flex-basis: 194px;
+    width: 194px;
+    max-width: 194px;
+    min-width: 194px;
+  }
+
+  :deep(.nav-tab--reports) {
+    flex-basis: 160px;
+    width: 160px;
+    max-width: 160px;
+    min-width: 160px;
   }
 }
 

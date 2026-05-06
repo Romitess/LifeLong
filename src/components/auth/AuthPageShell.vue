@@ -141,7 +141,17 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 48%, #f3f6f8 100%);
+  background:
+    linear-gradient(
+      110deg,
+      rgba(248, 246, 241, 0.92) 0%,
+      rgba(255, 250, 239, 0.88) 52%,
+      rgba(248, 246, 241, 0.82) 100%
+    ),
+    url('../../assets/login-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
 .auth-page__language {
@@ -156,39 +166,38 @@ onBeforeUnmount(() => {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: min(1080px, 100%);
-  height: min(570px, calc(100dvh - 40px));
+  width: min(1020px, 100%);
+  height: min(560px, calc(100dvh - 40px));
   overflow: hidden;
-  border: 1px solid rgba(17, 24, 39, 0.1);
-  border-radius: 14px;
-  background: #ffffff;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba($primary, 0.12);
   box-shadow:
-    0 18px 44px rgba(17, 24, 39, 0.1),
-    0 2px 8px rgba(17, 24, 39, 0.04);
+    0 28px 80px rgba(17, 24, 39, 0.14),
+    0 0 0 1px rgba($primary, 0.06);
 }
 
 .auth-page--register .auth-shell {
-  width: min(1080px, 100%);
-  height: min(570px, calc(100dvh - 40px));
+  width: min(1020px, 100%);
+  height: min(560px, calc(100dvh - 40px));
 }
 
 .auth-visual {
   position: relative;
   display: flex;
   min-height: 100%;
-  padding: 30px;
-  color: #111827;
+  padding: 28px;
+  color: #ffffff;
   background:
     linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.98) 0%,
-      rgba(255, 255, 255, 0.94) 50%,
-      rgba(255, 255, 255, 0.7) 100%
+      160deg,
+      rgba(17, 24, 39, 0.76) 0%,
+      rgba(247, 208, 70, 0.82) 72%,
+      rgba(212, 175, 55, 0.76) 100%
     ),
     url('../../assets/homepicture2.png');
   background-size: cover;
-  background-position: 58% center;
-  border-right: 1px solid rgba(17, 24, 39, 0.08);
+  background-position: center;
   z-index: 2;
 }
 
@@ -204,34 +213,38 @@ onBeforeUnmount(() => {
 }
 
 .auth-logo {
-  width: min(184px, 74%);
-  padding: 9px 11px;
-  border: 1px solid rgba(17, 24, 39, 0.1);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.08);
+  width: min(196px, 74%);
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.18);
 }
 
 .auth-copy {
   width: min(100%, 500px);
-  padding: 0;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.18), rgba(17, 24, 39, 0.34));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(6px);
 
   h1 {
     margin: 8px 0 10px;
-    color: $secondary;
-    font-size: clamp(1.55rem, 2.6vw, 2.2rem);
+    font-size: clamp(1.55rem, 2.8vw, 2.35rem);
     line-height: 1.12;
     font-weight: 800;
     letter-spacing: 0;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
   }
 
   p {
     max-width: 440px;
     margin: 0;
-    color: #475467;
+    color: rgba(255, 255, 255, 0.96);
     font-size: 0.92rem;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1.6;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.26);
   }
 }
 
@@ -240,9 +253,9 @@ onBeforeUnmount(() => {
   width: fit-content;
   padding: 5px 11px;
   border-radius: 999px;
-  color: #8a5a11;
+  color: #111827;
   background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba($primary, 0.28);
+  border: 1px solid rgba($primary, 0.44);
   font-size: 0.78rem;
   font-weight: 800;
 }
@@ -254,25 +267,35 @@ onBeforeUnmount(() => {
 
 .auth-visual-item {
   display: grid;
-  grid-template-columns: 34px 1fr;
-  gap: 10px;
+  grid-template-columns: 42px 1fr;
+  gap: 12px;
   align-items: center;
-  padding: 10px;
-  border: 1px solid rgba(17, 24, 39, 0.1);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.84);
-  backdrop-filter: blur(10px);
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba($primary, 0.12);
+  box-shadow:
+    0 1px 3px rgba($primary, 0.06),
+    0 6px 16px rgba(17, 24, 39, 0.04);
+  transition: all 0.24s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 24px rgba($primary, 0.1),
+      0 4px 8px rgba(17, 24, 39, 0.04);
+  }
 
   .q-icon {
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    color: $primary;
-    background: rgba($primary, 0.12);
-    box-shadow: inset 0 0 0 1px rgba($primary, 0.16);
-    font-size: 20px;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    color: #ffffff;
+    background: linear-gradient(135deg, $primary, darken($primary, 8%));
+    box-shadow: 0 4px 12px rgba($primary, 0.3);
+    font-size: 22px;
   }
 
   strong,
@@ -282,13 +305,14 @@ onBeforeUnmount(() => {
 
   strong {
     color: #111827;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+    font-weight: 700;
   }
 
   span {
-    color: #475467;
-    font-size: 0.86rem;
-    font-weight: 500;
+    color: #667085;
+    font-size: 0.82rem;
+    font-weight: 600;
     line-height: 1.5;
   }
 }
@@ -300,7 +324,6 @@ onBeforeUnmount(() => {
   gap: 14px;
   padding: clamp(18px, 2.4vw, 30px);
   background: #ffffff;
-  box-shadow: inset 1px 0 0 rgba(17, 24, 39, 0.04);
   overflow-y: auto;
   min-height: 0;
   transition:
@@ -366,9 +389,9 @@ onBeforeUnmount(() => {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  color: $secondary;
-  background: rgba($secondary, 0.08);
-  box-shadow: inset 0 0 0 1px rgba($primary, 0.2);
+  color: #ffffff;
+  background: linear-gradient(135deg, $primary, darken($primary, 8%));
+  box-shadow: 0 4px 12px rgba($primary, 0.3);
   font-size: 22px;
 }
 
@@ -459,14 +482,12 @@ onBeforeUnmount(() => {
     grid-template-columns: 1fr;
     height: auto;
     min-height: auto;
-    border-radius: 14px;
+    border-radius: 18px;
   }
 
   .auth-visual {
-    min-height: 320px;
+    min-height: 360px;
     padding: 28px;
-    border-right: 0;
-    border-bottom: 1px solid rgba(17, 24, 39, 0.08);
   }
 
   .auth-shell--register .auth-visual,

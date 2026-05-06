@@ -181,6 +181,11 @@ export default {
     },
   },
   homePage: {
+    hero: {
+      title: 'SHORT COURSE',
+      body1: 'Short courses designed to build essential skills and core competencies',
+      body2: 'for learners of all ages to keep developing themselves continuously.',
+    },
     stats: {
       onlineCourses: 'Online Courses',
       onlineCoursesSub: 'Various Categories',

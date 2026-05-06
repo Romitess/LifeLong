@@ -77,7 +77,7 @@ const { t } = useI18n();
 .app-footer {
   background-color: #7c7c7c; // Exact Brand Grey from Logo
   width: 100%;
-  border-top: 2px solid #f7d046; // Gold accent line
+  border-top: 4px solid #f7d046; // Gold accent line
 }
 
 .footer-container {

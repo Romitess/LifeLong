@@ -1,5 +1,5 @@
 <template>
-  <q-page class="bg-grey-1">
+  <q-page class="short-courses-page">
     <div class="section-container filter-container">
       <div class="row justify-center">
         <div class="col-12 col-md-8">
@@ -213,69 +213,84 @@
 
     <!-- Content Section -->
     <div class="section-container q-pb-xl" style="margin-bottom: 48px">
-      <!-- Category Header -->
-      <div v-if="activeFilter.category" class="q-pt-xl q-pb-md">
-        <h1 class="text-h4 text-weight-bold text-dark q-mb-md">
-          {{ getTranslatedCategory(activeFilter.category) }}
-        </h1>
-      </div>
-
-      <!-- Search Header -->
-      <div v-else-if="activeFilter.search" class="q-pt-xl q-pb-md">
-        <h1 class="text-h4 text-weight-bold text-dark q-mb-md">
-          {{ $t('searchResult') }}: "{{ activeFilter.search }}"
-        </h1>
-      </div>
-
-      <!-- Active Courses Header -->
-      <h2
-        v-else-if="filter.onlyActive"
-        class="section-title text-h5 text-weight-bold q-mb-lg text-dark"
-      >
-        {{ $t('activeCoursesTitle') }}
-      </h2>
-
-      <!-- Default Header -->
-      <h2 v-else class="section-title text-h5 text-weight-bold q-mb-lg text-dark">
-        {{ $t('allCoursesTitle') }}
-      </h2>
-
-      <!-- Course Grid -->
-      <BaseSpinner v-if="isLoading" />
-
-      <div v-else class="row q-col-gutter-lg">
-        <div
-          v-for="course in paginatedCourses"
-          :key="course.id"
-          class="col-xs-12 col-sm-6 col-md-3"
-        >
-          <BaseCourseCard :course="course" @click="onCourseClick(course)" />
+      <div class="course-section-panel">
+        <!-- Category Header -->
+        <div v-if="activeFilter.category" class="course-section-panel__header q-mb-lg">
+          <h1 class="section-title-underline section-title-with-icon">
+            <span class="section-title-icon">
+              <q-icon name="category" />
+            </span>
+            <span>{{ getTranslatedCategory(activeFilter.category) }}</span>
+          </h1>
         </div>
-        <div v-if="filteredCourses.length === 0" class="col-12 text-center q-py-xl">
-          <q-icon name="search_off" size="4rem" color="grey-4" />
-          <div class="text-h6 text-grey-5 q-mt-md">{{ $t('noCoursesFoundShort') }}</div>
-          <q-btn flat color="primary" :label="$t('clearSearch')" @click="resetFilter" />
-        </div>
-      </div>
 
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="row justify-center q-mt-xl q-mb-xl">
-        <q-pagination
-          v-model="currentPage"
-          :max="totalPages"
-          :max-pages="7"
-          flat
-          round
-          active-design="unelevated"
-          direction-links
-          color="grey-7"
-          active-color="primary"
-          active-text-color="white"
-          icon-prev="chevron_left"
-          icon-next="chevron_right"
-          class="custom-pagination"
-          gutter="md"
-        />
+        <!-- Search Header -->
+        <div v-else-if="activeFilter.search" class="course-section-panel__header q-mb-lg">
+          <h1 class="section-title-underline section-title-with-icon">
+            <span class="section-title-icon section-title-icon--secondary">
+              <q-icon name="search" />
+            </span>
+            <span>{{ $t('searchResult') }}: "{{ activeFilter.search }}"</span>
+          </h1>
+        </div>
+
+        <!-- Active Courses Header -->
+        <div v-else-if="filter.onlyActive" class="course-section-panel__header q-mb-lg">
+          <h2 class="section-title-underline section-title-with-icon">
+            <span class="section-title-icon">
+              <q-icon name="local_fire_department" />
+            </span>
+            <span>{{ $t('activeCoursesTitle') }}</span>
+          </h2>
+        </div>
+
+        <!-- Default Header -->
+        <div v-else class="course-section-panel__header q-mb-lg">
+          <h2 class="section-title-underline section-title-with-icon">
+            <span class="section-title-icon section-title-icon--secondary">
+              <q-icon name="library_books" />
+            </span>
+            <span>{{ $t('allCoursesTitle') }}</span>
+          </h2>
+        </div>
+
+        <!-- Course Grid -->
+        <BaseSpinner v-if="isLoading" />
+
+        <div v-else class="row q-col-gutter-lg">
+          <div
+            v-for="course in paginatedCourses"
+            :key="course.id"
+            class="col-xs-12 col-sm-6 col-md-3"
+          >
+            <BaseCourseCard :course="course" @click="onCourseClick(course)" />
+          </div>
+          <div v-if="filteredCourses.length === 0" class="col-12 text-center q-py-xl">
+            <q-icon name="search_off" size="4rem" color="grey-4" />
+            <div class="text-h6 text-grey-5 q-mt-md">{{ $t('noCoursesFoundShort') }}</div>
+            <q-btn flat color="primary" :label="$t('clearSearch')" @click="resetFilter" />
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="row justify-center q-mt-xl q-mb-xl">
+          <q-pagination
+            v-model="currentPage"
+            :max="totalPages"
+            :max-pages="7"
+            flat
+            round
+            active-design="unelevated"
+            direction-links
+            color="grey-7"
+            active-color="primary"
+            active-text-color="white"
+            icon-prev="chevron_left"
+            icon-next="chevron_right"
+            class="custom-pagination"
+            gutter="md"
+          />
+        </div>
       </div>
     </div>
   </q-page>
@@ -635,5 +650,53 @@ onMounted(fetchCourses);
     background: $primary;
     border-radius: 4px;
   }
+}
+
+// ── Page & Panel (matching main-page) ──
+.short-courses-page {
+  background: #f8f6f1;
+}
+
+.course-section-panel {
+  padding: clamp(18px, 2.4vw, 30px);
+  border: 1px solid rgba($primary, 0.1);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgba($primary, 0.04),
+    0 10px 28px rgba(17, 24, 39, 0.04);
+}
+
+.course-section-panel__header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba($primary, 0.08);
+
+  .section-title-underline {
+    color: $secondary;
+  }
+}
+
+.section-title-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-title-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: $primary;
+  background: #fff4d6;
+  box-shadow: inset 0 0 0 1px rgba($primary, 0.16);
+  font-size: 22px;
+}
+
+.section-title-icon--secondary {
+  color: $secondary;
+  background: #e8eaf6;
+  box-shadow: inset 0 0 0 1px rgba($secondary, 0.14);
 }
 </style>

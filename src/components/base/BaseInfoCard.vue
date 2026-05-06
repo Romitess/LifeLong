@@ -1,17 +1,22 @@
 <template>
-  <q-card class="base-info-card" :class="`base-info-card--${variant}`" flat bordered>
+  <q-card
+    class="base-info-card"
+    :class="[`base-info-card--${variant}`, `base-info-card--${tone}-tone`]"
+    flat
+    bordered
+  >
     <div class="base-info-card__icon" :class="`base-info-card__icon--${tone}`">
-      <q-icon :name="icon" />
+      <q-icon :name="icon" size="28px" />
     </div>
 
     <div class="base-info-card__body">
       <div v-if="value" class="base-info-card__value">
         {{ value }}
       </div>
-      <div class="base-info-card__title text-weight-bold text-dark">
+      <div class="base-info-card__title">
         {{ title }}
       </div>
-      <div class="base-info-card__description text-grey-6">
+      <div class="base-info-card__description">
         {{ description }}
       </div>
     </div>
@@ -40,126 +45,136 @@ withDefaults(defineProps<Props>(), {
   display: flex;
   align-items: center;
   gap: 14px;
-  min-height: 104px;
-  padding: 18px 20px;
-  border-radius: 14px !important;
-  background: linear-gradient(145deg, #ffffff, #fffaf0);
+  min-height: 80px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba($primary, 0.12) !important;
   box-shadow:
-    0 8px 22px rgba(17, 24, 39, 0.05),
-    0 0 0 1px rgba(17, 24, 39, 0.08) !important;
-  transition:
-    transform 0.24s ease,
-    box-shadow 0.24s ease,
-    border-color 0.24s ease;
+    0 1px 3px rgba($primary, 0.06),
+    0 8px 24px rgba(17, 24, 39, 0.04);
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
 
   &:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    border-color: rgba($primary, 0.24) !important;
     box-shadow:
-      0 14px 34px rgba(17, 24, 39, 0.09),
-      0 0 0 1px rgba($primary, 0.16) !important;
+      0 12px 32px rgba($primary, 0.1),
+      0 4px 12px rgba(17, 24, 39, 0.06);
   }
 
   &--stat {
-    min-height: 112px;
-    padding: 22px 30px;
-    gap: 16px;
+    min-height: 88px;
+    padding: 18px 24px;
   }
 
+  // ── Icon ──
   &__icon {
-    flex: 0 0 auto;
-    display: grid;
-    place-items: center;
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
-    font-size: 1.55rem;
+    flex: 0 0 46px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    min-height: 46px !important;
+    border-radius: 14px !important;
+    font-size: 24px;
+    align-self: center !important;
+    color: #ffffff !important;
+    transition: transform 0.24s ease;
 
     &--primary {
-      color: $primary;
-      background: rgba($primary, 0.12);
+      background: linear-gradient(135deg, $primary, darken($primary, 8%)) !important;
+      box-shadow: 0 4px 12px rgba($primary, 0.3);
     }
 
     &--secondary {
-      color: $secondary;
-      background: rgba($secondary, 0.12);
+      background: linear-gradient(135deg, $secondary, darken($secondary, 8%)) !important;
+      box-shadow: 0 4px 12px rgba($secondary, 0.3);
     }
 
     &--positive {
-      color: #15803d;
-      background: rgba(21, 128, 61, 0.12);
+      background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
     }
 
     &--accent {
-      color: $accent;
-      background: rgba($accent, 0.14);
+      background: linear-gradient(135deg, $accent, darken($accent, 8%)) !important;
+      box-shadow: 0 4px 12px rgba($accent, 0.3);
     }
 
-    &--amber {
-      color: $primary;
-      background: rgba($primary, 0.12);
-    }
-
-    &--indigo {
-      color: #1f2a72;
-      background: rgba(31, 42, 114, 0.1);
-    }
-
+    &--amber,
     &--gold {
-      color: #f5a623;
-      background: rgba(245, 166, 35, 0.12);
+      background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
     }
 
+    &--indigo,
     &--blue {
-      color: #1f2a72;
-      background: rgba(31, 42, 114, 0.1);
+      background: linear-gradient(135deg, #4f7df5, #3b63d4) !important;
+      box-shadow: 0 4px 12px rgba(79, 125, 245, 0.3);
     }
   }
 
+  &:hover &__icon {
+    transform: scale(1.08);
+  }
+
+  // ── Body ──
   &__body {
     min-width: 0;
-    text-align: left;
+    flex: 1;
   }
 
   &__value {
-    color: $primary;
-    font-size: 1.62rem;
+    display: block;
+    font-size: 1.5rem;
     font-weight: 800;
-    line-height: 1.1;
+    color: $secondary !important;
+    line-height: 1;
+    margin-bottom: 3px;
+    letter-spacing: -0.02em;
   }
 
   &__title {
+    display: block;
     font-size: 0.95rem;
+    font-weight: 700;
+    color: #111827 !important;
     line-height: 1.3;
-    margin-top: 2px;
   }
 
   &__description {
-    margin-top: 4px;
-    font-size: 0.78rem;
-    line-height: 1.45;
+    display: block;
+    font-size: 0.82rem;
+    color: #667085 !important;
+    margin-top: 2px;
+    line-height: 1.4;
   }
-}
 
-@media (max-width: 767px) {
-  .base-info-card {
-    min-height: 92px;
-    padding: 16px;
-
-    &--stat {
-      min-height: 88px;
-      padding: 14px 12px;
-      gap: 10px;
-    }
+  @media (max-width: 600px) {
+    padding: 14px 16px;
+    border-radius: 14px;
+    gap: 12px;
 
     &__icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      font-size: 1.3rem;
+      flex: 0 0 40px !important;
+      width: 40px !important;
+      height: 40px !important;
+      min-width: 40px !important;
+      min-height: 40px !important;
+      font-size: 20px;
+      border-radius: 12px !important;
+    }
+
+    &__title {
+      font-size: 0.88rem;
     }
 
     &__value {
-      font-size: 1.35rem;
+      font-size: 1.25rem;
     }
   }
 }

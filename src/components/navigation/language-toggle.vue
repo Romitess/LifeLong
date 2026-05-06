@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick } from 'vue';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 type SupportedLocale = 'th' | 'en-US';
@@ -55,19 +55,12 @@ const selectedLocale = computed<SupportedLocale>({
     return isSupportedLocale(locale.value) ? locale.value : 'th';
   },
   set(value) {
-    // Save document height and scroll position before the language change
-    const scrollY = window.scrollY;
-    const docHeightBefore = document.documentElement.scrollHeight;
+    if (locale.value === value) {
+      return;
+    }
 
     locale.value = value;
     saveLocale(value);
-
-    // After Vue re-renders, adjust scroll so the viewport stays in the same relative place
-    void nextTick(() => {
-      const docHeightAfter = document.documentElement.scrollHeight;
-      const delta = docHeightAfter - docHeightBefore;
-      window.scrollTo({ top: scrollY + delta, behavior: 'instant' });
-    });
   },
 });
 
