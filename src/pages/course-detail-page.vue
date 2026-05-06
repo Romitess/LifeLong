@@ -59,37 +59,6 @@
               </div>
             </div>
           </div>
-
-          <div
-            v-if="course.previewVideoUrl"
-            class="detail-hero__preview"
-            @mouseenter="showPreviewControls"
-            @mouseleave="hidePreviewControls"
-            @focusin="showPreviewControls"
-            @focusout="hidePreviewControls"
-          >
-            <iframe
-              v-if="isYoutubeVideoUrl(course.previewVideoUrl)"
-              class="detail-hero__preview-video"
-              :src="getYoutubeEmbedUrl(course.previewVideoUrl, previewControlsVisible)"
-              title="Course preview"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowfullscreen
-            />
-            <video
-              v-else
-              class="detail-hero__preview-video"
-              :src="course.previewVideoUrl"
-              :poster="course.previewPosterUrl || course.imageUrl"
-              autoplay
-              muted
-              loop
-              :controls="previewControlsVisible"
-              playsinline
-              preload="metadata"
-            />
-            <span class="detail-hero__preview-shade" />
-          </div>
         </div>
       </section>
 
@@ -248,6 +217,44 @@
 
             <!-- Right Column (Sidebar) -->
             <div class="col-xs-12 col-md-4 detail-sidebar">
+              <!-- Course Preview -->
+              <q-card
+                v-if="course.previewVideoUrl"
+                flat
+                bordered
+                class="course-preview-card q-mb-lg"
+              >
+                <div
+                  class="course-preview-card__frame"
+                  @mouseenter="showPreviewControls"
+                  @mouseleave="hidePreviewControls"
+                  @focusin="showPreviewControls"
+                  @focusout="hidePreviewControls"
+                >
+                  <iframe
+                    v-if="isYoutubeVideoUrl(course.previewVideoUrl)"
+                    class="course-preview-card__video"
+                    :src="getYoutubeEmbedUrl(course.previewVideoUrl, previewControlsVisible)"
+                    title="Course preview"
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowfullscreen
+                  />
+                  <video
+                    v-else
+                    class="course-preview-card__video"
+                    :src="course.previewVideoUrl"
+                    :poster="course.previewPosterUrl || course.imageUrl"
+                    autoplay
+                    muted
+                    loop
+                    :controls="previewControlsVisible"
+                    playsinline
+                    preload="metadata"
+                  />
+                  <span class="course-preview-card__shade" />
+                </div>
+              </q-card>
+
               <!-- Enroll CTA Card -->
               <q-card flat bordered class="enroll-card q-mb-lg">
                 <q-card-section class="enroll-card__top">
@@ -869,10 +876,6 @@ watch(
     padding-top: 84px;
     padding-bottom: 48px;
     color: white;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 56px;
   }
 
   &__info {
@@ -905,38 +908,6 @@ watch(
     font-size: 0.88rem;
     color: rgba(255, 255, 255, 0.8);
     font-weight: 400;
-  }
-
-  &__preview {
-    position: relative;
-    flex: 0 1 520px;
-    width: min(38vw, 520px);
-    min-width: 360px;
-    aspect-ratio: 16 / 9;
-    padding: 0;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.26);
-    border-radius: 8px;
-    background: rgba(15, 23, 42, 0.48);
-    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.32);
-  }
-
-  &__preview-video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
-    object-fit: cover;
-  }
-
-  &__preview-shade {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-      linear-gradient(180deg, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0.42)),
-      linear-gradient(135deg, rgba(245, 166, 35, 0.16), transparent 44%);
   }
 }
 
@@ -1086,6 +1057,40 @@ watch(
 // ── Detail Sidebar ───────────────────────────────────────────
 .detail-sidebar {
   align-self: flex-start;
+}
+
+// ── Course Preview ───────────────────────────────────────────
+.course-preview-card {
+  border-radius: 14px !important;
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+  overflow: hidden;
+  background: #0f172a;
+  box-shadow: none !important;
+
+  &__frame {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #0f172a;
+  }
+
+  &__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    object-fit: cover;
+  }
+
+  &__shade {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0.2)),
+      linear-gradient(135deg, rgba(245, 166, 35, 0.1), transparent 48%);
+  }
 }
 
 // ── Enroll Card ──────────────────────────────────────────────
@@ -1447,13 +1452,6 @@ watch(
     &__content {
       padding-top: 76px;
       padding-bottom: 32px;
-      display: block;
-    }
-
-    &__preview {
-      width: 100%;
-      min-width: 0;
-      margin-top: 24px;
     }
   }
 
