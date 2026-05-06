@@ -97,20 +97,25 @@ function onCancel(): void {
   }
 
   &__actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    justify-content: center;
     gap: 12px;
+    padding-bottom: 24px;
   }
 
   &__button {
-    width: 100%;
-    min-height: 44px;
+    width: 120px !important;
+    min-width: 120px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    min-height: 40px !important;
   }
 
   &__actions :deep(.q-btn__content) {
     width: 100%;
     justify-content: center;
     white-space: nowrap;
+    font-size: 13px;
   }
 }
 </style>

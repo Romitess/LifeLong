@@ -455,7 +455,6 @@
         :confirm-label="$t('enterClassDialog.confirm')"
         :cancel-label="$t('enterClassDialog.cancel')"
         icon="play_circle"
-        confirm-icon="arrow_forward"
         confirm-color="positive"
         @confirm="goToLearningPage()"
       />
