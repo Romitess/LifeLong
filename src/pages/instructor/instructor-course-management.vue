@@ -271,12 +271,13 @@
                       <p>กำหนดรอบเรียน วันรับสมัคร และรูปแบบการเรียน</p>
                     </div>
                   </div>
-                  <div class="form-grid q-mt-md">
+                  <div class="form-grid course-settings-form q-mt-md">
                     <q-input
                       v-model="courseSettings.termName"
                       dense
                       outlined
                       label="รอบ/รุ่นที่เปิดสอน"
+                      class="course-settings-field"
                     />
                     <q-select
                       v-model="courseSettings.deliveryMode"
@@ -284,6 +285,9 @@
                       dense
                       outlined
                       label="รูปแบบการเรียน"
+                      dropdown-icon="keyboard_arrow_down"
+                      popup-content-class="course-settings-select-menu"
+                      class="course-settings-field"
                     />
                     <q-input
                       v-model="courseSettings.registrationStartDate"
@@ -291,6 +295,7 @@
                       outlined
                       type="date"
                       label="วันเปิดรับสมัคร"
+                      class="course-settings-field"
                     />
                     <q-input
                       v-model="courseSettings.registrationEndDate"
@@ -298,6 +303,7 @@
                       outlined
                       type="date"
                       label="วันปิดรับสมัคร"
+                      class="course-settings-field"
                     />
                   </div>
                 </div>
@@ -2375,6 +2381,143 @@ function openQuickDialog(title: string): void {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.course-settings-form {
+  gap: 16px;
+}
+
+.course-settings-field {
+  min-width: 0;
+  padding-bottom: 0;
+
+  :deep(.q-field__control) {
+    min-height: 58px;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #10223c;
+    box-shadow: inset 0 0 0 1px rgba(16, 34, 60, 0.12);
+    transition:
+      box-shadow 0.2s ease,
+      background 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  :deep(.q-field__control::before) {
+    border: 0;
+  }
+
+  :deep(.q-field__control::after) {
+    border: 0;
+  }
+
+  :deep(.q-field__bottom) {
+    display: none;
+  }
+
+  :deep(.q-field__native),
+  :deep(.q-field__input),
+  :deep(.q-field__label) {
+    color: #10223c;
+    font-weight: 800;
+  }
+
+  :deep(.q-field__label) {
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 800;
+  }
+
+  :deep(.q-field__marginal) {
+    color: #475569;
+  }
+
+  :deep(.q-field__append .q-icon) {
+    font-size: 21px;
+    transition:
+      color 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  &:hover :deep(.q-field__control) {
+    background: #fff;
+    box-shadow:
+      inset 0 0 0 1px rgba(245, 166, 35, 0.6),
+      0 10px 24px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+  }
+
+  &.q-field--focused :deep(.q-field__control) {
+    background: #fff;
+    box-shadow:
+      inset 0 0 0 2px $primary,
+      0 0 0 4px rgba(245, 166, 35, 0.12),
+      0 12px 26px rgba(15, 23, 42, 0.08);
+  }
+
+  &.q-field--focused :deep(.q-field__append .q-icon) {
+    color: $primary;
+    transform: rotate(180deg);
+  }
+
+  :deep(input[type='date']) {
+    color-scheme: light;
+  }
+
+  :deep(input[type='date']::-webkit-calendar-picker-indicator) {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    opacity: 0.72;
+    filter: invert(18%) sepia(22%) saturate(1212%) hue-rotate(181deg) brightness(90%) contrast(93%);
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease,
+      filter 0.2s ease;
+  }
+
+  &:hover :deep(input[type='date']::-webkit-calendar-picker-indicator) {
+    opacity: 1;
+    filter: invert(66%) sepia(95%) saturate(586%) hue-rotate(348deg) brightness(99%) contrast(94%);
+    transform: scale(1.05);
+  }
+}
+
+:global(.course-settings-select-menu) {
+  overflow: hidden;
+  margin-top: 8px;
+  border: 1px solid rgba(16, 34, 60, 0.1);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.14),
+    0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+:global(.course-settings-select-menu .q-item) {
+  min-height: 44px;
+  padding: 10px 14px;
+  color: #10223c;
+  font-size: 0.9rem;
+  font-weight: 800;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+:global(.course-settings-select-menu .q-item:hover),
+:global(.course-settings-select-menu .q-item.q-manual-focusable--focused) {
+  background: rgba(245, 166, 35, 0.1);
+  color: #10223c;
+}
+
+:global(.course-settings-select-menu .q-item.q-item--active) {
+  background: linear-gradient(90deg, rgba(245, 166, 35, 0.18), rgba(245, 166, 35, 0.06));
+  color: #1a237e;
+}
+
+:global(.course-settings-select-menu .q-item.q-item--active .q-item__label) {
+  font-weight: 900;
 }
 
 .form-grid__wide {
