@@ -568,7 +568,7 @@ const navigateToLesson = async (lesson: Lesson) => {
 .course-page {
   height: calc(100vh - 72px);
   overflow: hidden;
-  background-color: #f8f9fa;
+  background-color: #f8f6f1;
 }
 
 .section-container {

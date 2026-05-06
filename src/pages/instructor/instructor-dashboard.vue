@@ -278,7 +278,7 @@ const activities = [
 
 <style lang="scss" scoped>
 .instructor-dashboard {
-  background-color: #f8fafc;
+  background-color: #f8f6f1;
   min-height: 100vh;
 }
 

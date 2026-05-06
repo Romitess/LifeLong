@@ -3496,7 +3496,7 @@ function saveCroppedAvatar(): void {
 }
 
 .profile-content {
-  background: #f6f8f8;
+  background: #f8f6f1;
   min-height: 60vh;
   flex: 1;
 }

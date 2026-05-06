@@ -1622,7 +1622,7 @@ function openQuickDialog(title: string): void {
 <style lang="scss" scoped>
 .instructor-dashboard {
   min-height: 100vh;
-  background: #f8fafc;
+  background: #f8f6f1;
 }
 
 .instructor-dashboard__inner {
@@ -2023,7 +2023,7 @@ function openQuickDialog(title: string): void {
   min-width: 0;
   padding: 12px;
   border-radius: 12px;
-  background: #f8fafc;
+  background: #f8f6f1;
   border: 1px solid rgba(17, 24, 39, 0.06);
 }
 
@@ -2238,7 +2238,7 @@ function openQuickDialog(title: string): void {
   min-height: 104px;
   padding: 14px;
   border-radius: 12px;
-  background: #f8fafc;
+  background: #f8f6f1;
 
   span {
     color: #64748b;
@@ -2389,7 +2389,7 @@ function openQuickDialog(title: string): void {
   padding: 12px;
   border: 1px solid rgba(17, 24, 39, 0.08);
   border-radius: 12px;
-  background: #f8fafc;
+  background: #f8f6f1;
 }
 
 .pricing-row {
@@ -2438,7 +2438,7 @@ function openQuickDialog(title: string): void {
   min-height: 58px;
   padding: 12px;
   border-radius: 12px;
-  background: #f8fafc;
+  background: #f8f6f1;
   color: #334155;
   font-size: 0.88rem;
   font-weight: 800;

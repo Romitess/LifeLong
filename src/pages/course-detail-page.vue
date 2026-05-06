@@ -982,7 +982,7 @@ watch(
 
 // ── Detail Content ───────────────────────────────────────────
 .detail-content {
-  background: #f6f8f8;
+  background: #f8f6f1;
 }
 
 // ── Detail Cards ─────────────────────────────────────────────

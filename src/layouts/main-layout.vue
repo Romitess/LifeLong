@@ -64,6 +64,7 @@
                           v-ripple
                           class="category-item"
                           @click="onCategoryClick(cat.label)"
+                          v-close-popup
                         >
                           <q-item-section>
                             <div class="row items-center justify-between no-wrap full-width">
@@ -89,6 +90,7 @@
                           v-ripple
                           class="category-item"
                           @click="onCategoryClick(cat.label)"
+                          v-close-popup
                         >
                           <q-item-section>
                             <div class="row items-center justify-between no-wrap full-width">
