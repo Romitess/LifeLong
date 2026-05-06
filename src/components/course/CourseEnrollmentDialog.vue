@@ -82,6 +82,23 @@
             </template>
           </q-input>
 
+          <q-input
+            v-model="userInfo.billingAddress"
+            :label="t('enrollment.billingAddress')"
+            :placeholder="t('enrollment.billingAddressHint')"
+            outlined
+            rounded
+            dense
+            bg-color="grey-1"
+            type="textarea"
+            autogrow
+            :rules="[(val) => !!val || t('enrollment.billingAddressRequired')]"
+          >
+            <template v-slot:prepend>
+              <q-icon name="location_on" color="primary" />
+            </template>
+          </q-input>
+
           <div class="row justify-between items-center q-mt-lg">
             <div class="column">
               <div class="text-caption text-grey-6">{{ t('enrollment.fee') }}</div>
@@ -230,6 +247,7 @@
     :issued-at="receiptIssuedAt"
     :customer-name="userInfo.name"
     :customer-tax-id="userInfo.taxId"
+    :customer-address="userInfo.billingAddress"
     :show-customer="Boolean(enrollingCourse && !enrollingCourse.isFree)"
     :course-title="translatedEnrollingCourseTitle"
     :course-code="enrollingCourse?.code ?? ''"
@@ -293,6 +311,7 @@ const userInfo = reactive({
   email: '',
   phone: '',
   taxId: '',
+  billingAddress: '',
 });
 
 const priceLabel = computed<string>(() => {
@@ -334,6 +353,7 @@ function openEnrollment(course: CourseDetail): void {
       userInfo.email = existingRegistration.registrantInfo.email;
       userInfo.phone = existingRegistration.registrantInfo.phone;
       userInfo.taxId = existingRegistration.registrantInfo.taxId || '';
+      userInfo.billingAddress = existingRegistration.registrantInfo.billingAddress || '';
     } else {
       resetPaidInfo();
     }
@@ -368,6 +388,7 @@ function resetPaidInfo(): void {
   userInfo.email = '';
   userInfo.phone = '';
   userInfo.taxId = '';
+  userInfo.billingAddress = '';
   paidInfoFormRef.value?.resetValidation();
 }
 
@@ -397,6 +418,7 @@ async function submitPaidInfo(): Promise<void> {
     email: userInfo.email,
     phone: userInfo.phone,
     taxId: userInfo.taxId,
+    billingAddress: userInfo.billingAddress,
   });
 
   const paymentData = encodeURIComponent(
@@ -432,6 +454,7 @@ function onPaymentDone(): void {
     paymentDate: issuedAt.toISOString(),
     taxId: userInfo.taxId,
     customerName: userInfo.name,
+    customerAddress: userInfo.billingAddress,
   });
   emit('enrolled', enrollingCourse.value.id);
 

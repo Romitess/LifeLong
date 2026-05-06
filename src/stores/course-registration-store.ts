@@ -10,6 +10,7 @@ export interface RegistrantInfo {
   email: string;
   phone: string;
   taxId?: string;
+  billingAddress?: string;
 }
 
 export interface CourseRegistration {

@@ -1645,6 +1645,7 @@
       :issued-at="selectedPayment?.paymentDate ?? null"
       :customer-name="receiptCustomerName"
       :customer-tax-id="selectedPayment?.taxId ?? ''"
+      :customer-address="selectedPayment?.customerAddress ?? ''"
       :show-customer="true"
       :course-title="
         getTranslatedCourseTitleByInfo(selectedPayment?.courseCode, selectedPayment?.courseTitle)

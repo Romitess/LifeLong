@@ -15,6 +15,7 @@ export interface CoursePaymentRecord {
   userId: string;
   taxId?: string;
   customerName?: string;
+  customerAddress?: string;
 }
 
 interface CoursePaymentState {
@@ -90,6 +91,7 @@ export const useCoursePaymentStore = defineStore('course-payment', {
         method?: string;
         taxId?: string;
         customerName?: string;
+        customerAddress?: string;
       },
     ): void {
       const paymentDate = payload.paymentDate ?? new Date().toISOString();
@@ -109,6 +111,7 @@ export const useCoursePaymentStore = defineStore('course-payment', {
         userId: currentUserId,
         ...(payload.taxId ? { taxId: payload.taxId } : {}),
         ...(payload.customerName ? { customerName: payload.customerName } : {}),
+        ...(payload.customerAddress ? { customerAddress: payload.customerAddress } : {}),
       };
 
       const nextPayments = [

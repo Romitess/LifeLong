@@ -59,7 +59,9 @@
             <div>{{ customerTaxId || '-' }}</div>
           </div>
           <div class="row" style="margin-bottom: 2px">
-            <div style="width: 280px; flex-shrink: 0">ที่อยู่ (Address)</div>
+            <div style="width: 280px; flex-shrink: 0">
+              ที่อยู่สำหรับออกใบเสร็จรับเงิน (Billing Address)
+            </div>
             <div>{{ customerAddress || '-' }}</div>
           </div>
         </div>
@@ -575,7 +577,7 @@ function printReceipt(): void {
             <div>${printableCustomerTaxId}</div>
           </div>
           <div class="info-row">
-            <div class="info-label">ที่อยู่ (Address)</div>
+            <div class="info-label">ที่อยู่สำหรับออกใบเสร็จรับเงิน (Billing Address)</div>
             <div>${printableCustomerAddress}</div>
           </div>
         </div>
