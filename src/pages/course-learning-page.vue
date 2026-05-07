@@ -583,10 +583,6 @@ const navigateToLesson = async (lesson: Lesson) => {
   transition: padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.content-standard {
-  // inherits section-container max-width
-}
-
 .content-fullscreen {
   padding-left: 32px;
   padding-right: 32px;

@@ -199,7 +199,7 @@ const seatInfo = computed(() => {
     line-height: 1.45;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     min-height: 2.9em;
   }

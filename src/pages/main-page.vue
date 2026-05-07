@@ -668,12 +668,6 @@ onBeforeUnmount(clearHeroTypingTimer);
   vertical-align: -0.12em;
 }
 
-.hero-type-line--body-1 {
-}
-
-.hero-type-line--body-2 {
-}
-
 .hero-carousel :deep(.q-carousel__slide) {
   background-position: center 54%;
 }

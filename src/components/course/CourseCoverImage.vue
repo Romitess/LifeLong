@@ -110,7 +110,7 @@ const titleLabel = computed<string>(
     line-height: 1.45;
     display: -webkit-box;
     overflow: hidden;
-    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
   }
 

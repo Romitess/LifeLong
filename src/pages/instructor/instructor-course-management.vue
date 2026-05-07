@@ -1844,7 +1844,7 @@ function openQuickDialog(title: string): void {
   font-weight: 800;
   line-height: 1.35;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .course-list-item__meta {
@@ -1933,7 +1933,7 @@ function openQuickDialog(title: string): void {
     font-weight: 800;
     line-height: 1.32;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 }
 
@@ -2164,7 +2164,7 @@ function openQuickDialog(title: string): void {
   font-weight: 900;
   line-height: 1.35;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .learner-course-card__meta {

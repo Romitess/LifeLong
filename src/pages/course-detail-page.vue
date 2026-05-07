@@ -1264,7 +1264,7 @@ watch(
     line-height: 1.38;
     display: -webkit-box;
     overflow: hidden;
-    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
   }
 
@@ -1422,7 +1422,7 @@ watch(
 
     &__course-title {
       font-size: 0.95rem;
-      -webkit-line-clamp: 2;
+      line-clamp: 2;
     }
 
     &__course-meta {

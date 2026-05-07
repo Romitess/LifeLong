@@ -1199,9 +1199,6 @@ const navigateToActivity = (lesson: Lesson) => {
   border: 1px solid rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   padding: 16px;
-
-  &:hover {
-  }
 }
 
 .nav-btn {
