@@ -152,14 +152,40 @@
                 <div class="text-weight-bolder text-dark">{{ authStore.user?.studentId }}</div>
                 <q-btn
                   flat
-                  dense
                   no-caps
                   color="primary"
                   :label="$t('profile.menu.studentCard')"
                   icon="badge"
-                  class="q-mt-sm full-width text-left"
-                  size="sm"
+                  class="full-width profile-sidebar-link-btn"
+                  align="left"
+                  padding="8px 12px"
                   @click="showStudentCardDialog = true"
+                />
+                <q-btn
+                  flat
+                  no-caps
+                  color="primary"
+                  :label="$t('profile.menu.changePassword')"
+                  icon="lock_reset"
+                  class="full-width profile-sidebar-link-btn"
+                  align="left"
+                  padding="8px 12px"
+                  href="https://myid.buu.ac.th"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+                <q-btn
+                  flat
+                  no-caps
+                  color="primary"
+                  :label="$t('profile.menu.learnerDocuments')"
+                  icon="description"
+                  class="full-width profile-sidebar-link-btn"
+                  align="left"
+                  padding="8px 12px"
+                  href="https://drive.google.com/drive/folders/1ZEzkuEd5tVK-9BlTEzflDDS5ibrhOdOi"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 />
               </div>
             </q-card>
@@ -3546,6 +3572,32 @@ function saveCroppedAvatar(): void {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+}
+
+.profile-sidebar-link-btn {
+  border-radius: 10px;
+  margin: 4px 8px;
+  min-height: 56px;
+  transition: all 0.2s ease;
+}
+
+.profile-sidebar-link-btn:hover {
+  background: rgba($primary, 0.04);
+}
+
+.profile-sidebar-link-btn :deep(.q-btn__content) {
+  width: 100%;
+  justify-content: flex-start;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.profile-sidebar-link-btn :deep(.q-icon) {
+  font-size: 20px;
+}
+
+.profile-sidebar-link-btn :deep(.on-left) {
+  margin-right: 10px;
 }
 
 // ── Search Input ─────────────────────────────────────────────

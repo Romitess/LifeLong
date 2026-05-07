@@ -256,6 +256,8 @@ export default {
       benefits: 'Benefits',
       chat: 'Chat with Instructor',
       studentCard: 'Student ID Card',
+      changePassword: 'Change Password',
+      learnerDocuments: 'Learner Documents',
     },
     courses: {
       title: 'My Courses',

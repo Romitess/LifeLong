@@ -257,6 +257,8 @@ export default {
       benefits: 'สิทธิประโยชน์',
       chat: 'สนทนากับผู้สอน',
       studentCard: 'บัตรประจำตัวผู้เรียน',
+      changePassword: 'เปลี่ยนรหัส',
+      learnerDocuments: 'เอกสารสำหรับผู้เรียน',
     },
     courses: {
       title: 'รายวิชาของฉัน',
