@@ -18,8 +18,9 @@
       <q-page-container>
         <!-- Wrap everything in section-container to match main-page padding (max-width 1400px, 24px sides) -->
         <div
-          class="q-py-xl content-area"
-          :class="isFullscreen ? 'content-fullscreen' : 'section-container'"
+          class="content-area"
+          :class="isFullscreen ? 'content-fullscreen' : 'section-container content-standard'"
+          style="padding-top: 64px; padding-bottom: 64px"
         >
           <!-- Course Content -->
           <div class="course-content-wrapper">
@@ -46,9 +47,14 @@
             <div class="row items-center justify-between q-mb-xl">
               <div class="row items-center">
                 <div class="title-accent bg-primary q-mr-md"></div>
-                <h2 class="text-h4 text-weight-bolder text-dark q-my-none">
-                  {{ $t('learning.content') }}
-                </h2>
+                <div>
+                  <h2 class="text-h5 text-weight-bolder text-dark q-my-none">
+                    {{ $t('learning.content') }}
+                  </h2>
+                  <div class="text-caption text-grey-6 q-mt-xs">
+                    {{ $t('learning.manageContent') || 'จัดการเนื้อหาบทเรียนและการเรียนรู้ของคุณ' }}
+                  </div>
+                </div>
               </div>
               <q-btn
                 unelevated
@@ -291,7 +297,7 @@ const navigateToLesson = async (lesson: Lesson) => {
 }
 
 .section-container {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
   padding-left: 24px;
   padding-right: 24px;

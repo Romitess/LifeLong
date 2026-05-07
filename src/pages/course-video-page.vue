@@ -16,13 +16,13 @@
 
       <q-page-container>
         <div
-          class="q-pb-xl content-area"
+          class="content-area"
           :class="isFullscreen ? 'content-fullscreen' : 'section-container content-standard'"
-          style="padding-top: 50px"
+          style="padding-top: 64px; padding-bottom: 64px"
         >
           <!-- Video Content -->
-          <div class="video-content-wrapper row justify-center">
-            <div :class="isFullscreen ? 'col-12' : 'col-12 col-lg-10 col-xl-9'">
+          <div class="video-content-wrapper row">
+            <div class="col-12">
               <!-- Breadcrumbs -->
               <q-breadcrumbs class="text-grey-8 q-mb-xl modern-breadcrumbs" active-color="primary">
                 <template v-slot:separator>
@@ -50,10 +50,18 @@
                   class="text-weight-bold text-dark q-px-sm"
                 />
               </q-breadcrumbs>
-              <div class="row items-center justify-between q-mb-lg">
-                <h1 class="text-h5 text-weight-bolder text-dark q-my-none lh-sm">
-                  {{ $t('learning.videoLesson') }} {{ lessonTitle }}
-                </h1>
+              <div class="row items-center justify-between q-mb-xl">
+                <div class="row items-center">
+                  <div class="title-accent bg-primary q-mr-md"></div>
+                  <div>
+                    <h2 class="text-h5 text-weight-bolder text-dark q-my-none">
+                      {{ $t('learning.videoLesson') }} {{ lessonTitle }}
+                    </h2>
+                    <div class="text-caption text-grey-6 q-mt-xs">
+                      {{ $t('learning.manageVideo') || 'เรียนรู้ผ่านสื่อวิดีโอคุณภาพสูง' }}
+                    </div>
+                  </div>
+                </div>
                 <q-btn
                   unelevated
                   :color="isCompleted ? 'positive' : 'grey-4'"
@@ -234,10 +242,16 @@ const navigateToActivity = (lesson: Lesson) => {
 }
 
 .section-container {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
   padding-left: 24px;
   padding-right: 24px;
+}
+
+.title-accent {
+  width: 8px;
+  height: 40px;
+  border-radius: 4px;
 }
 
 // Breadcrumbs

@@ -311,6 +311,7 @@ export default {
       empty: 'No payment history yet',
       emptySub: 'Your payment information will be displayed here',
     },
+    manageGrades: 'Check your accumulated scores and learning progress',
     benefits: {
       title: 'Benefits',
       subtitle: 'Check benefits for BUU students, alumni, and staff',
@@ -469,6 +470,8 @@ export default {
     videoLesson: 'Video Lesson:',
     markAsDone: 'Mark as Done',
     completed: 'Completed',
+    manageContent: 'Manage your course content and learning journey',
+    manageVideo: 'Learn through high-quality instructional videos',
   },
   quiz: {
     opened: 'Opened:',
@@ -503,6 +506,7 @@ export default {
     questionNumber: 'Question {n}',
     statusSaved: 'Answer saved',
     submitAttempt: 'Submit all and finish',
+    manageQuiz: 'Challenge your knowledge with course quizzes',
   },
   enrollment: {
     paidInfoTitle: 'Registrant Information',

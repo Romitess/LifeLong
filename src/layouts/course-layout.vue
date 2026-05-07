@@ -186,47 +186,6 @@
 
     <!-- Right: View Mode + User Actions -->
     <div class="nav-actions row items-center no-wrap">
-      <div class="view-toggle-group row items-center q-mr-sm">
-        <q-btn
-          :flat="isFullscreen"
-          :unelevated="!isFullscreen"
-          round
-          dense
-          icon="view_agenda"
-          size="sm"
-          :class="!isFullscreen ? 'view-btn-active' : 'view-btn-inactive'"
-          @click="isFullscreen = false"
-        >
-          <q-tooltip
-            anchor="bottom middle"
-            self="top middle"
-            :offset="[0, 8]"
-            class="bg-dark text-white text-caption"
-          >
-            มุมมองมาตรฐาน
-          </q-tooltip>
-        </q-btn>
-        <q-btn
-          :flat="!isFullscreen"
-          :unelevated="isFullscreen"
-          round
-          dense
-          icon="fullscreen"
-          size="sm"
-          :class="isFullscreen ? 'view-btn-active' : 'view-btn-inactive'"
-          @click="isFullscreen = true"
-        >
-          <q-tooltip
-            anchor="bottom middle"
-            self="top middle"
-            :offset="[0, 8]"
-            class="bg-dark text-white text-caption"
-          >
-            มุมมองเต็มหน้าจอ
-          </q-tooltip>
-        </q-btn>
-      </div>
-
       <LanguageToggle class="nav-actions__language" />
 
       <div class="nav-user-group">
@@ -302,7 +261,81 @@
           </q-menu>
         </q-avatar>
         <q-btn round unelevated class="nav-notification-btn q-ml-xs" icon="notifications">
-          <q-badge floating rounded color="negative" class="nav-notification-badge">2</q-badge>
+          <q-badge floating rounded color="negative" class="nav-notification-badge">
+            {{ notificationUnreadCount }}
+          </q-badge>
+          <q-tooltip>{{ $t('notifications') }}</q-tooltip>
+          <q-menu
+            anchor="bottom right"
+            self="top right"
+            class="notification-preview-menu"
+            transition-show="jump-down"
+            transition-hide="jump-up"
+          >
+            <div class="notification-preview">
+              <div class="notification-preview__header">
+                <div>
+                  <div class="notification-preview__title">แจ้งเตือน</div>
+                  <div class="notification-preview__subtitle">
+                    {{ notificationPreviewSubtitle }}
+                  </div>
+                </div>
+                <q-badge rounded color="negative" class="notification-preview__count"
+                  >{{ notificationUnreadCount }} ใหม่</q-badge
+                >
+              </div>
+
+              <q-separator />
+
+              <q-list separator class="notification-preview__list">
+                <q-item
+                  v-for="notification in notificationPreviewItems"
+                  :key="notification.id"
+                  clickable
+                  v-ripple
+                  class="notification-preview__item"
+                  @click="openNotificationPreview(notification)"
+                  v-close-popup
+                >
+                  <q-item-section avatar top>
+                    <div
+                      class="notification-preview__icon"
+                      :style="{
+                        background: notification.iconBg,
+                        color: notification.iconColor,
+                      }"
+                    >
+                      <q-icon :name="notification.icon" size="19px" />
+                    </div>
+                  </q-item-section>
+                  <q-item-section>
+                    <div class="notification-preview__item-title">
+                      {{ notification.title }}
+                    </div>
+                    <div class="notification-preview__item-message">
+                      {{ notification.message }}
+                    </div>
+                    <div class="notification-preview__item-time">
+                      {{ notification.time }}
+                    </div>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+
+              <div class="notification-preview__footer">
+                <q-btn
+                  unelevated
+                  color="primary"
+                  icon="notifications"
+                  label="แสดงทั้งหมด"
+                  class="notification-preview__all-btn"
+                  no-caps
+                  @click="goToNotifications"
+                  v-close-popup
+                />
+              </div>
+            </div>
+          </q-menu>
         </q-btn>
       </div>
     </div>
@@ -313,7 +346,6 @@
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
-import { useUiStore } from 'src/stores/ui-store';
 import { useMyRegisteredCourses } from 'src/composables/use-my-registered-courses';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
 
@@ -324,7 +356,6 @@ const emit = defineEmits<{
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
-const uiStore = useUiStore();
 const { myRegisteredCourseEntries } = useMyRegisteredCourses();
 
 const courseId = computed(() => {
@@ -339,11 +370,6 @@ const registeredCourses = computed(() => {
 const activeNav = ref('this-course');
 const myCoursesMenu = ref(false);
 const thisCourseMenu = ref(false);
-
-const isFullscreen = computed({
-  get: () => uiStore.isCourseFullscreen,
-  set: (val) => uiStore.setCourseFullscreen(val),
-});
 
 let menuTimer: ReturnType<typeof setTimeout> | null = null;
 const openMenu = () => {
@@ -370,6 +396,104 @@ const closeThisCourseMenu = () => {
 function onLogout() {
   authStore.logout();
   void router.push('/main');
+}
+
+/**
+ * Notification Helper Functions (Copied from main-layout.vue)
+ */
+function isTeachingNotificationRole(role: string | undefined): boolean {
+  return ['teach', 'instructor'].includes(role ?? '');
+}
+
+function getNotificationItemsForRole(role: string | undefined) {
+  if (isTeachingNotificationRole(role)) {
+    return [
+      {
+        id: 1,
+        title: 'เหลือเวลาอีก 2 วัน',
+        message: 'ครบกำหนดให้คะแนนใบงานวิเคราะห์กรณีศึกษา',
+        time: 'วันนี้ 09:00',
+        icon: 'alarm',
+        iconBg: '#ffebee',
+        iconColor: '#c62828',
+        action: '/instructor/grading',
+        read: false,
+      },
+      {
+        id: 2,
+        title: 'รอตรวจ 18 รายการ',
+        message: 'แบบทดสอบปลายบทที่ 3 ปิดรับคำตอบแล้ว',
+        time: '1 ชั่วโมงที่แล้ว',
+        icon: 'rate_review',
+        iconBg: '#fff3e0',
+        iconColor: '#ef6c00',
+        action: '/instructor/grading',
+        read: false,
+      },
+      {
+        id: 3,
+        title: 'นิสิตส่งงานใหม่ 6 รายการ',
+        message: 'มีไฟล์รายงานใหม่จากรายวิชาที่กำลังเปิดสอน',
+        time: '3 ชั่วโมงที่แล้ว',
+        icon: 'upload_file',
+        iconBg: '#e3f2fd',
+        iconColor: '#1565c0',
+        action: '/instructor/notifications',
+        read: false,
+      },
+    ];
+  }
+
+  // Student Notifications
+  return [
+    {
+      id: 101,
+      title: 'ยินดีต้อนรับสู่ BUU LLL',
+      message: 'เริ่มเรียนรู้วันนี้เพื่อสะสมหน่วยกิตและวุฒิบัตร',
+      time: 'เมื่อวานนี้',
+      icon: 'celebration',
+      iconBg: '#e8f5e9',
+      iconColor: '#2e7d32',
+      action: '/short-courses',
+      read: false,
+    },
+    {
+      id: 102,
+      title: 'คอร์สใหม่แนะนำ',
+      message: 'มีคอร์สใหม่ในหมวดหมู่ที่คุณสนใจ ลองเข้าไปดูกันเลย!',
+      time: '2 วันที่แล้ว',
+      icon: 'auto_awesome',
+      iconBg: '#f3e5f5',
+      iconColor: '#7b1fa2',
+      action: '/short-courses',
+      read: true,
+    },
+  ];
+}
+
+const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
+
+const notificationPreviewItems = computed(() =>
+  getNotificationItemsForRole(authStore.user?.role).slice(0, 3),
+);
+const notificationUnreadCount = computed(
+  () => getNotificationItemsForRole(authStore.user?.role).filter((item) => !item.read).length,
+);
+const notificationPreviewSubtitle = computed(() =>
+  isTeachingRole.value ? 'รายการสำคัญสำหรับผู้สอน' : 'ข่าวสารและกิจกรรมการเรียนของคุณ',
+);
+
+async function goToNotifications() {
+  await router.push('/notifications');
+}
+
+async function openNotificationPreview(notification: { action?: string }) {
+  if (isTeachingRole.value && notification.action) {
+    await router.push(notification.action);
+    return;
+  }
+
+  await router.push('/notifications');
 }
 </script>
 
@@ -531,11 +655,11 @@ function onLogout() {
     min-width: 162px;
   }
   :deep(.nav-tab--lll-system) {
-    --nav-tab-label-width: 112px;
-    flex-basis: 180px;
-    width: 180px;
-    max-width: 180px;
-    min-width: 180px;
+    --nav-tab-label-width: 156px;
+    flex-basis: 226px;
+    width: 226px;
+    max-width: 226px;
+    min-width: 226px;
   }
 }
 
@@ -668,6 +792,101 @@ function onLogout() {
   font-size: 0.62rem;
   font-weight: 800;
   line-height: 17px;
+}
+
+.notification-preview-menu {
+  border-radius: 8px;
+  box-shadow: 0 18px 42px rgba(17, 24, 39, 0.18);
+}
+
+.notification-preview {
+  width: min(380px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.notification-preview__header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+
+.notification-preview__title {
+  color: #263238;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.notification-preview__subtitle {
+  margin-top: 2px;
+  color: #78909c;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.notification-preview__count {
+  flex: 0 0 auto;
+  font-weight: 800;
+}
+
+.notification-preview__list {
+  max-height: 318px;
+  background: #ffffff;
+}
+
+.notification-preview__item {
+  min-height: 86px;
+  padding: 12px 14px;
+}
+
+.notification-preview__icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 8px;
+}
+
+.notification-preview__item-title {
+  color: #263238;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.notification-preview__item-message {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 3px;
+  color: #546e7a;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.notification-preview__item-time {
+  margin-top: 5px;
+  color: #90a4ae;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.notification-preview__footer {
+  padding: 12px 14px;
+  background: #fafafa;
+}
+
+.notification-preview__all-btn {
+  width: 100%;
+  min-height: 38px;
+  border-radius: 8px;
+  font-weight: 800;
 }
 
 .profile-action-menu {

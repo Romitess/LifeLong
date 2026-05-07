@@ -16,12 +16,12 @@
 
       <q-page-container>
         <div
-          class="q-pb-xl content-area"
+          class="content-area"
           :class="isFullscreen ? 'content-fullscreen' : 'section-container content-standard'"
-          style="padding-top: 50px"
+          style="padding-top: 64px; padding-bottom: 64px"
         >
-          <div class="row justify-center">
-            <div :class="isFullscreen ? 'col-12' : 'col-12 col-lg-10 col-xl-9'">
+          <div class="row">
+            <div class="col-12">
               <!-- Breadcrumbs -->
               <q-breadcrumbs class="text-grey-8 q-mb-xl modern-breadcrumbs" active-color="primary">
                 <template v-slot:separator>
@@ -44,8 +44,25 @@
                 />
               </q-breadcrumbs>
 
+              <!-- Page Header -->
+              <div class="row items-center justify-between q-mb-xl">
+                <div class="row items-center">
+                  <div class="title-accent bg-primary q-mr-md"></div>
+                  <div>
+                    <h2 class="text-h5 text-weight-bolder text-dark q-my-none">
+                      {{ $t('sidebar.grades') }}
+                    </h2>
+                    <div class="text-caption text-grey-6 q-mt-xs">
+                      {{ $t('grades.manageGrades') || 'ตรวจสอบคะแนนสะสมและผลการเรียนของคุณ' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- User Profile Summary -->
-              <div class="row items-center q-mb-xl profile-summary-card">
+              <div
+                class="row items-center q-mb-xl profile-summary-card bg-white border-radius-16 shadow-1 q-pa-lg"
+              >
                 <q-avatar
                   size="64px"
                   color="blue-grey-1"
@@ -274,10 +291,16 @@ const totalPercentage = computed(() => {
 }
 
 .section-container {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
   padding-left: 24px;
   padding-right: 24px;
+}
+
+.title-accent {
+  width: 8px;
+  height: 40px;
+  border-radius: 4px;
 }
 
 // Breadcrumbs

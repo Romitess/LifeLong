@@ -21,8 +21,8 @@
           :class="isFullscreen ? 'content-fullscreen' : 'section-container content-standard'"
           style="padding-top: 50px; padding-bottom: 50px"
         >
-          <div class="row justify-center">
-            <div :class="isFullscreen ? 'col-12' : 'col-12 col-lg-10 col-xl-9'">
+          <div class="row">
+            <div class="col-12">
               <div class="section-header row items-center justify-between q-mb-xl">
                 <div class="row items-center">
                   <div class="title-accent bg-primary q-mr-md"></div>
@@ -182,7 +182,7 @@ const formatDate = (dateStr: string) => {
 }
 
 .section-container {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
   padding-left: 24px;
   padding-right: 24px;

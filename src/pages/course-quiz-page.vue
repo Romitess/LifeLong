@@ -15,16 +15,13 @@
       </q-drawer>
       <q-page-container>
         <div
-          class="q-pb-xl content-area"
+          class="content-area"
           :class="isFullscreen ? 'content-fullscreen' : 'section-container content-standard'"
-          style="padding-top: 50px"
+          style="padding-top: 64px; padding-bottom: 64px"
         >
           <!-- Start Screen with Attempts History -->
-          <div
-            v-if="!quizStarted && !quizSubmitted && !showSummary"
-            class="quiz-intro-wrapper row justify-center"
-          >
-            <div :class="isFullscreen ? 'col-12' : 'col-12 col-lg-10 col-xl-9'">
+          <div v-if="!quizStarted && !quizSubmitted && !showSummary" class="quiz-intro-wrapper row">
+            <div class="col-12">
               <q-breadcrumbs class="text-grey-8 q-mb-xl modern-breadcrumbs" active-color="primary">
                 <template v-slot:separator>
                   <q-icon size="1.4em" name="chevron_right" color="grey-4" />
@@ -49,12 +46,22 @@
                 <q-breadcrumbs-el :label="quizTitle" class="text-weight-bold text-dark q-px-sm" />
               </q-breadcrumbs>
 
+              <div class="row items-center justify-between q-mb-xl">
+                <div class="row items-center">
+                  <div class="title-accent bg-primary q-mr-md"></div>
+                  <div>
+                    <h2 class="text-h5 text-weight-bolder text-dark q-my-none">
+                      {{ quizTitle }}
+                    </h2>
+                    <div class="text-caption text-grey-6 q-mt-xs">
+                      {{ $t('quiz.manageQuiz') || 'ท้าทายความรู้ด้วยแบบทดสอบบทเรียน' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="intro-card bg-white shadow-1 q-mb-xl border-radius-16 overflow-hidden">
                 <div class="q-pa-xl">
-                  <h1 class="text-h4 text-weight-bolder text-dark q-mt-none q-mb-lg">
-                    {{ quizTitle }}
-                  </h1>
-
                   <div class="row q-mb-xl">
                     <q-btn
                       unelevated
@@ -288,8 +295,8 @@
           <!-- Results Screen removed as per user request, going directly to start screen -->
 
           <!-- Active Quiz Screen (With Sidebar) -->
-          <div v-else class="quiz-content-wrapper row justify-center">
-            <div :class="isFullscreen ? 'col-12' : 'col-12 col-lg-10 col-xl-9'">
+          <div v-else class="quiz-content-wrapper row">
+            <div class="col-12">
               <q-breadcrumbs class="text-grey-8 q-mb-xl modern-breadcrumbs" active-color="primary">
                 <template v-slot:separator
                   ><q-icon size="1.4em" name="chevron_right" color="grey-4"
@@ -745,10 +752,16 @@ const navigateToActivity = (lesson: Lesson) => {
 }
 
 .section-container {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
   padding-left: 24px;
   padding-right: 24px;
+}
+
+.title-accent {
+  width: 8px;
+  height: 40px;
+  border-radius: 4px;
 }
 
 // View Mode
