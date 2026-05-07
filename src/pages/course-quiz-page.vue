@@ -1,250 +1,14 @@
 <template>
   <q-page class="bg-grey-1 course-page">
+    <!-- Course Toolbar -->
+    <CourseLayout @toggleDrawer="leftDrawerOpen = !leftDrawerOpen" />
+
     <q-layout
       view="lHh Lpr lFf"
       container
       style="height: calc(100vh - 72px)"
       class="learning-layout shadow-2"
     >
-      <!-- Course Toolbar (Header) -->
-      <q-header elevated class="nav-bar text-white">
-        <div class="section-container">
-          <div class="row items-center no-wrap">
-            <!-- Left: Menu toggle + Tabs -->
-            <div class="row items-center no-wrap col">
-              <div
-                class="menu-toggle-btn cursor-pointer row items-center justify-center"
-                @click="leftDrawerOpen = !leftDrawerOpen"
-              >
-                <q-icon name="menu" size="20px" />
-              </div>
-
-              <q-tabs
-                v-model="activeNav"
-                align="left"
-                active-color="white"
-                indicator-color="white"
-                dense
-                no-caps
-                class="nav-tabs"
-              >
-                <q-tab
-                  name="home"
-                  icon="home"
-                  :label="$t('learning.home')"
-                  class="nav-tab"
-                  @click="$router.push('/course-home')"
-                />
-
-                <q-tab
-                  name="my-courses"
-                  icon="auto_stories"
-                  :label="$t('learning.myCourses')"
-                  class="nav-tab"
-                  @mouseenter="openMenu"
-                  @mouseleave="closeMenu"
-                >
-                  <q-menu
-                    v-model="myCoursesMenu"
-                    @mouseenter="openMenu"
-                    @mouseleave="closeMenu"
-                    transition-show="jump-down"
-                    transition-hide="jump-up"
-                    fit
-                    class="my-courses-dropdown shadow-10"
-                    :offset="[0, 8]"
-                  >
-                    <q-list style="min-width: 320px" class="q-py-sm">
-                      <div class="text-overline q-px-md q-pb-sm text-grey-6 letter-spacing-1">
-                        {{ $t('profile.courses.registeredTitle') }}
-                      </div>
-                      <q-item
-                        v-for="course in registeredCourses"
-                        :key="course.id"
-                        clickable
-                        v-ripple
-                        @click="$router.push(`/course/${course.id}/learn`)"
-                        class="course-menu-item q-mx-sm border-radius-10"
-                        :active="course.id === courseId"
-                        active-class="bg-blue-1 text-primary"
-                      >
-                        <q-item-section avatar>
-                          <q-avatar
-                            :icon="course.cover.icon"
-                            :color="course.id === courseId ? 'primary' : 'grey-2'"
-                            :text-color="course.id === courseId ? 'white' : 'grey-7'"
-                            size="32px"
-                          />
-                        </q-item-section>
-                        <q-item-section>
-                          <q-item-label lines="1" class="text-weight-bold">{{
-                            course.title
-                          }}</q-item-label>
-                          <q-item-label caption>{{ course.code }}</q-item-label>
-                        </q-item-section>
-                        <q-item-section side v-if="course.id === courseId">
-                          <q-icon name="check_circle" color="primary" size="20px" />
-                        </q-item-section>
-                      </q-item>
-                      <q-item
-                        v-if="registeredCourses.length === 0"
-                        class="text-grey-6 text-center q-pa-md"
-                      >
-                        {{ $t('profile.courses.empty') }}
-                      </q-item>
-                    </q-list>
-                  </q-menu>
-                </q-tab>
-
-                <q-tab
-                  name="this-course"
-                  icon="school"
-                  :label="$t('learning.thisCourse')"
-                  class="nav-tab"
-                  @mouseenter="openThisCourseMenu"
-                  @mouseleave="closeThisCourseMenu"
-                >
-                  <q-menu
-                    v-model="thisCourseMenu"
-                    @mouseenter="openThisCourseMenu"
-                    @mouseleave="closeThisCourseMenu"
-                    transition-show="jump-down"
-                    transition-hide="jump-up"
-                    class="this-course-dropdown shadow-12"
-                    :offset="[0, 0]"
-                    square
-                  >
-                    <q-list style="min-width: 220px" class="q-py-sm">
-                      <q-item clickable v-ripple class="this-course-menu-item">
-                        <q-item-section avatar class="this-course-icon-section">
-                          <q-icon name="format_list_numbered" size="20px" color="grey-7" />
-                        </q-item-section>
-                        <q-item-section>
-                          <q-item-label class="text-weight-medium">{{
-                            $t('thisCourse.sections')
-                          }}</q-item-label>
-                        </q-item-section>
-                        <q-item-section side>
-                          <q-icon name="chevron_right" size="18px" color="grey-5" />
-                        </q-item-section>
-                      </q-item>
-                      <q-item clickable v-ripple class="this-course-menu-item">
-                        <q-item-section avatar class="this-course-icon-section">
-                          <q-icon name="groups" size="20px" color="deep-purple-5" />
-                        </q-item-section>
-                        <q-item-section>
-                          <q-item-label class="text-weight-medium">{{
-                            $t('thisCourse.participants')
-                          }}</q-item-label>
-                        </q-item-section>
-                      </q-item>
-                      <q-item
-                        clickable
-                        v-ripple
-                        class="this-course-menu-item"
-                        @click="$router.push(`/course/${courseId}/grades`)"
-                      >
-                        <q-item-section avatar class="this-course-icon-section">
-                          <q-icon name="grid_on" size="20px" color="teal-6" />
-                        </q-item-section>
-                        <q-item-section>
-                          <q-item-label class="text-weight-medium">{{
-                            $t('thisCourse.grades')
-                          }}</q-item-label>
-                        </q-item-section>
-                      </q-item>
-                      <q-item clickable v-ripple class="this-course-menu-item">
-                        <q-item-section avatar class="this-course-icon-section">
-                          <q-icon name="forum" size="20px" color="blue-grey-5" />
-                        </q-item-section>
-                        <q-item-section>
-                          <q-item-label class="text-weight-medium">{{
-                            $t('thisCourse.forum')
-                          }}</q-item-label>
-                        </q-item-section>
-                      </q-item>
-                      <q-item
-                        clickable
-                        v-ripple
-                        class="this-course-menu-item"
-                        @click="$router.push(`/course/${courseId}/learn`)"
-                      >
-                        <q-item-section avatar class="this-course-icon-section">
-                          <q-icon name="description" size="20px" color="orange-7" />
-                        </q-item-section>
-                        <q-item-section>
-                          <q-item-label class="text-weight-medium">{{
-                            $t('thisCourse.content')
-                          }}</q-item-label>
-                        </q-item-section>
-                      </q-item>
-                      <q-item clickable v-ripple class="this-course-menu-item">
-                        <q-item-section avatar class="this-course-icon-section">
-                          <q-icon name="manage_accounts" size="20px" color="deep-orange-5" />
-                        </q-item-section>
-                        <q-item-section>
-                          <q-item-label class="text-weight-medium">{{
-                            $t('thisCourse.quiz')
-                          }}</q-item-label>
-                        </q-item-section>
-                      </q-item>
-                    </q-list>
-                  </q-menu>
-                </q-tab>
-
-                <q-tab
-                  name="lll-system"
-                  icon="stars"
-                  :label="$t('learning.systemTitle')"
-                  class="nav-tab"
-                  @click="$router.push('/profile')"
-                />
-              </q-tabs>
-            </div>
-
-            <!-- Right: View Mode Toggle -->
-            <div class="view-toggle-group row items-center q-gutter-xs q-pr-sm">
-              <q-btn
-                :flat="isFullscreen"
-                :unelevated="!isFullscreen"
-                round
-                dense
-                icon="view_agenda"
-                size="sm"
-                :class="!isFullscreen ? 'view-btn-active' : 'view-btn-inactive'"
-                @click="isFullscreen = false"
-              >
-                <q-tooltip
-                  anchor="bottom middle"
-                  self="top middle"
-                  :offset="[0, 8]"
-                  class="bg-dark text-white text-caption"
-                  >มุมมองมาตรฐาน</q-tooltip
-                >
-              </q-btn>
-              <q-btn
-                :flat="!isFullscreen"
-                :unelevated="isFullscreen"
-                round
-                dense
-                icon="fullscreen"
-                size="sm"
-                :class="isFullscreen ? 'view-btn-active' : 'view-btn-inactive'"
-                @click="isFullscreen = true"
-              >
-                <q-tooltip
-                  anchor="bottom middle"
-                  self="top middle"
-                  :offset="[0, 8]"
-                  class="bg-dark text-white text-caption"
-                  >มุมมองเต็มหน้าจอ</q-tooltip
-                >
-              </q-btn>
-            </div>
-          </div>
-        </div>
-      </q-header>
-
       <!-- Sidebar Navigation (Drawer) -->
       <q-drawer v-model="leftDrawerOpen" bordered :width="300" :breakpoint="1024" class="bg-white">
         <SidebarNavigation />
@@ -712,52 +476,23 @@ import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
-import { useMyRegisteredCourses } from 'src/composables/use-my-registered-courses';
-
 import SidebarNavigation from 'components/navigation/SidebarNavigation.vue';
 import { getNavigation, type Lesson } from 'src/data/course-structure';
+import CourseLayout from 'layouts/course-layout.vue';
 
 const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
 const { t } = useI18n();
 const progressStore = useCourseProgressStore();
-const { myRegisteredCourseEntries } = useMyRegisteredCourses();
-const activeNav = ref('this-course');
 const leftDrawerOpen = ref(false);
-const myCoursesMenu = ref(false);
-const thisCourseMenu = ref(false);
+
 import { useUiStore } from 'src/stores/ui-store';
 const uiStore = useUiStore();
 const isFullscreen = computed({
   get: () => uiStore.isCourseFullscreen,
   set: (val) => uiStore.setCourseFullscreen(val),
 });
-let menuTimer: ReturnType<typeof setTimeout> | null = null;
-
-const openMenu = () => {
-  if (menuTimer) clearTimeout(menuTimer);
-  myCoursesMenu.value = true;
-};
-
-const closeMenu = () => {
-  menuTimer = setTimeout(() => {
-    myCoursesMenu.value = false;
-  }, 150);
-};
-
-let thisCourseMenuTimer: ReturnType<typeof setTimeout> | null = null;
-
-const openThisCourseMenu = () => {
-  if (thisCourseMenuTimer) clearTimeout(thisCourseMenuTimer);
-  thisCourseMenu.value = true;
-};
-
-const closeThisCourseMenu = () => {
-  thisCourseMenuTimer = setTimeout(() => {
-    thisCourseMenu.value = false;
-  }, 150);
-};
 const quizStarted = ref(false);
 const quizSubmitted = ref(false);
 const showSummary = ref(false);
@@ -772,9 +507,6 @@ const courseId = computed(() => {
   return id || '';
 });
 
-const registeredCourses = computed(() => {
-  return myRegisteredCourseEntries.value.map((entry) => entry.course);
-});
 const quizId = computed(() =>
   Array.isArray(route.params.quizId) ? route.params.quizId[0] : route.params.quizId,
 );
