@@ -172,25 +172,90 @@
                   <div
                     v-for="(item, index) in form.syllabus"
                     :key="index"
-                    class="bg-grey-1 q-pa-sm q-mb-sm rounded-borders row items-center q-gutter-x-sm"
+                    class="bg-white q-pa-md q-mb-md rounded-borders border-grey shadow-1"
                   >
-                    <div class="text-caption text-weight-bold">สัปดาห์ที่ {{ index + 1 }}:</div>
+                    <div class="row items-center q-gutter-x-sm q-mb-sm">
+                      <div class="text-subtitle2 text-primary">สัปดาห์ที่ {{ index + 1 }}</div>
+                      <q-space />
+                      <q-btn
+                        flat
+                        round
+                        color="negative"
+                        icon="delete"
+                        size="sm"
+                        @click="removeSyllabus(index)"
+                        v-if="form.syllabus.length > 1"
+                      />
+                    </div>
                     <q-input
-                      v-model="form.syllabus[index]"
+                      v-model="item.topic"
                       outlined
                       dense
-                      class="col"
+                      class="full-width q-mb-sm"
                       placeholder="หัวข้อการสอน"
                     />
-                    <q-btn
-                      flat
-                      round
-                      color="negative"
-                      icon="delete"
-                      size="sm"
-                      @click="removeSyllabus(index)"
-                      v-if="form.syllabus.length > 1"
-                    />
+
+                    <!-- Activities List -->
+                    <div class="bg-grey-1 q-pa-sm rounded-borders">
+                      <div class="row items-center justify-between q-mb-xs">
+                        <div class="text-caption text-weight-bold text-grey-8">
+                          กิจกรรมในสัปดาห์นี้:
+                        </div>
+                        <q-btn-dropdown
+                          flat
+                          dense
+                          no-caps
+                          color="primary"
+                          label="เพิ่มกิจกรรม"
+                          icon="add"
+                          size="sm"
+                        >
+                          <q-list dense>
+                            <q-item
+                              clickable
+                              v-close-popup
+                              @click="openActivityDialog(index, 'quiz')"
+                            >
+                              <q-item-section avatar>
+                                <q-icon name="quiz" color="orange" size="xs" />
+                              </q-item-section>
+                              <q-item-section>แบบทดสอบ (Quiz)</q-item-section>
+                            </q-item>
+                            <q-item
+                              clickable
+                              v-close-popup
+                              @click="openActivityDialog(index, 'assign')"
+                            >
+                              <q-item-section avatar>
+                                <q-icon name="assignment" color="blue" size="xs" />
+                              </q-item-section>
+                              <q-item-section>การส่งงาน (Assignment)</q-item-section>
+                            </q-item>
+                          </q-list>
+                        </q-btn-dropdown>
+                      </div>
+
+                      <div
+                        v-if="item.activities.length === 0"
+                        class="text-center text-grey-5 text-caption q-py-xs"
+                      >
+                        ยังไม่มีกิจกรรม
+                      </div>
+
+                      <q-chip
+                        v-for="(act, aIdx) in item.activities"
+                        :key="aIdx"
+                        dense
+                        removable
+                        @remove="removeActivity(index, aIdx)"
+                        :color="act.type === 'quiz' ? 'orange-1' : 'blue-1'"
+                        :text-color="act.type === 'quiz' ? 'orange-9' : 'blue-9'"
+                        class="q-ma-xs"
+                      >
+                        <q-avatar :icon="act.type === 'quiz' ? 'quiz' : 'assignment'" />
+                        {{ act.name }}
+                      </q-chip>
+                    </div>
                   </div>
                 </div>
 
@@ -526,6 +591,41 @@
           </q-stepper>
         </q-card-section>
       </q-card>
+
+      <!-- Activity Creation Dialog -->
+      <q-dialog v-model="activityDialog.show" persistent>
+        <q-card style="min-width: 350px">
+          <q-card-section class="row items-center q-pb-none">
+            <div class="text-h6">
+              <q-icon
+                :name="activityDialog.type === 'quiz' ? 'quiz' : 'assignment'"
+                :color="activityDialog.type === 'quiz' ? 'orange' : 'blue'"
+                size="sm"
+                class="q-mr-sm"
+              />
+              เพิ่ม{{ activityDialog.type === 'quiz' ? 'แบบทดสอบ' : 'การส่งงาน' }}
+            </div>
+            <q-space />
+            <q-btn icon="close" flat round dense v-close-popup />
+          </q-card-section>
+
+          <q-card-section class="q-pt-md">
+            <q-input
+              v-model="activityDialog.name"
+              label="ชื่อกิจกรรม *"
+              outlined
+              dense
+              autofocus
+              @keyup.enter="saveActivity"
+            />
+          </q-card-section>
+
+          <q-card-actions align="right" class="text-primary">
+            <q-btn flat label="ยกเลิก" v-close-popup />
+            <q-btn unelevated color="primary" label="ตกลง" @click="saveActivity" />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
     </div>
   </q-page>
 </template>
@@ -547,6 +647,22 @@ const authStore = useAuthStore();
 const step = ref(1);
 const loading = ref(false);
 const stepper = ref<QStepper | null>(null);
+
+// Activity Dialog state with clear typing
+interface ActivityDialogState {
+  show: boolean;
+  type: 'quiz' | 'assign';
+  name: string;
+  weekIndex: number;
+}
+
+const activityDialog = reactive<ActivityDialogState>({
+  show: false,
+  type: 'quiz',
+  name: '',
+  weekIndex: -1,
+});
+
 const categories = [
   'วิทยาศาสตร์และเทคโนโลยี',
   'ธุรกิจและการจัดการ',
@@ -572,7 +688,12 @@ const form = reactive({
   faculty: '',
   description: '',
   objectives: [''],
-  syllabus: [''],
+  syllabus: [
+    {
+      topic: 'บทนำและความรู้พื้นฐาน',
+      activities: [] as { type: 'quiz' | 'assign'; name: string }[],
+    },
+  ],
   schedules: [{ day: '', startTime: '09:00', endTime: '12:00', room: '' }],
   registrationStart: '',
   registrationEnd: '',
@@ -613,11 +734,40 @@ const onFileRejected = () => {
 // Helper functions for dynamic lists
 const addObjective = () => form.objectives.push('');
 const removeObjective = (index: number) => form.objectives.splice(index, 1);
-const addSyllabus = () => form.syllabus.push('');
+const addSyllabus = () => form.syllabus.push({ topic: '', activities: [] });
 const removeSyllabus = (index: number) => form.syllabus.splice(index, 1);
 const addSchedule = () =>
   form.schedules.push({ day: '', startTime: '09:00', endTime: '12:00', room: '' });
 const removeSchedule = (index: number) => form.schedules.splice(index, 1);
+
+// Activity methods
+const openActivityDialog = (weekIndex: number, type: 'quiz' | 'assign') => {
+  activityDialog.weekIndex = weekIndex;
+  activityDialog.type = type;
+  activityDialog.name = type === 'quiz' ? 'แบบทดสอบย่อย' : 'งานที่มอบหมาย';
+  activityDialog.show = true;
+};
+
+const saveActivity = () => {
+  if (!activityDialog.name || activityDialog.weekIndex === -1) return;
+
+  const targetWeek = form.syllabus[activityDialog.weekIndex];
+  if (targetWeek) {
+    targetWeek.activities.push({
+      type: activityDialog.type,
+      name: activityDialog.name,
+    });
+  }
+
+  activityDialog.show = false;
+};
+
+const removeActivity = (weekIndex: number, actIndex: number) => {
+  const targetWeek = form.syllabus[weekIndex];
+  if (targetWeek) {
+    targetWeek.activities.splice(actIndex, 1);
+  }
+};
 
 const thaiShortMonths = [
   'ม.ค.',
@@ -636,19 +786,13 @@ const thaiShortMonths = [
 
 function parseDateInput(dateText: string): Date | null {
   const [year, month, day] = dateText.split('-').map(Number);
-  if (!year || !month || !day) {
-    return null;
-  }
-
+  if (!year || !month || !day) return null;
   return new Date(year, month - 1, day);
 }
 
 function formatThaiShortDate(dateText: string, includeYear: boolean): string {
   const date = parseDateInput(dateText);
-  if (!date) {
-    return dateText;
-  }
-
+  if (!date) return dateText;
   const day = date.getDate();
   const month = thaiShortMonths[date.getMonth()] ?? '';
   const year = date.getFullYear() + 543;
@@ -657,10 +801,7 @@ function formatThaiShortDate(dateText: string, includeYear: boolean): string {
 
 function formatEnglishShortDate(dateText: string): string {
   const date = parseDateInput(dateText);
-  if (!date) {
-    return dateText;
-  }
-
+  if (!date) return dateText;
   return date.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
@@ -676,11 +817,10 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    // 1. Prepare FormData for file upload
+    // 1. Create Course
     const formData = new FormData();
     formData.append('fullname', form.title);
     formData.append('shortname', form.code);
-    formData.append('categoryid', '1');
     formData.append('summary', form.description);
     formData.append('titleEn', form.titleEn);
     formData.append('hours', form.totalHours.toString());
@@ -691,7 +831,6 @@ async function onSubmit() {
       formData.append('file', form.image);
     }
 
-    // 2. Call Backend to create course in Moodle and Local DB
     const moodleResponse = await fetch('http://localhost:3000/api/moodle/courses', {
       method: 'POST',
       body: formData,
@@ -702,23 +841,44 @@ async function onSubmit() {
       throw new Error(errorData.message || 'Failed to create course in Moodle');
     }
 
+    const courseData = await moodleResponse.json();
+    const moodleCourseId = courseData.data?.moodleId || courseData.id;
+
+    // 2. Create Activities for each week (Safe check)
+    if (moodleCourseId) {
+      for (let i = 0; i < form.syllabus.length; i++) {
+        const week = form.syllabus[i];
+        if (week && week.activities) {
+          for (const act of week.activities) {
+            await fetch('http://localhost:3000/api/moodle/modules', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                courseid: moodleCourseId,
+                type: act.type,
+                name: act.name,
+                sectionindex: i + 1,
+              }),
+            }).catch((e) => console.error('Failed to create activity:', e));
+          }
+        }
+      }
+    }
+
+    // 3. Update Local Store
     const registrationStartLabel = formatThaiShortDate(form.registrationStart, false);
     const registrationEndLabel = formatThaiShortDate(form.registrationEnd, true);
 
     const newCourseDetail: CourseDetail = {
       id: String(Date.now()),
       code: form.code,
+      ...(moodleCourseId ? { moodleId: Number(moodleCourseId) } : {}),
       title: form.title,
       titleEn: form.titleEn,
       ...(authStore.user?.id ? { instructorId: authStore.user.id } : {}),
-      ...(authStore.user?.email ? { instructorEmail: authStore.user.email } : {}),
       imageUrl:
         'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
-      cover: {
-        icon: 'school',
-        accentColor: '#f5a623',
-        backgroundColor: '#1e3a5f',
-      },
+      cover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
       registrationStart: registrationStartLabel,
       registrationStartEn: formatEnglishShortDate(form.registrationStart),
       registrationEnd: registrationEndLabel,
@@ -746,8 +906,6 @@ async function onSubmit() {
       contactEmail: form.contactEmail,
       contactPhone: form.contactPhone,
       instructor: {
-        ...(authStore.user?.id ? { userId: authStore.user.id } : {}),
-        ...(authStore.user?.email ? { email: authStore.user.email } : {}),
         name: authStore.user?.firstNameTh
           ? `${authStore.user.firstNameTh} ${authStore.user.lastNameTh}`
           : 'ผู้สอนใหม่',
@@ -762,27 +920,26 @@ async function onSubmit() {
       })),
       syllabus: form.syllabus.map((s, idx) => ({
         week: idx + 1,
-        topic: s,
-        description: 'รายละเอียดเนื้อหาประจำสัปดาห์',
+        topic: s.topic,
+        description: `มีกิจกรรม: ${s.activities.map((a) => a.name).join(', ') || 'ไม่มี'}`,
       })),
     };
 
     courseStore.addCourse(newCourseDetail);
     courseStore.addCourseDetail(newCourseDetail);
+
     $q.notify({
       type: 'positive',
-      message: 'สร้างรายวิชาและเชื่อมต่อ Moodle สำเร็จ!',
+      message: 'สร้างรายวิชาและกิจกรรมใน Moodle สำเร็จ!',
       position: 'top',
     });
 
-    // Navigate to course management and select the newly created course
     void router.push({
       path: '/instructor/courses',
       query: { courseId: newCourseDetail.id },
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'ไม่สามารถเชื่อมต่อ Moodle ได้';
-    console.error('Error creating course:', error);
     $q.notify({
       type: 'negative',
       message: 'เกิดข้อผิดพลาด: ' + errorMessage,
@@ -803,6 +960,9 @@ async function onSubmit() {
 }
 .border-dashed {
   border: 2px dashed #e0e0e0;
+}
+.border-grey {
+  border: 1px solid #e0e0e0;
 }
 :deep(.q-stepper__step-content) {
   padding: 20px 24px;

@@ -10,6 +10,7 @@ export interface CourseCover {
 export interface Course {
   id: string;
   code: string;
+  moodleId?: number;
   title: string;
   titleEn?: string;
   instructorId?: string;

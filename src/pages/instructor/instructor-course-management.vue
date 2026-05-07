@@ -466,6 +466,49 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Moodle Activities -->
+              <div class="q-mt-lg">
+                <div class="panel-heading q-mb-md">
+                  <div>
+                    <h4>กิจกรรม Moodle</h4>
+                    <p>กิจกรรมที่เชื่อมต่อกับระบบ Moodle</p>
+                  </div>
+                </div>
+
+                <div v-if="isMoodleLoading" class="flex flex-center q-py-lg">
+                  <q-spinner color="primary" size="40px" />
+                </div>
+
+                <template v-else-if="moodleContents.length > 0">
+                  <div class="lesson-list">
+                    <div v-for="mod in moodleContents" :key="mod.name" class="lesson-row">
+                      <q-icon
+                        :name="mod.modname === 'quiz' ? 'quiz' : 'assignment'"
+                        :color="mod.modname === 'quiz' ? 'orange-7' : 'teal-7'"
+                        size="20px"
+                      />
+                      <a
+                        v-if="mod.url"
+                        :href="mod.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="moodle-activity-link"
+                        >{{ mod.name }}</a
+                      >
+                      <span v-else>{{ mod.name }}</span>
+                      <q-space />
+                      <q-badge
+                        outline
+                        :color="mod.modname === 'quiz' ? 'orange-7' : 'teal-7'"
+                        :label="mod.modname === 'quiz' ? 'แบบทดสอบ' : 'งาน'"
+                      />
+                    </div>
+                  </div>
+                </template>
+
+                <div v-else class="text-grey-6 text-center q-py-md">ไม่มีกิจกรรม</div>
+              </div>
             </q-tab-panel>
 
             <q-tab-panel name="learners">
@@ -971,6 +1014,12 @@ interface CourseSettingsForm {
   registrationEndDate: string;
 }
 
+interface MoodleModule {
+  modname: string;
+  name: string;
+  url?: string;
+}
+
 const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
@@ -1057,6 +1106,25 @@ const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
 );
 const selectedStructure = computed(() => getCourseStructure(selectedCourseId.value));
+
+const moodleContents = ref<MoodleModule[]>([]);
+const isMoodleLoading = ref(false);
+
+async function fetchMoodleContents(shortname: string): Promise<void> {
+  isMoodleLoading.value = true;
+  moodleContents.value = [];
+  try {
+    const url = `http://localhost:3000/api/moodle/activities?shortname=${encodeURIComponent(shortname)}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      moodleContents.value = (await res.json()) as MoodleModule[];
+    }
+  } catch {
+    // silent fail — Moodle unavailable
+  } finally {
+    isMoodleLoading.value = false;
+  }
+}
 
 const filteredCourses = computed(() => {
   const keyword = courseSearch.value.trim().toLowerCase();
@@ -1378,6 +1446,7 @@ watch(
       learnerPricing[1].amount = course.isFree ? 0 : Math.max(0, Math.round(course.price * 0.75));
     if (learnerPricing[2]) learnerPricing[2].amount = course.price;
     activeWorkspaceTab.value = 'overview';
+    void fetchMoodleContents(course.code);
   },
   { immediate: true },
 );
@@ -2094,6 +2163,19 @@ function openQuickDialog(title: string): void {
     color: #334155;
     font-size: 0.9rem;
     font-weight: 700;
+  }
+}
+
+.moodle-activity-link {
+  min-width: 0;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    color: var(--q-primary);
   }
 }
 
