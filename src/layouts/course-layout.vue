@@ -98,6 +98,7 @@
       </q-tab>
 
       <q-tab
+        v-if="route.path !== '/course-home'"
         name="this-course"
         icon="school"
         :label="$t('learning.thisCourse')"

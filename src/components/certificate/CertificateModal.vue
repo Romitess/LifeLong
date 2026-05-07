@@ -1,12 +1,6 @@
 <template>
   <q-dialog v-model="isVisible" maximized transition-show="scale" transition-hide="scale">
     <q-card class="certificate-dialog bg-grey-2">
-      <q-bar class="bg-primary text-white q-py-md hide-on-print">
-        <div class="text-subtitle1 text-weight-bold">ตัวอย่างก่อนพิมพ์เกียรติบัตร</div>
-        <q-space />
-        <q-btn flat round icon="close" v-close-popup />
-      </q-bar>
-
       <q-card-section class="flex flex-center q-pa-md scroll cert-container-section">
         <div class="certificate-wrapper shadow-10 bg-white" id="certificate-print-area">
           <svg class="bg-graphics" viewBox="0 0 1000 707" preserveAspectRatio="none">
