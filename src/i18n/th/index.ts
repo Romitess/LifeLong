@@ -461,6 +461,7 @@ export default {
 
   // Learning & Quiz
   learning: {
+    menu: 'เมนู',
     home: 'หน้าแรก',
     myCourses: 'วิชาของฉัน',
     systemTitle: 'ระบบเรียนรู้ตลอดชีวิต',

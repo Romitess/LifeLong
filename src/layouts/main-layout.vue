@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header style="background: transparent">
+    <q-header v-if="showNavBar" style="background: transparent">
       <!-- Top Bar -->
       <q-toolbar class="top-toolbar">
         <q-btn

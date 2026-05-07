@@ -455,6 +455,7 @@ export default {
 
   // Learning & Quiz
   learning: {
+    menu: 'Menu',
     home: 'Home',
     myCourses: 'My Courses',
     systemTitle: 'Lifelong Learning System',
