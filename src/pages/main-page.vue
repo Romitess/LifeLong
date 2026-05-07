@@ -178,7 +178,7 @@
 
           <div v-else class="row q-col-gutter-lg">
             <div
-              v-for="course in filteredActiveCourses"
+              v-for="course in displayedActiveCourses"
               :key="course.id"
               class="col-xs-12 col-sm-6 col-md-3"
             >
@@ -234,7 +234,11 @@
           </div>
 
           <div v-else class="row q-col-gutter-lg">
-            <div v-for="course in courses" :key="course.id" class="col-xs-12 col-sm-6 col-md-3">
+            <div
+              v-for="course in displayedAllCourses"
+              :key="course.id"
+              class="col-xs-12 col-sm-6 col-md-3"
+            >
               <BaseCourseCard :course="course" @click="onCourseClick" />
             </div>
           </div>
@@ -254,9 +258,11 @@ import type { Course } from 'src/types/course';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
+import { useQuasar } from 'quasar';
 
 const router = useRouter();
 const courseStore = useCourseStore();
+const $q = useQuasar();
 const { t } = useI18n({ useScope: 'global' });
 const heroSlide = ref(1);
 const HERO_SLIDE_DURATION_MS = 12000;
@@ -317,6 +323,21 @@ const filteredActiveCourses = computed(() => {
     if (!courseStore.selectedCategory) return true;
     return c.category === courseStore.selectedCategory;
   });
+});
+
+// Limit display to 2 rows based on screen size
+const maxHomeItems = computed(() => {
+  if ($q.screen.lt.sm) return 2; // xs: 1 column -> 2 items
+  if ($q.screen.lt.md) return 4; // sm: 2 columns -> 4 items
+  return 8; // md+: 4 columns -> 8 items
+});
+
+const displayedActiveCourses = computed(() => {
+  return filteredActiveCourses.value.slice(0, maxHomeItems.value);
+});
+
+const displayedAllCourses = computed(() => {
+  return courses.value.slice(0, maxHomeItems.value);
 });
 
 const stats = computed<HomeInfoItem[]>(() => [
