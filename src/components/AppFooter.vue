@@ -44,6 +44,36 @@
                   target="_blank"
                   class="social-btn"
                 />
+                <q-btn
+                  round
+                  unelevated
+                  color="pink-7"
+                  icon="fab fa-instagram"
+                  type="a"
+                  href="https://www.instagram.com/buu.lifelong"
+                  target="_blank"
+                  class="social-btn"
+                />
+                <q-btn
+                  round
+                  unelevated
+                  color="red-8"
+                  icon="fab fa-youtube"
+                  type="a"
+                  href="https://www.youtube.com/@buulifelong"
+                  target="_blank"
+                  class="social-btn"
+                />
+                <q-btn
+                  round
+                  unelevated
+                  color="green-6"
+                  icon="fab fa-line"
+                  type="a"
+                  href="https://line.me/R/ti/p/@996rqoni?oat_content=url&ts=10081646"
+                  target="_blank"
+                  class="social-btn"
+                />
               </div>
             </li>
           </ul>
@@ -146,13 +176,13 @@ const { t } = useI18n();
 }
 
 .social-btn {
-  border: 2px solid white;
+  border: 1.5px solid white;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  width: 40px !important;
-  height: 40px !important;
+  width: 32px !important;
+  height: 32px !important;
   border-radius: 50% !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  font-size: 16px !important; /* slightly larger icon */
+  font-size: 14px !important; /* slightly smaller icon */
 
   &:hover {
     transform: translateY(-5px);
