@@ -461,7 +461,7 @@ export default {
     menu: 'Menu',
     home: 'Home',
     myCourses: 'My Courses',
-    systemTitle: 'Lifelong Learning System',
+    systemTitle: 'BUU-Lifelong',
     content: 'Course Content',
     collapseAll: 'Collapse All',
     expandAll: 'Expand All',
