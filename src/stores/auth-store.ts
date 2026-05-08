@@ -399,6 +399,7 @@ function createUserFromAccount(account: StoredAuthAccount): User {
     faculty: account.faculty,
     department: account.department,
     role: account.role,
+    ...(account.username !== undefined ? { username: account.username } : {}),
     avatar: getStoredAvatar() || account.avatar || createDefaultAvatar(account.email),
   };
 }

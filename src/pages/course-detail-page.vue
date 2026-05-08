@@ -477,6 +477,7 @@ import { useCourseBookmarkStore } from 'src/stores/course-bookmark-store';
 import type { Course, DeliveryMode } from 'src/types/course';
 import type { CourseDetail, CourseSchedule, CourseSyllabus } from 'src/types/course-detail';
 import { useI18n } from 'vue-i18n';
+import { useMoodleSso } from 'src/composables/use-moodle-sso';
 
 type RegistrationWindowStatus = 'upcoming' | 'open' | 'closed';
 
@@ -494,6 +495,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const courseRegistrationStore = useCourseRegistrationStore();
 const courseBookmarkStore = useCourseBookmarkStore();
+const { getMoodleCourseUrl } = useMoodleSso();
 
 function getRouteCourseId(): string {
   const routeCourseId = route.params.id;
@@ -813,7 +815,16 @@ function onCourseClick(courseItem: Course): void {
   void router.push(`/course/${courseItem.id}`);
 }
 
-function goToLearningPage(targetCourseId = courseId.value): void {
+async function goToLearningPage(targetCourseId = courseId.value): Promise<void> {
+  const username = authStore.user?.username;
+  if (username) {
+    const courseCode = course.value?.code;
+    const url = await getMoodleCourseUrl(targetCourseId, username, courseCode);
+    if (url) {
+      window.open(url, '_blank');
+      return;
+    }
+  }
   void router.push(`/course/${targetCourseId}/learn`);
 }
 
