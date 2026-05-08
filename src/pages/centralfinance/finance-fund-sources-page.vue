@@ -148,11 +148,13 @@
 import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import type { QTableColumn } from 'quasar';
+import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
 
 const router = useRouter();
+const financeStore = useCentralFinanceStore();
 
 interface RequestRow {
   id: string;
@@ -235,56 +237,7 @@ const columns: QTableColumn[] = [
   },
 ];
 
-const rows = ref<RequestRow[]>([
-  {
-    id: '1',
-    requestId: 'REQ-2569-001',
-    date: '2026-05-01',
-    faculty: 'คณะวิทยาการสารสนเทศ',
-    project: 'โครงการพัฒนาทักษะ AI สำหรับบุคคลทั่วไป',
-    status: 'completed',
-  },
-  {
-    id: '2',
-    requestId: 'REQ-2569-002',
-    date: '2026-05-02',
-    faculty: 'คณะวิทยาศาสตร์',
-    project: 'ขอเพิ่มแหล่งเงินทุนวิจัยนวัตกรรมสีเขียว',
-    status: 'processing',
-  },
-  {
-    id: '3',
-    requestId: 'REQ-2569-003',
-    date: '2026-05-05',
-    faculty: 'คณะพยาบาลศาสตร์',
-    project: 'โครงการฝึกอบรมการดูแลผู้สูงอายุระยะยาว',
-    status: 'new',
-  },
-  {
-    id: '4',
-    requestId: 'REQ-2569-004',
-    date: '2026-05-06',
-    faculty: 'คณะบริหารธุรกิจ',
-    project: 'จัดซื้อครุภัณฑ์คอมพิวเตอร์เพื่อการเรียนการสอน',
-    status: 'rejected',
-  },
-  {
-    id: '5',
-    requestId: 'REQ-2569-005',
-    date: '2026-05-07',
-    faculty: 'สำนักคอมพิวเตอร์',
-    project: 'พัฒนาระบบเครือข่ายความเร็วสูงภายในมหาวิทยาลัย',
-    status: 'new',
-  },
-  {
-    id: '6',
-    requestId: 'REQ-2569-006',
-    date: '2026-05-08',
-    faculty: 'คณะวิศวกรรมศาสตร์',
-    project: 'โครงการอบรมเทคโนโลยีหุ่นยนต์อุตสาหกรรม',
-    status: 'new',
-  },
-]);
+const rows = computed(() => financeStore.requests);
 
 const filteredRows = computed(() => {
   return rows.value.filter((row) => {

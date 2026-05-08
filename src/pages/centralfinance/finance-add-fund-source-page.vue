@@ -192,9 +192,11 @@ import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import { useQuasar } from 'quasar';
+import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 
 const router = useRouter();
 const $q = useQuasar();
+const financeStore = useCentralFinanceStore();
 
 const isSaving = ref(false);
 const isDuplicate = ref(false);
@@ -247,8 +249,12 @@ function checkDuplicate() {
   // Simulate API delay
   setTimeout(() => {
     $q.loading.hide();
-    // 5% chance of being duplicate for simulation
-    isDuplicate.value = Math.random() < 0.05;
+
+    // Also check against local store
+    const localExists = financeStore.fundSources.some((s) => s.fundCode === form.fundCode);
+
+    // 5% chance of being duplicate for simulation + check store
+    isDuplicate.value = Math.random() < 0.05 || localExists;
 
     if (isDuplicate.value) {
       $q.notify({
@@ -272,8 +278,18 @@ async function onSave() {
 
   isSaving.value = true;
 
-  // Simulate API Save
+  // Simulate API Save delay
   await new Promise((resolve) => setTimeout(resolve, 1500));
+
+  // Save to Pinia Store
+  financeStore.addFundSource({
+    fundCode: form.fundCode,
+    fundType: form.fundType,
+    fiscalYear: form.fiscalYear,
+    nameTh: form.nameTh,
+    nameEn: form.nameEn,
+    description: form.description,
+  });
 
   savedCode.value = form.fundCode;
   isSaving.value = false;

@@ -241,8 +241,10 @@ import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import AdminMetricCard from 'components/admin/AdminMetricCard.vue';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 
 const router = useRouter();
+const financeStore = useCentralFinanceStore();
 const chartPeriod = ref<'7d' | '30d'>('7d');
 
 async function onAddFundSource() {
@@ -258,18 +260,26 @@ async function onShortcutClick(to: string) {
 }
 
 // ── Finance Pulse (Hero aside) ──────────────────────────────
-const financePulse = [
-  { icon: 'pending_actions', value: '12', label: 'รอดำเนินการ' },
-  { icon: 'task_alt', value: '38', label: 'เสร็จวันนี้' },
+const financePulse = computed(() => [
+  {
+    icon: 'pending_actions',
+    value: financeStore.requests.filter((r) => r.status === 'new').length.toString(),
+    label: 'รอดำเนินการ',
+  },
+  {
+    icon: 'task_alt',
+    value: financeStore.requests.filter((r) => r.status === 'completed').length.toString(),
+    label: 'เสร็จวันนี้',
+  },
   { icon: 'payments', value: '฿1.2M', label: 'ยอดรวมวันนี้' },
   { icon: 'speed', value: '99.8%', label: 'อัตราสำเร็จ' },
-];
+]);
 
 // ── Metric Cards ────────────────────────────────────────────
 const metricCards = computed(() => [
   {
     label: 'คำขอรอดำเนินการ',
-    value: '12',
+    value: financeStore.requests.filter((r) => r.status === 'new').length.toString(),
     icon: 'pending_actions',
     color: '#b45309',
     tint: 'rgba(180, 83, 9, 0.12)',
@@ -279,7 +289,7 @@ const metricCards = computed(() => [
   },
   {
     label: 'ดำเนินการเสร็จวันนี้',
-    value: '38',
+    value: financeStore.requests.filter((r) => r.status === 'completed').length.toString(),
     icon: 'task_alt',
     color: '#047857',
     tint: 'rgba(4, 120, 87, 0.12)',
@@ -299,7 +309,7 @@ const metricCards = computed(() => [
   },
   {
     label: 'แหล่งเงินที่ออกแล้ว',
-    value: '247',
+    value: financeStore.fundSources.length.toString(),
     icon: 'account_tree',
     color: '#7c3aed',
     tint: 'rgba(124, 58, 237, 0.12)',
@@ -336,10 +346,10 @@ const chartBars = computed(() => {
 });
 
 // ── Fund Source Status ──────────────────────────────────────
-const fundSourceStatus = [
+const fundSourceStatus = computed(() => [
   {
     label: 'รอดำเนินการ (Pending)',
-    count: 12,
+    count: financeStore.requests.filter((r) => r.status === 'new').length,
     icon: 'hourglass_top',
     bg: 'rgba(217, 119, 6, 0.12)',
     color: '#b45309',
@@ -347,8 +357,8 @@ const fundSourceStatus = [
     badgeColor: 'warning',
   },
   {
-    label: 'ดำเนินการเสร็จสิ้นวันนี้',
-    count: 38,
+    label: 'ดำเนินการเสร็จสิ้นแล้ว',
+    count: financeStore.requests.filter((r) => r.status === 'completed').length,
     icon: 'check_circle',
     bg: 'rgba(4, 120, 87, 0.12)',
     color: '#047857',
@@ -357,7 +367,7 @@ const fundSourceStatus = [
   },
   {
     label: 'รอตรวจสอบเอกสาร',
-    count: 5,
+    count: financeStore.requests.filter((r) => r.status === 'processing').length,
     icon: 'find_in_page',
     bg: 'rgba(29, 78, 216, 0.12)',
     color: '#1d4ed8',
@@ -366,14 +376,14 @@ const fundSourceStatus = [
   },
   {
     label: 'ส่งคืน / แก้ไข',
-    count: 2,
+    count: financeStore.requests.filter((r) => r.status === 'rejected').length,
     icon: 'reply',
     bg: 'rgba(220, 38, 38, 0.1)',
     color: '#b91c1c',
     badge: 'แก้ไข',
     badgeColor: 'negative',
   },
-];
+]);
 
 // ── Recent Activities ───────────────────────────────────────
 const recentActivities = [

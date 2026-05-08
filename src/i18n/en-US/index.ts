@@ -130,6 +130,7 @@ export default {
       instructorDemo: "teach{'@'}go.buu.ac.th / 111111, teach1{'@'}go.buu.ac.th / 111111",
       adminDemo: "admin{'@'}go.buu.ac.th / 111111",
       financeDemo: "finance{'@'}go.buu.ac.th / 111111",
+      centralFinanceDemo: "central-finance{'@'}go.buu.ac.th / 111111",
       memberTitle: 'For BUU students and staff',
       memberDesc: "Use your full university email or the username before {'@'}go.buu.ac.th.",
       support: "support_lifelong{'@'}buu.ac.th",
