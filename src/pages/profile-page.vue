@@ -88,13 +88,10 @@
 
     <!-- ─── CONTENT ─── -->
     <section ref="profileContentRef" class="profile-content q-py-xl">
-      <div
-        class="section-container profile-content__container"
-        :class="{ 'profile-content__container--teacher': isTeachingRole }"
-      >
-        <div class="row q-col-gutter-xl profile-content__grid">
+      <div class="section-container">
+        <div class="row q-col-gutter-xl">
           <!-- Sidebar Menu -->
-          <div class="col-12 col-md-3 profile-sidebar-col">
+          <div class="col-12 col-md-3">
             <q-card
               v-if="isTeachingRole"
               flat
@@ -247,7 +244,7 @@
           </div>
 
           <!-- Main Content -->
-          <div class="col-12 col-md-9 profile-main-col">
+          <div class="col-12 col-md-9">
             <div class="profile-tab-panel">
               <!-- My Courses Tab -->
               <div v-if="activeMenu === 'my-courses'" class="student-course-panel">
@@ -3639,10 +3636,6 @@ function saveCroppedAvatar(): void {
   flex: 1;
 }
 
-.profile-content__container--teacher {
-  max-width: 1480px;
-}
-
 .profile-content :deep(.row.q-col-gutter-xl) {
   margin-left: -22px;
   margin-right: -22px;
@@ -3655,41 +3648,6 @@ function saveCroppedAvatar(): void {
 
 .profile-tab-panel {
   min-height: 100%;
-}
-
-@media (min-width: 1024px) {
-  .profile-content__container--teacher {
-    width: min(1480px, calc(100vw - 40px));
-    max-width: none;
-    margin-left: max(16px, calc((100vw - 1480px) / 2));
-    margin-right: 24px;
-    padding-left: 16px;
-    padding-right: 24px;
-  }
-
-  .profile-content__container--teacher .profile-content__grid {
-    margin-left: -30px;
-    margin-right: -18px;
-  }
-
-  .profile-content__container--teacher .profile-content__grid > * {
-    padding-left: 18px;
-    padding-right: 18px;
-  }
-
-  .profile-content__container--teacher .profile-sidebar-col {
-    flex: 0 0 240px;
-    max-width: 240px;
-  }
-
-  .profile-content__container--teacher .profile-main-col {
-    flex: 1 1 0;
-    max-width: none;
-  }
-
-  .profile-content__container--teacher .student-course-panel {
-    max-width: none;
-  }
 }
 
 // ── Sidebar Menu ─────────────────────────────────────────────

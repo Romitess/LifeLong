@@ -2375,12 +2375,11 @@ function openQuickDialog(title: string): void {
 }
 
 .course-table-layout {
-  --course-table-left-offset: 32px;
-  width: min(1512px, calc(100vw - max(16px, calc((100vw - 1280px) / 2 + 24px)) - 40px));
-  margin-left: calc(var(--course-table-left-offset) * -1);
+  width: calc(100vw - 48px);
+  margin-left: calc(50% - 50vw + 24px);
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 26px;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 16px;
   align-items: start;
 }
 
@@ -2397,7 +2396,8 @@ function openQuickDialog(title: string): void {
 
 .instructor-table-nav__item {
   min-height: 52px;
-  margin: 6px 10px;
+  margin: 6px 8px;
+  padding: 0 10px;
   border-radius: 10px;
   transition:
     background-color 0.18s ease,
@@ -2642,7 +2642,7 @@ function openQuickDialog(title: string): void {
 
 .course-admin-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1320px;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
@@ -2651,7 +2651,7 @@ function openQuickDialog(title: string): void {
 
   th,
   td {
-    padding: 16px 12px;
+    padding: 14px 8px;
     border-right: 1px solid #dce4ee;
     border-bottom: 1px solid #dce4ee;
     vertical-align: top;
@@ -2695,7 +2695,7 @@ function openQuickDialog(title: string): void {
 }
 
 .course-col-index {
-  width: 58px;
+  width: 56px;
 }
 
 .course-col-title {
@@ -2703,36 +2703,36 @@ function openQuickDialog(title: string): void {
 }
 
 .course-col-fee {
-  width: 9%;
+  width: 8%;
 }
 
 .course-col-schedule {
-  width: 12%;
+  width: 11%;
 }
 
 .course-col-seat {
-  width: 5%;
+  width: 4.5%;
 }
 
 .course-col-paid,
 .course-col-unpaid {
-  width: 7%;
+  width: 6%;
 }
 
 .course-col-publish {
-  width: 7%;
+  width: 6%;
 }
 
 .course-col-remain {
-  width: 5%;
+  width: 4.5%;
 }
 
 .course-col-moodle {
-  width: 14%;
+  width: 12%;
 }
 
 .course-col-actions {
-  width: 10%;
+  width: 8%;
 }
 
 .col-index {
@@ -2742,7 +2742,7 @@ function openQuickDialog(title: string): void {
 }
 
 .course-title-cell {
-  padding-left: 18px !important;
+  padding-left: 16px !important;
 
   button {
     display: block;
@@ -2767,7 +2767,7 @@ function openQuickDialog(title: string): void {
     display: block;
     margin-top: 5px;
     color: #ea7a00;
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     font-weight: 700;
     line-height: 1.45;
   }
@@ -2807,12 +2807,12 @@ function openQuickDialog(title: string): void {
     min-height: 30px;
     min-width: 0;
     width: 100%;
-    max-width: 144px;
+    max-width: 128px;
     margin-top: 10px;
-    padding: 0 10px !important;
+    padding: 0 8px !important;
     border: 0 !important;
     border-radius: 999px !important;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 900 !important;
     box-shadow: 0 7px 16px rgba(22, 163, 74, 0.16) !important;
   }
@@ -2826,8 +2826,8 @@ function openQuickDialog(title: string): void {
 
 .moodle-status :deep(.q-badge) {
   min-height: 24px;
-  padding: 4px 11px;
-  font-size: 0.72rem;
+  padding: 4px 9px;
+  font-size: 0.7rem;
   font-weight: 900;
 }
 
@@ -2850,14 +2850,14 @@ function openQuickDialog(title: string): void {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 6px;
   white-space: nowrap;
 }
 
 .table-action-btn {
-  width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
   margin: 0;
   background: #ffffff !important;
   border: 1px solid #dce4ee !important;
