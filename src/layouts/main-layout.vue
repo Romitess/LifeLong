@@ -676,6 +676,12 @@ const navItems = computed<NavItem[]>(() => {
         icon: 'analytics',
         to: '/central-finance/dashboard',
       },
+      {
+        name: 'central-finance-fund-sources',
+        label: 'รายการคำขอแหล่งเงิน',
+        icon: 'description',
+        to: '/central-finance/fund-sources',
+      },
     ];
   }
 
@@ -848,6 +854,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = '';
   } else if (path.includes('/central-finance/dashboard')) {
     activeNav.value = 'central-finance-dashboard';
+  } else if (path.includes('/central-finance/fund-sources')) {
+    activeNav.value = 'central-finance-fund-sources';
   } else if (path.includes('/instructor/reports')) {
     activeNav.value = 'reports';
   } else {
