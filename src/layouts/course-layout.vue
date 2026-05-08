@@ -186,15 +186,17 @@
     <q-space />
 
     <!-- Right: View Mode + User Actions -->
-    <div class="nav-actions row items-center no-wrap">
+    <div class="gt-sm nav-actions row items-center no-wrap">
       <LanguageToggle class="nav-actions__language" />
 
       <div class="nav-user-group">
         <div class="nav-profile-summary column items-start justify-center gt-xs">
-          <span class="nav-profile-name"
-            >{{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}</span
-          >
-          <span class="nav-profile-role">{{ authStore.user?.studentId }}</span>
+          <span class="nav-profile-name">
+            {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
+          </span>
+          <span class="nav-profile-role">
+            {{ isTeachingRole ? 'Teacher' : authStore.user?.studentId }}
+          </span>
         </div>
         <q-avatar size="36px" class="nav-profile-avatar cursor-pointer" role="button" tabindex="0">
           <img
@@ -217,17 +219,27 @@
             <q-card flat class="profile-action-card">
               <div class="profile-action-card__header">
                 <q-avatar size="42px" class="profile-action-card__avatar">
-                  <img v-if="authStore.user?.avatar" :src="authStore.user.avatar" />
+                  <img
+                    v-if="authStore.user?.avatar"
+                    :src="authStore.user.avatar"
+                    alt="Profile avatar"
+                    loading="eager"
+                    decoding="sync"
+                  />
                   <q-icon v-else name="person" size="22px" color="white" />
                 </q-avatar>
                 <div class="profile-action-card__identity">
                   <div class="profile-action-card__name">
                     {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
                   </div>
-                  <div class="profile-action-card__role">{{ authStore.user?.studentId }}</div>
+                  <div class="profile-action-card__role">
+                    {{ isTeachingRole ? 'Teacher' : authStore.user?.studentId }}
+                  </div>
                 </div>
               </div>
+
               <q-separator />
+
               <q-list dense class="profile-action-card__list">
                 <q-item
                   clickable
@@ -236,12 +248,12 @@
                   class="profile-action-card__item"
                   @click="$router.push('/profile')"
                 >
-                  <q-item-section avatar class="profile-action-card__item-icon"
-                    ><q-icon name="person"
-                  /></q-item-section>
-                  <q-item-section
-                    ><q-item-label>{{ $t('myProfile') }}</q-item-label></q-item-section
-                  >
+                  <q-item-section avatar class="profile-action-card__item-icon">
+                    <q-icon name="person" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ $t('myProfile') }}</q-item-label>
+                  </q-item-section>
                 </q-item>
                 <q-item
                   clickable
@@ -250,18 +262,25 @@
                   class="profile-action-card__item profile-action-card__item--danger"
                   @click="onLogout"
                 >
-                  <q-item-section avatar class="profile-action-card__item-icon"
-                    ><q-icon name="logout"
-                  /></q-item-section>
-                  <q-item-section
-                    ><q-item-label>{{ $t('logout') }}</q-item-label></q-item-section
-                  >
+                  <q-item-section avatar class="profile-action-card__item-icon">
+                    <q-icon name="logout" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ $t('logout') }}</q-item-label>
+                  </q-item-section>
                 </q-item>
               </q-list>
             </q-card>
           </q-menu>
         </q-avatar>
-        <q-btn round unelevated class="nav-notification-btn q-ml-xs" icon="notifications">
+
+        <q-btn
+          round
+          unelevated
+          class="nav-notification-btn"
+          icon="notifications"
+          :aria-label="$t('notifications')"
+        >
           <q-badge floating rounded color="negative" class="nav-notification-badge">
             {{ notificationUnreadCount }}
           </q-badge>
@@ -339,6 +358,24 @@
           </q-menu>
         </q-btn>
       </div>
+    </div>
+
+    <div class="lt-md row items-center">
+      <q-btn flat round icon="account_circle" color="grey-7" size="sm">
+        <q-menu>
+          <q-list style="min-width: 150px">
+            <q-item clickable v-ripple @click="$router.push('/profile')">
+              <q-item-section>{{ $t('myProfile') }}</q-item-section>
+            </q-item>
+            <q-item v-if="isTeachingRole" clickable v-ripple @click="goToNotifications">
+              <q-item-section>{{ $t('notifications') }}</q-item-section>
+            </q-item>
+            <q-item clickable v-ripple @click="onLogout">
+              <q-item-section class="text-negative">{{ $t('logout') }}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </q-btn>
     </div>
   </q-toolbar>
 </template>
@@ -694,8 +731,11 @@ async function openNotificationPreview(notification: { action?: string }) {
 .nav-actions {
   display: flex;
   align-items: center;
+  flex: 0 0 460px;
   flex-wrap: nowrap;
   gap: 8px;
+  width: 460px;
+  min-width: 0;
 }
 
 .nav-actions__language {
@@ -711,7 +751,7 @@ async function openNotificationPreview(notification: { action?: string }) {
   justify-content: end;
   height: 46px;
   min-height: 46px;
-  width: auto;
+  width: 326px;
   padding: 4px 10px 4px 14px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.58);
@@ -747,7 +787,6 @@ async function openNotificationPreview(notification: { action?: string }) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: left;
 }
 
 .nav-profile-avatar {
