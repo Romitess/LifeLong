@@ -27,3 +27,7 @@ defineProps<{
 
 defineEmits(['update:modelValue']);
 </script>
+
+<style scoped>
+/* Clean style block */
+</style>

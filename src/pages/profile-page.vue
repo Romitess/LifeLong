@@ -63,7 +63,12 @@
           <!-- Stats Cards -->
           <div class="col-12 col-lg-auto">
             <div class="row q-gutter-md justify-center">
-              <div v-for="stat in profileStats" :key="stat.label" class="profile-stat-card">
+              <div
+                v-for="stat in profileStats"
+                :key="stat.label"
+                class="profile-stat-card"
+                :style="stat.tone"
+              >
                 <div class="profile-stat-card__icon-wrap">
                   <q-icon :name="stat.icon" size="24px" color="white" />
                 </div>
@@ -1719,6 +1724,13 @@ interface AvatarOption {
   value: string;
 }
 
+interface ProfileStatCardItem {
+  label: string;
+  value: number;
+  icon: string;
+  tone: Record<string, string>;
+}
+
 interface CartoonAvatarConfig {
   body: string;
   face: string;
@@ -2774,30 +2786,41 @@ const canSendChatMessage = computed<boolean>(
   () => Boolean(selectedChatEntry.value) && chatDraft.value.trim().length > 0,
 );
 
-const profileStats = computed(() => [
+function buildProfileStatTone(accent: string): Record<string, string> {
+  return {
+    '--profile-stat-accent': accent,
+    '--profile-stat-accent-strong': withOpacity(accent, 0.88),
+    '--profile-stat-border': withOpacity(accent, 0.34),
+    '--profile-stat-surface': withOpacity(accent, 0.18),
+    '--profile-stat-surface-hover': withOpacity(accent, 0.26),
+    '--profile-stat-shadow': withOpacity(accent, 0.22),
+  };
+}
+
+const profileStats = computed<ProfileStatCardItem[]>(() => [
   {
     label: t('profile.menu.myCourses'),
     value: myRegistrations.value.length,
     icon: 'app_registration',
-    color: 'primary',
+    tone: buildProfileStatTone('#F5A623'),
   },
   {
     label: t('profile.courses.inProgress'),
     value: inProgressCoursesCount.value,
     icon: 'auto_stories',
-    color: 'info',
+    tone: buildProfileStatTone('#31B7C8'),
   },
   {
     label: t('learning.completed'),
     value: completedCoursesCount.value,
     icon: 'workspace_premium',
-    color: 'positive',
+    tone: buildProfileStatTone('#49B37D'),
   },
   {
     label: t('creditBank'),
     value: 0,
     icon: 'stars',
-    color: 'warning',
+    tone: buildProfileStatTone('#5B7CFA'),
   },
 ]);
 
@@ -3466,33 +3489,50 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Stats Cards ──────────────────────────────────────────────
 .profile-stat-card {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 14px 20px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    135deg,
+    var(--profile-stat-surface, rgba(255, 255, 255, 0.1)) 0%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  border: 1px solid var(--profile-stat-border, rgba(255, 255, 255, 0.14));
   border-radius: 14px;
   backdrop-filter: blur(12px);
   min-width: 140px;
   transition: all 0.3s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background: linear-gradient(
+      135deg,
+      var(--profile-stat-surface-hover, rgba(255, 255, 255, 0.16)) 0%,
+      rgba(255, 255, 255, 0.1) 100%
+    );
     transform: translateY(-2px);
+  }
+
+  &:hover &__icon-wrap {
+    transform: scale(1.08);
   }
 
   &__icon-wrap {
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: rgba($primary, 0.35);
+    background: linear-gradient(
+      135deg,
+      var(--profile-stat-accent, #{$primary}) 0%,
+      var(--profile-stat-accent-strong, rgba($primary, 0.88)) 100%
+    );
+    box-shadow: 0 12px 24px var(--profile-stat-shadow, rgba($primary, 0.22));
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: transform 0.24s ease;
   }
 
   &__info {
@@ -3509,9 +3549,9 @@ function saveCroppedAvatar(): void {
 
   &__label {
     font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.6);
-    font-weight: 500;
-    margin-top: 2px;
+    color: rgba(255, 255, 255, 0.72);
+    font-weight: 600;
+    margin-top: 4px;
   }
 }
 
