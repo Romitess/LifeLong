@@ -195,7 +195,7 @@
             {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
           </span>
           <span class="nav-profile-role">
-            {{ isTeachingRole ? 'Teacher' : authStore.user?.studentId }}
+            {{ userRoleLabel }}
           </span>
         </div>
         <q-avatar size="36px" class="nav-profile-avatar cursor-pointer" role="button" tabindex="0">
@@ -233,7 +233,7 @@
                     {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
                   </div>
                   <div class="profile-action-card__role">
-                    {{ isTeachingRole ? 'Teacher' : authStore.user?.studentId }}
+                    {{ userRoleLabel }}
                   </div>
                 </div>
               </div>
@@ -405,7 +405,26 @@ const registeredCourses = computed(() => {
   return myRegisteredCourseEntries.value.map((entry) => entry.course);
 });
 
-const activeNav = ref('this-course');
+const activeNav = computed({
+  get: () => {
+    const path = route.path;
+    if (path === '/course-home') return 'home';
+    if (
+      path.includes('/learn') ||
+      path.includes('/video') ||
+      path.includes('/quiz') ||
+      path.includes('/grades')
+    ) {
+      return 'this-course';
+    }
+    if (path === '/main' || path === '/') return 'lll-system';
+    return 'home';
+  },
+  set: () => {
+    // Navigation is handled via @click in the template
+  },
+});
+
 const myCoursesMenu = ref(false);
 const thisCourseMenu = ref(false);
 
@@ -510,6 +529,21 @@ function getNotificationItemsForRole(role: string | undefined) {
 }
 
 const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
+const userRoleLabel = computed(() => {
+  if (authStore.user?.role === 'admin') {
+    return 'Admin';
+  }
+
+  if (isTeachingRole.value) {
+    return 'Teacher';
+  }
+
+  if (authStore.user?.role === 'staff') {
+    return authStore.user.department || 'Staff';
+  }
+
+  return authStore.user?.studentId ?? '';
+});
 
 const notificationPreviewItems = computed(() =>
   getNotificationItemsForRole(authStore.user?.role).slice(0, 3),
@@ -673,10 +707,10 @@ async function openNotificationPreview(notification: { action?: string }) {
 
   :deep(.nav-tab--home) {
     --nav-tab-label-width: 78px;
-    flex-basis: 148px;
-    width: 148px;
-    max-width: 148px;
-    min-width: 148px;
+    flex-basis: 156px;
+    width: 156px;
+    max-width: 156px;
+    min-width: 156px;
   }
   :deep(.nav-tab--my-courses) {
     --nav-tab-label-width: 108px;
@@ -686,11 +720,11 @@ async function openNotificationPreview(notification: { action?: string }) {
     min-width: 176px;
   }
   :deep(.nav-tab--this-course) {
-    --nav-tab-label-width: 94px;
-    flex-basis: 162px;
-    width: 162px;
-    max-width: 162px;
-    min-width: 162px;
+    --nav-tab-label-width: 108px;
+    flex-basis: 176px;
+    width: 176px;
+    max-width: 176px;
+    min-width: 176px;
   }
   :deep(.nav-tab--lll-system) {
     --nav-tab-label-width: 156px;

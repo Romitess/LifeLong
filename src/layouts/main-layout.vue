@@ -589,6 +589,10 @@ const userRoleLabel = computed(() => {
     return 'Teacher';
   }
 
+  if (authStore.user?.role === 'staff') {
+    return authStore.user.department || 'Staff';
+  }
+
   return authStore.user?.studentId ?? '';
 });
 

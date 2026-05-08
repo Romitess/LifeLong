@@ -107,6 +107,20 @@ const MOCK_ADMIN_BASE: Omit<User, 'avatar'> = {
   role: 'admin',
 };
 
+const MOCK_FINANCE_BASE: Omit<User, 'avatar'> = {
+  id: 'mock-finance-user',
+  studentId: 'FIN0001',
+  firstNameTh: 'สมศรี',
+  lastNameTh: 'กองคลัง',
+  firstNameEn: 'SOMSRI',
+  lastNameEn: 'KONGKLANG',
+  email: 'central.finance@go.buu.ac.th',
+  phone: '038103333',
+  faculty: 'กองคลัง',
+  department: 'เจ้าหน้าที่การเงินกองคลัง',
+  role: 'staff',
+};
+
 const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
   {
     ...MOCK_USER_BASE,
@@ -136,6 +150,14 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_ADMIN_BASE,
     email: MOCK_ADMIN_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=BUU-LLL-Admin',
+    password: '111111',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    source: 'mock',
+  },
+  {
+    ...MOCK_FINANCE_BASE,
+    email: MOCK_FINANCE_BASE.email.toLowerCase(),
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Somsri',
     password: '111111',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',

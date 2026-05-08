@@ -130,6 +130,7 @@ export default {
       studentDemo: "student{'@'}go.buu.ac.th / 111111",
       instructorDemo: "teach{'@'}go.buu.ac.th / 111111, teach1{'@'}go.buu.ac.th / 111111",
       adminDemo: "admin{'@'}go.buu.ac.th / 111111",
+      financeDemo: "central.finance{'@'}go.buu.ac.th / 111111",
       memberTitle: 'สำหรับนิสิตและบุคลากร ม.บูรพา',
       memberDesc: "ใช้ชื่อผู้ใช้ก่อน {'@'}go.buu.ac.th หรืออีเมลเต็มเพื่อเข้าสู่ระบบได้",
       support: "support_lifelong{'@'}buu.ac.th",

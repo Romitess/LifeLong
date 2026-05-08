@@ -89,6 +89,7 @@
       <div>{{ $t('auth.login.studentDemo') }}</div>
       <div>{{ $t('auth.login.instructorDemo') }}</div>
       <div>{{ $t('auth.login.adminDemo') }}</div>
+      <div>{{ $t('auth.login.financeDemo') }}</div>
     </div>
 
     <div class="auth-switch">
