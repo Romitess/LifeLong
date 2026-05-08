@@ -9,10 +9,10 @@
     >
       <template #actions>
         <AdminActionButton
-          icon="add_circle_outline"
-          label="ออกเลขแหล่งเงิน"
+          icon="description"
+          label="รายการคำขอเเหล่งเงิน"
           no-caps
-          @click="onAddFundSource"
+          @click="onGotoFundSources"
         />
         <AdminActionButton
           variant="outline"
@@ -250,7 +250,9 @@ const chartPeriod = ref<'7d' | '30d'>('7d');
 async function onAddFundSource() {
   await router.push('/central-finance/fund-sources/add');
 }
-
+async function onGotoFundSources() {
+  await router.push('/central-finance/fund-sources');
+}
 async function onGoToReports() {
   await router.push('/central-finance/reports');
 }
