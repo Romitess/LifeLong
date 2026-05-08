@@ -1,5 +1,6 @@
 <template>
   <footer class="app-footer text-white">
+    <GoldenUnderline position="top" />
     <div class="footer-container q-py-md q-px-xl">
       <div class="row items-center justify-between">
         <!-- Left Section: Related Links -->
@@ -99,6 +100,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 
 const { t } = useI18n();
 </script>
@@ -107,7 +109,7 @@ const { t } = useI18n();
 .app-footer {
   background-color: #7c7c7c; // Exact Brand Grey from Logo
   width: 100%;
-  border-top: 4px solid #f7d046; // Gold accent line
+  position: relative;
 }
 
 .footer-container {

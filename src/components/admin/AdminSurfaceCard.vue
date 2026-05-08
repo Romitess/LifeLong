@@ -8,6 +8,13 @@
       cardClass,
     ]"
   >
+    <GoldenUnderline
+      v-if="accent"
+      position="top"
+      left="22px"
+      right="22px"
+      border-radius="0 0 999px 999px"
+    />
     <div v-if="showHeader" class="admin-surface-card__header">
       <div class="admin-surface-card__heading">
         <p v-if="eyebrow">{{ eyebrow }}</p>
@@ -29,6 +36,7 @@
 
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
+import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 
 interface Props {
   eyebrow?: string;
@@ -78,17 +86,6 @@ const showHeader = computed(() =>
   box-shadow:
     0 12px 24px rgba(17, 24, 39, 0.08),
     0 0 0 1px rgba(245, 166, 35, 0.08);
-}
-
-.admin-surface-card--accent::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 22px;
-  right: 22px;
-  height: 4px;
-  border-radius: 0 0 999px 999px;
-  background: var(--admin-gold-accent);
 }
 
 .admin-surface-card--glass {

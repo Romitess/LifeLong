@@ -6,7 +6,7 @@
     transition-hide="scale"
   >
     <q-card class="admin-confirm-dialog">
-      <div class="admin-confirm-dialog__accent" />
+      <GoldenUnderline :absolute="false" position="top" />
 
       <q-card-section class="admin-confirm-dialog__body">
         <div class="admin-confirm-dialog__header">
@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import AdminActionButton from './AdminActionButton.vue';
+import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
@@ -147,11 +148,6 @@ function onCancel(): void {
   border-radius: 20px;
   background: #ffffff;
   box-shadow: 0 28px 64px rgba(15, 23, 42, 0.24);
-}
-
-.admin-confirm-dialog__accent {
-  height: 4px;
-  background: var(--admin-gold-accent);
 }
 
 .admin-confirm-dialog__body {

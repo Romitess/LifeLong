@@ -4,6 +4,7 @@
     <section class="profile-hero">
       <div class="profile-hero__particles" />
       <div class="profile-hero__overlay" />
+      <GoldenUnderline />
       <div class="section-container profile-hero__content">
         <div class="row items-center justify-between q-col-gutter-lg">
           <!-- Avatar and Name Info -->
@@ -1699,9 +1700,9 @@ import {
 import { useCoursePaymentStore, type CoursePaymentRecord } from 'src/stores/course-payment-store';
 import { useCourseBookmarkStore, type CourseBookmark } from 'src/stores/course-bookmark-store';
 import BaseButton from 'components/base/BaseButton.vue';
-import CourseCoverImage from 'components/course/CourseCoverImage.vue';
-import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
+import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
+import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import {
   useMyRegisteredCourses,
   type RegisteredCourseEntry,

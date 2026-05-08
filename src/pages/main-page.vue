@@ -64,6 +64,7 @@
             </div>
           </q-carousel-slide>
         </q-carousel>
+        <GoldenUnderline />
       </section>
 
       <!-- ─── FLOATING STATS BAR ─── -->
@@ -256,6 +257,7 @@ import type { Course } from 'src/types/course';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
+import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import { useQuasar } from 'quasar';
 
 const router = useRouter();
@@ -700,17 +702,6 @@ onBeforeUnmount(clearHeroTypingTimer);
   aspect-ratio: 1920 / 600;
   overflow: hidden;
   background: #111827;
-}
-
-.hero-section::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 4px;
-  background: #f7d046;
-  z-index: 3;
 }
 
 .hero-carousel {

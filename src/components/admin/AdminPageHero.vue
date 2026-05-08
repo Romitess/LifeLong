@@ -24,11 +24,13 @@
         <slot name="aside" />
       </div>
     </div>
+    <GoldenUnderline />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
+import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 
 interface Props {
   eyebrow: string;
@@ -51,10 +53,10 @@ const hasAside = computed(() => Boolean(slots.aside));
 .admin-page-hero {
   padding: 58px 0 34px;
   color: #ffffff;
+  position: relative;
   background:
     linear-gradient(135deg, rgba(16, 35, 63, 0.98), rgba(20, 84, 106, 0.92)),
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
-  border-bottom: 4px solid var(--admin-gold-accent);
 }
 
 .admin-page-hero__content {
