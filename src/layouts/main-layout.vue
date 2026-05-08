@@ -796,7 +796,7 @@ function syncActiveNavWithRoute(path: string) {
   } else if (path.includes('/instructor/dashboard')) {
     activeNav.value = 'dashboard';
   } else if (path.includes('/instructor/courses')) {
-    activeNav.value = 'my-courses-mgmt';
+    activeNav.value = route.query.view === 'table' ? '' : 'my-courses-mgmt';
   } else if (path.includes('/instructor/students')) {
     activeNav.value = 'students-mgmt';
   } else if (path.includes('/notifications')) {

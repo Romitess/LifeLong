@@ -88,11 +88,61 @@
 
     <!-- ─── CONTENT ─── -->
     <section ref="profileContentRef" class="profile-content q-py-xl">
-      <div class="section-container">
-        <div class="row q-col-gutter-xl">
+      <div
+        class="section-container profile-content__container"
+        :class="{ 'profile-content__container--teacher': isTeachingRole }"
+      >
+        <div class="row q-col-gutter-xl profile-content__grid">
           <!-- Sidebar Menu -->
-          <div class="col-12 col-md-3">
-            <q-card flat bordered class="profile-menu-card">
+          <div class="col-12 col-md-3 profile-sidebar-col">
+            <q-card
+              v-if="isTeachingRole"
+              flat
+              bordered
+              class="profile-menu-card profile-menu-card--empty"
+            >
+              <q-list padding>
+                <q-item clickable v-ripple class="profile-menu-item" @click="goToInstructorHome">
+                  <q-item-section avatar>
+                    <q-icon name="dashboard" color="primary" size="20px" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label class="text-primary text-weight-bold text-body2">
+                      หน้าหลักผู้สอน
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-item clickable v-ripple class="profile-menu-item" @click="goToInstructorCourses">
+                  <q-item-section avatar>
+                    <q-icon name="menu_book" color="primary" size="20px" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label class="text-primary text-weight-bold text-body2">
+                      รายวิชาของฉัน
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-item
+                  clickable
+                  v-ripple
+                  class="profile-menu-item"
+                  @click="goToActiveInstructorCourses"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="campaign" color="primary" size="20px" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label class="text-primary text-weight-bold text-body2">
+                      รายวิชาที่เปิดสอน
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-card>
+
+            <q-card v-else flat bordered class="profile-menu-card">
               <q-list padding>
                 <q-item-label
                   header
@@ -149,7 +199,6 @@
                 </q-item>
               </q-list>
 
-              <!-- Student ID Card -->
               <q-separator />
               <div class="q-pa-md">
                 <div class="text-caption text-grey-6 q-mb-xs">
@@ -198,10 +247,10 @@
           </div>
 
           <!-- Main Content -->
-          <div class="col-12 col-md-9">
+          <div class="col-12 col-md-9 profile-main-col">
             <div class="profile-tab-panel">
               <!-- My Courses Tab -->
-              <div v-if="activeMenu === 'my-courses'">
+              <div v-if="activeMenu === 'my-courses'" class="student-course-panel">
                 <!-- Section Header -->
                 <div class="row items-center justify-between q-mb-lg">
                   <div>
@@ -235,7 +284,7 @@
                 </div>
 
                 <!-- Course List -->
-                <div v-if="filteredRegistrations.length > 0" class="column q-gutter-md">
+                <div v-if="filteredRegistrations.length > 0" class="student-course-list">
                   <ProfileCourseCard
                     v-for="entry in filteredRegistrations"
                     :key="entry.registration.id"
@@ -1714,12 +1763,6 @@ import CourseReceiptDialog from 'components/receipt/CourseReceiptDialog.vue';
 import { getCourseDetailById, MOCK_COURSES } from 'src/data/mock-courses';
 import { useAuthStore, type User, type UserProfileUpdate } from 'src/stores/auth-store';
 
-interface MenuItem {
-  label: string;
-  value: string;
-  icon: string;
-}
-
 interface AvatarOption {
   label: string;
   value: string;
@@ -1780,6 +1823,12 @@ interface StoredChatMessage {
   status?: ChatMessageStatus;
 }
 
+interface MenuItem {
+  label: string;
+  value: string;
+  icon: string;
+}
+
 interface SkillMetric {
   id: string;
   shortLabel: string;
@@ -1820,6 +1869,9 @@ const {
   getRegisteredCourseEntry,
 } = useMyRegisteredCourses();
 
+const isTeachingRole = computed(
+  () => authStore.user?.role === 'teach' || authStore.user?.role === 'instructor',
+);
 const activeMenu = ref('my-courses');
 const profileContentRef = ref<HTMLElement | null>(null);
 const courseSearch = ref('');
@@ -3135,6 +3187,24 @@ function goToCourse(courseId: string): void {
   void router.push(`/course/${courseId}/learn`);
 }
 
+function goToInstructorHome(): void {
+  void router.push('/instructor/dashboard');
+}
+
+function goToInstructorCourses(): void {
+  void router.push({
+    path: '/instructor/courses',
+    query: { view: 'table' },
+  });
+}
+
+function goToActiveInstructorCourses(): void {
+  void router.push({
+    path: '/instructor/courses',
+    query: { view: 'table', status: 'active' },
+  });
+}
+
 function selectChatCourse(courseId: string): void {
   selectedChatCourseId.value = courseId;
 }
@@ -3569,8 +3639,57 @@ function saveCroppedAvatar(): void {
   flex: 1;
 }
 
+.profile-content__container--teacher {
+  max-width: 1480px;
+}
+
+.profile-content :deep(.row.q-col-gutter-xl) {
+  margin-left: -22px;
+  margin-right: -22px;
+}
+
+.profile-content :deep(.row.q-col-gutter-xl > *) {
+  padding-left: 22px;
+  padding-right: 22px;
+}
+
 .profile-tab-panel {
   min-height: 100%;
+}
+
+@media (min-width: 1024px) {
+  .profile-content__container--teacher {
+    width: min(1480px, calc(100vw - 40px));
+    max-width: none;
+    margin-left: max(16px, calc((100vw - 1480px) / 2));
+    margin-right: 24px;
+    padding-left: 16px;
+    padding-right: 24px;
+  }
+
+  .profile-content__container--teacher .profile-content__grid {
+    margin-left: -30px;
+    margin-right: -18px;
+  }
+
+  .profile-content__container--teacher .profile-content__grid > * {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .profile-content__container--teacher .profile-sidebar-col {
+    flex: 0 0 240px;
+    max-width: 240px;
+  }
+
+  .profile-content__container--teacher .profile-main-col {
+    flex: 1 1 0;
+    max-width: none;
+  }
+
+  .profile-content__container--teacher .student-course-panel {
+    max-width: none;
+  }
 }
 
 // ── Sidebar Menu ─────────────────────────────────────────────
@@ -3579,20 +3698,26 @@ function saveCroppedAvatar(): void {
   overflow: hidden;
   position: sticky;
   top: 140px;
+  min-height: 490px;
+  background: #ffffff;
   border: 1px solid rgba(17, 24, 39, 0.12) !important; // ปรับความเข้มขอบให้ตรงกับที่อื่น
-  box-shadow: 0 4px 20px rgba(17, 24, 39, 0.05) !important;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06) !important;
+}
+
+.profile-menu-card--empty {
+  min-height: 490px;
 }
 
 .profile-menu-item {
   border-radius: 10px;
-  margin: 2px 8px;
-  min-height: 44px;
-  padding: 0 10px;
+  margin: 4px 8px;
+  min-height: 48px;
+  padding: 0 12px;
   transition: all 0.2s ease;
 
   &--active {
     background: rgba($primary, 0.08) !important;
-    box-shadow: inset 3px 0 0 $primary;
+    box-shadow: inset 4px 0 0 $primary;
   }
 
   &:hover {
@@ -3642,12 +3767,18 @@ function saveCroppedAvatar(): void {
 }
 
 // ── Search Input ─────────────────────────────────────────────
+.student-course-panel {
+  max-width: 1004px;
+}
+
 .profile-search-input {
-  width: 280px;
+  width: 310px;
 
   :deep(.q-field__control) {
     background: white;
     border-color: rgba(17, 24, 39, 0.08);
+    min-height: 44px;
+    box-shadow: 0 5px 16px rgba(17, 24, 39, 0.03);
   }
 }
 
@@ -3656,19 +3787,30 @@ function saveCroppedAvatar(): void {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
+  min-height: 42px;
+  padding: 8px 18px;
   background: white;
   border-radius: 10px;
   border: 1px solid rgba(17, 24, 39, 0.12);
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.03);
+}
+
+.student-course-list {
+  display: grid;
+  gap: 18px;
 }
 
 .course-action-btn {
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.78rem;
+  min-height: 40px;
+  border-radius: 10px !important;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding: 0 16px !important;
 
   &--primary {
-    box-shadow: 0 2px 10px rgba($primary, 0.3);
+    min-width: 116px;
+    border: 0 !important;
+    box-shadow: 0 7px 18px rgba($primary, 0.24) !important;
   }
 }
 

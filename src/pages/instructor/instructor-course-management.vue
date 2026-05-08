@@ -1,52 +1,441 @@
 <template>
   <q-page class="instructor-dashboard">
-    <div class="section-container instructor-dashboard__inner">
+    <div v-if="isTeachingRole" class="section-container instructor-dashboard__inner">
       <section class="instructor-hero">
-        <div>
-          <div class="instructor-hero__eyebrow">Instructor Workspace</div>
-          <h1>จัดการรายวิชา</h1>
-          <p>
-            สวัสดี {{ instructorName }} ดูภาพรวมรายวิชา ปรับเนื้อหา ติดตามผู้เรียน ตรวจงาน ออกประกาศ
-            และจัดการการเผยแพร่ได้จากหน้านี้
-          </p>
-        </div>
+        <div class="instructor-hero__particles" />
+        <div class="instructor-hero__overlay" />
 
-        <div class="instructor-hero__actions">
-          <q-btn
-            unelevated
-            color="primary"
-            icon="add"
-            label="สร้างรายวิชา"
-            no-caps
-            @click="openCreateCourseDialog"
-          />
-          <q-btn
-            outline
-            color="primary"
-            icon="analytics"
-            label="รายงานรวม"
-            no-caps
-            @click="activeWorkspaceTab = 'reports'"
-          />
+        <div class="instructor-hero__content">
+          <div class="instructor-hero__identity">
+            <q-avatar size="100px" class="instructor-hero__avatar">
+              <img
+                v-if="authStore.user?.avatar"
+                :src="authStore.user.avatar"
+                alt="Instructor avatar"
+                class="instructor-hero__avatar-image"
+              />
+              <q-icon v-else name="person" size="56px" color="white" />
+            </q-avatar>
+
+            <div class="instructor-hero__copy">
+              <div class="instructor-hero__eyebrow">Instructor Workspace</div>
+              <h1>{{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}</h1>
+              <div class="instructor-hero__meta">
+                <q-badge rounded color="positive" label="Teacher" class="text-weight-bold" />
+                <span>{{ authStore.user?.studentId }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="instructor-hero__stats">
+            <div v-for="metric in dashboardMetrics" :key="metric.label" class="metric-tile">
+              <div
+                class="metric-tile__icon"
+                :style="{ background: metric.background, color: metric.color }"
+              >
+                <q-icon :name="metric.icon" size="24px" />
+              </div>
+              <div>
+                <div class="metric-tile__value">{{ metric.value }}</div>
+                <div class="metric-tile__label">{{ metric.label }}</div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="metrics-grid">
-        <div v-for="metric in dashboardMetrics" :key="metric.label" class="metric-tile">
+      <section v-if="isCourseTableView" class="course-table-layout">
+        <aside class="instructor-table-nav">
+          <q-card flat bordered class="instructor-table-nav__card">
+            <q-list padding>
+              <q-item
+                clickable
+                v-ripple
+                class="instructor-table-nav__item"
+                @click="goToInstructorDashboard"
+              >
+                <q-item-section avatar>
+                  <q-icon name="dashboard" color="primary" size="20px" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-primary text-weight-bold text-body2">
+                    หน้าหลักผู้สอน
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item
+                clickable
+                v-ripple
+                class="instructor-table-nav__item"
+                :class="{ 'instructor-table-nav__item--active': courseStatusFilter === 'all' }"
+                @click="goToInstructorCoursesTable"
+              >
+                <q-item-section avatar>
+                  <q-icon name="menu_book" color="primary" size="20px" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-primary text-weight-bold text-body2">
+                    รายวิชาของฉัน
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item
+                clickable
+                v-ripple
+                class="instructor-table-nav__item"
+                :class="{ 'instructor-table-nav__item--active': courseStatusFilter === 'active' }"
+                @click="goToActiveInstructorCoursesTable"
+              >
+                <q-item-section avatar>
+                  <q-icon name="campaign" color="primary" size="20px" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-primary text-weight-bold text-body2">
+                    รายวิชาที่เปิดสอน
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-card>
+        </aside>
+
+        <div class="course-table-view">
+          <div class="course-table-view__toolbar">
+            <div>
+              <h2>{{ courseTableTitle }}</h2>
+              <span>{{ filteredCourses.length }} รายวิชา</span>
+            </div>
+
+            <q-input
+              v-model="courseSearch"
+              dense
+              outlined
+              rounded
+              placeholder="ค้นหารายวิชา..."
+              class="course-table-search"
+            >
+              <template #prepend>
+                <q-icon name="search" color="grey-5" />
+              </template>
+            </q-input>
+          </div>
+
+          <div v-if="false && paginatedCourses.length > 0" class="instructor-profile-course-list">
+            <article
+              v-for="course in paginatedCourses"
+              :key="course.id"
+              class="instructor-profile-course-card"
+            >
+              <div class="instructor-profile-course-card__stripe"></div>
+
+              <div class="instructor-profile-course-card__thumb">
+                <img :src="course.imageUrl" :alt="course.titleEn || course.title" />
+              </div>
+
+              <div class="instructor-profile-course-card__content">
+                <div class="instructor-profile-course-card__top">
+                  <div>
+                    <button
+                      type="button"
+                      class="instructor-profile-course-card__title"
+                      @click="openCourseWorkspace(course.id)"
+                    >
+                      {{ course.code }} : {{ course.title }}
+                    </button>
+                    <div v-if="course.titleEn" class="instructor-profile-course-card__subtitle">
+                      {{ course.titleEn }}
+                    </div>
+
+                    <div class="instructor-profile-course-card__badges">
+                      <q-badge
+                        :color="course.isActive ? 'positive' : 'blue-grey-7'"
+                        class="badge-pill"
+                      >
+                        {{ course.isActive ? 'เปิดสอน' : 'ฉบับร่าง' }}
+                      </q-badge>
+                      <q-badge
+                        v-for="mode in course.deliveryModes"
+                        :key="mode"
+                        color="blue-7"
+                        class="badge-pill"
+                      >
+                        {{ mode }}
+                      </q-badge>
+                      <q-badge color="green-6" class="badge-pill">
+                        ว่าง {{ getRemainingSeats(course) }} ที่
+                      </q-badge>
+                    </div>
+                  </div>
+
+                  <div class="instructor-profile-course-card__publish">
+                    <span>สถานะการเผยแพร่</span>
+                    <q-toggle
+                      :model-value="course.isActive"
+                      color="positive"
+                      dense
+                      @update:model-value="setCoursePublished(course.id, $event)"
+                    />
+                  </div>
+                </div>
+
+                <div class="instructor-profile-course-card__meta">
+                  <q-icon name="event" size="15px" color="grey-5" />
+                  <span
+                    >ลงทะเบียน {{ course.registrationStart }} ถึง {{ course.registrationEnd }}</span
+                  >
+                </div>
+
+                <div class="instructor-profile-course-card__progress">
+                  <div class="instructor-profile-course-card__progress-head">
+                    <span>จำนวนผู้เรียน</span>
+                    <q-badge color="primary" class="badge-pill">
+                      {{ course.enrolledCount }} / {{ course.maxSeats }}
+                    </q-badge>
+                  </div>
+                  <q-linear-progress
+                    rounded
+                    size="8px"
+                    :value="course.maxSeats > 0 ? course.enrolledCount / course.maxSeats : 0"
+                    color="primary"
+                    track-color="grey-2"
+                  />
+                  <div class="instructor-profile-course-card__payment">
+                    <span class="text-positive"
+                      >ไม่มีหนี้ค้างชำระ {{ getPaidLearnerCount(course) }}</span
+                    >
+                    <span class="text-negative">ค้างชำระ {{ getUnpaidLearnerCount(course) }}</span>
+                    <span>เหลือ {{ getRemainingSeats(course) }}</span>
+                  </div>
+                </div>
+
+                <div class="instructor-profile-course-card__footer">
+                  <div class="instructor-profile-course-card__moodle">
+                    <q-badge
+                      rounded
+                      :color="course.isActive ? 'positive' : 'grey-5'"
+                      text-color="white"
+                      :label="course.isActive ? 'ส่งข้อมูลแล้ว' : 'ยังไม่ส่ง'"
+                    />
+                    <span v-if="course.isActive">sukanya · {{ course.registrationEnd }}</span>
+                  </div>
+
+                  <div class="instructor-profile-course-card__actions">
+                    <q-btn
+                      outline
+                      color="primary"
+                      icon="list_alt"
+                      label="รายละเอียด"
+                      no-caps
+                      class="course-action-btn"
+                      @click="openCourseWorkspace(course.id)"
+                    />
+                    <q-btn
+                      outline
+                      color="primary"
+                      icon="edit"
+                      label="แก้ไข"
+                      no-caps
+                      class="course-action-btn"
+                      @click="openCourseWorkspace(course.id)"
+                    />
+                    <q-btn
+                      unelevated
+                      color="positive"
+                      icon="login"
+                      label="เข้าระบบ Moodle"
+                      no-caps
+                      class="course-action-btn course-action-btn--moodle"
+                    />
+                    <q-btn
+                      outline
+                      color="negative"
+                      icon="close"
+                      label="ลบ"
+                      no-caps
+                      class="course-action-btn"
+                      @click="queueDeleteCourse(course)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+
           <div
-            class="metric-tile__icon"
-            :style="{ background: metric.background, color: metric.color }"
+            v-if="false && paginatedCourses.length === 0"
+            class="instructor-profile-course-empty"
           >
-            <q-icon :name="metric.icon" size="24px" />
+            ไม่พบรายวิชา
           </div>
-          <div>
-            <div class="metric-tile__value">{{ metric.value }}</div>
-            <div class="metric-tile__label">{{ metric.label }}</div>
+
+          <div class="course-table-scroll">
+            <table class="course-admin-table">
+              <colgroup>
+                <col class="course-col-index" />
+                <col class="course-col-title" />
+                <col class="course-col-fee" />
+                <col class="course-col-schedule" />
+                <col class="course-col-seat" />
+                <col class="course-col-paid" />
+                <col class="course-col-unpaid" />
+                <col class="course-col-remain" />
+                <col class="course-col-publish" />
+                <col class="course-col-moodle" />
+                <col class="course-col-actions" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="col-index">ลำดับ</th>
+                  <th>ชื่อรายวิชา</th>
+                  <th>ค่าเรียน</th>
+                  <th>วันที่</th>
+                  <th>รับ</th>
+                  <th>
+                    <span class="table-head-label">ชำระแล้ว</span>
+                  </th>
+                  <th>ค้าง</th>
+                  <th>เหลือ</th>
+                  <th>
+                    <span class="table-head-label">เผยแพร่</span>
+                  </th>
+                  <th>
+                    <span class="table-head-label">Moodle</span>
+                  </th>
+                  <th>จัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(course, index) in paginatedCourses" :key="course.id">
+                  <td class="col-index">{{ firstCourseRowIndex + index + 1 }}</td>
+                  <td class="course-title-cell">
+                    <button type="button" @click="openCourseWorkspace(course.id)">
+                      {{ course.code }} : {{ course.title }}
+                    </button>
+                    <span v-if="course.titleEn">{{ course.titleEn }}</span>
+                  </td>
+                  <td class="text-center">
+                    {{ course.isFree ? 'ไม่มีค่าใช้จ่าย' : formatCurrency(course.price) }}
+                  </td>
+                  <td class="schedule-cell">
+                    <div class="schedule-cell__content">
+                      <span>ลงทะเบียน</span>
+                      <strong>
+                        {{
+                          formatCompactDateRange(course.registrationStart, course.registrationEnd)
+                        }}
+                      </strong>
+                    </div>
+                  </td>
+                  <td class="text-center">{{ course.maxSeats }}</td>
+                  <td class="text-center text-positive">
+                    {{ getPaidLearnerCount(course) }}
+                  </td>
+                  <td class="text-center text-negative">
+                    {{ getUnpaidLearnerCount(course) }}
+                  </td>
+                  <td class="text-center">
+                    {{ getRemainingSeats(course) }}
+                  </td>
+                  <td class="text-center">
+                    <q-toggle
+                      :model-value="course.isActive"
+                      color="positive"
+                      dense
+                      @update:model-value="setCoursePublished(course.id, $event)"
+                    />
+                  </td>
+                  <td class="moodle-cell">
+                    <div class="moodle-status">
+                      <q-badge
+                        rounded
+                        :color="course.isActive ? 'positive' : 'grey-5'"
+                        text-color="white"
+                        :label="course.isActive ? 'ส่งข้อมูลแล้ว' : 'ยังไม่ส่ง'"
+                      />
+                      <div v-if="course.isActive" class="moodle-status__meta">
+                        <span>sukanya</span>
+                        <span>{{ course.registrationEnd }}</span>
+                      </div>
+                    </div>
+                    <q-btn
+                      unelevated
+                      color="positive"
+                      label="เข้าระบบ Moodle"
+                      no-caps
+                      size="sm"
+                      class="moodle-link-btn"
+                    />
+                  </td>
+                  <td class="actions-cell">
+                    <div class="actions-cell__group">
+                      <q-btn
+                        dense
+                        round
+                        color="primary"
+                        icon="list_alt"
+                        class="table-action-btn table-action-btn--list"
+                        aria-label="รายละเอียด"
+                        @click="openCourseWorkspace(course.id)"
+                      >
+                        <q-tooltip>รายละเอียด</q-tooltip>
+                      </q-btn>
+                      <q-btn
+                        dense
+                        round
+                        color="primary"
+                        icon="edit"
+                        class="table-action-btn table-action-btn--edit"
+                        aria-label="แก้ไข"
+                        @click="openCourseWorkspace(course.id)"
+                      >
+                        <q-tooltip>แก้ไข</q-tooltip>
+                      </q-btn>
+                      <q-btn
+                        dense
+                        round
+                        color="negative"
+                        icon="close"
+                        class="table-action-btn table-action-btn--delete"
+                        aria-label="ลบ"
+                        @click="queueDeleteCourse(course)"
+                      >
+                        <q-tooltip>ลบ</q-tooltip>
+                      </q-btn>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="paginatedCourses.length === 0">
+                  <td colspan="11" class="empty-table-cell">ไม่พบรายวิชา</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div v-if="filteredCourses.length > courseRowsPerPage" class="course-table-pagination">
+            <q-btn
+              flat
+              dense
+              round
+              icon="chevron_left"
+              :disable="courseTablePage === 1"
+              @click="courseTablePage -= 1"
+            />
+            <span> หน้า {{ courseTablePage }} / {{ courseTablePageCount }} </span>
+            <q-btn
+              flat
+              dense
+              round
+              icon="chevron_right"
+              :disable="courseTablePage === courseTablePageCount"
+              @click="courseTablePage += 1"
+            />
           </div>
         </div>
       </section>
 
-      <section class="workspace-layout">
+      <section v-else class="workspace-layout">
         <aside class="course-sidebar">
           <div class="toolbar-row">
             <div>
@@ -1031,6 +1420,8 @@ courseStore.init();
 
 const courseSearch = ref('');
 const activeWorkspaceTab = ref<WorkspaceTab>('overview');
+const courseRowsPerPage = 10;
+const courseTablePage = ref(1);
 const deleteCourseDialogOpen = ref(false);
 const pendingDeleteCourse = ref<Course | null>(null);
 const saveCourseDialogOpen = ref(false);
@@ -1101,7 +1492,16 @@ const facultyStaff = ref<FacultyStaffMember[]>([
     permission: 'แก้ไขข้อมูลและตรวจสอบรายชื่อ',
   },
 ]);
-const instructorName = computed(() => authStore.user?.firstNameTh || 'อาจารย์');
+const courseStatusFilter = computed<'all' | 'active'>(() =>
+  route.query.status === 'active' ? 'active' : 'all',
+);
+const isTeachingRole = computed(
+  () => authStore.user?.role === 'teach' || authStore.user?.role === 'instructor',
+);
+const isCourseTableView = computed(() => route.query.view === 'table');
+const courseTableTitle = computed(() =>
+  courseStatusFilter.value === 'active' ? 'รายวิชาที่เปิดสอน' : 'รายวิชาของฉัน',
+);
 const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
 );
@@ -1127,14 +1527,63 @@ async function fetchMoodleContents(shortname: string): Promise<void> {
 }
 
 const filteredCourses = computed(() => {
+  const courses =
+    courseStatusFilter.value === 'active'
+      ? instructorCourses.value.filter((course) => course.isActive)
+      : instructorCourses.value;
   const keyword = courseSearch.value.trim().toLowerCase();
-  if (!keyword) return instructorCourses.value;
-  return instructorCourses.value.filter((course) =>
+  if (!keyword) return courses;
+  return courses.filter((course) =>
     [course.code, course.title, course.titleEn, course.faculty, course.category]
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(keyword)),
   );
 });
+
+const courseTablePageCount = computed(() =>
+  Math.max(1, Math.ceil(filteredCourses.value.length / courseRowsPerPage)),
+);
+const firstCourseRowIndex = computed(() => (courseTablePage.value - 1) * courseRowsPerPage);
+const paginatedCourses = computed(() =>
+  filteredCourses.value.slice(
+    firstCourseRowIndex.value,
+    firstCourseRowIndex.value + courseRowsPerPage,
+  ),
+);
+
+watch([filteredCourses, courseStatusFilter], () => {
+  courseTablePage.value = 1;
+});
+
+watch(courseTablePageCount, (pageCount) => {
+  if (courseTablePage.value > pageCount) {
+    courseTablePage.value = pageCount;
+  }
+});
+
+watch(
+  filteredCourses,
+  (courses) => {
+    if (courses.some((course) => course.id === selectedCourseId.value)) {
+      return;
+    }
+
+    selectedCourseId.value = courses[0]?.id ?? '';
+  },
+  { immediate: true },
+);
+
+watch(
+  isTeachingRole,
+  (canAccessInstructorArea) => {
+    if (canAccessInstructorArea) {
+      return;
+    }
+
+    void router.replace('/profile');
+  },
+  { immediate: true },
+);
 
 const dashboardMetrics = computed(() => {
   const totalLearners = instructorCourses.value.reduce(
@@ -1521,6 +1970,50 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
+function getPaidLearnerCount(course: Course): number {
+  return Math.max(0, course.enrolledCount - getUnpaidLearnerCount(course));
+}
+
+function getUnpaidLearnerCount(course: Course): number {
+  if (course.isFree) return 0;
+  return Math.min(course.enrolledCount, Math.max(0, Math.round(course.enrolledCount * 0.12)));
+}
+
+function getRemainingSeats(course: Course): number {
+  return Math.max(0, course.maxSeats - course.enrolledCount);
+}
+
+function setCoursePublished(courseId: string, isPublished: boolean): void {
+  courseStore.updateCourse(courseId, { isActive: isPublished });
+}
+
+function openCourseWorkspace(courseId: string): void {
+  selectedCourseId.value = courseId;
+  activeWorkspaceTab.value = 'overview';
+  void router.push({
+    path: '/instructor/courses',
+    query: { courseId },
+  });
+}
+
+function goToInstructorDashboard(): void {
+  void router.push('/instructor/dashboard');
+}
+
+function goToInstructorCoursesTable(): void {
+  void router.push({
+    path: '/instructor/courses',
+    query: { view: 'table' },
+  });
+}
+
+function goToActiveInstructorCoursesTable(): void {
+  void router.push({
+    path: '/instructor/courses',
+    query: { view: 'table', status: 'active' },
+  });
+}
+
 function previewCourse(): void {
   if (!selectedCourse.value) return;
   void router.push(`/course/${selectedCourse.value.id}`);
@@ -1537,6 +2030,18 @@ function formatCourseDateLabel(dateText: string, fallback: string): string {
     month: 'short',
     year: 'numeric',
   });
+}
+
+function formatCompactDateRange(startDate: string, endDate: string): string {
+  const thaiShortDatePattern = /^(\d{1,2})\s+(.+?)\s+(\d{4})$/;
+  const startMatch = startDate.match(thaiShortDatePattern);
+  const endMatch = endDate.match(thaiShortDatePattern);
+
+  if (startMatch && endMatch && startMatch[3] === endMatch[3]) {
+    return `${startMatch[1]} ${startMatch[2]} - ${endMatch[1]} ${endMatch[2]} ${endMatch[3]}`;
+  }
+
+  return `${startDate} - ${endDate}`;
 }
 
 function buildCourseUpdatePayload(course: Course): Partial<Course> {
@@ -1633,6 +2138,15 @@ function notifySaved(): void {
 }
 
 function confirmDeleteSelectedCourse(): void {
+  confirmDeleteSelectedCourseWithDialog();
+}
+
+function queueDeleteCourse(course: Course): void {
+  pendingDeleteCourse.value = course;
+  deleteCourseDialogOpen.value = true;
+}
+
+function confirmDeleteSelectedCourseWithDialog(): void {
   const course = selectedCourse.value;
   if (!course) return;
 
@@ -1701,62 +2215,118 @@ function openQuickDialog(title: string): void {
 }
 
 .instructor-dashboard__inner {
-  padding-block: 32px 48px;
+  padding-block: 0 48px;
 }
 
 .instructor-hero {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 24px;
-  padding: 28px 30px;
-  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+  width: 100vw;
+  margin-left: 50%;
+  margin-bottom: 28px;
+  transform: translateX(-50%);
+  border-radius: 0;
   background:
-    radial-gradient(circle at 92% 10%, rgba(245, 166, 35, 0.18), transparent 30%),
-    linear-gradient(135deg, #1e3a5f 0%, #23384a 58%, #315f4a 100%);
+    radial-gradient(circle at 15% 25%, rgba(245, 166, 35, 0.3), transparent 40%),
+    radial-gradient(circle at 85% 75%, rgba(35, 78, 112, 0.4), transparent 40%),
+    linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #234e70 100%);
   color: #fff;
-  box-shadow: 0 18px 42px rgba(30, 58, 95, 0.16);
+  box-shadow: none;
 
   h1 {
-    margin: 6px 0 8px;
-    font-size: 2rem;
+    margin: 6px 0 4px;
+    font-size: clamp(2rem, 3vw, 2.6rem);
     font-weight: 800;
-    line-height: 1.2;
-  }
-
-  p {
-    max-width: 720px;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.76);
-    font-size: 1rem;
-    line-height: 1.6;
+    line-height: 1.12;
   }
 }
 
+.instructor-hero__particles,
+.instructor-hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.instructor-hero__overlay {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.015) 0,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 48px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.015) 0,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 48px
+    );
+}
+
+.instructor-hero__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 34px;
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: 200px;
+  padding: 32px 24px;
+}
+
+.instructor-hero__identity {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  min-width: 0;
+}
+
+.instructor-hero__avatar {
+  flex: 0 0 auto;
+  border: 3px solid rgba(245, 166, 35, 0.48);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.08),
+    0 14px 30px rgba(0, 0, 0, 0.24);
+}
+
+.instructor-hero__avatar-image {
+  object-fit: cover;
+}
+
 .instructor-hero__eyebrow {
-  color: #f8c94a;
-  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-.instructor-hero__actions {
+.instructor-hero__meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.86rem;
+  font-weight: 700;
 }
 
-.metrics-grid {
+.instructor-hero__stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(4, minmax(132px, 1fr));
+  gap: 14px;
+  width: min(720px, 100%);
+  flex: 0 0 auto;
 }
 
 .metric-tile,
+.course-table-view,
 .course-sidebar,
 .course-workspace,
 .panel-block,
@@ -1770,34 +2340,566 @@ function openQuickDialog(title: string): void {
 .metric-tile {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 94px;
-  padding: 18px;
-  border-radius: 14px;
+  gap: 12px;
+  min-height: 78px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(4px);
 }
 
 .metric-tile__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   flex-shrink: 0;
 }
 
 .metric-tile__value {
-  color: #10223c;
-  font-size: 1.5rem;
+  color: #ffffff;
+  font-size: 1.48rem;
   font-weight: 800;
   line-height: 1.1;
 }
 
 .metric-tile__label {
   margin-top: 4px;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.course-table-layout {
+  --course-table-left-offset: 32px;
+  width: min(1512px, calc(100vw - max(16px, calc((100vw - 1280px) / 2 + 24px)) - 40px));
+  margin-left: calc(var(--course-table-left-offset) * -1);
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 26px;
+  align-items: start;
+}
+
+.instructor-table-nav__card {
+  position: sticky;
+  top: 88px;
+  min-height: 520px;
+  overflow: hidden;
+  border-radius: 14px !important;
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06) !important;
+}
+
+.instructor-table-nav__item {
+  min-height: 52px;
+  margin: 6px 10px;
+  border-radius: 10px;
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    background: rgba($primary, 0.06);
+    transform: translateX(2px);
+  }
+
+  &--active {
+    background: rgba($primary, 0.1) !important;
+    box-shadow: inset 3px 0 0 $primary;
+  }
+
+  :deep(.q-item__section--avatar) {
+    min-width: 34px;
+    padding-right: 10px;
+  }
+}
+
+.course-table-view {
+  overflow: hidden;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06);
+}
+
+.course-table-view__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 26px 26px 22px;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+  background: #ffffff;
+
+  h2 {
+    margin: 0;
+    color: #10223c;
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  span {
+    color: #64748b;
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+}
+
+.course-table-search {
+  width: min(320px, 100%);
+}
+
+.course-table-scroll {
+  display: block;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-top: 4px;
+}
+
+.instructor-profile-course-list {
+  display: grid;
+  gap: 18px;
+  padding: 0 18px 18px;
+}
+
+.instructor-profile-course-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 154px minmax(0, 1fr);
+  gap: 18px;
+  overflow: hidden;
+  padding: 18px 18px 16px 26px;
+  border: 1px solid rgba(245, 166, 35, 0.28);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.05);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(245, 166, 35, 0.5);
+    box-shadow: 0 16px 32px rgba(17, 24, 39, 0.08);
+  }
+}
+
+.instructor-profile-course-card__stripe {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  background: linear-gradient(180deg, $primary, #c4850e);
+}
+
+.instructor-profile-course-card__thumb {
+  width: 154px;
+  height: 94px;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.instructor-profile-course-card__content {
+  min-width: 0;
+}
+
+.instructor-profile-course-card__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.instructor-profile-course-card__title {
+  display: block;
+  padding: 0;
+  border: 0;
+  color: #2f3137;
+  background: transparent;
+  font: inherit;
+  font-size: 1.04rem;
+  font-weight: 900;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    color: #d97706;
+  }
+}
+
+.instructor-profile-course-card__subtitle {
+  margin-top: 4px;
+  color: #d97706;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.instructor-profile-course-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.instructor-profile-course-card__publish {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.instructor-profile-course-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.instructor-profile-course-card__progress {
+  max-width: 520px;
+  margin-top: 18px;
+}
+
+.instructor-profile-course-card__progress-head,
+.instructor-profile-course-card__payment {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.instructor-profile-course-card__payment {
+  justify-content: flex-start;
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+}
+
+.instructor-profile-course-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(17, 24, 39, 0.1);
+}
+
+.instructor-profile-course-card__moodle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.instructor-profile-course-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.course-action-btn--moodle {
+  border: 0 !important;
+  box-shadow: 0 7px 18px rgba(22, 163, 74, 0.18) !important;
+}
+
+.instructor-profile-course-empty {
+  margin: 0 18px 18px;
+  padding: 42px 18px;
+  border: 2px dashed rgba(245, 166, 35, 0.16);
+  border-radius: 12px;
+  color: #94a3b8;
+  font-weight: 800;
+  text-align: center;
+}
+
+.course-admin-table {
+  width: 100%;
+  min-width: 1120px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: #172033;
+  font-size: 0.82rem;
+
+  th,
+  td {
+    padding: 16px 12px;
+    border-right: 1px solid #dce4ee;
+    border-bottom: 1px solid #dce4ee;
+    vertical-align: top;
+    overflow-wrap: break-word;
+  }
+
+  th {
+    color: #0f172a;
+    background: #e7e7e7;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-align: center;
+    height: 70px;
+    line-height: 1.42;
+    vertical-align: middle;
+    white-space: nowrap;
+    word-break: keep-all;
+  }
+
+  tbody tr {
+    background: #ffffff;
+    transition: background-color 0.16s ease;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #fffaf1;
+  }
+
+  tbody tr:hover {
+    background: #fff4dd;
+  }
+
+  td.text-center {
+    vertical-align: middle;
+  }
+}
+
+.table-head-label {
+  display: inline-block;
+  line-height: 1.38;
+}
+
+.course-col-index {
+  width: 58px;
+}
+
+.course-col-title {
+  width: 25%;
+}
+
+.course-col-fee {
+  width: 9%;
+}
+
+.course-col-schedule {
+  width: 12%;
+}
+
+.course-col-seat {
+  width: 5%;
+}
+
+.course-col-paid,
+.course-col-unpaid {
+  width: 7%;
+}
+
+.course-col-publish {
+  width: 7%;
+}
+
+.course-col-remain {
+  width: 5%;
+}
+
+.course-col-moodle {
+  width: 14%;
+}
+
+.course-col-actions {
+  width: 10%;
+}
+
+.col-index {
+  text-align: center;
+  vertical-align: middle !important;
+  word-break: keep-all;
+}
+
+.course-title-cell {
+  padding-left: 18px !important;
+
+  button {
+    display: block;
+    padding: 0;
+    border: 0;
+    color: #d97706;
+    background: transparent;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 900;
+    line-height: 1.5;
+    text-align: left;
+    cursor: pointer;
+    transition: color 0.18s ease;
+
+    &:hover {
+      color: #b45309;
+    }
+  }
+
+  span {
+    display: block;
+    margin-top: 5px;
+    color: #ea7a00;
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+}
+
+.schedule-cell {
+  color: #26364d;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.42;
+  vertical-align: middle !important;
+}
+
+.schedule-cell__content {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+
+  span {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  strong {
+    color: #172033;
+    font-size: 0.78rem;
+    font-weight: 900;
+  }
+}
+
+.moodle-cell {
+  text-align: center;
+  vertical-align: middle !important;
+
+  .moodle-link-btn {
+    min-height: 30px;
+    min-width: 0;
+    width: 100%;
+    max-width: 144px;
+    margin-top: 10px;
+    padding: 0 10px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    font-size: 0.7rem;
+    font-weight: 900 !important;
+    box-shadow: 0 7px 16px rgba(22, 163, 74, 0.16) !important;
+  }
+}
+
+.moodle-status {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+}
+
+.moodle-status :deep(.q-badge) {
+  min-height: 24px;
+  padding: 4px 11px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.moodle-status__meta {
+  display: grid;
+  gap: 2px;
+  color: #334155;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.actions-cell {
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle !important;
+}
+
+.actions-cell__group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.table-action-btn {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  margin: 0;
+  background: #ffffff !important;
+  border: 1px solid #dce4ee !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12) !important;
+  }
+}
+
+.table-action-btn--list,
+.table-action-btn--edit {
+  color: #f59e0b !important;
+}
+
+.table-action-btn--delete {
+  color: #dc2626 !important;
+}
+
+.empty-table-cell {
+  padding: 34px 16px !important;
+  color: #94a3b8;
+  font-weight: 700;
+  text-align: center;
+}
+
+.course-table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid #dce4ee;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.86rem;
+  font-weight: 800;
 }
 
 .workspace-layout {
@@ -2687,16 +3789,31 @@ function openQuickDialog(title: string): void {
 }
 
 @media (max-width: 1180px) {
-  .metrics-grid,
   .assignment-grid,
   .learner-course-grid,
   .report-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .instructor-hero__content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .instructor-hero__stats {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .workspace-layout,
+  .course-table-layout,
   .course-summary {
     grid-template-columns: 1fr;
+  }
+
+  .course-table-layout {
+    width: 100%;
+    margin-left: 0;
   }
 
   .course-sidebar {
@@ -2718,22 +3835,36 @@ function openQuickDialog(title: string): void {
   }
 
   .instructor-hero {
-    align-items: stretch;
-    flex-direction: column;
-    padding: 22px;
-
     h1 {
       font-size: 1.65rem;
     }
   }
 
-  .instructor-hero__actions,
+  .instructor-hero__content {
+    min-height: auto;
+    padding: 30px 16px;
+  }
+
+  .instructor-hero__identity {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .instructor-hero__avatar {
+    width: 82px !important;
+    height: 82px !important;
+    font-size: 82px !important;
+  }
+
+  .instructor-hero__stats {
+    grid-template-columns: 1fr;
+  }
+
   .course-summary__actions {
     display: grid;
     grid-template-columns: 1fr;
   }
 
-  .metrics-grid,
   .overview-grid,
   .settings-grid,
   .form-grid,

@@ -89,7 +89,7 @@
       </q-card-section>
     </template>
 
-    <q-card-section v-else class="row items-start q-gutter-md no-wrap q-pl-lg">
+    <q-card-section v-else class="profile-course-card__body row items-start q-gutter-md no-wrap">
       <div class="profile-course-card__thumb">
         <CourseCoverImage
           :course="course"
@@ -100,7 +100,7 @@
         />
       </div>
 
-      <div class="col">
+      <div class="profile-course-card__main col">
         <div class="row items-start justify-between no-wrap">
           <div class="col">
             <div class="profile-course-card__title text-subtitle1 text-weight-bolder text-dark">
@@ -163,7 +163,7 @@
 
         <template v-if="hasActions">
           <q-separator class="q-mt-md" />
-          <div class="row items-center q-gutter-sm q-mt-sm q-pb-xs">
+          <div class="profile-course-card__actions row items-center q-gutter-sm q-mt-sm q-pb-xs">
             <slot name="actions" />
           </div>
         </template>
@@ -291,7 +291,7 @@ const progressStatusLabel = computed<string>(() => {
 <style lang="scss" scoped>
 .profile-course-card {
   position: relative;
-  border-radius: 14px !important;
+  border-radius: 12px !important;
   border: 1px solid rgba(17, 24, 39, 0.12) !important;
   overflow: hidden;
   height: 100%;
@@ -302,9 +302,9 @@ const progressStatusLabel = computed<string>(() => {
     border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    transform: translateY(-4px);
-    border-color: rgba($primary, 0.35) !important;
-    box-shadow: 0 16px 32px rgba(17, 24, 39, 0.1);
+    transform: translateY(-2px);
+    border-color: rgba($primary, 0.42) !important;
+    box-shadow: 0 14px 28px rgba(17, 24, 39, 0.08);
   }
 
   &--active {
@@ -317,19 +317,27 @@ const progressStatusLabel = computed<string>(() => {
     left: 0;
     top: 0;
     bottom: 0;
-    width: 4px;
+    width: 5px;
     background: linear-gradient(180deg, $primary, #c4850e);
     border-radius: 4px 0 0 4px;
   }
 
   &__thumb {
-    width: 140px;
-    height: 84px;
+    width: 154px;
+    height: 94px;
     border-radius: 10px;
     overflow: hidden;
     position: relative;
     flex-shrink: 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  &__body {
+    padding: 18px 18px 16px 26px;
+  }
+
+  &__main {
+    min-width: 0;
   }
 
   &__cover {
@@ -357,11 +365,32 @@ const progressStatusLabel = computed<string>(() => {
   }
 
   &__title {
+    color: #2f3137 !important;
     line-height: 1.4;
+    font-size: 1.04rem;
+    font-weight: 800;
   }
 
   &__progress {
-    max-width: 420px;
+    max-width: 500px;
+  }
+
+  &__actions {
+    min-height: 56px;
+    padding-top: 12px;
+
+    :deep(.q-space) {
+      flex: 1 1 auto;
+    }
+
+    :deep(.q-btn) {
+      min-height: 38px;
+      border-radius: 10px !important;
+    }
+
+    :deep(.q-btn .q-icon) {
+      font-size: 20px;
+    }
   }
 }
 
