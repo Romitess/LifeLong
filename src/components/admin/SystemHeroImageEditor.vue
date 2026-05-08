@@ -1765,11 +1765,12 @@ onBeforeUnmount(() => {
 
 .hero-slide-list {
   display: grid;
-  gap: 10px;
-  max-height: 360px;
+  gap: 12px;
+  max-height: 400px;
   overflow: auto;
   margin-top: 6px;
-  padding: 4px 4px 4px 0;
+  padding: 12px;
+  margin: 0 -12px;
 }
 
 .color-picker-btn {
@@ -1786,9 +1787,9 @@ onBeforeUnmount(() => {
   gap: 10px;
   align-items: center;
   width: 100%;
-  padding: 8px;
-  border: 1px solid rgba(16, 35, 63, 0.09);
-  border-radius: 16px;
+  padding: 10px;
+  border: 1px solid rgba(16, 35, 63, 0.08);
+  border-radius: 20px;
   background: #f8fafc;
   color: inherit;
   cursor: pointer;
@@ -1797,21 +1798,24 @@ onBeforeUnmount(() => {
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     background-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+  }
 }
 
 .hero-slide-picker:hover {
-  border-color: rgba(245, 166, 35, 0.24);
+  border-color: rgba(245, 166, 35, 0.32);
   background: #ffffff;
   box-shadow:
-    0 12px 24px rgba(17, 24, 39, 0.08),
-    0 0 0 1px rgba(245, 166, 35, 0.08);
+    0 10px 20px -5px rgba(17, 24, 39, 0.1),
+    0 8px 12px -6px rgba(17, 24, 39, 0.08);
 }
 
 .hero-slide-picker--active {
-  border-color: rgba(245, 166, 35, 0.52);
-  box-shadow:
-    0 10px 20px rgba(17, 24, 39, 0.07),
-    0 0 0 1px rgba(245, 166, 35, 0.1);
+  border-color: rgba(245, 166, 35, 0.65);
+  background: #ffffff;
+  box-shadow: none;
 }
 
 .hero-slide-picker img {
