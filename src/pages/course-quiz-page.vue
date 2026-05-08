@@ -483,7 +483,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
-import SidebarNavigation from 'components/navigation/SidebarNavigation.vue';
+import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import { getNavigation, type Lesson } from 'src/data/course-structure';
 import CourseLayout from 'layouts/course-layout.vue';
 

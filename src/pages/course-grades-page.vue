@@ -194,7 +194,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import SidebarNavigation from 'components/navigation/SidebarNavigation.vue';
+import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import { getCourseDetailById } from 'src/data/mock-courses';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';

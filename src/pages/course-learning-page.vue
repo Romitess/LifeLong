@@ -185,7 +185,7 @@
 import { ref, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
-import SidebarNavigation from 'components/navigation/SidebarNavigation.vue';
+import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import CourseLayout from 'layouts/course-layout.vue';
 import { getCourseDetailById } from 'src/data/mock-courses';
 import { getCourseStructure, type CourseModule, type Lesson } from 'src/data/course-structure';

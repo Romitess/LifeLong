@@ -132,7 +132,7 @@ import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
-import SidebarNavigation from 'components/navigation/SidebarNavigation.vue';
+import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import { getCourseDetailById } from 'src/data/mock-courses';
 import { getNavigation, type Lesson } from 'src/data/course-structure';
 import { useRouter } from 'vue-router';

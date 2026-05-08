@@ -125,7 +125,7 @@ import { useI18n } from 'vue-i18n';
 import BaseButton from 'components/base/BaseButton.vue';
 import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
-import SidebarNavigation from 'components/navigation/SidebarNavigation.vue';
+import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import CourseLayout from 'layouts/course-layout.vue';
 import {
   useMyRegisteredCourses,
