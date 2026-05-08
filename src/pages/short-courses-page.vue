@@ -258,13 +258,21 @@
         <!-- Course Grid -->
         <BaseSpinner v-if="isLoading" />
 
-        <div v-else class="row q-col-gutter-lg">
+        <div v-else class="row q-col-gutter-lg short-courses-grid">
           <div
             v-for="course in paginatedCourses"
             :key="course.id"
-            class="col-xs-12 col-sm-6 col-md-3"
+            class="col-xs-12 col-sm-6 col-md-3 short-courses-grid__cell"
           >
             <BaseCourseCard :course="course" @click="onCourseClick(course)" />
+          </div>
+          <div
+            v-for="placeholderIndex in placeholderCards"
+            :key="`placeholder-${placeholderIndex}`"
+            class="col-xs-12 col-sm-6 col-md-3 short-courses-grid__cell short-courses-grid__cell--placeholder"
+            aria-hidden="true"
+          >
+            <div class="short-courses-card-placeholder"></div>
           </div>
           <div v-if="filteredCourses.length === 0" class="col-12 text-center q-py-xl">
             <q-icon name="search_off" size="4rem" color="grey-4" />
@@ -274,22 +282,16 @@
         </div>
 
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="row justify-center q-mt-xl q-mb-xl">
-          <q-pagination
-            v-model="currentPage"
+        <div
+          v-if="filteredCourses.length > 0 && (totalPages > 1 || Boolean(activeFilter.category))"
+          class="row justify-center q-mt-xl q-mb-xl short-courses-pagination"
+        >
+          <BasePagination
+            :model-value="currentPage"
             :max="totalPages"
             :max-pages="7"
-            flat
-            round
-            active-design="unelevated"
-            direction-links
-            color="grey-7"
-            active-color="primary"
-            active-text-color="white"
-            icon-prev="chevron_left"
-            icon-next="chevron_right"
-            class="custom-pagination"
             gutter="md"
+            @update:model-value="handlePageChange"
           />
         </div>
       </div>
@@ -298,7 +300,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { QPopupProxy } from 'quasar';
 import { useCourseList } from 'src/composables/use-course-list';
@@ -306,6 +308,7 @@ import type { Course, DeliveryMode } from 'src/types/course';
 import { useI18n } from 'vue-i18n';
 import { useCategoryStore } from 'src/stores/category-store';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
+import BasePagination from 'components/base/BasePagination.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 
 const router = useRouter();
@@ -318,7 +321,6 @@ const { courses, isLoading, fetchCourses } = useCourseList();
 
 const startDateProxy = ref<QPopupProxy | null>(null);
 const endDateProxy = ref<QPopupProxy | null>(null);
-
 const dateLocale = computed(() => {
   if (locale.value === 'th') {
     return {
@@ -521,6 +523,17 @@ const paginatedCourses = computed(() => {
   return filteredCourses.value.slice(start, start + ITEMS_PER_PAGE);
 });
 
+const placeholderCards = computed(() => {
+  if (filteredCourses.value.length === 0) {
+    return [];
+  }
+
+  return Array.from(
+    { length: Math.max(0, ITEMS_PER_PAGE - paginatedCourses.value.length) },
+    (_, index) => index,
+  );
+});
+
 // Reset to page 1 when filters change
 watch(filteredCourses, () => {
   currentPage.value = 1;
@@ -562,6 +575,31 @@ function resetFilter() {
   void router.push('/short-courses');
 }
 
+function handlePageChange(page: number): void {
+  const previousScrollY = window.scrollY;
+  currentPage.value = page;
+
+  void nextTick(() => {
+    const restoreScroll = () => {
+      window.scrollTo({
+        top: previousScrollY,
+        behavior: 'auto',
+      });
+    };
+
+    restoreScroll();
+    requestAnimationFrame(() => {
+      restoreScroll();
+      requestAnimationFrame(restoreScroll);
+    });
+
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+  });
+}
+
 function onCourseClick(course: Course): void {
   void router.push(`/course/${course.id}`);
 }
@@ -570,36 +608,6 @@ onMounted(fetchCourses);
 </script>
 
 <style lang="scss" scoped>
-.custom-pagination {
-  :deep(.q-btn) {
-    width: 40px;
-    height: 40px;
-    min-height: 40px;
-    padding: 0;
-    border-radius: 50% !important;
-    font-weight: 600;
-    transition: all 0.2s ease;
-
-    &::before {
-      display: none !important;
-    }
-
-    .q-btn__content {
-      min-height: unset;
-    }
-  }
-
-  :deep(.q-btn.q-btn--active) {
-    background-color: var(--q-primary) !important;
-    color: white !important;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
-  }
-
-  :deep(.q-btn:hover:not(.q-btn--active)) {
-    background-color: #f5f5f5 !important;
-  }
-}
-
 .border-top-yellow {
   border-top: 4px solid #f5a623;
 }
@@ -680,6 +688,9 @@ onMounted(fetchCourses);
 }
 
 .course-section-panel {
+  min-height: 1180px;
+  display: flex;
+  flex-direction: column;
   padding: clamp(18px, 2.4vw, 30px);
   border: 1px solid rgba($primary, 0.1);
   border-radius: 16px;
@@ -696,6 +707,36 @@ onMounted(fetchCourses);
   .section-title-underline {
     color: $secondary;
   }
+}
+
+.short-courses-grid {
+  flex: 1;
+  align-content: start;
+  min-height: 920px;
+}
+
+.short-courses-grid__cell {
+  display: flex;
+}
+
+.short-courses-grid__cell :deep(.course-card) {
+  width: 100%;
+  min-height: 390px;
+}
+
+.short-courses-grid__cell--placeholder {
+  pointer-events: none;
+}
+
+.short-courses-card-placeholder {
+  width: 100%;
+  min-height: 390px;
+  visibility: hidden;
+}
+
+.short-courses-pagination {
+  min-height: 72px;
+  align-items: center;
 }
 
 .section-title-with-icon {
@@ -720,5 +761,15 @@ onMounted(fetchCourses);
   color: $secondary;
   background: #e8eaf6;
   box-shadow: inset 0 0 0 1px rgba($secondary, 0.14);
+}
+
+@media (max-width: 1023px) {
+  .course-section-panel {
+    min-height: 0;
+  }
+
+  .short-courses-grid {
+    min-height: 0;
+  }
 }
 </style>

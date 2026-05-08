@@ -207,22 +207,7 @@
           v-if="filteredCategories.length > rowsPerPage"
           class="admin-categories-page__pagination"
         >
-          <q-pagination
-            v-model="currentPage"
-            :max="pageCount"
-            :max-pages="7"
-            flat
-            round
-            active-design="unelevated"
-            direction-links
-            color="grey-7"
-            active-color="primary"
-            active-text-color="white"
-            icon-prev="chevron_left"
-            icon-next="chevron_right"
-            class="custom-pagination"
-            gutter="md"
-          />
+          <BasePagination v-model="currentPage" :max="pageCount" :max-pages="7" gutter="md" />
         </div>
       </AdminSurfaceCard>
     </section>
@@ -264,6 +249,7 @@ import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
+import BasePagination from 'components/base/BasePagination.vue';
 import CategoryCoursesDialog from 'components/admin/CategoryCoursesDialog.vue';
 import CategoryFormDialog from 'components/admin/CategoryFormDialog.vue';
 import { useCategoryStore } from 'src/stores/category-store';
@@ -747,44 +733,6 @@ function confirmDelete(): void {
   padding: 24px 18px 22px;
   border-top: 1px solid #dce4ee;
   background: #ffffff;
-}
-
-.custom-pagination {
-  :deep(.q-btn) {
-    width: 40px;
-    height: 40px;
-    min-height: 40px;
-    padding: 0;
-    border-radius: 50% !important;
-    font-weight: 600;
-    transform: none !important;
-    transition:
-      background-color 0.2s ease,
-      border-color 0.2s ease,
-      box-shadow 0.2s ease,
-      color 0.2s ease;
-
-    &::before {
-      display: none !important;
-    }
-
-    .q-btn__content {
-      min-height: unset;
-    }
-  }
-
-  :deep(.q-btn.q-btn--round[aria-current='true']) {
-    background-color: var(--q-primary) !important;
-    color: #ffffff !important;
-    border-color: var(--q-primary) !important;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
-  }
-
-  :deep(.q-btn.q-btn--round:not([aria-current='true']):hover) {
-    background-color: #f5f5f5 !important;
-    transform: none !important;
-    box-shadow: 0 4px 8px rgba(15, 23, 42, 0.08) !important;
-  }
 }
 
 @media (max-width: 900px) {
