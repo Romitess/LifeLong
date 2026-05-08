@@ -214,7 +214,7 @@ async function onLogin(): Promise<void> {
 
   try {
     await wait(600);
-    const success = authStore.login(loginForm.username, loginForm.password);
+    const success = await authStore.login(loginForm.username, loginForm.password);
 
     if (!success) {
       $q.notify({

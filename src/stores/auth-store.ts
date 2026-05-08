@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { api } from 'src/boot/axios';
 
 export interface User {
   id: string;
@@ -20,6 +21,7 @@ export interface User {
     | 'admin'
     | 'finance'
     | 'central_finance';
+  username?: string;
   avatar: string;
 }
 
@@ -237,16 +239,6 @@ function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
-function normalizeLoginIdentifier(value: string): string {
-  const normalizedValue = normalizeEmail(value);
-
-  if (!normalizedValue || normalizedValue.includes('@')) {
-    return normalizedValue;
-  }
-
-  return `${normalizedValue}@go.buu.ac.th`;
-}
-
 function createDefaultAvatar(email: string): string {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`;
 }
@@ -449,17 +441,41 @@ export const useAuthStore = defineStore('auth', {
       persistUserProfile(getProfileFields(this.user));
     },
 
-    login(username: string, password: string): boolean {
-      const email = normalizeLoginIdentifier(username);
-      const candidatePassword = password.trim();
-      const account = findAuthAccountByEmail(email);
+    async login(username: string, password: string): Promise<boolean> {
+      try {
+        const response = await api.post('/api/auth/login', {
+          username,
+          password,
+        });
 
-      if (!account || account.password !== candidatePassword) {
+        const apiUser = response.data.user;
+
+        // Map API User to Frontend User model
+        const account: StoredAuthAccount = {
+          id: String(apiUser.id),
+          studentId: 'EXT' + String(apiUser.id).padStart(7, '0'),
+          firstNameTh: apiUser.username,
+          lastNameTh: '',
+          firstNameEn: apiUser.username.toUpperCase(),
+          lastNameEn: apiUser.role.toUpperCase(),
+          email: apiUser.email,
+          phone: '',
+          faculty: 'Lifelong Learning',
+          department: apiUser.role,
+          role: apiUser.role.toLowerCase() === 'instructor' ? 'instructor' : 'student',
+          username: apiUser.username,
+          avatar: createDefaultAvatar(apiUser.email),
+          password: password,
+          createdAt: new Date().toISOString(),
+          source: 'mock',
+        };
+
+        this.setAuthenticatedUser(account);
+        return true;
+      } catch (error) {
+        console.error('Login error:', error);
         return false;
       }
-
-      this.setAuthenticatedUser(account);
-      return true;
     },
 
     registerLearner(payload: RegisterLearnerPayload): AuthActionResult {

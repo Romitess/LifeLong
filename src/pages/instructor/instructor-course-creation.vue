@@ -831,6 +831,14 @@ async function onSubmit() {
       formData.append('file', form.image);
     }
 
+    console.log('Current User in Store:', authStore.user);
+    if (authStore.user?.username) {
+      formData.append('instructorUsername', authStore.user.username);
+    } else if (authStore.user?.firstNameTh) {
+      // Fallback if username is missing but we have firstNameTh (which we mapped from username earlier)
+      formData.append('instructorUsername', authStore.user.firstNameTh);
+    }
+
     const moodleResponse = await fetch('http://localhost:3000/api/moodle/courses', {
       method: 'POST',
       body: formData,
