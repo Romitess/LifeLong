@@ -1,0 +1,523 @@
+import { defineStore } from 'pinia';
+import homePicture1 from 'src/assets/homepicture1.png';
+import homePicture2 from 'src/assets/homepicture2.png';
+
+export interface HeroTextSegment {
+  id: string;
+  text: string;
+  color: string;
+  fontWeight?: number;
+}
+
+export type HeroTextEffect = 'typewriter' | 'fade' | 'slide-up' | 'none';
+
+export interface HeroTextLine {
+  id: string;
+  label: string;
+  enabled: boolean;
+  segments: HeroTextSegment[];
+  effect: HeroTextEffect;
+  durationMs: number;
+  gapMs: number;
+  fontFamily: string;
+  fontSizePx: number;
+  fontWeight: number;
+  lineHeight: number;
+  letterSpacing: string;
+}
+
+export interface HeroTextBlock {
+  enabled: boolean;
+  xPercent: number;
+  yPercent: number;
+  widthPercent: number;
+  gapPx: number;
+  textAlign: 'left' | 'center' | 'right';
+  backgroundEnabled: boolean;
+  backgroundColor: string;
+  paddingTopPx: number;
+  paddingRightPx: number;
+  paddingBottomPx: number;
+  paddingLeftPx: number;
+  borderRadiusPx: number;
+  lines: HeroTextLine[];
+}
+
+export interface HeroSlideTemplate {
+  id: string;
+  name: string;
+  imageUrl: string;
+  enabled: boolean;
+  backgroundPosition: string;
+  overlayColor: string;
+  overlayOpacity: number;
+  textBlock: HeroTextBlock;
+}
+
+export interface HeroTemplateConfig {
+  slideDurationMs: number;
+  initialDelayMs: number;
+  slides: HeroSlideTemplate[];
+}
+
+const SYSTEM_HERO_TEMPLATE_STORAGE_KEY = 'lll-system-hero-template';
+
+const DEFAULT_FONT_STACK = "'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif";
+
+const DEFAULT_HERO_CONFIG: HeroTemplateConfig = {
+  slideDurationMs: 12000,
+  initialDelayMs: 250,
+  slides: [
+    {
+      id: 'main-short-course',
+      name: 'Main Short Course Hero',
+      imageUrl: homePicture1,
+      enabled: true,
+      backgroundPosition: 'center 60%',
+      overlayColor: '#ffffff',
+      overlayOpacity: 0,
+      textBlock: {
+        enabled: true,
+        xPercent: 8,
+        yPercent: 18,
+        widthPercent: 56,
+        gapPx: 10,
+        textAlign: 'left',
+        backgroundEnabled: false,
+        backgroundColor: '#FFFFFFB8',
+        paddingTopPx: 0,
+        paddingRightPx: 0,
+        paddingBottomPx: 0,
+        paddingLeftPx: 0,
+        borderRadiusPx: 28,
+        lines: [
+          {
+            id: 'buu-title',
+            label: 'BUU title',
+            enabled: true,
+            effect: 'typewriter',
+            durationMs: 1300,
+            gapMs: 120,
+            fontFamily: DEFAULT_FONT_STACK,
+            fontSizePx: 96,
+            fontWeight: 800,
+            lineHeight: 0.95,
+            letterSpacing: '0',
+            segments: [
+              { id: 'buu-title-bu', text: 'BU', color: '#f7d046', fontWeight: 800 },
+              { id: 'buu-title-u', text: 'U', color: '#7c7c7c', fontWeight: 800 },
+            ],
+          },
+          {
+            id: 'course-title',
+            label: 'Course title',
+            enabled: true,
+            effect: 'typewriter',
+            durationMs: 1300,
+            gapMs: 120,
+            fontFamily: DEFAULT_FONT_STACK,
+            fontSizePx: 72,
+            fontWeight: 800,
+            lineHeight: 0.95,
+            letterSpacing: '0',
+            segments: [{ id: 'course-title-main', text: 'SHORT COURSE', color: '#1a237e' }],
+          },
+          {
+            id: 'course-body-1',
+            label: 'Description line 1',
+            enabled: true,
+            effect: 'fade',
+            durationMs: 520,
+            gapMs: 100,
+            fontFamily: DEFAULT_FONT_STACK,
+            fontSizePx: 22,
+            fontWeight: 500,
+            lineHeight: 1.45,
+            letterSpacing: '0',
+            segments: [
+              {
+                id: 'course-body-1-main',
+                text: 'หลักสูตรระยะสั้นที่ออกแบบมาเพื่อเพิ่มพูนทักษะ และสมรรถนะ',
+                color: '#667085',
+              },
+            ],
+          },
+          {
+            id: 'course-body-2',
+            label: 'Description line 2',
+            enabled: true,
+            effect: 'fade',
+            durationMs: 520,
+            gapMs: 0,
+            fontFamily: DEFAULT_FONT_STACK,
+            fontSizePx: 22,
+            fontWeight: 500,
+            lineHeight: 1.45,
+            letterSpacing: '0',
+            segments: [
+              {
+                id: 'course-body-2-main',
+                text: 'ในด้านต่าง ๆ ให้กับผู้เรียนทุกช่วงวัยในการพัฒนาตนเองอย่างต่อเนื่อง.',
+                color: '#667085',
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      id: 'main-catalog',
+      name: 'Catalog Hero',
+      imageUrl: homePicture2,
+      enabled: true,
+      backgroundPosition: 'center 58%',
+      overlayColor: '#0f172a',
+      overlayOpacity: 0,
+      textBlock: createEmptyTextBlock(),
+    },
+  ],
+};
+
+function createEmptyTextBlock(): HeroTextBlock {
+  return {
+    enabled: false,
+    xPercent: 8,
+    yPercent: 18,
+    widthPercent: 56,
+    gapPx: 10,
+    textAlign: 'left',
+    backgroundEnabled: false,
+    backgroundColor: '#FFFFFFB8',
+    paddingTopPx: 0,
+    paddingRightPx: 0,
+    paddingBottomPx: 0,
+    paddingLeftPx: 0,
+    borderRadiusPx: 28,
+    lines: [],
+  };
+}
+
+function createId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function cloneHeroConfig(config: HeroTemplateConfig): HeroTemplateConfig {
+  return JSON.parse(JSON.stringify(config)) as HeroTemplateConfig;
+}
+
+export function cloneHeroTemplateConfig(config: HeroTemplateConfig): HeroTemplateConfig {
+  return cloneHeroConfig(config);
+}
+
+export function createDefaultHeroTemplateConfig(): HeroTemplateConfig {
+  return cloneHeroConfig(DEFAULT_HERO_CONFIG);
+}
+
+export function createHeroTextSegment(line: HeroTextLine): HeroTextSegment {
+  return {
+    id: createId('segment'),
+    text: 'ช่วงข้อความ',
+    color: '#f5a623',
+    fontWeight: line.fontWeight,
+  };
+}
+
+export function createHeroTextLine(lineIndex: number): HeroTextLine {
+  return {
+    id: createId('hero-line'),
+    label: `Line ${lineIndex + 1}`,
+    enabled: true,
+    effect: 'fade',
+    durationMs: 1100,
+    gapMs: 120,
+    fontFamily: DEFAULT_FONT_STACK,
+    fontSizePx: 40,
+    fontWeight: 800,
+    lineHeight: 1.05,
+    letterSpacing: '0',
+    segments: [{ id: createId('segment'), text: 'ข้อความใหม่', color: '#1a237e' }],
+  };
+}
+
+export function createHeroSlideTemplate(
+  imageUrl: string,
+  name = 'New Hero Image',
+): HeroSlideTemplate {
+  return {
+    id: createId('main-hero'),
+    name,
+    imageUrl,
+    enabled: true,
+    backgroundPosition: 'center center',
+    overlayColor: '#0f172a',
+    overlayOpacity: 0.12,
+    textBlock: createEmptyTextBlock(),
+  };
+}
+
+function clampNumber(value: unknown, fallback: number, min: number, max: number): number {
+  const numericValue = typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return Math.min(Math.max(numericValue, min), max);
+}
+
+function parseLegacyFontSizePx(value: unknown, fallback: number): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  const trimmedValue = value.trim();
+  const pxMatch = trimmedValue.match(/^(\d+(?:\.\d+)?)px$/);
+  if (pxMatch?.[1]) {
+    return Number(pxMatch[1]);
+  }
+
+  const remMatch = trimmedValue.match(/^(\d+(?:\.\d+)?)rem$/);
+  if (remMatch?.[1]) {
+    return Number(remMatch[1]) * 16;
+  }
+
+  const clampValues = Array.from(trimmedValue.matchAll(/(\d+(?:\.\d+)?)(rem|px)/g));
+  if (clampValues.length > 0) {
+    const parsedValues = clampValues.map((match) => {
+      const numericValue = Number(match[1]);
+      return match[2] === 'rem' ? numericValue * 16 : numericValue;
+    });
+    return parsedValues[Math.floor(parsedValues.length / 2)] ?? fallback;
+  }
+
+  return fallback;
+}
+
+function normalizeTextEffect(value: unknown): HeroTextEffect {
+  return value === 'typewriter' || value === 'fade' || value === 'slide-up' || value === 'none'
+    ? value
+    : 'fade';
+}
+
+function normalizeSegment(segment: Partial<HeroTextSegment>, index: number): HeroTextSegment {
+  return {
+    id: typeof segment.id === 'string' ? segment.id : createId(`segment-${index}`),
+    text: typeof segment.text === 'string' ? segment.text : '',
+    color: typeof segment.color === 'string' ? segment.color : '#1a237e',
+    ...(typeof segment.fontWeight === 'number'
+      ? { fontWeight: clampNumber(segment.fontWeight, 800, 100, 1000) }
+      : {}),
+  };
+}
+
+function normalizeLine(
+  line: Partial<HeroTextLine> & { fontSize?: unknown },
+  index: number,
+): HeroTextLine {
+  const segments = Array.isArray(line.segments)
+    ? line.segments.map((segment, segmentIndex) => normalizeSegment(segment, segmentIndex))
+    : [{ id: createId('segment'), text: 'ข้อความใหม่', color: '#1a237e' }];
+
+  return {
+    id: typeof line.id === 'string' ? line.id : createId(`line-${index}`),
+    label: typeof line.label === 'string' ? line.label : `Line ${index + 1}`,
+    enabled: typeof line.enabled === 'boolean' ? line.enabled : true,
+    segments,
+    effect: normalizeTextEffect(line.effect),
+    durationMs: clampNumber(line.durationMs, 1300, 80, 10000),
+    gapMs: clampNumber(line.gapMs, 120, 0, 5000),
+    fontFamily: typeof line.fontFamily === 'string' ? line.fontFamily : DEFAULT_FONT_STACK,
+    fontSizePx: clampNumber(
+      parseLegacyFontSizePx(line.fontSizePx ?? line.fontSize, 40),
+      40,
+      10,
+      160,
+    ),
+    fontWeight: clampNumber(line.fontWeight, 800, 100, 1000),
+    lineHeight: clampNumber(line.lineHeight, 1, 0.7, 2.5),
+    letterSpacing: typeof line.letterSpacing === 'string' ? line.letterSpacing : '0',
+  };
+}
+
+function normalizeTextBlock(block: Partial<HeroTextBlock> | undefined): HeroTextBlock {
+  const fallback = createEmptyTextBlock();
+
+  if (!block || typeof block !== 'object') {
+    return fallback;
+  }
+
+  return {
+    enabled: typeof block.enabled === 'boolean' ? block.enabled : fallback.enabled,
+    xPercent: clampNumber(block.xPercent, fallback.xPercent, 0, 100),
+    yPercent: clampNumber(block.yPercent, fallback.yPercent, 0, 100),
+    widthPercent: clampNumber(block.widthPercent, fallback.widthPercent, 16, 100),
+    gapPx: clampNumber(block.gapPx, fallback.gapPx, 0, 80),
+    textAlign:
+      block.textAlign === 'center' || block.textAlign === 'right' || block.textAlign === 'left'
+        ? block.textAlign
+        : fallback.textAlign,
+    backgroundEnabled:
+      typeof block.backgroundEnabled === 'boolean'
+        ? block.backgroundEnabled
+        : fallback.backgroundEnabled,
+    backgroundColor:
+      typeof block.backgroundColor === 'string' ? block.backgroundColor : fallback.backgroundColor,
+    paddingTopPx: clampNumber(block.paddingTopPx, fallback.paddingTopPx, 0, 100),
+    paddingRightPx: clampNumber(block.paddingRightPx, fallback.paddingRightPx, 0, 100),
+    paddingBottomPx: clampNumber(block.paddingBottomPx, fallback.paddingBottomPx, 0, 100),
+    paddingLeftPx: clampNumber(block.paddingLeftPx, fallback.paddingLeftPx, 0, 100),
+    borderRadiusPx: clampNumber(block.borderRadiusPx, fallback.borderRadiusPx, 0, 80),
+    lines: Array.isArray(block.lines)
+      ? block.lines.map((line, lineIndex) => normalizeLine(line, lineIndex))
+      : fallback.lines,
+  };
+}
+
+function normalizeSlide(slide: Partial<HeroSlideTemplate>, index: number): HeroSlideTemplate {
+  return {
+    id: typeof slide.id === 'string' ? slide.id : createId(`hero-slide-${index}`),
+    name: typeof slide.name === 'string' ? slide.name : `Hero ${index + 1}`,
+    imageUrl: typeof slide.imageUrl === 'string' && slide.imageUrl ? slide.imageUrl : homePicture1,
+    enabled: typeof slide.enabled === 'boolean' ? slide.enabled : true,
+    backgroundPosition:
+      typeof slide.backgroundPosition === 'string' ? slide.backgroundPosition : 'center 60%',
+    overlayColor: typeof slide.overlayColor === 'string' ? slide.overlayColor : '#ffffff',
+    overlayOpacity: clampNumber(slide.overlayOpacity, 0, 0, 1),
+    textBlock: normalizeTextBlock(slide.textBlock),
+  };
+}
+
+function normalizeHeroConfig(value: unknown): HeroTemplateConfig {
+  if (!value || typeof value !== 'object') {
+    return cloneHeroConfig(DEFAULT_HERO_CONFIG);
+  }
+
+  const partialConfig = value as Partial<HeroTemplateConfig>;
+  const slides = Array.isArray(partialConfig.slides)
+    ? partialConfig.slides.map((slide, index) => normalizeSlide(slide, index))
+    : cloneHeroConfig(DEFAULT_HERO_CONFIG).slides;
+
+  return {
+    slideDurationMs: clampNumber(partialConfig.slideDurationMs, 12000, 3000, 60000),
+    initialDelayMs: clampNumber(partialConfig.initialDelayMs, 250, 0, 5000),
+    slides: slides.length > 0 ? slides : cloneHeroConfig(DEFAULT_HERO_CONFIG).slides,
+  };
+}
+
+function readStoredHeroConfig(): HeroTemplateConfig | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const rawValue = window.localStorage.getItem(SYSTEM_HERO_TEMPLATE_STORAGE_KEY);
+
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    return normalizeHeroConfig(JSON.parse(rawValue) as unknown);
+  } catch (error) {
+    console.warn('Failed to parse system hero template', error);
+    window.localStorage.removeItem(SYSTEM_HERO_TEMPLATE_STORAGE_KEY);
+    return null;
+  }
+}
+
+export const useSystemImageStore = defineStore('systemImage', {
+  state: (): { heroConfig: HeroTemplateConfig; initialized: boolean } => ({
+    heroConfig: cloneHeroConfig(DEFAULT_HERO_CONFIG),
+    initialized: false,
+  }),
+
+  getters: {
+    activeHeroSlides(state): HeroSlideTemplate[] {
+      const enabledSlides = state.heroConfig.slides.filter((slide) => slide.enabled);
+      return enabledSlides.length > 0 ? enabledSlides : state.heroConfig.slides.slice(0, 1);
+    },
+  },
+
+  actions: {
+    init(): void {
+      if (this.initialized) {
+        return;
+      }
+
+      this.heroConfig = readStoredHeroConfig() ?? createDefaultHeroTemplateConfig();
+      this.initialized = true;
+      this.persistHeroConfig();
+    },
+
+    setHeroConfig(config: HeroTemplateConfig): void {
+      this.heroConfig = normalizeHeroConfig(config);
+      this.persistHeroConfig();
+    },
+
+    persistHeroConfig(): void {
+      if (typeof window === 'undefined') {
+        return;
+      }
+
+      window.localStorage.setItem(
+        SYSTEM_HERO_TEMPLATE_STORAGE_KEY,
+        JSON.stringify(normalizeHeroConfig(this.heroConfig)),
+      );
+    },
+
+    resetHeroConfig(): void {
+      this.heroConfig = createDefaultHeroTemplateConfig();
+      this.persistHeroConfig();
+    },
+
+    addHeroSlide(imageUrl: string, name = 'New Hero Image'): HeroSlideTemplate {
+      const nextSlide = createHeroSlideTemplate(imageUrl, name);
+
+      this.heroConfig.slides.push(nextSlide);
+      this.persistHeroConfig();
+      return nextSlide;
+    },
+
+    deleteHeroSlide(slideId: string): void {
+      if (this.heroConfig.slides.length <= 1) {
+        return;
+      }
+
+      this.heroConfig.slides = this.heroConfig.slides.filter((slide) => slide.id !== slideId);
+      this.persistHeroConfig();
+    },
+
+    addHeroTextLine(slideId: string): void {
+      const slide = this.heroConfig.slides.find((item) => item.id === slideId);
+      if (!slide) {
+        return;
+      }
+
+      slide.textBlock.enabled = true;
+      slide.textBlock.lines.push(createHeroTextLine(slide.textBlock.lines.length));
+      this.persistHeroConfig();
+    },
+
+    deleteHeroTextLine(slideId: string, lineId: string): void {
+      const slide = this.heroConfig.slides.find((item) => item.id === slideId);
+      if (!slide) {
+        return;
+      }
+
+      slide.textBlock.lines = slide.textBlock.lines.filter((line) => line.id !== lineId);
+      this.persistHeroConfig();
+    },
+
+    addHeroTextSegment(line: HeroTextLine): void {
+      line.segments.push(createHeroTextSegment(line));
+      this.persistHeroConfig();
+    },
+
+    deleteHeroTextSegment(line: HeroTextLine, segmentId: string): void {
+      if (line.segments.length <= 1) {
+        return;
+      }
+
+      line.segments = line.segments.filter((segment) => segment.id !== segmentId);
+      this.persistHeroConfig();
+    },
+  },
+});

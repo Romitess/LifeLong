@@ -1,5 +1,6 @@
 // app global css
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import './App/admin-family/admin-theme.scss';
 
 *,
 body,
@@ -9,7 +10,7 @@ body,
 }
 
 body {
-  background-color: #f8f9fa;
+  background-color: #f8f6f1;
 }
 
 .section-container {
@@ -79,7 +80,7 @@ body .q-btn {
 // ข้อยกเว้นสำหรับกล่องสถิติบนพื้นหลังเข้ม (Profile Hero)
 .profile-hero .profile-stat-card {
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
-  background: rgba(255, 255, 255, 0.08);
+  background: #f8f6f1 !important;
   
   &:hover {
     box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.4), 0 10px 20px rgba(0, 0, 0, 0.2) !important;

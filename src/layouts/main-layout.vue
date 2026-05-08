@@ -150,7 +150,7 @@
                   >{{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}</span
                 >
                 <span class="nav-profile-role">
-                  {{ isTeachingRole ? 'Teacher' : authStore.user?.studentId }}
+                  {{ userRoleLabel }}
                 </span>
               </div>
               <q-avatar
@@ -193,7 +193,7 @@
                           {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
                         </div>
                         <div class="profile-action-card__role">
-                          {{ isTeachingRole ? 'Teacher' : authStore.user?.studentId }}
+                          {{ userRoleLabel }}
                         </div>
                       </div>
                     </div>
@@ -337,7 +337,7 @@
                   <q-item clickable v-ripple @click="goToProfile">
                     <q-item-section>{{ $t('myProfile') }}</q-item-section>
                   </q-item>
-                  <q-item v-if="isTeachingRole" clickable v-ripple @click="goToNotifications">
+                  <q-item v-if="isPrivilegedRole" clickable v-ripple @click="goToNotifications">
                     <q-item-section>{{ $t('notifications') }}</q-item-section>
                   </q-item>
                   <q-item clickable v-ripple @click="onLogout">
@@ -469,7 +469,49 @@ function isTeachingNotificationRole(role: string | undefined): boolean {
   return ['teach', 'instructor'].includes(role ?? '');
 }
 
+function isAdminNotificationRole(role: string | undefined): boolean {
+  return role === 'admin';
+}
+
 function getNotificationItemsForRole(role: string | undefined) {
+  if (isAdminNotificationRole(role)) {
+    return [
+      {
+        id: 901,
+        title: 'รอตรวจหมวดหมู่ใหม่ 3 รายการ',
+        message: 'มีคำขอเพิ่มหมวดหมู่รายวิชาจากทีมวิชาการ',
+        time: 'วันนี้ 10:15',
+        icon: 'category',
+        iconBg: '#e0f2fe',
+        iconColor: '#0369a1',
+        action: '/admin/categories',
+        read: false,
+      },
+      {
+        id: 902,
+        title: 'ภาพ Hero ใกล้หมดอายุ',
+        message: 'แบนเนอร์แคมเปญ Summer Credit Bank สิ้นสุดวันที่ 31 พ.ค.',
+        time: 'วันนี้ 08:40',
+        icon: 'image',
+        iconBg: '#fff7ed',
+        iconColor: '#c2410c',
+        action: '/admin/images',
+        read: false,
+      },
+      {
+        id: 903,
+        title: 'ข้อมูลระบบถูกอัปเดต',
+        message: 'ทีมทะเบียนแก้ไขปีการศึกษาเริ่มต้นล่าสุด',
+        time: 'เมื่อวานนี้',
+        icon: 'settings',
+        iconBg: '#ecfdf5',
+        iconColor: '#047857',
+        action: '/admin/basics',
+        read: true,
+      },
+    ];
+  }
+
   if (isTeachingNotificationRole(role)) {
     return [
       {
@@ -536,6 +578,19 @@ function getNotificationItemsForRole(role: string | undefined) {
 }
 
 const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
+const isAdminRole = computed(() => isAdminNotificationRole(authStore.user?.role));
+const isPrivilegedRole = computed(() => isTeachingRole.value || isAdminRole.value);
+const userRoleLabel = computed(() => {
+  if (isAdminRole.value) {
+    return 'Admin';
+  }
+
+  if (isTeachingRole.value) {
+    return 'Teacher';
+  }
+
+  return authStore.user?.studentId ?? '';
+});
 
 const showNavBar = computed(() => {
   const excludedPaths = ['/learn', '/grades', '/video', '/quiz', '/course-home'];
@@ -550,6 +605,35 @@ const homeNav = computed<NavItem>(() => ({
 }));
 
 const navItems = computed<NavItem[]>(() => {
+  if (isAdminRole.value) {
+    return [
+      {
+        name: 'admin-dashboard',
+        label: 'แดชบอร์ด',
+        icon: 'dashboard_customize',
+        to: '/admin/dashboard',
+      },
+      {
+        name: 'admin-categories',
+        label: 'หมวดหมู่รายวิชา',
+        icon: 'category',
+        to: '/admin/categories',
+      },
+      {
+        name: 'admin-images',
+        label: 'รูปภาพระบบ',
+        icon: 'collections',
+        to: '/admin/images',
+      },
+      {
+        name: 'admin-basics',
+        label: 'ข้อมูลพื้นฐาน',
+        icon: 'tune',
+        to: '/admin/basics',
+      },
+    ];
+  }
+
   if (isTeachingRole.value) {
     return [
       {
@@ -652,13 +736,17 @@ const notificationUnreadCount = computed(
   () => getNotificationItemsForRole(authStore.user?.role).filter((item) => !item.read).length,
 );
 const notificationPreviewSubtitle = computed(() =>
-  isTeachingRole.value ? 'รายการสำคัญสำหรับผู้สอน' : 'ข่าวสารและกิจกรรมการเรียนของคุณ',
+  isAdminRole.value
+    ? 'รายการสำคัญสำหรับผู้ดูแลระบบ'
+    : isTeachingRole.value
+      ? 'รายการสำคัญสำหรับผู้สอน'
+      : 'ข่าวสารและกิจกรรมการเรียนของคุณ',
 );
 
 type AuthPath = '/login' | '/register';
 
 function shouldShowPageSwitchLoading(path: string): boolean {
-  return pageSwitchLoadingPaths.has(path);
+  return pageSwitchLoadingPaths.has(path) || path.startsWith('/admin');
 }
 
 function showPageSwitchLoading(): void {
@@ -694,6 +782,14 @@ async function goToAuthPage(path: AuthPath): Promise<void> {
 function syncActiveNavWithRoute(path: string) {
   if (path === '/main' || path === '/') {
     activeNav.value = courseStore.selectedCategory ? 'category' : 'home';
+  } else if (path.includes('/admin/categories')) {
+    activeNav.value = 'admin-categories';
+  } else if (path.includes('/admin/images')) {
+    activeNav.value = 'admin-images';
+  } else if (path.includes('/admin/basics')) {
+    activeNav.value = 'admin-basics';
+  } else if (path.includes('/admin')) {
+    activeNav.value = 'admin-dashboard';
   } else if (path.includes('/short-courses')) {
     // If there's a category in query, highlight 'category' tab, otherwise 'short-courses'
     activeNav.value = route.query.category ? 'category' : 'short-courses';
@@ -713,11 +809,12 @@ function syncActiveNavWithRoute(path: string) {
 }
 
 watch(
-  () => route.path,
-  (path, previousPath) => {
+  () => route.fullPath,
+  (fullPath, previousFullPath) => {
+    const path = route.path;
     syncActiveNavWithRoute(path);
 
-    if (!previousPath || path === previousPath || !shouldShowPageSwitchLoading(path)) {
+    if (!previousFullPath || fullPath === previousFullPath || !shouldShowPageSwitchLoading(path)) {
       return;
     }
 
@@ -746,8 +843,8 @@ function confirmLogout() {
 
 async function onLogoClick() {
   courseStore.setSelectedCategory(null);
-  activeNav.value = 'home';
-  await navigateWithPageLoading('/main');
+  activeNav.value = isAdminRole.value ? 'admin-dashboard' : 'home';
+  await navigateWithPageLoading(isAdminRole.value ? '/admin/dashboard' : '/main');
 }
 
 async function goToProfile() {
@@ -761,7 +858,7 @@ async function goToNotifications() {
 }
 
 async function openNotificationPreview(notification: { action?: string }) {
-  if (isTeachingRole.value && notification.action) {
+  if (isPrivilegedRole.value && notification.action) {
     await router.push(notification.action);
     return;
   }

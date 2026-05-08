@@ -11,7 +11,7 @@ export interface User {
   phone: string;
   faculty: string;
   department: string;
-  role: 'student' | 'staff' | 'external' | 'instructor' | 'teach';
+  role: 'student' | 'staff' | 'external' | 'instructor' | 'teach' | 'admin';
   avatar: string;
 }
 
@@ -93,6 +93,20 @@ const MOCK_INSTRUCTOR_1_BASE: Omit<User, 'avatar'> = {
   role: 'teach',
 };
 
+const MOCK_ADMIN_BASE: Omit<User, 'avatar'> = {
+  id: 'mock-admin-user',
+  studentId: 'ADM0001',
+  firstNameTh: 'ผู้ดูแล',
+  lastNameTh: 'ระบบ',
+  firstNameEn: 'SYSTEM',
+  lastNameEn: 'ADMIN',
+  email: 'admin@go.buu.ac.th',
+  phone: '038102222',
+  faculty: 'สำนักบริหารระบบ',
+  department: 'BUU Lifelong Learning Platform',
+  role: 'admin',
+};
+
 const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
   {
     ...MOCK_USER_BASE,
@@ -114,6 +128,14 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_INSTRUCTOR_1_BASE,
     email: MOCK_INSTRUCTOR_1_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pitcha',
+    password: '111111',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    source: 'mock',
+  },
+  {
+    ...MOCK_ADMIN_BASE,
+    email: MOCK_ADMIN_BASE.email.toLowerCase(),
+    avatar: 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=BUU-LLL-Admin',
     password: '111111',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
@@ -183,7 +205,8 @@ function isUserRole(value: unknown): value is User['role'] {
     value === 'staff' ||
     value === 'external' ||
     value === 'instructor' ||
-    value === 'teach'
+    value === 'teach' ||
+    value === 'admin'
   );
 }
 

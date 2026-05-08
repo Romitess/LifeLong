@@ -38,6 +38,27 @@ const routes: RouteRecordRaw[] = [
         meta: { public: true },
       },
       { path: 'profile', component: () => import('pages/profile-page.vue') },
+      { path: 'admin', redirect: '/admin/dashboard', meta: { role: 'admin' } },
+      {
+        path: 'admin/dashboard',
+        component: () => import('pages/admin/admin-dashboard-page.vue'),
+        meta: { role: 'admin' },
+      },
+      {
+        path: 'admin/categories',
+        component: () => import('pages/admin/admin-categories-page.vue'),
+        meta: { role: 'admin' },
+      },
+      {
+        path: 'admin/images',
+        component: () => import('pages/admin/admin-images-page.vue'),
+        meta: { role: 'admin' },
+      },
+      {
+        path: 'admin/basics',
+        component: () => import('pages/admin/admin-basics-page.vue'),
+        meta: { role: 'admin' },
+      },
       {
         path: 'notifications',
         component: () => import('pages/instructor/instructor-notifications.vue'),

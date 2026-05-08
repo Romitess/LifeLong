@@ -88,6 +88,7 @@
       <div class="auth-demo__title">{{ $t('auth.login.demoTitle') }}</div>
       <div>{{ $t('auth.login.studentDemo') }}</div>
       <div>{{ $t('auth.login.instructorDemo') }}</div>
+      <div>{{ $t('auth.login.adminDemo') }}</div>
     </div>
 
     <div class="auth-switch">
@@ -227,6 +228,11 @@ async function onLogin(): Promise<void> {
       message: t('auth.login.success'),
       position: 'top',
     });
+
+    if (authStore.user?.role === 'admin') {
+      void router.push('/admin/dashboard');
+      return;
+    }
 
     if (authStore.user?.role === 'instructor' || authStore.user?.role === 'teach') {
       void router.push('/instructor/dashboard');

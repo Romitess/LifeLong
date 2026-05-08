@@ -128,6 +128,7 @@ export default {
       demoTitle: 'Demo Accounts',
       studentDemo: "student{'@'}go.buu.ac.th / 111111",
       instructorDemo: "teach{'@'}go.buu.ac.th / 111111, teach1{'@'}go.buu.ac.th / 111111",
+      adminDemo: "admin{'@'}go.buu.ac.th / 111111",
       memberTitle: 'For BUU students and staff',
       memberDesc: "Use your full university email or the username before {'@'}go.buu.ac.th.",
       support: "support_lifelong{'@'}buu.ac.th",

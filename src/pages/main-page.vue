@@ -4,73 +4,65 @@
     <template v-if="!courseStore.selectedCategory">
       <section
         class="hero-section"
-        :style="{ '--hero-slide-duration': `${HERO_SLIDE_DURATION_MS}ms` }"
+        :style="{ '--hero-slide-duration': `${heroSlideDurationMs}ms` }"
       >
         <q-carousel
           v-model="heroSlide"
           animated
           infinite
-          :autoplay="HERO_SLIDE_DURATION_MS"
+          :autoplay="heroSlideDurationMs"
           transition-prev="fade"
           transition-next="fade"
           transition-duration="1000"
           class="hero-carousel"
         >
           <q-carousel-slide
-            :name="1"
-            img-src="~assets/homepicture1.png"
-            class="hero-slide hero-slide--short-course"
+            v-for="slide in activeHeroSlides"
+            :key="slide.id"
+            :name="slide.id"
+            :img-src="slide.imageUrl"
+            class="hero-slide"
+            :style="{ backgroundPosition: slide.backgroundPosition }"
           >
             <div
-              class="section-container hero-copy"
-              :class="{ 'hero-copy--active': heroSlide === 1 }"
+              class="hero-slide__overlay"
+              :style="{ backgroundColor: slide.overlayColor, opacity: slide.overlayOpacity }"
+            />
+            <div
+              v-if="slide.textBlock.enabled"
+              class="hero-copy"
+              :class="{ 'hero-copy--active': heroSlide === slide.id }"
             >
-              <div class="hero-copy__content">
+              <div class="hero-copy__content" :style="getHeroTextBlockStyle(slide)">
                 <div
-                  class="hero-type-line hero-type-line--title hero-type-line--title-buu"
-                  :class="{ 'hero-type-line--visible': isHeroLineVisible(0) }"
+                  v-for="(line, lineIndex) in getEnabledHeroLines(slide)"
+                  :key="line.id"
+                  class="hero-type-line"
+                  :class="[
+                    getHeroLineEffectClass(line),
+                    { 'hero-type-line--visible': isHeroLineVisible(lineIndex) },
+                  ]"
+                  :style="getHeroLineStyle(line)"
                 >
-                  <span class="hero-type-line__text"
-                    ><span class="hero-title-buu__bu">{{ heroTypedBuuPrefix }}</span
-                    ><span class="hero-title-buu__u">{{ heroTypedBuuSuffix }}</span
-                    ><span v-if="shouldShowHeroCaret(0)" class="hero-type-caret"></span
-                  ></span>
-                </div>
-                <div
-                  class="hero-type-line hero-type-line--title hero-type-line--title-course"
-                  :class="{ 'hero-type-line--visible': isHeroLineVisible(1) }"
-                >
-                  <span class="hero-type-line__text"
-                    ><span v-text="heroTypedLines[1]"></span
-                    ><span v-if="shouldShowHeroCaret(1)" class="hero-type-caret"></span
-                  ></span>
-                </div>
-                <div
-                  class="hero-type-line hero-type-line--body hero-type-line--body-1"
-                  :class="{ 'hero-type-line--visible': isHeroLineVisible(2) }"
-                >
-                  <span class="hero-type-line__text"
-                    ><span v-text="heroTypedLines[2]"></span
-                    ><span v-if="shouldShowHeroCaret(2)" class="hero-type-caret"></span
-                  ></span>
-                </div>
-                <div
-                  class="hero-type-line hero-type-line--body hero-type-line--body-2 hero-type-line--persist-caret"
-                  :class="{ 'hero-type-line--visible': isHeroLineVisible(3) }"
-                >
-                  <span class="hero-type-line__text"
-                    ><span v-text="heroTypedLines[3]"></span
-                    ><span v-if="shouldShowHeroCaret(3)" class="hero-type-caret"></span
-                  ></span>
+                  <span
+                    class="hero-type-line__text"
+                    :style="{ color: getHeroLineCaretColor(line) }"
+                  >
+                    <span
+                      v-for="segment in getVisibleHeroSegments(line, lineIndex)"
+                      :key="segment.id"
+                      :style="{
+                        color: segment.color,
+                        fontWeight: segment.fontWeight ?? line.fontWeight,
+                      }"
+                      v-text="segment.text"
+                    />
+                    <span v-if="shouldShowHeroCaret(lineIndex)" class="hero-type-caret"></span>
+                  </span>
                 </div>
               </div>
             </div>
           </q-carousel-slide>
-          <q-carousel-slide
-            :name="2"
-            img-src="~assets/homepicture2.png"
-            class="hero-slide hero-slide--catalog"
-          />
         </q-carousel>
       </section>
 
@@ -249,10 +241,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useCourseStore } from 'src/stores/course-store';
+import {
+  useSystemImageStore,
+  type HeroSlideTemplate,
+  type HeroTextLine,
+  type HeroTextSegment,
+} from 'src/stores/system-image-store';
 import { useCourseList } from 'src/composables/use-course-list';
 import type { Course } from 'src/types/course';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
@@ -262,13 +260,12 @@ import { useQuasar } from 'quasar';
 
 const router = useRouter();
 const courseStore = useCourseStore();
+const systemImageStore = useSystemImageStore();
 const $q = useQuasar();
 const { t } = useI18n({ useScope: 'global' });
-const heroSlide = ref(1);
-const HERO_SLIDE_DURATION_MS = 12000;
-const HERO_TYPING_INITIAL_DELAY_MS = 250;
-const HERO_TYPING_DURATIONS_MS = [1300, 1300, 1450, 1300] as const;
-const HERO_TYPING_LINE_GAPS_MS = [120, 120, 100, 0] as const;
+systemImageStore.init();
+
+const heroSlide = ref(systemImageStore.activeHeroSlides[0]?.id ?? '');
 
 interface HomeInfoItem {
   icon: string;
@@ -281,8 +278,8 @@ interface HomeInfoItem {
 const { courses, isLoading, error, activeCourses, fetchCourses } = useCourseList();
 
 const isCategoryLoading = ref(false);
-const heroTypedLines = ref(['', '', '', '']);
-const heroTypingLineIndex = ref(0);
+const heroTypedCharCounts = ref<number[]>([]);
+const heroTypingLineIndex = ref(-1);
 const isHeroTypingComplete = ref(false);
 let heroTypingTimer: ReturnType<typeof setTimeout> | null = null;
 const categoryMap: Record<string, string> = {
@@ -310,8 +307,8 @@ watch(
   },
 );
 
-watch(heroSlide, (value) => {
-  if (value === 1) {
+watch(heroSlide, () => {
+  if (currentHeroTypeLines.value.length > 0) {
     startHeroTyping();
   } else {
     stopHeroTyping();
@@ -392,23 +389,42 @@ const infoCards = computed<HomeInfoItem[]>(() => [
   },
 ]);
 
-const heroCopy = computed(() => ({
-  title: t('homePage.hero.title'),
-  body1: t('homePage.hero.body1'),
-  body2: t('homePage.hero.body2'),
-}));
+const activeHeroSlides = computed(() => systemImageStore.activeHeroSlides);
+const heroSlideDurationMs = computed(() => systemImageStore.heroConfig.slideDurationMs);
+const currentHeroSlide = computed<HeroSlideTemplate | null>(
+  () =>
+    activeHeroSlides.value.find((slide) => slide.id === heroSlide.value) ??
+    activeHeroSlides.value[0] ??
+    null,
+);
+const currentHeroTypeLines = computed<HeroTextLine[]>(() =>
+  currentHeroSlide.value ? getEnabledHeroLines(currentHeroSlide.value) : [],
+);
 
-const heroTypeLines = computed(() => [
-  'BUU',
-  heroCopy.value.title,
-  heroCopy.value.body1,
-  heroCopy.value.body2,
-]);
-const heroTypedBuuPrefix = computed(() => heroTypedLines.value[0]?.slice(0, 2) ?? '');
-const heroTypedBuuSuffix = computed(() => heroTypedLines.value[0]?.slice(2) ?? '');
+watch(
+  activeHeroSlides,
+  (slides) => {
+    if (!slides.some((slide) => slide.id === heroSlide.value)) {
+      heroSlide.value = slides[0]?.id ?? '';
+    }
+  },
+  { immediate: true },
+);
 
-watch(heroTypeLines, () => {
-  if (heroSlide.value === 1) {
+watch(
+  () => JSON.stringify(currentHeroTypeLines.value),
+  () => {
+    if (currentHeroTypeLines.value.length > 0) {
+      startHeroTyping();
+      return;
+    }
+
+    stopHeroTyping();
+  },
+);
+
+watch(heroSlideDurationMs, () => {
+  if (currentHeroTypeLines.value.length > 0) {
     startHeroTyping();
   }
 });
@@ -422,18 +438,25 @@ function clearHeroTypingTimer(): void {
 
 function stopHeroTyping(): void {
   clearHeroTypingTimer();
+  heroTypingLineIndex.value = -1;
+  heroTypedCharCounts.value = [];
   isHeroTypingComplete.value = false;
 }
 
 function startHeroTyping(): void {
   clearHeroTypingTimer();
-  heroTypedLines.value = ['', '', '', ''];
-  heroTypingLineIndex.value = 0;
-  isHeroTypingComplete.value = false;
+  const lineCount = currentHeroTypeLines.value.length;
+  heroTypedCharCounts.value = Array.from({ length: lineCount }, () => 0);
+  heroTypingLineIndex.value = -1;
+  isHeroTypingComplete.value = lineCount === 0;
+
+  if (lineCount === 0) {
+    return;
+  }
 
   heroTypingTimer = setTimeout(() => {
-    typeHeroLine(0, 0);
-  }, HERO_TYPING_INITIAL_DELAY_MS);
+    playHeroLine(0);
+  }, systemImageStore.heroConfig.initialDelayMs);
 }
 
 type IntlSegmenterConstructor = new (
@@ -455,8 +478,8 @@ function getHeroTextSegments(text: string): string[] {
   );
 }
 
-function typeHeroLine(lineIndex: number, characterIndex: number): void {
-  const lines = heroTypeLines.value;
+function playHeroLine(lineIndex: number): void {
+  const lines = currentHeroTypeLines.value;
   const currentLine = lines[lineIndex];
 
   if (lineIndex >= lines.length || currentLine === undefined) {
@@ -467,12 +490,34 @@ function typeHeroLine(lineIndex: number, characterIndex: number): void {
   }
 
   heroTypingLineIndex.value = lineIndex;
-  const segments = getHeroTextSegments(currentLine);
-  const duration = HERO_TYPING_DURATIONS_MS[lineIndex] ?? 1300;
-  const interval = Math.max(Math.round(duration / Math.max(segments.length, 1)), 24);
 
-  if (characterIndex < segments.length) {
-    heroTypedLines.value[lineIndex] = segments.slice(0, characterIndex + 1).join('');
+  if (currentLine.effect === 'typewriter') {
+    typeHeroLine(lineIndex, 0);
+    return;
+  }
+
+  heroTypedCharCounts.value[lineIndex] = getHeroLineCharacterLength(currentLine);
+  const effectDuration = currentLine.effect === 'none' ? 0 : currentLine.durationMs;
+  heroTypingTimer = setTimeout(() => {
+    playHeroLine(lineIndex + 1);
+  }, effectDuration + currentLine.gapMs);
+}
+
+function typeHeroLine(lineIndex: number, characterIndex: number): void {
+  const lines = currentHeroTypeLines.value;
+  const currentLine = lines[lineIndex];
+
+  if (lineIndex >= lines.length || currentLine === undefined) {
+    playHeroLine(lineIndex);
+    return;
+  }
+
+  const totalCharacters = getHeroLineCharacterLength(currentLine);
+  const duration = currentLine.durationMs;
+  const interval = Math.max(Math.round(duration / Math.max(totalCharacters, 1)), 24);
+
+  if (characterIndex < totalCharacters) {
+    heroTypedCharCounts.value[lineIndex] = characterIndex + 1;
     heroTypingTimer = setTimeout(() => {
       typeHeroLine(lineIndex, characterIndex + 1);
     }, interval);
@@ -480,28 +525,115 @@ function typeHeroLine(lineIndex: number, characterIndex: number): void {
   }
 
   heroTypingTimer = setTimeout(() => {
-    typeHeroLine(lineIndex + 1, 0);
-  }, HERO_TYPING_LINE_GAPS_MS[lineIndex] ?? 0);
+    playHeroLine(lineIndex + 1);
+  }, currentLine.gapMs);
 }
 
 function isHeroLineVisible(lineIndex: number): boolean {
   return (
     isHeroTypingComplete.value ||
     heroTypingLineIndex.value >= lineIndex ||
-    (heroTypedLines.value[lineIndex]?.length ?? 0) > 0
+    (heroTypedCharCounts.value[lineIndex] ?? 0) > 0
   );
 }
 
 function shouldShowHeroCaret(lineIndex: number): boolean {
-  if (heroSlide.value !== 1) {
+  if (!currentHeroSlide.value?.textBlock.enabled) {
     return false;
   }
 
-  if (isHeroTypingComplete.value) {
-    return lineIndex === heroTypeLines.value.length - 1;
+  const line = currentHeroTypeLines.value[lineIndex];
+  return (
+    !isHeroTypingComplete.value &&
+    line?.effect === 'typewriter' &&
+    heroTypingLineIndex.value === lineIndex
+  );
+}
+
+function getEnabledHeroLines(slide: HeroSlideTemplate): HeroTextLine[] {
+  return slide.textBlock.lines.filter(
+    (line) => line.enabled && line.segments.some((segment) => segment.text.length > 0),
+  );
+}
+
+function getHeroLineCharacterLength(line: HeroTextLine): number {
+  return line.segments.reduce(
+    (total, segment) => total + getHeroTextSegments(segment.text).length,
+    0,
+  );
+}
+
+function getVisibleHeroSegments(line: HeroTextLine, lineIndex: number): HeroTextSegment[] {
+  if (!isHeroLineVisible(lineIndex)) {
+    return [];
   }
 
-  return heroTypingLineIndex.value === lineIndex;
+  if (line.effect !== 'typewriter') {
+    return line.segments;
+  }
+
+  let remainingCharacters = heroTypedCharCounts.value[lineIndex] ?? 0;
+
+  if (isHeroTypingComplete.value || heroTypingLineIndex.value > lineIndex) {
+    remainingCharacters = getHeroLineCharacterLength(line);
+  }
+
+  return line.segments
+    .map((segment) => {
+      if (remainingCharacters <= 0) {
+        return {
+          ...segment,
+          text: '',
+        };
+      }
+
+      const segmentCharacters = getHeroTextSegments(segment.text);
+      const visibleCharacters = segmentCharacters.slice(0, remainingCharacters);
+      remainingCharacters -= visibleCharacters.length;
+
+      return {
+        ...segment,
+        text: visibleCharacters.join(''),
+      };
+    })
+    .filter((segment) => segment.text.length > 0);
+}
+
+function getHeroTextBlockStyle(slide: HeroSlideTemplate): CSSProperties {
+  const block = slide.textBlock;
+
+  return {
+    left: `${block.xPercent}%`,
+    top: `${block.yPercent}%`,
+    width: `${block.widthPercent}%`,
+    gap: `${block.gapPx}px`,
+    textAlign: block.textAlign,
+    background: block.backgroundEnabled ? block.backgroundColor : 'transparent',
+    paddingTop: `${block.paddingTopPx}px`,
+    paddingRight: `${block.paddingRightPx}px`,
+    paddingBottom: `${block.paddingBottomPx}px`,
+    paddingLeft: `${block.paddingLeftPx}px`,
+    borderRadius: `${block.borderRadiusPx}px`,
+  };
+}
+
+function getHeroLineStyle(line: HeroTextLine): CSSProperties {
+  return {
+    fontFamily: line.fontFamily,
+    fontSize: `${line.fontSizePx}px`,
+    fontWeight: line.fontWeight,
+    lineHeight: line.lineHeight,
+    letterSpacing: line.letterSpacing,
+    '--hero-line-duration': `${line.durationMs}ms`,
+  };
+}
+
+function getHeroLineEffectClass(line: HeroTextLine): string {
+  return `hero-type-line--effect-${line.effect}`;
+}
+
+function getHeroLineCaretColor(line: HeroTextLine): string {
+  return line.segments.find((segment) => segment.color)?.color ?? '#1a237e';
 }
 
 function getTranslatedCategory(category: string | null): string {
@@ -589,18 +721,22 @@ onBeforeUnmount(clearHeroTypingTimer);
 .hero-copy {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
   pointer-events: none;
   z-index: 2;
 }
 
 .hero-copy__content {
+  position: absolute;
   display: grid;
-  gap: 10px;
-  width: min(58vw, 880px);
-  max-width: min(58vw, 880px);
-  padding-top: 24px;
+  max-width: calc(100% - 48px);
+  transform: translateZ(0);
+}
+
+.hero-slide__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .hero-type-line {
@@ -608,8 +744,12 @@ onBeforeUnmount(clearHeroTypingTimer);
   display: inline-block;
   max-width: 100%;
   opacity: 0;
+  transform: translateY(0);
   vertical-align: top;
-  transition: opacity 0.12s ease;
+  transition:
+    opacity var(--hero-line-duration, 420ms) ease,
+    transform var(--hero-line-duration, 420ms) cubic-bezier(0.2, 0.9, 0.2, 1);
+  will-change: opacity, transform;
 }
 
 .hero-type-line__text {
@@ -621,6 +761,23 @@ onBeforeUnmount(clearHeroTypingTimer);
 
 .hero-type-line--visible {
   opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-type-line--effect-slide-up {
+  transform: translateY(18px);
+}
+
+.hero-type-line--effect-slide-up.hero-type-line--visible {
+  transform: translateY(0);
+}
+
+.hero-type-line--effect-typewriter {
+  transition: none;
+}
+
+.hero-type-line--effect-none {
+  transition: none;
 }
 
 .hero-type-caret {
@@ -631,41 +788,6 @@ onBeforeUnmount(clearHeroTypingTimer);
   background: currentColor;
   vertical-align: -0.04em;
   animation: heroCaretBlink 0.75s step-end infinite;
-}
-
-.hero-type-line--title {
-  font-weight: 800;
-  letter-spacing: 0;
-  line-height: 0.95;
-}
-
-.hero-type-line--title-buu {
-  font-size: clamp(3.8rem, 7vw, 6.6rem);
-}
-
-.hero-title-buu__bu {
-  color: #f7d046;
-}
-
-.hero-title-buu__u {
-  color: #7c7c7c;
-}
-
-.hero-type-line--title-course {
-  color: #1a237e;
-  font-size: clamp(2.6rem, 5vw, 4.9rem);
-}
-
-.hero-type-line--body {
-  color: #667085;
-  font-size: clamp(1rem, 1.5vw, 1.35rem);
-  font-weight: 500;
-  line-height: 1.45;
-}
-
-.hero-type-line--body .hero-type-caret {
-  height: 0.88em;
-  vertical-align: -0.12em;
 }
 
 .hero-carousel :deep(.q-carousel__slide) {
@@ -906,14 +1028,15 @@ onBeforeUnmount(clearHeroTypingTimer);
   }
 
   .hero-copy {
-    align-items: flex-end;
-    padding-bottom: 88px;
+    padding: 0;
   }
 
   .hero-copy__content {
-    max-width: min(100%, 460px);
-    gap: 8px;
-    padding-top: 0;
+    left: 24px !important;
+    top: auto !important;
+    bottom: 84px;
+    width: calc(100% - 48px) !important;
+    max-width: 460px;
   }
 
   .hero-type-line {
@@ -924,19 +1047,6 @@ onBeforeUnmount(clearHeroTypingTimer);
   .hero-type-line__text {
     max-width: none;
     white-space: normal;
-  }
-
-  .hero-type-line--title-buu {
-    font-size: clamp(2.8rem, 12vw, 3.6rem);
-  }
-
-  .hero-type-line--title-course {
-    font-size: clamp(2rem, 9vw, 2.8rem);
-  }
-
-  .hero-type-line--body {
-    font-size: 0.96rem;
-    line-height: 1.5;
   }
 
   .hero-carousel :deep(.q-carousel__slide) {
