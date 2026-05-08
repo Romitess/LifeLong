@@ -304,15 +304,17 @@ import { QPopupProxy } from 'quasar';
 import { useCourseList } from 'src/composables/use-course-list';
 import type { Course, DeliveryMode } from 'src/types/course';
 import { useI18n } from 'vue-i18n';
+import { useCategoryStore } from 'src/stores/category-store';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 
 const router = useRouter();
 const route = useRoute();
-const { t } = useI18n();
+const { t, locale } = useI18n();
+const categoryStore = useCategoryStore();
+categoryStore.init();
 
 const { courses, isLoading, fetchCourses } = useCourseList();
-const { locale } = useI18n();
 
 const startDateProxy = ref<QPopupProxy | null>(null);
 const endDateProxy = ref<QPopupProxy | null>(null);
@@ -374,6 +376,20 @@ const categoryMap: Record<string, string> = {
 };
 
 function getTranslatedCategory(label: string): string {
+  const matchedCategory = categoryStore.findByName(label);
+  if (matchedCategory) {
+    const key = categoryMap[matchedCategory.name];
+    if (key) {
+      return t(key);
+    }
+
+    if (locale.value !== 'th' && matchedCategory.nameEn?.trim()) {
+      return matchedCategory.nameEn;
+    }
+
+    return matchedCategory.name;
+  }
+
   const key = categoryMap[label];
   return key ? t(key) : label;
 }

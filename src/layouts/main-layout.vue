@@ -54,59 +54,29 @@
                 transition-hide="jump-up"
               >
                 <div class="category-menu-content">
-                  <div class="row q-col-gutter-xl">
-                    <div class="col-12 col-md-6">
-                      <q-list dense padding>
-                        <q-item
-                          v-for="cat in categories.slice(0, 6)"
-                          :key="cat.label"
-                          clickable
-                          v-ripple
-                          class="category-item"
-                          @click="onCategoryClick(cat.label)"
-                          v-close-popup
-                        >
-                          <q-item-section>
-                            <div class="row items-center justify-between no-wrap full-width">
-                              <span
-                                class="text-subtitle1 text-weight-medium text-blue-grey-9 text-no-wrap q-mr-lg"
-                              >
-                                {{ $t(cat.labelKey) }}
-                              </span>
-                              <q-badge rounded color="teal" class="category-badge">{{
-                                cat.count
-                              }}</q-badge>
-                            </div>
-                          </q-item-section>
-                        </q-item>
-                      </q-list>
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <q-list dense padding>
-                        <q-item
-                          v-for="cat in categories.slice(6)"
-                          :key="cat.label"
-                          clickable
-                          v-ripple
-                          class="category-item"
-                          @click="onCategoryClick(cat.label)"
-                          v-close-popup
-                        >
-                          <q-item-section>
-                            <div class="row items-center justify-between no-wrap full-width">
-                              <span
-                                class="text-subtitle1 text-weight-medium text-blue-grey-9 text-no-wrap q-mr-lg"
-                              >
-                                {{ $t(cat.labelKey) }}
-                              </span>
-                              <q-badge rounded color="teal" class="category-badge">{{
-                                cat.count
-                              }}</q-badge>
-                            </div>
-                          </q-item-section>
-                        </q-item>
-                      </q-list>
-                    </div>
+                  <div class="category-menu-grid">
+                    <q-item
+                      v-for="cat in categories"
+                      :key="cat.id"
+                      clickable
+                      v-ripple
+                      class="category-item"
+                      @click="onCategoryClick(cat.name)"
+                      v-close-popup
+                    >
+                      <q-item-section>
+                        <div class="row items-center justify-between no-wrap full-width">
+                          <span
+                            class="text-subtitle1 text-weight-medium text-blue-grey-9 text-no-wrap q-mr-lg"
+                          >
+                            {{ cat.displayLabel }}
+                          </span>
+                          <q-badge rounded color="teal" class="category-badge">{{
+                            cat.count
+                          }}</q-badge>
+                        </div>
+                      </q-item-section>
+                    </q-item>
                   </div>
                 </div>
               </q-menu>
@@ -439,6 +409,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useCourseStore } from 'src/stores/course-store';
+import { useCategoryStore } from 'src/stores/category-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
@@ -459,8 +430,10 @@ const router = useRouter();
 const route = useRoute();
 const $q = useQuasar();
 const courseStore = useCourseStore();
+const categoryStore = useCategoryStore();
 const authStore = useAuthStore();
-const { t } = useI18n({ useScope: 'global' });
+const { t, locale } = useI18n({ useScope: 'global' });
+categoryStore.init();
 
 /**
  * Notification Helper Functions
@@ -733,21 +706,6 @@ const navItems = computed<NavItem[]>(() => {
   ];
 });
 
-const CATEGORY_LIST = [
-  'ภาษาและการสื่อสาร',
-  'สุขภาพและการแพทย์',
-  'การศึกษาและการฝึกอบรม',
-  'อาหารและโภชนาการ',
-  'วิศวกรรมและสถาปัตยกรรม',
-  'สังคม การเมืองการปกครอง',
-  'คณิตศาสตร์และวิทยาศาสตร์',
-  'คอมพิวเตอร์และเทคโนโลยี',
-  'ทักษะชีวิตและการพัฒนาตนเอง',
-  'ธุรกิจและการบริหารจัดการ',
-  'ศิลปวัฒนธรรมและศาสนา',
-  'เกษตรและสิ่งแวดล้อม',
-];
-
 const categoryMap: Record<string, string> = {
   ภาษาและการสื่อสาร: 'langComm',
   สุขภาพและการแพทย์: 'healthMed',
@@ -763,11 +721,25 @@ const categoryMap: Record<string, string> = {
   เกษตรและสิ่งแวดล้อม: 'agriEnv',
 };
 
+function getCategoryDisplayName(name: string, nameEn?: string): string {
+  const labelKey = categoryMap[name];
+  if (labelKey) {
+    return t(labelKey);
+  }
+
+  if (locale.value !== 'th' && nameEn?.trim()) {
+    return nameEn;
+  }
+
+  return name;
+}
+
 const categories = computed(() => {
-  return CATEGORY_LIST.map((label) => ({
-    label,
-    labelKey: categoryMap[label] || '',
-    count: courseStore.courses.filter((course) => course.category === label).length,
+  return categoryStore.activeCategories.map((category) => ({
+    id: category.id,
+    name: category.name,
+    displayLabel: getCategoryDisplayName(category.name, category.nameEn),
+    count: courseStore.courses.filter((course) => course.category === category.name).length,
   }));
 });
 
@@ -955,7 +927,10 @@ async function onNavClick(nav: NavItem) {
 
 async function onCategoryClick(category: string) {
   activeNav.value = 'category';
-  await router.push(`/short-courses?category=${category}`);
+  await router.push({
+    path: '/short-courses',
+    query: { category },
+  });
 }
 </script>
 
@@ -1491,10 +1466,15 @@ async function onCategoryClick(category: string) {
   padding: 32px;
 }
 
+.category-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 32px;
+}
+
 .category-item {
   border-radius: 8px;
   padding: 12px 20px;
-  margin-bottom: 4px;
   transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 
   &:hover {
@@ -1512,6 +1492,13 @@ async function onCategoryClick(category: string) {
   font-weight: 700;
   min-width: 28px;
   text-align: center;
+}
+
+@media (max-width: 1023px) {
+  .category-menu-grid {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
 }
 
 // ── Search Bar ───────────────────────────────────────────────

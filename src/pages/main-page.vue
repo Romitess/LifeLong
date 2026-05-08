@@ -246,6 +246,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } 
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useCourseStore } from 'src/stores/course-store';
+import { useCategoryStore } from 'src/stores/category-store';
 import {
   useSystemImageStore,
   type HeroSlideTemplate,
@@ -262,9 +263,11 @@ import { useQuasar } from 'quasar';
 
 const router = useRouter();
 const courseStore = useCourseStore();
+const categoryStore = useCategoryStore();
 const systemImageStore = useSystemImageStore();
 const $q = useQuasar();
-const { t } = useI18n({ useScope: 'global' });
+const { t, locale } = useI18n({ useScope: 'global' });
+categoryStore.init();
 systemImageStore.init();
 
 const heroSlide = ref(systemImageStore.activeHeroSlides[0]?.id ?? '');
@@ -641,6 +644,20 @@ function getHeroLineCaretColor(line: HeroTextLine): string {
 function getTranslatedCategory(category: string | null): string {
   if (!category) {
     return '';
+  }
+
+  const matchedCategory = categoryStore.findByName(category);
+  if (matchedCategory) {
+    const categoryKey = categoryMap[matchedCategory.name];
+    if (categoryKey) {
+      return t(categoryKey);
+    }
+
+    if (locale.value !== 'th' && matchedCategory.nameEn?.trim()) {
+      return matchedCategory.nameEn;
+    }
+
+    return matchedCategory.name;
   }
 
   const categoryKey = categoryMap[category];
