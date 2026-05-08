@@ -1,0 +1,141 @@
+<template>
+  <q-page class="admin-page finance-receipts-page">
+    <AdminPageHero
+      eyebrow="Financial Operations"
+      eyebrow-icon="receipt_long"
+      title="จัดการใบเสร็จรับเงิน"
+      description="ค้นหา ตรวจสอบ และพิมพ์ใบเสร็จรับเงินสำหรับผู้เรียน"
+    />
+
+    <section class="admin-shell admin-content">
+      <AdminSurfaceCard title="รายการใบเสร็จทั้งหมด" card-class="q-pa-none">
+        <template #header-actions>
+          <q-input
+            v-model="search"
+            dense
+            outlined
+            rounded
+            placeholder="ค้นหาด้วยชื่อ เลขที่ใบเสร็จ หรือรหัสคอร์ส"
+            class="receipt-search"
+          >
+            <template v-slot:prepend>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+          <q-btn flat round icon="filter_list" color="primary" />
+        </template>
+
+        <q-table
+          :rows="mockReceipts"
+          :columns="columns"
+          row-key="id"
+          flat
+          :filter="search"
+          class="receipt-table"
+        >
+          <template v-slot:body-cell-status="props">
+            <q-td :props="props">
+              <q-badge
+                :color="props.value === 'Paid' ? 'positive' : 'warning'"
+                :label="props.value"
+              />
+            </q-td>
+          </template>
+
+          <template v-slot:body-cell-actions="props">
+            <q-td :props="props" class="q-gutter-xs">
+              <q-btn flat round dense icon="visibility" color="primary">
+                <q-tooltip>ดูรายละเอียด</q-tooltip>
+              </q-btn>
+              <q-btn flat round dense icon="print" color="grey-7">
+                <q-tooltip>พิมพ์ใบเสร็จ</q-tooltip>
+              </q-btn>
+            </q-td>
+          </template>
+        </q-table>
+      </AdminSurfaceCard>
+    </section>
+  </q-page>
+</template>
+
+<script setup lang="ts">
+import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import { ref } from 'vue';
+import type { QTableProps } from 'quasar';
+
+const search = ref('');
+
+const columns: QTableProps['columns'] = [
+  { name: 'id', label: 'เลขที่ใบเสร็จ', field: 'id', align: 'left', sortable: true },
+  { name: 'date', label: 'วันที่ชำระ', field: 'date', align: 'left', sortable: true },
+  { name: 'learner', label: 'ผู้เรียน', field: 'learner', align: 'left', sortable: true },
+  { name: 'course', label: 'รหัสวิชา', field: 'course', align: 'left', sortable: true },
+  { name: 'amount', label: 'จำนวนเงิน', field: 'amount', align: 'right', sortable: true },
+  { name: 'status', label: 'สถานะ', field: 'status', align: 'center' },
+  { name: 'actions', label: 'จัดการ', field: 'actions', align: 'center' },
+];
+
+const mockReceipts = [
+  {
+    id: 'REC-69001',
+    date: '2026-05-08',
+    learner: 'สมชาย ใจดี',
+    course: '888101',
+    amount: '฿1,200',
+    status: 'Paid',
+  },
+  {
+    id: 'REC-69002',
+    date: '2026-05-08',
+    learner: 'วิภาวี สุขใจ',
+    course: '888203',
+    amount: '฿3,500',
+    status: 'Paid',
+  },
+  {
+    id: 'REC-68999',
+    date: '2026-05-07',
+    learner: 'กิตติพงษ์ มั่นคง',
+    course: '888101',
+    amount: '฿1,200',
+    status: 'Paid',
+  },
+  {
+    id: 'REC-68998',
+    date: '2026-05-07',
+    learner: 'ธนากร รักเรียน',
+    course: '999101',
+    amount: '฿0',
+    status: 'Paid',
+  },
+  {
+    id: 'REC-68995',
+    date: '2026-05-06',
+    learner: 'นารี มีสุข',
+    course: '777102',
+    amount: '฿2,900',
+    status: 'Pending',
+  },
+];
+</script>
+
+<style lang="scss" scoped>
+.receipt-search {
+  width: 300px;
+}
+
+.receipt-table {
+  :deep(.q-table__card) {
+    box-shadow: none;
+  }
+  :deep(thead tr) {
+    background: #f8fafc;
+  }
+  :deep(th) {
+    font-weight: 800;
+    color: #475569;
+    font-size: 0.9rem;
+  }
+}
+</style>

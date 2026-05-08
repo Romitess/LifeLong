@@ -579,14 +579,21 @@ function getNotificationItemsForRole(role: string | undefined) {
 
 const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
 const isAdminRole = computed(() => isAdminNotificationRole(authStore.user?.role));
-const isPrivilegedRole = computed(() => isTeachingRole.value || isAdminRole.value);
+const isFinanceRole = computed(() => authStore.user?.role === 'finance');
+const isPrivilegedRole = computed(
+  () => isTeachingRole.value || isAdminRole.value || isFinanceRole.value,
+);
 const userRoleLabel = computed(() => {
   if (isAdminRole.value) {
-    return 'Admin';
+    return t('profile.roles.admin');
   }
 
   if (isTeachingRole.value) {
-    return 'Teacher';
+    return t('profile.roles.instructor');
+  }
+
+  if (isFinanceRole.value) {
+    return t('profile.roles.finance');
   }
 
   if (authStore.user?.role === 'staff') {
@@ -634,6 +641,23 @@ const navItems = computed<NavItem[]>(() => {
         label: 'ข้อมูลพื้นฐาน',
         icon: 'tune',
         to: '/admin/basics',
+      },
+    ];
+  }
+
+  if (isFinanceRole.value) {
+    return [
+      {
+        name: 'finance-dashboard',
+        label: 'แดชบอร์ดการเงิน',
+        icon: 'payments',
+        to: '/finance/dashboard',
+      },
+      {
+        name: 'finance-receipts',
+        label: 'จัดการใบเสร็จ',
+        icon: 'receipt_long',
+        to: '/finance/receipts',
       },
     ];
   }
@@ -1075,7 +1099,7 @@ async function onCategoryClick(category: string) {
   font-size: 0.78rem;
   line-height: 1.45;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .notification-preview__item-time {

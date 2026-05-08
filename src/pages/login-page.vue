@@ -240,6 +240,11 @@ async function onLogin(): Promise<void> {
       return;
     }
 
+    if (authStore.user?.role === 'finance') {
+      void router.push('/finance/dashboard');
+      return;
+    }
+
     const redirectPath = typeof route.query.redirect === 'string' ? route.query.redirect : '/main';
     void router.push(redirectPath);
   } catch {

@@ -367,7 +367,12 @@
             <q-item clickable v-ripple @click="$router.push('/profile')">
               <q-item-section>{{ $t('myProfile') }}</q-item-section>
             </q-item>
-            <q-item v-if="isTeachingRole" clickable v-ripple @click="goToNotifications">
+            <q-item
+              v-if="isTeachingRole || isFinanceRole"
+              clickable
+              v-ripple
+              @click="goToNotifications"
+            >
               <q-item-section>{{ $t('notifications') }}</q-item-section>
             </q-item>
             <q-item clickable v-ripple @click="onLogout">
@@ -385,6 +390,7 @@ import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useMyRegisteredCourses } from 'src/composables/use-my-registered-courses';
+import { useI18n } from 'vue-i18n';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
 
 const emit = defineEmits<{
@@ -394,6 +400,7 @@ const emit = defineEmits<{
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const { t } = useI18n({ useScope: 'global' });
 const { myRegisteredCourseEntries } = useMyRegisteredCourses();
 
 const courseId = computed(() => {
@@ -529,19 +536,24 @@ function getNotificationItemsForRole(role: string | undefined) {
 }
 
 const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
+const isFinanceRole = computed(() => authStore.user?.role === 'finance');
+
 const userRoleLabel = computed(() => {
   if (authStore.user?.role === 'admin') {
     return 'Admin';
   }
 
   if (isTeachingRole.value) {
-    return 'Teacher';
+    return t('profile.roles.instructor');
+  }
+
+  if (isFinanceRole.value) {
+    return t('profile.roles.finance');
   }
 
   if (authStore.user?.role === 'staff') {
     return authStore.user.department || 'Staff';
   }
-
   return authStore.user?.studentId ?? '';
 });
 
@@ -941,7 +953,7 @@ async function openNotificationPreview(notification: { action?: string }) {
   font-size: 0.78rem;
   line-height: 1.45;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .notification-preview__item-time {

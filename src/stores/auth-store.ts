@@ -11,7 +11,7 @@ export interface User {
   phone: string;
   faculty: string;
   department: string;
-  role: 'student' | 'staff' | 'external' | 'instructor' | 'teach' | 'admin';
+  role: 'student' | 'staff' | 'external' | 'instructor' | 'teach' | 'admin' | 'finance';
   avatar: string;
 }
 
@@ -111,14 +111,14 @@ const MOCK_FINANCE_BASE: Omit<User, 'avatar'> = {
   id: 'mock-finance-user',
   studentId: 'FIN0001',
   firstNameTh: 'สมศรี',
-  lastNameTh: 'กองคลัง',
+  lastNameTh: 'การเงิน',
   firstNameEn: 'SOMSRI',
-  lastNameEn: 'KONGKLANG',
-  email: 'central.finance@go.buu.ac.th',
-  phone: '038103333',
-  faculty: 'กองคลัง',
-  department: 'เจ้าหน้าที่การเงินกองคลัง',
-  role: 'staff',
+  lastNameEn: 'FINANCE',
+  email: 'finance@go.buu.ac.th',
+  phone: '038101111',
+  faculty: 'คณะวิทยาการสารสนเทศ',
+  department: 'งานคลังและพัสดุ',
+  role: 'finance',
 };
 
 const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
@@ -157,7 +157,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
   {
     ...MOCK_FINANCE_BASE,
     email: MOCK_FINANCE_BASE.email.toLowerCase(),
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Somsri',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SomsriFinance',
     password: '111111',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
@@ -228,7 +228,8 @@ function isUserRole(value: unknown): value is User['role'] {
     value === 'external' ||
     value === 'instructor' ||
     value === 'teach' ||
-    value === 'admin'
+    value === 'admin' ||
+    value === 'finance'
   );
 }
 

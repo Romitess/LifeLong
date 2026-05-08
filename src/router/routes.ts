@@ -93,6 +93,16 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/instructor/instructor-grading.vue'),
         meta: { role: 'instructor' },
       },
+      {
+        path: 'finance/dashboard',
+        component: () => import('pages/finance/finance-dashboard-page.vue'),
+        meta: { role: 'finance' },
+      },
+      {
+        path: 'finance/receipts',
+        component: () => import('pages/finance/finance-receipts-page.vue'),
+        meta: { role: 'finance' },
+      },
     ],
   },
   {

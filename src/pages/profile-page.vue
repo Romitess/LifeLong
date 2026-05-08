@@ -46,7 +46,7 @@
               </div>
               <div class="column">
                 <div class="text-overline text-white" style="opacity: 0.6; letter-spacing: 0.12em">
-                  {{ $t('profile.hero.learner') }}
+                  {{ heroRoleLabel }}
                 </div>
                 <div class="text-h4 text-weight-bolder text-white q-mt-xs">
                   {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
@@ -2218,6 +2218,14 @@ const learnerRegisteredDate = computed<string>(() =>
 const activeBenefitLabel = computed<string>(() => t('profile.benefits.activeStudent'));
 const benefitsCheckedAtLabel = computed<string>(() => formatThaiDateTime(benefitsCheckedAt.value));
 const maskedCitizenId = computed<string>(() => '121990096xxxx');
+
+const heroRoleLabel = computed(() => {
+  if (authStore.user?.role === 'admin') return t('profile.roles.admin');
+  if (authStore.user?.role === 'teach' || authStore.user?.role === 'instructor')
+    return t('profile.roles.instructor');
+  if (authStore.user?.role === 'finance') return t('profile.roles.finance');
+  return t('profile.hero.learner');
+});
 
 const selectedHairLabel = computed<string>(() => cartoonAvatar.hair);
 const selectedFaceLabel = computed<string>(() => cartoonAvatar.face);
