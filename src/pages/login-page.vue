@@ -90,6 +90,7 @@
       <div>{{ $t('auth.login.instructorDemo') }}</div>
       <div>{{ $t('auth.login.adminDemo') }}</div>
       <div>{{ $t('auth.login.financeDemo') }}</div>
+      <div>{{ $t('auth.login.centralFinanceDemo') }}</div>
     </div>
 
     <div class="auth-switch">
@@ -242,6 +243,11 @@ async function onLogin(): Promise<void> {
 
     if (authStore.user?.role === 'finance') {
       void router.push('/finance/dashboard');
+      return;
+    }
+
+    if (authStore.user?.role === 'central_finance') {
+      void router.push('/central-finance/dashboard');
       return;
     }
 

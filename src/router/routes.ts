@@ -103,6 +103,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/finance/finance-receipts-page.vue'),
         meta: { role: 'finance' },
       },
+      {
+        path: 'central-finance/dashboard',
+        component: () => import('pages/centralfinance/finance-dashboard-page.vue'),
+        meta: { role: 'central_finance' },
+      },
     ],
   },
   {

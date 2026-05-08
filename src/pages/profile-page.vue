@@ -2224,6 +2224,7 @@ const heroRoleLabel = computed(() => {
   if (authStore.user?.role === 'teach' || authStore.user?.role === 'instructor')
     return t('profile.roles.instructor');
   if (authStore.user?.role === 'finance') return t('profile.roles.finance');
+  if (authStore.user?.role === 'central_finance') return t('profile.roles.central_finance');
   return t('profile.hero.learner');
 });
 

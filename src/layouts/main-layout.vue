@@ -580,8 +580,10 @@ function getNotificationItemsForRole(role: string | undefined) {
 const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
 const isAdminRole = computed(() => isAdminNotificationRole(authStore.user?.role));
 const isFinanceRole = computed(() => authStore.user?.role === 'finance');
+const isCentralFinanceRole = computed(() => authStore.user?.role === 'central_finance');
 const isPrivilegedRole = computed(
-  () => isTeachingRole.value || isAdminRole.value || isFinanceRole.value,
+  () =>
+    isTeachingRole.value || isAdminRole.value || isFinanceRole.value || isCentralFinanceRole.value,
 );
 const userRoleLabel = computed(() => {
   if (isAdminRole.value) {
@@ -594,6 +596,10 @@ const userRoleLabel = computed(() => {
 
   if (isFinanceRole.value) {
     return t('profile.roles.finance');
+  }
+
+  if (isCentralFinanceRole.value) {
+    return t('profile.roles.central_finance');
   }
 
   if (authStore.user?.role === 'staff') {
@@ -658,6 +664,17 @@ const navItems = computed<NavItem[]>(() => {
         label: 'จัดการใบเสร็จ',
         icon: 'receipt_long',
         to: '/finance/receipts',
+      },
+    ];
+  }
+
+  if (isCentralFinanceRole.value) {
+    return [
+      {
+        name: 'central-finance-dashboard',
+        label: 'แดชบอร์ดกองคลัง',
+        icon: 'analytics',
+        to: '/central-finance/dashboard',
       },
     ];
   }
@@ -829,6 +846,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'students-mgmt';
   } else if (path.includes('/notifications')) {
     activeNav.value = '';
+  } else if (path.includes('/central-finance/dashboard')) {
+    activeNav.value = 'central-finance-dashboard';
   } else if (path.includes('/instructor/reports')) {
     activeNav.value = 'reports';
   } else {

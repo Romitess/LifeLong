@@ -131,6 +131,7 @@ export default {
       instructorDemo: "teach{'@'}go.buu.ac.th / 111111, teach1{'@'}go.buu.ac.th / 111111",
       adminDemo: "admin{'@'}go.buu.ac.th / 111111",
       financeDemo: "finance{'@'}go.buu.ac.th / 111111",
+      centralFinanceDemo: "central-finance{'@'}go.buu.ac.th / 111111",
       memberTitle: 'สำหรับนิสิตและบุคลากร ม.บูรพา',
       memberDesc: "ใช้ชื่อผู้ใช้ก่อน {'@'}go.buu.ac.th หรืออีเมลเต็มเพื่อเข้าสู่ระบบได้",
       support: "support_lifelong{'@'}buu.ac.th",
@@ -286,6 +287,7 @@ export default {
       admin: 'ผู้ดูแลระบบ',
       instructor: 'อาจารย์ผู้สอน',
       finance: 'เจ้าหน้าที่การเงินคณะ',
+      central_finance: 'เจ้าหน้าที่การเงินกองคลัง',
       student: 'ผู้เรียน',
     },
     menu: {
