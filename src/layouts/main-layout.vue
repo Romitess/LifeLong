@@ -870,8 +870,23 @@ function confirmLogout() {
 
 async function onLogoClick() {
   courseStore.setSelectedCategory(null);
-  activeNav.value = isAdminRole.value ? 'admin-dashboard' : 'home';
-  await navigateWithPageLoading(isAdminRole.value ? '/admin/dashboard' : '/main');
+
+  if (isAdminRole.value) {
+    activeNav.value = 'admin-dashboard';
+    await navigateWithPageLoading('/admin/dashboard');
+  } else if (isCentralFinanceRole.value) {
+    activeNav.value = 'central-finance-dashboard';
+    await navigateWithPageLoading('/central-finance/dashboard');
+  } else if (isFinanceRole.value) {
+    activeNav.value = 'finance-dashboard';
+    await navigateWithPageLoading('/finance/dashboard');
+  } else if (isTeachingRole.value) {
+    activeNav.value = 'dashboard';
+    await navigateWithPageLoading('/instructor/dashboard');
+  } else {
+    activeNav.value = 'home';
+    await navigateWithPageLoading('/main');
+  }
 }
 
 async function goToProfile() {
