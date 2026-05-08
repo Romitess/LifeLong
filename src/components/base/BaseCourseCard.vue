@@ -57,6 +57,10 @@ import { computed } from 'vue';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import type { Course, CourseStatus, DeliveryMode } from 'src/types/course';
 import { useI18n } from 'vue-i18n';
+import {
+  formatPrice as formatPriceShared,
+  formatViews as formatViewsShared,
+} from 'src/utils/course-format';
 
 const { locale, t } = useI18n({ useScope: 'global' });
 
@@ -112,11 +116,11 @@ function getStatusKey(status: CourseStatus): string {
 }
 
 function formatPrice(price: number): string {
-  return price.toLocaleString(locale.value === 'th' ? 'th-TH' : 'en-US');
+  return formatPriceShared(price, locale.value === 'th' ? 'th' : 'en');
 }
 
 function formatViews(views: number): string {
-  return views.toLocaleString(locale.value === 'th' ? 'th-TH' : 'en-US');
+  return formatViewsShared(views, locale.value === 'th' ? 'th' : 'en');
 }
 
 function getStatusColor(status: CourseStatus): string {

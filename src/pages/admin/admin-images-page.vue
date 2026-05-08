@@ -5,7 +5,6 @@
       eyebrow-icon="collections"
       title="จัดการรูปภาพของระบบ"
       description="จัดการ Hero หน้า Main ด้วย template preview แบบลากวางได้ พร้อมปรับข้อความ ฟ้อนต์ สี ตำแหน่ง และ animation ต่อบรรทัด"
-      wide
     >
       <template #aside>
         <q-badge
@@ -17,7 +16,7 @@
       </template>
     </AdminPageHero>
 
-    <section class="admin-shell admin-shell--wide admin-content">
+    <section class="admin-shell admin-content">
       <SystemHeroImageEditor />
     </section>
   </q-page>

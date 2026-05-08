@@ -3,7 +3,6 @@
     <div
       :class="[
         'admin-shell',
-        { 'admin-shell--wide': wide },
         'admin-page-hero__content',
         { 'admin-page-hero__content--with-aside': hasAside },
       ]"
@@ -37,12 +36,10 @@ interface Props {
   eyebrowIcon?: string;
   title: string;
   description: string;
-  wide?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {
   eyebrowIcon: '',
-  wide: false,
 });
 
 const slots = useSlots();
@@ -51,25 +48,24 @@ const hasAside = computed(() => Boolean(slots.aside));
 
 <style scoped lang="scss">
 .admin-page-hero {
-  padding: 58px 0 34px;
-  color: #ffffff;
   position: relative;
+  padding: 56px 0 36px;
+  color: #ffffff;
   background:
     linear-gradient(135deg, rgba(16, 35, 63, 0.98), rgba(20, 84, 106, 0.92)),
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
 }
 
 .admin-page-hero__content {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  min-height: 168px;
 }
 
 .admin-page-hero__content--with-aside {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-  align-items: center;
+  grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.6fr);
 }
 
 .admin-page-hero__copy {
@@ -94,38 +90,42 @@ const hasAside = computed(() => Boolean(slots.aside));
 .admin-page-hero h1 {
   margin: 14px 0 10px;
   color: #ffffff;
-  font-size: clamp(2rem, 3.6vw, 4.4rem);
-  line-height: 0.98;
-  letter-spacing: -0.045em;
+  font-size: clamp(1.8rem, 2.6vw, 2.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
 .admin-page-hero p {
-  max-width: 840px;
+  max-width: 720px;
   margin: 0;
-  color: rgba(255, 255, 255, 0.76);
-  font-size: 1.04rem;
-  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1rem;
+  line-height: 1.65;
 }
 
 .admin-page-hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 18px;
 }
 
 .admin-page-hero__aside {
   min-width: 0;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
 }
 
 @media (max-width: 900px) {
+  .admin-page-hero {
+    padding: 44px 0 28px;
+  }
+
   .admin-page-hero__content,
   .admin-page-hero__content--with-aside {
-    align-items: stretch;
     grid-template-columns: 1fr;
-    flex-direction: column;
+    min-height: auto;
   }
 
   .admin-page-hero__aside {
