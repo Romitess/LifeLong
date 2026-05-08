@@ -57,11 +57,9 @@ withDefaults(defineProps<Props>(), {
   overflow: visible;
 
   &:hover {
-    transform: translateY(-3px);
-    border-color: rgba($primary, 0.24) !important;
-    box-shadow:
-      0 12px 32px rgba($primary, 0.1),
-      0 4px 12px rgba(17, 24, 39, 0.06);
+    transform: translateY(-4px) !important;
+    border-color: rgba($primary, 0.6) !important;
+    box-shadow: 0 16px 32px rgba(17, 24, 39, 0.12) !important;
   }
 
   &--stat {

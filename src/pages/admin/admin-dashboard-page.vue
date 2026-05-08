@@ -452,14 +452,14 @@ function formatRelativeTime(iso: string): string {
   background: var(--admin-surface);
   box-shadow: var(--admin-shadow-sm);
   overflow: hidden;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
 }
 
-.admin-kpi-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--admin-shadow-md);
+.admin-kpi-card:hover .admin-kpi-card__icon {
+  transform: scale(1.08);
+}
+
+.admin-kpi-card__icon {
+  transition: transform 0.24s ease;
 }
 
 .admin-kpi-card::before {
@@ -617,6 +617,13 @@ function formatRelativeTime(iso: string): string {
   align-items: center;
   padding: 14px 22px;
   border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.admin-dashboard__leaderboard-item:hover {
+  background: rgba(245, 166, 35, 0.06);
 }
 
 .admin-dashboard__leaderboard-item:last-child {
@@ -706,6 +713,11 @@ function formatRelativeTime(iso: string): string {
   align-items: center;
   padding: 14px 22px;
   border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  transition: background-color 0.2s ease;
+}
+
+.admin-dashboard__registration:hover {
+  background: rgba(245, 166, 35, 0.06);
 }
 
 .admin-dashboard__registration:last-child {

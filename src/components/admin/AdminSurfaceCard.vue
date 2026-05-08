@@ -74,18 +74,6 @@ const showHeader = computed(() =>
   border-radius: var(--admin-radius-lg);
   background: var(--admin-surface);
   box-shadow: var(--admin-shadow-sm);
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.admin-surface-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(245, 166, 35, 0.24);
-  box-shadow:
-    0 12px 24px rgba(17, 24, 39, 0.08),
-    0 0 0 1px rgba(245, 166, 35, 0.08);
 }
 
 .admin-surface-card--glass {
