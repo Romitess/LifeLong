@@ -241,6 +241,7 @@ export default {
       averagePerTransaction: 'เฉลี่ยต่อรายการ',
       receiptsIssued: 'ออกใบเสร็จแล้ว',
       financialTrends: 'แนวโน้มการเงิน',
+      performanceOverview: 'ภาพรวมผลการดำเนินงาน',
       revenueByCategory: 'สัดส่วนรายรับตามหมวดหมู่รายวิชา',
       systemAudit: 'ความถูกต้องของข้อมูล',
       paymentGateway: 'ช่องทางการชำระเงิน',

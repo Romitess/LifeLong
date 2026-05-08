@@ -240,6 +240,7 @@ export default {
       averagePerTransaction: 'Average per Transaction',
       receiptsIssued: 'Receipts Issued',
       financialTrends: 'Financial Trends',
+      performanceOverview: 'Performance Overview',
       revenueByCategory: 'Revenue by Category',
       systemAudit: 'System Audit',
       paymentGateway: 'Payment Gateway',

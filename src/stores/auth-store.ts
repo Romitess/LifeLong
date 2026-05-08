@@ -124,7 +124,7 @@ const MOCK_FINANCE_BASE: Omit<User, 'avatar'> = {
   lastNameEn: 'FINANCE',
   email: 'finance@go.buu.ac.th',
   phone: '038101111',
-  faculty: 'คณะวิทยาการสารสนเทศ',
+  faculty: 'คอมพิวเตอร์และเทคโนโลยี',
   department: 'งานคลังและพัสดุ',
   role: 'finance',
 };

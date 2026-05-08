@@ -8,17 +8,36 @@
       <div class="section-container q-px-xl q-pt-xl q-pb-lg relative-position z-top">
         <div class="row items-center justify-between q-col-gutter-xl">
           <div class="col-12 col-md-7">
-            <div class="row items-center q-gutter-sm q-mb-md">
-              <div class="icon-glass-wrap">
-                <q-icon name="account_balance" size="24px" color="white" />
+            <div class="row items-center q-gutter-md q-mb-md">
+              <div class="row items-center q-gutter-sm">
+                <div class="icon-glass-wrap">
+                  <q-icon name="account_balance" size="24px" color="white" />
+                </div>
+                <div
+                  class="text-overline text-white text-weight-bold"
+                  style="letter-spacing: 0.15em; opacity: 0.95"
+                >
+                  {{ $t('finance.dashboard.console') }}
+                </div>
               </div>
-              <div
-                class="text-overline text-white text-weight-bold"
-                style="letter-spacing: 0.15em; opacity: 0.95"
-              >
-                {{ $t('finance.dashboard.console') }}
-              </div>
+
+              <!-- Faculty Context Badge -->
+              <template v-if="currentUserFaculty">
+                <div style="width: 1px; height: 24px; background: rgba(255, 255, 255, 0.2)"></div>
+                <div class="row items-center">
+                  <q-badge
+                    rounded
+                    color="rgba(255, 255, 255, 0.15)"
+                    class="q-px-md q-py-sm text-weight-bold border-glass-subtle backdrop-blur"
+                    style="font-size: 0.85rem; letter-spacing: 0.5px"
+                  >
+                    <q-icon name="apartment" size="18px" class="q-mr-sm text-yellow-5" />
+                    {{ currentUserFaculty }}
+                  </q-badge>
+                </div>
+              </template>
             </div>
+
             <h1
               class="text-h3 text-weight-bolder text-white q-my-none"
               style="line-height: 1.2; letter-spacing: -0.02em"
@@ -75,7 +94,12 @@
                       size="28px"
                       class="q-mb-sm text-yellow-3 drop-shadow"
                     />
-                    <div class="text-h4 text-weight-bolder text-white">฿42.5k</div>
+                    <div class="text-h4 text-weight-bolder text-white">
+                      {{
+                        financeStats.find((s) => s.label.includes('totalRevenueToday'))?.value ||
+                        '฿0'
+                      }}
+                    </div>
                     <div
                       class="text-body2 text-white q-mt-xs"
                       style="opacity: 0.8; font-weight: 500"
@@ -91,7 +115,11 @@
                       size="28px"
                       class="q-mb-sm text-orange-3 drop-shadow"
                     />
-                    <div class="text-h4 text-weight-bolder text-white">12</div>
+                    <div class="text-h4 text-weight-bolder text-white">
+                      {{
+                        financeStats.find((s) => s.label.includes('pendingReview'))?.value || '0'
+                      }}
+                    </div>
                     <div
                       class="text-body2 text-white q-mt-xs"
                       style="opacity: 0.8; font-weight: 500"
@@ -150,7 +178,7 @@
       <div class="row q-col-gutter-xl">
         <!-- Main Chart Area -->
         <div class="col-12 col-lg-8">
-          <q-card flat bordered class="dashboard-panel shadow-soft h-full">
+          <q-card flat bordered class="dashboard-panel shadow-soft">
             <q-card-section class="q-pa-xl">
               <div class="row items-center justify-between q-mb-xl">
                 <div class="row items-center no-wrap">
@@ -165,57 +193,58 @@
                       {{ $t('finance.dashboard.financialTrends') }}
                     </div>
                     <div class="text-h5 text-weight-bolder text-dark">
-                      {{ $t('finance.dashboard.revenueByCategory') }}
+                      {{ $t('finance.dashboard.performanceOverview') }}
                     </div>
                   </div>
                 </div>
-                <q-btn outline round icon="more_horiz" color="grey-4" text-color="grey-7" />
+                <div class="row q-gutter-sm">
+                  <q-btn-toggle
+                    v-model="trendPeriod"
+                    flat
+                    toggle-color="primary"
+                    color="grey-7"
+                    :options="[
+                      { label: '7D', value: '7d' },
+                      { label: '1M', value: '1m' },
+                      { label: '6M', value: '6m' },
+                      { label: '1Y', value: '1y' },
+                    ]"
+                    class="period-toggle"
+                  />
+                </div>
               </div>
 
-              <div class="row q-col-gutter-md q-mt-lg">
-                <div v-for="item in topRevenueCategories" :key="item.name" class="col-12 col-md-6">
-                  <q-card flat class="category-card shadow-soft overflow-hidden">
-                    <div
-                      class="category-card__indicator"
-                      :style="{ background: item.gradient }"
-                    ></div>
-                    <q-card-section class="q-pa-lg row items-center justify-between no-wrap">
-                      <div class="col">
-                        <div
-                          class="text-caption text-weight-bold text-uppercase"
-                          style="color: #64748b; letter-spacing: 0.5px"
-                        >
-                          {{ item.name }}
-                        </div>
-                        <div class="text-h5 text-weight-bolder text-dark q-mt-sm">
-                          ฿{{ item.amount.toLocaleString() }}
-                        </div>
-                      </div>
-                      <q-circular-progress
-                        show-value
-                        font-size="12px"
-                        :value="item.percent"
-                        size="54px"
-                        :thickness="0.22"
-                        color="primary"
-                        track-color="grey-2"
-                        class="q-ml-md"
-                      >
-                        <span class="text-weight-bold" style="color: #334155"
-                          >{{ item.percent }}%</span
-                        >
-                      </q-circular-progress>
-                    </q-card-section>
-                  </q-card>
+              <div class="q-mt-xl">
+                <!-- Unified Charts Flow -->
+                <div class="trend-section q-mb-xl">
+                  <div class="text-subtitle1 text-weight-bold text-grey-8 q-mb-md row items-center">
+                    <q-icon name="show_chart" color="primary" class="q-mr-sm" />
+                    แนวโน้มรายรับรายเดือน
+                  </div>
+                  <RevenueTrendChart :data="trendData" :labels="trendLabels" />
+                </div>
+
+                <q-separator class="q-my-xl" />
+
+                <div class="proportion-section">
+                  <div class="text-subtitle1 text-weight-bold text-grey-8 q-mb-md row items-center">
+                    <q-icon name="pie_chart" color="orange-8" class="q-mr-sm" />
+                    สัดส่วนรายรับแยกตามหมวดหมู่
+                  </div>
+                  <div class="row justify-center">
+                    <div class="col-12 col-md-10">
+                      <RevenueDonutChart :data="donutData" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </q-card-section>
           </q-card>
 
           <!-- System Audit -->
-          <div class="row q-col-gutter-lg q-mt-md">
-            <div class="col-12 col-md-6" v-for="item in healthChecks" :key="item.name">
-              <q-card flat bordered class="health-card shadow-soft hover-lift">
+          <div class="row q-col-gutter-lg q-mt-md items-stretch">
+            <div class="col-12 col-md-6 row" v-for="item in healthChecks" :key="item.name">
+              <q-card flat bordered class="health-card shadow-soft hover-lift full-height col">
                 <q-card-section class="q-pa-lg row items-center no-wrap">
                   <div class="health-pulse-wrap q-mr-lg">
                     <div class="health-pulse" :class="`health-pulse--${item.status}`"></div>
@@ -314,87 +343,201 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from 'src/stores/auth-store';
 import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
+import RevenueTrendChart from 'src/components/finance/RevenueTrendChart.vue';
+import RevenueDonutChart from 'src/components/finance/RevenueDonutChart.vue';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
-const financeStats = computed(() => [
+const trendPeriod = ref('6m');
+
+interface FinanceStat {
+  label: string;
+  value: string | number;
+  icon: string;
+  color: string;
+  tint: string;
+  progress: number;
+  progressColor: string;
+  faculty?: string;
+  trend?: string;
+  trendColor?: string;
+}
+
+const rawFinanceStats: FinanceStat[] = [
   {
-    label: 'finance.dashboard.totalRevenueMonth',
-    value: '฿128,400',
-    icon: 'account_balance_wallet',
+    label: 'finance.dashboard.totalRevenueToday',
+    value: 42500,
+    icon: 'payments',
     color: '#0d9488',
     tint: '#ccfbf1',
-    progress: 0.75,
+    progress: 0.85,
     progressColor: 'teal',
-    trend: '+12%',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
+    trend: '+15%',
     trendColor: 'positive',
+  },
+  {
+    label: 'finance.dashboard.pendingReview',
+    value: 12,
+    icon: 'hourglass_empty',
+    color: '#d97706',
+    tint: '#fef3c7',
+    progress: 0.35,
+    progressColor: 'amber-8',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
+    trend: '+2',
+    trendColor: 'orange',
   },
   {
     label: 'finance.dashboard.totalTransactions',
-    value: '482',
+    value: 156,
     icon: 'confirmation_number',
     color: '#2563eb',
     tint: '#dbeafe',
-    progress: 0.62,
+    progress: 0.65,
     progressColor: 'blue-7',
-    trend: '+5%',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
+    trend: '+8%',
     trendColor: 'positive',
   },
   {
-    label: 'finance.dashboard.averagePerTransaction',
-    value: '฿266',
+    label: 'finance.dashboard.receiptsIssued',
+    value: '99.1%',
+    icon: 'task_alt',
+    color: '#059669',
+    tint: '#d1fae5',
+    progress: 0.99,
+    progressColor: 'positive',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
+  },
+  // Information Sciences Faculty Data
+  {
+    label: 'finance.dashboard.totalRevenueToday',
+    value: 128400,
     icon: 'payments',
+    color: '#3aa6b9',
+    tint: '#e0f2fe',
+    progress: 0.72,
+    progressColor: 'primary',
+    faculty: 'คณะวิทยาการสารสนเทศ',
+  },
+  {
+    label: 'finance.dashboard.pendingReview',
+    value: 42,
+    icon: 'hourglass_empty',
     color: '#d97706',
     tint: '#fef3c7',
     progress: 0.45,
     progressColor: 'amber-8',
+    faculty: 'คณะวิทยาการสารสนเทศ',
+  },
+];
+
+const currentUserFaculty = computed(() => authStore.user?.faculty);
+
+const financeStats = computed(() => {
+  const faculty = currentUserFaculty.value;
+  const filtered = rawFinanceStats.filter((stat) => !faculty || stat.faculty === faculty);
+
+  if (!faculty) {
+    const aggregated: FinanceStat[] = [];
+    const labels = [...new Set(rawFinanceStats.map((s) => s.label))];
+    labels.forEach((label) => {
+      const items = rawFinanceStats.filter((s) => s.label === label);
+      const first = items[0];
+      const totalValue = items.reduce((acc, curr) => {
+        if (typeof curr.value === 'number') return acc + curr.value;
+        return acc;
+      }, 0);
+
+      if (first) {
+        aggregated.push({
+          ...first,
+          value: typeof first.value === 'number' ? `฿${totalValue.toLocaleString()}` : first.value,
+          progress: items.reduce((acc, curr) => acc + curr.progress, 0) / items.length,
+        });
+      }
+    });
+    return aggregated;
+  }
+
+  return filtered.map((s) => ({
+    ...s,
+    value: typeof s.value === 'number' ? `฿${s.value.toLocaleString()}` : s.value,
+  }));
+});
+
+const allTopRevenueCategories = [
+  {
+    name: 'Full-Stack Web Development',
+    amount: 18500,
+    percent: 45,
+    color: '#3aa6b9',
+    gradient: 'linear-gradient(90deg, #3aa6b9, #1e3a8a)',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
   },
   {
-    label: 'finance.dashboard.receiptsIssued',
-    value: '98.2%',
-    icon: 'task_alt',
-    color: '#059669',
-    tint: '#d1fae5',
-    progress: 0.98,
-    progressColor: 'positive',
+    name: 'Data Science & Machine Learning',
+    amount: 12000,
+    percent: 30,
+    color: '#f5a623',
+    gradient: 'linear-gradient(90deg, #f5a623, #d97706)',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
   },
-]);
-
-const topRevenueCategories = [
+  {
+    name: 'Cybersecurity Essentials',
+    amount: 8000,
+    percent: 20,
+    color: '#ec4899',
+    gradient: 'linear-gradient(90deg, #ec4899, #be185d)',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
+  },
+  {
+    name: 'Cloud Computing (AWS/Azure)',
+    amount: 4000,
+    percent: 5,
+    color: '#10b981',
+    gradient: 'linear-gradient(90deg, #10b981, #047857)',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
+  },
   {
     name: 'Computer and Technology',
     amount: 54200,
     percent: 42,
+    color: '#3aa6b9',
     gradient: 'linear-gradient(90deg, #3aa6b9, #1e3a8a)',
-  },
-  {
-    name: 'Business Administration',
-    amount: 32100,
-    percent: 25,
-    gradient: 'linear-gradient(90deg, #f5a623, #d97706)',
-  },
-  {
-    name: 'Language and Culture',
-    amount: 21500,
-    percent: 17,
-    gradient: 'linear-gradient(90deg, #a855f7, #6b21a8)',
-  },
-  {
-    name: 'Personal Development',
-    amount: 15400,
-    percent: 12,
-    gradient: 'linear-gradient(90deg, #ec4899, #be185d)',
-  },
-  {
-    name: 'Healthcare',
-    amount: 5200,
-    percent: 4,
-    gradient: 'linear-gradient(90deg, #10b981, #047857)',
+    faculty: 'คณะวิทยาการสารสนเทศ',
   },
 ];
+
+const topRevenueCategories = computed(() => {
+  const faculty = currentUserFaculty.value;
+  return allTopRevenueCategories.filter((cat) => !faculty || cat.faculty === faculty);
+});
+
+const donutData = computed(() => {
+  return topRevenueCategories.value.map((cat) => ({
+    name: cat.name,
+    amount: cat.amount,
+    percent: cat.percent,
+    color: cat.color,
+  }));
+});
+
+const trendData = computed(() => {
+  const faculty = currentUserFaculty.value;
+  if (faculty === 'คอมพิวเตอร์และเทคโนโลยี') {
+    return [125000, 148000, 132000, 155000, 172000, 188000];
+  }
+  return [250000, 280000, 260000, 310000, 290000, 340000];
+});
+
+const trendLabels = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.'];
 
 const healthChecks = [
   {
@@ -413,36 +556,45 @@ const healthChecks = [
   },
 ];
 
-const recentActivities = [
+const allRecentActivities = [
   {
     title: 'finance.dashboard.confirmPayment',
-    time: '10 นาทีที่แล้ว',
-    detail: 'นิสิต สมชาย ใจดี - ฿1,200 (โอนเงิน) #REC-69001',
+    time: '2 นาทีที่แล้ว',
+    detail: 'นิสิต ธนากร สุขใจ - ฿4,500 (บัตรเครดิต) #REC-70012',
+    icon: 'credit_card',
+    color: 'purple-5',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
+  },
+  {
+    title: 'finance.dashboard.confirmPayment',
+    time: '15 นาทีที่แล้ว',
+    detail: 'นิสิต พรเทพ ดีมาก - ฿3,200 (โอนเงิน) #REC-70001',
     icon: 'check_circle',
     color: 'positive',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
   },
   {
     title: 'finance.dashboard.autoReceipt',
-    time: '45 นาทีที่แล้ว',
-    detail: 'จำนวน 8 รายการ สำหรับคอร์ส Python Beginner',
+    time: '1 ชั่วโมงที่แล้ว',
+    detail: 'ออกใบเสร็จอัตโนมัติ 5 รายการ - คอร์ส Data Science',
     icon: 'receipt',
     color: 'blue-6',
-  },
-  {
-    title: 'finance.dashboard.cancelReceipt',
-    time: '2 ชั่วโมงที่แล้ว',
-    detail: 'หมดอายุการชำระเงิน (48 ชม.) #REC-68995',
-    icon: 'cancel',
-    color: 'negative',
+    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
   },
   {
     title: 'finance.dashboard.confirmPayment',
-    time: '3 ชั่วโมงที่แล้ว',
-    detail: 'นิสิต สมหญิง รักเรียน - ฿3,500 (บัตรเครดิต) #REC-68990',
-    icon: 'credit_card',
-    color: 'purple-5',
+    time: '2 ชั่วโมงที่แล้ว',
+    detail: 'นิสิต สมชาย ใจดี - ฿1,200 (โอนเงิน) #REC-69001',
+    icon: 'check_circle',
+    color: 'positive',
+    faculty: 'คณะวิทยาการสารสนเทศ',
   },
 ];
+
+const recentActivities = computed(() => {
+  const faculty = currentUserFaculty.value;
+  return allRecentActivities.filter((activity) => !faculty || activity.faculty === faculty);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -519,10 +671,20 @@ const recentActivities = [
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.backdrop-blur {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.border-glass-subtle {
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Glassmorphism Card */
@@ -763,6 +925,12 @@ const recentActivities = [
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+.period-toggle {
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 2px;
+}
+
 .header-icon-box {
   width: 48px;
   height: 48px;
@@ -772,6 +940,14 @@ const recentActivities = [
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.trend-section {
+  min-height: 380px;
+}
+
+.proportion-section {
+  min-height: 420px;
 }
 
 .finance-content {
