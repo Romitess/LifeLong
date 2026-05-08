@@ -146,10 +146,13 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import type { QTableColumn } from 'quasar';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
+
+const router = useRouter();
 
 interface RequestRow {
   id: string;
@@ -328,8 +331,8 @@ function getStatusColor(status: string) {
   }
 }
 
-function onCreateNew() {
-  console.log('Create new fund source');
+async function onCreateNew() {
+  await router.push('/central-finance/fund-sources/add');
 }
 
 function onExport() {

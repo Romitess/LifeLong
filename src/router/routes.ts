@@ -113,6 +113,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/centralfinance/finance-fund-sources-page.vue'),
         meta: { role: 'central_finance' },
       },
+      {
+        path: 'central-finance/fund-sources/add',
+        component: () => import('pages/centralfinance/finance-add-fund-source-page.vue'),
+        meta: { role: 'central_finance' },
+      },
     ],
   },
   {

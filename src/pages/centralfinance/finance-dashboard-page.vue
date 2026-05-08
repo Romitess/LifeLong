@@ -12,14 +12,14 @@
           icon="add_circle_outline"
           label="ออกเลขแหล่งเงิน"
           no-caps
-          @click="router.push('/central-finance/fund-sources')"
+          @click="onAddFundSource"
         />
         <AdminActionButton
           variant="outline"
           icon="file_download"
           label="ส่งออกรายงาน"
           no-caps
-          @click="router.push('/central-finance/reports')"
+          @click="onGoToReports"
         />
       </template>
 
@@ -165,7 +165,7 @@
               icon-right="arrow_forward"
               no-caps
               class="full-width"
-              @click="router.push('/central-finance/fund-sources')"
+              @click="onAddFundSource"
             />
             <AdminActionButton
               variant="secondary"
@@ -174,7 +174,7 @@
               icon-right="arrow_forward"
               no-caps
               class="full-width"
-              @click="router.push('/central-finance/reports')"
+              @click="onGoToReports"
             />
           </div>
         </AdminSurfaceCard>
@@ -224,7 +224,7 @@
                 label="เปิดหน้านี้"
                 icon-right="arrow_forward"
                 no-caps
-                @click="router.push(item.to)"
+                @click="onShortcutClick(item.to)"
               />
             </div>
           </AdminSurfaceCard>
@@ -244,6 +244,18 @@ import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 
 const router = useRouter();
 const chartPeriod = ref<'7d' | '30d'>('7d');
+
+async function onAddFundSource() {
+  await router.push('/central-finance/fund-sources/add');
+}
+
+async function onGoToReports() {
+  await router.push('/central-finance/reports');
+}
+
+async function onShortcutClick(to: string) {
+  await router.push(to);
+}
 
 // ── Finance Pulse (Hero aside) ──────────────────────────────
 const financePulse = [
