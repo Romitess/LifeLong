@@ -11,52 +11,74 @@
     </div>
 
     <div class="chart-body relative-position">
-      <!-- Simple SVG Grid & Line Chart -->
       <svg viewBox="0 0 400 200" class="trend-svg" preserveAspectRatio="none">
-        <!-- Grid Lines -->
-        <line x1="0" y1="40" x2="400" y2="40" stroke="#f1f5f9" stroke-width="1" />
-        <line x1="0" y1="80" x2="400" y2="80" stroke="#f1f5f9" stroke-width="1" />
-        <line x1="0" y1="120" x2="400" y2="120" stroke="#f1f5f9" stroke-width="1" />
-        <line x1="0" y1="160" x2="400" y2="160" stroke="#f1f5f9" stroke-width="1" />
+        <!-- Subtle Grid Lines (Minimal) -->
+        <g class="grid-lines">
+          <line
+            x1="0"
+            y1="40"
+            x2="400"
+            y2="40"
+            stroke="#f1f5f9"
+            stroke-width="1"
+            stroke-dasharray="8 8"
+          />
+          <line
+            x1="0"
+            y1="80"
+            x2="400"
+            y2="80"
+            stroke="#f1f5f9"
+            stroke-width="1"
+            stroke-dasharray="8 8"
+          />
+          <line
+            x1="0"
+            y1="120"
+            x2="400"
+            y2="120"
+            stroke="#f1f5f9"
+            stroke-width="1"
+            stroke-dasharray="8 8"
+          />
+          <line
+            x1="0"
+            y1="160"
+            x2="400"
+            y2="160"
+            stroke="#f1f5f9"
+            stroke-width="1"
+            stroke-dasharray="8 8"
+          />
+        </g>
 
-        <!-- Area Fill -->
-        <path :d="areaPath" fill="url(#trendGradient)" opacity="0.3" />
-
-        <!-- Main Line -->
+        <!-- Single Thick Trend Line (Rounded Style) -->
         <path
           :d="linePath"
           fill="transparent"
           stroke="#3aa6b9"
-          stroke-width="3"
+          stroke-width="6"
           stroke-linecap="round"
           stroke-linejoin="round"
+          class="main-trend-line"
         />
 
-        <!-- Data Points -->
-        <circle
-          v-for="(point, index) in points"
-          :key="index"
-          :cx="point.x"
-          :cy="point.y"
-          r="4"
-          fill="white"
-          stroke="#3aa6b9"
-          stroke-width="2"
-          class="chart-point"
-        />
-
-        <!-- Gradient Definition -->
+        <!-- Subtle Glow Filter for the line -->
         <defs>
-          <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#3aa6b9" />
-            <stop offset="100%" stop-color="#3aa6b9" stop-opacity="0" />
-          </linearGradient>
+          <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
         </defs>
       </svg>
 
       <!-- Labels -->
-      <div class="x-labels row justify-between q-mt-sm q-px-xs">
-        <div v-for="label in labels" :key="label" class="text-caption text-grey-5 text-weight-bold">
+      <div class="x-labels row justify-between q-mt-lg q-px-xs">
+        <div
+          v-for="label in labels"
+          :key="label"
+          class="text-caption text-grey-5 text-weight-bolder"
+        >
           {{ label }}
         </div>
       </div>
@@ -72,10 +94,17 @@ const props = defineProps<{
   labels: string[];
 }>();
 
-const points = computed(() => {
+interface Point {
+  x: number;
+  y: number;
+}
+
+const points = computed<Point[]>(() => {
   const width = 400;
   const height = 200;
-  const max = Math.max(...props.data) * 1.2;
+  if (props.data.length === 0) return [];
+
+  const max = Math.max(...props.data) * 1.25;
   const stepX = width / (props.data.length - 1);
 
   return props.data.map((val, i) => ({
@@ -88,14 +117,6 @@ const linePath = computed(() => {
   if (points.value.length === 0) return '';
   return `M ${points.value.map((p) => `${p.x},${p.y}`).join(' L ')}`;
 });
-
-const areaPath = computed(() => {
-  if (points.value.length === 0) return '';
-  const first = points.value[0];
-  const last = points.value[points.value.length - 1];
-  if (first === undefined || last === undefined) return '';
-  return `M 0,200 L ${first.x},${first.y} ${points.value.map((p) => `${p.x},${p.y}`).join(' L ')} L ${last.x},200 Z`;
-});
 </script>
 
 <style scoped lang="scss">
@@ -107,18 +128,16 @@ const areaPath = computed(() => {
   width: 100%;
   height: 240px;
   display: block;
+  overflow: visible;
 }
 
-.chart-point {
-  cursor: pointer;
-  transition: r 0.2s ease;
-  &:hover {
-    r: 6;
-  }
+.main-trend-line {
+  transition: all 0.5s ease;
+  filter: drop-shadow(0 4px 12px rgba(58, 166, 185, 0.2));
 }
 
 .x-labels {
   border-top: 1px solid #f1f5f9;
-  padding-top: 8px;
+  padding-top: 12px;
 }
 </style>

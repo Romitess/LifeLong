@@ -927,8 +927,40 @@ const recentActivities = computed(() => {
 
 .period-toggle {
   background: #f1f5f9;
-  border-radius: 12px;
-  padding: 2px;
+  border-radius: 14px;
+  padding: 4px;
+  border: 1px solid #e2e8f0;
+
+  :deep(.q-btn) {
+    border-radius: 10px !important;
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+    min-height: unset;
+    min-width: 52px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.text-primary {
+      background: #ffffff !important;
+      color: var(--q-primary) !important;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      transform: scale(1.02);
+    }
+
+    &:not(.text-primary) {
+      color: #64748b !important;
+      opacity: 0.8;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.4);
+        opacity: 1;
+      }
+    }
+
+    .q-focus-helper {
+      display: none;
+    }
+  }
 }
 
 .header-icon-box {
