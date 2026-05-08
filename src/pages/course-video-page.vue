@@ -34,12 +34,6 @@
                   to="/course-home"
                   class="breadcrumb-link"
                 />
-                <!-- <q-breadcrumbs-el
-                  :label="$t('learning.thisCourse')"
-                  icon="school"
-                  class="breadcrumb-link cursor-pointer"
-                  @click="$router.push(`/course/${String($route.params.id)}/learn`)"
-                /> -->
                 <q-breadcrumbs-el
                   :label="courseTitle"
                   class="breadcrumb-link cursor-pointer"

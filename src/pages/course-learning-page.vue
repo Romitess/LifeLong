@@ -16,7 +16,6 @@
       </q-drawer>
 
       <q-page-container>
-        <!-- Wrap everything in section-container to match main-page padding (max-width 1400px, 24px sides) -->
         <div
           class="content-area"
           :class="isFullscreen ? 'content-fullscreen' : 'section-container content-standard'"
@@ -35,12 +34,6 @@
                 to="/course-home"
                 class="breadcrumb-link"
               />
-              <!-- <q-breadcrumbs-el
-                  label="This course"
-                  icon="school"
-                  class="breadcrumb-link cursor-pointer"
-                  @click="$router.push(`/course/${courseId}/learn`)"
-                /> -->
               <q-breadcrumbs-el :label="courseTitle" class="text-weight-bold text-dark q-px-sm" />
             </q-breadcrumbs>
 
