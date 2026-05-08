@@ -2,12 +2,11 @@
   <q-dialog
     v-model="dialogModel"
     :persistent="persistent"
+    class="admin-dialog"
     transition-show="scale"
     transition-hide="scale"
   >
     <q-card class="admin-confirm-dialog">
-      <GoldenUnderline :absolute="false" position="top" />
-
       <q-card-section class="admin-confirm-dialog__body">
         <div class="admin-confirm-dialog__header">
           <div
@@ -41,7 +40,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import AdminActionButton from './AdminActionButton.vue';
-import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
