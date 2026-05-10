@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npx vue-tsc *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(xargs grep -l \"header\" -i)"
     ]
   }
 }

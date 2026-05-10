@@ -374,7 +374,7 @@
                         no-caps
                         size="md"
                         class="course-action-btn course-action-btn--primary"
-                        @click="goToCourse(entry.registration.courseId)"
+                        @click="goToCourse(entry.registration.courseId, entry.course.code)"
                       />
                     </template>
                   </ProfileCourseCard>
@@ -530,7 +530,7 @@
                           no-caps
                           size="md"
                           class="course-action-btn course-action-btn--primary"
-                          @click="goToCourse(bookmark.courseId)"
+                          @click="goToCourse(bookmark.courseId, bookmark.courseCode)"
                         />
                       </template>
                       <template v-else>
@@ -1452,7 +1452,7 @@
                 :course="savedEnrollmentDialogCourse"
                 :open-key="savedEnrollmentDialogOpenKey"
                 @enrolled="onSavedCourseEnrolled"
-                @go-to-learning="goToCourse"
+                @go-to-learning="(id) => goToCourse(id, savedEnrollmentDialogCourse?.code)"
               />
             </div>
           </div>
@@ -1759,6 +1759,7 @@ import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue
 import CourseReceiptDialog from 'components/receipt/CourseReceiptDialog.vue';
 import { getCourseDetailById, MOCK_COURSES } from 'src/data/mock-courses';
 import { useAuthStore, type User, type UserProfileUpdate } from 'src/stores/auth-store';
+import { useMoodleSso } from 'src/composables/use-moodle-sso';
 
 interface AvatarOption {
   label: string;
@@ -1859,6 +1860,7 @@ const courseRegistrationStore = useCourseRegistrationStore();
 const coursePaymentStore = useCoursePaymentStore();
 const courseBookmarkStore = useCourseBookmarkStore();
 const authStore = useAuthStore();
+const { getMoodleCourseUrl } = useMoodleSso();
 const {
   myRegistrations,
   myRegisteredCourseEntries,
@@ -3189,7 +3191,15 @@ function isLatestLearnerMessage(message: ChatMessage): boolean {
   return latestLearnerMessage?.id === message.id;
 }
 
-function goToCourse(courseId: string): void {
+async function goToCourse(courseId: string, courseCode?: string): Promise<void> {
+  const username = authStore.user?.username;
+  if (username) {
+    const url = await getMoodleCourseUrl(courseId, username, courseCode);
+    if (url) {
+      window.open(url, '_blank');
+      return;
+    }
+  }
   void router.push(`/course/${courseId}/learn`);
 }
 

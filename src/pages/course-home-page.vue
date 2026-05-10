@@ -80,7 +80,7 @@
                         no-caps
                         full-width
                         class="course-home-btn"
-                        @click.stop="goToCourse(entry.course.id)"
+                        @click.stop="goToCourse(entry.course.id, entry.course.code)"
                       />
                       <CourseCompletionDocumentActions
                         v-if="entry.progress.isCompleted"
@@ -122,6 +122,8 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { useMoodleSso } from 'src/composables/use-moodle-sso';
+import { useAuthStore } from 'src/stores/auth-store';
 import BaseButton from 'components/base/BaseButton.vue';
 import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
@@ -136,6 +138,8 @@ const router = useRouter();
 const { locale } = useI18n({ useScope: 'global' });
 const { myRegisteredCourseEntries } = useMyRegisteredCourses();
 const { t } = useI18n({ useScope: 'global' });
+const authStore = useAuthStore();
+const { getMoodleCourseUrl } = useMoodleSso();
 
 const leftDrawerOpen = ref(false);
 const searchQuery = ref('');
@@ -161,7 +165,15 @@ const filteredCourses = computed<RegisteredCourseEntry[]>(() => {
 const getTranslatedCourseTitle = (course: { title: string; titleEn?: string }) =>
   locale.value === 'th' ? course.title : course.titleEn || course.title;
 
-const goToCourse = (id: string) => {
+const goToCourse = async (id: string, courseCode?: string): Promise<void> => {
+  const username = authStore.user?.username;
+  if (username) {
+    const url = await getMoodleCourseUrl(id, username, courseCode);
+    if (url) {
+      window.open(url, '_blank');
+      return;
+    }
+  }
   void router.push(`/course/${id}/learn`);
 };
 
