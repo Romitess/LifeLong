@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia';
+import { acceptHMRUpdate, defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
 export interface User {
@@ -243,6 +243,14 @@ function createDefaultAvatar(email: string): string {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`;
 }
 
+function mapApiRole(value: unknown): User['role'] {
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (isUserRole(normalized)) {
+    return normalized;
+  }
+  return 'student';
+}
+
 function isUserRole(value: unknown): value is User['role'] {
   return (
     value === 'student' ||
@@ -463,7 +471,7 @@ export const useAuthStore = defineStore('auth', {
           phone: '',
           faculty: 'Lifelong Learning',
           department: apiUser.role,
-          role: apiUser.role.toLowerCase() === 'instructor' ? 'instructor' : 'student',
+          role: mapApiRole(apiUser.role),
           username: apiUser.username,
           avatar: createDefaultAvatar(apiUser.email),
           password: password,
@@ -547,3 +555,7 @@ export const useAuthStore = defineStore('auth', {
     },
   },
 });
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useAuthStore, import.meta.hot));
+}
