@@ -213,7 +213,7 @@
     </div>
 
     <!-- Content Section -->
-    <div class="section-container q-pb-xl" style="margin-bottom: 48px">
+    <div class="section-container q-pb-lg" style="margin-bottom: 32px">
       <div class="course-section-panel">
         <!-- Category Header -->
         <div v-if="activeFilter.category" class="course-section-panel__header q-mb-lg">
@@ -266,14 +266,6 @@
           >
             <BaseCourseCard :course="course" @click="onCourseClick(course)" />
           </div>
-          <div
-            v-for="placeholderIndex in placeholderCards"
-            :key="`placeholder-${placeholderIndex}`"
-            class="col-xs-12 col-sm-6 col-md-3 short-courses-grid__cell short-courses-grid__cell--placeholder"
-            aria-hidden="true"
-          >
-            <div class="short-courses-card-placeholder"></div>
-          </div>
           <div v-if="filteredCourses.length === 0" class="col-12 text-center q-py-xl">
             <q-icon name="search_off" size="4rem" color="grey-4" />
             <div class="text-h6 text-grey-5 q-mt-md">{{ $t('noCoursesFoundShort') }}</div>
@@ -284,7 +276,7 @@
         <!-- Pagination -->
         <div
           v-if="filteredCourses.length > 0 && (totalPages > 1 || Boolean(activeFilter.category))"
-          class="row justify-center q-mt-xl q-mb-xl short-courses-pagination"
+          class="row justify-center q-mt-xl q-mb-md short-courses-pagination"
         >
           <BasePagination
             :model-value="currentPage"
@@ -523,17 +515,6 @@ const paginatedCourses = computed(() => {
   return filteredCourses.value.slice(start, start + ITEMS_PER_PAGE);
 });
 
-const placeholderCards = computed(() => {
-  if (filteredCourses.value.length === 0) {
-    return [];
-  }
-
-  return Array.from(
-    { length: Math.max(0, ITEMS_PER_PAGE - paginatedCourses.value.length) },
-    (_, index) => index,
-  );
-});
-
 // Reset to page 1 when filters change
 watch(filteredCourses, () => {
   currentPage.value = 1;
@@ -688,7 +669,6 @@ onMounted(fetchCourses);
 }
 
 .course-section-panel {
-  min-height: 1180px;
   display: flex;
   flex-direction: column;
   padding: clamp(18px, 2.4vw, 30px);
@@ -712,7 +692,6 @@ onMounted(fetchCourses);
 .short-courses-grid {
   flex: 1;
   align-content: start;
-  min-height: 920px;
 }
 
 .short-courses-grid__cell {
@@ -722,16 +701,6 @@ onMounted(fetchCourses);
 .short-courses-grid__cell :deep(.course-card) {
   width: 100%;
   min-height: 390px;
-}
-
-.short-courses-grid__cell--placeholder {
-  pointer-events: none;
-}
-
-.short-courses-card-placeholder {
-  width: 100%;
-  min-height: 390px;
-  visibility: hidden;
 }
 
 .short-courses-pagination {
