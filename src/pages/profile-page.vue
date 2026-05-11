@@ -136,6 +136,40 @@
                     </q-item-label>
                   </q-item-section>
                 </q-item>
+
+                <q-item
+                  clickable
+                  v-ripple
+                  class="profile-menu-item"
+                  @click="goToInstructorStudents"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="fact_check" color="primary" size="20px" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label
+                      class="text-primary text-weight-bold text-body2 profile-menu-item__wrap-label"
+                    >
+                      ตรวจสอบและพิมพ์รายชื่อผู้เรียน
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-item
+                  clickable
+                  v-ripple
+                  class="profile-menu-item"
+                  @click="goToInstructorLearningResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="grading" color="primary" size="20px" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label class="text-primary text-weight-bold text-body2">
+                      บันทึกผลการเรียน
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
               </q-list>
             </q-card>
 
@@ -3221,6 +3255,17 @@ function goToActiveInstructorCourses(): void {
   });
 }
 
+function goToInstructorStudents(): void {
+  void router.push('/instructor/students');
+}
+
+function goToInstructorLearningResults(): void {
+  void router.push({
+    path: '/instructor/students',
+    query: { tab: 'results' },
+  });
+}
+
 function selectChatCourse(courseId: string): void {
   selectedChatCourseId.value = courseId;
 }
@@ -3714,6 +3759,13 @@ function saveCroppedAvatar(): void {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  :deep(.profile-menu-item__wrap-label) {
+    overflow: visible;
+    text-overflow: initial;
+    white-space: normal;
+    line-height: 1.35;
   }
 }
 
