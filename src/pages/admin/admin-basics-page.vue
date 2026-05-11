@@ -181,15 +181,35 @@ watch(activeMenu, () => {
 }
 
 .admin-basics-menu-item {
-  border-radius: 12px;
-  margin: 2px 8px;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+  border-radius: 10px;
+  margin: 4px 8px;
+  min-height: 56px;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba($primary, 0.04);
+  }
+
+  :deep(.q-item__section--avatar) {
+    min-width: 34px;
+    padding-right: 10px;
+  }
+
+  :deep(.q-item__section--main) {
+    min-width: 0;
+  }
+
+  :deep(.q-item__label) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .admin-basics-menu-item--active {
-  background: rgba(245, 166, 35, 0.12);
+  background: rgba($primary, 0.08) !important;
+  box-shadow: inset 4px 0 0 $primary;
 }
 
 @media (max-width: 900px) {
