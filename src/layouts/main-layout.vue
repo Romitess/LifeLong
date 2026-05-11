@@ -457,7 +457,7 @@ function getNotificationItemsForRole(role: string | undefined) {
         icon: 'category',
         iconBg: '#e0f2fe',
         iconColor: '#0369a1',
-        action: '/admin/categories',
+        action: '/admin/basics',
         read: false,
       },
       {
@@ -468,7 +468,7 @@ function getNotificationItemsForRole(role: string | undefined) {
         icon: 'image',
         iconBg: '#fff7ed',
         iconColor: '#c2410c',
-        action: '/admin/images',
+        action: '/admin/basics',
         read: false,
       },
       {
@@ -604,20 +604,8 @@ const navItems = computed<NavItem[]>(() => {
         to: '/admin/dashboard',
       },
       {
-        name: 'admin-categories',
-        label: 'หมวดหมู่รายวิชา',
-        icon: 'category',
-        to: '/admin/categories',
-      },
-      {
-        name: 'admin-images',
-        label: 'รูปภาพระบบ',
-        icon: 'collections',
-        to: '/admin/images',
-      },
-      {
         name: 'admin-basics',
-        label: 'ข้อมูลพื้นฐาน',
+        label: 'จัดการข้อมูลพื้นฐาน',
         icon: 'tune',
         to: '/admin/basics',
       },
@@ -1464,6 +1452,22 @@ async function onCategoryClick(category: string) {
     width: 160px;
     max-width: 160px;
     min-width: 160px;
+  }
+
+  :deep(.nav-tab--admin-dashboard) {
+    --nav-tab-label-width: 80px;
+    flex-basis: 144px;
+    width: 144px;
+    max-width: 144px;
+    min-width: 144px;
+  }
+
+  :deep(.nav-tab--admin-basics) {
+    --nav-tab-label-width: 142px;
+    flex-basis: 188px;
+    width: 188px;
+    max-width: 188px;
+    min-width: 188px;
   }
 }
 

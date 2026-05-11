@@ -7,7 +7,16 @@
             <p>Hero Images</p>
             <h4>รูป Hero หน้า Main</h4>
           </div>
-          <q-badge rounded color="primary" :label="`${draftHeroConfig.slides.length} ภาพ`" />
+          <q-badge
+            rounded
+            color="primary"
+            :label="`${liveSlideCount}/${draftHeroConfig.slides.length} ภาพ`"
+          >
+            <q-tooltip>
+              หลังบันทึก จะแสดงบน main {{ liveSlideCount }} จากทั้งหมด
+              {{ draftHeroConfig.slides.length }} สไลด์
+            </q-tooltip>
+          </q-badge>
         </div>
 
         <div
@@ -39,15 +48,45 @@
           <HeroEditorInput
             v-model="draftHeroConfig.initialDelayMs"
             type="number"
-            label="หน่วงก่อนเริ่มพิมพ์ (ms)"
+            label="หน่วงก่อนเริ่ม Animation (ms)"
             :min="0"
             :max="5000"
           />
         </div>
 
+        <div class="hero-slide-filters">
+          <q-input
+            :model-value="slideSearch"
+            outlined
+            dense
+            debounce="200"
+            placeholder="ค้นหาชื่อสไลด์..."
+            clearable
+            @update:model-value="onSlideSearchUpdate"
+            @clear="slideSearch = ''"
+          >
+            <template #prepend><q-icon name="search" /></template>
+          </q-input>
+          <BaseDateRangeFilter
+            v-model="slideDateFilter"
+            label="ช่วงวันแสดงผล"
+            from-hint="ตั้งแต่"
+            to-hint="ถึง"
+          />
+          <button
+            v-if="hasActiveSlideFilters"
+            type="button"
+            class="hero-slide-filters__reset"
+            @click="resetSlideFilters"
+          >
+            <q-icon name="restart_alt" size="16px" />
+            ล้างตัวกรอง
+          </button>
+        </div>
+
         <div class="hero-slide-list">
           <button
-            v-for="slide in draftHeroConfig.slides"
+            v-for="slide in visibleSlides"
             :key="slide.id"
             type="button"
             class="hero-slide-picker"
@@ -57,9 +96,13 @@
             <img :src="slide.imageUrl" alt="" />
             <span>
               <strong>{{ slide.name }}</strong>
-              <small>{{ slide.enabled ? 'แสดงบน main' : 'ซ่อนอยู่' }}</small>
+              <small>{{ describeSlideSchedule(slide) }}</small>
             </span>
           </button>
+          <p v-if="visibleSlides.length === 0" class="hero-slide-list__empty">
+            <q-icon name="search_off" size="22px" />
+            ไม่พบสไลด์ที่ตรงกับเงื่อนไข
+          </p>
         </div>
 
         <q-btn
@@ -247,6 +290,13 @@
                 <HeroEditorInput
                   v-model="selectedSlide.name"
                   label="ชื่อภาพ"
+                  class="hero-form-span-full"
+                />
+                <BaseDateRangeFilter
+                  v-model="selectedSlideSchedule"
+                  label="ช่วงวันแสดงผล"
+                  from-hint="วันเริ่มแสดง"
+                  to-hint="วันสิ้นสุด"
                   class="hero-form-span-full"
                 />
                 <div class="hero-form-row">
@@ -628,6 +678,15 @@
       @confirm="handleConfirmDialog"
       @cancel="clearPendingConfirmAction"
     />
+
+    <HeroSlideFormDialog
+      v-model="addSlideDialogOpen"
+      mode="create"
+      :initial-name="addSlideDraft.name"
+      :preview-url="addSlideDraft.imageUrl"
+      @submit="onAddSlideSubmit"
+      @cancel="resetAddSlideDraft"
+    />
   </div>
 </template>
 
@@ -643,7 +702,11 @@ import {
 } from 'vue';
 import { useQuasar } from 'quasar';
 import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
+import HeroSlideFormDialog, {
+  type HeroSlideFormPayload,
+} from 'components/admin/HeroSlideFormDialog.vue';
 import BaseButton from 'components/base/BaseButton.vue';
+import BaseDateRangeFilter, { type DateRangeValue } from 'components/base/BaseDateRangeFilter.vue';
 import {
   cloneHeroTemplateConfig,
   createDefaultHeroTemplateConfig,
@@ -651,6 +714,7 @@ import {
   createHeroTextLine,
   createHeroTextSegment,
   useSystemImageStore,
+  type HeroSlideTemplate,
   type HeroTemplateConfig,
   type HeroTextEffect,
   type HeroTextLine,
@@ -848,6 +912,136 @@ const fontFamilyOptions = [
 const selectedSlide = computed(() =>
   draftHeroConfig.value.slides.find((slide) => slide.id === selectedSlideId.value),
 );
+
+const slideSearch = ref('');
+const slideDateFilter = ref<DateRangeValue>({ start: null, end: null });
+const addSlideDialogOpen = ref(false);
+const addSlideDraft = ref<{ imageUrl: string; name: string }>({ imageUrl: '', name: '' });
+
+const selectedSlideSchedule = computed<DateRangeValue>({
+  get: () => ({
+    start: selectedSlide.value?.startDate ?? null,
+    end: selectedSlide.value?.endDate ?? null,
+  }),
+  set: (next) => {
+    if (!selectedSlide.value) return;
+    selectedSlide.value.startDate = next.start;
+    selectedSlide.value.endDate = next.end;
+  },
+});
+
+function parseSlideDate(value: string | null): Date | null {
+  if (!value) return null;
+  const parts = value.split('/');
+  if (parts.length === 3) {
+    const [day, month, year] = parts.map(Number);
+    if (
+      Number.isFinite(day) &&
+      Number.isFinite(month) &&
+      Number.isFinite(year) &&
+      day &&
+      month &&
+      year
+    ) {
+      return new Date(year, month - 1, day);
+    }
+  }
+  const fallback = new Date(value);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function rangesOverlap(
+  slideStart: Date | null,
+  slideEnd: Date | null,
+  filterStart: Date | null,
+  filterEnd: Date | null,
+): boolean {
+  if (filterStart && slideEnd && slideEnd < filterStart) return false;
+  if (filterEnd && slideStart && slideStart > filterEnd) return false;
+  if (filterStart && !slideStart && !slideEnd) return false;
+  if (filterEnd && !slideStart && !slideEnd) return false;
+  return true;
+}
+
+const visibleSlides = computed(() => {
+  const term = slideSearch.value.trim().toLowerCase();
+  const filterStart = parseSlideDate(slideDateFilter.value.start);
+  const filterEnd = parseSlideDate(slideDateFilter.value.end);
+
+  return draftHeroConfig.value.slides.filter((slide) => {
+    if (term && !slide.name.toLowerCase().includes(term)) {
+      return false;
+    }
+
+    if (!filterStart && !filterEnd) {
+      return true;
+    }
+
+    return rangesOverlap(
+      parseSlideDate(slide.startDate),
+      parseSlideDate(slide.endDate),
+      filterStart,
+      filterEnd,
+    );
+  });
+});
+
+const hasActiveSlideFilters = computed(
+  () =>
+    slideSearch.value.trim().length > 0 ||
+    Boolean(slideDateFilter.value.start) ||
+    Boolean(slideDateFilter.value.end),
+);
+
+function resetSlideFilters(): void {
+  slideSearch.value = '';
+  slideDateFilter.value = { start: null, end: null };
+}
+
+function onSlideSearchUpdate(value: string | number | null): void {
+  slideSearch.value = value === null ? '' : String(value);
+}
+
+function isSlideLiveToday(slide: HeroSlideTemplate): boolean {
+  if (!slide.enabled) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = parseSlideDate(slide.startDate);
+  const end = parseSlideDate(slide.endDate);
+  if (start && today < start) return false;
+  if (end && today > end) return false;
+  return true;
+}
+
+const liveSlideCount = computed(() => draftHeroConfig.value.slides.filter(isSlideLiveToday).length);
+
+const slideValidationError = computed(() => {
+  for (const slide of draftHeroConfig.value.slides) {
+    if (!slide.startDate || !slide.endDate) {
+      return `สไลด์ "${slide.name}" ยังไม่ได้กำหนดช่วงวันแสดงผล`;
+    }
+    const start = parseSlideDate(slide.startDate);
+    const end = parseSlideDate(slide.endDate);
+    if (start && end && end < start) {
+      return `สไลด์ "${slide.name}" วันสิ้นสุดต้องไม่อยู่ก่อนวันเริ่มแสดง`;
+    }
+  }
+  return '';
+});
+
+function describeSlideSchedule(slide: HeroSlideTemplate): string {
+  const status = slide.enabled ? 'แสดงบน main' : 'ซ่อนอยู่';
+  if (slide.startDate && slide.endDate) {
+    return `${status} • ${slide.startDate} - ${slide.endDate}`;
+  }
+  if (slide.startDate) {
+    return `${status} • ตั้งแต่ ${slide.startDate}`;
+  }
+  if (slide.endDate) {
+    return `${status} • ถึง ${slide.endDate}`;
+  }
+  return status;
+}
 
 const enabledPreviewLines = computed(
   () => selectedSlide.value?.textBlock.lines.filter((line) => line.enabled) ?? [],
@@ -1057,18 +1251,13 @@ function requestAddImageFile(file: File): void {
     return;
   }
 
-  openConfirmDialog(
-    {
-      title: 'ยืนยันการเพิ่มรูป Hero?',
-      message: `ต้องการเพิ่ม "${file.name}" เป็นรูป Hero ใหม่หรือไม่`,
-      confirmLabel: 'เพิ่มรูป',
-      icon: 'add_photo_alternate',
-      confirmIcon: 'add',
-    },
-    () => {
-      void addImageFile(file);
-    },
-  );
+  void readFileAsDataUrl(file).then((imageUrl) => {
+    addSlideDraft.value = {
+      imageUrl,
+      name: getImageName(file),
+    };
+    addSlideDialogOpen.value = true;
+  });
 }
 
 function requestReplaceImageFile(file: File): void {
@@ -1097,19 +1286,32 @@ function requestReplaceImageFile(file: File): void {
   );
 }
 
-function addImageFile(file: File): Promise<void> {
+function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = () => {
-      const imageUrl = typeof reader.result === 'string' ? reader.result : '';
-      const slide = createHeroSlideTemplate(imageUrl, getImageName(file));
-      draftHeroConfig.value.slides.push(slide);
-      selectedSlideId.value = slide.id;
-      notifyDraftChanged('เพิ่มรูปใน draft แล้ว กดยืนยันการบันทึกเพื่อใช้จริง');
-      resolve();
+      resolve(typeof reader.result === 'string' ? reader.result : '');
     };
     reader.readAsDataURL(file);
   });
+}
+
+function onAddSlideSubmit(payload: HeroSlideFormPayload): void {
+  if (!addSlideDraft.value.imageUrl) {
+    return;
+  }
+
+  const slide = createHeroSlideTemplate(addSlideDraft.value.imageUrl, payload.name);
+  slide.startDate = payload.startDate;
+  slide.endDate = payload.endDate;
+  draftHeroConfig.value.slides.push(slide);
+  selectedSlideId.value = slide.id;
+  resetAddSlideDraft();
+  notifyDraftChanged('เพิ่มสไลด์ใน draft แล้ว กดยืนยันการบันทึกเพื่อใช้จริง');
+}
+
+function resetAddSlideDraft(): void {
+  addSlideDraft.value = { imageUrl: '', name: '' };
 }
 
 function replaceSlideImageFile(slideId: string, file: File): Promise<void> {
@@ -1208,6 +1410,15 @@ function requestDiscardDraft(): void {
 function requestSaveTemplate(): void {
   if (!hasUnsavedChanges.value) {
     $q.notify({ type: 'info', message: 'ยังไม่มีการเปลี่ยนแปลงให้บันทึก', position: 'top' });
+    return;
+  }
+
+  if (slideValidationError.value) {
+    $q.notify({
+      type: 'negative',
+      message: slideValidationError.value,
+      position: 'top',
+    });
     return;
   }
 
@@ -1763,6 +1974,33 @@ onBeforeUnmount(() => {
   gap: 10px;
 }
 
+.hero-slide-filters {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px dashed rgba(16, 35, 63, 0.12);
+  border-radius: 14px;
+  background: #fafbfd;
+}
+
+.hero-slide-filters__reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 0;
+  border: 0;
+  background: transparent;
+  color: #b7791f;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+
+  &:hover {
+    color: #8a5a11;
+  }
+}
+
 .hero-slide-list {
   display: grid;
   gap: 12px;
@@ -1771,6 +2009,19 @@ onBeforeUnmount(() => {
   margin-top: 6px;
   padding: 12px;
   margin: 0 -12px;
+}
+
+.hero-slide-list__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 12px;
+  border: 1px dashed rgba(16, 35, 63, 0.12);
+  border-radius: 12px;
+  color: #6b7280;
+  font-size: 0.84rem;
 }
 
 .color-picker-btn {

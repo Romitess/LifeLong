@@ -52,6 +52,8 @@ export interface HeroSlideTemplate {
   overlayColor: string;
   overlayOpacity: number;
   textBlock: HeroTextBlock;
+  startDate: string | null;
+  endDate: string | null;
 }
 
 export interface HeroTemplateConfig {
@@ -60,7 +62,7 @@ export interface HeroTemplateConfig {
   slides: HeroSlideTemplate[];
 }
 
-const SYSTEM_HERO_TEMPLATE_STORAGE_KEY = 'lll-system-hero-template';
+const SYSTEM_HERO_TEMPLATE_STORAGE_KEY = 'lll-system-hero-template-v2';
 
 const DEFAULT_FONT_STACK = "'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif";
 
@@ -76,6 +78,8 @@ const DEFAULT_HERO_CONFIG: HeroTemplateConfig = {
       backgroundPosition: 'center 60%',
       overlayColor: '#ffffff',
       overlayOpacity: 0,
+      startDate: '01/05/2026',
+      endDate: '31/12/2026',
       textBlock: {
         enabled: true,
         xPercent: 8,
@@ -173,6 +177,8 @@ const DEFAULT_HERO_CONFIG: HeroTemplateConfig = {
       backgroundPosition: 'center 58%',
       overlayColor: '#0f172a',
       overlayOpacity: 0,
+      startDate: '15/06/2026',
+      endDate: '15/09/2026',
       textBlock: createEmptyTextBlock(),
     },
   ],
@@ -251,6 +257,8 @@ export function createHeroSlideTemplate(
     backgroundPosition: 'center center',
     overlayColor: '#0f172a',
     overlayOpacity: 0.12,
+    startDate: null,
+    endDate: null,
     textBlock: createEmptyTextBlock(),
   };
 }
@@ -372,6 +380,48 @@ function normalizeTextBlock(block: Partial<HeroTextBlock> | undefined): HeroText
   };
 }
 
+function normalizeDateString(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function parseDmyDate(value: string | null): Date | null {
+  if (!value) return null;
+  const parts = value.split('/');
+  if (parts.length === 3) {
+    const [day, month, year] = parts.map(Number);
+    if (
+      Number.isFinite(day) &&
+      Number.isFinite(month) &&
+      Number.isFinite(year) &&
+      day &&
+      month &&
+      year
+    ) {
+      return new Date(year, month - 1, day);
+    }
+  }
+  const fallback = new Date(value);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function startOfToday(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function isSlideScheduledOn(slide: HeroSlideTemplate, target: Date): boolean {
+  const start = parseDmyDate(slide.startDate);
+  const end = parseDmyDate(slide.endDate);
+  if (start && target < start) return false;
+  if (end && target > end) return false;
+  return true;
+}
+
 function normalizeSlide(slide: Partial<HeroSlideTemplate>, index: number): HeroSlideTemplate {
   return {
     id: typeof slide.id === 'string' ? slide.id : createId(`hero-slide-${index}`),
@@ -382,6 +432,8 @@ function normalizeSlide(slide: Partial<HeroSlideTemplate>, index: number): HeroS
       typeof slide.backgroundPosition === 'string' ? slide.backgroundPosition : 'center 60%',
     overlayColor: typeof slide.overlayColor === 'string' ? slide.overlayColor : '#ffffff',
     overlayOpacity: clampNumber(slide.overlayOpacity, 0, 0, 1),
+    startDate: normalizeDateString(slide.startDate),
+    endDate: normalizeDateString(slide.endDate),
     textBlock: normalizeTextBlock(slide.textBlock),
   };
 }
@@ -431,8 +483,18 @@ export const useSystemImageStore = defineStore('systemImage', {
 
   getters: {
     activeHeroSlides(state): HeroSlideTemplate[] {
+      const today = startOfToday();
+      const scheduledSlides = state.heroConfig.slides.filter(
+        (slide) => slide.enabled && isSlideScheduledOn(slide, today),
+      );
+      if (scheduledSlides.length > 0) {
+        return scheduledSlides;
+      }
       const enabledSlides = state.heroConfig.slides.filter((slide) => slide.enabled);
-      return enabledSlides.length > 0 ? enabledSlides : state.heroConfig.slides.slice(0, 1);
+      if (enabledSlides.length > 0) {
+        return enabledSlides;
+      }
+      return state.heroConfig.slides.slice(0, 1);
     },
   },
 

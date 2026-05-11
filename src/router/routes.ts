@@ -44,16 +44,8 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/admin/admin-dashboard-page.vue'),
         meta: { role: 'admin' },
       },
-      {
-        path: 'admin/categories',
-        component: () => import('pages/admin/admin-categories-page.vue'),
-        meta: { role: 'admin' },
-      },
-      {
-        path: 'admin/images',
-        component: () => import('pages/admin/admin-images-page.vue'),
-        meta: { role: 'admin' },
-      },
+      { path: 'admin/categories', redirect: '/admin/basics', meta: { role: 'admin' } },
+      { path: 'admin/images', redirect: '/admin/basics', meta: { role: 'admin' } },
       {
         path: 'admin/basics',
         component: () => import('pages/admin/admin-basics-page.vue'),

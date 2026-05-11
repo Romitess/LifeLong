@@ -1,0 +1,54 @@
+<template>
+  <div class="cert-placeholder">
+    <AdminSurfaceCard
+      eyebrow="Certificate Signer"
+      title="ผู้เซ็น Certificate"
+      subtitle="ตั้งค่ารายชื่อผู้ลงนามบนวุฒิบัตร พร้อมตำแหน่งและลายเซ็น"
+      body-padding="lg"
+    >
+      <div class="cert-placeholder__body">
+        <q-icon name="draw" size="56px" class="cert-placeholder__icon" />
+        <h3 class="cert-placeholder__title">เร็ว ๆ นี้</h3>
+        <p class="cert-placeholder__description">
+          ส่วนจัดการผู้ลงนามวุฒิบัตร อยู่ระหว่างการพัฒนา จะเปิดให้ใช้งานในเฟสถัดไป
+        </p>
+      </div>
+    </AdminSurfaceCard>
+  </div>
+</template>
+
+<script setup lang="ts">
+import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+</script>
+
+<style lang="scss" scoped>
+.cert-placeholder__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  color: #4b5563;
+}
+
+.cert-placeholder__icon {
+  color: #1a237e;
+  margin-bottom: 16px;
+}
+
+.cert-placeholder__title {
+  margin: 0 0 8px;
+  color: var(--admin-navy);
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+
+.cert-placeholder__description {
+  max-width: 380px;
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+</style>
