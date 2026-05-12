@@ -255,12 +255,87 @@ function createDefaultAvatar(email: string): string {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`;
 }
 
-function mapApiRole(value: unknown): User['role'] {
-  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
-  if (isUserRole(normalized)) {
-    return normalized;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function getRecordValue(record: Record<string, unknown>, keys: string[]): unknown {
+  for (const key of keys) {
+    if (key in record) {
+      return record[key];
+    }
+
+    const matchedKey = Object.keys(record).find(
+      (recordKey) => recordKey.toLowerCase() === key.toLowerCase(),
+    );
+
+    if (matchedKey) {
+      return record[matchedKey];
+    }
   }
+
+  return undefined;
+}
+
+function stringifyApiValue(value: unknown, fallback = ''): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  return fallback;
+}
+
+function normalizeRoleToken(value: unknown): string {
+  return stringifyApiValue(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+    .replace(/^role_/, '');
+}
+
+function collectRoleCandidates(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectRoleCandidates(item));
+  }
+
+  if (isRecord(value)) {
+    return [
+      getRecordValue(value, ['role', 'roles']),
+      getRecordValue(value, ['name', 'code', 'key', 'slug', 'roleName', 'role_name', 'authority']),
+    ].flatMap((item) => collectRoleCandidates(item));
+  }
+
+  const normalized = normalizeRoleToken(value);
+  return normalized ? [normalized] : [];
+}
+
+function resolveRoleFromCandidates(candidates: string[]): User['role'] {
+  if (
+    candidates.some(
+      (candidate) => candidate.includes('central_finance') || candidate.includes('finance_central'),
+    )
+  ) {
+    return 'central_finance';
+  }
+
+  if (candidates.some((candidate) => candidate.includes('finance'))) {
+    return 'finance';
+  }
+
+  const matchedRole = candidates.find(isUserRole);
+  if (matchedRole) {
+    return matchedRole;
+  }
+
   return 'student';
+}
+
+function mapApiRole(...values: unknown[]): User['role'] {
+  return resolveRoleFromCandidates(values.flatMap((value) => collectRoleCandidates(value)));
 }
 
 function isUserRole(value: unknown): value is User['role'] {
@@ -329,6 +404,20 @@ function readStoredAuthAccounts(): StoredAuthAccount[] {
 
 function writeStoredAuthAccounts(accounts: StoredAuthAccount[]): void {
   writeLocalStorage(AUTH_ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+}
+
+function upsertStoredAuthAccount(account: StoredAuthAccount): void {
+  const normalizedAccount: StoredAuthAccount = {
+    ...account,
+    email: normalizeEmail(account.email),
+  };
+  const storedAccounts = readStoredAuthAccounts();
+  const nextAccounts = [
+    normalizedAccount,
+    ...storedAccounts.filter((storedAccount) => storedAccount.email !== normalizedAccount.email),
+  ];
+
+  writeStoredAuthAccounts(nextAccounts);
 }
 
 function getAllAuthAccounts(): StoredAuthAccount[] {
@@ -450,15 +539,24 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
-    setAuthenticatedUser(account: StoredAuthAccount): void {
+    setAuthenticatedUser(account: StoredAuthAccount, options: { persist?: boolean } = {}): void {
+      const normalizedAccount: StoredAuthAccount = {
+        ...account,
+        email: normalizeEmail(account.email),
+      };
+
+      if (options.persist) {
+        upsertStoredAuthAccount(normalizedAccount);
+      }
+
       removeLocalStorage(USER_PROFILE_STORAGE_KEY);
       removeLocalStorage(PROFILE_AVATAR_STORAGE_KEY);
       removeLocalStorage(FULL_PROFILE_AVATAR_STORAGE_KEY);
       writeLocalStorage(LOGIN_STATE_STORAGE_KEY, 'true');
-      writeLocalStorage(CURRENT_USER_EMAIL_STORAGE_KEY, account.email);
+      writeLocalStorage(CURRENT_USER_EMAIL_STORAGE_KEY, normalizedAccount.email);
 
       this.isLoggedIn = true;
-      this.user = createUserFromAccount(account);
+      this.user = createUserFromAccount(normalizedAccount);
       persistUserProfile(getProfileFields(this.user));
     },
 
@@ -491,7 +589,7 @@ export const useAuthStore = defineStore('auth', {
           source: 'mock',
         };
 
-        this.setAuthenticatedUser(account);
+        this.setAuthenticatedUser(account, { persist: true });
         return true;
       } catch (error) {
         console.error('Login error:', error);

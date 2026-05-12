@@ -200,6 +200,23 @@ async function goToForgotPassword(): Promise<void> {
   void router.push('/login-forget');
 }
 
+function getPostLoginPath(): string {
+  const rolePathMap = {
+    admin: '/admin/dashboard',
+    instructor: '/instructor/dashboard',
+    teach: '/instructor/dashboard',
+    finance: '/finance/dashboard',
+    central_finance: '/central-finance/dashboard',
+  } as const;
+
+  const role = authStore.user?.role;
+  if (role && role in rolePathMap) {
+    return rolePathMap[role as keyof typeof rolePathMap];
+  }
+
+  return typeof route.query.redirect === 'string' ? route.query.redirect : '/main';
+}
+
 async function onLogin(): Promise<void> {
   if (!loginForm.username.trim() || !loginForm.password.trim()) {
     $q.notify({
@@ -231,28 +248,7 @@ async function onLogin(): Promise<void> {
       position: 'top',
     });
 
-    if (authStore.user?.role === 'admin') {
-      void router.push('/admin/dashboard');
-      return;
-    }
-
-    if (authStore.user?.role === 'instructor' || authStore.user?.role === 'teach') {
-      void router.push('/instructor/dashboard');
-      return;
-    }
-
-    if (authStore.user?.role === 'finance') {
-      void router.push('/finance/dashboard');
-      return;
-    }
-
-    if (authStore.user?.role === 'central_finance') {
-      void router.push('/central-finance/dashboard');
-      return;
-    }
-
-    const redirectPath = typeof route.query.redirect === 'string' ? route.query.redirect : '/main';
-    void router.push(redirectPath);
+    void router.push(getPostLoginPath());
   } catch {
     $q.notify({
       type: 'negative',
