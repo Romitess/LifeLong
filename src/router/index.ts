@@ -49,19 +49,6 @@ export default defineRouter((/* { store, ssrContext } */) => {
   Router.beforeEach(async (to, from) => {
     if (isInitialLoad) {
       isInitialLoad = false;
-
-      // Only force home and logout if it's a new tab/window session
-      const isNewSession = !sessionStorage.getItem('lll-app-initialized');
-
-      if (isNewSession) {
-        sessionStorage.setItem('lll-app-initialized', 'true');
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('userEmail');
-
-        if (to.path !== '/main' && to.path !== '/') {
-          return { path: '/main' };
-        }
-      }
     }
 
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';

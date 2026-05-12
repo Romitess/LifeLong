@@ -562,39 +562,49 @@ export const useAuthStore = defineStore('auth', {
 
     async login(username: string, password: string): Promise<boolean> {
       try {
-        const response = await api.post('/api/auth/login', {
+        const response = await api.post('auth/login', {
           username,
           password,
         });
 
-        const apiUser = response.data.user;
+        if (response.data && response.data.user) {
+          const apiUser = response.data.user;
 
-        // Map API User to Frontend User model
-        const account: StoredAuthAccount = {
-          id: String(apiUser.id),
-          studentId: 'EXT' + String(apiUser.id).padStart(7, '0'),
-          firstNameTh: apiUser.username,
-          lastNameTh: '',
-          firstNameEn: apiUser.username.toUpperCase(),
-          lastNameEn: apiUser.role.toUpperCase(),
-          email: apiUser.email,
-          phone: '',
-          faculty: 'Lifelong Learning',
-          department: apiUser.role,
-          role: mapApiRole(apiUser.role),
-          username: apiUser.username,
-          avatar: createDefaultAvatar(apiUser.email),
-          password: password,
-          createdAt: new Date().toISOString(),
-          source: 'mock',
-        };
+          // Map API User to Frontend User model
+          const account: StoredAuthAccount = {
+            id: String(apiUser.id),
+            studentId: 'EXT' + String(apiUser.id).padStart(7, '0'),
+            firstNameTh: apiUser.username,
+            lastNameTh: '',
+            firstNameEn: apiUser.username.toUpperCase(),
+            lastNameEn: apiUser.role.toUpperCase(),
+            email: apiUser.email,
+            phone: '',
+            faculty: 'Lifelong Learning',
+            department: apiUser.role,
+            role: mapApiRole(apiUser.role),
+            username: apiUser.username,
+            avatar: createDefaultAvatar(apiUser.email),
+            password: password,
+            createdAt: new Date().toISOString(),
+            source: 'mock',
+          };
 
-        this.setAuthenticatedUser(account, { persist: true });
-        return true;
+          this.setAuthenticatedUser(account, { persist: true });
+          return true;
+        }
       } catch (error) {
-        console.error('Login error:', error);
-        return false;
+        console.warn('API login failed, checking mock accounts...', error);
       }
+
+      // Fallback: Check mock accounts if API fails or doesn't find user
+      const mockAccount = findAuthAccountByEmail(username);
+      if (mockAccount && mockAccount.password === password) {
+        this.setAuthenticatedUser(mockAccount);
+        return true;
+      }
+
+      return false;
     },
 
     registerLearner(payload: RegisterLearnerPayload): AuthActionResult {

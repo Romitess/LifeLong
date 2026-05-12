@@ -248,7 +248,14 @@ async function onLogin(): Promise<void> {
       position: 'top',
     });
 
-    void router.push(getPostLoginPath());
+    const targetPath = getPostLoginPath();
+    console.log(
+      '[Login] Login success. User role:',
+      authStore.user?.role,
+      'Redirecting to:',
+      targetPath,
+    );
+    void router.push(targetPath);
   } catch {
     $q.notify({
       type: 'negative',
