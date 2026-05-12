@@ -3,8 +3,8 @@ import type { CourseDetail } from 'src/types/course-detail';
 
 type CourseDetailContent = Omit<CourseDetail, keyof Course>;
 
-export const DEMO_INSTRUCTOR_ID = 'mock-instructor-user';
-export const DEMO_INSTRUCTOR_EMAIL = 'teach@go.buu.ac.th';
+export const DEMO_INSTRUCTOR_ID = '1';
+export const DEMO_INSTRUCTOR_EMAIL = 'instructor@example.com';
 export const DEMO_INSTRUCTOR_1_ID = 'mock-instructor-teach1-user';
 export const DEMO_INSTRUCTOR_1_EMAIL = 'teach1@go.buu.ac.th';
 

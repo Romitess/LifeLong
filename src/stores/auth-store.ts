@@ -46,6 +46,11 @@ interface StoredAuthAccount extends User {
   source: 'mock' | 'registered';
 }
 
+export interface AuthDemoAccount {
+  email: string;
+  password: string;
+}
+
 const PROFILE_AVATAR_STORAGE_KEY = 'lll-profile-avatar';
 const FULL_PROFILE_AVATAR_STORAGE_KEY = 'lll-profile-avatar-full';
 const USER_PROFILE_STORAGE_KEY = 'lll-user-profile';
@@ -68,7 +73,7 @@ const MOCK_USER_BASE: Omit<User, 'avatar'> = {
   lastNameTh: 'ไม่อยู่',
   firstNameEn: 'NATTHAPHONG',
   lastNameEn: 'MAIYOO',
-  email: 'student@go.buu.ac.th',
+  email: 'student_test@go.buu.ac.th',
   phone: '0812345678',
   faculty: 'คณะวิทยาการสารสนเทศ',
   department: 'สาขาวิทยาการคอมพิวเตอร์',
@@ -82,7 +87,7 @@ const MOCK_INSTRUCTOR_BASE: Omit<User, 'avatar'> = {
   lastNameTh: 'ใจดี',
   firstNameEn: 'NITITHORN',
   lastNameEn: 'JAIDEE',
-  email: 'teach@go.buu.ac.th',
+  email: 'instructor_test@go.buu.ac.th',
   phone: '0898765432',
   faculty: 'คณะวิทยาการสารสนเทศ',
   department: 'สาขาวิทยาการคอมพิวเตอร์',
@@ -110,7 +115,7 @@ const MOCK_ADMIN_BASE: Omit<User, 'avatar'> = {
   lastNameTh: 'ระบบ',
   firstNameEn: 'SYSTEM',
   lastNameEn: 'ADMIN',
-  email: 'admin@go.buu.ac.th',
+  email: 'admin_test@go.buu.ac.th',
   phone: '038102222',
   faculty: 'สำนักบริหารระบบ',
   department: 'BUU Lifelong Learning Platform',
@@ -124,7 +129,7 @@ const MOCK_FINANCE_BASE: Omit<User, 'avatar'> = {
   lastNameTh: 'การเงิน',
   firstNameEn: 'SOMSRI',
   lastNameEn: 'FINANCE',
-  email: 'finance@go.buu.ac.th',
+  email: 'finance_test@go.buu.ac.th',
   phone: '038101111',
   faculty: 'คอมพิวเตอร์และเทคโนโลยี',
   department: 'งานคลังและพัสดุ',
@@ -138,7 +143,7 @@ const MOCK_CENTRAL_FINANCE_BASE: Omit<User, 'avatar'> = {
   lastNameTh: 'การเงินกองคลัง',
   firstNameEn: 'CENTRAL',
   lastNameEn: 'FINANCE',
-  email: 'central-finance@go.buu.ac.th',
+  email: 'central_finance_test@go.buu.ac.th',
   phone: '038103333',
   faculty: 'กองคลัง',
   department: 'งานบริหารการเงิน',
@@ -150,7 +155,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_USER_BASE,
     email: MOCK_USER_BASE.email.toLowerCase(),
     avatar: DEFAULT_PROFILE_AVATAR,
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -158,7 +163,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_INSTRUCTOR_BASE,
     email: MOCK_INSTRUCTOR_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nitithorn',
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -166,7 +171,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_INSTRUCTOR_1_BASE,
     email: MOCK_INSTRUCTOR_1_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pitcha',
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -174,7 +179,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_ADMIN_BASE,
     email: MOCK_ADMIN_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=BUU-LLL-Admin',
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -182,7 +187,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_FINANCE_BASE,
     email: MOCK_FINANCE_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SomsriFinance',
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -190,11 +195,18 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_CENTRAL_FINANCE_BASE,
     email: MOCK_CENTRAL_FINANCE_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CentralFinance',
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
 ];
+
+export const AUTH_DEMO_ACCOUNTS: AuthDemoAccount[] = DEFAULT_AUTH_ACCOUNTS.map(
+  ({ email, password }) => ({
+    email,
+    password,
+  }),
+);
 
 function readLocalStorage(key: string): string | null {
   if (typeof window === 'undefined') {

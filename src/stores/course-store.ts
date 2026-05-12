@@ -1,5 +1,6 @@
 // src/stores/course-store.ts
 import { defineStore } from 'pinia';
+import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
 import {
@@ -21,8 +22,92 @@ type CourseInstructorOwner = {
   role?: string;
 } | null;
 
+interface BackendCourseResponse {
+  value?: BackendCourse[];
+}
+
+interface BackendCourse {
+  id?: number;
+  code?: string | null;
+  titleTh?: string | null;
+  titleEn?: string | null;
+  hours?: number | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  categoryId?: number | null;
+  objective?: string | null;
+  status?: string | null;
+  createUser?: string | null;
+}
+
 function normalizeInstructorEmail(email?: string): string {
   return email?.trim().toLowerCase() ?? '';
+}
+
+function formatDisplayDate(value?: string | null): string {
+  if (!value) {
+    return '-';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
+
+function mapBackendCourse(course: BackendCourse): Course | null {
+  if (course.id === undefined || !course.code || !course.titleTh) {
+    return null;
+  }
+
+  const isActive = course.status === 'Y';
+  const startDate = course.startDate ?? '2026-06-01';
+  const endDate = course.endDate ?? '2026-09-30';
+  const activeStatus =
+    MOCK_COURSES.find((candidate) => candidate.isActive)?.status ?? 'เปิดรับสมัคร';
+  const inactiveStatus =
+    MOCK_COURSES.find((candidate) => !candidate.isActive)?.status ?? activeStatus;
+
+  return {
+    id: `db-${course.id}`,
+    code: course.code,
+    moodleId: course.id,
+    title: course.titleTh,
+    titleEn: course.titleEn ?? course.titleTh,
+    instructorId: DEMO_INSTRUCTOR_ID,
+    instructorEmail: DEMO_INSTRUCTOR_EMAIL,
+    imageUrl:
+      'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80',
+    cover: {
+      icon: 'school',
+      accentColor: '#f5a623',
+      backgroundColor: '#26364d',
+    },
+    registrationStart: formatDisplayDate(startDate),
+    registrationStartEn: startDate,
+    registrationEnd: formatDisplayDate(endDate),
+    registrationEndEn: endDate,
+    registrationStartDate: startDate,
+    registrationEndDate: endDate,
+    price: 0,
+    isFree: true,
+    views: 0,
+    status: isActive ? activeStatus : inactiveStatus,
+    deliveryModes: ['Online'],
+    isActive,
+    faculty: 'Lifelong Learning',
+    facultyEn: 'Lifelong Learning',
+    category: `Category ${course.categoryId ?? 1}`,
+    categoryEn: `Category ${course.categoryId ?? 1}`,
+    maxSeats: 40,
+    enrolledCount: 0,
+  };
 }
 
 function ensureCourseInstructorOwner(course: Course): Course {
@@ -196,10 +281,14 @@ export const useCourseStore = defineStore('course', {
     courses: Course[];
     courseDetails: Record<string, CourseDetail>;
     selectedCategory: string | null;
+    backendCoursesLoaded: boolean;
+    backendCoursesLoading: boolean;
   } => ({
     courses: [],
     courseDetails: {},
     selectedCategory: null,
+    backendCoursesLoaded: false,
+    backendCoursesLoading: false,
   }),
   actions: {
     setSelectedCategory(category: string | null) {
@@ -207,7 +296,19 @@ export const useCourseStore = defineStore('course', {
     },
     /** Initialize courses from mock data. */
     init() {
-      if (this.courses.length > 0) return;
+      if (this.courses.length > 0) {
+        this.courses = this.courses.map(ensureCourseInstructorOwner);
+        this.courseDetails = Object.fromEntries(
+          Object.entries(this.courseDetails).map(([courseId, detail]) => [
+            courseId,
+            ensureCourseDetailInstructorOwner(detail),
+          ]),
+        );
+        writeStoredCourses(this.courses);
+        writeStoredCourseDetails(this.courseDetails);
+        void this.fetchBackendCourses();
+        return;
+      }
 
       const storedCourses = readStoredCourses() ?? [];
       const mockIds = new Set(MOCK_COURSES.map((c) => c.id));
@@ -227,6 +328,38 @@ export const useCourseStore = defineStore('course', {
 
       writeStoredCourses(this.courses);
       writeStoredCourseDetails(this.courseDetails);
+      void this.fetchBackendCourses();
+    },
+    async fetchBackendCourses() {
+      if (this.backendCoursesLoaded || this.backendCoursesLoading) {
+        return;
+      }
+
+      this.backendCoursesLoading = true;
+
+      try {
+        const { data } = await api.get<BackendCourseResponse>('/api/moodle/courses');
+        const backendCourses = (data.value ?? [])
+          .map(mapBackendCourse)
+          .filter((course): course is Course => Boolean(course));
+
+        if (backendCourses.length === 0) {
+          return;
+        }
+
+        const backendIds = new Set(backendCourses.map((course) => course.id));
+        this.courses = [
+          ...backendCourses,
+          ...this.courses.filter((course) => !backendIds.has(course.id)),
+        ].map(ensureCourseInstructorOwner);
+
+        writeStoredCourses(this.courses);
+      } catch (error) {
+        console.warn('Failed to fetch backend courses', error);
+      } finally {
+        this.backendCoursesLoaded = true;
+        this.backendCoursesLoading = false;
+      }
     },
     /** Add a new course to the list */
     addCourse(course: Course) {

@@ -86,11 +86,9 @@
 
     <div class="auth-demo">
       <div class="auth-demo__title">{{ $t('auth.login.demoTitle') }}</div>
-      <div>{{ $t('auth.login.studentDemo') }}</div>
-      <div>{{ $t('auth.login.instructorDemo') }}</div>
-      <div>{{ $t('auth.login.adminDemo') }}</div>
-      <div>{{ $t('auth.login.financeDemo') }}</div>
-      <div>{{ $t('auth.login.centralFinanceDemo') }}</div>
+      <div v-for="account in demoAccounts" :key="account.email">
+        {{ account.email }} / {{ account.password }}
+      </div>
     </div>
 
     <div class="auth-switch">
@@ -128,7 +126,7 @@ import { useRoute, useRouter } from 'vue-router';
 import AuthPageShell, { type AuthVisualItem } from 'components/auth/AuthPageShell.vue';
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
-import { useAuthStore } from 'src/stores/auth-store';
+import { AUTH_DEMO_ACCOUNTS, useAuthStore } from 'src/stores/auth-store';
 
 interface LoginForm {
   username: string;
@@ -152,6 +150,8 @@ const loginForm = reactive<LoginForm>({
   password: '',
   remember: false,
 });
+
+const demoAccounts = AUTH_DEMO_ACCOUNTS;
 
 const visualItems = computed<AuthVisualItem[]>(() => [
   {

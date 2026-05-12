@@ -819,7 +819,8 @@ async function goToLearningPage(targetCourseId = courseId.value): Promise<void> 
   const username = authStore.user?.username;
   if (username) {
     const courseCode = course.value?.code;
-    const url = await getMoodleCourseUrl(targetCourseId, username, courseCode);
+    const moodleCourseId = String(course.value?.moodleId ?? targetCourseId);
+    const url = await getMoodleCourseUrl(moodleCourseId, username, courseCode);
     if (url) {
       window.open(url, '_blank');
       return;
