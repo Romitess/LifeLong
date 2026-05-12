@@ -621,6 +621,12 @@ const navItems = computed<NavItem[]>(() => {
         to: '/finance/dashboard',
       },
       {
+        name: 'finance-source-of-funds-chart',
+        label: 'ผังแหล่งเงิน',
+        icon: 'schema',
+        to: '/finance/source-of-funds-chart',
+      },
+      {
         name: 'finance-receipts',
         label: 'จัดการใบเสร็จ',
         icon: 'receipt_long',
@@ -816,6 +822,12 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'central-finance-dashboard';
   } else if (path.includes('/central-finance/fund-sources')) {
     activeNav.value = 'central-finance-fund-sources';
+  } else if (path.includes('/finance/source-of-funds-chart')) {
+    activeNav.value = 'finance-source-of-funds-chart';
+  } else if (path.includes('/finance/receipts')) {
+    activeNav.value = 'finance-receipts';
+  } else if (path.includes('/finance/dashboard')) {
+    activeNav.value = 'finance-dashboard';
   } else if (path.includes('/instructor/reports')) {
     activeNav.value = 'reports';
   } else {
