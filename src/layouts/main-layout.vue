@@ -955,6 +955,7 @@ async function onCategoryClick(category: string) {
   min-height: 72px;
   background: rgb(247, 208, 70);
   border-bottom: none;
+  gap: 0;
 }
 
 .vertical-divider {
@@ -1141,10 +1142,11 @@ async function onCategoryClick(category: string) {
 .nav-actions {
   display: flex;
   align-items: center;
-  flex: 0 0 460px;
+  flex: 0 1 460px;
   flex-wrap: nowrap;
   gap: 8px;
-  width: 460px;
+  justify-content: flex-end;
+  width: min(460px, 38vw);
   min-width: 0;
 }
 
@@ -1166,12 +1168,12 @@ async function onCategoryClick(category: string) {
   display: grid;
   grid-template-columns: minmax(0, 172px) 36px 36px;
   align-items: center;
-  flex: 0 0 auto;
+  flex: 0 1 326px;
   column-gap: 10px;
   justify-content: end;
   height: 46px;
   min-height: 46px;
-  width: 326px;
+  width: min(326px, 100%);
   padding: 4px 10px 4px 14px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.58);
@@ -1395,8 +1397,9 @@ async function onCategoryClick(category: string) {
       font-size: 0.95rem;
       text-align: left;
       white-space: nowrap;
-      overflow: visible;
-      text-overflow: clip;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
 
     .q-tab__indicator {
@@ -1481,9 +1484,101 @@ async function onCategoryClick(category: string) {
     max-width: 188px;
     min-width: 188px;
   }
+
+  :deep(.nav-tab--finance-receipts) {
+    --nav-tab-label-width: 116px;
+    flex-basis: 166px;
+    width: 166px;
+    max-width: 166px;
+    min-width: 166px;
+  }
+
+  :deep(.nav-tab--finance-dashboard) {
+    --nav-tab-label-width: 136px;
+    flex-basis: 188px;
+    width: 188px;
+    max-width: 188px;
+    min-width: 188px;
+  }
+
+  :deep(.nav-tab--finance-source-of-funds-chart) {
+    --nav-tab-label-width: 144px;
+    flex-basis: 196px;
+    width: 196px;
+    max-width: 196px;
+    min-width: 196px;
+  }
 }
 
 // ── Category Menu ───────────────────────────────────────────
+@media (max-width: 1320px) {
+  .top-toolbar {
+    padding-inline: 14px;
+  }
+
+  .logo {
+    padding-inline: 12px;
+  }
+
+  .logo__image {
+    width: 128px;
+  }
+
+  .vertical-divider {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+
+  .nav-tabs {
+    margin-left: 8px;
+
+    :deep(.q-tab) {
+      padding-inline: 6px;
+      margin-inline: 1px;
+    }
+
+    :deep(.nav-tab--finance-receipts) {
+      --nav-tab-label-width: 104px;
+      flex-basis: 152px;
+      width: 152px;
+      max-width: 152px;
+      min-width: 152px;
+    }
+
+    :deep(.nav-tab--finance-dashboard) {
+      --nav-tab-label-width: 126px;
+      flex-basis: 174px;
+      width: 174px;
+      max-width: 174px;
+      min-width: 174px;
+    }
+
+    :deep(.nav-tab--finance-source-of-funds-chart) {
+      --nav-tab-label-width: 126px;
+      flex-basis: 174px;
+      width: 174px;
+      max-width: 174px;
+      min-width: 174px;
+    }
+  }
+
+  .nav-actions {
+    flex-basis: 252px;
+    width: 252px;
+  }
+
+  .nav-user-group {
+    grid-template-columns: 36px 36px;
+    width: 104px;
+    flex-basis: 104px;
+    padding: 4px 8px;
+  }
+
+  .nav-profile-summary {
+    display: none;
+  }
+}
+
 .category-mega-menu {
   min-width: 960px;
   max-width: 95vw;

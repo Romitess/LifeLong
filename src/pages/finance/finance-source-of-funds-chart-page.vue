@@ -1,7 +1,7 @@
 <template>
   <q-page class="admin-page finance-sof-page finance-sof-page--static-cards">
     <AdminPageHero
-      eyebrow="ข้อมูลอ้างอิงการเงิน"
+      eyebrow="Financial Operations"
       eyebrow-icon="schema"
       title="ผังแหล่งเงิน"
       description="จัดการรหัสและชื่อผังแหล่งเงินตามส่วนงาน เพื่อใช้ประกอบการบันทึกและอ้างอิงในระบบ"
@@ -550,37 +550,6 @@ function onDelete(row: FundChartRow) {
 <style scoped lang="scss">
 .finance-sof-page {
   padding-bottom: 48px;
-}
-
-/* Hero บนหน้านี้ — กะทัดรัดขึ้นให้สมดุลกับแถบเมนูด้านบน */
-.finance-sof-page :deep(.admin-page-hero) {
-  padding: 28px 0 20px;
-}
-
-.finance-sof-page :deep(.admin-page-hero__content) {
-  min-height: 0;
-}
-
-.finance-sof-page :deep(.admin-eyebrow) {
-  padding: 6px 11px;
-  font-size: 0.68rem;
-}
-
-.finance-sof-page :deep(.admin-page-hero h1) {
-  font-size: clamp(1.35rem, 1.85vw, 1.75rem);
-  margin: 8px 0 6px;
-}
-
-.finance-sof-page :deep(.admin-page-hero p) {
-  font-size: 0.88rem;
-  line-height: 1.5;
-  max-width: min(52ch, 100%);
-}
-
-@media (max-width: 900px) {
-  .finance-sof-page :deep(.admin-page-hero) {
-    padding: 22px 0 16px;
-  }
 }
 
 /* ปิดเอฟเฟกต์การ์ดเด้งขึ้นตอน hover จากธีม admin (ใช้เฉพาะหน้านี้) */
