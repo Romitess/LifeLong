@@ -2,7 +2,7 @@
   <q-dialog v-model="isVisible" maximized transition-show="scale" transition-hide="scale">
     <q-card class="certificate-dialog bg-grey-2">
       <q-card-section class="flex flex-center q-pa-md scroll cert-container-section">
-        <div class="certificate-wrapper shadow-10 bg-white" id="certificate-print-area">
+        <div id="certificate-print-area" class="certificate-wrapper shadow-10 bg-white">
           <svg class="bg-graphics" viewBox="0 0 1000 707" preserveAspectRatio="none">
             <path d="M0,707 L280,707 Q120,600 0,580 Z" fill="#ffe600" />
             <path d="M1000,400 Q780,480 480,707 L540,707 Q800,500 1000,430 Z" fill="#d3d4d4" />
@@ -14,7 +14,7 @@
           <div class="watermark-buu">BUU</div>
 
           <div class="cert-content relative-position">
-            <img src="~assets/logo-1.svg" alt=" BUU Seal" class="uni-seal" />
+            <img src="~assets/logo-1.svg" alt="BUU Seal" class="uni-seal" />
 
             <div class="uni-title">มหาวิทยาลัยบูรพา</div>
             <div class="cert-subtitle">ขอมอบประกาศนียบัตรฉบับนี้เพื่อแสดงว่า</div>
@@ -64,19 +64,23 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { CourseDetail } from 'src/types/course-detail';
+import type { Course } from 'src/types/course';
+
+type CertificateCourse = Pick<Course, 'title' | 'faculty'>;
 
 const props = defineProps<{
   modelValue: boolean;
-  course: CourseDetail | null;
+  course: CertificateCourse | null;
   userName: string;
 }>();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean];
+}>();
 
 const isVisible = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
+  set: (value: boolean) => emit('update:modelValue', value),
 });
 
 const formattedShortDate = computed(() => {
@@ -87,9 +91,9 @@ const formattedShortDate = computed(() => {
   return `${day}/${month}/${year}`;
 });
 
-const printCertificate = () => {
+function printCertificate(): void {
   window.print();
-};
+}
 </script>
 
 <style lang="scss" scoped>
@@ -146,7 +150,6 @@ const printCertificate = () => {
   text-align: center;
   padding: 0 10%;
   margin-top: 2%;
-  /* ชดเชยพื้นที่ด้านล่างเพื่อให้กึ่งกลางหน้าอยู่ระดับสายตา ไม่ทับกับ footer */
   padding-bottom: clamp(60px, 10vw, 100px);
 }
 
@@ -155,7 +158,6 @@ const printCertificate = () => {
   margin-bottom: clamp(10px, 2vw, 20px);
 }
 
-/* 🌟 ปรับขนาดตัวอักษรให้ใหญ่ขึ้นเล็กน้อย สมดุลพอดี 🌟 */
 .uni-title {
   font-size: clamp(16px, 3vw, 34px);
   font-weight: 700;
@@ -194,18 +196,12 @@ const printCertificate = () => {
   color: #666;
 }
 
-/* =========================================
-   🌟 ล็อค Footer ให้หยุดนิ่ง 100% ไม่ขยับไปไหน
-   ========================================= */
 .cert-footer {
   position: absolute;
-  /* ล็อคให้ติดขอบจอ/ขอบกรอบ เสมอ */
   bottom: 0;
-  /* ดึงให้ชิดกรอบล่างพอดีเป๊ะ */
   left: 0;
   z-index: 10;
   padding: 0 clamp(20px, 4vw, 40px) clamp(15px, 3vw, 35px);
-  /* ระยะ padding ยังคงเดิมทุกประการ */
   width: 100%;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -226,8 +222,6 @@ const printCertificate = () => {
   text-align: right;
   margin-bottom: 5px;
 }
-
-/* ========================================= */
 
 .signature-box {
   height: clamp(30px, 5vw, 60px);
@@ -271,20 +265,17 @@ const printCertificate = () => {
     margin: 0;
   }
 
-  /* บังคับซ่อนทุกอย่างในหน้าเว็บ */
   body * {
     visibility: hidden !important;
   }
 
-  /* บังคับแสดงเฉพาะกรอบเกียรติบัตรและเนื้อหาข้างใน */
   #certificate-print-area,
   #certificate-print-area * {
     visibility: visible !important;
   }
 
-  /* ล็อคเกียรติบัตรให้เต็มหน้ากระดาษและหลุดจากกรอบของ Dialog */
   #certificate-print-area {
-    position: fixed !important; /* <--- สำคัญมาก: เปลี่ยนจาก absolute เป็น fixed */
+    position: fixed !important;
     left: 0 !important;
     top: 0 !important;
     width: 297mm !important;
@@ -292,13 +283,13 @@ const printCertificate = () => {
     max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
-    transform: none !important; /* <--- สำคัญมาก: ล้างค่า transform ของ Dialog ที่ทำให้ตำแหน่งเพี้ยน */
+    transform: none !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     background-color: white !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    z-index: 999999 !important; /* ดันให้อยู่บนสุดเสมอ */
+    z-index: 999999 !important;
   }
 }
 </style>

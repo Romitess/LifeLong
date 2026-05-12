@@ -816,6 +816,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = route.query.view === 'table' ? '' : 'my-courses-mgmt';
   } else if (path.includes('/instructor/students')) {
     activeNav.value = 'students-mgmt';
+  } else if (path.includes('/instructor/certificates')) {
+    activeNav.value = 'certificates';
   } else if (path.includes('/notifications')) {
     activeNav.value = '';
   } else if (path.includes('/central-finance/dashboard')) {
@@ -927,7 +929,12 @@ async function onNavClick(nav: NavItem) {
     if (
       isTeachingRole.value &&
       nav.to.startsWith('/instructor/') &&
-      !['/instructor/dashboard', '/instructor/courses', '/instructor/students'].includes(nav.to)
+      ![
+        '/instructor/dashboard',
+        '/instructor/courses',
+        '/instructor/students',
+        '/instructor/certificates',
+      ].includes(nav.to)
     ) {
       $q.dialog({
         title: 'อยู่ระหว่างการพัฒนา',

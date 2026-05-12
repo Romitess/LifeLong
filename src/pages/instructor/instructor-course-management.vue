@@ -129,6 +129,22 @@
                   </q-item-label>
                 </q-item-section>
               </q-item>
+
+              <q-item
+                clickable
+                v-ripple
+                class="instructor-table-nav__item"
+                @click="goToInstructorCertificates"
+              >
+                <q-item-section avatar>
+                  <q-icon name="workspace_premium" color="primary" size="20px" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-primary text-weight-bold text-body2">
+                    สร้าง Certificate
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
             </q-list>
           </q-card>
         </aside>
@@ -2086,6 +2102,10 @@ function goToInstructorLearningResults(): void {
     path: '/instructor/students',
     query: { tab: 'results' },
   });
+}
+
+function goToInstructorCertificates(): void {
+  void router.push('/instructor/certificates');
 }
 
 function previewCourse(): void {
