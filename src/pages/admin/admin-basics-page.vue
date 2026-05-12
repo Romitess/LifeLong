@@ -17,58 +17,45 @@
     </AdminPageHero>
 
     <section ref="basicsContentRef" class="admin-shell admin-content admin-basics-page__shell">
-      <div class="row q-col-gutter-xl">
-        <div class="col-12 col-md-3">
-          <q-card flat bordered class="admin-basics-menu-card">
-            <q-list padding>
+      <q-card flat bordered class="admin-basics-menu-card">
+        <q-list class="admin-basics-menu-list">
+          <q-item
+            v-for="menu in menuItems"
+            :key="menu.value"
+            clickable
+            v-ripple
+            :active="activeMenu === menu.value"
+            active-class="admin-basics-menu-item--active"
+            class="admin-basics-menu-item"
+            @click="activeMenu = menu.value"
+          >
+            <q-item-section avatar>
+              <q-icon
+                :name="menu.icon"
+                :color="activeMenu === menu.value ? 'primary' : 'grey-6'"
+                size="20px"
+              />
+            </q-item-section>
+            <q-item-section>
               <q-item-label
-                header
-                class="text-weight-bold text-grey-8 text-caption admin-basics-menu-card__header"
+                :class="activeMenu === menu.value ? 'text-primary text-weight-bold' : 'text-grey-8'"
+                class="text-body2"
               >
-                เมนูข้อมูลพื้นฐาน
+                {{ menu.label }}
               </q-item-label>
-              <q-item
-                v-for="menu in menuItems"
-                :key="menu.value"
-                clickable
-                v-ripple
-                :active="activeMenu === menu.value"
-                active-class="admin-basics-menu-item--active"
-                class="admin-basics-menu-item"
-                @click="activeMenu = menu.value"
-              >
-                <q-item-section avatar>
-                  <q-icon
-                    :name="menu.icon"
-                    :color="activeMenu === menu.value ? 'primary' : 'grey-6'"
-                    size="20px"
-                  />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label
-                    :class="
-                      activeMenu === menu.value ? 'text-primary text-weight-bold' : 'text-grey-8'
-                    "
-                    class="text-body2"
-                  >
-                    {{ menu.label }}
-                  </q-item-label>
-                  <q-item-label v-if="menu.caption" caption>{{ menu.caption }}</q-item-label>
-                </q-item-section>
-                <q-item-section v-if="menu.badge" side>
-                  <q-badge rounded color="amber-8" :label="menu.badge" />
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-card>
-        </div>
+            </q-item-section>
+            <q-item-section v-if="menu.badge" side>
+              <q-badge rounded color="amber-8" :label="menu.badge" />
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-card>
 
-        <div class="col-12 col-md-9">
-          <CategoriesManager v-if="activeMenu === 'categories'" />
-          <CertificateTemplateManager v-else-if="activeMenu === 'cert-template'" />
-          <CertificateSignerManager v-else-if="activeMenu === 'cert-signer'" />
-          <SystemHeroImageEditor v-else-if="activeMenu === 'slides'" />
-        </div>
+      <div class="admin-basics-page__content">
+        <CategoriesManager v-if="activeMenu === 'categories'" />
+        <CertificateTemplateManager v-else-if="activeMenu === 'cert-template'" />
+        <CertificateSignerManager v-else-if="activeMenu === 'cert-signer'" />
+        <SystemHeroImageEditor v-else-if="activeMenu === 'slides'" />
       </div>
     </section>
   </q-page>
@@ -167,23 +154,25 @@ watch(activeMenu, () => {
 }
 
 .admin-basics-menu-card {
-  position: sticky;
-  top: 96px;
-  border-radius: var(--admin-radius-lg);
+  margin-bottom: 18px;
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+  border-radius: 14px !important;
   background: #ffffff;
-  box-shadow: var(--admin-shadow-sm);
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06) !important;
   overflow: hidden;
 }
 
-.admin-basics-menu-card__header {
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.admin-basics-menu-list {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 8px;
 }
 
 .admin-basics-menu-item {
+  flex: 0 0 auto;
   border-radius: 10px;
-  margin: 4px 8px;
-  min-height: 56px;
+  min-height: 48px;
   padding: 0 12px;
   transition: all 0.2s ease;
 
@@ -212,13 +201,21 @@ watch(activeMenu, () => {
   box-shadow: inset 4px 0 0 $primary;
 }
 
+.admin-basics-page__content {
+  min-width: 0;
+}
+
 @media (max-width: 900px) {
   .admin-basics-page__hero-badge {
     justify-self: start;
   }
 
-  .admin-basics-menu-card {
-    position: static;
+  .admin-basics-menu-list {
+    padding: 6px;
+  }
+
+  .admin-basics-menu-item {
+    padding: 0 12px;
   }
 }
 </style>
