@@ -31,122 +31,125 @@
       </template>
     </AdminPageHero>
 
-    <!-- ── Filter Section ────────────────────────────────────── -->
-    <section class="admin-shell filter-section">
-      <AdminSurfaceCard tone="glass" :accent="false" class="filter-card">
-        <div class="filter-grid">
-          <q-input
-            v-model="filters.search"
-            outlined
-            dense
-            bg-color="white"
-            placeholder="ค้นหาเลขที่คำขอ หรือชื่อโครงการ..."
-            class="filter-item search-input"
+    <!-- ── Content Section ───────────────────────────────────── -->
+    <section class="admin-shell admin-content">
+      <!-- ── Filter Section ────────────────────────────────────── -->
+      <div class="filter-section">
+        <AdminSurfaceCard tone="glass" :accent="false" class="filter-card">
+          <div class="filter-grid">
+            <q-input
+              v-model="filters.search"
+              outlined
+              dense
+              bg-color="white"
+              placeholder="ค้นหาเลขที่คำขอ หรือชื่อโครงการ..."
+              class="filter-item search-input"
+            >
+              <template #prepend>
+                <q-icon name="search" />
+              </template>
+            </q-input>
+
+            <q-select
+              v-model="filters.faculty"
+              :options="facultyOptions"
+              outlined
+              dense
+              bg-color="white"
+              label="คณะ/ส่วนงาน"
+              class="filter-item"
+              clearable
+            >
+              <template #prepend>
+                <q-icon name="business" />
+              </template>
+            </q-select>
+
+            <q-input
+              v-model="filters.date"
+              outlined
+              dense
+              bg-color="white"
+              label="วันที่ส่งคำขอ"
+              class="filter-item"
+              mask="####-##-##"
+            >
+              <template #prepend>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                    <q-date v-model="filters.date" mask="YYYY-MM-DD">
+                      <div class="row items-center justify-end">
+                        <q-btn v-close-popup label="Close" color="primary" flat />
+                      </div>
+                    </q-date>
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
+
+            <q-select
+              v-model="filters.status"
+              :options="statusOptions"
+              outlined
+              dense
+              bg-color="white"
+              label="สถานะ"
+              class="filter-item"
+              emit-value
+              map-options
+              clearable
+            >
+              <template #prepend>
+                <q-icon name="flag" />
+              </template>
+            </q-select>
+          </div>
+        </AdminSurfaceCard>
+      </div>
+
+      <!-- ── Table Section ────────────────────────────────────── -->
+      <div class="table-section">
+        <AdminSurfaceCard :accent="true" class="table-card">
+          <q-table
+            :rows="filteredRows"
+            :columns="columns"
+            row-key="id"
+            flat
+            :pagination="pagination"
+            class="fund-source-table"
           >
-            <template #prepend>
-              <q-icon name="search" />
+            <!-- Status Column Custom Rendering -->
+            <template #body-cell-status="props">
+              <q-td :props="props">
+                <q-badge
+                  :color="getStatusColor(props.value)"
+                  :label="getStatusLabel(props.value)"
+                  class="status-badge"
+                />
+              </q-td>
             </template>
-          </q-input>
 
-          <q-select
-            v-model="filters.faculty"
-            :options="facultyOptions"
-            outlined
-            dense
-            bg-color="white"
-            label="คณะ/ส่วนงาน"
-            class="filter-item"
-            clearable
-          >
-            <template #prepend>
-              <q-icon name="business" />
+            <!-- Actions Column -->
+            <template #body-cell-actions="props">
+              <q-td :props="props" class="text-right">
+                <q-btn
+                  flat
+                  round
+                  dense
+                  color="primary"
+                  icon="visibility"
+                  @click="onViewDetail(props.row)"
+                >
+                  <q-tooltip>ดูรายละเอียด</q-tooltip>
+                </q-btn>
+                <q-btn flat round dense color="secondary" icon="edit" @click="onEdit(props.row)">
+                  <q-tooltip>แก้ไข/อัปเดต</q-tooltip>
+                </q-btn>
+              </q-td>
             </template>
-          </q-select>
-
-          <q-input
-            v-model="filters.date"
-            outlined
-            dense
-            bg-color="white"
-            label="วันที่ส่งคำขอ"
-            class="filter-item"
-            mask="####-##-##"
-          >
-            <template #prepend>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <q-date v-model="filters.date" mask="YYYY-MM-DD">
-                    <div class="row items-center justify-end">
-                      <q-btn v-close-popup label="Close" color="primary" flat />
-                    </div>
-                  </q-date>
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
-
-          <q-select
-            v-model="filters.status"
-            :options="statusOptions"
-            outlined
-            dense
-            bg-color="white"
-            label="สถานะ"
-            class="filter-item"
-            emit-value
-            map-options
-            clearable
-          >
-            <template #prepend>
-              <q-icon name="flag" />
-            </template>
-          </q-select>
-        </div>
-      </AdminSurfaceCard>
-    </section>
-
-    <!-- ── Table Section ────────────────────────────────────── -->
-    <section class="admin-shell table-section">
-      <AdminSurfaceCard :accent="true" class="table-card">
-        <q-table
-          :rows="filteredRows"
-          :columns="columns"
-          row-key="id"
-          flat
-          :pagination="pagination"
-          class="fund-source-table"
-        >
-          <!-- Status Column Custom Rendering -->
-          <template #body-cell-status="props">
-            <q-td :props="props">
-              <q-badge
-                :color="getStatusColor(props.value)"
-                :label="getStatusLabel(props.value)"
-                class="status-badge"
-              />
-            </q-td>
-          </template>
-
-          <!-- Actions Column -->
-          <template #body-cell-actions="props">
-            <q-td :props="props" class="text-right">
-              <q-btn
-                flat
-                round
-                dense
-                color="primary"
-                icon="visibility"
-                @click="onViewDetail(props.row)"
-              >
-                <q-tooltip>ดูรายละเอียด</q-tooltip>
-              </q-btn>
-              <q-btn flat round dense color="secondary" icon="edit" @click="onEdit(props.row)">
-                <q-tooltip>แก้ไข/อัปเดต</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
-      </AdminSurfaceCard>
+          </q-table>
+        </AdminSurfaceCard>
+      </div>
     </section>
 
     <!-- ── History Dialog ────────────────────────────────────── -->
@@ -368,10 +371,7 @@ function onEdit(row: RequestRow) {
 }
 
 .filter-section {
-  margin-top: -30px;
-  position: relative;
-  z-index: 10;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .filter-grid {

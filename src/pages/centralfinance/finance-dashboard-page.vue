@@ -22,27 +22,6 @@
           @click="onGoToReports"
         />
       </template>
-
-      <template #aside>
-        <AdminSurfaceCard
-          tone="glass"
-          :accent="false"
-          title="Finance Pulse"
-          body-class="finance-pulse-card-shell"
-        >
-          <template #header-actions>
-            <q-badge rounded color="positive" label="Active" />
-          </template>
-
-          <div class="finance-pulse-grid">
-            <div v-for="item in financePulse" :key="item.label" class="finance-pulse-card">
-              <q-icon :name="item.icon" size="22px" />
-              <strong>{{ item.value }}</strong>
-              <span>{{ item.label }}</span>
-            </div>
-          </div>
-        </AdminSurfaceCard>
-      </template>
     </AdminPageHero>
 
     <!-- ── Content ───────────────────────────────────────────── -->
@@ -260,22 +239,6 @@ async function onGoToReports() {
 async function onShortcutClick(to: string) {
   await router.push(to);
 }
-
-// ── Finance Pulse (Hero aside) ──────────────────────────────
-const financePulse = computed(() => [
-  {
-    icon: 'pending_actions',
-    value: financeStore.requests.filter((r) => r.status === 'new').length.toString(),
-    label: 'รอดำเนินการ',
-  },
-  {
-    icon: 'task_alt',
-    value: financeStore.requests.filter((r) => r.status === 'completed').length.toString(),
-    label: 'เสร็จวันนี้',
-  },
-  { icon: 'payments', value: '฿1.2M', label: 'ยอดรวมวันนี้' },
-  { icon: 'speed', value: '99.8%', label: 'อัตราสำเร็จ' },
-]);
 
 // ── Metric Cards ────────────────────────────────────────────
 const metricCards = computed(() => [
