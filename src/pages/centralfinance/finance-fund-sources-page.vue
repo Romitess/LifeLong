@@ -16,6 +16,13 @@
         />
         <AdminActionButton
           variant="outline"
+          icon="history"
+          label="ประวัติการแจ้งเตือน"
+          no-caps
+          @click="showHistory = true"
+        />
+        <AdminActionButton
+          variant="outline"
           icon="file_download"
           label="ส่งออกรายงานรวม"
           no-caps
@@ -141,6 +148,50 @@
         </q-table>
       </AdminSurfaceCard>
     </section>
+
+    <!-- ── History Dialog ────────────────────────────────────── -->
+    <q-dialog v-model="showHistory">
+      <q-card style="min-width: 700px; border-radius: 16px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6 text-weight-bold">
+            <q-icon name="history" size="md" color="primary" class="q-mr-sm" />
+            ประวัติการส่งแจ้งเตือนกลับคณะ
+          </div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-card-section>
+          <q-table
+            :rows="financeStore.notificationLogs"
+            :columns="historyColumns"
+            row-key="id"
+            flat
+            bordered
+            :pagination="{ rowsPerPage: 5 }"
+          >
+            <template #body-cell-note="props">
+              <q-td :props="props">
+                <div class="text-caption text-grey-8" style="max-width: 200px; white-space: normal">
+                  {{ props.row.note || '-' }}
+                </div>
+              </q-td>
+            </template>
+            <template #body-cell-sentAt="props">
+              <q-td :props="props">
+                {{ new Date(props.row.sentAt).toLocaleString('th-TH') }}
+              </q-td>
+            </template>
+            <template #no-data>
+              <div class="full-width row flex-center text-grey-6 q-pa-md">
+                <q-icon size="2em" name="info" class="q-mr-sm" />
+                <span>ยังไม่มีประวัติการแจ้งเตือน</span>
+              </div>
+            </template>
+          </q-table>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -164,6 +215,8 @@ interface RequestRow {
   project: string;
   status: 'new' | 'processing' | 'completed' | 'rejected';
 }
+
+const showHistory = ref(false);
 
 const filters = reactive({
   search: '',
@@ -235,6 +288,14 @@ const columns: QTableColumn[] = [
     field: 'actions',
     align: 'right',
   },
+];
+
+const historyColumns: QTableColumn[] = [
+  { name: 'fundCode', label: 'รหัสแหล่งเงิน', field: 'fundCode', align: 'left', sortable: true },
+  { name: 'sentTo', label: 'ส่งไปยังส่วนงาน', field: 'sentTo', align: 'left', sortable: true },
+  { name: 'approvedBy', label: 'ผู้อนุมัติ', field: 'approvedBy', align: 'left' },
+  { name: 'note', label: 'หมายเหตุ', field: 'note', align: 'left' },
+  { name: 'sentAt', label: 'เวลาที่ส่ง', field: 'sentAt', align: 'right', sortable: true },
 ];
 
 const rows = computed(() => financeStore.requests);

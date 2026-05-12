@@ -87,6 +87,52 @@
                   class="admin-editor-field"
                 />
               </div>
+
+              <!-- Notification toggle -->
+              <div class="col-12 q-mt-md">
+                <q-toggle
+                  v-model="form.isNotifyFaculty"
+                  label="ระบบแจ้งเตือน: ส่งเลขแหล่งเงินกลับไปยังคณะ"
+                  color="primary"
+                  class="text-weight-bold"
+                />
+              </div>
+
+              <!-- Notification Details -->
+              <template v-if="form.isNotifyFaculty">
+                <div class="col-12 col-md-6">
+                  <q-select
+                    v-model="form.notifyFaculty"
+                    outlined
+                    dense
+                    label="ส่งไปยังส่วนงาน *"
+                    :options="facultyOptions"
+                    class="admin-editor-field"
+                  />
+                </div>
+                <div class="col-12 col-md-6">
+                  <q-input
+                    v-model="form.notifyApprover"
+                    outlined
+                    dense
+                    label="ชื่อผู้ดำเนินการ / ผู้อนุมัติ *"
+                    placeholder="เช่น นางสมศรี การเงินกลาง"
+                    class="admin-editor-field"
+                  />
+                </div>
+                <div class="col-12">
+                  <q-input
+                    v-model="form.notifyNote"
+                    outlined
+                    dense
+                    type="textarea"
+                    label="บันทึกหมายเหตุเพิ่มเติมถึงคณะ"
+                    placeholder="เช่น อนุมัติเรียบร้อย กรุณาใช้รหัสนี้ในใบเสร็จถัดไป"
+                    rows="2"
+                    class="admin-editor-field"
+                  />
+                </div>
+              </template>
             </div>
           </AdminSurfaceCard>
         </div>
@@ -210,7 +256,20 @@ const form = reactive({
   nameEn: '',
   description: '',
   fundCode: '',
+  isNotifyFaculty: false,
+  notifyFaculty: '',
+  notifyApprover: 'เจ้าหน้าที่การเงินกลาง', // Mock default approver
+  notifyNote: '',
 });
+
+const facultyOptions = [
+  'คณะวิทยาการสารสนเทศ',
+  'คณะวิทยาศาสตร์',
+  'คณะพยาบาลศาสตร์',
+  'คณะบริหารธุรกิจ',
+  'คณะวิศวกรรมศาสตร์',
+  'สำนักคอมพิวเตอร์',
+];
 
 const fundTypeOptions = [
   { label: 'เงินงบประมาณ (Budget)', value: 'BG' },
@@ -223,7 +282,11 @@ const fundTypeOptions = [
 const yearOptions = ['2566', '2567', '2568', '2569'];
 
 const isValid = computed(() => {
-  return form.fundType && form.fiscalYear && form.nameTh;
+  const baseValid = form.fundType && form.fiscalYear && form.nameTh;
+  if (form.isNotifyFaculty) {
+    return baseValid && form.notifyFaculty && form.notifyApprover;
+  }
+  return baseValid;
 });
 
 // ── Logic: Auto-Generate Fund Code ───────────────────────────
@@ -290,6 +353,16 @@ async function onSave() {
     nameEn: form.nameEn,
     description: form.description,
   });
+
+  // Save Notification Log
+  if (form.isNotifyFaculty) {
+    financeStore.addNotificationLog({
+      fundCode: form.fundCode,
+      sentTo: form.notifyFaculty,
+      note: form.notifyNote,
+      approvedBy: form.notifyApprover,
+    });
+  }
 
   savedCode.value = form.fundCode;
   isSaving.value = false;

@@ -20,6 +20,15 @@ export interface FundSource {
   createdAt: string;
 }
 
+export interface NotificationLog {
+  id: string;
+  fundCode: string;
+  sentTo: string;
+  note: string;
+  approvedBy: string;
+  sentAt: string;
+}
+
 export const useCentralFinanceStore = defineStore('central-finance', {
   state: () => ({
     // Mock requests from faculties
@@ -85,6 +94,9 @@ export const useCentralFinanceStore = defineStore('central-finance', {
         createdAt: '2026-01-10',
       },
     ] as FundSource[],
+
+    // History logs of sent notifications
+    notificationLogs: [] as NotificationLog[],
   }),
 
   actions: {
@@ -103,6 +115,16 @@ export const useCentralFinanceStore = defineStore('central-finance', {
       if (request) {
         request.status = status;
       }
+    },
+
+    addNotificationLog(log: Omit<NotificationLog, 'id' | 'sentAt'>) {
+      const newLog: NotificationLog = {
+        ...log,
+        id: Date.now().toString(),
+        sentAt: new Date().toISOString(),
+      };
+      this.notificationLogs.push(newLog);
+      return newLog;
     },
   },
 });
