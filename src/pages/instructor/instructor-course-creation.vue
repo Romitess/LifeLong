@@ -638,6 +638,7 @@ import { useCourseStore } from 'src/stores/course-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import type { DeliveryMode } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
+import { api } from 'src/boot/axios';
 
 const $q = useQuasar();
 const router = useRouter();
@@ -817,7 +818,19 @@ async function onSubmit() {
   loading.value = true;
 
   try {
-    // 1. Create Course
+    const registrationStartLabel = formatThaiShortDate(form.registrationStart, false);
+    const registrationEndLabel = formatThaiShortDate(form.registrationEnd, true);
+    const registrationStartEnLabel = formatEnglishShortDate(form.registrationStart);
+    const registrationEndEnLabel = formatEnglishShortDate(form.registrationEnd);
+    const cover = JSON.stringify({
+      icon: 'school',
+      accentColor: '#f5a623',
+      backgroundColor: '#1e3a5f',
+    });
+    const imageUrl =
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80';
+
+    // 1. Create Course in DB + Moodle
     const formData = new FormData();
     formData.append('fullname', form.title);
     formData.append('shortname', form.code);
@@ -826,71 +839,77 @@ async function onSubmit() {
     formData.append('hours', form.totalHours.toString());
     formData.append('startDate', form.registrationStart);
     formData.append('endDate', form.registrationEnd);
+    formData.append('imageUrl', imageUrl);
+    formData.append('price', (form.isFree ? 0 : form.priceExternal).toString());
+    formData.append('maxSeats', form.maxSeats.toString());
+    formData.append('deliveryModes', JSON.stringify(form.deliveryModes));
+    formData.append('cover', cover);
+    formData.append('courseStatus', form.certificateType);
+    formData.append('facultyName', form.faculty);
+    formData.append('categoryName', form.category);
+    formData.append('registrationStart', registrationStartLabel);
+    formData.append('registrationStartEn', registrationStartEnLabel);
+    formData.append('registrationEnd', registrationEndLabel);
+    formData.append('registrationEndEn', registrationEndEnLabel);
+    formData.append('isFree', form.isFree ? 'true' : 'false');
+    formData.append('isActive', 'true');
 
-    if (form.image) {
-      formData.append('file', form.image);
-    }
+    if (authStore.user?.id) formData.append('instructorId', authStore.user.id);
+    if (authStore.user?.email) formData.append('instructorEmail', authStore.user.email);
 
     console.log('Current User in Store:', authStore.user);
     if (authStore.user?.username) {
       formData.append('instructorUsername', authStore.user.username);
     } else if (authStore.user?.firstNameTh) {
-      // Fallback if username is missing but we have firstNameTh (which we mapped from username earlier)
       formData.append('instructorUsername', authStore.user.firstNameTh);
     }
 
-    const moodleResponse = await fetch('http://localhost:3000/api/moodle/courses', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!moodleResponse.ok) {
-      const errorData = await moodleResponse.json();
-      throw new Error(errorData.message || 'Failed to create course in Moodle');
+    if (form.image) {
+      formData.append('file', form.image);
     }
 
-    const courseData = await moodleResponse.json();
-    const moodleCourseId = courseData.data?.moodleId || courseData.id;
+    const { data: courseData } = await api.post<{ id: number; data?: { moodleId?: number } }>(
+      '/api/moodle/courses',
+      formData,
+    );
 
-    // 2. Create Activities for each week (Safe check)
+    const dbCourseId = String(courseData.id);
+    const moodleCourseId = courseData.data?.moodleId ?? courseData.id;
+
+    // 2. Create Activities for each week
     if (moodleCourseId) {
       for (let i = 0; i < form.syllabus.length; i++) {
         const week = form.syllabus[i];
         if (week && week.activities) {
           for (const act of week.activities) {
-            await fetch('http://localhost:3000/api/moodle/modules', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
+            await api
+              .post('/api/moodle/modules', {
                 courseid: moodleCourseId,
                 type: act.type,
                 name: act.name,
                 sectionindex: i + 1,
-              }),
-            }).catch((e) => console.error('Failed to create activity:', e));
+              })
+              .catch((err: unknown) => console.error('Failed to create activity:', err));
           }
         }
       }
     }
 
-    // 3. Update Local Store
-    const registrationStartLabel = formatThaiShortDate(form.registrationStart, false);
-    const registrationEndLabel = formatThaiShortDate(form.registrationEnd, true);
-
+    // 3. Update Local Store using DB-assigned ID
     const newCourseDetail: CourseDetail = {
-      id: String(Date.now()),
+      id: dbCourseId,
       code: form.code,
       ...(moodleCourseId ? { moodleId: Number(moodleCourseId) } : {}),
       title: form.title,
       titleEn: form.titleEn,
       ...(authStore.user?.id ? { instructorId: authStore.user.id } : {}),
-      imageUrl:
-        'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+      ...(authStore.user?.email ? { instructorEmail: authStore.user.email } : {}),
+      imageUrl,
       cover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
       registrationStart: registrationStartLabel,
-      registrationStartEn: formatEnglishShortDate(form.registrationStart),
+      registrationStartEn: registrationStartEnLabel,
       registrationEnd: registrationEndLabel,
-      registrationEndEn: formatEnglishShortDate(form.registrationEnd),
+      registrationEndEn: registrationEndEnLabel,
       registrationStartDate: form.registrationStart,
       registrationEndDate: form.registrationEnd,
       price: form.isFree ? 0 : form.priceExternal,

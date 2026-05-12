@@ -1,6 +1,7 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { useCourseStore } from 'src/stores/course-store';
 import type { Course } from 'src/types/course';
+import { api } from 'src/boot/axios';
 
 interface UseCourseListReturn {
   courses: ComputedRef<Course[]>;
@@ -8,6 +9,45 @@ interface UseCourseListReturn {
   error: Ref<string | null>;
   activeCourses: ComputedRef<Course[]>;
   fetchCourses: () => Promise<void>;
+}
+
+interface ApiLltcourse {
+  id: number;
+  code: string | null;
+  titleTh: string | null;
+  titleEn: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  categoryId: number | null;
+  objective: string | null;
+  status: string | null;
+  hours: number | null;
+}
+
+function mapApiCourse(raw: ApiLltcourse): Course {
+  const today = new Date().toISOString().substring(0, 10);
+  return {
+    id: String(raw.id),
+    code: raw.code ?? '',
+    title: raw.titleTh ?? '',
+    ...(raw.titleEn ? { titleEn: raw.titleEn } : {}),
+    imageUrl: '',
+    cover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
+    registrationStart: raw.startDate ?? today,
+    registrationEnd: raw.endDate ?? '2099-12-31',
+    registrationStartDate: raw.startDate ?? today,
+    registrationEndDate: raw.endDate ?? '2099-12-31',
+    price: 0,
+    isFree: true,
+    views: 0,
+    status: 'เปิดรับสมัคร',
+    deliveryModes: ['Online'],
+    isActive: raw.status === 'Y' || raw.status === null,
+    faculty: '',
+    category: '',
+    maxSeats: 9999,
+    enrolledCount: 0,
+  };
 }
 
 export function useCourseList(): UseCourseListReturn {
@@ -32,10 +72,12 @@ export function useCourseList(): UseCourseListReturn {
     error.value = null;
 
     try {
-      await new Promise<void>((resolve) => setTimeout(resolve, 600));
-      courseStore.init();
+      const { data } = await api.get<ApiLltcourse[]>('/api/moodle/courses');
+      courseStore.loadFromApi(data.map(mapApiCourse));
     } catch {
-      error.value = 'ไม่สามารถโหลดข้อมูลคอร์สได้ กรุณาลองใหม่อีกครั้ง';
+      // Fall back to mock + localStorage if API unreachable
+      courseStore.init();
+      error.value = 'ไม่สามารถโหลดข้อมูลคอร์สได้';
     } finally {
       isLoading.value = false;
     }
