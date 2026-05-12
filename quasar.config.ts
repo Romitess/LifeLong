@@ -53,13 +53,15 @@ export default defineConfig((ctx) => {
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      // publicPath: '/',
-      // analyze: true,
-      // env: {},
+      // publicPath: '/'
+      // analyze: true
+      env: {
+        VITE_API_URL: process.env.VITE_API_URL ?? process.env.BACKEND_URL ?? '',
+      },
       // rawDefine: {}
-      // ignorePublicFolder: true,
-      // minify: false,
-      // polyfillModulePreload: true,
+      // ignorePublicFolder: true
+      // minify: false
+      // polyfillModulePreload: true
       // distDir
 
       extendViteConf(viteConf) {
@@ -99,6 +101,12 @@ export default defineConfig((ctx) => {
       // https: true,
       open: true, // opens browser window automatically
       host: '0.0.0.0', // เครื่องอื่นในวงแลนเข้าได้
+      proxy: {
+        '/api': {
+          target: process.env.BACKEND_URL ?? 'http://localhost:3000',
+          changeOrigin: true,
+        },
+      },
     },
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#framework

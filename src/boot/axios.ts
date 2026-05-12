@@ -15,7 +15,7 @@ declare module 'vue' {
 // "export default () => {}" function below (which runs individually
 // for each client)
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? `http://${window.location.hostname}:3000`,
+  baseURL: import.meta.env.VITE_API_URL ?? import.meta.env.VITE_BACKEND_URL ?? '',
 });
 
 export default defineBoot(({ app }) => {

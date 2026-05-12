@@ -361,6 +361,35 @@ export const useCourseStore = defineStore('course', {
         this.backendCoursesLoading = false;
       }
     },
+    /** Load courses from API — merges with MOCK_COURSES, replaces localStorage courses */
+    loadFromApi(apiCourses: Course[]) {
+      const mockIds = new Set(MOCK_COURSES.map((c) => c.id));
+      const apiIds = new Set(apiCourses.map((c) => c.id));
+
+      // MOCK_COURSES first, then API courses, skip mocks already in API
+      this.courses = [...MOCK_COURSES.filter((c) => !apiIds.has(c.id)), ...apiCourses].map(
+        ensureCourseInstructorOwner,
+      );
+
+      // Build course details: keep existing MOCK details, add fallbacks for API courses
+      const storedDetails = readStoredCourseDetails() ?? {};
+      const mergedMockDetails = mergeStoredCourseDetails(MOCK_COURSE_DETAILS, storedDetails);
+
+      const apiDetails: Record<string, CourseDetail> = {};
+      for (const course of apiCourses) {
+        if (!mockIds.has(course.id)) {
+          apiDetails[course.id] =
+            mergedMockDetails[course.id] ?? createFallbackCourseDetail(course);
+        }
+      }
+
+      this.courseDetails = Object.fromEntries(
+        Object.entries({ ...mergedMockDetails, ...apiDetails }).map(([id, detail]) => [
+          id,
+          ensureCourseDetailInstructorOwner(detail),
+        ]),
+      );
+    },
     /** Add a new course to the list */
     addCourse(course: Course) {
       this.init();
