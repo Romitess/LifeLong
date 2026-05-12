@@ -51,7 +51,7 @@ export default defineRouter((/* { store, ssrContext } */) => {
       isInitialLoad = false;
     }
 
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
     const authRequired = !to.matched.some((record) => record.meta.public);
     const loginRedirect =
       authRequired && !isLoggedIn

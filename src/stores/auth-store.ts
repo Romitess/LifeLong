@@ -214,9 +214,9 @@ function readLocalStorage(key: string): string | null {
   }
 
   try {
-    return window.localStorage.getItem(key);
+    return window.sessionStorage.getItem(key);
   } catch (error) {
-    console.warn(`Failed to read localStorage key: ${key}`, error);
+    console.warn(`Failed to read sessionStorage key: ${key}`, error);
     return null;
   }
 }
@@ -227,9 +227,9 @@ function removeLocalStorage(key: string): void {
   }
 
   try {
-    window.localStorage.removeItem(key);
+    window.sessionStorage.removeItem(key);
   } catch (error) {
-    console.warn(`Failed to remove localStorage key: ${key}`, error);
+    console.warn(`Failed to remove sessionStorage key: ${key}`, error);
   }
 }
 
@@ -239,10 +239,10 @@ function writeLocalStorage(key: string, value: string): boolean {
   }
 
   try {
-    window.localStorage.setItem(key, value);
+    window.sessionStorage.setItem(key, value);
     return true;
   } catch (error) {
-    console.warn(`Failed to write localStorage key: ${key}`, error);
+    console.warn(`Failed to write sessionStorage key: ${key}`, error);
     return false;
   }
 }
