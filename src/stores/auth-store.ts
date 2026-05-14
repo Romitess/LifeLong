@@ -1,4 +1,4 @@
-import { acceptHMRUpdate, defineStore } from 'pinia';
+import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 
 export interface User {
@@ -46,11 +46,6 @@ interface StoredAuthAccount extends User {
   source: 'mock' | 'registered';
 }
 
-export interface AuthDemoAccount {
-  email: string;
-  password: string;
-}
-
 const PROFILE_AVATAR_STORAGE_KEY = 'lll-profile-avatar';
 const FULL_PROFILE_AVATAR_STORAGE_KEY = 'lll-profile-avatar-full';
 const USER_PROFILE_STORAGE_KEY = 'lll-user-profile';
@@ -73,7 +68,7 @@ const MOCK_USER_BASE: Omit<User, 'avatar'> = {
   lastNameTh: 'ไม่อยู่',
   firstNameEn: 'NATTHAPHONG',
   lastNameEn: 'MAIYOO',
-  email: 'student_test@go.buu.ac.th',
+  email: 'student@go.buu.ac.th',
   phone: '0812345678',
   faculty: 'คณะวิทยาการสารสนเทศ',
   department: 'สาขาวิทยาการคอมพิวเตอร์',
@@ -87,7 +82,7 @@ const MOCK_INSTRUCTOR_BASE: Omit<User, 'avatar'> = {
   lastNameTh: 'ใจดี',
   firstNameEn: 'NITITHORN',
   lastNameEn: 'JAIDEE',
-  email: 'instructor_test@go.buu.ac.th',
+  email: 'teach@go.buu.ac.th',
   phone: '0898765432',
   faculty: 'คณะวิทยาการสารสนเทศ',
   department: 'สาขาวิทยาการคอมพิวเตอร์',
@@ -115,7 +110,7 @@ const MOCK_ADMIN_BASE: Omit<User, 'avatar'> = {
   lastNameTh: 'ระบบ',
   firstNameEn: 'SYSTEM',
   lastNameEn: 'ADMIN',
-  email: 'admin_test@go.buu.ac.th',
+  email: 'admin@go.buu.ac.th',
   phone: '038102222',
   faculty: 'สำนักบริหารระบบ',
   department: 'BUU Lifelong Learning Platform',
@@ -129,7 +124,7 @@ const MOCK_FINANCE_BASE: Omit<User, 'avatar'> = {
   lastNameTh: 'การเงิน',
   firstNameEn: 'SOMSRI',
   lastNameEn: 'FINANCE',
-  email: 'finance_test@go.buu.ac.th',
+  email: 'finance@go.buu.ac.th',
   phone: '038101111',
   faculty: 'คอมพิวเตอร์และเทคโนโลยี',
   department: 'งานคลังและพัสดุ',
@@ -143,7 +138,7 @@ const MOCK_CENTRAL_FINANCE_BASE: Omit<User, 'avatar'> = {
   lastNameTh: 'การเงินกองคลัง',
   firstNameEn: 'CENTRAL',
   lastNameEn: 'FINANCE',
-  email: 'central_finance_test@go.buu.ac.th',
+  email: 'central-finance@go.buu.ac.th',
   phone: '038103333',
   faculty: 'กองคลัง',
   department: 'งานบริหารการเงิน',
@@ -155,7 +150,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_USER_BASE,
     email: MOCK_USER_BASE.email.toLowerCase(),
     avatar: DEFAULT_PROFILE_AVATAR,
-    password: 'P@ssword123!',
+    password: '111111',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -163,7 +158,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_INSTRUCTOR_BASE,
     email: MOCK_INSTRUCTOR_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nitithorn',
-    password: 'P@ssword123!',
+    password: '111111',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -171,7 +166,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_INSTRUCTOR_1_BASE,
     email: MOCK_INSTRUCTOR_1_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pitcha',
-    password: 'P@ssword123!',
+    password: '111111',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -179,7 +174,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_ADMIN_BASE,
     email: MOCK_ADMIN_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=BUU-LLL-Admin',
-    password: 'P@ssword123!',
+    password: '111111',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -187,7 +182,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_FINANCE_BASE,
     email: MOCK_FINANCE_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SomsriFinance',
-    password: 'P@ssword123!',
+    password: '111111',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -195,18 +190,11 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_CENTRAL_FINANCE_BASE,
     email: MOCK_CENTRAL_FINANCE_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CentralFinance',
-    password: 'P@ssword123!',
+    password: '111111',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
 ];
-
-export const AUTH_DEMO_ACCOUNTS: AuthDemoAccount[] = DEFAULT_AUTH_ACCOUNTS.map(
-  ({ email, password }) => ({
-    email,
-    password,
-  }),
-);
 
 function readLocalStorage(key: string): string | null {
   if (typeof window === 'undefined') {
@@ -214,9 +202,9 @@ function readLocalStorage(key: string): string | null {
   }
 
   try {
-    return window.sessionStorage.getItem(key);
+    return window.localStorage.getItem(key);
   } catch (error) {
-    console.warn(`Failed to read sessionStorage key: ${key}`, error);
+    console.warn(`Failed to read localStorage key: ${key}`, error);
     return null;
   }
 }
@@ -227,9 +215,9 @@ function removeLocalStorage(key: string): void {
   }
 
   try {
-    window.sessionStorage.removeItem(key);
+    window.localStorage.removeItem(key);
   } catch (error) {
-    console.warn(`Failed to remove sessionStorage key: ${key}`, error);
+    console.warn(`Failed to remove localStorage key: ${key}`, error);
   }
 }
 
@@ -239,10 +227,10 @@ function writeLocalStorage(key: string, value: string): boolean {
   }
 
   try {
-    window.sessionStorage.setItem(key, value);
+    window.localStorage.setItem(key, value);
     return true;
   } catch (error) {
-    console.warn(`Failed to write sessionStorage key: ${key}`, error);
+    console.warn(`Failed to write localStorage key: ${key}`, error);
     return false;
   }
 }
@@ -253,89 +241,6 @@ function normalizeEmail(value: string): string {
 
 function createDefaultAvatar(email: string): string {
   return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
-}
-
-function getRecordValue(record: Record<string, unknown>, keys: string[]): unknown {
-  for (const key of keys) {
-    if (key in record) {
-      return record[key];
-    }
-
-    const matchedKey = Object.keys(record).find(
-      (recordKey) => recordKey.toLowerCase() === key.toLowerCase(),
-    );
-
-    if (matchedKey) {
-      return record[matchedKey];
-    }
-  }
-
-  return undefined;
-}
-
-function stringifyApiValue(value: unknown, fallback = ''): string {
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-
-  return fallback;
-}
-
-function normalizeRoleToken(value: unknown): string {
-  return stringifyApiValue(value)
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, '_')
-    .replace(/^role_/, '');
-}
-
-function collectRoleCandidates(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return value.flatMap((item) => collectRoleCandidates(item));
-  }
-
-  if (isRecord(value)) {
-    return [
-      getRecordValue(value, ['role', 'roles']),
-      getRecordValue(value, ['name', 'code', 'key', 'slug', 'roleName', 'role_name', 'authority']),
-    ].flatMap((item) => collectRoleCandidates(item));
-  }
-
-  const normalized = normalizeRoleToken(value);
-  return normalized ? [normalized] : [];
-}
-
-function resolveRoleFromCandidates(candidates: string[]): User['role'] {
-  if (
-    candidates.some(
-      (candidate) => candidate.includes('central_finance') || candidate.includes('finance_central'),
-    )
-  ) {
-    return 'central_finance';
-  }
-
-  if (candidates.some((candidate) => candidate.includes('finance'))) {
-    return 'finance';
-  }
-
-  const matchedRole = candidates.find(isUserRole);
-  if (matchedRole) {
-    return matchedRole;
-  }
-
-  return 'student';
-}
-
-function mapApiRole(...values: unknown[]): User['role'] {
-  return resolveRoleFromCandidates(values.flatMap((value) => collectRoleCandidates(value)));
 }
 
 function isUserRole(value: unknown): value is User['role'] {
@@ -404,20 +309,6 @@ function readStoredAuthAccounts(): StoredAuthAccount[] {
 
 function writeStoredAuthAccounts(accounts: StoredAuthAccount[]): void {
   writeLocalStorage(AUTH_ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
-}
-
-function upsertStoredAuthAccount(account: StoredAuthAccount): void {
-  const normalizedAccount: StoredAuthAccount = {
-    ...account,
-    email: normalizeEmail(account.email),
-  };
-  const storedAccounts = readStoredAuthAccounts();
-  const nextAccounts = [
-    normalizedAccount,
-    ...storedAccounts.filter((storedAccount) => storedAccount.email !== normalizedAccount.email),
-  ];
-
-  writeStoredAuthAccounts(nextAccounts);
 }
 
 function getAllAuthAccounts(): StoredAuthAccount[] {
@@ -539,72 +430,60 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
-    setAuthenticatedUser(account: StoredAuthAccount, options: { persist?: boolean } = {}): void {
-      const normalizedAccount: StoredAuthAccount = {
-        ...account,
-        email: normalizeEmail(account.email),
-      };
-
-      if (options.persist) {
-        upsertStoredAuthAccount(normalizedAccount);
-      }
-
+    setAuthenticatedUser(account: StoredAuthAccount): void {
       removeLocalStorage(USER_PROFILE_STORAGE_KEY);
       removeLocalStorage(PROFILE_AVATAR_STORAGE_KEY);
       removeLocalStorage(FULL_PROFILE_AVATAR_STORAGE_KEY);
       writeLocalStorage(LOGIN_STATE_STORAGE_KEY, 'true');
-      writeLocalStorage(CURRENT_USER_EMAIL_STORAGE_KEY, normalizedAccount.email);
+      writeLocalStorage(CURRENT_USER_EMAIL_STORAGE_KEY, account.email);
 
       this.isLoggedIn = true;
-      this.user = createUserFromAccount(normalizedAccount);
+      this.user = createUserFromAccount(account);
       persistUserProfile(getProfileFields(this.user));
     },
 
     async login(username: string, password: string): Promise<boolean> {
       try {
-        const response = await api.post('auth/login', {
+        const response = await api.post('/api/auth/login', {
           username,
           password,
         });
 
-        if (response.data && response.data.user) {
-          const apiUser = response.data.user;
+        const apiUser = response.data.user;
 
-          // Map API User to Frontend User model
-          const account: StoredAuthAccount = {
-            id: String(apiUser.id),
-            studentId: 'EXT' + String(apiUser.id).padStart(7, '0'),
-            firstNameTh: apiUser.username,
-            lastNameTh: '',
-            firstNameEn: apiUser.username.toUpperCase(),
-            lastNameEn: apiUser.role.toUpperCase(),
-            email: apiUser.email,
-            phone: '',
-            faculty: 'Lifelong Learning',
-            department: apiUser.role,
-            role: mapApiRole(apiUser.role),
-            username: apiUser.username,
-            avatar: createDefaultAvatar(apiUser.email),
-            password: password,
-            createdAt: new Date().toISOString(),
-            source: 'mock',
-          };
+        // Map API User to Frontend User model
+        const account: StoredAuthAccount = {
+          id: String(apiUser.id),
+          studentId: 'EXT' + String(apiUser.id).padStart(7, '0'),
+          firstNameTh: apiUser.username,
+          lastNameTh: '',
+          firstNameEn: apiUser.username.toUpperCase(),
+          lastNameEn: apiUser.role.toUpperCase(),
+          email: apiUser.email,
+          phone: '',
+          faculty: 'Lifelong Learning',
+          department: apiUser.role,
+          role: ((): User['role'] => {
+            const r = apiUser.role.toLowerCase();
+            if (r === 'admin') return 'admin';
+            if (r === 'instructor' || r === 'teach') return 'teach';
+            if (r === 'finance') return 'finance';
+            if (r === 'central_finance' || r === 'central-finance') return 'central_finance';
+            return 'student';
+          })(),
+          username: apiUser.username,
+          avatar: createDefaultAvatar(apiUser.email),
+          password: password,
+          createdAt: new Date().toISOString(),
+          source: 'mock',
+        };
 
-          this.setAuthenticatedUser(account, { persist: true });
-          return true;
-        }
-      } catch (error) {
-        console.warn('API login failed, checking mock accounts...', error);
-      }
-
-      // Fallback: Check mock accounts if API fails or doesn't find user
-      const mockAccount = findAuthAccountByEmail(username);
-      if (mockAccount && mockAccount.password === password) {
-        this.setAuthenticatedUser(mockAccount);
+        this.setAuthenticatedUser(account);
         return true;
+      } catch (error) {
+        console.error('Login error:', error);
+        return false;
       }
-
-      return false;
     },
 
     registerLearner(payload: RegisterLearnerPayload): AuthActionResult {
@@ -675,7 +554,3 @@ export const useAuthStore = defineStore('auth', {
     },
   },
 });
-
-if (import.meta.hot) {
-  import.meta.hot.accept(acceptHMRUpdate(useAuthStore, import.meta.hot));
-}
