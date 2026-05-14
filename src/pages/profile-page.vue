@@ -186,6 +186,22 @@
                     </q-item-label>
                   </q-item-section>
                 </q-item>
+
+                <q-item
+                  clickable
+                  v-ripple
+                  class="profile-menu-item"
+                  @click="goToInstructorLearnerChat"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="forum" color="primary" size="20px" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label class="text-primary text-weight-bold text-body2">
+                      สนทนากับผู้เรียน
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
               </q-list>
             </q-card>
 
@@ -610,7 +626,13 @@
                         no-caps
                         size="md"
                         class="course-action-btn course-action-btn--primary"
-                        @click="goToCourse(entry.registration.courseId, entry.course.code)"
+                        @click="
+                          goToCourse(
+                            entry.registration.courseId,
+                            entry.course.code,
+                            entry.course.moodleId,
+                          )
+                        "
                       />
                     </template>
                   </ProfileCourseCard>
@@ -766,7 +788,13 @@
                           no-caps
                           size="md"
                           class="course-action-btn course-action-btn--primary"
-                          @click="goToCourse(bookmark.courseId, bookmark.courseCode)"
+                          @click="
+                            goToCourse(
+                              bookmark.courseId,
+                              bookmark.courseCode,
+                              getHydratedBookmarkCourse(bookmark).moodleId,
+                            )
+                          "
                         />
                       </template>
                       <template v-else>
@@ -3527,12 +3555,24 @@ function isLatestLearnerMessage(message: ChatMessage): boolean {
   return latestLearnerMessage?.id === message.id;
 }
 
-async function goToCourse(courseId: string, courseCode?: string): Promise<void> {
+async function goToCourse(
+  courseId: string,
+  courseCode?: string,
+  moodleCourseId?: number,
+): Promise<void> {
   const username = authStore.user?.username;
   if (username) {
-    const url = await getMoodleCourseUrl(courseId, username, courseCode);
+    const courseDetail = getCourseDetailById(courseId);
+    const url = await getMoodleCourseUrl(
+      String(moodleCourseId ?? courseDetail?.moodleId ?? courseId),
+      username,
+      courseCode,
+    );
     if (url) {
-      window.open(url, '_blank');
+      void router.push({
+        path: `/course/${courseId}/learn`,
+        query: { moodleUrl: url },
+      });
       return;
     }
   }
@@ -3570,6 +3610,16 @@ function goToInstructorLearningResults(): void {
 
 function goToInstructorCertificates(): void {
   void router.push('/instructor/certificates');
+}
+
+function goToInstructorLearnerChat(): void {
+  void router.push('/instructor/chat').catch(() => {
+    $q.notify({
+      type: 'info',
+      message: 'เมนูสนทนากับผู้เรียนอยู่ระหว่างเตรียมหน้าสนทนา',
+      position: 'top',
+    });
+  });
 }
 
 function goToInstructorCourseWorkspace(courseId: string): void {

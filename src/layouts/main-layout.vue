@@ -673,6 +673,12 @@ const navItems = computed<NavItem[]>(() => {
         to: '/instructor/students',
       },
       {
+        name: 'learner-chat',
+        label: 'สนทนากับผู้เรียน',
+        icon: 'forum',
+        to: '/instructor/chat',
+      },
+      {
         name: 'reports',
         label: 'รายงานผล',
         icon: 'bar_chart',
@@ -816,6 +822,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = route.query.view === 'table' ? '' : 'my-courses-mgmt';
   } else if (path.includes('/instructor/students')) {
     activeNav.value = 'students-mgmt';
+  } else if (path.includes('/instructor/chat')) {
+    activeNav.value = 'learner-chat';
   } else if (path.includes('/instructor/certificates')) {
     activeNav.value = 'certificates';
   } else if (path.includes('/notifications')) {
@@ -934,6 +942,7 @@ async function onNavClick(nav: NavItem) {
         '/instructor/courses',
         '/instructor/students',
         '/instructor/certificates',
+        '/instructor/chat',
       ].includes(nav.to)
     ) {
       $q.dialog({
@@ -1460,7 +1469,8 @@ async function onCategoryClick(category: string) {
   }
 
   :deep(.nav-tab--my-courses-mgmt),
-  :deep(.nav-tab--students-mgmt) {
+  :deep(.nav-tab--students-mgmt),
+  :deep(.nav-tab--learner-chat) {
     --nav-tab-label-width: 132px;
     flex-basis: 194px;
     width: 194px;
