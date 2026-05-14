@@ -87,7 +87,7 @@
     <div class="auth-demo">
       <div class="auth-demo__title">{{ $t('auth.login.demoTitle') }}</div>
       <div v-for="account in demoAccounts" :key="account.email">
-        {{ account.email }} / {{ account.password }}
+        {{ account.identifier }} / {{ account.password }}
       </div>
     </div>
 

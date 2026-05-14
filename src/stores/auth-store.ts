@@ -47,8 +47,10 @@ interface StoredAuthAccount extends User {
 }
 
 export interface AuthDemoAccount {
+  identifier: string;
   email: string;
   password: string;
+  role: User['role'];
 }
 
 const PROFILE_AVATAR_STORAGE_KEY = 'lll-profile-avatar';
@@ -67,87 +69,93 @@ export type UserProfileUpdate = Pick<
 type StoredUserProfile = UserProfileUpdate;
 
 const MOCK_USER_BASE: Omit<User, 'avatar'> = {
-  id: 'mock-student-user',
-  studentId: 'C6901355',
-  firstNameTh: 'ณัฐพงศ์',
-  lastNameTh: 'ไม่อยู่',
-  firstNameEn: 'NATTHAPHONG',
-  lastNameEn: 'MAIYOO',
-  email: 'student@go.buu.ac.th',
-  phone: '0812345678',
-  faculty: 'คณะวิทยาการสารสนเทศ',
-  department: 'สาขาวิทยาการคอมพิวเตอร์',
+  id: 'mock-student-test-user',
+  studentId: 'STD0001',
+  firstNameTh: 'ผู้เรียน',
+  lastNameTh: 'ทดสอบ',
+  firstNameEn: 'STUDENT',
+  lastNameEn: 'TEST',
+  email: 'student@example.com',
+  phone: '',
+  faculty: 'Lifelong Learning',
+  department: 'Student',
   role: 'student',
+  username: 'student_test',
 };
 
 const MOCK_INSTRUCTOR_BASE: Omit<User, 'avatar'> = {
   id: 'mock-instructor-user',
-  studentId: 'T1234567',
-  firstNameTh: 'อ.นิติธร',
-  lastNameTh: 'ใจดี',
-  firstNameEn: 'NITITHORN',
-  lastNameEn: 'JAIDEE',
-  email: 'teach@go.buu.ac.th',
-  phone: '0898765432',
-  faculty: 'คณะวิทยาการสารสนเทศ',
-  department: 'สาขาวิทยาการคอมพิวเตอร์',
+  studentId: 'INS0001',
+  firstNameTh: 'ผู้สอน',
+  lastNameTh: 'ทดสอบ',
+  firstNameEn: 'INSTRUCTOR',
+  lastNameEn: 'TEST',
+  email: 'teach1@go.buu.ac.th',
+  phone: '',
+  faculty: 'Lifelong Learning',
+  department: 'Instructor',
   role: 'teach',
+  username: 'teach1',
 };
 
 const MOCK_INSTRUCTOR_1_BASE: Omit<User, 'avatar'> = {
-  id: 'mock-instructor-teach1-user',
-  studentId: 'T7654321',
-  firstNameTh: 'อ.พิชชา',
-  lastNameTh: 'แสงวิจัย',
-  firstNameEn: 'PITCHA',
-  lastNameEn: 'SAENGWIJAI',
-  email: 'teach1@go.buu.ac.th',
-  phone: '0887654321',
-  faculty: 'คณะวิทยาศาสตร์',
-  department: 'ภาควิชาคณิตศาสตร์และสถิติ',
+  id: 'mock-instructor-alt-user',
+  studentId: 'INS0002',
+  firstNameTh: 'ผู้สอน',
+  lastNameTh: 'สำรอง',
+  firstNameEn: 'INSTRUCTOR',
+  lastNameEn: 'ALT',
+  email: 'instructor@example.com',
+  phone: '',
+  faculty: 'Lifelong Learning',
+  department: 'Instructor',
   role: 'teach',
+  username: 'instructor_test',
 };
 
 const MOCK_ADMIN_BASE: Omit<User, 'avatar'> = {
   id: 'mock-admin-user',
   studentId: 'ADM0001',
   firstNameTh: 'ผู้ดูแล',
-  lastNameTh: 'ระบบ',
-  firstNameEn: 'SYSTEM',
-  lastNameEn: 'ADMIN',
+  lastNameTh: 'ทดสอบ',
+  firstNameEn: 'ADMIN',
+  lastNameEn: 'TEST',
   email: 'admin@go.buu.ac.th',
-  phone: '038102222',
-  faculty: 'สำนักบริหารระบบ',
-  department: 'BUU Lifelong Learning Platform',
+  phone: '',
+  faculty: 'Lifelong Learning',
+  department: 'Admin',
   role: 'admin',
+  username: 'admin_test',
 };
 
 const MOCK_FINANCE_BASE: Omit<User, 'avatar'> = {
   id: 'mock-finance-user',
   studentId: 'FIN0001',
-  firstNameTh: 'สมศรี',
-  lastNameTh: 'การเงิน',
-  firstNameEn: 'SOMSRI',
-  lastNameEn: 'FINANCE',
+  firstNameTh: 'การเงิน',
+  lastNameTh: 'ทดสอบ',
+  firstNameEn: 'FINANCE',
+  lastNameEn: 'TEST',
   email: 'finance@go.buu.ac.th',
-  phone: '038101111',
-  faculty: 'คอมพิวเตอร์และเทคโนโลยี',
-  department: 'งานคลังและพัสดุ',
+  phone: '',
+  faculty: 'Lifelong Learning',
+  department: 'Finance',
   role: 'finance',
+  username: 'finance_test',
 };
 
 const MOCK_CENTRAL_FINANCE_BASE: Omit<User, 'avatar'> = {
   id: 'mock-central-finance-user',
   studentId: 'CFIN001',
-  firstNameTh: 'เจ้าหน้าที่',
-  lastNameTh: 'การเงินกองคลัง',
+  firstNameTh: 'การเงินกลาง',
+  lastNameTh: 'ทดสอบ',
   firstNameEn: 'CENTRAL',
   lastNameEn: 'FINANCE',
-  email: 'central-finance@go.buu.ac.th',
-  phone: '038103333',
-  faculty: 'กองคลัง',
-  department: 'งานบริหารการเงิน',
+  email: 'central-finance@example.com',
+  phone: '',
+  faculty: 'Lifelong Learning',
+  department: 'Central Finance',
   role: 'central_finance',
+  username: 'central_finance_test',
 };
 
 const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
@@ -155,7 +163,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_USER_BASE,
     email: MOCK_USER_BASE.email.toLowerCase(),
     avatar: DEFAULT_PROFILE_AVATAR,
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -163,7 +171,7 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_INSTRUCTOR_BASE,
     email: MOCK_INSTRUCTOR_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nitithorn',
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -171,23 +179,23 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_INSTRUCTOR_1_BASE,
     email: MOCK_INSTRUCTOR_1_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pitcha',
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
   {
     ...MOCK_ADMIN_BASE,
-    email: MOCK_ADMIN_BASE.email.toLowerCase(),
+    email: 'admin@example.com',
     avatar: 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=BUU-LLL-Admin',
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
   {
     ...MOCK_FINANCE_BASE,
-    email: MOCK_FINANCE_BASE.email.toLowerCase(),
+    email: 'finance@example.com',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SomsriFinance',
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
@@ -195,15 +203,17 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_CENTRAL_FINANCE_BASE,
     email: MOCK_CENTRAL_FINANCE_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CentralFinance',
-    password: '111111',
+    password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
   },
 ];
 
 export const AUTH_DEMO_ACCOUNTS: AuthDemoAccount[] = DEFAULT_AUTH_ACCOUNTS.map((account) => ({
+  identifier: account.username ?? account.email,
   email: account.email,
   password: account.password,
+  role: account.role,
 }));
 
 function readLocalStorage(key: string): string | null {
