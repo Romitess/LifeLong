@@ -152,6 +152,148 @@
       </div>
     </section>
 
+    <!-- ── Detail Dialog ────────────────────────────────────── -->
+    <q-dialog v-model="showDetail">
+      <q-card v-if="selectedRequest" style="width: 800px; max-width: 95vw; border-radius: 20px">
+        <q-card-section class="detail-dialog-header q-pa-lg">
+          <div class="row items-center justify-between no-wrap">
+            <div class="column">
+              <div class="text-overline text-gold-deep text-weight-bolder">
+                Ref: {{ selectedRequest.requestId }}
+              </div>
+              <div class="text-h5 text-weight-black text-navy q-mt-xs">รายละเอียดคำขอแหล่งเงิน</div>
+            </div>
+            <q-btn icon="close" flat round dense v-close-popup color="grey-7" />
+          </div>
+
+          <div class="row items-center q-mt-md q-gutter-sm">
+            <q-badge
+              :color="getStatusColor(selectedRequest.status)"
+              class="q-px-md q-py-sm text-weight-bold"
+              style="border-radius: 8px"
+            >
+              {{ getStatusLabel(selectedRequest.status) }}
+            </q-badge>
+            <div class="text-caption text-grey-7">
+              <q-icon name="event" class="q-mr-xs" />
+              ยื่นคำขอเมื่อ: {{ selectedRequest.date }}
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-section class="q-pa-lg">
+          <div class="row q-col-gutter-lg">
+            <!-- Left Side: Basic Info -->
+            <div class="col-12 col-md-7">
+              <div class="detail-group">
+                <label>คณะ / ส่วนงานที่ยื่นคำขอ</label>
+                <div class="text-subtitle1 text-weight-bold text-navy">
+                  {{ selectedRequest.faculty }}
+                </div>
+              </div>
+
+              <div class="detail-group q-mt-lg">
+                <label>ชื่อโครงการ / เหตุผลความจำเป็น</label>
+                <div class="text-subtitle1 text-weight-bold text-primary">
+                  {{ selectedRequest.project }}
+                </div>
+                <div class="text-body2 text-grey-8 q-mt-sm line-height-relaxed">
+                  {{ selectedRequest.description || 'ไม่มีรายละเอียดเพิ่มเติม' }}
+                </div>
+              </div>
+
+              <div class="detail-group q-mt-xl">
+                <label>เอกสารแนบประกอบการพิจารณา</label>
+                <div
+                  v-if="selectedRequest.documents && selectedRequest.documents.length > 0"
+                  class="row q-gutter-sm q-mt-sm"
+                >
+                  <q-btn
+                    v-for="(doc, idx) in selectedRequest.documents"
+                    :key="idx"
+                    outline
+                    no-caps
+                    color="blue-grey-8"
+                    class="doc-btn"
+                  >
+                    <q-icon
+                      :name="doc.type === 'pdf' ? 'picture_as_pdf' : 'description'"
+                      size="xs"
+                      class="q-mr-sm"
+                    />
+                    <div class="doc-name">{{ doc.name }}</div>
+                  </q-btn>
+                </div>
+                <div v-else class="text-caption text-grey-6 italic q-mt-sm">ไม่มีเอกสารแนบ</div>
+              </div>
+            </div>
+
+            <!-- Right Side: Budget & Contact -->
+            <div class="col-12 col-md-5">
+              <AdminSurfaceCard tone="default" body-padding="md" class="info-sidebar">
+                <div class="budget-section text-center q-pa-md">
+                  <div class="text-overline text-grey-7">งบประมาณที่เสนอขอ</div>
+                  <div class="text-h4 text-weight-black text-primary">
+                    {{ formatCurrency(selectedRequest.amount) }}
+                  </div>
+                </div>
+
+                <q-separator spaced />
+
+                <div class="contact-section q-pa-md">
+                  <div class="text-subtitle2 text-weight-bold text-navy q-mb-md">
+                    ข้อมูลผู้ประสานงาน
+                  </div>
+                  <div class="row items-center q-mb-sm">
+                    <q-icon name="person" color="grey-6" size="xs" class="q-mr-sm" />
+                    <div class="text-body2">{{ selectedRequest.contactName || '-' }}</div>
+                  </div>
+                  <div class="row items-center">
+                    <q-icon name="phone" color="grey-6" size="xs" class="q-mr-sm" />
+                    <div class="text-body2">{{ selectedRequest.contactPhone || '-' }}</div>
+                  </div>
+                </div>
+              </AdminSurfaceCard>
+
+              <div class="action-summary q-mt-lg">
+                <div class="text-caption text-grey-7 q-mb-sm">การดำเนินการเบื้องต้น</div>
+                <div class="column q-gutter-sm">
+                  <q-btn
+                    v-if="selectedRequest.status === 'new'"
+                    color="primary"
+                    unelevated
+                    label="เริ่มการตรวจสอบเอกสาร"
+                    icon="play_arrow"
+                    no-caps
+                    class="full-width q-py-sm"
+                  />
+                  <q-btn
+                    v-if="selectedRequest.status === 'processing'"
+                    color="positive"
+                    unelevated
+                    label="ออกรหัสแหล่งเงิน (Approve)"
+                    icon="check_circle"
+                    no-caps
+                    class="full-width q-py-sm"
+                  />
+                  <q-btn
+                    outline
+                    color="negative"
+                    label="ตีกลับเพื่อแก้ไข"
+                    icon="reply"
+                    no-caps
+                    class="full-width q-py-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
     <!-- ── History Dialog ────────────────────────────────────── -->
     <q-dialog v-model="showHistory">
       <q-card style="min-width: 700px; border-radius: 16px">
@@ -203,6 +345,7 @@ import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import type { QTableColumn } from 'quasar';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
+import type { FundSourceRequest } from 'src/stores/central-finance-store';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
@@ -210,16 +353,9 @@ import AdminActionButton from 'components/admin/AdminActionButton.vue';
 const router = useRouter();
 const financeStore = useCentralFinanceStore();
 
-interface RequestRow {
-  id: string;
-  requestId: string;
-  date: string;
-  faculty: string;
-  project: string;
-  status: 'new' | 'processing' | 'completed' | 'rejected';
-}
-
 const showHistory = ref(false);
+const showDetail = ref(false);
+const selectedRequest = ref<FundSourceRequest | null>(null);
 
 const filters = reactive({
   search: '',
@@ -318,6 +454,11 @@ const filteredRows = computed(() => {
   });
 });
 
+function formatCurrency(value: number | undefined) {
+  if (value === undefined) return '-';
+  return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(value);
+}
+
 function getStatusLabel(status: string) {
   switch (status) {
     case 'new':
@@ -356,11 +497,12 @@ function onExport() {
   console.log('Exporting report');
 }
 
-function onViewDetail(row: RequestRow) {
-  console.log('View detail', row);
+function onViewDetail(row: FundSourceRequest) {
+  selectedRequest.value = row;
+  showDetail.value = true;
 }
 
-function onEdit(row: RequestRow) {
+function onEdit(row: FundSourceRequest) {
   console.log('Edit row', row);
 }
 </script>
@@ -416,6 +558,51 @@ function onEdit(row: RequestRow) {
   font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
+}
+
+/* Detail Dialog Styles */
+.detail-group {
+  label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--admin-muted);
+    margin-bottom: 4px;
+  }
+}
+
+.line-height-relaxed {
+  line-height: 1.6;
+}
+
+.doc-btn {
+  border-radius: 10px;
+  padding: 4px 12px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+
+  .doc-name {
+    font-size: 0.8rem;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.info-sidebar {
+  border-radius: 16px !important;
+  background: #f8fafc !important;
+  border: 1px dashed rgba(var(--q-primary), 0.2) !important;
+}
+
+.budget-section {
+  .text-h4 {
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+  }
 }
 
 @media (max-width: 1024px) {
