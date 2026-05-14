@@ -673,6 +673,12 @@ const navItems = computed<NavItem[]>(() => {
         to: '/instructor/students',
       },
       {
+        name: 'learner-chat',
+        label: 'สนทนากับผู้เรียน',
+        icon: 'forum',
+        to: '/instructor/chat',
+      },
+      {
         name: 'reports',
         label: 'รายงานผล',
         icon: 'bar_chart',
@@ -816,6 +822,10 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = route.query.view === 'table' ? '' : 'my-courses-mgmt';
   } else if (path.includes('/instructor/students')) {
     activeNav.value = 'students-mgmt';
+  } else if (path.includes('/instructor/chat')) {
+    activeNav.value = 'learner-chat';
+  } else if (path.includes('/instructor/certificates')) {
+    activeNav.value = 'certificates';
   } else if (path.includes('/notifications')) {
     activeNav.value = '';
   } else if (path.includes('/central-finance/dashboard')) {
@@ -927,7 +937,13 @@ async function onNavClick(nav: NavItem) {
     if (
       isTeachingRole.value &&
       nav.to.startsWith('/instructor/') &&
-      !['/instructor/dashboard', '/instructor/courses', '/instructor/students'].includes(nav.to)
+      ![
+        '/instructor/dashboard',
+        '/instructor/courses',
+        '/instructor/students',
+        '/instructor/certificates',
+        '/instructor/chat',
+      ].includes(nav.to)
     ) {
       $q.dialog({
         title: 'อยู่ระหว่างการพัฒนา',
@@ -1453,7 +1469,8 @@ async function onCategoryClick(category: string) {
   }
 
   :deep(.nav-tab--my-courses-mgmt),
-  :deep(.nav-tab--students-mgmt) {
+  :deep(.nav-tab--students-mgmt),
+  :deep(.nav-tab--learner-chat) {
     --nav-tab-label-width: 132px;
     flex-basis: 194px;
     width: 194px;

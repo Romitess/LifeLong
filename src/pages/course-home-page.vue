@@ -80,7 +80,9 @@
                         no-caps
                         full-width
                         class="course-home-btn"
-                        @click.stop="goToCourse(entry.course.id, entry.course.code)"
+                        @click.stop="
+                          goToCourse(entry.course.id, entry.course.code, entry.course.moodleId)
+                        "
                       />
                       <CourseCompletionDocumentActions
                         v-if="entry.progress.isCompleted"
@@ -165,12 +167,19 @@ const filteredCourses = computed<RegisteredCourseEntry[]>(() => {
 const getTranslatedCourseTitle = (course: { title: string; titleEn?: string }) =>
   locale.value === 'th' ? course.title : course.titleEn || course.title;
 
-const goToCourse = async (id: string, courseCode?: string): Promise<void> => {
+const goToCourse = async (
+  id: string,
+  courseCode?: string,
+  moodleCourseId?: number,
+): Promise<void> => {
   const username = authStore.user?.username;
   if (username) {
-    const url = await getMoodleCourseUrl(id, username, courseCode);
+    const url = await getMoodleCourseUrl(String(moodleCourseId ?? id), username, courseCode);
     if (url) {
-      window.open(url, '_blank');
+      void router.push({
+        path: `/course/${id}/learn`,
+        query: { moodleUrl: url },
+      });
       return;
     }
   }

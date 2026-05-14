@@ -170,6 +170,38 @@
                     </q-item-label>
                   </q-item-section>
                 </q-item>
+
+                <q-item
+                  clickable
+                  v-ripple
+                  class="profile-menu-item"
+                  @click="goToInstructorCertificates"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="workspace_premium" color="primary" size="20px" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label class="text-primary text-weight-bold text-body2">
+                      สร้าง Certificate
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-item
+                  clickable
+                  v-ripple
+                  class="profile-menu-item"
+                  @click="goToInstructorLearnerChat"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="forum" color="primary" size="20px" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label class="text-primary text-weight-bold text-body2">
+                      สนทนากับผู้เรียน
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
               </q-list>
             </q-card>
 
@@ -281,7 +313,193 @@
           <div class="col-12 col-md-9">
             <div class="profile-tab-panel">
               <!-- My Courses Tab -->
-              <div v-if="activeMenu === 'my-courses'" class="student-course-panel">
+              <div v-if="isTeachingRole" class="instructor-home-panel">
+                <div class="instructor-home-header">
+                  <div>
+                    <div class="text-h5 text-weight-bolder text-primary">หน้าหลักผู้สอน</div>
+                    <div class="text-caption text-grey-6 q-mt-xs">
+                      ภาพรวมรายวิชา งานที่ต้องดำเนินการ และสถานะ Certificate
+                    </div>
+                  </div>
+                  <q-btn
+                    unelevated
+                    color="primary"
+                    icon="add"
+                    label="สร้างรายวิชาใหม่"
+                    no-caps
+                    @click="router.push('/instructor/create-course')"
+                  />
+                </div>
+
+                <div class="instructor-overview-grid">
+                  <q-card
+                    v-for="item in instructorOverviewCards"
+                    :key="item.label"
+                    flat
+                    bordered
+                    class="instructor-overview-card"
+                  >
+                    <q-icon :name="item.icon" size="26px" :style="{ color: item.color }" />
+                    <div>
+                      <strong>{{ item.value.toLocaleString('th-TH') }}</strong>
+                      <span>{{ item.label }}</span>
+                    </div>
+                  </q-card>
+                </div>
+
+                <div class="instructor-work-grid">
+                  <q-card flat bordered class="instructor-work-card">
+                    <div class="instructor-work-card__head">
+                      <div>
+                        <h2>งานที่ต้องทำต่อ</h2>
+                        <span>รายการที่ควรจัดการจากรายวิชาที่คุณรับผิดชอบ</span>
+                      </div>
+                      <q-icon name="task_alt" size="30px" color="primary" />
+                    </div>
+
+                    <div class="instructor-task-list">
+                      <button
+                        type="button"
+                        class="instructor-task-item"
+                        @click="goToInstructorStudents"
+                      >
+                        <q-icon name="fact_check" />
+                        <div>
+                          <strong>ตรวจสอบรายชื่อผู้เรียน</strong>
+                          <span
+                            >{{ totalInstructorLearners.toLocaleString('th-TH') }} คนในระบบ
+                            mockup</span
+                          >
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        class="instructor-task-item"
+                        @click="goToInstructorLearningResults"
+                      >
+                        <q-icon name="grading" />
+                        <div>
+                          <strong>บันทึกผลการเรียน</strong>
+                          <span
+                            >{{
+                              pendingResultCourses.toLocaleString('th-TH')
+                            }}
+                            รายวิชายังต้องตรวจผล</span
+                          >
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        class="instructor-task-item"
+                        @click="goToInstructorCertificates"
+                      >
+                        <q-icon name="workspace_premium" />
+                        <div>
+                          <strong>สร้าง Certificate</strong>
+                          <span
+                            >{{
+                              certificateReadyLearners.toLocaleString('th-TH')
+                            }}
+                            คนผ่านเกณฑ์พร้อมออกเอกสาร</span
+                          >
+                        </div>
+                      </button>
+                    </div>
+                  </q-card>
+
+                  <q-card flat bordered class="instructor-work-card">
+                    <div class="instructor-work-card__head">
+                      <div>
+                        <h2>สถานะ Certificate</h2>
+                        <span>ประเมินจากคะแนน mockup สำหรับเตรียม flow ก่อนต่อ backend</span>
+                      </div>
+                      <q-icon name="workspace_premium" size="30px" color="amber-8" />
+                    </div>
+
+                    <div class="certificate-status-row">
+                      <div>
+                        <strong>{{ certificateReadyLearners.toLocaleString('th-TH') }}</strong>
+                        <span>พร้อมสร้าง</span>
+                      </div>
+                      <div>
+                        <strong>{{ generatedCertificateCount.toLocaleString('th-TH') }}</strong>
+                        <span>สร้างแล้ว</span>
+                      </div>
+                      <div>
+                        <strong>{{ pendingCertificateCount.toLocaleString('th-TH') }}</strong>
+                        <span>ยังไม่ได้สร้าง</span>
+                      </div>
+                    </div>
+                  </q-card>
+                </div>
+
+                <q-card flat bordered class="instructor-course-work-card">
+                  <div class="instructor-course-work-card__head">
+                    <div>
+                      <h2>รายวิชาที่รับผิดชอบ</h2>
+                      <span>{{ instructorCourses.length.toLocaleString('th-TH') }} รายวิชา</span>
+                    </div>
+                    <q-btn
+                      flat
+                      color="primary"
+                      icon-right="arrow_forward"
+                      label="ดูทั้งหมด"
+                      no-caps
+                      @click="goToInstructorCourses"
+                    />
+                  </div>
+
+                  <div v-if="instructorCourses.length > 0" class="instructor-course-list">
+                    <div
+                      v-for="course in instructorCoursePreview"
+                      :key="course.id"
+                      class="instructor-course-item"
+                    >
+                      <img :src="course.imageUrl" :alt="course.titleEn || course.title" />
+                      <div class="instructor-course-item__body">
+                        <span>{{ course.code }}</span>
+                        <strong>{{ course.titleEn || course.title }}</strong>
+                        <div>
+                          {{ course.enrolledCount.toLocaleString('th-TH') }}/{{
+                            course.maxSeats.toLocaleString('th-TH')
+                          }}
+                          ผู้เรียน
+                        </div>
+                      </div>
+                      <div class="instructor-course-item__actions">
+                        <q-btn
+                          dense
+                          outline
+                          color="primary"
+                          icon="edit"
+                          label="จัดการ"
+                          no-caps
+                          @click="goToInstructorCourseWorkspace(course.id)"
+                        />
+                        <q-btn
+                          dense
+                          flat
+                          color="amber-8"
+                          icon="workspace_premium"
+                          label="Certificate"
+                          no-caps
+                          @click="goToInstructorCertificateCourse(course.id)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-else class="instructor-empty-state">
+                    <q-icon name="school" size="44px" color="primary" />
+                    <strong>ยังไม่มีรายวิชาที่รับผิดชอบ</strong>
+                    <span
+                      >เริ่มจากการสร้างรายวิชาใหม่ หรือเข้าสู่ระบบด้วยบัญชีผู้สอนที่มีรายวิชา</span
+                    >
+                  </div>
+                </q-card>
+              </div>
+
+              <div v-else-if="activeMenu === 'my-courses'" class="student-course-panel">
                 <!-- Section Header -->
                 <div class="row items-center justify-between q-mb-lg">
                   <div>
@@ -408,7 +626,13 @@
                         no-caps
                         size="md"
                         class="course-action-btn course-action-btn--primary"
-                        @click="goToCourse(entry.registration.courseId, entry.course.code)"
+                        @click="
+                          goToCourse(
+                            entry.registration.courseId,
+                            entry.course.code,
+                            entry.course.moodleId,
+                          )
+                        "
                       />
                     </template>
                   </ProfileCourseCard>
@@ -564,7 +788,13 @@
                           no-caps
                           size="md"
                           class="course-action-btn course-action-btn--primary"
-                          @click="goToCourse(bookmark.courseId, bookmark.courseCode)"
+                          @click="
+                            goToCourse(
+                              bookmark.courseId,
+                              bookmark.courseCode,
+                              getHydratedBookmarkCourse(bookmark).moodleId,
+                            )
+                          "
                         />
                       </template>
                       <template v-else>
@@ -1793,6 +2023,7 @@ import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue
 import CourseReceiptDialog from 'components/receipt/CourseReceiptDialog.vue';
 import { getCourseDetailById, MOCK_COURSES } from 'src/data/mock-courses';
 import { useAuthStore, type User, type UserProfileUpdate } from 'src/stores/auth-store';
+import { useCourseStore } from 'src/stores/course-store';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
 
 interface AvatarOption {
@@ -1894,6 +2125,8 @@ const courseRegistrationStore = useCourseRegistrationStore();
 const coursePaymentStore = useCoursePaymentStore();
 const courseBookmarkStore = useCourseBookmarkStore();
 const authStore = useAuthStore();
+const courseStore = useCourseStore();
+courseStore.init();
 const { getMoodleCourseUrl } = useMoodleSso();
 const {
   myRegistrations,
@@ -2853,6 +3086,72 @@ const completedCoursesCount = computed<number>(
   () => myRegisteredCourseEntries.value.filter((entry) => entry.progress.isCompleted).length,
 );
 
+const instructorCourses = computed<Course[]>(() =>
+  courseStore.getInstructorCourses(authStore.user),
+);
+
+const activeInstructorCoursesCount = computed<number>(
+  () => instructorCourses.value.filter((course) => course.isActive).length,
+);
+
+const totalInstructorLearners = computed<number>(() =>
+  instructorCourses.value.reduce((sum, course) => sum + course.enrolledCount, 0),
+);
+
+const pendingResultCourses = computed<number>(
+  () => instructorCourses.value.filter((course) => course.enrolledCount > 0).length,
+);
+
+function getCertificateReadyCount(course: Course): number {
+  if (course.enrolledCount <= 0) return 0;
+
+  return Array.from({ length: course.enrolledCount }, (_, index): number => {
+    const score = (course.id.charCodeAt(0) * 13 + index * 11) % 101;
+    return score >= 60 ? 1 : 0;
+  }).reduce((sum, value) => sum + value, 0);
+}
+
+const certificateReadyLearners = computed<number>(() =>
+  instructorCourses.value.reduce((sum, course) => sum + getCertificateReadyCount(course), 0),
+);
+
+const generatedCertificateCount = computed<number>(() =>
+  Math.floor(certificateReadyLearners.value * 0.35),
+);
+
+const pendingCertificateCount = computed<number>(() =>
+  Math.max(0, certificateReadyLearners.value - generatedCertificateCount.value),
+);
+
+const instructorCoursePreview = computed<Course[]>(() => instructorCourses.value.slice(0, 4));
+
+const instructorOverviewCards = computed(() => [
+  {
+    label: 'รายวิชาทั้งหมด',
+    value: instructorCourses.value.length,
+    icon: 'menu_book',
+    color: '#F5A623',
+  },
+  {
+    label: 'รายวิชาที่เปิดสอน',
+    value: activeInstructorCoursesCount.value,
+    icon: 'campaign',
+    color: '#31B7C8',
+  },
+  {
+    label: 'ผู้เรียนรวม',
+    value: totalInstructorLearners.value,
+    icon: 'groups',
+    color: '#49B37D',
+  },
+  {
+    label: 'พร้อมออก Certificate',
+    value: certificateReadyLearners.value,
+    icon: 'workspace_premium',
+    color: '#5B7CFA',
+  },
+]);
+
 const selectedChatEntry = computed<RegisteredCourseEntry | null>(() => {
   if (myRegisteredCourseEntries.value.length === 0) {
     return null;
@@ -2892,32 +3191,63 @@ function buildProfileStatTone(accent: string): Record<string, string> {
   };
 }
 
-const profileStats = computed<ProfileStatCardItem[]>(() => [
-  {
-    label: t('profile.menu.myCourses'),
-    value: myRegistrations.value.length,
-    icon: 'app_registration',
-    tone: buildProfileStatTone('#F5A623'),
-  },
-  {
-    label: t('profile.courses.inProgress'),
-    value: inProgressCoursesCount.value,
-    icon: 'auto_stories',
-    tone: buildProfileStatTone('#31B7C8'),
-  },
-  {
-    label: t('learning.completed'),
-    value: completedCoursesCount.value,
-    icon: 'workspace_premium',
-    tone: buildProfileStatTone('#49B37D'),
-  },
-  {
-    label: t('creditBank'),
-    value: 0,
-    icon: 'stars',
-    tone: buildProfileStatTone('#5B7CFA'),
-  },
-]);
+const profileStats = computed<ProfileStatCardItem[]>(() => {
+  if (isTeachingRole.value) {
+    return [
+      {
+        label: 'รายวิชาทั้งหมด',
+        value: instructorCourses.value.length,
+        icon: 'app_registration',
+        tone: buildProfileStatTone('#F5A623'),
+      },
+      {
+        label: 'กำลังเปิดสอน',
+        value: activeInstructorCoursesCount.value,
+        icon: 'auto_stories',
+        tone: buildProfileStatTone('#31B7C8'),
+      },
+      {
+        label: 'ผู้เรียนรวม',
+        value: totalInstructorLearners.value,
+        icon: 'groups',
+        tone: buildProfileStatTone('#49B37D'),
+      },
+      {
+        label: 'รอออก Certificate',
+        value: pendingCertificateCount.value,
+        icon: 'workspace_premium',
+        tone: buildProfileStatTone('#5B7CFA'),
+      },
+    ];
+  }
+
+  return [
+    {
+      label: t('profile.menu.myCourses'),
+      value: myRegistrations.value.length,
+      icon: 'app_registration',
+      tone: buildProfileStatTone('#F5A623'),
+    },
+    {
+      label: t('profile.courses.inProgress'),
+      value: inProgressCoursesCount.value,
+      icon: 'auto_stories',
+      tone: buildProfileStatTone('#31B7C8'),
+    },
+    {
+      label: t('learning.completed'),
+      value: completedCoursesCount.value,
+      icon: 'workspace_premium',
+      tone: buildProfileStatTone('#49B37D'),
+    },
+    {
+      label: t('creditBank'),
+      value: 0,
+      icon: 'stars',
+      tone: buildProfileStatTone('#5B7CFA'),
+    },
+  ];
+});
 
 const cropImageStyle = computed(() => {
   const scale = cropZoom.value;
@@ -3225,12 +3555,24 @@ function isLatestLearnerMessage(message: ChatMessage): boolean {
   return latestLearnerMessage?.id === message.id;
 }
 
-async function goToCourse(courseId: string, courseCode?: string): Promise<void> {
+async function goToCourse(
+  courseId: string,
+  courseCode?: string,
+  moodleCourseId?: number,
+): Promise<void> {
   const username = authStore.user?.username;
   if (username) {
-    const url = await getMoodleCourseUrl(courseId, username, courseCode);
+    const courseDetail = getCourseDetailById(courseId);
+    const url = await getMoodleCourseUrl(
+      String(moodleCourseId ?? courseDetail?.moodleId ?? courseId),
+      username,
+      courseCode,
+    );
     if (url) {
-      window.open(url, '_blank');
+      void router.push({
+        path: `/course/${courseId}/learn`,
+        query: { moodleUrl: url },
+      });
       return;
     }
   }
@@ -3263,6 +3605,34 @@ function goToInstructorLearningResults(): void {
   void router.push({
     path: '/instructor/students',
     query: { tab: 'results' },
+  });
+}
+
+function goToInstructorCertificates(): void {
+  void router.push('/instructor/certificates');
+}
+
+function goToInstructorLearnerChat(): void {
+  void router.push('/instructor/chat').catch(() => {
+    $q.notify({
+      type: 'info',
+      message: 'เมนูสนทนากับผู้เรียนอยู่ระหว่างเตรียมหน้าสนทนา',
+      position: 'top',
+    });
+  });
+}
+
+function goToInstructorCourseWorkspace(courseId: string): void {
+  void router.push({
+    path: '/instructor/courses',
+    query: { courseId },
+  });
+}
+
+function goToInstructorCertificateCourse(courseId: string): void {
+  void router.push({
+    path: '/instructor/certificates',
+    query: { courseId },
   });
 }
 
@@ -3712,6 +4082,244 @@ function saveCroppedAvatar(): void {
 
 .profile-tab-panel {
   min-height: 100%;
+}
+
+.instructor-home-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.instructor-home-header,
+.instructor-work-card,
+.instructor-course-work-card,
+.instructor-overview-card {
+  border-radius: 16px !important;
+  background: #ffffff;
+}
+
+.instructor-home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.instructor-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.instructor-overview-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-color: rgba(17, 24, 39, 0.08) !important;
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    color: #101828;
+    font-size: 1.45rem;
+    line-height: 1;
+  }
+
+  span {
+    margin-top: 4px;
+    color: #667085;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+}
+
+.instructor-work-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 18px;
+}
+
+.instructor-work-card,
+.instructor-course-work-card {
+  padding: 18px;
+  border-color: rgba(17, 24, 39, 0.08) !important;
+}
+
+.instructor-work-card__head,
+.instructor-course-work-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0 0 4px;
+    color: #101828;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  span {
+    color: #667085;
+    font-size: 0.85rem;
+  }
+}
+
+.instructor-task-list {
+  display: grid;
+  gap: 10px;
+}
+
+.instructor-task-item {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(245, 166, 35, 0.2);
+  border-radius: 12px;
+  color: #344054;
+  background: #fffaf2;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    border-color: rgba(245, 166, 35, 0.48);
+    transform: translateY(-1px);
+  }
+
+  .q-icon {
+    color: $primary;
+    font-size: 22px;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    color: #101828;
+    font-size: 0.95rem;
+  }
+
+  span {
+    margin-top: 2px;
+    color: #667085;
+    font-size: 0.82rem;
+  }
+}
+
+.certificate-status-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+
+  div {
+    padding: 14px 10px;
+    border-radius: 12px;
+    background: #f8fafc;
+    text-align: center;
+  }
+
+  strong,
+  span {
+    display: block;
+  }
+
+  strong {
+    color: #101828;
+    font-size: 1.35rem;
+  }
+
+  span {
+    color: #667085;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+}
+
+.instructor-course-list {
+  display: grid;
+  gap: 12px;
+}
+
+.instructor-course-item {
+  display: grid;
+  grid-template-columns: 88px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #e4e9f2;
+  border-radius: 14px;
+  background: #fbfdff;
+
+  img {
+    width: 88px;
+    height: 62px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+}
+
+.instructor-course-item__body {
+  min-width: 0;
+
+  span,
+  strong,
+  div {
+    display: block;
+  }
+
+  span {
+    color: $primary;
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
+
+  strong {
+    margin-top: 2px;
+    color: #101828;
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  div {
+    margin-top: 4px;
+    color: #667085;
+    font-size: 0.82rem;
+  }
+}
+
+.instructor-course-item__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.instructor-empty-state {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 220px;
+  color: #667085;
+  text-align: center;
+
+  strong {
+    color: #101828;
+    font-size: 1.1rem;
+  }
 }
 
 // ── Sidebar Menu ─────────────────────────────────────────────

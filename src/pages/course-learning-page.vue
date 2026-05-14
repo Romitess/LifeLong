@@ -16,13 +16,18 @@
       </q-drawer>
 
       <q-page-container>
-        <div
-          class="content-area"
-          :class="isFullscreen ? 'content-fullscreen' : 'section-container content-standard'"
-          style="padding-top: 64px; padding-bottom: 64px"
-        >
+        <div class="content-area" :class="contentAreaClass" :style="contentAreaStyle">
+          <div v-if="moodleUrl" class="moodle-wrapper">
+            <iframe
+              class="moodle-frame"
+              :src="moodleUrl"
+              title="Moodle course content"
+              allow="fullscreen; clipboard-write"
+            />
+          </div>
+
           <!-- Course Content -->
-          <div class="course-content-wrapper">
+          <div v-else class="course-content-wrapper">
             <!-- Breadcrumbs -->
             <q-breadcrumbs class="text-grey-8 q-mb-xl modern-breadcrumbs" active-color="primary">
               <template v-slot:separator>
@@ -199,6 +204,10 @@ const currentCourse = computed(() => {
 });
 
 const courseTitle = computed(() => currentCourse.value?.title || 'Course Learning');
+const moodleUrl = computed(() => {
+  const value = route.query.moodleUrl;
+  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
+});
 
 const leftDrawerOpen = ref(false);
 const uiStore = useUiStore();
@@ -206,6 +215,14 @@ const isFullscreen = computed({
   get: () => uiStore.isCourseFullscreen,
   set: (val) => uiStore.setCourseFullscreen(val),
 });
+const contentAreaClass = computed(() => [
+  isFullscreen.value ? 'content-fullscreen' : 'section-container content-standard',
+  { 'content-area--moodle': Boolean(moodleUrl.value) },
+]);
+const contentAreaStyle = computed(() => ({
+  paddingTop: moodleUrl.value ? '0' : '64px',
+  paddingBottom: moodleUrl.value ? '0' : '64px',
+}));
 
 interface CourseModuleState extends CourseModule {
   expanded: boolean;
@@ -299,6 +316,28 @@ const navigateToLesson = async (lesson: Lesson) => {
 // View Mode
 .content-area {
   transition: padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100%;
+}
+
+.content-area--moodle {
+  max-width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.moodle-wrapper {
+  width: 100%;
+  height: calc(100vh - 72px);
+  min-height: 520px;
+  background: #fff;
+}
+
+.moodle-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
 }
 
 .content-fullscreen {

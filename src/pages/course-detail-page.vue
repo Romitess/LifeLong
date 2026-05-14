@@ -822,7 +822,10 @@ async function goToLearningPage(targetCourseId = courseId.value): Promise<void> 
     const moodleCourseId = String(course.value?.moodleId ?? targetCourseId);
     const url = await getMoodleCourseUrl(moodleCourseId, username, courseCode);
     if (url) {
-      window.open(url, '_blank');
+      void router.push({
+        path: `/course/${targetCourseId}/learn`,
+        query: { moodleUrl: url },
+      });
       return;
     }
   }
