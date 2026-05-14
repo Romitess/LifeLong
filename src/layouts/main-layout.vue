@@ -627,6 +627,12 @@ const navItems = computed<NavItem[]>(() => {
         to: '/finance/source-of-funds-chart',
       },
       {
+        name: 'finance-payment-import',
+        label: 'นำเข้าชำระเงิน',
+        icon: 'upload_file',
+        to: '/finance/payment-import',
+      },
+      {
         name: 'finance-receipts',
         label: 'จัดการใบเสร็จ',
         icon: 'receipt_long',
@@ -834,6 +840,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'central-finance-fund-sources';
   } else if (path.includes('/finance/source-of-funds-chart')) {
     activeNav.value = 'finance-source-of-funds-chart';
+  } else if (path.includes('/finance/payment-import')) {
+    activeNav.value = 'finance-payment-import';
   } else if (path.includes('/finance/receipts')) {
     activeNav.value = 'finance-receipts';
   } else if (path.includes('/finance/dashboard')) {
@@ -1525,6 +1533,14 @@ async function onCategoryClick(category: string) {
     max-width: 196px;
     min-width: 196px;
   }
+
+  :deep(.nav-tab--finance-payment-import) {
+    --nav-tab-label-width: 122px;
+    flex-basis: 174px;
+    width: 174px;
+    max-width: 174px;
+    min-width: 174px;
+  }
 }
 
 // ── Category Menu ───────────────────────────────────────────
@@ -1576,6 +1592,14 @@ async function onCategoryClick(category: string) {
       width: 174px;
       max-width: 174px;
       min-width: 174px;
+    }
+
+    :deep(.nav-tab--finance-payment-import) {
+      --nav-tab-label-width: 112px;
+      flex-basis: 158px;
+      width: 158px;
+      max-width: 158px;
+      min-width: 158px;
     }
   }
 
