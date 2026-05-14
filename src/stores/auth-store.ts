@@ -46,6 +46,11 @@ interface StoredAuthAccount extends User {
   source: 'mock' | 'registered';
 }
 
+export interface AuthDemoAccount {
+  email: string;
+  password: string;
+}
+
 const PROFILE_AVATAR_STORAGE_KEY = 'lll-profile-avatar';
 const FULL_PROFILE_AVATAR_STORAGE_KEY = 'lll-profile-avatar-full';
 const USER_PROFILE_STORAGE_KEY = 'lll-user-profile';
@@ -195,6 +200,11 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     source: 'mock',
   },
 ];
+
+export const AUTH_DEMO_ACCOUNTS: AuthDemoAccount[] = DEFAULT_AUTH_ACCOUNTS.map((account) => ({
+  email: account.email,
+  password: account.password,
+}));
 
 function readLocalStorage(key: string): string | null {
   if (typeof window === 'undefined') {
