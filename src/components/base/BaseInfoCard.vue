@@ -5,21 +5,23 @@
     flat
     bordered
   >
-    <div class="base-info-card__icon" :class="`base-info-card__icon--${tone}`">
-      <q-icon :name="icon" size="28px" />
-    </div>
+    <slot>
+      <div class="base-info-card__icon" :class="`base-info-card__icon--${tone}`">
+        <q-icon :name="icon" size="28px" />
+      </div>
 
-    <div class="base-info-card__body">
-      <div v-if="value" class="base-info-card__value">
-        {{ value }}
+      <div class="base-info-card__body">
+        <div v-if="value" class="base-info-card__value">
+          {{ value }}
+        </div>
+        <div class="base-info-card__title">
+          {{ title }}
+        </div>
+        <div class="base-info-card__description">
+          {{ description }}
+        </div>
       </div>
-      <div class="base-info-card__title">
-        {{ title }}
-      </div>
-      <div class="base-info-card__description">
-        {{ description }}
-      </div>
-    </div>
+    </slot>
   </q-card>
 </template>
 

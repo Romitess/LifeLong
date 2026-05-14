@@ -1,14 +1,5 @@
-import { computed, type ComputedRef } from 'vue';
-import { useCategoryStore } from 'src/stores/category-store';
-import { useCourseStore } from 'src/stores/course-store';
-import type { Course } from 'src/types/course';
-import type { CategoryWithUsage } from 'src/types/category';
-import {
-  calculateCourseRevenue,
-  calculateFillRate,
-  formatCompactCurrency,
-  formatCount,
-} from 'src/utils/course-format';
+import { computed, onMounted, ref, type ComputedRef, type Ref } from 'vue';
+import { api } from 'src/boot/axios';
 
 const SITE_PALETTE = [
   '#F5A623',
@@ -25,12 +16,10 @@ const SITE_PALETTE = [
   '#65A30D',
 ];
 
-const MONTH_LABELS = ['ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.'];
-
 export interface DashboardKpi {
   id: string;
   label: string;
-  value: string;
+  value: number;
   delta: number;
   deltaLabel: string;
   description: string;
@@ -46,12 +35,15 @@ export interface DeliveryModeBreakdown {
   color: string;
 }
 
-export interface RevenueAndEnrollmentSeries {
+export interface MonthlyDashboardSeries {
   months: string[];
-  revenue: number[];
+  monthKeys: string[];
   enrollments: number[];
-  totalRevenue: number;
-  totalEnrollments: number;
+  paidEnrollments: number[];
+  distinctLearners: number[];
+  revenue: number[];
+  openClasses: number[];
+  clicks: number[];
 }
 
 export interface CategoryUsage {
@@ -59,6 +51,7 @@ export interface CategoryUsage {
   name: string;
   courseCount: number;
   enrolledLearners: number;
+  revenue: number;
   color: string;
   icon: string;
 }
@@ -70,16 +63,19 @@ export interface CourseLeaderboardItem {
   faculty: string;
   category: string;
   enrolledCount: number;
-  maxSeats: number;
-  fillRate: number;
+  paidEnrollmentCount: number;
   revenue: number;
-  isFree: boolean;
+  classAmount: number;
+  paymentRate: number;
+  isPublic: boolean;
 }
 
 export interface FacultyShare {
   id: string;
   label: string;
   value: number;
+  courseCount: number;
+  revenue: number;
   color: string;
 }
 
@@ -87,18 +83,109 @@ export interface RecentRegistration {
   id: string;
   learnerName: string;
   learnerInitial: string;
+  learnerEmail: string | null;
   courseTitle: string;
   courseCode: string;
-  category: string;
   amount: number;
-  isFree: boolean;
-  registeredAt: string;
-  channel: 'online' | 'onsite' | 'self-paced';
+  registeredAt: string | null;
+  paymentStatus: 'paid' | 'free' | 'pending';
+}
+
+interface DashboardApiTotals {
+  totalCourses: number;
+  activeCourses: number;
+  certificateCourses: number;
+  creditCourses: number;
+  publicGeneralCourses: number;
+  unspecifiedTypeCourses: number;
+  instructorCount: number;
+  facultyCount: number;
+  totalOpenClasses: number;
+  publicOpenClasses: number;
+  registrationOpenClasses: number;
+  distinctLearners: number;
+  totalEnrollments: number;
+  paidEnrollments: number;
+  freeEnrollments: number;
+  totalRevenue: number;
+  paymentRecords: number;
+  paymentAmount: number;
+  totalClicks: number;
+}
+
+interface DashboardApiMonthlySeries {
+  monthKey: string;
+  enrollments: number;
+  paidEnrollments: number;
+  distinctLearners: number;
+  revenue: number;
+  openClasses: number;
+  clicks: number;
+}
+
+interface DashboardApiBreakdownItem {
+  id: string;
+  label: string;
+  value: number;
+}
+
+interface DashboardApiCategoryItem {
+  id: string;
+  label: string;
+  courseCount: number;
+  enrollmentCount: number;
+  revenue: number;
+}
+
+interface DashboardApiFacultyItem {
+  id: string;
+  label: string;
+  courseCount: number;
+  enrollmentCount: number;
+  revenue: number;
+}
+
+interface DashboardApiTopCourseItem {
+  courseId: number;
+  courseCode: string;
+  courseTitle: string;
+  facultyName: string;
+  categoryName: string;
+  enrollmentCount: number;
+  paidEnrollmentCount: number;
+  revenue: number;
+  openClassAmount: number;
+  publicFlag: string | null;
+}
+
+interface DashboardApiRecentEnrollmentItem {
+  enrollId: number;
+  enrolledAt: string | null;
+  learnerName: string;
+  learnerEmail: string | null;
+  courseCode: string;
+  courseTitle: string;
+  amount: number;
+  payStatus: 'paid' | 'free' | 'pending';
+}
+
+interface DashboardApiResponse {
+  generatedAt: string;
+  totals: DashboardApiTotals;
+  monthlySeries: DashboardApiMonthlySeries[];
+  enrollmentBreakdown: DashboardApiBreakdownItem[];
+  categoryPerformance: DashboardApiCategoryItem[];
+  facultyPerformance: DashboardApiFacultyItem[];
+  topCourses: DashboardApiTopCourseItem[];
+  recentEnrollments: DashboardApiRecentEnrollmentItem[];
 }
 
 export interface DashboardMetrics {
+  isLoading: Ref<boolean>;
+  errorMessage: Ref<string | null>;
+  generatedAt: ComputedRef<string | null>;
   kpis: ComputedRef<DashboardKpi[]>;
-  revenueSeries: ComputedRef<RevenueAndEnrollmentSeries>;
+  monthlySeries: ComputedRef<MonthlyDashboardSeries>;
   categoryUsage: ComputedRef<CategoryUsage[]>;
   deliveryBreakdown: ComputedRef<DeliveryModeBreakdown[]>;
   topCourses: ComputedRef<CourseLeaderboardItem[]>;
@@ -107,312 +194,284 @@ export interface DashboardMetrics {
   totals: ComputedRef<{
     courses: number;
     activeCourses: number;
-    categories: number;
+    certificateCourses: number;
+    creditCourses: number;
+    publicGeneralCourses: number;
+    unspecifiedTypeCourses: number;
+    instructorCount: number;
+    facultyCount: number;
+    totalOpenClasses: number;
+    publicOpenClasses: number;
+    registrationOpenClasses: number;
+    distinctLearners: number;
     enrolledLearners: number;
-    totalSeats: number;
+    paidEnrollments: number;
+    freeEnrollments: number;
     totalRevenue: number;
-    totalViews: number;
-    averageFillRate: number;
+    paymentRecords: number;
+    paymentAmount: number;
+    totalClicks: number;
   }>;
+  refresh: () => Promise<void>;
 }
 
-function hashString(input: string): number {
-  let hash = 2166136261;
-  for (let i = 0; i < input.length; i += 1) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
+function formatMonthLabel(monthKey: string): string {
+  const [yearText, monthText] = monthKey.split('-');
+  const year = Number(yearText);
+  const month = Number(monthText);
+  if (!year || !month) {
+    return monthKey;
   }
-  return Math.abs(hash);
+
+  const date = new Date(Date.UTC(year, month - 1, 1));
+  return new Intl.DateTimeFormat('th-TH', { month: 'short' }).format(date);
 }
 
-function pseudoRandomFromSeed(seed: number): () => number {
-  let value = seed % 2147483647;
-  if (value <= 0) value += 2147483646;
-  return () => {
-    value = (value * 16807) % 2147483647;
-    return value / 2147483647;
+function createEmptyResponse(): DashboardApiResponse {
+  return {
+    generatedAt: new Date().toISOString(),
+    totals: {
+      totalCourses: 0,
+      activeCourses: 0,
+      certificateCourses: 0,
+      creditCourses: 0,
+      publicGeneralCourses: 0,
+      unspecifiedTypeCourses: 0,
+      instructorCount: 0,
+      facultyCount: 0,
+      totalOpenClasses: 0,
+      publicOpenClasses: 0,
+      registrationOpenClasses: 0,
+      distinctLearners: 0,
+      totalEnrollments: 0,
+      paidEnrollments: 0,
+      freeEnrollments: 0,
+      totalRevenue: 0,
+      paymentRecords: 0,
+      paymentAmount: 0,
+      totalClicks: 0,
+    },
+    monthlySeries: [],
+    enrollmentBreakdown: [],
+    categoryPerformance: [],
+    facultyPerformance: [],
+    topCourses: [],
+    recentEnrollments: [],
   };
 }
 
-const FAKE_LEARNER_NAMES = [
-  'นริศรา ภูมิใจ',
-  'อาทิตย์ ศุภวงศ์',
-  'พิชญา เสริมสุข',
-  'ธนกฤต สุนทรพันธุ์',
-  'ปาริชาต ชัยวัฒน์',
-  'กฤตภาส อุดมศักดิ์',
-  'มนัสนันท์ บัวศรี',
-  'ภาณุวัฒน์ พัฒนวงศ์',
-  'ศิรประภา ทองรอด',
-  'พงศธร อักษรเงิน',
-  'อนุวัฒน์ สุขเจริญ',
-  'พิมพ์มาดา รัศมีฉาย',
-];
+function deltaFromSeries(values: number[]): number {
+  if (values.length < 2) {
+    return 0;
+  }
+
+  const previous = values[values.length - 2] ?? 0;
+  const current = values[values.length - 1] ?? 0;
+
+  if (previous === 0) {
+    return current > 0 ? 100 : 0;
+  }
+
+  return ((current - previous) / previous) * 100;
+}
+
+function getInitial(name: string): string {
+  const cleaned = name.trim();
+  if (!cleaned) {
+    return 'L';
+  }
+
+  return cleaned.charAt(0).toUpperCase();
+}
 
 export function useAdminDashboardMetrics(): DashboardMetrics {
-  const courseStore = useCourseStore();
-  const categoryStore = useCategoryStore();
+  const isLoading = ref(false);
+  const errorMessage = ref<string | null>(null);
+  const response = ref<DashboardApiResponse>(createEmptyResponse());
 
-  courseStore.init();
-  categoryStore.init();
+  async function refresh(): Promise<void> {
+    isLoading.value = true;
+    errorMessage.value = null;
 
-  const courses = computed<Course[]>(() => courseStore.courses);
+    try {
+      const { data } = await api.get<DashboardApiResponse>('/api/admin/dashboard');
+      response.value = data;
+    } catch (error) {
+      console.error('Failed to load admin dashboard metrics', error);
+      errorMessage.value = 'ไม่สามารถโหลดข้อมูล dashboard จาก backend ได้';
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
-  const totalRevenue = computed(() =>
-    courses.value.reduce((sum, course) => sum + calculateCourseRevenue(course), 0),
-  );
-
-  const totalEnrolled = computed(() =>
-    courses.value.reduce((sum, course) => sum + course.enrolledCount, 0),
-  );
-
-  const totalSeats = computed(() =>
-    courses.value.reduce((sum, course) => sum + course.maxSeats, 0),
-  );
-
-  const revenueSeries = computed<RevenueAndEnrollmentSeries>(() => {
-    const seedRandom = pseudoRandomFromSeed(hashString('lll-revenue'));
-    const courseCount = Math.max(courses.value.length, 1);
-    const baseRevenue = totalRevenue.value || courseCount * 12000;
-    const baseEnroll = totalEnrolled.value || courseCount * 30;
-
-    const distribution = [0.62, 0.74, 0.83, 0.91, 0.97, 1];
-
-    const revenue = distribution.map((ratio, index) => {
-      const noise = seedRandom() * 0.16 - 0.08;
-      const seasonal = Math.sin((index / 5) * Math.PI) * 0.08;
-      return Math.round(baseRevenue * (ratio + noise + seasonal));
-    });
-
-    const enrollments = distribution.map((ratio, index) => {
-      const noise = seedRandom() * 0.18 - 0.09;
-      const seasonal = Math.sin(((index + 1) / 6) * Math.PI) * 0.1;
-      return Math.round(baseEnroll * (ratio + noise + seasonal));
-    });
-
-    return {
-      months: MONTH_LABELS,
-      revenue,
-      enrollments,
-      totalRevenue: revenue.reduce((sum, value) => sum + value, 0),
-      totalEnrollments: enrollments.reduce((sum, value) => sum + value, 0),
-    };
+  onMounted(() => {
+    void refresh();
   });
 
-  const categoryUsage = computed<CategoryUsage[]>(() => {
-    const usage: CategoryWithUsage[] = categoryStore.categoriesWithUsage;
+  const generatedAt = computed(() => response.value.generatedAt ?? null);
 
-    return usage
-      .map((category) => {
-        const learners = courses.value
-          .filter((course) => course.category === category.name)
-          .reduce((sum, course) => sum + course.enrolledCount, 0);
+  const totals = computed(() => ({
+    courses: response.value.totals.totalCourses,
+    activeCourses: response.value.totals.activeCourses,
+    certificateCourses: response.value.totals.certificateCourses,
+    creditCourses: response.value.totals.creditCourses,
+    publicGeneralCourses: response.value.totals.publicGeneralCourses,
+    unspecifiedTypeCourses: response.value.totals.unspecifiedTypeCourses,
+    instructorCount: response.value.totals.instructorCount,
+    facultyCount: response.value.totals.facultyCount,
+    totalOpenClasses: response.value.totals.totalOpenClasses,
+    publicOpenClasses: response.value.totals.publicOpenClasses,
+    registrationOpenClasses: response.value.totals.registrationOpenClasses,
+    distinctLearners: response.value.totals.distinctLearners,
+    enrolledLearners: response.value.totals.totalEnrollments,
+    paidEnrollments: response.value.totals.paidEnrollments,
+    freeEnrollments: response.value.totals.freeEnrollments,
+    totalRevenue: response.value.totals.totalRevenue,
+    paymentRecords: response.value.totals.paymentRecords,
+    paymentAmount: response.value.totals.paymentAmount,
+    totalClicks: response.value.totals.totalClicks,
+  }));
 
-        return {
-          id: category.id,
-          name: category.name,
-          courseCount: category.courseCount,
-          enrolledLearners: learners,
-          color: category.color,
-          icon: category.icon,
-        };
-      })
-      .filter((entry) => entry.courseCount > 0)
-      .sort((left, right) => right.enrolledLearners - left.enrolledLearners);
-  });
+  const monthlySeries = computed<MonthlyDashboardSeries>(() => ({
+    months: response.value.monthlySeries.map((item) => formatMonthLabel(item.monthKey)),
+    monthKeys: response.value.monthlySeries.map((item) => item.monthKey),
+    enrollments: response.value.monthlySeries.map((item) => item.enrollments),
+    paidEnrollments: response.value.monthlySeries.map((item) => item.paidEnrollments),
+    distinctLearners: response.value.monthlySeries.map((item) => item.distinctLearners),
+    revenue: response.value.monthlySeries.map((item) => item.revenue),
+    openClasses: response.value.monthlySeries.map((item) => item.openClasses),
+    clicks: response.value.monthlySeries.map((item) => item.clicks),
+  }));
 
-  const deliveryBreakdown = computed<DeliveryModeBreakdown[]>(() => {
-    const counters: Record<string, number> = {
-      Online: 0,
-      Onsite: 0,
-      'Self-Paced Learning': 0,
-    };
+  const categoryUsage = computed<CategoryUsage[]>(() =>
+    response.value.categoryPerformance.map((item, index) => ({
+      id: item.id,
+      name: item.label,
+      courseCount: item.courseCount,
+      enrolledLearners: item.enrollmentCount,
+      revenue: item.revenue,
+      color: SITE_PALETTE[index % SITE_PALETTE.length] ?? '#1A237E',
+      icon: 'category',
+    })),
+  );
 
-    courses.value.forEach((course) => {
-      const mode = course.deliveryModes[0] ?? 'Online';
-      counters[mode] = (counters[mode] ?? 0) + course.enrolledCount;
-    });
-
-    return [
-      { id: 'online', label: 'Online', value: counters.Online ?? 0, color: '#1A237E' },
-      { id: 'onsite', label: 'Onsite', value: counters.Onsite ?? 0, color: '#F5A623' },
-      {
-        id: 'self-paced',
-        label: 'Self-Paced',
-        value: counters['Self-Paced Learning'] ?? 0,
-        color: '#0F766E',
-      },
-    ];
-  });
+  const deliveryBreakdown = computed<DeliveryModeBreakdown[]>(() =>
+    response.value.enrollmentBreakdown.map((item) => ({
+      id: item.id,
+      label: item.label,
+      value: item.value,
+      color: item.id === 'paid' ? '#1A237E' : item.id === 'free' ? '#0F766E' : '#F5A623',
+    })),
+  );
 
   const topCourses = computed<CourseLeaderboardItem[]>(() =>
-    [...courses.value]
-      .map((course) => ({
-        id: course.id,
-        code: course.code,
-        title: course.title,
-        faculty: course.faculty,
-        category: course.category,
-        enrolledCount: course.enrolledCount,
-        maxSeats: course.maxSeats,
-        fillRate: calculateFillRate(course),
-        revenue: calculateCourseRevenue(course),
-        isFree: course.isFree,
-      }))
-      .sort((left, right) => {
-        if (right.revenue !== left.revenue) return right.revenue - left.revenue;
-        return right.enrolledCount - left.enrolledCount;
-      })
-      .slice(0, 6),
+    response.value.topCourses.map((item) => ({
+      id: String(item.courseId),
+      code: item.courseCode,
+      title: item.courseTitle,
+      faculty: item.facultyName,
+      category: item.categoryName,
+      enrolledCount: item.enrollmentCount,
+      paidEnrollmentCount: item.paidEnrollmentCount,
+      revenue: item.revenue,
+      classAmount: item.openClassAmount,
+      paymentRate: item.enrollmentCount === 0 ? 0 : item.paidEnrollmentCount / item.enrollmentCount,
+      isPublic: item.publicFlag === 'Y',
+    })),
   );
 
-  const facultyShare = computed<FacultyShare[]>(() => {
-    const counter = new Map<string, number>();
-    courses.value.forEach((course) => {
-      counter.set(course.faculty, (counter.get(course.faculty) ?? 0) + course.enrolledCount);
-    });
+  const facultyShare = computed<FacultyShare[]>(() =>
+    response.value.facultyPerformance.map((item, index) => ({
+      id: item.id,
+      label: item.label,
+      value: item.enrollmentCount,
+      courseCount: item.courseCount,
+      revenue: item.revenue,
+      color: SITE_PALETTE[index % SITE_PALETTE.length] ?? '#1A237E',
+    })),
+  );
 
-    return Array.from(counter.entries())
-      .map(([faculty, value], index) => ({
-        id: faculty,
-        label: faculty,
-        value,
-        color: SITE_PALETTE[index % SITE_PALETTE.length] ?? '#1A237E',
-      }))
-      .filter((entry) => entry.value > 0)
-      .sort((left, right) => right.value - left.value);
-  });
-
-  const recentRegistrations = computed<RecentRegistration[]>(() => {
-    const random = pseudoRandomFromSeed(hashString('lll-recent'));
-    const sourceCourses = [...courses.value]
-      .sort((left, right) => right.enrolledCount - left.enrolledCount)
-      .slice(0, 8);
-
-    const baseDate = new Date('2026-05-08T16:30:00+07:00');
-
-    return sourceCourses.map((course, index) => {
-      const learnerName =
-        FAKE_LEARNER_NAMES[index % FAKE_LEARNER_NAMES.length] ?? 'ผู้เรียน Lifelong';
-      const offsetMinutes = Math.round(20 + random() * 240) * (index + 1);
-      const registeredAt = new Date(baseDate.getTime() - offsetMinutes * 60 * 1000);
-      const mode = course.deliveryModes[0] ?? 'Online';
-      const channel: RecentRegistration['channel'] =
-        mode === 'Onsite' ? 'onsite' : mode === 'Self-Paced Learning' ? 'self-paced' : 'online';
-
-      const initial = learnerName.split(' ')[0]?.charAt(0) ?? 'L';
-
-      return {
-        id: `${course.id}-${index}`,
-        learnerName,
-        learnerInitial: initial,
-        courseTitle: course.title,
-        courseCode: course.code,
-        category: course.category,
-        amount: course.isFree ? 0 : course.price,
-        isFree: course.isFree,
-        registeredAt: registeredAt.toISOString(),
-        channel,
-      };
-    });
-  });
-
-  const totals = computed(() => {
-    const fillRates = courses.value.map(calculateFillRate);
-    const averageFillRate =
-      fillRates.length === 0
-        ? 0
-        : fillRates.reduce((sum, rate) => sum + rate, 0) / fillRates.length;
-    const totalViews = courses.value.reduce((sum, course) => sum + course.views, 0);
-
-    return {
-      courses: courses.value.length,
-      activeCourses: courses.value.filter((course) => course.isActive).length,
-      categories: categoryStore.categories.length,
-      enrolledLearners: totalEnrolled.value,
-      totalSeats: totalSeats.value,
-      totalRevenue: totalRevenue.value,
-      totalViews,
-      averageFillRate,
-    };
-  });
+  const recentRegistrations = computed<RecentRegistration[]>(() =>
+    response.value.recentEnrollments.map((item) => ({
+      id: String(item.enrollId),
+      learnerName: item.learnerName,
+      learnerInitial: getInitial(item.learnerName),
+      learnerEmail: item.learnerEmail,
+      courseTitle: item.courseTitle,
+      courseCode: item.courseCode,
+      amount: item.amount,
+      registeredAt: item.enrolledAt,
+      paymentStatus: item.payStatus,
+    })),
+  );
 
   const kpis = computed<DashboardKpi[]>(() => {
-    const series = revenueSeries.value;
-    const tail = series.revenue.slice(-3);
-    const enrollTail = series.enrollments.slice(-3);
-
-    function deltaFromArray(values: number[]): number {
-      if (values.length < 2) return 0;
-      const first = values[0] ?? 0;
-      const last = values[values.length - 1] ?? 0;
-      if (first === 0) return last > 0 ? 100 : 0;
-      return ((last - first) / first) * 100;
-    }
-
-    const revenueDelta = deltaFromArray(tail);
-    const enrollDelta = deltaFromArray(enrollTail);
+    const series = monthlySeries.value;
+    const paidRate =
+      totals.value.enrolledLearners === 0
+        ? 0
+        : (totals.value.paidEnrollments / totals.value.enrolledLearners) * 100;
 
     return [
       {
         id: 'revenue',
-        label: 'รายได้รวม (6 เดือน)',
-        value: formatCompactCurrency(series.totalRevenue),
-        delta: revenueDelta,
-        deltaLabel: `${revenueDelta >= 0 ? '+' : ''}${revenueDelta.toFixed(1)}% จากไตรมาสก่อน`,
-        description: 'รวมรายได้จากคอร์สแบบเสียค่าใช้จ่าย',
+        label: 'รายได้จากการลงทะเบียน',
+        value: totals.value.totalRevenue,
+        delta: deltaFromSeries(series.revenue),
+        deltaLabel: 'เทียบเดือนล่าสุด',
+        description: 'รวมยอดจากผู้ลงทะเบียนที่มีรายการชำระเงิน',
         icon: 'payments',
         tone: 'gold',
         trend: series.revenue,
       },
       {
         id: 'enrollments',
-        label: 'ผู้ลงทะเบียนสะสม',
-        value: formatCount(totals.value.enrolledLearners),
-        delta: enrollDelta,
-        deltaLabel: `${enrollDelta >= 0 ? '+' : ''}${enrollDelta.toFixed(1)}% เทียบเดือนก่อน`,
-        description: `จาก ${formatCount(totals.value.courses)} รายวิชา`,
+        label: 'ผู้ลงทะเบียนทั้งหมด',
+        value: totals.value.enrolledLearners,
+        delta: deltaFromSeries(series.enrollments),
+        deltaLabel: 'เทียบเดือนล่าสุด',
+        description: `ชำระเงินแล้ว ${totals.value.paidEnrollments.toLocaleString('th-TH')} รายการ`,
         icon: 'groups',
         tone: 'navy',
         trend: series.enrollments,
       },
       {
-        id: 'fill-rate',
-        label: 'อัตราที่นั่งถูกจอง',
-        value: `${Math.round(totals.value.averageFillRate * 100)}%`,
-        delta: totals.value.averageFillRate * 100 - 60,
-        deltaLabel: `เป้าหมาย 60% — ${
-          totals.value.averageFillRate * 100 >= 60 ? 'ทำได้ตามเป้า' : 'ต่ำกว่าเป้าเล็กน้อย'
-        }`,
-        description: `${formatCount(totalSeats.value)} ที่นั่งทั้งหมด`,
-        icon: 'event_seat',
+        id: 'learners',
+        label: 'ผู้เรียนทั้งหมด',
+        value: totals.value.distinctLearners,
+        delta: deltaFromSeries(series.distinctLearners),
+        deltaLabel: 'เทียบเดือนล่าสุด',
+        description: `จาก ${totals.value.courses.toLocaleString('th-TH')} หลักสูตรในระบบ`,
+        icon: 'school',
         tone: 'teal',
-        trend: series.enrollments.map((value) =>
-          totalSeats.value === 0 ? 0 : value / Math.max(totalSeats.value / 6, 1),
-        ),
+        trend: series.distinctLearners,
       },
       {
-        id: 'courses',
-        label: 'รายวิชาที่กำลังเปิดรับ',
-        value: formatCount(totals.value.activeCourses),
-        delta: (totals.value.activeCourses / Math.max(totals.value.courses, 1) - 0.5) * 100,
-        deltaLabel: `${formatCount(totals.value.categories)} หมวดหมู่ในระบบ`,
-        description: 'จำนวนคอร์สสถานะ "เปิดรับสมัคร"',
-        icon: 'auto_stories',
+        id: 'paid-rate',
+        label: 'อัตราการชำระเงินสำเร็จ',
+        value: paidRate,
+        delta: deltaFromSeries(series.paidEnrollments),
+        deltaLabel: 'อิงจำนวนผู้ชำระเงินรายเดือน',
+        description: `${totals.value.paymentRecords.toLocaleString('th-TH')} รายการใน LLTPAYMENT`,
+        icon: 'receipt_long',
         tone: 'rose',
-        trend: series.revenue.map((value) => Math.round(value / 1000)),
+        trend: series.paidEnrollments,
       },
     ];
   });
 
   return {
+    isLoading,
+    errorMessage,
+    generatedAt,
     kpis,
-    revenueSeries,
+    monthlySeries,
     categoryUsage,
     deliveryBreakdown,
     topCourses,
     facultyShare,
     recentRegistrations,
     totals,
+    refresh,
   };
 }

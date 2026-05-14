@@ -97,11 +97,15 @@ function lightenColor(hex: string, amount = 0.4): string {
 .admin-bar-chart {
   display: grid;
   gap: 16px;
+  width: 100%;
+  min-width: 0;
 }
 
 .admin-bar-chart__row {
   display: grid;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 
 .admin-bar-chart__row-head {
@@ -109,6 +113,8 @@ function lightenColor(hex: string, amount = 0.4): string {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 
 .admin-bar-chart__label {
@@ -116,6 +122,7 @@ function lightenColor(hex: string, amount = 0.4): string {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex: 1;
 }
 
 .admin-bar-chart__icon-wrap {
@@ -139,9 +146,8 @@ function lightenColor(hex: string, amount = 0.4): string {
   font-size: 0.92rem;
   font-weight: 800;
   line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .admin-bar-chart__label-copy span {
@@ -155,6 +161,8 @@ function lightenColor(hex: string, amount = 0.4): string {
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
+  flex-shrink: 0;
+  text-align: right;
 }
 
 .admin-bar-chart__value strong {
@@ -175,6 +183,8 @@ function lightenColor(hex: string, amount = 0.4): string {
   border-radius: 999px;
   background: rgba(16, 35, 63, 0.06);
   overflow: hidden;
+  width: 100%;
+  min-width: 0;
 }
 
 .admin-bar-chart__fill {

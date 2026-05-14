@@ -70,10 +70,12 @@ const showHeader = computed(() =>
 .admin-surface-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--admin-line);
+  border: 1px solid rgba($primary, 0.12) !important;
   border-radius: var(--admin-radius-lg);
-  background: var(--admin-surface);
-  box-shadow: var(--admin-shadow-sm);
+  background: #ffffff;
+  box-shadow:
+    0 1px 3px rgba($primary, 0.06),
+    0 8px 24px rgba(17, 24, 39, 0.04);
 }
 
 .admin-surface-card--glass {

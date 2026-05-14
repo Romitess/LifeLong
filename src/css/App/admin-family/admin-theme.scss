@@ -50,20 +50,23 @@
 .admin-page .admin-kpi-card,
 .admin-dialog .admin-kpi-card {
   transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .admin-page .admin-surface-card:not(.admin-surface-card--glass):hover,
-.admin-dialog .admin-surface-card:not(.admin-surface-card--glass):hover,
+.admin-dialog .admin-surface-card:not(.admin-surface-card--glass):hover {
+  transform: translateY(-4px);
+  border-color: rgba(245, 166, 35, 0.6) !important;
+  box-shadow: 0 16px 32px rgba(17, 24, 39, 0.12) !important;
+}
+
 .admin-page .admin-kpi-card:hover,
 .admin-dialog .admin-kpi-card:hover {
   transform: translateY(-4px);
-  border-color: var(--admin-hover-border) !important;
-  box-shadow:
-    inset 0 0 0 1px var(--admin-hover-border),
-    var(--admin-shadow-hover) !important;
+  border-color: rgba(245, 166, 35, 0.6) !important;
+  box-shadow: 0 16px 32px rgba(17, 24, 39, 0.12) !important;
 }
 
 :where(.admin-page, .admin-dialog) .q-btn {

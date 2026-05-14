@@ -198,6 +198,10 @@ function valueToY(value: number): number {
   return paddingTop + usable - (value / maxValue.value) * usable;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
 function buildSmoothPath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return '';
   if (points.length === 1) return `M ${points[0]!.x} ${points[0]!.y}`;
@@ -211,9 +215,11 @@ function buildSmoothPath(points: { x: number; y: number }[]): string {
 
     const tension = 0.18;
     const cp1x = p1.x + (p2.x - p0.x) * tension;
-    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const minY = Math.min(p1.y, p2.y);
+    const maxY = Math.max(p1.y, p2.y);
+    const cp1y = clamp(p1.y + (p2.y - p0.y) * tension, minY, maxY);
     const cp2x = p2.x - (p3.x - p1.x) * tension;
-    const cp2y = p2.y - (p3.y - p1.y) * tension;
+    const cp2y = clamp(p2.y - (p3.y - p1.y) * tension, minY, maxY);
 
     segments.push(`C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`);
   }
