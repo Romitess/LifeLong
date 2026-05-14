@@ -485,10 +485,13 @@ export const useAuthStore = defineStore('auth', {
           department: apiUser.role,
           role: ((): User['role'] => {
             const r = apiUser.role.toLowerCase();
+            console.log('[AuthStore] Raw role from API:', apiUser.role, 'Normalized to:', r);
             if (r === 'admin') return 'admin';
             if (r === 'instructor' || r === 'teach') return 'teach';
             if (r === 'finance') return 'finance';
-            if (r === 'central_finance' || r === 'central-finance') return 'central_finance';
+            if (r === 'central_finance' || r === 'central-finance' || r === 'central finance')
+              return 'central_finance';
+            console.warn('[AuthStore] Role not recognized, defaulting to student');
             return 'student';
           })(),
           username: apiUser.username,

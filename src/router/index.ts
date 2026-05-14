@@ -11,6 +11,7 @@ import {
   hideAuthNavigationLoading,
   showAuthNavigationLoading,
 } from 'src/composables/use-auth-navigation-loading';
+import { useAuthStore } from 'src/stores/auth-store';
 
 /*
  * If not building with SSR mode, you can
@@ -21,7 +22,7 @@ import {
  * with the Router instance.
  */
 
-export default defineRouter((/* { store, ssrContext } */) => {
+export default defineRouter(({ store /*, ssrContext */ }) => {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
     : process.env.VUE_ROUTER_MODE === 'history'
@@ -51,16 +52,83 @@ export default defineRouter((/* { store, ssrContext } */) => {
       isInitialLoad = false;
     }
 
-    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
+    // Use the Pinia instance provided by Quasar
+    const authStore = useAuthStore(store);
+
+    // Get state from store
+    const storeIsLoggedIn = authStore.isLoggedIn;
+    const storeUserRole = authStore.user?.role;
+
+    // Fallback/Verify with localStorage (sometimes store isn't ready in the first microtask)
+    const localIsLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const userEmail = localStorage.getItem('userEmail');
+
+    const isLoggedIn = storeIsLoggedIn || localIsLoggedIn;
     const authRequired = !to.matched.some((record) => record.meta.public);
-    const loginRedirect =
-      authRequired && !isLoggedIn
-        ? {
-            path: '/login',
-            query: { redirect: to.fullPath },
-          }
-        : null;
-    const targetPath = loginRedirect?.path ?? to.path;
+
+    console.log(`[Router Guard] Navigation to: ${to.path}`, {
+      isLoggedIn,
+      authRequired,
+      storeUserRole,
+      localIsLoggedIn,
+    });
+
+    // 1. Check Authentication
+    if (authRequired && !isLoggedIn) {
+      console.log(`[Router Guard] Auth required. Redirecting to login. Target: ${to.path}`);
+      return {
+        path: '/login',
+        query: { redirect: to.fullPath },
+      };
+    }
+
+    // 2. Check Role Authorization
+    const requiredRole = to.meta.role as string | undefined;
+    if (requiredRole && isLoggedIn) {
+      // Determine final user role to check
+      let finalUserRole = storeUserRole;
+
+      // If store doesn't have it, try to re-init or infer from account storage
+      if (!finalUserRole && userEmail) {
+        console.log('[Router Guard] Store role missing, attempting re-init for check...');
+        // We can check if the store can re-hydrate
+        if (!authStore.user) {
+          // Triggering a read of state if needed, though useAuthStore(store) should have done it
+        }
+        finalUserRole = authStore.user?.role;
+      }
+
+      const isAuthorized = ((): boolean => {
+        if (!finalUserRole) return false;
+
+        const normalizedUserRole = finalUserRole.toLowerCase().replace(/-/g, '_');
+        const normalizedRequiredRole = requiredRole.toLowerCase().replace(/-/g, '_');
+
+        const match =
+          normalizedUserRole === normalizedRequiredRole ||
+          (normalizedRequiredRole === 'teach' &&
+            (normalizedUserRole === 'teach' || normalizedUserRole === 'instructor')) ||
+          (normalizedRequiredRole === 'instructor' &&
+            (normalizedUserRole === 'teach' || normalizedUserRole === 'instructor'));
+
+        return match;
+      })();
+
+      console.log(`[Router Guard] Role check for ${to.path}:`, {
+        required: requiredRole,
+        userRole: finalUserRole,
+        isAuthorized,
+      });
+
+      if (!isAuthorized) {
+        console.warn(
+          `[Router Guard] Access denied. Required: ${requiredRole}, User: ${finalUserRole}`,
+        );
+        return '/main';
+      }
+    }
+
+    const targetPath = to.path;
     const shouldShowAuthLoading =
       (targetPath === '/login' || targetPath === '/register') &&
       from.matched.length > 0 &&
@@ -70,10 +138,6 @@ export default defineRouter((/* { store, ssrContext } */) => {
     if (shouldShowAuthLoading) {
       showAuthNavigationLoading();
       await wait(AUTH_NAVIGATION_LOADING_DELAY_MS);
-    }
-
-    if (loginRedirect) {
-      return loginRedirect;
     }
   });
 
