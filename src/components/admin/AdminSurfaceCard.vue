@@ -122,11 +122,15 @@ const showHeader = computed(() =>
 }
 
 .admin-surface-card__heading span {
-  display: block;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   margin-top: 8px;
   color: var(--admin-muted);
   font-size: 0.9rem;
   line-height: 1.55;
+  min-height: 3.1em; /* Exactly 2 lines at 1.55 line-height */
 }
 
 .admin-surface-card__header-actions {
