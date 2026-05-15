@@ -509,7 +509,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    registerLearner(payload: RegisterLearnerPayload): AuthActionResult {
+    async registerLearner(payload: RegisterLearnerPayload): Promise<AuthActionResult> {
       const email = normalizeEmail(payload.email);
       const password = payload.password.trim();
 
@@ -517,31 +517,48 @@ export const useAuthStore = defineStore('auth', {
         return { success: false, reason: 'invalid-input' };
       }
 
-      if (findAuthAccountByEmail(email)) {
-        return { success: false, reason: 'duplicate-email' };
+      try {
+        const response = await api.post('/api/auth/register', {
+          firstNameTh: payload.firstNameTh.trim(),
+          lastNameTh: payload.lastNameTh.trim(),
+          firstNameEn: payload.firstNameEn.trim(),
+          lastNameEn: payload.lastNameEn.trim(),
+          phone: payload.phone.trim(),
+          email,
+          password,
+        });
+
+        const apiUser = response.data.user;
+        const createdAt = new Date().toISOString();
+        const nextAccount: StoredAuthAccount = {
+          id: String(apiUser.id),
+          studentId: `EXT${String(apiUser.id).padStart(7, '0')}`,
+          firstNameTh: payload.firstNameTh.trim(),
+          lastNameTh: payload.lastNameTh.trim(),
+          firstNameEn: payload.firstNameEn.trim().toUpperCase(),
+          lastNameEn: payload.lastNameEn.trim().toUpperCase(),
+          email,
+          phone: payload.phone.trim(),
+          faculty: 'บุคคลทั่วไป',
+          department: 'Lifelong Learning',
+          role: 'external',
+          username: apiUser.username,
+          avatar: createDefaultAvatar(email),
+          password,
+          createdAt,
+          source: 'registered',
+        };
+
+        writeStoredAuthAccounts([...readStoredAuthAccounts(), nextAccount]);
+        return { success: true };
+      } catch (error: unknown) {
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (status === 409) {
+          return { success: false, reason: 'duplicate-email' };
+        }
+        console.error('Registration error:', error);
+        return { success: false, reason: 'invalid-input' };
       }
-
-      const createdAt = new Date().toISOString();
-      const nextAccount: StoredAuthAccount = {
-        id: `registered-${Date.now()}`,
-        studentId: `EXT${Date.now().toString().slice(-7)}`,
-        firstNameTh: payload.firstNameTh.trim(),
-        lastNameTh: payload.lastNameTh.trim(),
-        firstNameEn: payload.firstNameEn.trim().toUpperCase(),
-        lastNameEn: payload.lastNameEn.trim().toUpperCase(),
-        email,
-        phone: payload.phone.trim(),
-        faculty: 'บุคคลทั่วไป',
-        department: 'Lifelong Learning',
-        role: 'external',
-        avatar: createDefaultAvatar(email),
-        password,
-        createdAt,
-        source: 'registered',
-      };
-
-      writeStoredAuthAccounts([...readStoredAuthAccounts(), nextAccount]);
-      return { success: true };
     },
 
     logout(): void {

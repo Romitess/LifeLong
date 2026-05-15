@@ -28,7 +28,8 @@ interface ApiLltcourse {
 function mapApiCourse(raw: ApiLltcourse): Course {
   const today = new Date().toISOString().substring(0, 10);
   return {
-    id: String(raw.id),
+    id: `db-${raw.id}`,
+    moodleId: raw.id,
     code: raw.code ?? '',
     title: raw.titleTh ?? '',
     ...(raw.titleEn ? { titleEn: raw.titleEn } : {}),

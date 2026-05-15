@@ -753,6 +753,7 @@ onMounted(() => {
     overflow-wrap: anywhere;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     text-wrap: pretty;
   }
 
@@ -805,6 +806,7 @@ onMounted(() => {
     overflow: hidden;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 
   span {

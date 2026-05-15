@@ -2021,7 +2021,7 @@ import type { Course } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
 import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue';
 import CourseReceiptDialog from 'components/receipt/CourseReceiptDialog.vue';
-import { getCourseDetailById, MOCK_COURSES } from 'src/data/mock-courses';
+import { getCourseDetailById } from 'src/data/mock-courses';
 import { useAuthStore, type User, type UserProfileUpdate } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
@@ -3328,12 +3328,12 @@ function getTranslatedCourseTitleByInfo(code?: string, title?: string): string {
   if (locale.value === 'th') return title;
 
   // Try to find the course by code to get the English title
-  const course = MOCK_COURSES.find((c: Course) => c.code === code);
+  const course = courseStore.courses.find((c: Course) => c.code === code);
   return course?.titleEn || title;
 }
 
 function getHydratedBookmarkCourse(bookmark: CourseBookmark) {
-  const realCourse = MOCK_COURSES.find((c) => c.id === bookmark.courseId);
+  const realCourse = courseStore.courses.find((c) => c.id === bookmark.courseId);
   return {
     ...realCourse,
     title: bookmark.courseTitle,
