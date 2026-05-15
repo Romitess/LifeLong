@@ -1,6 +1,4 @@
 import { defineStore } from 'pinia';
-import homePicture1 from 'src/assets/homepicture1.png';
-import homePicture2 from 'src/assets/homepicture2.png';
 
 export interface HeroTextSegment {
   id: string;
@@ -62,9 +60,17 @@ export interface HeroTemplateConfig {
   slides: HeroSlideTemplate[];
 }
 
-const SYSTEM_HERO_TEMPLATE_STORAGE_KEY = 'lll-system-hero-template-v2';
+const SYSTEM_HERO_TEMPLATE_STORAGE_KEY = 'lll-system-hero-template-v4';
 
 const DEFAULT_FONT_STACK = "'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif";
+const BACKEND_PUBLIC_URL = (
+  (import.meta.env.VITE_BACKEND_PUBLIC_URL as string | undefined) ||
+  (import.meta.env.VITE_API_URL as string | undefined) ||
+  'http://localhost:3000'
+)
+  .replace(/\/api\/?$/, '')
+  .replace(/\/+$/, '');
+const heroImageUrl = (filename: string) => `${BACKEND_PUBLIC_URL}/uploads/system/${filename}`;
 
 const DEFAULT_HERO_CONFIG: HeroTemplateConfig = {
   slideDurationMs: 12000,
@@ -73,7 +79,7 @@ const DEFAULT_HERO_CONFIG: HeroTemplateConfig = {
     {
       id: 'main-short-course',
       name: 'Main Short Course Hero',
-      imageUrl: homePicture1,
+      imageUrl: heroImageUrl('homepicture1.png'),
       enabled: true,
       backgroundPosition: 'center 60%',
       overlayColor: '#ffffff',
@@ -172,13 +178,13 @@ const DEFAULT_HERO_CONFIG: HeroTemplateConfig = {
     {
       id: 'main-catalog',
       name: 'Catalog Hero',
-      imageUrl: homePicture2,
+      imageUrl: heroImageUrl('homepicture2.png'),
       enabled: true,
       backgroundPosition: 'center 58%',
       overlayColor: '#0f172a',
       overlayOpacity: 0,
-      startDate: '15/06/2026',
-      endDate: '15/09/2026',
+      startDate: '01/05/2026',
+      endDate: '31/12/2026',
       textBlock: createEmptyTextBlock(),
     },
   ],
@@ -426,7 +432,10 @@ function normalizeSlide(slide: Partial<HeroSlideTemplate>, index: number): HeroS
   return {
     id: typeof slide.id === 'string' ? slide.id : createId(`hero-slide-${index}`),
     name: typeof slide.name === 'string' ? slide.name : `Hero ${index + 1}`,
-    imageUrl: typeof slide.imageUrl === 'string' && slide.imageUrl ? slide.imageUrl : homePicture1,
+    imageUrl:
+      typeof slide.imageUrl === 'string' && slide.imageUrl
+        ? slide.imageUrl
+        : heroImageUrl('homepicture1.png'),
     enabled: typeof slide.enabled === 'boolean' ? slide.enabled : true,
     backgroundPosition:
       typeof slide.backgroundPosition === 'string' ? slide.backgroundPosition : 'center 60%',
@@ -447,11 +456,15 @@ function normalizeHeroConfig(value: unknown): HeroTemplateConfig {
   const slides = Array.isArray(partialConfig.slides)
     ? partialConfig.slides.map((slide, index) => normalizeSlide(slide, index))
     : cloneHeroConfig(DEFAULT_HERO_CONFIG).slides;
+  const usableSlides =
+    slides.filter((slide) => slide.enabled).length >= 2
+      ? slides
+      : cloneHeroConfig(DEFAULT_HERO_CONFIG).slides;
 
   return {
     slideDurationMs: clampNumber(partialConfig.slideDurationMs, 12000, 3000, 60000),
     initialDelayMs: clampNumber(partialConfig.initialDelayMs, 250, 0, 5000),
-    slides: slides.length > 0 ? slides : cloneHeroConfig(DEFAULT_HERO_CONFIG).slides,
+    slides: usableSlides.length > 0 ? usableSlides : cloneHeroConfig(DEFAULT_HERO_CONFIG).slides,
   };
 }
 

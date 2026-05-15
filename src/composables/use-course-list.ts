@@ -22,6 +22,7 @@ interface ApiLltcourse {
   objective: string | null;
   status: string | null;
   hours: number | null;
+  imageUrl: string | null;
 }
 
 function mapApiCourse(raw: ApiLltcourse): Course {
@@ -31,7 +32,7 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     code: raw.code ?? '',
     title: raw.titleTh ?? '',
     ...(raw.titleEn ? { titleEn: raw.titleEn } : {}),
-    imageUrl: '',
+    imageUrl: raw.imageUrl ?? '',
     cover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
     registrationStart: raw.startDate ?? today,
     registrationEnd: raw.endDate ?? '2099-12-31',
