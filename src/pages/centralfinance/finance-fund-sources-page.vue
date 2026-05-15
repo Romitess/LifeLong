@@ -306,6 +306,90 @@
       </q-card>
     </q-dialog>
 
+    <!-- ── Compact Edit Dialog ────────────────────────────────── -->
+    <q-dialog v-model="showEdit">
+      <q-card class="compact-edit-card">
+        <q-card-section class="bg-grey-1 q-py-md q-px-md row items-center">
+          <div class="text-h6 text-weight-bold">
+            {{ $t('centralFinance.fundSources.edit.title') }}
+          </div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup size="sm" color="grey-7" />
+        </q-card-section>
+
+        <q-card-section class="q-pa-md">
+          <div class="column q-gutter-sm">
+            <!-- Request Brief -->
+            <div class="request-brief-box q-pa-md bg-blue-1 rounded-borders">
+              <div class="row justify-between items-center">
+                <div class="text-subtitle2 text-blue-9 text-weight-bolder">{{ editForm.id }}</div>
+                <q-badge
+                  :color="getStatusColor(selectedRequest?.status || '')"
+                  class="q-px-sm q-py-xs"
+                  style="font-size: 12px"
+                >
+                  {{ getStatusLabel(selectedRequest?.status || '') }}
+                </q-badge>
+              </div>
+              <div class="text-body2 text-grey-8 q-mt-xs">{{ selectedRequest?.faculty }}</div>
+            </div>
+
+            <!-- Inputs -->
+            <div class="compact-form q-mt-sm q-gutter-y-sm">
+              <div>
+                <label class="compact-label">{{
+                  $t('centralFinance.fundSources.edit.newStatus')
+                }}</label>
+                <q-select
+                  v-model="editForm.status"
+                  :options="statusOptions"
+                  outlined
+                  emit-value
+                  map-options
+                  class="q-mt-xs large-text-input"
+                />
+              </div>
+
+              <div>
+                <label class="compact-label">{{
+                  $t('centralFinance.fundSources.edit.note')
+                }}</label>
+                <q-input
+                  v-model="editForm.note"
+                  type="textarea"
+                  outlined
+                  :placeholder="$t('centralFinance.fundSources.edit.notePlaceholder')"
+                  rows="3"
+                  class="q-mt-xs large-text-input"
+                />
+              </div>
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-sm q-gutter-x-sm">
+          <q-btn
+            flat
+            no-caps
+            :label="$t('centralFinance.fundSources.edit.cancelBtn')"
+            color="grey-7"
+            v-close-popup
+            dense
+          />
+          <q-btn
+            unelevated
+            no-caps
+            :label="$t('centralFinance.fundSources.edit.saveBtn')"
+            color="primary"
+            class="q-px-md"
+            @click="onSaveEdit"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <!-- ── History Dialog ────────────────────────────────────── -->
     <q-dialog v-model="showHistory">
       <q-card style="min-width: 700px; border-radius: 16px">
@@ -356,6 +440,7 @@
 import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import type { FundSourceRequest } from 'src/stores/central-finance-store';
@@ -365,11 +450,25 @@ import AdminActionButton from 'components/admin/AdminActionButton.vue';
 
 const router = useRouter();
 const { t } = useI18n();
+const $q = useQuasar();
 const financeStore = useCentralFinanceStore();
 
 const showHistory = ref(false);
 const showDetail = ref(false);
+const showEdit = ref(false);
 const selectedRequest = ref<FundSourceRequest | null>(null);
+
+interface EditForm {
+  id: string;
+  status: FundSourceRequest['status'];
+  note: string;
+}
+
+const editForm = reactive<EditForm>({
+  id: '',
+  status: 'new',
+  note: '',
+});
 
 const filters = reactive({
   search: '',
@@ -545,7 +644,24 @@ function onViewDetail(row: FundSourceRequest) {
 }
 
 function onEdit(row: FundSourceRequest) {
-  console.log('Edit row', row);
+  selectedRequest.value = row;
+  editForm.id = row.requestId;
+  editForm.status = row.status;
+  editForm.note = '';
+  showEdit.value = true;
+}
+
+function onSaveEdit() {
+  if (selectedRequest.value) {
+    // In a real app, this would be an API call
+    selectedRequest.value.status = editForm.status;
+    $q.notify({
+      type: 'positive',
+      message: t('centralFinance.fundSources.edit.success'),
+      position: 'top',
+    });
+    showEdit.value = false;
+  }
 }
 </script>
 
@@ -657,5 +773,33 @@ function onEdit(row: FundSourceRequest) {
   .filter-grid {
     grid-template-columns: 1fr;
   }
+}
+.compact-edit-card {
+  width: 400px;
+  max-width: 95vw;
+  border-radius: 12px;
+}
+
+.request-brief-box {
+  border: 1px solid rgba(25, 118, 210, 0.2);
+}
+
+.compact-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.large-text-input {
+  font-size: 15px;
+}
+
+.truncate-1-line {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

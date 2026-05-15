@@ -704,6 +704,12 @@ export default {
           editReturned: 'แก้ไขคำขอ #FN-2569-0241 ส่งคืนแล้ว',
           editTime: 'เมื่อวาน 11:00',
           editDetail: 'เอกสารประกอบไม่ครบ — แจ้งคณะต้นสังกัดแล้ว',
+          dynamic: {
+            new: 'ได้รับคำขอใหม่จาก {faculty}',
+            processing: 'กำลังตรวจสอบคำขอ {id}',
+            completed: 'ออกเลขแหล่งเงินให้ {faculty} เรียบร้อย',
+            rejected: 'ตีกลับคำขอ {id} เพื่อแก้ไข',
+          },
         },
       },
       shortcuts: {
@@ -766,6 +772,17 @@ export default {
         note: 'หมายเหตุ',
         sentAt: 'เวลาที่ส่ง',
         noData: 'ยังไม่มีประวัติการแจ้งเตือน',
+      },
+      edit: {
+        title: 'อัปเดตสถานะคำขอแหล่งเงิน',
+        requestId: 'เลขที่คำขอ',
+        currentStatus: 'สถานะปัจจุบัน',
+        newStatus: 'ปรับเปลี่ยนสถานะเป็น',
+        note: 'หมายเหตุการดำเนินการ',
+        notePlaceholder: 'ระบุรายละเอียดการตรวจสอบ หรือเหตุผลที่ตีกลับ...',
+        saveBtn: 'บันทึกการเปลี่ยนแปลง',
+        cancelBtn: 'ยกเลิก',
+        success: 'อัปเดตข้อมูลสำเร็จ',
       },
     },
     addFundSource: {

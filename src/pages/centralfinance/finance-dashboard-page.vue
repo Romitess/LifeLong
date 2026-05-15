@@ -361,43 +361,58 @@ const fundSourceStatus = computed(() => [
 ]);
 
 // ── Recent Activities ───────────────────────────────────────
-const recentActivities = computed(() => [
-  {
-    title: t('centralFinance.dashboard.activities.items.scienceFacultyRequest'),
-    time: t('centralFinance.dashboard.activities.items.scienceFacultyTime'),
-    detail: t('centralFinance.dashboard.activities.items.scienceFacultyDetail'),
-    icon: 'add_circle',
-    color: 'teal',
-  },
-  {
-    title: t('centralFinance.dashboard.activities.items.issueSuccess'),
-    time: t('centralFinance.dashboard.activities.items.issueTime'),
-    detail: t('centralFinance.dashboard.activities.items.issueDetail'),
-    icon: 'receipt_long',
-    color: 'primary',
-  },
-  {
-    title: t('centralFinance.dashboard.activities.items.exportSuccess'),
-    time: t('centralFinance.dashboard.activities.items.exportTime'),
-    detail: t('centralFinance.dashboard.activities.items.exportDetail'),
-    icon: 'file_download',
-    color: 'orange',
-  },
-  {
-    title: t('centralFinance.dashboard.activities.items.nursingFacultyRequest'),
-    time: t('centralFinance.dashboard.activities.items.nursingFacultyTime'),
-    detail: t('centralFinance.dashboard.activities.items.nursingFacultyDetail'),
-    icon: 'upload_file',
-    color: 'blue',
-  },
-  {
-    title: t('centralFinance.dashboard.activities.items.editReturned'),
-    time: t('centralFinance.dashboard.activities.items.editTime'),
-    detail: t('centralFinance.dashboard.activities.items.editDetail'),
-    icon: 'reply',
-    color: 'negative',
-  },
-]);
+const recentActivities = computed(() => {
+  // Sort requests by date (newest first) and take the last 5 activities
+  // In a real app, this might come from a dedicated activity log table
+  return financeStore.requests
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5)
+    .map((req) => {
+      let title = '';
+      let icon = 'info';
+      let color = 'primary';
+
+      switch (req.status) {
+        case 'new':
+          title = t('centralFinance.dashboard.activities.items.dynamic.new', {
+            faculty: req.faculty,
+          });
+          icon = 'add_circle';
+          color = 'teal';
+          break;
+        case 'processing':
+          title = t('centralFinance.dashboard.activities.items.dynamic.processing', {
+            id: req.requestId,
+          });
+          icon = 'hourglass_empty';
+          color = 'orange';
+          break;
+        case 'completed':
+          title = t('centralFinance.dashboard.activities.items.dynamic.completed', {
+            faculty: req.faculty,
+          });
+          icon = 'check_circle';
+          color = 'positive';
+          break;
+        case 'rejected':
+          title = t('centralFinance.dashboard.activities.items.dynamic.rejected', {
+            id: req.requestId,
+          });
+          icon = 'error';
+          color = 'negative';
+          break;
+      }
+
+      return {
+        title,
+        time: req.date, // Using request date as activity time for now
+        detail: req.project,
+        icon,
+        color,
+      };
+    });
+});
 
 // ── Quick Shortcuts ─────────────────────────────────────────
 const shortcuts = computed(() => [

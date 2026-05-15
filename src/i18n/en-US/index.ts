@@ -699,6 +699,12 @@ export default {
           editReturned: 'Request #FN-2569-0241 returned for edit',
           editTime: 'Yesterday 11:00',
           editDetail: 'Incomplete documents — Notified originating faculty',
+          dynamic: {
+            new: 'New request received from {faculty}',
+            processing: 'Reviewing request {id}',
+            completed: 'Issued fund code for {faculty}',
+            rejected: 'Returned request {id} for edit',
+          },
         },
       },
       shortcuts: {
@@ -761,6 +767,17 @@ export default {
         note: 'Note',
         sentAt: 'Sent At',
         noData: 'No notification history yet',
+      },
+      edit: {
+        title: 'Update Fund Request Status',
+        requestId: 'Request ID',
+        currentStatus: 'Current Status',
+        newStatus: 'Change Status To',
+        note: 'Action Note',
+        notePlaceholder: 'Enter review details or reason for return...',
+        saveBtn: 'Save Changes',
+        cancelBtn: 'Cancel',
+        success: 'Update successful',
       },
     },
     addFundSource: {
