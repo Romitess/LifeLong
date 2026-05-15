@@ -219,7 +219,7 @@
                 <div class="trend-section q-mb-xl">
                   <div class="text-subtitle1 text-weight-bold text-grey-8 q-mb-md row items-center">
                     <q-icon name="show_chart" color="primary" class="q-mr-sm" />
-                    แนวโน้มรายรับรายเดือน
+                    {{ $t('finance.dashboard.revenueTrend') }}
                   </div>
                   <RevenueTrendChart :data="trendData" :labels="trendLabels" />
                 </div>
@@ -229,7 +229,7 @@
                 <div class="proportion-section">
                   <div class="text-subtitle1 text-weight-bold text-grey-8 q-mb-md row items-center">
                     <q-icon name="pie_chart" color="orange-8" class="q-mr-sm" />
-                    สัดส่วนรายรับแยกตามหมวดหมู่
+                    {{ $t('finance.dashboard.revenueProportion') }}
                   </div>
                   <div class="row justify-center">
                     <div class="col-12 col-md-10">

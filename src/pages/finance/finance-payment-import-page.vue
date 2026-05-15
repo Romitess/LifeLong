@@ -3,18 +3,18 @@
     <AdminPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="upload_file"
-      title="นำเข้าไฟล์การชำระเงิน"
-      description="อัปโหลดไฟล์รายการชำระเงิน ตรวจสอบความถูกต้อง และเตรียมข้อมูลสำหรับออกใบเสร็จรับเงินในขั้นตอนเดียว"
+      :title="$t('finance.paymentImport.title')"
+      :description="$t('finance.paymentImport.description')"
     />
 
     <section class="admin-shell admin-content">
       <div class="payment-import-main-container">
-        <AdminSurfaceCard title="อัปโหลดไฟล์ชำระเงิน" body-padding="lg">
+        <AdminSurfaceCard :title="$t('finance.paymentImport.uploadSectionTitle')" body-padding="lg">
           <div class="import-station-container">
             <!-- Left Side: Contextual Information -->
             <div class="import-station-context">
               <div class="context-group">
-                <div class="context-label">ส่วนงานที่ดำเนินการ</div>
+                <div class="context-label">{{ $t('finance.paymentImport.operatingFaculty') }}</div>
                 <div class="context-value text-primary">
                   <q-icon name="apartment" class="q-mr-sm" />
                   {{ defaultDivision }}
@@ -22,22 +22,25 @@
               </div>
 
               <div class="context-group">
-                <div class="context-label">สถานะการเลือกไฟล์</div>
+                <div class="context-label">{{ $t('finance.paymentImport.fileStatus') }}</div>
                 <div class="context-status" :class="{ 'is-selected': selectedFile }">
                   <q-icon
                     :name="selectedFile ? 'check_circle' : 'pending'"
                     size="18px"
                     class="q-mr-sm"
                   />
-                  {{ selectedFile ? 'เตรียมพร้อมสำหรับการนำเข้า' : 'ยังไม่ได้เลือกไฟล์' }}
+                  {{
+                    selectedFile
+                      ? $t('finance.paymentImport.readyForImport')
+                      : $t('finance.paymentImport.noFileSelected')
+                  }}
                 </div>
               </div>
 
               <div class="import-station-hint">
                 <q-icon name="info" size="18px" class="q-mr-xs text-amber-9" />
-                <span class="text-weight-bold">หมายเหตุ:</span>
-                กรณีนำเข้าข้อมูลไม่สำเร็จ ให้ตรวจสอบไฟล์ที่นำเข้า โดยต้องเป็นไปตามที่ระบบกำหนด
-                ได้แก่ รูปแบบ .csv และมี comp code ตรงกับคณะของผู้ใช้
+                <span class="text-weight-bold">{{ $t('finance.paymentImport.noteTitle') }}</span>
+                {{ $t('finance.paymentImport.noteDescription') }}
               </div>
             </div>
 
@@ -54,8 +57,8 @@
                     <q-icon name="cloud_upload" />
                   </div>
                   <div class="fancy-upload-zone__text">
-                    <div class="main-text">คลิกเพื่อเลือกไฟล์จ่ายเงิน</div>
-                    <div class="sub-text">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกจากเครื่อง</div>
+                    <div class="main-text">{{ $t('finance.paymentImport.clickToSelect') }}</div>
+                    <div class="sub-text">{{ $t('finance.paymentImport.dragOrClick') }}</div>
                   </div>
                 </div>
 
@@ -92,7 +95,7 @@
               <q-btn
                 unelevated
                 color="amber-8"
-                label="บันทึกข้อมูลไฟล์จ่ายเงิน"
+                :label="$t('finance.paymentImport.savePaymentData')"
                 no-caps
                 class="full-width q-mt-lg btn-save-import"
                 :disable="!selectedFile"
@@ -107,8 +110,13 @@
         </AdminSurfaceCard>
 
         <AdminSurfaceCard
-          title="รายการชำระเงินที่นำเข้า"
-          :subtitle="`แสดงข้อมูล ${filteredRows.length} จาก ${importedRows.length} รายการ`"
+          :title="$t('finance.paymentImport.importedRecords')"
+          :subtitle="
+            $t('finance.paymentImport.showingRecords', {
+              filtered: filteredRows.length,
+              total: importedRows.length,
+            })
+          "
           card-class="payment-import-table-card"
           body-padding="none"
         >
@@ -119,7 +127,7 @@
                 outlined
                 clearable
                 debounce="200"
-                placeholder="ค้นหา..."
+                :placeholder="$t('finance.paymentImport.searchPlaceholder')"
                 class="payment-search"
               >
                 <template #prepend>
@@ -131,7 +139,7 @@
                 unelevated
                 color="negative"
                 icon="delete_sweep"
-                label="ลบข้อมูลทั้งหมด"
+                :label="$t('finance.paymentImport.clearAllData')"
                 no-caps
                 class="payment-delete-btn"
                 :disable="!importedRows.length"
@@ -164,7 +172,7 @@
             <template #no-data>
               <div class="full-width column flex-center q-pa-xl text-grey-7">
                 <q-icon name="upload_file" size="52px" class="q-mb-md" />
-                <span>ยังไม่มีข้อมูลไฟล์จ่ายเงิน</span>
+                <span>{{ $t('finance.paymentImport.noData') }}</span>
               </div>
             </template>
           </q-table>
@@ -172,13 +180,13 @@
           <div class="payment-table-footer" v-if="!isVerifying">
             <div>
               <q-icon name="rule" size="18px" />
-              ตรวจสอบเลขอ้างอิงและยอดชำระก่อนส่งต่อขั้นตอนออกใบเสร็จ
+              {{ $t('finance.paymentImport.verifyHint') }}
             </div>
             <q-btn
               unelevated
               color="primary"
               icon="fact_check"
-              label="ตรวจสอบข้อมูล"
+              :label="$t('finance.paymentImport.verifyDataBtn')"
               no-caps
               :disable="!importedRows.length"
               @click="verifyImportedRows"
@@ -191,13 +199,13 @@
               <div class="row items-center q-gutter-sm">
                 <q-btn flat round icon="arrow_back" @click="isVerifying = false" />
                 <div class="text-h6 text-weight-bolder">
-                  ตรวจสอบความถูกต้อง (เปรียบเทียบข้อมูลผู้สมัคร)
+                  {{ $t('finance.paymentImport.verificationTitle') }}
                 </div>
               </div>
               <q-btn
                 unelevated
                 color="cyan-7"
-                label="ค้นหาข้อมูลผู้สมัคร"
+                :label="$t('finance.paymentImport.searchApplicantBtn')"
                 no-caps
                 class="rounded-borders"
               />
@@ -216,14 +224,18 @@
             >
               <template #header="props">
                 <q-tr :props="props" class="comparison-header-main">
-                  <q-th colspan="3" class="text-center bg-grey-2 border-r">ทั่วไป</q-th>
-                  <q-th colspan="4" class="text-center bg-blue-1 text-blue-9 border-r"
-                    >ไฟล์จ่ายเงิน</q-th
-                  >
-                  <q-th colspan="4" class="text-center bg-green-1 text-green-9 border-r"
-                    >ข้อมูลผู้สมัคร</q-th
-                  >
-                  <q-th rowspan="2" class="text-center">แก้ไข</q-th>
+                  <q-th colspan="3" class="text-center bg-grey-2 border-r">{{
+                    $t('finance.paymentImport.colGeneral')
+                  }}</q-th>
+                  <q-th colspan="4" class="text-center bg-blue-1 text-blue-9 border-r">{{
+                    $t('finance.paymentImport.colPaymentFile')
+                  }}</q-th>
+                  <q-th colspan="4" class="text-center bg-green-1 text-green-9 border-r">{{
+                    $t('finance.paymentImport.colApplicantData')
+                  }}</q-th>
+                  <q-th rowspan="2" class="text-center">{{
+                    $t('finance.paymentImport.colEdit')
+                  }}</q-th>
                 </q-tr>
                 <q-tr :props="props" class="comparison-header-sub">
                   <q-th
@@ -269,9 +281,13 @@
 
               <template #bottom-row>
                 <q-tr class="comparison-footer-row text-weight-bold bg-grey-1">
-                  <q-td colspan="6" class="text-right border-r">รวม</q-td>
+                  <q-td colspan="6" class="text-right border-r">{{
+                    $t('finance.paymentImport.total')
+                  }}</q-td>
                   <q-td class="text-center border-r text-primary">{{ totalAmount }}</q-td>
-                  <q-td colspan="3" class="text-center bg-grey-2 border-r">รวม</q-td>
+                  <q-td colspan="3" class="text-center bg-grey-2 border-r">{{
+                    $t('finance.paymentImport.total')
+                  }}</q-td>
                   <q-td class="text-center border-r text-primary">{{ totalAmount }}</q-td>
                   <q-td></q-td>
                 </q-tr>
@@ -280,13 +296,12 @@
 
             <div class="column items-center q-mt-xl">
               <div class="text-negative text-weight-bold q-mb-md">
-                กรุณาตรวจสอบความถูกต้องก่อนกดปุ่ม "บันทึกข้อมูลการชำระเงินค่าลงทะเบียน"
-                เพื่อสร้างใบเสร็จรับเงิน
+                {{ $t('finance.paymentImport.finalVerifyHint') }}
               </div>
               <q-btn
                 unelevated
                 color="amber-8"
-                label="บันทึกข้อมูลการชำระเงินค่าลงทะเบียน"
+                :label="$t('finance.paymentImport.saveRegistrationBtn')"
                 no-caps
                 class="q-px-xl q-py-md text-weight-bolder shadow-3"
                 style="font-size: 1.1rem; border-radius: 12px"
@@ -301,10 +316,10 @@
     <!-- Unified Confirm Dialog -->
     <AdminConfirmDialog
       v-model="showSaveConfirm"
-      title="ยืนยันการบันทึกข้อมูล"
-      message="คุณต้องการบันทึกข้อมูลการชำระเงินค่าลงทะเบียนและดำเนินการออกใบเสร็จรับเงินใช่หรือไม่?"
-      confirm-label="บันทึกและออกใบเสร็จ"
-      cancel-label="ยกเลิก"
+      :title="$t('finance.paymentImport.confirmSaveTitle')"
+      :message="$t('finance.paymentImport.confirmSaveMessage')"
+      :confirm-label="$t('finance.paymentImport.confirmBtn')"
+      :cancel-label="$t('finance.paymentImport.cancelBtn')"
       icon="fact_check"
       @confirm="executeFinalizeImport"
     />
@@ -317,8 +332,10 @@ import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
 import { useQuasar, type QTableProps } from 'quasar';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const $q = useQuasar();
+const { t } = useI18n();
 
 type ImportedPaymentRow = {
   id: string;
@@ -340,18 +357,24 @@ const tableSearch = ref('');
 const isVerifying = ref(false);
 const showSaveConfirm = ref(false);
 
-const comparisonColumns: QTableProps['columns'] = [
-  { name: 'index', label: 'ลำดับ', align: 'center', field: 'index', style: 'width: 40px' },
+const comparisonColumns = computed<QTableProps['columns']>(() => [
+  {
+    name: 'index',
+    label: t('finance.paymentImport.columns.no'),
+    align: 'center',
+    field: 'index',
+    style: 'width: 40px',
+  },
   {
     name: 'paymentDate',
-    label: 'วันที่ชำระ',
+    label: t('finance.paymentImport.columns.paymentDate'),
     align: 'center',
     field: 'paymentDate',
     style: 'width: 85px',
   },
   {
     name: 'paymentTime',
-    label: 'เวลา',
+    label: t('finance.paymentImport.columns.paymentTime'),
     align: 'center',
     field: 'paymentTime',
     style: 'width: 65px',
@@ -359,22 +382,27 @@ const comparisonColumns: QTableProps['columns'] = [
   // Import Group
   {
     name: 'importLearnerRef',
-    label: 'รหัสผู้เรียน (Ref1)',
+    label: t('finance.paymentImport.columns.importLearnerRef'),
     align: 'center',
     field: 'learnerRef',
     style: 'width: 100px',
   },
   {
     name: 'importAppRef',
-    label: 'เลขสมัคร (Ref2)',
+    label: t('finance.paymentImport.columns.importAppRef'),
     align: 'center',
     field: 'applicationRef',
     style: 'width: 115px',
   },
-  { name: 'importPayerName', label: 'ผู้ชำระเงิน', align: 'center', field: 'payerName' },
+  {
+    name: 'importPayerName',
+    label: t('finance.paymentImport.columns.payerName'),
+    align: 'center',
+    field: 'payerName',
+  },
   {
     name: 'importAmount',
-    label: 'จำนวนเงิน',
+    label: t('finance.paymentImport.columns.amount'),
     align: 'center',
     field: 'amount',
     style: 'width: 80px',
@@ -382,29 +410,40 @@ const comparisonColumns: QTableProps['columns'] = [
   // DB Group
   {
     name: 'dbLearnerRef',
-    label: 'รหัสผู้เรียน (Ref1)',
+    label: t('finance.paymentImport.columns.importLearnerRef'),
     align: 'center',
     field: 'dbLearnerRef',
     style: 'width: 100px',
   },
   {
     name: 'dbAppRef',
-    label: 'เลขสมัคร (Ref2)',
+    label: t('finance.paymentImport.columns.importAppRef'),
     align: 'center',
     field: 'dbAppRef',
     style: 'width: 115px',
   },
-  { name: 'dbLearnerName', label: 'ชื่อผู้เรียน', align: 'center', field: 'dbLearnerName' },
+  {
+    name: 'dbLearnerName',
+    label: t('finance.paymentImport.columns.dbLearnerName'),
+    align: 'center',
+    field: 'dbLearnerName',
+  },
   {
     name: 'dbAmount',
-    label: 'จำนวนเงิน',
+    label: t('finance.paymentImport.columns.amount'),
     align: 'center',
     field: 'dbAmount',
     style: 'width: 80px',
   },
   // Actions
-  { name: 'actions', label: 'แก้ไข', align: 'center', field: 'actions', style: 'width: 50px' },
-];
+  {
+    name: 'actions',
+    label: t('finance.paymentImport.colEdit'),
+    align: 'center',
+    field: 'actions',
+    style: 'width: 50px',
+  },
+]);
 
 const comparisonRows = computed(() => {
   return importedRows.value.map((row) => ({
@@ -459,10 +498,10 @@ const pagination = ref({
   rowsPerPage: 10,
 });
 
-const columns: QTableProps['columns'] = [
+const columns = computed<QTableProps['columns']>(() => [
   {
     name: 'index',
-    label: 'ลำดับ',
+    label: t('finance.paymentImport.columns.no'),
     field: 'index',
     align: 'center',
     sortable: false,
@@ -470,61 +509,61 @@ const columns: QTableProps['columns'] = [
   },
   {
     name: 'learnerRef',
-    label: 'รหัสประจำตัวผู้เรียน (Ref1)',
+    label: t('finance.paymentImport.columns.importLearnerRef'),
     field: 'learnerRef',
     align: 'left',
     sortable: true,
   },
   {
     name: 'applicationRef',
-    label: 'เลขอ้างอิงการสมัคร (Ref2)',
+    label: t('finance.paymentImport.columns.importAppRef'),
     field: 'applicationRef',
     align: 'left',
     sortable: true,
   },
   {
     name: 'payerName',
-    label: 'ผู้ชำระเงิน',
+    label: t('finance.paymentImport.columns.payerName'),
     field: 'payerName',
     align: 'left',
     sortable: true,
   },
   {
     name: 'paymentDate',
-    label: 'Payment Date',
+    label: t('finance.paymentImport.columns.paymentDate'),
     field: 'paymentDate',
     align: 'left',
     sortable: true,
   },
   {
     name: 'paymentTime',
-    label: 'Payment Time',
+    label: t('finance.paymentImport.columns.paymentTime'),
     field: 'paymentTime',
     align: 'left',
     sortable: true,
   },
   {
     name: 'amount',
-    label: 'จำนวนเงิน',
+    label: t('finance.paymentImport.columns.amount'),
     field: 'amount',
     align: 'right',
     sortable: true,
   },
   {
     name: 'importedAt',
-    label: 'วันที่นำเข้าข้อมูล',
+    label: t('finance.paymentImport.columns.importedAt'),
     field: 'importedAt',
     align: 'left',
     sortable: true,
   },
   {
     name: 'importedBy',
-    label: 'ผู้นำเข้าข้อมูล',
+    label: t('finance.paymentImport.columns.importedBy'),
     field: 'importedBy',
     align: 'left',
     sortable: true,
   },
-];
+]);
 
 const formatFileSize = (bytes: number) => {
   if (bytes === 0) return '0 Bytes';
@@ -580,7 +619,7 @@ function saveImportedFile() {
 
   $q.notify({
     type: 'positive',
-    message: `บันทึกข้อมูลไฟล์ ${selectedFile.value.name} เรียบร้อย`,
+    message: t('finance.paymentImport.notifications.fileSaved', { name: selectedFile.value.name }),
   });
 }
 
@@ -596,7 +635,7 @@ function executeFinalizeImport() {
   isVerifying.value = false;
   $q.notify({
     type: 'positive',
-    message: 'บันทึกข้อมูลและเตรียมออกใบเสร็จเรียบร้อยแล้ว',
+    message: t('finance.paymentImport.notifications.completed'),
     icon: 'verified_user',
     position: 'top',
     timeout: 2500,
@@ -605,15 +644,15 @@ function executeFinalizeImport() {
 
 function confirmClearAll() {
   $q.dialog({
-    title: 'ลบข้อมูลไฟล์จ่ายเงินทั้งหมด?',
-    message: 'รายการที่นำเข้าจะแสดงเป็นค่าว่างในหน้านี้ ต้องการดำเนินการต่อหรือไม่',
-    cancel: { flat: true, label: 'ยกเลิก', color: 'grey-8' },
-    ok: { unelevated: true, label: 'ลบข้อมูล', color: 'negative' },
+    title: t('finance.paymentImport.notifications.clearTitle'),
+    message: t('finance.paymentImport.notifications.clearMessage'),
+    cancel: { flat: true, label: t('finance.paymentImport.cancelBtn'), color: 'grey-8' },
+    ok: { unelevated: true, label: t('finance.paymentImport.clearAllData'), color: 'negative' },
     persistent: true,
   }).onOk(() => {
     importedRows.value = [];
     selectedFile.value = null;
-    $q.notify({ type: 'positive', message: 'ลบข้อมูลไฟล์จ่ายเงินทั้งหมดแล้ว' });
+    $q.notify({ type: 'positive', message: t('finance.paymentImport.notifications.cleared') });
   });
 }
 </script>

@@ -3,24 +3,24 @@
     <AdminPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="schema"
-      title="ผังแหล่งเงิน"
-      description="จัดการรหัสและชื่อผังแหล่งเงินตามส่วนงาน เพื่อใช้ประกอบการบันทึกและอ้างอิงในระบบ"
+      :title="$t('finance.sourceOfFunds.title')"
+      :description="$t('finance.sourceOfFunds.description')"
     />
 
     <section class="admin-shell admin-content">
       <AdminSurfaceCard
-        title="ผังแหล่งเงิน"
+        :title="$t('finance.sourceOfFunds.title')"
         :subtitle="
-          editingId
-            ? 'แก้ไขรายการด้านล่าง แล้วกดบันทึก — รหัสเป็นตัวเลขเท่านั้น'
-            : 'กรอกข้อมูลด้านบน แล้วดูรายการด้านล่างในหน้าเดียวกัน'
+          editingId ? $t('finance.sourceOfFunds.editHint') : $t('finance.sourceOfFunds.createHint')
         "
         body-padding="lg"
       >
         <div class="sof-form">
           <div class="sof-form__grid">
             <div class="sof-field">
-              <label class="sof-label"> ส่วนงาน <span class="text-negative">*</span> </label>
+              <label class="sof-label">
+                {{ $t('finance.sourceOfFunds.faculty') }} <span class="text-negative">*</span>
+              </label>
               <q-select
                 v-model="form.division"
                 :options="divisionOptions"
@@ -28,22 +28,22 @@
                 dense
                 emit-value
                 map-options
-                placeholder="เลือกส่วนงาน"
+                :placeholder="$t('finance.sourceOfFunds.selectFaculty')"
                 class="admin-editor-field"
-                :rules="[(v) => !!v || 'กรุณาเลือกส่วนงาน']"
+                :rules="[(v) => !!v || $t('finance.sourceOfFunds.validation.faculty')]"
                 lazy-rules
               />
             </div>
 
             <div class="sof-field">
               <label class="sof-label">
-                รหัสผังแหล่งเงิน <span class="text-negative">*</span>
+                {{ $t('finance.sourceOfFunds.code') }} <span class="text-negative">*</span>
               </label>
               <q-input
                 :model-value="form.code"
                 outlined
                 dense
-                placeholder="เช่น 42245"
+                :placeholder="$t('finance.sourceOfFunds.codePlaceholder')"
                 inputmode="numeric"
                 autocomplete="off"
                 class="admin-editor-field"
@@ -55,21 +55,21 @@
 
             <div class="sof-field sof-field--span">
               <label class="sof-label">
-                ชื่อผังแหล่งเงิน <span class="text-negative">*</span>
+                {{ $t('finance.sourceOfFunds.name') }} <span class="text-negative">*</span>
               </label>
               <q-input
                 v-model.trim="form.name"
                 outlined
                 dense
-                placeholder="ชื่อเต็มของผังแหล่งเงิน"
+                :placeholder="$t('finance.sourceOfFunds.namePlaceholder')"
                 class="admin-editor-field"
-                :rules="[(v) => !!v || 'กรุณากรอกชื่อ']"
+                :rules="[(v) => !!v || $t('finance.sourceOfFunds.validation.nameRequired')]"
                 lazy-rules
               />
             </div>
 
             <div class="sof-field sof-field--span">
-              <label class="sof-label">สถานะ</label>
+              <label class="sof-label">{{ $t('finance.sourceOfFunds.status') }}</label>
               <div class="sof-status-row">
                 <q-option-group
                   v-model="form.active"
@@ -85,7 +85,7 @@
                     flat
                     no-caps
                     color="grey-8"
-                    label="ยกเลิกการแก้ไข"
+                    :label="$t('finance.sourceOfFunds.cancelEdit')"
                     @click="resetForm"
                   />
                   <q-btn
@@ -93,7 +93,7 @@
                     no-caps
                     color="primary"
                     icon="save"
-                    label="บันทึก"
+                    :label="$t('finance.sourceOfFunds.save')"
                     class="sof-save-btn"
                     @click="onSave"
                   />
@@ -106,14 +106,16 @@
         <q-separator class="q-my-xl" />
 
         <div class="sof-list-head row items-center justify-between q-mb-md">
-          <div class="sof-list-head__title text-weight-bold text-body1">รายการทั้งหมด</div>
+          <div class="sof-list-head__title text-weight-bold text-body1">
+            {{ $t('finance.sourceOfFunds.allItems') }}
+          </div>
           <div class="sof-table-toolbar">
             <q-input
               v-model="tableSearch"
               outlined
               clearable
               debounce="200"
-              placeholder="ค้นหา ส่วนงาน รหัส หรือชื่อ..."
+              :placeholder="$t('finance.sourceOfFunds.searchPlaceholder')"
               bg-color="white"
               class="sof-search-input-main"
             >
@@ -125,7 +127,9 @@
                 <q-btn flat round color="grey-7" icon="filter_list">
                   <q-menu padding class="sof-filter-menu shadow-10" style="border-radius: 16px">
                     <div class="q-pa-md" style="min-width: 260px">
-                      <div class="text-subtitle1 text-weight-bold q-mb-md">ตัวกรองเพิ่มเติม</div>
+                      <div class="text-subtitle1 text-weight-bold q-mb-md">
+                        {{ $t('finance.sourceOfFunds.additionalFilters') }}
+                      </div>
 
                       <div class="filter-group q-mb-md">
                         <q-select
@@ -136,13 +140,15 @@
                           emit-value
                           map-options
                           options-dense
-                          label="คณะ / ส่วนงาน"
+                          :label="$t('finance.sourceOfFunds.faculty')"
                           class="full-width sof-filter-menu-field"
                         />
                       </div>
 
                       <div class="filter-group q-mb-md">
-                        <div class="text-caption text-grey-7 q-mb-xs">สถานะการใช้งาน</div>
+                        <div class="text-caption text-grey-7 q-mb-xs">
+                          {{ $t('finance.sourceOfFunds.activeStatus') }}
+                        </div>
                         <div class="row q-gutter-xs">
                           <q-btn
                             unelevated
@@ -150,7 +156,7 @@
                             no-caps
                             :color="listFilter.status === 'open' ? 'primary' : 'grey-2'"
                             :text-color="listFilter.status === 'open' ? 'white' : 'dark'"
-                            label="เปิด"
+                            :label="$t('finance.sourceOfFunds.active')"
                             class="q-px-md text-caption"
                             @click="
                               listFilter.status = listFilter.status === 'open' ? null : 'open'
@@ -162,7 +168,7 @@
                             no-caps
                             :color="listFilter.status === 'closed' ? 'primary' : 'grey-2'"
                             :text-color="listFilter.status === 'closed' ? 'white' : 'dark'"
-                            label="ปิด"
+                            :label="$t('finance.sourceOfFunds.inactive')"
                             class="q-px-md text-caption"
                             @click="
                               listFilter.status = listFilter.status === 'closed' ? null : 'closed'
@@ -175,7 +181,7 @@
                       <div class="row q-gutter-sm">
                         <q-btn
                           unelevated
-                          label="ล้าง"
+                          :label="$t('finance.sourceOfFunds.clear')"
                           color="grey-2"
                           text-color="dark"
                           dense
@@ -185,7 +191,7 @@
                         />
                         <q-btn
                           unelevated
-                          label="ตกลง"
+                          :label="$t('finance.sourceOfFunds.ok')"
                           color="primary"
                           dense
                           no-caps
@@ -222,7 +228,11 @@
                 rounded
                 class="sof-status-badge"
                 :color="props.row.active ? 'positive' : 'grey-6'"
-                :label="props.row.active ? 'เปิด' : 'ปิด'"
+                :label="
+                  props.row.active
+                    ? $t('finance.sourceOfFunds.active')
+                    : $t('finance.sourceOfFunds.inactive')
+                "
               />
             </q-td>
           </template>
@@ -240,9 +250,9 @@
                   @click="onEdit(props.row)"
                 >
                   <q-tooltip v-if="props.row.referencedInCourse">
-                    ไม่สามารถแก้ไขได้เมื่อมีการอ้างอิงในการเปิดรายวิชา
+                    {{ $t('finance.sourceOfFunds.cannotEdit') }}
                   </q-tooltip>
-                  <q-tooltip v-else>แก้ไข</q-tooltip>
+                  <q-tooltip v-else>{{ $t('finance.sourceOfFunds.edit') }}</q-tooltip>
                 </q-btn>
                 <q-btn
                   flat
@@ -254,9 +264,9 @@
                   @click="onDelete(props.row)"
                 >
                   <q-tooltip v-if="props.row.referencedInCourse">
-                    ไม่สามารถลบได้เมื่อมีการอ้างอิงในการเปิดรายวิชา
+                    {{ $t('finance.sourceOfFunds.cannotDelete') }}
                   </q-tooltip>
-                  <q-tooltip v-else>ลบ</q-tooltip>
+                  <q-tooltip v-else>{{ $t('finance.sourceOfFunds.delete') }}</q-tooltip>
                 </q-btn>
               </div>
             </q-td>
@@ -265,14 +275,14 @@
           <template #no-data>
             <div class="full-width column flex-center q-pa-xl text-grey-7">
               <q-icon name="inventory_2" size="48px" class="q-mb-md" />
-              <span>ยังไม่มีข้อมูลผังแหล่งเงิน</span>
+              <span>{{ $t('finance.sourceOfFunds.noData') }}</span>
             </div>
           </template>
         </q-table>
 
         <div class="sof-footnote q-mt-md">
           <q-icon name="info" size="18px" class="q-mr-sm" />
-          หมายเหตุ ไม่สามารถแก้ไขและลบข้อมูลได้ ถ้ามีการอ้างอิงในการเปิดรายวิชาแล้ว
+          {{ $t('finance.sourceOfFunds.note') }}
         </div>
       </AdminSurfaceCard>
     </section>
@@ -284,8 +294,10 @@ import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import { useQuasar, type QTableProps } from 'quasar';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const $q = useQuasar();
+const { t } = useI18n();
 
 type FundChartRow = {
   id: string;
@@ -399,19 +411,19 @@ watch(
   },
 );
 
-const codeFieldRules = [
-  (v: string) => !!String(v ?? '').trim() || 'กรุณากรอกรหัส',
-  (v: string) => /^\d+$/.test(String(v ?? '')) || 'กรุณาใช้เฉพาะตัวเลข',
-];
+const codeFieldRules = computed(() => [
+  (v: string) => !!String(v ?? '').trim() || t('finance.sourceOfFunds.validation.codeRequired'),
+  (v: string) => /^\d+$/.test(String(v ?? '')) || t('finance.sourceOfFunds.validation.codeNumeric'),
+]);
 
 function onCodeInput(v: string | number | null | undefined) {
   form.value.code = String(v ?? '').replace(/\D/g, '');
 }
 
-const columns: QTableProps['columns'] = [
+const columns = computed<QTableProps['columns']>(() => [
   {
     name: 'index',
-    label: 'ลำดับ',
+    label: t('finance.sourceOfFunds.columnNo'),
     field: 'index',
     align: 'center',
     sortable: false,
@@ -419,14 +431,14 @@ const columns: QTableProps['columns'] = [
   },
   {
     name: 'division',
-    label: 'ส่วนงาน',
+    label: t('finance.sourceOfFunds.faculty'),
     field: 'division',
     align: 'left',
     sortable: true,
   },
   {
     name: 'code',
-    label: 'รหัสผังแหล่งเงิน',
+    label: t('finance.sourceOfFunds.code'),
     field: 'code',
     align: 'left',
     sortable: true,
@@ -434,27 +446,27 @@ const columns: QTableProps['columns'] = [
   },
   {
     name: 'name',
-    label: 'ชื่อผังแหล่งเงิน',
+    label: t('finance.sourceOfFunds.name'),
     field: 'name',
     align: 'left',
     sortable: true,
   },
   {
     name: 'active',
-    label: 'สถานะการใช้งาน',
+    label: t('finance.sourceOfFunds.activeStatus'),
     field: 'active',
     align: 'center',
     sortable: true,
   },
   {
     name: 'actions',
-    label: 'จัดการ',
+    label: t('finance.sourceOfFunds.columnActions'),
     field: 'actions',
     align: 'center',
     sortable: false,
     style: 'width: 120px',
   },
-];
+]);
 
 function resetForm() {
   editingId.value = null;

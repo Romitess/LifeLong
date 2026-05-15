@@ -3,19 +3,19 @@
     <AdminPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="receipt_long"
-      title="จัดการใบเสร็จรับเงิน"
-      description="ค้นหา ตรวจสอบ และพิมพ์ใบเสร็จรับเงินสำหรับผู้เรียน"
+      :title="$t('finance.receipts.title')"
+      :description="$t('finance.receipts.description')"
     />
 
     <section class="admin-shell admin-content">
-      <AdminSurfaceCard title="รายการใบเสร็จทั้งหมด" card-class="q-pa-none">
+      <AdminSurfaceCard :title="$t('finance.receipts.allReceipts')" card-class="q-pa-none">
         <template #header-actions>
           <q-input
             v-model="search"
             dense
             outlined
             rounded
-            placeholder="ค้นหาด้วยชื่อ เลขที่ใบเสร็จ หรือรหัสคอร์ส"
+            :placeholder="$t('finance.receipts.searchPlaceholder')"
             class="receipt-search"
           >
             <template v-slot:prepend>
@@ -45,10 +45,10 @@
           <template v-slot:body-cell-actions="props">
             <q-td :props="props" class="q-gutter-xs">
               <q-btn flat round dense icon="visibility" color="primary">
-                <q-tooltip>ดูรายละเอียด</q-tooltip>
+                <q-tooltip>{{ $t('finance.receipts.viewDetails') }}</q-tooltip>
               </q-btn>
               <q-btn flat round dense icon="print" color="grey-7">
-                <q-tooltip>พิมพ์ใบเสร็จ</q-tooltip>
+                <q-tooltip>{{ $t('finance.receipts.printReceipt') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -61,20 +61,58 @@
 <script setup lang="ts">
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import type { QTableProps } from 'quasar';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const search = ref('');
 
-const columns: QTableProps['columns'] = [
-  { name: 'id', label: 'เลขที่ใบเสร็จ', field: 'id', align: 'left', sortable: true },
-  { name: 'date', label: 'วันที่ชำระ', field: 'date', align: 'left', sortable: true },
-  { name: 'learner', label: 'ผู้เรียน', field: 'learner', align: 'left', sortable: true },
-  { name: 'course', label: 'รหัสวิชา', field: 'course', align: 'left', sortable: true },
-  { name: 'amount', label: 'จำนวนเงิน', field: 'amount', align: 'right', sortable: true },
-  { name: 'status', label: 'สถานะ', field: 'status', align: 'center' },
-  { name: 'actions', label: 'จัดการ', field: 'actions', align: 'center' },
-];
+const columns = computed<QTableProps['columns']>(() => [
+  {
+    name: 'id',
+    label: t('finance.receipts.columns.receiptNo'),
+    field: 'id',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'date',
+    label: t('finance.receipts.columns.paymentDate'),
+    field: 'date',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'learner',
+    label: t('finance.receipts.columns.learner'),
+    field: 'learner',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'course',
+    label: t('finance.receipts.columns.courseCode'),
+    field: 'course',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'amount',
+    label: t('finance.receipts.columns.amount'),
+    field: 'amount',
+    align: 'right',
+    sortable: true,
+  },
+  { name: 'status', label: t('finance.receipts.columns.status'), field: 'status', align: 'center' },
+  {
+    name: 'actions',
+    label: t('finance.receipts.columns.actions'),
+    field: 'actions',
+    align: 'center',
+  },
+]);
 
 const mockReceipts = [
   {
