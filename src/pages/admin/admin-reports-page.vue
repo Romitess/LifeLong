@@ -50,6 +50,9 @@
 
       <div class="admin-reports-page__content">
         <AdminCourseInterestReportManager v-if="activeMenu === 'interested-courses'" />
+        <AdminRegistrationStatisticsReportManager
+          v-else-if="activeMenu === 'registration-statistics'"
+        />
       </div>
     </section>
   </q-page>
@@ -58,9 +61,10 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 import AdminCourseInterestReportManager from 'components/admin/AdminCourseInterestReportManager.vue';
+import AdminRegistrationStatisticsReportManager from 'components/admin/AdminRegistrationStatisticsReportManager.vue';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 
-type ReportsMenu = 'interested-courses';
+type ReportsMenu = 'interested-courses' | 'registration-statistics';
 
 interface MenuItem {
   value: ReportsMenu;
@@ -73,6 +77,11 @@ const menuItems: MenuItem[] = [
     value: 'interested-courses',
     label: 'รายวิชาที่ได้รับความสนใจ',
     icon: 'bar_chart',
+  },
+  {
+    value: 'registration-statistics',
+    label: 'สถิติการลงทะเบียน',
+    icon: 'table_chart',
   },
 ];
 
