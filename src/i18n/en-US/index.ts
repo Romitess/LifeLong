@@ -1012,6 +1012,26 @@ export default {
         flagged: 'Flagged',
         void: 'Void',
       },
+      auditLog: {
+        title: 'Transaction Audit Log',
+        id: 'Transaction ID',
+        history: 'Event History',
+        system: 'System',
+        manual: 'By Staff',
+        noLogs: 'No additional history found',
+        flagTitle: 'Confirm Flagging',
+        flagConfirm: 'Do you want to flag transaction {id} for review?',
+        flagSuccess: 'Transaction has been flagged successfully',
+        alreadyFlagged: 'This transaction is already flagged',
+        viewAudit: 'View Audit Log',
+        flagTx: 'Flag Transaction',
+        events: {
+          created: 'Transaction Created',
+          createdDetail: 'Initial capture from payment gateway',
+          flagged: 'Marked for Review',
+          flaggedDetail: 'Manually flagged by Central Finance Auditor',
+        },
+      },
     },
     dailyReport: {
       hero: {
@@ -1038,6 +1058,11 @@ export default {
   },
   common: {
     faculties: {
+      informatics: 'Informatics',
+      science: 'Science',
+      nursing: 'Nursing',
+      business: 'Business Administration',
+      engineering: 'Engineering',
       computerCenter: 'Computer Center',
     },
   },

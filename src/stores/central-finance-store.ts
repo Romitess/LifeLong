@@ -292,5 +292,12 @@ export const useCentralFinanceStore = defineStore('central-finance', {
       this.notificationLogs.push(newLog);
       return newLog;
     },
+
+    updateTransactionStatus(txId: string, status: Transaction['status']): void {
+      const tx = this.transactions.find((t) => t.id === txId);
+      if (tx) {
+        tx.status = status;
+      }
+    },
   },
 });

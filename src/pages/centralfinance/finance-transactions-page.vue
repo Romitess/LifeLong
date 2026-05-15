@@ -43,6 +43,8 @@
               :label="$t('centralFinance.transactions.filters.faculty')"
               class="filter-item"
               clearable
+              emit-value
+              map-options
             >
               <template #prepend>
                 <q-icon name="business" />
@@ -63,7 +65,7 @@
                   <q-popup-proxy cover transition-show="scale" transition-hide="scale">
                     <q-date v-model="dateRange" mask="YYYY/MM/DD - YYYY/MM/DD" range>
                       <div class="row items-center justify-end">
-                        <q-btn v-close-popup label="Close" color="primary" flat />
+                        <q-btn v-close-popup :label="$t('close')" color="primary" flat />
                       </div>
                     </q-date>
                   </q-popup-proxy>
@@ -92,7 +94,7 @@
           :columns="columns"
           row-key="id"
           class="transactions-table"
-          :pagination="{ rowsPerPage: 10 }"
+          :pagination="pagination"
         >
           <!-- Custom Status Column -->
           <template #body-cell-status="props">
@@ -126,7 +128,9 @@
                 icon="visibility"
                 @click="onViewAuditLog(props.row)"
               >
-                <q-tooltip v-if="!$q.platform.is.mobile">View Audit Log</q-tooltip>
+                <q-tooltip v-if="!$q.platform.is.mobile">{{
+                  $t('centralFinance.transactions.auditLog.viewAudit')
+                }}</q-tooltip>
               </q-btn>
               <q-btn
                 flat
@@ -136,13 +140,103 @@
                 icon="flag"
                 @click="onFlagTransaction(props.row)"
               >
-                <q-tooltip v-if="!$q.platform.is.mobile">Flag Transaction</q-tooltip>
+                <q-tooltip v-if="!$q.platform.is.mobile">{{
+                  $t('centralFinance.transactions.auditLog.flagTx')
+                }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
         </q-table>
       </AdminSurfaceCard>
     </section>
+
+    <!-- ── Audit Log Dialog ─────────────────────────────────── -->
+    <q-dialog v-model="showAuditDialog">
+      <AdminSurfaceCard
+        :title="$t('centralFinance.transactions.auditLog.title')"
+        body-padding="none"
+        style="width: 500px; max-width: 90vw"
+      >
+        <template #header-actions>
+          <q-btn icon="close" flat round dense v-close-popup />
+        </template>
+
+        <div v-if="selectedTx" class="q-pa-md">
+          <div class="row q-col-gutter-md q-mb-lg">
+            <div class="col-6">
+              <div class="text-overline text-grey-7">
+                {{ $t('centralFinance.transactions.table.receiptNumber') }}
+              </div>
+              <div class="text-subtitle1 text-weight-bold">{{ selectedTx.receiptNumber }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-overline text-grey-7">
+                {{ $t('centralFinance.transactions.table.status') }}
+              </div>
+              <q-badge
+                :color="getStatusColor(selectedTx.status)"
+                :label="$t(`centralFinance.transactions.status.${selectedTx.status}`)"
+              />
+            </div>
+          </div>
+
+          <q-separator spaced />
+
+          <div class="text-subtitle2 q-mb-md text-primary">
+            {{ $t('centralFinance.transactions.auditLog.history') }}
+          </div>
+
+          <q-timeline layout="dense" side="right" color="primary">
+            <q-timeline-entry
+              v-for="(log, idx) in mockAuditHistory"
+              :key="idx"
+              :title="log.action"
+              :subtitle="log.time"
+              :icon="log.icon"
+              :color="log.color"
+            >
+              <div class="text-caption">{{ log.detail }}</div>
+              <div class="text-caption text-grey-6 text-italic q-mt-xs">
+                {{
+                  log.by === 'system'
+                    ? $t('centralFinance.transactions.auditLog.system')
+                    : $t('centralFinance.transactions.auditLog.manual')
+                }}
+              </div>
+            </q-timeline-entry>
+          </q-timeline>
+
+          <div v-if="mockAuditHistory.length === 0" class="text-center q-pa-lg text-grey-6">
+            {{ $t('centralFinance.transactions.auditLog.noLogs') }}
+          </div>
+        </div>
+      </AdminSurfaceCard>
+    </q-dialog>
+
+    <!-- ── Flag Confirmation Dialog ─────────────────────────── -->
+    <q-dialog v-model="showFlagDialog" persistent>
+      <q-card style="border-radius: 16px; min-width: 350px">
+        <q-card-section class="row items-center q-pb-none">
+          <q-avatar icon="flag" color="warning" text-color="white" />
+          <span class="text-h6 q-ml-md">{{
+            $t('centralFinance.transactions.auditLog.flagTitle')
+          }}</span>
+        </q-card-section>
+
+        <q-card-section class="q-pt-md">
+          {{
+            $t('centralFinance.transactions.auditLog.flagConfirm', {
+              id: selectedTx?.receiptNumber,
+            })
+          }}
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat :label="$t('cancel')" color="grey-7" v-close-popup no-caps />
+          <q-btn unelevated :label="$t('confirm')" color="warning" @click="confirmFlag" no-caps />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -156,7 +250,7 @@ import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import { useCentralFinanceStore, type Transaction } from 'src/stores/central-finance-store';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const $q = useQuasar();
 const financeStore = useCentralFinanceStore();
 
@@ -182,14 +276,59 @@ const dateDisplay = computed<string>({
   },
 });
 
-const facultyOptions: string[] = [
-  'คณะวิทยาการสารสนเทศ',
-  'คณะวิทยาศาสตร์',
-  'คณะพยาบาลศาสตร์',
-  'คณะบริหารธุรกิจ',
-  'คณะวิศวกรรมศาสตร์',
-  'สำนักคอมพิวเตอร์',
-];
+const facultyOptions = computed(() => [
+  { label: t('common.faculties.informatics'), value: 'คณะวิทยาการสารสนเทศ' },
+  { label: t('common.faculties.science'), value: 'คณะวิทยาศาสตร์' },
+  { label: t('common.faculties.nursing'), value: 'คณะพยาบาลศาสตร์' },
+  { label: t('common.faculties.business'), value: 'คณะบริหารธุรกิจ' },
+  { label: t('common.faculties.engineering'), value: 'คณะวิศวกรรมศาสตร์' },
+  { label: t('common.faculties.computerCenter'), value: 'สำนักคอมพิวเตอร์' },
+]);
+
+const pagination = ref({
+  rowsPerPage: 10,
+});
+
+const showAuditDialog = ref<boolean>(false);
+const showFlagDialog = ref<boolean>(false);
+const selectedTx = ref<Transaction | null>(null);
+
+interface AuditLogEntry {
+  action: string;
+  time: string;
+  detail: string;
+  icon: string;
+  color: string;
+  by: 'system' | 'user';
+}
+
+const mockAuditHistory = computed<AuditLogEntry[]>(() => {
+  if (!selectedTx.value) return [];
+
+  const entries: AuditLogEntry[] = [
+    {
+      action: t('centralFinance.transactions.auditLog.events.created'),
+      time: selectedTx.value.timestamp,
+      detail: t('centralFinance.transactions.auditLog.events.createdDetail'),
+      icon: 'add_circle',
+      color: 'teal',
+      by: 'system',
+    },
+  ];
+
+  if (selectedTx.value.status === 'flagged') {
+    entries.unshift({
+      action: t('centralFinance.transactions.auditLog.events.flagged'),
+      time: new Date().toLocaleString(locale.value === 'th' ? 'th-TH' : 'en-US'),
+      detail: t('centralFinance.transactions.auditLog.events.flaggedDetail'),
+      icon: 'flag',
+      color: 'warning',
+      by: 'user',
+    });
+  }
+
+  return entries;
+});
 
 const columns = computed<QTableColumn[]>(() => [
   {
@@ -331,19 +470,33 @@ function onExportAuditLog(): void {
 }
 
 function onViewAuditLog(row: Transaction): void {
-  $q.notify({
-    type: 'info',
-    message: `${t('centralFinance.transactions.table.viewDetail')} ${row.receiptNumber}`,
-    icon: 'visibility',
-  });
+  selectedTx.value = row;
+  showAuditDialog.value = true;
 }
 
 function onFlagTransaction(row: Transaction): void {
-  $q.notify({
-    type: 'warning',
-    message: `Transaction ${row.receiptNumber} has been flagged for review`,
-    icon: 'flag',
-  });
+  if (row.status === 'flagged') {
+    $q.notify({
+      type: 'info',
+      message: t('centralFinance.transactions.auditLog.alreadyFlagged'),
+      icon: 'info',
+    });
+    return;
+  }
+  selectedTx.value = row;
+  showFlagDialog.value = true;
+}
+
+function confirmFlag(): void {
+  if (selectedTx.value) {
+    financeStore.updateTransactionStatus(selectedTx.value.id, 'flagged');
+    $q.notify({
+      type: 'positive',
+      message: t('centralFinance.transactions.auditLog.flagSuccess'),
+      icon: 'check_circle',
+    });
+    showFlagDialog.value = false;
+  }
 }
 
 function formatCurrency(val: number): string {
