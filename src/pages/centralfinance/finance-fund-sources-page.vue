@@ -2,29 +2,29 @@
   <q-page class="admin-page fund-sources-page">
     <!-- ── Hero ─────────────────────────────────────────────── -->
     <AdminPageHero
-      eyebrow="Central Finance · กองคลัง"
+      :eyebrow="$t('centralFinance.dashboard.hero.eyebrow')"
       eyebrow-icon="account_balance"
-      title="รายการคำขอเพิ่มแหล่งเงิน"
-      description="จัดการและตรวจสอบเอกสารคำขอเพิ่มแหล่งเงินงบประมาณจากคณะและหน่วยงานต่างๆ"
+      :title="$t('centralFinance.fundSources.hero.title')"
+      :description="$t('centralFinance.fundSources.hero.desc')"
     >
       <template #actions>
         <AdminActionButton
           icon="add_circle_outline"
-          label="ออกเลขแหล่งเงินใหม่"
+          :label="$t('centralFinance.dashboard.quickLinks.addFundSource')"
           no-caps
           @click="onCreateNew"
         />
         <AdminActionButton
           variant="outline"
           icon="history"
-          label="ประวัติการแจ้งเตือน"
+          :label="$t('centralFinance.fundSources.actions.history')"
           no-caps
           @click="showHistory = true"
         />
         <AdminActionButton
           variant="outline"
           icon="file_download"
-          label="ส่งออกรายงานรวม"
+          :label="$t('centralFinance.fundSources.actions.exportAll')"
           no-caps
           @click="onExport"
         />
@@ -42,7 +42,7 @@
               outlined
               dense
               bg-color="white"
-              placeholder="ค้นหาเลขที่คำขอ หรือชื่อโครงการ..."
+              :placeholder="$t('centralFinance.fundSources.filters.search')"
               class="filter-item search-input"
             >
               <template #prepend>
@@ -56,7 +56,7 @@
               outlined
               dense
               bg-color="white"
-              label="คณะ/ส่วนงาน"
+              :label="$t('centralFinance.fundSources.filters.faculty')"
               class="filter-item"
               clearable
             >
@@ -70,7 +70,7 @@
               outlined
               dense
               bg-color="white"
-              label="วันที่ส่งคำขอ"
+              :label="$t('centralFinance.fundSources.filters.date')"
               class="filter-item"
               mask="####-##-##"
             >
@@ -93,7 +93,7 @@
               outlined
               dense
               bg-color="white"
-              label="สถานะ"
+              :label="$t('centralFinance.fundSources.filters.status')"
               class="filter-item"
               emit-value
               map-options
@@ -161,7 +161,9 @@
               <div class="text-overline text-gold-deep text-weight-bolder">
                 Ref: {{ selectedRequest.requestId }}
               </div>
-              <div class="text-h5 text-weight-black text-navy q-mt-xs">รายละเอียดคำขอแหล่งเงิน</div>
+              <div class="text-h5 text-weight-black text-navy q-mt-xs">
+                {{ $t('centralFinance.fundSources.detail.title') }}
+              </div>
             </div>
             <q-btn icon="close" flat round dense v-close-popup color="grey-7" />
           </div>
@@ -176,7 +178,9 @@
             </q-badge>
             <div class="text-caption text-grey-7">
               <q-icon name="event" class="q-mr-xs" />
-              ยื่นคำขอเมื่อ: {{ selectedRequest.date }}
+              {{
+                $t('centralFinance.fundSources.detail.submittedAt', { date: selectedRequest.date })
+              }}
             </div>
           </div>
         </q-card-section>
@@ -188,24 +192,26 @@
             <!-- Left Side: Basic Info -->
             <div class="col-12 col-md-7">
               <div class="detail-group">
-                <label>คณะ / ส่วนงานที่ยื่นคำขอ</label>
+                <label>{{ $t('centralFinance.fundSources.detail.faculty') }}</label>
                 <div class="text-subtitle1 text-weight-bold text-navy">
                   {{ selectedRequest.faculty }}
                 </div>
               </div>
 
               <div class="detail-group q-mt-lg">
-                <label>ชื่อโครงการ / เหตุผลความจำเป็น</label>
+                <label>{{ $t('centralFinance.fundSources.detail.project') }}</label>
                 <div class="text-subtitle1 text-weight-bold text-primary">
                   {{ selectedRequest.project }}
                 </div>
                 <div class="text-body2 text-grey-8 q-mt-sm line-height-relaxed">
-                  {{ selectedRequest.description || 'ไม่มีรายละเอียดเพิ่มเติม' }}
+                  {{
+                    selectedRequest.description || $t('centralFinance.fundSources.detail.noDesc')
+                  }}
                 </div>
               </div>
 
               <div class="detail-group q-mt-xl">
-                <label>เอกสารแนบประกอบการพิจารณา</label>
+                <label>{{ $t('centralFinance.fundSources.detail.attachments') }}</label>
                 <div
                   v-if="selectedRequest.documents && selectedRequest.documents.length > 0"
                   class="row q-gutter-sm q-mt-sm"
@@ -226,7 +232,9 @@
                     <div class="doc-name">{{ doc.name }}</div>
                   </q-btn>
                 </div>
-                <div v-else class="text-caption text-grey-6 italic q-mt-sm">ไม่มีเอกสารแนบ</div>
+                <div v-else class="text-caption text-grey-6 italic q-mt-sm">
+                  {{ $t('centralFinance.fundSources.detail.noAttachments') }}
+                </div>
               </div>
             </div>
 
@@ -234,7 +242,9 @@
             <div class="col-12 col-md-5">
               <AdminSurfaceCard tone="default" body-padding="md" class="info-sidebar">
                 <div class="budget-section text-center q-pa-md">
-                  <div class="text-overline text-grey-7">งบประมาณที่เสนอขอ</div>
+                  <div class="text-overline text-grey-7">
+                    {{ $t('centralFinance.fundSources.detail.budgetRequested') }}
+                  </div>
                   <div class="text-h4 text-weight-black text-primary">
                     {{ formatCurrency(selectedRequest.amount) }}
                   </div>
@@ -244,7 +254,7 @@
 
                 <div class="contact-section q-pa-md">
                   <div class="text-subtitle2 text-weight-bold text-navy q-mb-md">
-                    ข้อมูลผู้ประสานงาน
+                    {{ $t('centralFinance.fundSources.detail.contactTitle') }}
                   </div>
                   <div class="row items-center q-mb-sm">
                     <q-icon name="person" color="grey-6" size="xs" class="q-mr-sm" />
@@ -258,13 +268,15 @@
               </AdminSurfaceCard>
 
               <div class="action-summary q-mt-lg">
-                <div class="text-caption text-grey-7 q-mb-sm">การดำเนินการเบื้องต้น</div>
+                <div class="text-caption text-grey-7 q-mb-sm">
+                  {{ $t('centralFinance.fundSources.detail.actionsTitle') }}
+                </div>
                 <div class="column q-gutter-sm">
                   <q-btn
                     v-if="selectedRequest.status === 'new'"
                     color="primary"
                     unelevated
-                    label="เริ่มการตรวจสอบเอกสาร"
+                    :label="$t('centralFinance.fundSources.detail.startReview')"
                     icon="play_arrow"
                     no-caps
                     class="full-width q-py-sm"
@@ -273,7 +285,7 @@
                     v-if="selectedRequest.status === 'processing'"
                     color="positive"
                     unelevated
-                    label="ออกรหัสแหล่งเงิน (Approve)"
+                    :label="$t('centralFinance.fundSources.detail.approve')"
                     icon="check_circle"
                     no-caps
                     class="full-width q-py-sm"
@@ -281,7 +293,7 @@
                   <q-btn
                     outline
                     color="negative"
-                    label="ตีกลับเพื่อแก้ไข"
+                    :label="$t('centralFinance.fundSources.detail.reject')"
                     icon="reply"
                     no-caps
                     class="full-width q-py-sm"
@@ -343,6 +355,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import type { QTableColumn } from 'quasar';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import type { FundSourceRequest } from 'src/stores/central-finance-store';
@@ -351,6 +364,7 @@ import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
 
 const router = useRouter();
+const { t } = useI18n();
 const financeStore = useCentralFinanceStore();
 
 const showHistory = ref(false);
@@ -377,38 +391,38 @@ const facultyOptions = [
   'สำนักคอมพิวเตอร์',
 ];
 
-const statusOptions = [
-  { label: 'มาใหม่', value: 'new' },
-  { label: 'กำลังตรวจสอบ', value: 'processing' },
-  { label: 'ออกเลขแล้ว', value: 'completed' },
-  { label: 'ถูกตีกลับ', value: 'rejected' },
-];
+const statusOptions = computed(() => [
+  { label: t('centralFinance.fundSources.status.new'), value: 'new' },
+  { label: t('centralFinance.fundSources.status.processing'), value: 'processing' },
+  { label: t('centralFinance.fundSources.status.completed'), value: 'completed' },
+  { label: t('centralFinance.fundSources.status.rejected'), value: 'rejected' },
+]);
 
-const columns: QTableColumn[] = [
+const columns = computed<QTableColumn[]>(() => [
   {
     name: 'requestId',
-    label: 'เลขที่อ้างอิงคำขอ',
+    label: t('centralFinance.fundSources.table.requestId'),
     field: 'requestId',
     align: 'left',
     sortable: true,
   },
   {
     name: 'date',
-    label: 'วันที่ส่งคำขอ',
+    label: t('centralFinance.fundSources.table.date'),
     field: 'date',
     align: 'left',
     sortable: true,
   },
   {
     name: 'faculty',
-    label: 'คณะ/ส่วนงาน',
+    label: t('centralFinance.fundSources.table.faculty'),
     field: 'faculty',
     align: 'left',
     sortable: true,
   },
   {
     name: 'project',
-    label: 'ชื่อโครงการ/เหตุผล',
+    label: t('centralFinance.fundSources.table.project'),
     field: 'project',
     align: 'left',
     sortable: true,
@@ -416,7 +430,7 @@ const columns: QTableColumn[] = [
   },
   {
     name: 'status',
-    label: 'สถานะ',
+    label: t('centralFinance.fundSources.table.status'),
     field: 'status',
     align: 'center',
     sortable: true,
@@ -427,15 +441,43 @@ const columns: QTableColumn[] = [
     field: 'actions',
     align: 'right',
   },
-];
+]);
 
-const historyColumns: QTableColumn[] = [
-  { name: 'fundCode', label: 'รหัสแหล่งเงิน', field: 'fundCode', align: 'left', sortable: true },
-  { name: 'sentTo', label: 'ส่งไปยังส่วนงาน', field: 'sentTo', align: 'left', sortable: true },
-  { name: 'approvedBy', label: 'ผู้อนุมัติ', field: 'approvedBy', align: 'left' },
-  { name: 'note', label: 'หมายเหตุ', field: 'note', align: 'left' },
-  { name: 'sentAt', label: 'เวลาที่ส่ง', field: 'sentAt', align: 'right', sortable: true },
-];
+const historyColumns = computed<QTableColumn[]>(() => [
+  {
+    name: 'fundCode',
+    label: t('centralFinance.fundSources.history.fundCode'),
+    field: 'fundCode',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'sentTo',
+    label: t('centralFinance.fundSources.history.sentTo'),
+    field: 'sentTo',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'approvedBy',
+    label: t('centralFinance.fundSources.history.approver'),
+    field: 'approvedBy',
+    align: 'left',
+  },
+  {
+    name: 'note',
+    label: t('centralFinance.fundSources.history.note'),
+    field: 'note',
+    align: 'left',
+  },
+  {
+    name: 'sentAt',
+    label: t('centralFinance.fundSources.history.sentAt'),
+    field: 'sentAt',
+    align: 'right',
+    sortable: true,
+  },
+]);
 
 const rows = computed(() => financeStore.requests);
 
@@ -462,13 +504,13 @@ function formatCurrency(value: number | undefined) {
 function getStatusLabel(status: string) {
   switch (status) {
     case 'new':
-      return 'มาใหม่';
+      return t('centralFinance.fundSources.status.new');
     case 'processing':
-      return 'กำลังตรวจสอบ';
+      return t('centralFinance.fundSources.status.processing');
     case 'completed':
-      return 'ออกเลขแล้ว';
+      return t('centralFinance.fundSources.status.completed');
     case 'rejected':
-      return 'ถูกตีกลับ';
+      return t('centralFinance.fundSources.status.rejected');
     default:
       return status;
   }

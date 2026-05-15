@@ -2,22 +2,22 @@
   <q-page class="admin-page finance-dashboard-page">
     <!-- ── Hero ─────────────────────────────────────────────── -->
     <AdminPageHero
-      eyebrow="Central Finance · กองคลัง"
+      :eyebrow="$t('centralFinance.dashboard.hero.eyebrow')"
       eyebrow-icon="account_balance"
-      title="แดชบอร์ดการเงิน"
-      description="ภาพรวมคำขอเพิ่มแหล่งเงิน ยอดรับเงินรายวัน และกิจกรรมล่าสุดของกองคลัง"
+      :title="$t('centralFinance.dashboard.hero.title')"
+      :description="$t('centralFinance.dashboard.hero.desc')"
     >
       <template #actions>
         <AdminActionButton
           icon="description"
-          label="รายการคำขอเเหล่งเงิน"
+          :label="$t('centralFinance.dashboard.actions.fundRequests')"
           no-caps
           @click="onGotoFundSources"
         />
         <AdminActionButton
           variant="outline"
           icon="file_download"
-          label="ส่งออกรายงาน"
+          :label="$t('centralFinance.dashboard.actions.exportReport')"
           no-caps
           @click="onGoToReports"
         />
@@ -50,8 +50,8 @@
       <div class="finance-main-grid">
         <!-- Revenue Chart -->
         <AdminSurfaceCard
-          eyebrow="Daily Revenue"
-          title="ยอดรับเงินรายวัน"
+          :eyebrow="$t('centralFinance.dashboard.revenueChart.eyebrow')"
+          :title="$t('centralFinance.dashboard.revenueChart.title')"
           card-class="finance-panel finance-panel--chart"
         >
           <template #header-actions>
@@ -64,8 +64,8 @@
               color="white"
               text-color="grey-7"
               :options="[
-                { label: '7 วัน', value: '7d' },
-                { label: '30 วัน', value: '30d' },
+                { label: `7 ${$t('day')}`, value: '7d' },
+                { label: `30 ${$t('day')}`, value: '30d' },
               ]"
               class="finance-period-toggle"
             />
@@ -74,19 +74,25 @@
           <div class="finance-chart-area">
             <div class="finance-chart-summary">
               <div class="finance-chart-summary__item">
-                <span class="finance-chart-summary__label">ยอดวันนี้</span>
+                <span class="finance-chart-summary__label">{{
+                  $t('centralFinance.dashboard.revenueChart.today')
+                }}</span>
                 <strong class="finance-chart-summary__value text-positive">{{
                   todayRevenue
                 }}</strong>
               </div>
               <div class="finance-chart-summary__divider" />
               <div class="finance-chart-summary__item">
-                <span class="finance-chart-summary__label">เมื่อวาน</span>
+                <span class="finance-chart-summary__label">{{
+                  $t('centralFinance.dashboard.revenueChart.yesterday')
+                }}</span>
                 <strong class="finance-chart-summary__value">{{ yesterdayRevenue }}</strong>
               </div>
               <div class="finance-chart-summary__divider" />
               <div class="finance-chart-summary__item">
-                <span class="finance-chart-summary__label">เปลี่ยนแปลง</span>
+                <span class="finance-chart-summary__label">{{
+                  $t('centralFinance.dashboard.revenueChart.change')
+                }}</span>
                 <strong class="finance-chart-summary__value" :class="changeClass">{{
                   revenueChange
                 }}</strong>
@@ -113,8 +119,8 @@
 
         <!-- Fund Source Request Status -->
         <AdminSurfaceCard
-          eyebrow="Fund Source Requests"
-          title="สถานะคำขอแหล่งเงิน"
+          :eyebrow="$t('centralFinance.dashboard.fundSourceStatus.eyebrow')"
+          :title="$t('centralFinance.dashboard.fundSourceStatus.title')"
           card-class="finance-panel finance-panel--status"
         >
           <div class="finance-status-list">
@@ -136,11 +142,13 @@
           <q-separator class="q-my-md" />
 
           <div class="finance-quick-links">
-            <p class="finance-quick-links__title">Quick Links</p>
+            <p class="finance-quick-links__title">
+              {{ $t('centralFinance.dashboard.quickLinks.title') }}
+            </p>
             <AdminActionButton
               variant="secondary"
               icon="add_circle_outline"
-              label="ออกเลขแหล่งเงินใหม่"
+              :label="$t('centralFinance.dashboard.quickLinks.addFundSource')"
               icon-right="arrow_forward"
               no-caps
               class="full-width"
@@ -149,7 +157,7 @@
             <AdminActionButton
               variant="secondary"
               icon="file_download"
-              label="ส่งออกรายงานประจำวัน"
+              :label="$t('centralFinance.dashboard.quickLinks.dailyReport')"
               icon-right="arrow_forward"
               no-caps
               class="full-width"
@@ -163,8 +171,8 @@
       <div class="finance-bottom-grid">
         <!-- Recent Activities -->
         <AdminSurfaceCard
-          eyebrow="Audit Trail"
-          title="กิจกรรมล่าสุด"
+          :eyebrow="$t('centralFinance.dashboard.activities.eyebrow')"
+          :title="$t('centralFinance.dashboard.activities.title')"
           card-class="finance-panel finance-panel--activity"
         >
           <q-timeline color="primary" layout="dense" class="finance-timeline">
@@ -186,7 +194,7 @@
           <AdminSurfaceCard
             v-for="item in shortcuts"
             :key="item.title"
-            eyebrow="Quick Access"
+            :eyebrow="$t('centralFinance.dashboard.shortcuts.eyebrow')"
             :title="item.title"
             card-class="finance-shortcut-card"
           >
@@ -200,7 +208,7 @@
               <p>{{ item.detail }}</p>
               <AdminActionButton
                 variant="secondary"
-                label="เปิดหน้านี้"
+                :label="$t('centralFinance.dashboard.shortcuts.openPage')"
                 icon-right="arrow_forward"
                 no-caps
                 @click="onShortcutClick(item.to)"
@@ -216,6 +224,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import AdminMetricCard from 'components/admin/AdminMetricCard.vue';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
@@ -223,6 +232,7 @@ import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 
 const router = useRouter();
+const { t } = useI18n();
 const financeStore = useCentralFinanceStore();
 const chartPeriod = ref<'7d' | '30d'>('7d');
 
@@ -243,44 +253,44 @@ async function onShortcutClick(to: string) {
 // ── Metric Cards ────────────────────────────────────────────
 const metricCards = computed(() => [
   {
-    label: 'คำขอรอดำเนินการ',
+    label: t('centralFinance.dashboard.metrics.pending'),
     value: financeStore.requests.filter((r) => r.status === 'new').length.toString(),
     icon: 'pending_actions',
     color: '#b45309',
     tint: 'rgba(180, 83, 9, 0.12)',
     trendIcon: 'trending_up',
     trendColor: 'negative',
-    trendText: '+3 จากเมื่อวาน',
+    trendText: t('centralFinance.dashboard.metrics.trendUp', { value: '3' }),
   },
   {
-    label: 'ดำเนินการเสร็จวันนี้',
+    label: t('centralFinance.dashboard.metrics.completedToday'),
     value: financeStore.requests.filter((r) => r.status === 'completed').length.toString(),
     icon: 'task_alt',
     color: '#047857',
     tint: 'rgba(4, 120, 87, 0.12)',
     trendIcon: 'trending_up',
     trendColor: 'positive',
-    trendText: '+12% จากวานนี้',
+    trendText: t('centralFinance.dashboard.metrics.trendUp', { value: '12%' }),
   },
   {
-    label: 'ยอดรับเงินวันนี้',
+    label: t('centralFinance.dashboard.metrics.todayRevenue'),
     value: '฿1,248,500',
     icon: 'payments',
     color: '#1d4ed8',
     tint: 'rgba(29, 78, 216, 0.12)',
     trendIcon: 'trending_up',
     trendColor: 'positive',
-    trendText: '+8.4% จากวานนี้',
+    trendText: t('centralFinance.dashboard.metrics.trendUp', { value: '8.4%' }),
   },
   {
-    label: 'แหล่งเงินที่ออกแล้ว',
+    label: t('centralFinance.dashboard.metrics.totalFundSources'),
     value: financeStore.fundSources.length.toString(),
     icon: 'account_tree',
     color: '#7c3aed',
     tint: 'rgba(124, 58, 237, 0.12)',
     trendIcon: 'trending_flat',
     trendColor: 'grey-6',
-    trendText: 'เดือนนี้ทั้งหมด',
+    trendText: t('centralFinance.dashboard.metrics.trendNeutral'),
   },
 ]);
 
@@ -291,13 +301,13 @@ const revenueChange = '+8.4%';
 const changeClass = 'text-positive';
 
 const rawBars = [
-  { day: 'จ', amount: 980000, isToday: false },
-  { day: 'อ', amount: 1152300, isToday: false },
-  { day: 'พ', amount: 870000, isToday: false },
-  { day: 'พฤ', amount: 1340000, isToday: false },
-  { day: 'ศ', amount: 1100000, isToday: false },
-  { day: 'ส', amount: 430000, isToday: false },
-  { day: 'วันนี้', amount: 1248500, isToday: true },
+  { day: t('centralFinance.dashboard.revenueChart.days.mon'), amount: 980000, isToday: false },
+  { day: t('centralFinance.dashboard.revenueChart.days.tue'), amount: 1152300, isToday: false },
+  { day: t('centralFinance.dashboard.revenueChart.days.wed'), amount: 870000, isToday: false },
+  { day: t('centralFinance.dashboard.revenueChart.days.thu'), amount: 1340000, isToday: false },
+  { day: t('centralFinance.dashboard.revenueChart.days.fri'), amount: 1100000, isToday: false },
+  { day: t('centralFinance.dashboard.revenueChart.days.sat'), amount: 430000, isToday: false },
+  { day: t('centralFinance.dashboard.revenueChart.days.today'), amount: 1248500, isToday: true },
 ];
 
 const chartBars = computed(() => {
@@ -313,101 +323,101 @@ const chartBars = computed(() => {
 // ── Fund Source Status ──────────────────────────────────────
 const fundSourceStatus = computed(() => [
   {
-    label: 'รอดำเนินการ (Pending)',
+    label: t('centralFinance.dashboard.fundSourceStatus.pending'),
     count: financeStore.requests.filter((r) => r.status === 'new').length,
     icon: 'hourglass_top',
     bg: 'rgba(217, 119, 6, 0.12)',
     color: '#b45309',
-    badge: 'รอ',
+    badge: t('centralFinance.dashboard.fundSourceStatus.badges.pending'),
     badgeColor: 'warning',
   },
   {
-    label: 'ดำเนินการเสร็จสิ้นแล้ว',
+    label: t('centralFinance.dashboard.fundSourceStatus.completed'),
     count: financeStore.requests.filter((r) => r.status === 'completed').length,
     icon: 'check_circle',
     bg: 'rgba(4, 120, 87, 0.12)',
     color: '#047857',
-    badge: 'เสร็จ',
+    badge: t('centralFinance.dashboard.fundSourceStatus.badges.completed'),
     badgeColor: 'positive',
   },
   {
-    label: 'รอตรวจสอบเอกสาร',
+    label: t('centralFinance.dashboard.fundSourceStatus.processing'),
     count: financeStore.requests.filter((r) => r.status === 'processing').length,
     icon: 'find_in_page',
     bg: 'rgba(29, 78, 216, 0.12)',
     color: '#1d4ed8',
-    badge: 'ตรวจสอบ',
+    badge: t('centralFinance.dashboard.fundSourceStatus.badges.processing'),
     badgeColor: 'blue-7',
   },
   {
-    label: 'ส่งคืน / แก้ไข',
+    label: t('centralFinance.dashboard.fundSourceStatus.rejected'),
     count: financeStore.requests.filter((r) => r.status === 'rejected').length,
     icon: 'reply',
     bg: 'rgba(220, 38, 38, 0.1)',
     color: '#b91c1c',
-    badge: 'แก้ไข',
+    badge: t('centralFinance.dashboard.fundSourceStatus.badges.rejected'),
     badgeColor: 'negative',
   },
 ]);
 
 // ── Recent Activities ───────────────────────────────────────
-const recentActivities = [
+const recentActivities = computed(() => [
   {
-    title: 'คณะวิทยาศาสตร์ส่งคำขอเพิ่มแหล่งเงินใหม่',
-    time: 'วันนี้ 10:42',
-    detail: 'หมวดหมู่: งบดำเนินการ — รอการออกเลขแหล่งเงิน',
+    title: t('centralFinance.dashboard.activities.items.scienceFacultyRequest'),
+    time: t('centralFinance.dashboard.activities.items.scienceFacultyTime'),
+    detail: t('centralFinance.dashboard.activities.items.scienceFacultyDetail'),
     icon: 'add_circle',
     color: 'teal',
   },
   {
-    title: 'ออกเลขแหล่งเงิน #FN-2569-0247 เรียบร้อย',
-    time: 'วันนี้ 09:18',
-    detail: 'คณะบริหารธุรกิจ — งบลงทุนครุภัณฑ์',
+    title: t('centralFinance.dashboard.activities.items.issueSuccess'),
+    time: t('centralFinance.dashboard.activities.items.issueTime'),
+    detail: t('centralFinance.dashboard.activities.items.issueDetail'),
     icon: 'receipt_long',
     color: 'primary',
   },
   {
-    title: 'ส่งออกรายงานยอดรับเงิน ประจำวัน',
-    time: 'วันนี้ 08:05',
-    detail: 'รายงาน PDF ถูกสร้างและส่งไปยังอีเมลกองคลัง',
+    title: t('centralFinance.dashboard.activities.items.exportSuccess'),
+    time: t('centralFinance.dashboard.activities.items.exportTime'),
+    detail: t('centralFinance.dashboard.activities.items.exportDetail'),
     icon: 'file_download',
     color: 'orange',
   },
   {
-    title: 'คณะพยาบาลศาสตร์ส่งเอกสารประกอบคำขอ',
-    time: 'เมื่อวาน 15:34',
-    detail: 'รออนุมัติจากหัวหน้ากองคลัง',
+    title: t('centralFinance.dashboard.activities.items.nursingFacultyRequest'),
+    time: t('centralFinance.dashboard.activities.items.nursingFacultyTime'),
+    detail: t('centralFinance.dashboard.activities.items.nursingFacultyDetail'),
     icon: 'upload_file',
     color: 'blue',
   },
   {
-    title: 'แก้ไขคำขอ #FN-2569-0241 ส่งคืนแล้ว',
-    time: 'เมื่อวาน 11:00',
-    detail: 'เอกสารประกอบไม่ครบ — แจ้งคณะต้นสังกัดแล้ว',
+    title: t('centralFinance.dashboard.activities.items.editReturned'),
+    time: t('centralFinance.dashboard.activities.items.editTime'),
+    detail: t('centralFinance.dashboard.activities.items.editDetail'),
     icon: 'reply',
     color: 'negative',
   },
-];
+]);
 
 // ── Quick Shortcuts ─────────────────────────────────────────
-const shortcuts = [
+const shortcuts = computed(() => [
   {
     icon: 'add_circle_outline',
-    title: 'ออกเลขแหล่งเงิน',
-    detail: 'บันทึกและออกรหัสแหล่งเงินสำหรับคำขอที่ได้รับอนุมัติ',
+    title: t('centralFinance.dashboard.quickLinks.addFundSource'),
+    detail: t('centralFinance.dashboard.shortcuts.addFundSourceDetail'),
     bg: 'rgba(4, 120, 87, 0.1)',
     color: '#047857',
     to: '/central-finance/fund-sources',
   },
   {
     icon: 'summarize',
-    title: 'ส่งออกรายงาน',
-    detail: 'สร้างและดาวน์โหลดรายงานยอดรับเงินในรูปแบบ PDF หรือ Excel',
+    title: t('centralFinance.dashboard.actions.exportReport'),
+    detail: t('centralFinance.dashboard.shortcuts.exportReportDetail'),
     bg: 'rgba(29, 78, 216, 0.1)',
     color: '#1d4ed8',
     to: '/central-finance/reports',
   },
-];
+]);
 </script>
 
 <style lang="scss" scoped>

@@ -1,16 +1,16 @@
 <template>
   <q-page class="admin-page finance-add-fund-page">
     <AdminPageHero
-      eyebrow="Central Finance · การจัดการรหัสบัญชี"
+      :eyebrow="$t('centralFinance.addFundSource.hero.eyebrow')"
       eyebrow-icon="account_balance"
-      title="ออกเลขแหล่งเงินใหม่"
-      description="กำหนดรหัสแหล่งเงินในระบบบัญชีกลาง พร้อมระบบรันเลขและตรวจสอบความซ้ำซ้อนอัตโนมัติ"
+      :title="$t('centralFinance.addFundSource.hero.title')"
+      :description="$t('centralFinance.addFundSource.hero.desc')"
     >
       <template #actions>
         <AdminActionButton
           variant="outline"
           icon="arrow_back"
-          label="ย้อนกลับ"
+          :label="$t('centralFinance.addFundSource.actions.back')"
           no-caps
           @click="onBack"
         />
@@ -21,7 +21,7 @@
       <div class="row q-col-gutter-lg">
         <!-- Form Section -->
         <div class="col-12 col-md-8">
-          <AdminSurfaceCard title="ข้อมูลแหล่งเงิน" :accent="true">
+          <AdminSurfaceCard :title="$t('centralFinance.addFundSource.form.title')" :accent="true">
             <div class="row q-col-gutter-md">
               <!-- Fund Type -->
               <div class="col-12 col-sm-6">
@@ -29,7 +29,7 @@
                   v-model="form.fundType"
                   outlined
                   dense
-                  label="ประเภทเงิน *"
+                  :label="$t('centralFinance.addFundSource.form.fundType')"
                   :options="fundTypeOptions"
                   emit-value
                   map-options
@@ -44,7 +44,7 @@
                   v-model="form.fiscalYear"
                   outlined
                   dense
-                  label="ปีงบประมาณ *"
+                  :label="$t('centralFinance.addFundSource.form.fiscalYear')"
                   :options="yearOptions"
                   class="admin-editor-field"
                   @update:model-value="generateFundCode"
@@ -57,8 +57,8 @@
                   v-model="form.nameTh"
                   outlined
                   dense
-                  label="ชื่อแหล่งเงิน (ภาษาไทย) *"
-                  placeholder="เช่น เงินงบประมาณแผ่นดินเพื่อการวิจัย..."
+                  :label="$t('centralFinance.addFundSource.form.nameTh')"
+                  :placeholder="$t('centralFinance.addFundSource.form.nameThPlaceholder')"
                   class="admin-editor-field"
                 />
               </div>
@@ -69,8 +69,8 @@
                   v-model="form.nameEn"
                   outlined
                   dense
-                  label="ชื่อแหล่งเงิน (ภาษาอังกฤษ)"
-                  placeholder="e.g. Government Budget for Research..."
+                  :label="$t('centralFinance.addFundSource.form.nameEn')"
+                  :placeholder="$t('centralFinance.addFundSource.form.nameEnPlaceholder')"
                   class="admin-editor-field"
                 />
               </div>
@@ -82,7 +82,7 @@
                   outlined
                   dense
                   type="textarea"
-                  label="หมายเหตุ / รายละเอียดเพิ่มเติม"
+                  :label="$t('centralFinance.addFundSource.form.note')"
                   rows="3"
                   class="admin-editor-field"
                 />
@@ -92,7 +92,7 @@
               <div class="col-12 q-mt-md">
                 <q-toggle
                   v-model="form.isNotifyFaculty"
-                  label="ระบบแจ้งเตือน: ส่งเลขแหล่งเงินกลับไปยังคณะ"
+                  :label="$t('centralFinance.addFundSource.form.notifyToggle')"
                   color="primary"
                   class="text-weight-bold"
                 />
@@ -105,7 +105,7 @@
                     v-model="form.notifyFaculty"
                     outlined
                     dense
-                    label="ส่งไปยังส่วนงาน *"
+                    :label="$t('centralFinance.addFundSource.form.notifyFaculty')"
                     :options="facultyOptions"
                     class="admin-editor-field"
                   />
@@ -115,8 +115,8 @@
                     v-model="form.notifyApprover"
                     outlined
                     dense
-                    label="ชื่อผู้ดำเนินการ / ผู้อนุมัติ *"
-                    placeholder="เช่น นางสมศรี การเงินกลาง"
+                    :label="$t('centralFinance.addFundSource.form.notifyApprover')"
+                    :placeholder="$t('centralFinance.addFundSource.form.notifyApproverPlaceholder')"
                     class="admin-editor-field"
                   />
                 </div>
@@ -126,8 +126,8 @@
                     outlined
                     dense
                     type="textarea"
-                    label="บันทึกหมายเหตุเพิ่มเติมถึงคณะ"
-                    placeholder="เช่น อนุมัติเรียบร้อย กรุณาใช้รหัสนี้ในใบเสร็จถัดไป"
+                    :label="$t('centralFinance.addFundSource.form.notifyNote')"
+                    :placeholder="$t('centralFinance.addFundSource.form.notifyNotePlaceholder')"
                     rows="2"
                     class="admin-editor-field"
                   />
@@ -140,19 +140,20 @@
         <!-- Result & Auto-Generate Section -->
         <div class="col-12 col-md-4">
           <div class="sticky-side">
-            <AdminSurfaceCard title="รหัสแหล่งเงินระบบ" tone="glass">
+            <AdminSurfaceCard :title="$t('centralFinance.addFundSource.result.title')" tone="glass">
               <div class="fund-code-display text-center q-pa-lg">
                 <div class="text-overline text-grey-7 q-mb-xs">
-                  รหัสที่ระบบเสนอ (Auto-Generated)
+                  {{ $t('centralFinance.addFundSource.result.generatedCode') }}
                 </div>
                 <div class="fund-code-value" :class="{ 'is-duplicate': isDuplicate }">
-                  {{ form.fundCode || 'รอระบุข้อมูล' }}
+                  {{ form.fundCode || $t('centralFinance.addFundSource.result.waitInfo') }}
                 </div>
                 <div v-if="isDuplicate" class="text-negative text-caption q-mt-sm">
-                  <q-icon name="error" /> รหัสนี้มีอยู่ในระบบแล้ว กรุณาตรวจสอบ
+                  <q-icon name="error" /> {{ $t('centralFinance.addFundSource.result.duplicate') }}
                 </div>
                 <div v-else-if="form.fundCode" class="text-positive text-caption q-mt-sm">
-                  <q-icon name="check_circle" /> รหัสพร้อมใช้งาน
+                  <q-icon name="check_circle" />
+                  {{ $t('centralFinance.addFundSource.result.ready') }}
                 </div>
               </div>
 
@@ -160,12 +161,12 @@
 
               <div class="q-px-md q-pb-md">
                 <p class="text-caption text-grey-8">
-                  โครงสร้างรหัส: <code>[ประเภท]-[ปี]-[ลำดับ]</code><br />
-                  ระบบจะตรวจสอบเลขล่าสุดอัตโนมัติเมื่อเลือกประเภทเงินและปีงบประมาณ
+                  {{ $t('centralFinance.addFundSource.result.structure') }}<br />
+                  {{ $t('centralFinance.addFundSource.result.structureHint') }}
                 </p>
 
                 <AdminActionButton
-                  label="บันทึกและออกเลข"
+                  :label="$t('centralFinance.addFundSource.result.saveBtn')"
                   icon="save"
                   class="full-width q-mt-md"
                   :disabled="!isValid || isDuplicate || isSaving"
@@ -175,7 +176,7 @@
 
                 <AdminActionButton
                   variant="outline"
-                  label="ตรวจสอบความซ้ำซ้อน"
+                  :label="$t('centralFinance.addFundSource.result.checkDuplicateBtn')"
                   icon="spellcheck"
                   class="full-width q-mt-sm"
                   :disabled="!form.fundCode"
@@ -187,11 +188,12 @@
             <AdminSurfaceCard class="q-mt-md info-card" tone="glass">
               <div class="flex items-center gap-sm">
                 <q-icon name="info" color="primary" size="20px" />
-                <span class="text-weight-bold">คำแนะนำ</span>
+                <span class="text-weight-bold">{{
+                  $t('centralFinance.addFundSource.tips.title')
+                }}</span>
               </div>
               <p class="text-caption q-mt-sm q-mb-none text-grey-8">
-                การออกเลขแหล่งเงินใหม่จะมีผลต่อการทำบัญชีรายรับ-รายจ่ายของคณะต่างๆ
-                กรุณาตรวจสอบความถูกต้องของชื่อและประเภทเงินก่อนบันทึก
+                {{ $t('centralFinance.addFundSource.tips.content') }}
               </p>
             </AdminSurfaceCard>
           </div>
@@ -209,11 +211,14 @@
           <div class="success-icon-wrap">
             <q-icon name="check_circle" color="positive" size="80px" />
           </div>
-          <div class="text-h5 text-weight-bold q-mt-md">ออกเลขแหล่งเงินสำเร็จ</div>
-          <div class="text-subtitle1 q-mt-sm">
-            รหัสแหล่งเงินคือ: <span class="text-primary text-weight-bold">{{ savedCode }}</span>
+          <div class="text-h5 text-weight-bold q-mt-md">
+            {{ $t('centralFinance.addFundSource.success.title') }}
           </div>
-          <p class="text-grey-7 q-mt-md">ระบบได้บันทึกข้อมูลแหล่งเงินใหม่เรียบร้อยแล้ว</p>
+          <div class="text-subtitle1 q-mt-sm">
+            {{ $t('centralFinance.addFundSource.success.codeIs') }}
+            <span class="text-primary text-weight-bold">{{ savedCode }}</span>
+          </div>
+          <p class="text-grey-7 q-mt-md">{{ $t('centralFinance.addFundSource.success.desc') }}</p>
         </q-card-section>
 
         <q-card-actions align="center">
@@ -221,7 +226,7 @@
             unelevated
             rounded
             color="primary"
-            label="ตกลง"
+            :label="$t('ok')"
             class="px-lg"
             @click="onDialogClose"
           />
@@ -234,6 +239,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
@@ -241,6 +247,7 @@ import { useQuasar } from 'quasar';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 
 const router = useRouter();
+const { t } = useI18n();
 const $q = useQuasar();
 const financeStore = useCentralFinanceStore();
 
@@ -271,13 +278,13 @@ const facultyOptions = [
   'สำนักคอมพิวเตอร์',
 ];
 
-const fundTypeOptions = [
-  { label: 'เงินงบประมาณ (Budget)', value: 'BG' },
-  { label: 'เงินรายได้ (Revenue)', value: 'RV' },
-  { label: 'เงินบริจาค (Donation)', value: 'DN' },
-  { label: 'เงินกองทุน (Fund)', value: 'FD' },
-  { label: 'อื่นๆ (Other)', value: 'OT' },
-];
+const fundTypeOptions = computed(() => [
+  { label: t('centralFinance.addFundSource.form.fundTypes.budget'), value: 'BG' },
+  { label: t('centralFinance.addFundSource.form.fundTypes.revenue'), value: 'RV' },
+  { label: t('centralFinance.addFundSource.form.fundTypes.donation'), value: 'DN' },
+  { label: t('centralFinance.addFundSource.form.fundTypes.fund'), value: 'FD' },
+  { label: t('centralFinance.addFundSource.form.fundTypes.other'), value: 'OT' },
+]);
 
 const yearOptions = ['2566', '2567', '2568', '2569'];
 
@@ -307,7 +314,7 @@ function generateFundCode() {
 function checkDuplicate() {
   if (!form.fundCode) return;
 
-  $q.loading.show({ message: 'กำลังตรวจสอบความซ้ำซ้อน...' });
+  $q.loading.show({ message: t('centralFinance.addFundSource.notif.checking') });
 
   // Simulate API delay
   setTimeout(() => {
@@ -322,13 +329,13 @@ function checkDuplicate() {
     if (isDuplicate.value) {
       $q.notify({
         type: 'negative',
-        message: 'พบรหัสซ้ำในระบบ!',
-        caption: 'รหัสนี้ถูกใช้งานไปแล้วโดยโครงการอื่น',
+        message: t('centralFinance.addFundSource.notif.duplicateError'),
+        caption: t('centralFinance.addFundSource.notif.duplicateDesc'),
       });
     } else {
       $q.notify({
         type: 'positive',
-        message: 'รหัสนี้สามารถใช้งานได้',
+        message: t('centralFinance.addFundSource.notif.available'),
         icon: 'check',
       });
     }
