@@ -344,7 +344,7 @@ async function onRegister(): Promise<void> {
 
   try {
     await wait(700);
-    const result = authStore.registerLearner({
+    const result = await authStore.registerLearner({
       firstNameTh: registerForm.firstNameTh,
       lastNameTh: registerForm.lastNameTh,
       firstNameEn: registerForm.firstNameEn,

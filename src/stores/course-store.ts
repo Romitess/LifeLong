@@ -6,15 +6,11 @@ import type { CourseDetail } from 'src/types/course-detail';
 import {
   DEMO_INSTRUCTOR_EMAIL,
   DEMO_INSTRUCTOR_ID,
-  MOCK_COURSES,
-  MOCK_COURSE_DETAILS,
   getMockCourseInstructorOwner,
 } from 'src/data/mock-courses';
 
 const STORAGE_KEY = 'lll-courses';
 const DETAIL_STORAGE_KEY = 'lll-course-details';
-const LEGACY_DEMO_PREVIEW_VIDEO_URL =
-  'https://videos.pexels.com/video-files/855734/855734-hd_1920_1080_25fps.mp4';
 
 type CourseInstructorOwner = {
   id?: string;
@@ -70,10 +66,8 @@ function mapBackendCourse(course: BackendCourse): Course | null {
   const isActive = course.status === 'Y';
   const startDate = course.startDate ?? '2026-06-01';
   const endDate = course.endDate ?? '2026-09-30';
-  const activeStatus =
-    MOCK_COURSES.find((candidate) => candidate.isActive)?.status ?? 'เปิดรับสมัคร';
-  const inactiveStatus =
-    MOCK_COURSES.find((candidate) => !candidate.isActive)?.status ?? activeStatus;
+  const activeStatus = 'เปิดรับสมัคร';
+  const inactiveStatus = 'เปิดรับสมัคร';
 
   return {
     id: `db-${course.id}`,
@@ -148,41 +142,6 @@ function ensureCourseDetailInstructorOwner(detail: CourseDetail): CourseDetail {
       email: instructorEmail,
     },
   };
-}
-
-function mergeStoredCourseDetails(
-  mockDetails: Record<string, CourseDetail>,
-  storedDetails: Record<string, CourseDetail>,
-): Record<string, CourseDetail> {
-  const detailIds = new Set([...Object.keys(mockDetails), ...Object.keys(storedDetails)]);
-
-  return Object.fromEntries(
-    [...detailIds].map((courseId) => {
-      const mockDetail = mockDetails[courseId];
-      const storedDetail = storedDetails[courseId];
-
-      if (!mockDetail) {
-        return [courseId, storedDetail];
-      }
-
-      if (!storedDetail) {
-        return [courseId, mockDetail];
-      }
-
-      return [
-        courseId,
-        {
-          ...storedDetail,
-          ...mockDetail,
-          previewVideoUrl:
-            storedDetail.previewVideoUrl === LEGACY_DEMO_PREVIEW_VIDEO_URL
-              ? mockDetail.previewVideoUrl
-              : (storedDetail.previewVideoUrl ?? mockDetail.previewVideoUrl),
-          previewPosterUrl: storedDetail.previewPosterUrl ?? mockDetail.previewPosterUrl,
-        },
-      ];
-    }),
-  );
 }
 
 function readStoredCourses(): Course[] | null {
@@ -296,36 +255,30 @@ export const useCourseStore = defineStore('course', {
     setSelectedCategory(category: string | null) {
       this.selectedCategory = category;
     },
-    /** Initialize courses from mock data. */
+    /** Initialize courses from backend. */
     init() {
       if (this.courses.length > 0) {
-        this.courses = this.courses.map(ensureCourseInstructorOwner);
-        this.courseDetails = Object.fromEntries(
-          Object.entries(this.courseDetails).map(([courseId, detail]) => [
-            courseId,
-            ensureCourseDetailInstructorOwner(detail),
-          ]),
-        );
-        writeStoredCourses(this.courses);
-        writeStoredCourseDetails(this.courseDetails);
         void this.fetchBackendCourses();
         return;
       }
 
-      const storedCourses = readStoredCourses() ?? [];
-      const mockIds = new Set(MOCK_COURSES.map((c) => c.id));
-
-      // Prioritize MOCK_COURSES and keep user-created courses from storage
-      const mergedCourses = [...MOCK_COURSES, ...storedCourses.filter((c) => !mockIds.has(c.id))];
-
-      this.courses = mergedCourses.map(ensureCourseInstructorOwner);
+      // Clear any stale mock data from localStorage (mock courses had ids like "1","2",... or "course-xxx")
+      const storedCourses = (readStoredCourses() ?? []).filter(
+        (c) => c.id.startsWith('db-') || c.id.startsWith('registered-'),
+      );
+      this.courses = storedCourses.map(ensureCourseInstructorOwner);
 
       const storedDetails = readStoredCourseDetails() ?? {};
-      // Prioritize MOCK_COURSE_DETAILS over stored details
-      this.courseDetails = Object.fromEntries(
-        Object.entries(mergeStoredCourseDetails(MOCK_COURSE_DETAILS, storedDetails)).map(
-          ([courseId, detail]) => [courseId, ensureCourseDetailInstructorOwner(detail)],
+      const cleanedDetails = Object.fromEntries(
+        Object.entries(storedDetails).filter(
+          ([id]) => id.startsWith('db-') || id.startsWith('registered-'),
         ),
+      );
+      this.courseDetails = Object.fromEntries(
+        Object.entries(cleanedDetails).map(([courseId, detail]) => [
+          courseId,
+          ensureCourseDetailInstructorOwner(detail),
+        ]),
       );
 
       writeStoredCourses(this.courses);
@@ -361,16 +314,16 @@ export const useCourseStore = defineStore('course', {
         this.backendCoursesLoading = false;
       }
     },
-    /** Load courses from API — shows only Moodle API courses (no mock data mixed in) */
+    /** Load courses from API — replaces all courses with backend data */
     loadFromApi(apiCourses: Course[]) {
       this.courses = apiCourses.map(ensureCourseInstructorOwner);
 
       const storedDetails = readStoredCourseDetails() ?? {};
-      const mergedMockDetails = mergeStoredCourseDetails(MOCK_COURSE_DETAILS, storedDetails);
-
       const apiDetails: Record<string, CourseDetail> = {};
       for (const course of apiCourses) {
-        apiDetails[course.id] = mergedMockDetails[course.id] ?? createFallbackCourseDetail(course);
+        const stored = storedDetails[course.id];
+        const isValidStored = stored && stored.code === course.code;
+        apiDetails[course.id] = isValidStored ? stored : createFallbackCourseDetail(course);
       }
 
       this.courseDetails = Object.fromEntries(
@@ -379,6 +332,9 @@ export const useCourseStore = defineStore('course', {
           ensureCourseDetailInstructorOwner(detail),
         ]),
       );
+
+      writeStoredCourses(this.courses);
+      writeStoredCourseDetails(this.courseDetails);
     },
     /** Add a new course to the list */
     addCourse(course: Course) {

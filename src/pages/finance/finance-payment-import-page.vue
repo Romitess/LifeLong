@@ -23,15 +23,16 @@
 
               <div class="context-group">
                 <div class="context-label">{{ $t('finance.paymentImport.fileStatus') }}</div>
-                <div class="context-status" :class="{ 'is-selected': selectedFile }">
+                <div class="context-status" :class="{ 'is-selected': selectedFiles.length }">
                   <q-icon
-                    :name="selectedFile ? 'check_circle' : 'pending'"
+                    :name="selectedFiles.length ? 'check_circle' : 'pending'"
                     size="18px"
                     class="q-mr-sm"
                   />
                   {{
-                    selectedFile
-                      ? $t('finance.paymentImport.readyForImport')
+                    selectedFiles.length
+                      ? $t('finance.paymentImport.readyForImport') +
+                        ` (${$t('finance.paymentImport.fileCount', { count: selectedFiles.length })})`
                       : $t('finance.paymentImport.noFileSelected')
                   }}
                 </div>
@@ -48,63 +49,83 @@
             <div class="import-station-action">
               <div
                 class="fancy-upload-zone"
-                :class="{ 'has-file': selectedFile }"
+                :class="{ 'has-file': selectedFiles.length }"
                 @click="fileInput?.pickFiles()"
               >
                 <!-- State: Empty -->
-                <div v-if="!selectedFile" class="fancy-upload-zone__content">
+                <div v-if="!selectedFiles.length" class="fancy-upload-zone__content">
                   <div class="fancy-upload-zone__icon">
                     <q-icon name="cloud_upload" />
                   </div>
                   <div class="fancy-upload-zone__text">
                     <div class="main-text">{{ $t('finance.paymentImport.clickToSelect') }}</div>
-                    <div class="sub-text">{{ $t('finance.paymentImport.dragOrClick') }}</div>
+                    <div class="sub-text">{{ $t('finance.paymentImport.csvOnlyHint') }}</div>
                   </div>
                 </div>
 
-                <!-- State: File Selected -->
-                <div v-else class="selected-file-display">
-                  <div class="selected-file-icon">
-                    <q-icon name="description" size="48px" />
+                <!-- State: Files Selected -->
+                <div v-else class="selected-files-list">
+                  <div
+                    v-for="(file, idx) in selectedFiles"
+                    :key="idx"
+                    class="selected-file-display"
+                  >
+                    <div class="selected-file-icon">
+                      <q-icon name="description" size="32px" />
+                    </div>
+                    <div class="selected-file-details">
+                      <div class="file-name">{{ file.name }}</div>
+                      <div class="file-meta">{{ formatFileSize(file.size) }}</div>
+                    </div>
+                    <q-btn
+                      flat
+                      round
+                      dense
+                      color="negative"
+                      icon="close"
+                      size="sm"
+                      class="btn-clear-file"
+                      @click.stop="removeFile(idx)"
+                    />
                   </div>
-                  <div class="selected-file-details">
-                    <div class="file-name">{{ selectedFile.name }}</div>
-                    <div class="file-meta">{{ formatFileSize(selectedFile.size) }}</div>
-                  </div>
-                  <q-btn
-                    flat
-                    round
-                    dense
-                    color="primary"
-                    icon="cancel"
-                    class="btn-clear-file"
-                    @click.stop="selectedFile = null"
-                  />
                 </div>
 
                 <!-- Hidden actual file input -->
                 <q-file
                   ref="fileInput"
-                  v-model="selectedFile"
+                  v-model="tempPickedFiles"
                   class="hidden"
-                  accept=".csv,.xlsx,.xls"
+                  accept=".csv"
+                  multiple
                   @update:model-value="onFileSelected"
                 />
               </div>
 
-              <q-btn
-                unelevated
-                color="amber-8"
-                :label="$t('finance.paymentImport.savePaymentData')"
-                no-caps
-                class="full-width q-mt-lg btn-save-import"
-                :disable="!selectedFile"
-                @click="saveImportedFile"
-              >
-                <template #loading>
-                  <q-spinner-facebook />
-                </template>
-              </q-btn>
+              <div class="row q-mt-lg q-gutter-sm">
+                <q-btn
+                  unelevated
+                  outline
+                  color="grey-7"
+                  :label="$t('finance.paymentImport.cancelBtn')"
+                  no-caps
+                  class="col btn-cancel-import"
+                  :disable="!selectedFiles.length"
+                  @click="cancelImport"
+                />
+                <q-btn
+                  unelevated
+                  color="amber-8"
+                  :label="$t('finance.paymentImport.savePaymentData')"
+                  no-caps
+                  class="col btn-save-import"
+                  :disable="!selectedFiles.length"
+                  @click="saveImportedFile"
+                >
+                  <template #loading>
+                    <q-spinner-facebook />
+                  </template>
+                </q-btn>
+              </div>
             </div>
           </div>
         </AdminSurfaceCard>
@@ -354,7 +375,8 @@ type ImportedPaymentRow = {
 
 const defaultDivision = 'สำนักคอมพิวเตอร์ (82994)';
 
-const selectedFile = ref<File | null>(null);
+const selectedFiles = ref<File[]>([]);
+const tempPickedFiles = ref<File[]>([]);
 const fileInput = ref<{ pickFiles: () => void } | null>(null);
 const tableSearch = ref('');
 const isVerifying = ref(false);
@@ -609,20 +631,37 @@ function formatCurrency(value: number) {
   return `฿${value.toLocaleString('th-TH')}`;
 }
 
-function onFileSelected(file: File | null) {
-  if (!file) {
+function onFileSelected(files: File[] | null) {
+  if (!files || !files.length) {
     return;
   }
+  // Append new CSV files to existing list (avoid duplicates by name)
+  const existingNames = new Set(selectedFiles.value.map((f) => f.name));
+  const newCsvFiles = files.filter(
+    (f) => f.name.toLowerCase().endsWith('.csv') && !existingNames.has(f.name),
+  );
+  selectedFiles.value = [...selectedFiles.value, ...newCsvFiles];
+  // Reset temp so q-file doesn't hold stale state
+  tempPickedFiles.value = [];
+}
+
+function removeFile(index: number) {
+  selectedFiles.value = selectedFiles.value.filter((_, i) => i !== index);
+}
+
+function cancelImport() {
+  selectedFiles.value = [];
 }
 
 function saveImportedFile() {
-  if (!selectedFile.value) {
+  if (!selectedFiles.value.length) {
     return;
   }
 
+  const names = selectedFiles.value.map((f) => f.name).join(', ');
   $q.notify({
     type: 'positive',
-    message: t('finance.paymentImport.notifications.fileSaved', { name: selectedFile.value.name }),
+    message: t('finance.paymentImport.notifications.fileSaved', { name: names }),
   });
 }
 
@@ -654,7 +693,7 @@ function confirmClearAll() {
     persistent: true,
   }).onOk(() => {
     importedRows.value = [];
-    selectedFile.value = null;
+    selectedFiles.value = [];
     $q.notify({ type: 'positive', message: t('finance.paymentImport.notifications.cleared') });
   });
 }
@@ -775,21 +814,33 @@ function confirmClearAll() {
   justify-content: flex-start;
 }
 
+.selected-files-list {
+  width: 100%;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 8px 12px;
+}
+
 .selected-file-display {
   display: flex;
   align-items: center;
-  padding: 30px;
+  padding: 10px 14px;
   width: 100%;
-  gap: 24px;
+  gap: 12px;
   animation: slideUp 0.4s ease;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
 }
 
 .selected-file-icon {
-  width: 72px;
-  height: 72px;
+  width: 40px;
+  height: 40px;
   background: rgba(var(--admin-primary-rgb), 0.08);
   color: var(--admin-primary);
-  border-radius: 18px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -801,17 +852,17 @@ function confirmClearAll() {
 .selected-file-icon::after {
   content: '✓';
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 22px;
-  height: 22px;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
   background: #21ba45;
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 9px;
   font-weight: bold;
   border: 2px solid white;
 }
@@ -822,17 +873,18 @@ function confirmClearAll() {
 }
 
 .selected-file-details .file-name {
-  font-size: 1.25rem;
-  font-weight: 900;
+  font-size: 0.95rem;
+  font-weight: 800;
   color: var(--admin-navy);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 2px;
+  max-width: 360px;
+  margin-bottom: 1px;
 }
 
 .selected-file-details .file-meta {
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   color: var(--admin-grey-6);
   font-weight: 700;
 }

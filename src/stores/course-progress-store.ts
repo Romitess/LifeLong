@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { getCourseStructure, getFlatLessons } from 'src/data/course-structure';
 import { useAuthStore } from 'src/stores/auth-store';
 
 export interface QuizAttempt {
@@ -15,58 +14,10 @@ interface StoredCourseProgress {
 }
 
 const STORAGE_KEY = 'lll-course-progress';
-const DEFAULT_MOCK_USER_ID = 'mock-student-user';
-const DOCUMENT_MOCK_SEED_KEY = 'lll-course-progress-document-seed-v1';
-const DOCUMENT_MOCK_COMPLETED_COURSE_ID = '1';
-
-const DOCUMENT_MOCK_COMPLETED_LESSONS = getFlatLessons(
-  getCourseStructure(DOCUMENT_MOCK_COMPLETED_COURSE_ID),
-).map((lesson) => lesson.title);
 
 const DEFAULT_PROGRESS_STATE: StoredCourseProgress = {
-  completedLessonsByUser: {
-    [DEFAULT_MOCK_USER_ID]: {
-      '1': DOCUMENT_MOCK_COMPLETED_LESSONS,
-      '2': [
-        'ประกาศจากผู้สอน',
-        'กลุ่มพูดคุยแลกเปลี่ยน',
-        'ภาพรวมของคอร์สเรียน',
-        'วิธีการเรียนและการประเมินผล',
-        'Pre-test วัดความรู้พื้นฐาน',
-        'AI เข้ามาเปลี่ยนวงการออกแบบอย่างไร?',
-        'Canva AI คืออะไร?',
-        'โครงสร้างของ Prompt ที่ดี',
-      ],
-      '3': [
-        'Welcome to Recraft Workflow',
-        'Overview of Recraft.ai Features',
-        'Understanding Vector Generation',
-        'Writing Prompts for Illustration Styles',
-      ],
-    },
-  },
-  quizAttemptsByUser: {
-    [DEFAULT_MOCK_USER_ID]: {
-      '1': {
-        แบบทดสอบเรื่องอัญมณีและราศี: [
-          {
-            score: 7,
-            total: 10,
-            date: '2026-04-30T09:40:00+07:00',
-          },
-        ],
-      },
-      '2': {
-        'Pre-test วัดความรู้พื้นฐาน': [
-          {
-            score: 8,
-            total: 10,
-            date: '2026-04-29T19:10:00+07:00',
-          },
-        ],
-      },
-    },
-  },
+  completedLessonsByUser: {},
+  quizAttemptsByUser: {},
 };
 
 function getAuthenticatedUserId(): string | null {
@@ -174,35 +125,18 @@ function readStoredProgress(): StoredCourseProgress {
   const rawValue = window.localStorage.getItem(STORAGE_KEY);
   if (!rawValue) {
     const defaultState = cloneProgressState(DEFAULT_PROGRESS_STATE);
-    window.localStorage.setItem(DOCUMENT_MOCK_SEED_KEY, 'true');
     writeStoredProgress(defaultState);
     return defaultState;
   }
 
   try {
     const parsedValue = JSON.parse(rawValue) as Partial<StoredCourseProgress>;
-    const normalizedState = {
+    return {
       completedLessonsByUser: normalizeCompletedLessons(parsedValue.completedLessonsByUser),
       quizAttemptsByUser: normalizeQuizAttempts(parsedValue.quizAttemptsByUser),
     };
-
-    if (window.localStorage.getItem(DOCUMENT_MOCK_SEED_KEY) !== 'true') {
-      if (!normalizedState.completedLessonsByUser[DEFAULT_MOCK_USER_ID]) {
-        normalizedState.completedLessonsByUser[DEFAULT_MOCK_USER_ID] = {};
-      }
-
-      normalizedState.completedLessonsByUser[DEFAULT_MOCK_USER_ID][
-        DOCUMENT_MOCK_COMPLETED_COURSE_ID
-      ] = [...DOCUMENT_MOCK_COMPLETED_LESSONS];
-
-      window.localStorage.setItem(DOCUMENT_MOCK_SEED_KEY, 'true');
-      writeStoredProgress(normalizedState);
-    }
-
-    return normalizedState;
   } catch {
     const defaultState = cloneProgressState(DEFAULT_PROGRESS_STATE);
-    window.localStorage.setItem(DOCUMENT_MOCK_SEED_KEY, 'true');
     writeStoredProgress(defaultState);
     return defaultState;
   }

@@ -310,6 +310,8 @@ export default {
       clickToSelect: 'Click to select payment file',
       dragOrClick: 'Drag and drop file here, or click to browse',
       savePaymentData: 'Save Payment Data',
+      fileCount: '{count} file(s)',
+      csvOnlyHint: 'Only .csv files are supported. You can select multiple files.',
       importedRecords: 'Imported Payment Records',
       showingRecords: 'Showing {filtered} of {total} records',
       searchPlaceholder: 'Search...',

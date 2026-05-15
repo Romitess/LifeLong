@@ -1,5 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia';
-import { MOCK_COURSES } from 'src/data/mock-courses';
+import { api } from 'src/boot/axios';
 import { useAuthStore } from 'src/stores/auth-store';
 import type { CourseDetail } from 'src/types/course-detail';
 
@@ -36,43 +36,6 @@ interface CourseRegistrationState {
 }
 
 const STORAGE_KEY = 'lll-course-registrations';
-const DEFAULT_MOCK_USER_ID = 'mock-student-user';
-
-function createMockRegistration(
-  courseId: string,
-  registeredAt: string,
-  userId = DEFAULT_MOCK_USER_ID,
-): CourseRegistration | null {
-  const course = MOCK_COURSES.find((candidate) => candidate.id === courseId);
-
-  if (!course) {
-    return null;
-  }
-
-  return {
-    id: `${userId}-${course.id}`,
-    courseId: course.id,
-    courseCode: course.code,
-    courseTitle: course.title,
-    courseImageUrl: course.imageUrl,
-    courseCover: {
-      icon: course.cover.icon,
-      accentColor: course.cover.accentColor,
-      backgroundColor: course.cover.backgroundColor,
-    },
-    eligibility: 'student',
-    paymentStatus: course.isFree ? 'free' : 'paid',
-    registeredAt,
-    userId,
-  };
-}
-
-const DEFAULT_REGISTRATIONS: CourseRegistration[] = [
-  createMockRegistration('2', '2026-04-27T09:00:00+07:00'),
-  createMockRegistration('3', '2026-04-28T14:30:00+07:00'),
-  createMockRegistration('1', '2026-04-29T08:15:00+07:00'),
-  createMockRegistration('4', '2026-04-30T10:45:00+07:00'),
-].filter((registration): registration is CourseRegistration => registration !== null);
 
 function getAuthenticatedUserId(): string | null {
   const authStore = useAuthStore();
@@ -86,13 +49,12 @@ function getAuthenticatedUserId(): string | null {
 
 function readStoredRegistrations(): CourseRegistration[] {
   if (typeof window === 'undefined') {
-    return DEFAULT_REGISTRATIONS;
+    return [];
   }
 
   const rawValue = window.localStorage.getItem(STORAGE_KEY);
   if (!rawValue) {
-    writeStoredRegistrations(DEFAULT_REGISTRATIONS);
-    return DEFAULT_REGISTRATIONS;
+    return [];
   }
 
   try {
@@ -100,23 +62,12 @@ function readStoredRegistrations(): CourseRegistration[] {
     if (!Array.isArray(parsedValue)) {
       return [];
     }
-
-    const registrationMap = new Map(
-      [...parsedValue, ...DEFAULT_REGISTRATIONS].map((registration) => {
-        const withPaymentStatus = {
-          ...registration,
-          paymentStatus: registration.paymentStatus || 'paid',
-        };
-        return [withPaymentStatus.id, withPaymentStatus];
-      }),
+    // Filter out any stale mock registrations (mock course IDs were plain numbers or "course-xxx")
+    return parsedValue.filter(
+      (r) => r.courseId.startsWith('db-') || r.courseId.startsWith('registered-'),
     );
-    const mergedRegistrations = Array.from(registrationMap.values());
-    writeStoredRegistrations(mergedRegistrations);
-
-    return mergedRegistrations;
   } catch {
-    writeStoredRegistrations(DEFAULT_REGISTRATIONS);
-    return DEFAULT_REGISTRATIONS;
+    return [];
   }
 }
 
@@ -160,12 +111,13 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
   },
 
   actions: {
-    registerCourse(
+    async registerCourse(
       course: CourseDetail,
       eligibility: LearnerEligibility,
       paymentStatus: 'pending' | 'paid' | 'free' = 'paid',
       registrantInfo?: RegistrantInfo,
-    ): void {
+    ): Promise<void> {
+      const authStore = useAuthStore();
       const userId = getAuthenticatedUserId();
 
       if (!userId) {
@@ -200,6 +152,16 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
           }
         }
         return;
+      }
+
+      // Sync enrollment to backend (LLL DB + Moodle)
+      const username = authStore.user?.username;
+      if (username && course.code) {
+        try {
+          await api.post('/api/moodle/enroll', { courseCode: course.code, username });
+        } catch (err) {
+          console.warn('Backend enrollment failed (saving locally only):', err);
+        }
       }
 
       const nextRegistrations: CourseRegistration[] = [

@@ -413,7 +413,7 @@ async function submitPaidInfo(): Promise<void> {
   // Close the info dialog first
   showPaidInfoDialog.value = false;
 
-  courseRegistrationStore.registerCourse(enrollingCourse.value, 'student', 'pending', {
+  void courseRegistrationStore.registerCourse(enrollingCourse.value, 'student', 'pending', {
     fullName: userInfo.name,
     email: userInfo.email,
     phone: userInfo.phone,
@@ -433,7 +433,7 @@ async function submitPaidInfo(): Promise<void> {
 
 function confirmFreeEnroll(): void {
   if (enrollingCourse.value) {
-    courseRegistrationStore.registerCourse(enrollingCourse.value, 'student');
+    void courseRegistrationStore.registerCourse(enrollingCourse.value, 'student');
     emit('enrolled', enrollingCourse.value.id);
   }
   showFreeConfirmDialog.value = false;
@@ -448,7 +448,7 @@ function onPaymentDone(): void {
   const issuedAt = new Date();
   const nextReceiptId = createReceiptId();
 
-  courseRegistrationStore.registerCourse(enrollingCourse.value, 'student', 'paid');
+  void courseRegistrationStore.registerCourse(enrollingCourse.value, 'student', 'paid');
   coursePaymentStore.recordPaidCourse(enrollingCourse.value, {
     receiptId: nextReceiptId,
     paymentDate: issuedAt.toISOString(),
