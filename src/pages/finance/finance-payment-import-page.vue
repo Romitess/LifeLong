@@ -208,6 +208,7 @@
                 :label="$t('finance.paymentImport.searchApplicantBtn')"
                 no-caps
                 class="rounded-borders"
+                @click="router.push('/finance/applicant-search')"
               />
             </div>
 
@@ -333,9 +334,11 @@ import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
 import { useQuasar, type QTableProps } from 'quasar';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 
 const $q = useQuasar();
 const { t } = useI18n();
+const router = useRouter();
 
 type ImportedPaymentRow = {
   id: string;

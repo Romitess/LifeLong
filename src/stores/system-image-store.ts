@@ -64,8 +64,8 @@ const SYSTEM_HERO_TEMPLATE_STORAGE_KEY = 'lll-system-hero-template-v4';
 
 const DEFAULT_FONT_STACK = "'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif";
 const BACKEND_PUBLIC_URL = (
-  (import.meta.env.VITE_BACKEND_PUBLIC_URL as string | undefined) ||
-  (import.meta.env.VITE_API_URL as string | undefined) ||
+  import.meta.env.VITE_BACKEND_PUBLIC_URL ||
+  import.meta.env.VITE_API_URL ||
   'http://localhost:3000'
 )
   .replace(/\/api\/?$/, '')

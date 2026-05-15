@@ -121,6 +121,11 @@ const routes: RouteRecordRaw[] = [
         meta: { role: 'finance' },
       },
       {
+        path: 'finance/applicant-search',
+        component: () => import('pages/finance/finance-applicant-search-page.vue'),
+        meta: { role: 'finance' },
+      },
+      {
         path: 'central-finance/dashboard',
         component: () => import('pages/centralfinance/finance-dashboard-page.vue'),
         meta: { role: 'central_finance' },

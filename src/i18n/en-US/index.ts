@@ -369,6 +369,37 @@ export default {
         actions: 'Actions',
       },
     },
+    applicantSearch: {
+      title: 'Search Applicant Data',
+      description: 'Search and verify applicant registration and payment status',
+      searchCardTitle: 'Search Conditions',
+      searchBtn: 'Search',
+      resultsTitle: 'Search Results',
+      resultsSubtitle: 'Applicant data for {faculty} (COMPCODE : {code})',
+      fields: {
+        learnerRef: 'Learner ID (Ref1)',
+        learnerRefPlaceholder: 'e.g. 6700017',
+        appRef: 'Application Ref (Ref2)',
+        appRefPlaceholder: 'e.g. 6751300100003',
+        learnerName: 'Learner Name',
+        learnerNamePlaceholder: 'e.g. Somchai JaiDee',
+      },
+      columns: {
+        no: 'No.',
+        learnerRef: 'Learner ID (Ref1)',
+        appRef: 'App Ref (Ref2)',
+        learnerName: 'Learner Name',
+        amount: 'Amount',
+        courseInfo: 'Course / Faculty',
+        status: 'Payment Status',
+        contact: 'Contact',
+      },
+      status: {
+        paid: 'Paid',
+        pending: 'Pending',
+      },
+      noData: 'No applicant data found matching the conditions',
+    },
   },
   footer: {
     about: 'About Us',
@@ -952,6 +983,11 @@ export default {
         duplicateDesc: 'This code is already used by another project',
         available: 'This code is available for use',
       },
+    },
+  },
+  common: {
+    faculties: {
+      computerCenter: 'Computer Center',
     },
   },
 };

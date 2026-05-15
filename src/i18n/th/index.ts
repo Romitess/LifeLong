@@ -371,6 +371,37 @@ export default {
         actions: 'จัดการ',
       },
     },
+    applicantSearch: {
+      title: 'ค้นหาข้อมูลผู้สมัคร',
+      description: 'ค้นหาและตรวจสอบข้อมูลการสมัครเรียนและการชำระเงิน',
+      searchCardTitle: 'เงื่อนไขการค้นหา',
+      searchBtn: 'ค้นหาข้อมูล',
+      resultsTitle: 'ผลการค้นหา',
+      resultsSubtitle: 'ข้อมูลผู้สมัคร {faculty} (COMPCODE : {code})',
+      fields: {
+        learnerRef: 'รหัสประจำตัวผู้เรียน (Ref1)',
+        learnerRefPlaceholder: 'เช่น 6700017',
+        appRef: 'เลขอ้างอิงการสมัคร (Ref2)',
+        appRefPlaceholder: 'เช่น 6751300100003',
+        learnerName: 'ชื่อผู้เรียน',
+        learnerNamePlaceholder: 'เช่น สมชาย ใจดี',
+      },
+      columns: {
+        no: 'ลำดับ',
+        learnerRef: 'รหัสผู้เรียน (Ref1)',
+        appRef: 'เลขสมัคร (Ref2)',
+        learnerName: 'ชื่อผู้เรียน',
+        amount: 'จำนวนเงิน',
+        courseInfo: 'หลักสูตร/คณะ',
+        status: 'สถานะการชำระเงิน',
+        contact: 'ติดต่อ',
+      },
+      status: {
+        paid: 'ชำระเงินแล้ว',
+        pending: 'ยังไม่ชำระเงิน',
+      },
+      noData: 'ไม่พบข้อมูลผู้สมัครที่ตรงตามเงื่อนไข',
+    },
   },
   footer: {
     about: 'เกี่ยวกับเรา',
@@ -958,6 +989,11 @@ export default {
         duplicateDesc: 'รหัสนี้ถูกใช้งานไปแล้วโดยโครงการอื่น',
         available: 'รหัสนี้สามารถใช้งานได้',
       },
+    },
+  },
+  common: {
+    faculties: {
+      computerCenter: 'สำนักคอมพิวเตอร์',
     },
   },
 };
