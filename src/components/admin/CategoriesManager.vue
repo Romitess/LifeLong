@@ -44,9 +44,7 @@
         />
       </template>
 
-      <BaseSpinner v-if="isLoading" />
-
-      <div v-else ref="tableWrapperRef" class="categories-manager__table">
+      <div class="categories-manager__table">
         <table class="categories-manager-table">
           <colgroup>
             <col class="categories-manager-table__col-index" />
@@ -67,191 +65,262 @@
             </tr>
           </thead>
           <tbody>
-            <template v-for="(category, categoryIndex) in paginatedCategories" :key="category.id">
-              <tr class="categories-manager-table__category-row">
+            <template v-if="isLoading">
+              <tr
+                v-for="skeletonIndex in rowsPerPage"
+                :key="`skeleton-${skeletonIndex}`"
+                class="categories-manager-table__skeleton-row"
+              >
                 <td class="categories-manager-table__index">
-                  {{ getCategoryNumber(categoryIndex) }}
+                  <q-skeleton type="text" width="28px" class="q-mx-auto" />
                 </td>
                 <td>
                   <div class="category-cell">
-                    <span class="category-cell__icon category-cell__icon--category">
-                      <q-icon name="category" />
-                    </span>
-                    <div class="category-cell__copy">
-                      <span class="category-cell__name">
-                        {{ category.name || '-' }}
-                      </span>
-                      <span class="category-cell__meta">
-                        หมวด {{ getCategoryNumber(categoryIndex) }} ·
-                        {{ category.subcategories.length }} หมู่
-                      </span>
+                    <q-skeleton type="QAvatar" size="36px" />
+                    <div class="category-cell__copy category-cell__copy--skeleton">
+                      <q-skeleton type="text" width="82%" />
+                      <q-skeleton type="text" width="44%" />
                     </div>
                   </div>
                 </td>
                 <td class="text-right">
                   <div class="category-cell__courses">
-                    <strong>{{ category.courseCount }}</strong>
-                    <span>เปิดรับ {{ category.activeCourseCount }}/{{ category.courseCount }}</span>
+                    <q-skeleton
+                      type="text"
+                      width="34px"
+                      class="categories-manager__metric-skeleton"
+                    />
+                    <q-skeleton
+                      type="text"
+                      width="74px"
+                      class="categories-manager__metric-skeleton"
+                    />
                   </div>
                 </td>
                 <td>
                   <div class="categories-manager__progress">
-                    <q-linear-progress
-                      rounded
-                      size="7px"
-                      :value="getTrendValue(category)"
-                      :color="category.activeCourseCount > 0 ? 'primary' : 'grey-5'"
-                    />
-                    <span>{{ Math.round(getTrendValue(category) * 100) }}%</span>
+                    <q-skeleton type="rect" height="7px" />
+                    <q-skeleton type="text" width="28px" />
                   </div>
                 </td>
                 <td class="text-center">
                   <div class="category-cell__status">
-                    <q-toggle
-                      :model-value="category.activeFlag === 'Y'"
-                      color="positive"
-                      dense
-                      @update:model-value="(value) => toggleCategoryStatus(category, value)"
-                    />
-                    <q-badge
-                      rounded
-                      :color="category.activeFlag === 'Y' ? 'positive' : 'grey-6'"
-                      :label="category.activeFlag === 'Y' ? 'เผยแพร่' : 'ซ่อน'"
-                      class="category-cell__status-badge"
-                    />
+                    <q-skeleton type="QToggle" width="42px" />
+                    <q-skeleton type="QChip" width="64px" />
                   </div>
                 </td>
                 <td class="text-right">
                   <div class="category-cell__actions">
-                    <q-btn
-                      dense
-                      unelevated
-                      no-caps
-                      icon="add"
-                      label="เพิ่มหมู่"
-                      size="sm"
-                      class="categories-manager__sub-add-btn"
-                      @click="openCreateSubcategoryDialog(category)"
-                    />
-                    <q-btn
-                      dense
-                      round
-                      unelevated
-                      icon="edit"
-                      size="sm"
-                      class="categories-manager-action-btn categories-manager-action-btn--edit"
-                      aria-label="แก้ไขหมวด"
-                      @click="openEditCategoryDialog(category)"
-                    >
-                      <q-tooltip>แก้ไขหมวด</q-tooltip>
-                    </q-btn>
-                    <q-btn
-                      dense
-                      round
-                      unelevated
-                      icon="delete"
-                      size="sm"
-                      class="categories-manager-action-btn categories-manager-action-btn--delete"
-                      :disable="!canDeleteCategory(category)"
-                      aria-label="ลบหมวด"
-                      @click="askDeleteCategory(category)"
-                    >
-                      <q-tooltip>ลบหมวด</q-tooltip>
-                    </q-btn>
-                  </div>
-                </td>
-              </tr>
-
-              <tr
-                v-for="(subcategory, subcategoryIndex) in category.subcategories"
-                :key="`sub-${subcategory.id}`"
-                class="categories-manager-table__subcategory-row"
-              >
-                <td class="categories-manager-table__index">
-                  {{ getCategoryNumber(categoryIndex) }}.{{ subcategoryIndex + 1 }}
-                </td>
-                <td>
-                  <div class="category-cell category-cell--subcategory">
-                    <span class="category-cell__icon category-cell__icon--subcategory">
-                      <q-icon name="subdirectory_arrow_right" />
-                    </span>
-                    <div class="category-cell__copy">
-                      <span class="category-cell__name">
-                        {{ subcategory.name || '-' }}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="category-cell__courses">
-                    <strong>{{ subcategory.courseCount }}</strong>
-                    <span
-                      >เปิดรับ {{ subcategory.activeCourseCount }}/{{
-                        subcategory.courseCount
-                      }}</span
-                    >
-                  </div>
-                </td>
-                <td>
-                  <div class="categories-manager__progress">
-                    <q-linear-progress
-                      rounded
-                      size="7px"
-                      :value="getTrendValue(subcategory)"
-                      :color="subcategory.activeCourseCount > 0 ? 'primary' : 'grey-5'"
-                    />
-                    <span>{{ Math.round(getTrendValue(subcategory) * 100) }}%</span>
-                  </div>
-                </td>
-                <td class="text-center">
-                  <div class="category-cell__status">
-                    <q-toggle
-                      :model-value="subcategory.activeFlag === 'Y'"
-                      color="positive"
-                      dense
-                      @update:model-value="(value) => toggleSubcategoryStatus(subcategory, value)"
-                    />
-                    <q-badge
-                      rounded
-                      :color="subcategory.activeFlag === 'Y' ? 'positive' : 'grey-6'"
-                      :label="subcategory.activeFlag === 'Y' ? 'เผยแพร่' : 'ซ่อน'"
-                      class="category-cell__status-badge"
-                    />
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="category-cell__actions">
-                    <q-btn
-                      dense
-                      round
-                      unelevated
-                      icon="edit"
-                      size="sm"
-                      class="categories-manager-action-btn categories-manager-action-btn--edit"
-                      aria-label="แก้ไขหมู่"
-                      @click="openEditSubcategoryDialog(subcategory)"
-                    >
-                      <q-tooltip>แก้ไขหมู่</q-tooltip>
-                    </q-btn>
-                    <q-btn
-                      dense
-                      round
-                      unelevated
-                      icon="delete"
-                      size="sm"
-                      class="categories-manager-action-btn categories-manager-action-btn--delete"
-                      :disable="subcategory.courseCount > 0"
-                      aria-label="ลบหมู่"
-                      @click="askDeleteSubcategory(subcategory)"
-                    >
-                      <q-tooltip>ลบหมู่</q-tooltip>
-                    </q-btn>
+                    <q-skeleton type="QBtn" width="82px" height="34px" />
+                    <q-skeleton type="QBtn" width="34px" height="34px" />
+                    <q-skeleton type="QBtn" width="34px" height="34px" />
                   </div>
                 </td>
               </tr>
             </template>
 
-            <tr v-if="filteredCategories.length === 0 && !isLoading">
+            <template v-else-if="paginatedRows.length > 0">
+              <tr
+                v-for="row in paginatedRows"
+                :key="row.key"
+                :class="
+                  row.kind === 'category'
+                    ? 'categories-manager-table__category-row'
+                    : 'categories-manager-table__subcategory-row'
+                "
+              >
+                <td class="categories-manager-table__index">
+                  {{ row.displayIndex }}
+                </td>
+                <td>
+                  <div
+                    :class="[
+                      'category-cell',
+                      { 'category-cell--subcategory': row.kind === 'subcategory' },
+                    ]"
+                  >
+                    <span
+                      :class="[
+                        'category-cell__icon',
+                        row.kind === 'category'
+                          ? 'category-cell__icon--category'
+                          : 'category-cell__icon--subcategory',
+                      ]"
+                    >
+                      <q-icon
+                        :name="row.kind === 'category' ? 'category' : 'subdirectory_arrow_right'"
+                      />
+                    </span>
+                    <div class="category-cell__copy">
+                      <span class="category-cell__name">
+                        {{
+                          row.kind === 'category'
+                            ? row.category.name || '-'
+                            : row.subcategory.name || '-'
+                        }}
+                      </span>
+                      <span v-if="row.kind === 'category'" class="category-cell__meta">
+                        หมวด {{ row.displayIndex }} · {{ row.category.subcategories.length }} หมู่
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-right">
+                  <div class="category-cell__courses">
+                    <strong>{{
+                      row.kind === 'category'
+                        ? row.category.courseCount
+                        : row.subcategory.courseCount
+                    }}</strong>
+                    <span>
+                      เปิดรับ
+                      {{
+                        row.kind === 'category'
+                          ? `${row.category.activeCourseCount}/${row.category.courseCount}`
+                          : `${row.subcategory.activeCourseCount}/${row.subcategory.courseCount}`
+                      }}
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <div class="categories-manager__progress">
+                    <q-linear-progress
+                      rounded
+                      size="7px"
+                      :value="
+                        getTrendValue(row.kind === 'category' ? row.category : row.subcategory)
+                      "
+                      :color="
+                        (row.kind === 'category'
+                          ? row.category.activeCourseCount
+                          : row.subcategory.activeCourseCount) > 0
+                          ? 'primary'
+                          : 'grey-5'
+                      "
+                    />
+                    <span>
+                      {{
+                        Math.round(
+                          getTrendValue(row.kind === 'category' ? row.category : row.subcategory) *
+                            100,
+                        )
+                      }}%
+                    </span>
+                  </div>
+                </td>
+                <td class="text-center">
+                  <div class="category-cell__status">
+                    <q-toggle
+                      :model-value="
+                        row.kind === 'category'
+                          ? row.category.activeFlag === 'Y'
+                          : row.subcategory.activeFlag === 'Y'
+                      "
+                      color="positive"
+                      dense
+                      @update:model-value="
+                        (value) =>
+                          row.kind === 'category'
+                            ? toggleCategoryStatus(row.category, value)
+                            : toggleSubcategoryStatus(row.subcategory, value)
+                      "
+                    />
+                    <q-badge
+                      rounded
+                      :color="
+                        (row.kind === 'category'
+                          ? row.category.activeFlag
+                          : row.subcategory.activeFlag) === 'Y'
+                          ? 'positive'
+                          : 'grey-6'
+                      "
+                      :label="
+                        (row.kind === 'category'
+                          ? row.category.activeFlag
+                          : row.subcategory.activeFlag) === 'Y'
+                          ? 'เผยแพร่'
+                          : 'ซ่อน'
+                      "
+                      class="category-cell__status-badge"
+                    />
+                  </div>
+                </td>
+                <td class="text-right">
+                  <div class="category-cell__actions">
+                    <template v-if="row.kind === 'category'">
+                      <q-btn
+                        dense
+                        unelevated
+                        no-caps
+                        icon="add"
+                        label="เพิ่มหมู่"
+                        size="sm"
+                        class="categories-manager__sub-add-btn"
+                        @click="openCreateSubcategoryDialog(row.category)"
+                      />
+                      <q-btn
+                        dense
+                        round
+                        unelevated
+                        icon="edit"
+                        size="sm"
+                        class="categories-manager-action-btn categories-manager-action-btn--edit"
+                        aria-label="แก้ไขหมวด"
+                        @click="openEditCategoryDialog(row.category)"
+                      >
+                        <q-tooltip>แก้ไขหมวด</q-tooltip>
+                      </q-btn>
+                      <q-btn
+                        dense
+                        round
+                        unelevated
+                        icon="delete"
+                        size="sm"
+                        class="categories-manager-action-btn categories-manager-action-btn--delete"
+                        :disable="!canDeleteCategory(row.category)"
+                        aria-label="ลบหมวด"
+                        @click="askDeleteCategory(row.category)"
+                      >
+                        <q-tooltip>ลบหมวด</q-tooltip>
+                      </q-btn>
+                    </template>
+                    <template v-else>
+                      <q-btn
+                        dense
+                        round
+                        unelevated
+                        icon="edit"
+                        size="sm"
+                        class="categories-manager-action-btn categories-manager-action-btn--edit"
+                        aria-label="แก้ไขหมู่"
+                        @click="openEditSubcategoryDialog(row.subcategory)"
+                      >
+                        <q-tooltip>แก้ไขหมู่</q-tooltip>
+                      </q-btn>
+                      <q-btn
+                        dense
+                        round
+                        unelevated
+                        icon="delete"
+                        size="sm"
+                        class="categories-manager-action-btn categories-manager-action-btn--delete"
+                        :disable="row.subcategory.courseCount > 0"
+                        aria-label="ลบหมู่"
+                        @click="askDeleteSubcategory(row.subcategory)"
+                      >
+                        <q-tooltip>ลบหมู่</q-tooltip>
+                      </q-btn>
+                    </template>
+                  </div>
+                </td>
+              </tr>
+
+              <tr v-if="fillerRowHeight > 0" class="categories-manager-table__filler-row">
+                <td colspan="6" :style="{ height: `${fillerRowHeight}px` }"></td>
+              </tr>
+            </template>
+
+            <tr v-else>
               <td colspan="6" class="categories-manager-table__empty">
                 {{ search ? 'ไม่พบหมวด/หมู่ที่ตรงกับคำค้นหา' : 'ยังไม่มีหมวด/หมู่ในระบบ' }}
               </td>
@@ -259,10 +328,7 @@
           </tbody>
         </table>
       </div>
-      <div
-        v-if="!isLoading && filteredCategories.length > categoriesPerPage"
-        class="categories-manager__pagination"
-      >
+      <div v-if="totalPages > 1" ref="paginationRef" class="categories-manager__pagination">
         <BasePagination
           :model-value="currentPage"
           :max="totalPages"
@@ -357,7 +423,6 @@ import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
-import BaseSpinner from 'components/base/BaseSpinner.vue';
 import { useAdminCourseTaxonomy } from 'src/composables/use-admin-course-taxonomy';
 import type { AdminCourseCategory, AdminCourseSubcategory } from 'src/types/admin-course-taxonomy';
 
@@ -385,12 +450,28 @@ interface TaxonomyFormState {
   isActive: boolean;
 }
 
+type CategoryTableRow =
+  | {
+      kind: 'category';
+      key: string;
+      displayIndex: string;
+      category: AdminCourseCategory;
+    }
+  | {
+      kind: 'subcategory';
+      key: string;
+      displayIndex: string;
+      subcategory: AdminCourseSubcategory;
+    };
+
 const $q = useQuasar();
 const formRef = ref<QForm | null>(null);
-const tableWrapperRef = ref<HTMLElement | null>(null);
 const search = ref('');
 const currentPage = ref(1);
-const categoriesPerPage = 8;
+const rowsPerPage = 10;
+const tableRowHeight = 76;
+const tableHeaderHeight = 57;
+const paginationRef = ref<HTMLElement | null>(null);
 const formDialogOpen = ref(false);
 const confirmDeleteOpen = ref(false);
 const dialogMode = ref<DialogMode>('category');
@@ -447,13 +528,37 @@ const filteredCategories = computed<AdminCourseCategory[]>(() => {
     .filter((category): category is AdminCourseCategory => category !== null);
 });
 
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredCategories.value.length / categoriesPerPage)),
-);
+const flattenedRows = computed<CategoryTableRow[]>(() => {
+  let categoryNumber = 0;
 
-const paginatedCategories = computed<AdminCourseCategory[]>(() => {
-  const start = (currentPage.value - 1) * categoriesPerPage;
-  return filteredCategories.value.slice(start, start + categoriesPerPage);
+  return filteredCategories.value.flatMap((category) => {
+    categoryNumber += 1;
+
+    const categoryRow: CategoryTableRow = {
+      kind: 'category',
+      key: `cat-${category.id}`,
+      displayIndex: `${categoryNumber}`,
+      category,
+    };
+
+    const subcategoryRows: CategoryTableRow[] = category.subcategories.map(
+      (subcategory, subcategoryIndex) => ({
+        kind: 'subcategory',
+        key: `sub-${subcategory.id}`,
+        displayIndex: `${categoryNumber}.${subcategoryIndex + 1}`,
+        subcategory,
+      }),
+    );
+
+    return [categoryRow, ...subcategoryRows];
+  });
+});
+
+const totalPages = computed(() => Math.max(1, Math.ceil(flattenedRows.value.length / rowsPerPage)));
+
+const paginatedRows = computed<CategoryTableRow[]>(() => {
+  const start = (currentPage.value - 1) * rowsPerPage;
+  return flattenedRows.value.slice(start, start + rowsPerPage);
 });
 
 const categoryStats = computed<CategoryStat[]>(() => [
@@ -526,10 +631,6 @@ function getTrendValue(node: CountableNode): number {
   return node.activeCourseCount / node.courseCount;
 }
 
-function getCategoryNumber(categoryIndex: number): number {
-  return (currentPage.value - 1) * categoriesPerPage + categoryIndex + 1;
-}
-
 function canDeleteCategory(category: AdminCourseCategory): boolean {
   const subcategoryCourseCount = category.subcategories.reduce(
     (sum, subcategory) => sum + subcategory.courseCount,
@@ -539,32 +640,38 @@ function canDeleteCategory(category: AdminCourseCategory): boolean {
   return category.courseCount + subcategoryCourseCount === 0;
 }
 
-function handlePageChange(page: number): void {
-  const previousScrollY = window.scrollY;
-  currentPage.value = page;
+const fillerRowHeight = computed(() =>
+  Math.max(0, (rowsPerPage - paginatedRows.value.length) * tableRowHeight),
+);
 
-  void nextTick(() => {
-    if (tableWrapperRef.value) {
-      tableWrapperRef.value.scrollTop = 0;
-    }
+const tableViewportHeight = `${rowsPerPage * tableRowHeight + tableHeaderHeight}px`;
 
-    const restoreScroll = () => {
-      window.scrollTo({
-        top: previousScrollY,
-        behavior: 'auto',
-      });
-    };
+async function preservePaginationPosition(update: () => Promise<void> | void): Promise<void> {
+  const anchorTop =
+    typeof window !== 'undefined' ? paginationRef.value?.getBoundingClientRect().top : undefined;
 
-    restoreScroll();
-    requestAnimationFrame(() => {
-      restoreScroll();
-      requestAnimationFrame(restoreScroll);
-    });
+  await update();
+  await nextTick();
 
-    const activeElement = document.activeElement;
-    if (activeElement instanceof HTMLElement) {
-      activeElement.blur();
-    }
+  if (typeof window === 'undefined' || anchorTop === undefined || !paginationRef.value) {
+    return;
+  }
+
+  const nextTop = paginationRef.value.getBoundingClientRect().top;
+  if (Math.abs(nextTop - anchorTop) < 1) {
+    return;
+  }
+
+  window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
+}
+
+async function handlePageChange(page: number): Promise<void> {
+  if (page === currentPage.value) {
+    return;
+  }
+
+  await preservePaginationPosition(() => {
+    currentPage.value = page;
   });
 }
 
@@ -771,6 +878,11 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   align-items: stretch;
 }
 
+.categories-manager {
+  --categories-manager-row-height: v-bind('`${tableRowHeight}px`');
+  --categories-manager-table-height: v-bind('tableViewportHeight');
+}
+
 .categories-manager__stats > [class*='col-'] {
   display: flex;
 }
@@ -807,49 +919,38 @@ function notifyError(error: unknown, fallbackMessage: string): void {
 }
 
 .categories-manager__table {
-  position: relative;
-  overflow: auto;
-  min-height: 420px;
-  max-height: min(76vh, 860px);
-  overscroll-behavior: contain;
+  overflow-x: auto;
+  min-height: var(--categories-manager-table-height);
 }
 
 .categories-manager-table {
   width: 100%;
   min-width: 960px;
-  table-layout: fixed;
   border-collapse: collapse;
-  background: #ffffff;
+
+  th,
+  td {
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    vertical-align: middle;
+  }
 
   thead th {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    padding: 14px 18px;
-    color: #64748b;
-    font-size: 0.78rem;
-    font-weight: 900;
+    color: #475467;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    text-align: left;
     background: #f8fafc;
-    border-bottom: 1px solid #dce4ee;
-    white-space: nowrap;
   }
 
-  thead th.text-right {
-    text-align: right;
-  }
-
-  thead th.text-center {
-    text-align: center;
+  tbody tr.categories-manager-table__filler-row:hover,
+  tbody tr.categories-manager-table__skeleton-row:hover {
+    background: transparent;
   }
 
   tbody td {
-    padding: 16px 18px;
-    border-bottom: 1px solid #eef2f7;
-    color: #1f2937;
-    font-size: 0.92rem;
-    vertical-align: top;
+    height: var(--categories-manager-row-height);
   }
 }
 
@@ -870,19 +971,18 @@ function notifyError(error: unknown, fallbackMessage: string): void {
 }
 
 .categories-manager-table__index {
-  width: 72px;
-  color: #94a3b8;
-  font-weight: 850;
+  width: 88px;
+  color: #1d4ed8;
+  font-weight: 800;
   text-align: center;
 }
 
 .categories-manager-table__col-index {
-  width: 72px;
+  width: 88px;
 }
 
 .categories-manager-table__col-name {
   width: auto;
-  min-width: 320px;
 }
 
 .categories-manager-table__col-courses {
@@ -902,10 +1002,21 @@ function notifyError(error: unknown, fallbackMessage: string): void {
 }
 
 .categories-manager-table__empty {
-  padding: 32px 16px !important;
-  color: #94a3b8;
-  font-weight: 700;
+  height: calc(var(--categories-manager-table-height) - 1px);
+  padding: 38px 18px !important;
+  color: #64748b;
   text-align: center;
+  vertical-align: middle !important;
+}
+
+.categories-manager-table__skeleton-row td {
+  background: #ffffff;
+}
+
+.categories-manager-table__filler-row td {
+  padding: 0 !important;
+  border-bottom: 0 !important;
+  background: transparent !important;
 }
 
 .category-cell {
@@ -943,6 +1054,12 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   display: grid;
   gap: 4px;
   min-width: 0;
+  min-height: 56px;
+  align-content: center;
+}
+
+.category-cell__copy--skeleton {
+  width: 100%;
 }
 
 .category-cell__name {
@@ -955,7 +1072,8 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   overflow: hidden;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
+  min-height: calc(1.42em * 2);
   text-wrap: pretty;
 }
 
@@ -968,6 +1086,7 @@ function notifyError(error: unknown, fallbackMessage: string): void {
 
 .category-cell__meta {
   display: block;
+  min-height: 1.2em;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -979,6 +1098,10 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   flex-direction: column;
   align-items: flex-end;
   gap: 3px;
+}
+
+.categories-manager__metric-skeleton {
+  margin-left: auto;
 }
 
 .category-cell__status {
@@ -1010,19 +1133,15 @@ function notifyError(error: unknown, fallbackMessage: string): void {
 
 .categories-manager__pagination {
   display: flex;
-  align-items: center;
   justify-content: center;
   min-height: 72px;
-  padding: 14px 18px;
-  border-top: 1px solid #eef2f7;
-  background: #ffffff;
+  padding: 22px 24px 24px;
 }
 
-.categories-manager__pagination :deep(.q-btn),
-.categories-manager__pagination :deep(.q-btn:hover),
-.categories-manager__pagination :deep(.q-btn:focus),
-.categories-manager__pagination :deep(.q-btn:active) {
-  transform: none !important;
+@media (max-width: 900px) {
+  .categories-manager-table__empty {
+    height: calc(var(--categories-manager-table-height) - 1px);
+  }
 }
 
 .categories-manager-action-btn {

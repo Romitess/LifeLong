@@ -827,7 +827,7 @@ async function onSubmit() {
       accentColor: '#f5a623',
       backgroundColor: '#1e3a5f',
     });
-    const imageUrl =
+    const fallbackImageUrl =
       'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80';
 
     // 1. Create Course in DB + Moodle
@@ -839,7 +839,7 @@ async function onSubmit() {
     formData.append('hours', form.totalHours.toString());
     formData.append('startDate', form.registrationStart);
     formData.append('endDate', form.registrationEnd);
-    formData.append('imageUrl', imageUrl);
+    formData.append('imageUrl', fallbackImageUrl);
     formData.append('price', (form.isFree ? 0 : form.priceExternal).toString());
     formData.append('maxSeats', form.maxSeats.toString());
     formData.append('deliveryModes', JSON.stringify(form.deliveryModes));
@@ -868,13 +868,14 @@ async function onSubmit() {
       formData.append('file', form.image);
     }
 
-    const { data: courseData } = await api.post<{ id: number; data?: { moodleId?: number } }>(
-      '/api/moodle/courses',
-      formData,
-    );
+    const { data: courseData } = await api.post<{
+      id: number;
+      data?: { moodleId?: number; imageUrl?: string | null };
+    }>('/api/moodle/courses', formData);
 
     const dbCourseId = String(courseData.id);
     const moodleCourseId = courseData.data?.moodleId ?? courseData.id;
+    const imageUrl = courseData.data?.imageUrl || fallbackImageUrl;
 
     // 2. Create Activities for each week
     if (moodleCourseId) {

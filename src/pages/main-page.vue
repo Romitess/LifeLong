@@ -22,7 +22,7 @@
             :name="slide.id"
             :img-src="slide.imageUrl"
             class="hero-slide"
-            :style="{ backgroundPosition: slide.backgroundPosition }"
+            :style="getHeroSlideStyle(slide)"
           >
             <div
               class="hero-slide__overlay"
@@ -287,6 +287,7 @@ const heroTypedCharCounts = ref<number[]>([]);
 const heroTypingLineIndex = ref(-1);
 const isHeroTypingComplete = ref(false);
 let heroTypingTimer: ReturnType<typeof setTimeout> | null = null;
+let heroSlideTimer: number | null = null;
 const categoryMap: Record<string, string> = {
   ภาษาและการสื่อสาร: 'langComm',
   สุขภาพและการแพทย์: 'healthMed',
@@ -412,6 +413,7 @@ watch(
     if (!slides.some((slide) => slide.id === heroSlide.value)) {
       heroSlide.value = slides[0]?.id ?? '';
     }
+    restartHeroSlideTimer();
   },
   { immediate: true },
 );
@@ -432,7 +434,35 @@ watch(heroSlideDurationMs, () => {
   if (currentHeroTypeLines.value.length > 0) {
     startHeroTyping();
   }
+  restartHeroSlideTimer();
 });
+
+function clearHeroSlideTimer(): void {
+  if (heroSlideTimer) {
+    window.clearInterval(heroSlideTimer);
+    heroSlideTimer = null;
+  }
+}
+
+function restartHeroSlideTimer(): void {
+  clearHeroSlideTimer();
+
+  if (activeHeroSlides.value.length < 2) {
+    return;
+  }
+
+  heroSlideTimer = window.setInterval(() => {
+    const slides = activeHeroSlides.value;
+    if (slides.length < 2) {
+      clearHeroSlideTimer();
+      return;
+    }
+
+    const currentIndex = slides.findIndex((slide) => slide.id === heroSlide.value);
+    const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % slides.length : 0;
+    heroSlide.value = slides[nextIndex]?.id ?? slides[0]?.id ?? '';
+  }, heroSlideDurationMs.value);
+}
 
 function clearHeroTypingTimer(): void {
   if (heroTypingTimer) {
@@ -622,6 +652,15 @@ function getHeroTextBlockStyle(slide: HeroSlideTemplate): CSSProperties {
   };
 }
 
+function getHeroSlideStyle(slide: HeroSlideTemplate): CSSProperties {
+  return {
+    backgroundImage: `url("${slide.imageUrl}")`,
+    backgroundPosition: slide.backgroundPosition,
+    backgroundSize: 'cover',
+    backgroundRepeat: 'no-repeat',
+  };
+}
+
 function getHeroLineStyle(line: HeroTextLine): CSSProperties {
   return {
     fontFamily: line.fontFamily,
@@ -671,9 +710,13 @@ function onCourseClick(course: Course): void {
 onMounted(() => {
   void fetchCourses();
   startHeroTyping();
+  restartHeroSlideTimer();
 });
 
-onBeforeUnmount(clearHeroTypingTimer);
+onBeforeUnmount(() => {
+  clearHeroTypingTimer();
+  clearHeroSlideTimer();
+});
 </script>
 
 <style lang="scss" scoped>

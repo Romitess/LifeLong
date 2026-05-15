@@ -38,6 +38,7 @@ interface BackendCourse {
   objective?: string | null;
   status?: string | null;
   createUser?: string | null;
+  imageUrl?: string | null;
 }
 
 function normalizeInstructorEmail(email?: string): string {
@@ -83,6 +84,7 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     instructorId: DEMO_INSTRUCTOR_ID,
     instructorEmail: DEMO_INSTRUCTOR_EMAIL,
     imageUrl:
+      course.imageUrl ||
       'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80',
     cover: {
       icon: 'school',
@@ -338,8 +340,11 @@ export const useCourseStore = defineStore('course', {
       this.backendCoursesLoading = true;
 
       try {
-        const { data } = await api.get<BackendCourseResponse>('/api/moodle/courses');
-        const backendCourses = (data.value ?? [])
+        const { data } = await api.get<BackendCourseResponse | BackendCourse[]>(
+          '/api/moodle/courses',
+        );
+        const rawCourses = Array.isArray(data) ? data : (data.value ?? []);
+        const backendCourses = rawCourses
           .map(mapBackendCourse)
           .filter((course): course is Course => Boolean(course));
 
