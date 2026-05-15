@@ -9,7 +9,7 @@
       <template #actions>
         <AdminActionButton
           icon="file_download"
-          label="Export Audit Log"
+          :label="$t('centralFinance.transactions.actions.exportAuditLog')"
           no-caps
           @click="onExportAuditLog"
         />
@@ -50,7 +50,7 @@
             </q-select>
 
             <q-input
-              v-model="dateRange"
+              v-model="dateDisplay"
               outlined
               dense
               bg-color="white"
@@ -162,7 +162,25 @@ const financeStore = useCentralFinanceStore();
 
 const search = ref<string>('');
 const facultyFilter = ref<string | null>(null);
-const dateRange = ref<string>('');
+
+interface DateRange {
+  from: string;
+  to: string;
+}
+
+type QuasarDateValue = string | DateRange | null;
+const dateRange = ref<QuasarDateValue>(null);
+
+const dateDisplay = computed<string>({
+  get(): string {
+    if (!dateRange.value) return '';
+    if (typeof dateRange.value === 'string') return dateRange.value;
+    return `${dateRange.value.from} - ${dateRange.value.to}`;
+  },
+  set(val: string): void {
+    dateRange.value = val;
+  },
+});
 
 const facultyOptions: string[] = [
   'คณะวิทยาการสารสนเทศ',
@@ -230,34 +248,97 @@ const columns = computed<QTableColumn[]>(() => [
 
 const filteredTransactions = computed<Transaction[]>(() => {
   return financeStore.transactions.filter((tx: Transaction) => {
+    // Search filter
     const matchesSearch =
       !search.value ||
       tx.receiptNumber.toLowerCase().includes(search.value.toLowerCase()) ||
       tx.payerName.toLowerCase().includes(search.value.toLowerCase());
 
+    // Faculty filter
     const matchesFaculty = !facultyFilter.value || tx.faculty === facultyFilter.value;
 
-    return matchesSearch && matchesFaculty;
+    // Date range filter
+    let matchesDate = true;
+    if (dateRange.value) {
+      const ts = tx.timestamp || '';
+      const txDate = ts.split(' ')[0]?.replace(/-/g, '/') || '';
+
+      if (typeof dateRange.value === 'string') {
+        if (dateRange.value.includes(' - ')) {
+          const [start, end] = dateRange.value.split(' - ');
+          matchesDate = txDate >= (start || '') && txDate <= (end || '');
+        } else {
+          matchesDate = txDate === dateRange.value;
+        }
+      } else if (dateRange.value && typeof dateRange.value === 'object') {
+        // Quasar date range object { from, to }
+        const { from, to } = dateRange.value;
+        matchesDate = txDate >= from && txDate <= to;
+      }
+    }
+
+    return matchesSearch && matchesFaculty && matchesDate;
   });
 });
 
-function onExportAuditLog() {
-  $q.notify({
-    type: 'positive',
-    message: 'Audit log exported successfully',
-    icon: 'file_download',
+function onExportAuditLog(): void {
+  $q.loading.show({
+    message: t('centralFinance.dashboard.activities.items.exportSuccess'),
+    spinnerColor: 'white',
+    backgroundColor: 'primary',
+    messageColor: 'white',
   });
+
+  setTimeout(() => {
+    // Mock CSV generation
+    const headers: string[] = [
+      t('centralFinance.transactions.table.timestamp'),
+      t('centralFinance.transactions.table.receiptNumber'),
+      t('centralFinance.transactions.table.payer'),
+      t('centralFinance.transactions.table.amount'),
+      t('centralFinance.transactions.table.fundCode'),
+      t('centralFinance.transactions.table.faculty'),
+      t('centralFinance.transactions.table.status'),
+    ];
+
+    const rows: (string | number)[][] = filteredTransactions.value.map((tx) => [
+      tx.timestamp,
+      tx.receiptNumber,
+      tx.payerName,
+      tx.amount,
+      tx.fundCode,
+      tx.faculty,
+      t(`centralFinance.transactions.status.${tx.status}`),
+    ]);
+
+    const csvContent: string = [headers, ...rows].map((e) => e.join(',')).join('\n');
+    const blob: Blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url: string = URL.createObjectURL(blob);
+    const link: HTMLAnchorElement = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `audit-log-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    $q.loading.hide();
+    $q.notify({
+      type: 'positive',
+      message: t('centralFinance.transactions.actions.exportAuditLog') + ' ' + t('success'),
+      icon: 'file_download',
+    });
+  }, 1500);
 }
 
-function onViewAuditLog(row: Transaction) {
+function onViewAuditLog(row: Transaction): void {
   $q.notify({
     type: 'info',
-    message: `Viewing audit log for ${row.receiptNumber}`,
+    message: `${t('centralFinance.transactions.table.viewDetail')} ${row.receiptNumber}`,
     icon: 'visibility',
   });
 }
 
-function onFlagTransaction(row: Transaction) {
+function onFlagTransaction(row: Transaction): void {
   $q.notify({
     type: 'warning',
     message: `Transaction ${row.receiptNumber} has been flagged for review`,

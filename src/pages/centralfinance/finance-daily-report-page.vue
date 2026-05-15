@@ -193,6 +193,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
@@ -201,6 +202,7 @@ import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import type { QTableColumn } from 'quasar';
 import type { Transaction } from 'src/stores/central-finance-store';
 const $q = useQuasar();
+const { t } = useI18n();
 const financeStore = useCentralFinanceStore();
 
 const reportDate = ref('15 May 2026');
@@ -256,20 +258,48 @@ const channelBreakdown = computed<ChannelSummary[]>(() => {
   });
 });
 
-const columns: QTableColumn[] = [
-  { name: 'timestamp', label: 'เวลา', field: 'timestamp', align: 'left', sortable: true },
+const columns = computed<QTableColumn[]>(() => [
+  {
+    name: 'timestamp',
+    label: t('centralFinance.dailyReport.table.timestamp') || 'เวลา',
+    field: 'timestamp',
+    align: 'left',
+    sortable: true,
+  },
   {
     name: 'receiptNumber',
-    label: 'เลขที่ใบเสร็จ',
+    label: t('centralFinance.dailyReport.table.receiptNumber') || 'เลขที่ใบเสร็จ',
     field: 'receiptNumber',
     align: 'left',
     sortable: true,
   },
-  { name: 'payerName', label: 'ผู้ชำระเงิน', field: 'payerName', align: 'left', sortable: true },
-  { name: 'channel', label: 'ช่องทาง', field: 'paymentChannel', align: 'left' },
-  { name: 'amount', label: 'จำนวนเงิน', field: 'amount', align: 'right', sortable: true },
-  { name: 'status', label: 'สถานะ', field: 'status', align: 'center' },
-];
+  {
+    name: 'payerName',
+    label: t('centralFinance.dailyReport.table.payer') || 'ผู้ชำระเงิน',
+    field: 'payerName',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'channel',
+    label: t('centralFinance.dailyReport.table.channel') || 'ช่องทาง',
+    field: 'paymentChannel',
+    align: 'left',
+  },
+  {
+    name: 'amount',
+    label: t('centralFinance.dailyReport.table.amount') || 'จำนวนเงิน',
+    field: 'amount',
+    align: 'right',
+    sortable: true,
+  },
+  {
+    name: 'status',
+    label: t('centralFinance.dailyReport.table.status') || 'สถานะ',
+    field: 'status',
+    align: 'center',
+  },
+]);
 
 function formatCurrency(val: number): string {
   return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(val);
@@ -301,10 +331,10 @@ function getChannelColor(channel: string): string {
   }
 }
 
-function onPrintReport() {
+function onPrintReport(): void {
   $q.notify({
     type: 'positive',
-    message: 'Report is being prepared for printing',
+    message: t('centralFinance.dashboard.activities.items.exportSuccess'),
     icon: 'print',
   });
 }

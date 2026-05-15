@@ -3,11 +3,16 @@
     <AdminPageHero
       :eyebrow="$t('centralFinance.dashboard.hero.eyebrow')"
       eyebrow-icon="analytics"
-      :title="'รายงานแยกตามคณะ/ส่วนงาน'"
-      :description="'วิเคราะห์สัดส่วนรายได้และการจัดเก็บเงินของแต่ละคณะในมหาวิทยาลัย'"
+      :title="$t('centralFinance.facultyRevenue.hero.title')"
+      :description="$t('centralFinance.facultyRevenue.hero.desc')"
     >
       <template #actions>
-        <AdminActionButton icon="file_download" label="Export Report" no-caps @click="onExport" />
+        <AdminActionButton
+          icon="file_download"
+          :label="$t('centralFinance.dashboard.actions.exportReport')"
+          no-caps
+          @click="onExport"
+        />
       </template>
     </AdminPageHero>
 
@@ -17,16 +22,18 @@
         <div class="col-12">
           <AdminSurfaceCard :accent="false">
             <div class="row items-center q-gutter-md">
-              <div class="text-subtitle1 text-weight-bold text-navy">รอบการรายงาน:</div>
+              <div class="text-subtitle1 text-weight-bold text-navy">
+                {{ $t('centralFinance.facultyRevenue.filters.period') }}
+              </div>
               <q-btn-toggle
                 v-model="period"
                 toggle-color="primary"
                 flat
                 unelevated
                 :options="[
-                  { label: 'รายเดือน', value: 'month' },
-                  { label: 'รายไตรมาส', value: 'quarter' },
-                  { label: 'รายปี', value: 'year' },
+                  { label: $t('centralFinance.facultyRevenue.filters.month'), value: 'month' },
+                  { label: $t('centralFinance.facultyRevenue.filters.quarter'), value: 'quarter' },
+                  { label: $t('centralFinance.facultyRevenue.filters.year'), value: 'year' },
                 ]"
                 class="period-toggle"
               />
@@ -37,7 +44,7 @@
                 outlined
                 dense
                 bg-color="white"
-                label="ปีงบประมาณ"
+                :label="$t('centralFinance.facultyRevenue.filters.fiscalYear')"
                 style="width: 150px"
               />
             </div>
@@ -49,11 +56,17 @@
       <div class="row q-col-gutter-lg">
         <!-- Pie Chart -->
         <div class="col-12 col-lg-5">
-          <AdminSurfaceCard :accent="false" title="สัดส่วนรายได้แยกตามคณะ" class="h-full">
+          <AdminSurfaceCard
+            :accent="false"
+            :title="$t('centralFinance.facultyRevenue.chart.title')"
+            class="h-full"
+          >
             <div class="column items-center justify-center q-pa-md">
               <RevenueDonutChart :data="chartData" />
               <div class="q-mt-lg text-center">
-                <div class="text-caption text-grey-6 q-mb-xs">รายรับรวมทั้งหมดประจำปี 2569</div>
+                <div class="text-caption text-grey-6 q-mb-xs">
+                  {{ $t('centralFinance.facultyRevenue.chart.totalRevenue') }} {{ selectedYear }}
+                </div>
                 <div class="text-h4 text-weight-bolder text-navy">
                   {{ formatCurrency(totalRevenue) }}
                 </div>
@@ -66,7 +79,7 @@
         <div class="col-12 col-lg-7">
           <AdminSurfaceCard
             :accent="false"
-            title="ตารางเปรียบเทียบรายคณะ"
+            :title="$t('centralFinance.facultyRevenue.table.title')"
             body-padding="none"
             class="h-full"
           >
@@ -110,6 +123,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import type { QTableColumn } from 'quasar';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
@@ -118,12 +132,27 @@ import RevenueDonutChart from 'components/finance/RevenueDonutChart.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const financeStore = useCentralFinanceStore();
 
-const period = ref('month');
-const selectedYear = ref('2569');
+const period = ref<string>('month');
+const selectedYear = ref<string>('2569');
 
-const facultyStats = computed(() => {
+interface FacultyStat {
+  name: string;
+  revenue: number;
+  percent: number;
+  color: string;
+}
+
+interface ChartDataItem {
+  name: string;
+  amount: number;
+  percent: number;
+  color: string;
+}
+
+const facultyStats = computed<FacultyStat[]>(() => {
   // Aggregate revenue from transactions
   const statsMap = new Map<string, number>();
 
@@ -163,12 +192,12 @@ const facultyStats = computed(() => {
     .sort((a, b) => b.revenue - a.revenue);
 });
 
-const totalRevenue = computed(() => {
-  return facultyStats.value.reduce((sum, f) => sum + f.revenue, 0);
+const totalRevenue = computed<number>(() => {
+  return facultyStats.value.reduce((sum: number, f: FacultyStat) => sum + f.revenue, 0);
 });
 
-const chartData = computed(() => {
-  return facultyStats.value.map((f) => ({
+const chartData = computed<ChartDataItem[]>(() => {
+  return facultyStats.value.map((f: FacultyStat) => ({
     name: f.name,
     amount: f.revenue,
     percent: f.percent,
@@ -176,11 +205,29 @@ const chartData = computed(() => {
   }));
 });
 
-const columns: QTableColumn[] = [
-  { name: 'name', label: 'คณะ / ส่วนงาน', field: 'name', align: 'left', sortable: true },
-  { name: 'percent', label: 'สัดส่วน', field: 'percent', align: 'left', sortable: true },
-  { name: 'revenue', label: 'รายได้รวม', field: 'revenue', align: 'right', sortable: true },
-];
+const columns = computed<QTableColumn[]>(() => [
+  {
+    name: 'name',
+    label: t('centralFinance.facultyRevenue.table.faculty'),
+    field: 'name',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'percent',
+    label: t('centralFinance.facultyRevenue.table.proportion'),
+    field: 'percent',
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'revenue',
+    label: t('centralFinance.facultyRevenue.table.revenue'),
+    field: 'revenue',
+    align: 'right',
+    sortable: true,
+  },
+]);
 
 function formatCurrency(val: number): string {
   return new Intl.NumberFormat('th-TH', {
@@ -190,10 +237,10 @@ function formatCurrency(val: number): string {
   }).format(val);
 }
 
-function onExport() {
+function onExport(): void {
   $q.notify({
     type: 'positive',
-    message: 'Report exported successfully',
+    message: t('centralFinance.dashboard.actions.exportReport') + ' ' + t('success'),
     icon: 'file_download',
   });
 }

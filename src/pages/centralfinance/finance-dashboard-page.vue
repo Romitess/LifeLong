@@ -245,25 +245,71 @@ const { t } = useI18n();
 const financeStore = useCentralFinanceStore();
 const chartPeriod = ref<'7d' | '30d'>('7d');
 
-async function onAddFundSource() {
-  await router.push('/central-finance/fund-sources/add');
-}
-async function onGotoFundSources() {
-  await router.push('/central-finance/fund-sources');
-}
-async function onGoToDailyReport() {
-  await router.push('/central-finance/daily-report');
-}
-async function onGoToFacultyRevenue() {
-  await router.push('/central-finance/faculty-revenue');
+interface MetricCard {
+  label: string;
+  value: string;
+  icon: string;
+  color: string;
+  tint: string;
+  trendIcon: string;
+  trendColor: string;
+  trendText: string;
 }
 
-async function onShortcutClick(to: string) {
+interface FundSourceStatusItem {
+  label: string;
+  count: number;
+  icon: string;
+  color: string;
+  bg: string;
+  badge: string;
+  badgeColor: string;
+}
+
+interface ActivityItem {
+  title: string;
+  time: string;
+  detail: string;
+  icon: string;
+  color: string;
+}
+
+interface ChartBarItem {
+  day: string;
+  label: string;
+  amount: number;
+  amountLabel: string;
+  percent: number;
+  isToday?: boolean;
+}
+
+interface ShortcutItem {
+  icon: string;
+  title: string;
+  detail: string;
+  bg: string;
+  color: string;
+  to: string;
+}
+
+async function onAddFundSource(): Promise<void> {
+  await router.push('/central-finance/fund-sources/add');
+}
+async function onGotoFundSources(): Promise<void> {
+  await router.push('/central-finance/fund-sources');
+}
+async function onGoToDailyReport(): Promise<void> {
+  await router.push('/central-finance/daily-report');
+}
+async function onGoToFacultyRevenue(): Promise<void> {
+  await router.push('/central-finance/faculty-revenue');
+}
+async function onShortcutClick(to: string): Promise<void> {
   await router.push(to);
 }
 
 // ── Metric Cards ────────────────────────────────────────────
-const metricCards = computed(() => [
+const metricCards = computed<MetricCard[]>(() => [
   {
     label: t('centralFinance.dashboard.metrics.pending'),
     value: financeStore.requests.filter((r) => r.status === 'new').length.toString(),
@@ -307,10 +353,10 @@ const metricCards = computed(() => [
 ]);
 
 // ── Revenue Chart Data ──────────────────────────────────────
-const todayRevenue = '฿1,248,500';
-const yesterdayRevenue = '฿1,152,300';
-const revenueChange = '+8.4%';
-const changeClass = 'text-positive';
+const todayRevenue = ref<string>('฿1,248,500');
+const yesterdayRevenue = ref<string>('฿1,152,300');
+const revenueChange = ref<string>('+8.4%');
+const changeClass = ref<string>('text-positive');
 
 const rawBars = [
   { day: t('centralFinance.dashboard.revenueChart.days.mon'), amount: 980000, isToday: false },
@@ -322,7 +368,7 @@ const rawBars = [
   { day: t('centralFinance.dashboard.revenueChart.days.today'), amount: 1248500, isToday: true },
 ];
 
-const chartBars = computed(() => {
+const chartBars = computed<ChartBarItem[]>(() => {
   const max = Math.max(...rawBars.map((b) => b.amount));
   return rawBars.map((b) => ({
     ...b,
@@ -333,7 +379,7 @@ const chartBars = computed(() => {
 });
 
 // ── Fund Source Status ──────────────────────────────────────
-const fundSourceStatus = computed(() => [
+const fundSourceStatus = computed<FundSourceStatusItem[]>(() => [
   {
     label: t('centralFinance.dashboard.fundSourceStatus.pending'),
     count: financeStore.requests.filter((r) => r.status === 'new').length,
@@ -373,9 +419,7 @@ const fundSourceStatus = computed(() => [
 ]);
 
 // ── Recent Activities ───────────────────────────────────────
-const recentActivities = computed(() => {
-  // Sort requests by date (newest first) and take the last 5 activities
-  // In a real app, this might come from a dedicated activity log table
+const recentActivities = computed<ActivityItem[]>(() => {
   return financeStore.requests
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -418,7 +462,7 @@ const recentActivities = computed(() => {
 
       return {
         title,
-        time: req.date, // Using request date as activity time for now
+        time: req.date,
         detail: req.project,
         icon,
         color,
@@ -427,7 +471,7 @@ const recentActivities = computed(() => {
 });
 
 // ── Quick Shortcuts ─────────────────────────────────────────
-const shortcuts = computed(() => [
+const shortcuts = computed<ShortcutItem[]>(() => [
   {
     icon: 'add_circle_outline',
     title: t('centralFinance.dashboard.quickLinks.addFundSource'),
