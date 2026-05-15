@@ -76,8 +76,6 @@ export function useCourseList(): UseCourseListReturn {
       const { data } = await api.get<ApiLltcourse[]>('/api/moodle/courses');
       courseStore.loadFromApi(data.map(mapApiCourse));
     } catch {
-      // Fall back to mock + localStorage if API unreachable
-      courseStore.init();
       error.value = 'ไม่สามารถโหลดข้อมูลคอร์สได้';
     } finally {
       isLoading.value = false;

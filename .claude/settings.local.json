@@ -3,7 +3,15 @@
     "allow": [
       "Bash(npx vue-tsc *)",
       "Bash(npx eslint *)",
-      "Bash(xargs grep -l \"header\" -i)"
+      "Bash(xargs grep -l \"header\" -i)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :9000)",
+      "Bash(findstr LISTENING)",
+      "Bash(tasklist /FI \"PID eq 11724\")",
+      "Bash(tasklist /FI \"PID eq 28572\")",
+      "PowerShell(Get-Process -Id 11724, 28572 -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Process -Id 11724 -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Process -Id 28572 -ErrorAction SilentlyContinue)"
     ]
   }
 }

@@ -152,214 +152,8 @@
               </div>
             </q-step>
 
-            <!-- ─── STEP 2: SYLLABUS & SCHEDULE ─── -->
-            <q-step :name="2" title="เนื้อหาและตารางเรียน" icon="menu_book" :done="step > 2">
-              <div class="row q-col-gutter-lg">
-                <!-- Syllabus -->
-                <div class="col-12 col-md-7">
-                  <div class="text-subtitle2 q-mb-sm row items-center">
-                    เนื้อหาหลักสูตร (รายสัปดาห์/โมดูล)
-                    <q-btn
-                      flat
-                      round
-                      color="primary"
-                      icon="add"
-                      size="sm"
-                      class="q-ml-sm"
-                      @click="addSyllabus"
-                    />
-                  </div>
-                  <div
-                    v-for="(item, index) in form.syllabus"
-                    :key="index"
-                    class="bg-white q-pa-md q-mb-md rounded-borders border-grey shadow-1"
-                  >
-                    <div class="row items-center q-gutter-x-sm q-mb-sm">
-                      <div class="text-subtitle2 text-primary">สัปดาห์ที่ {{ index + 1 }}</div>
-                      <q-space />
-                      <q-btn
-                        flat
-                        round
-                        color="negative"
-                        icon="delete"
-                        size="sm"
-                        @click="removeSyllabus(index)"
-                        v-if="form.syllabus.length > 1"
-                      />
-                    </div>
-                    <q-input
-                      v-model="item.topic"
-                      outlined
-                      dense
-                      class="full-width q-mb-sm"
-                      placeholder="หัวข้อการสอน"
-                    />
-
-                    <!-- Activities List -->
-                    <div class="bg-grey-1 q-pa-sm rounded-borders">
-                      <div class="row items-center justify-between q-mb-xs">
-                        <div class="text-caption text-weight-bold text-grey-8">
-                          กิจกรรมในสัปดาห์นี้:
-                        </div>
-                        <q-btn-dropdown
-                          flat
-                          dense
-                          no-caps
-                          color="primary"
-                          label="เพิ่มกิจกรรม"
-                          icon="add"
-                          size="sm"
-                        >
-                          <q-list dense>
-                            <q-item
-                              clickable
-                              v-close-popup
-                              @click="openActivityDialog(index, 'quiz')"
-                            >
-                              <q-item-section avatar>
-                                <q-icon name="quiz" color="orange" size="xs" />
-                              </q-item-section>
-                              <q-item-section>แบบทดสอบ (Quiz)</q-item-section>
-                            </q-item>
-                            <q-item
-                              clickable
-                              v-close-popup
-                              @click="openActivityDialog(index, 'assign')"
-                            >
-                              <q-item-section avatar>
-                                <q-icon name="assignment" color="blue" size="xs" />
-                              </q-item-section>
-                              <q-item-section>การส่งงาน (Assignment)</q-item-section>
-                            </q-item>
-                          </q-list>
-                        </q-btn-dropdown>
-                      </div>
-
-                      <div
-                        v-if="item.activities.length === 0"
-                        class="text-center text-grey-5 text-caption q-py-xs"
-                      >
-                        ยังไม่มีกิจกรรม
-                      </div>
-
-                      <q-chip
-                        v-for="(act, aIdx) in item.activities"
-                        :key="aIdx"
-                        dense
-                        removable
-                        @remove="removeActivity(index, aIdx)"
-                        :color="act.type === 'quiz' ? 'orange-1' : 'blue-1'"
-                        :text-color="act.type === 'quiz' ? 'orange-9' : 'blue-9'"
-                        class="q-ma-xs"
-                      >
-                        <q-avatar :icon="act.type === 'quiz' ? 'quiz' : 'assignment'" />
-                        {{ act.name }}
-                      </q-chip>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Schedule -->
-                <div class="col-12 col-md-5">
-                  <div class="text-subtitle2 q-mb-sm row items-center">
-                    ตารางเรียน (วัน-เวลา-สถานที่)
-                    <q-btn
-                      flat
-                      round
-                      color="primary"
-                      icon="add"
-                      size="sm"
-                      class="q-ml-sm"
-                      @click="addSchedule"
-                    />
-                  </div>
-                  <div
-                    v-for="(sch, index) in form.schedules"
-                    :key="index"
-                    class="q-mb-md q-pa-sm border-dashed rounded-borders"
-                  >
-                    <div class="row q-col-gutter-xs">
-                      <div class="col-4">
-                        <q-select v-model="sch.day" :options="days" label="วัน" outlined dense />
-                      </div>
-                      <div class="col-8">
-                        <div class="row q-col-gutter-xs">
-                          <div class="col-6">
-                            <q-input
-                              v-model="sch.startTime"
-                              label="เวลาเริ่ม"
-                              outlined
-                              dense
-                              mask="time"
-                              hide-bottom-space
-                            >
-                              <template v-slot:append>
-                                <q-icon name="access_time" class="cursor-pointer">
-                                  <q-popup-proxy
-                                    cover
-                                    transition-show="scale"
-                                    transition-hide="scale"
-                                  >
-                                    <q-time v-model="sch.startTime" format24h>
-                                      <div class="row items-center justify-end">
-                                        <q-btn v-close-popup label="ตกลง" color="primary" flat />
-                                      </div>
-                                    </q-time>
-                                  </q-popup-proxy>
-                                </q-icon>
-                              </template>
-                            </q-input>
-                          </div>
-                          <div class="col-6">
-                            <q-input
-                              v-model="sch.endTime"
-                              label="เวลาสิ้นสุด"
-                              outlined
-                              dense
-                              mask="time"
-                              hide-bottom-space
-                            >
-                              <template v-slot:append>
-                                <q-icon name="access_time" class="cursor-pointer">
-                                  <q-popup-proxy
-                                    cover
-                                    transition-show="scale"
-                                    transition-hide="scale"
-                                  >
-                                    <q-time v-model="sch.endTime" format24h>
-                                      <div class="row items-center justify-end">
-                                        <q-btn v-close-popup label="ตกลง" color="primary" flat />
-                                      </div>
-                                    </q-time>
-                                  </q-popup-proxy>
-                                </q-icon>
-                              </template>
-                            </q-input>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="col-10 q-mt-xs">
-                        <q-input v-model="sch.room" label="ห้องเรียน/ลิงก์" outlined dense />
-                      </div>
-                      <div class="col-2 q-mt-xs text-right">
-                        <q-btn
-                          flat
-                          round
-                          color="negative"
-                          icon="remove"
-                          size="sm"
-                          @click="removeSchedule(index)"
-                          v-if="form.schedules.length > 1"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </q-step>
-
-            <!-- ─── STEP 3: ADDITIONAL INFO & REGISTRATION ─── -->
-            <q-step :name="3" title="ข้อมูลเพิ่มเติม" icon="more_horiz" :done="step > 3">
+            <!-- ─── STEP 2: ADDITIONAL INFO & REGISTRATION ─── -->
+            <q-step :name="2" title="ข้อมูลเพิ่มเติม" icon="more_horiz" :done="step > 2">
               <div class="row q-col-gutter-md">
                 <div class="col-12 col-md-6">
                   <q-input
@@ -398,17 +192,7 @@
                     suffix="ที่นั่ง"
                   />
                 </div>
-                <div class="col-12 col-md-4">
-                  <q-input
-                    v-model.number="form.totalHours"
-                    type="number"
-                    label="จำนวนชั่วโมงรวม *"
-                    outlined
-                    dense
-                    suffix="ชั่วโมง"
-                    min="1"
-                  />
-                </div>
+
                 <div class="col-12 col-md-4">
                   <div class="row q-gutter-sm items-center full-height">
                     <div class="text-caption">รูปแบบ:</div>
@@ -443,7 +227,7 @@
             </q-step>
 
             <!-- ─── STEP 4: PRICING & CONTACT ─── -->
-            <q-step :name="4" title="ราคาและติดต่อ" icon="payments" :done="step > 4">
+            <q-step :name="3" title="ราคาและติดต่อ" icon="payments" :done="step > 3">
               <div class="column q-gutter-y-md">
                 <div class="row q-col-gutter-md">
                   <div class="col-12 col-md-4">
@@ -504,7 +288,7 @@
             </q-step>
 
             <!-- ─── STEP 5: REVIEW ─── -->
-            <q-step :name="5" title="สรุปข้อมูล" icon="check_circle">
+            <q-step :name="4" title="สรุปข้อมูล" icon="check_circle">
               <div class="row q-col-gutter-lg">
                 <div class="col-12 col-md-8">
                   <q-card flat bordered class="bg-blue-grey-1">
@@ -569,7 +353,7 @@
                   label="ย้อนกลับ"
                 />
                 <q-btn
-                  v-if="step < 5"
+                  v-if="step < 4"
                   unelevated
                   color="primary"
                   @click="stepper?.next()"
@@ -577,7 +361,7 @@
                   class="q-px-xl"
                 />
                 <q-btn
-                  v-if="step === 5"
+                  v-if="step === 4"
                   unelevated
                   color="positive"
                   @click="onSubmit"
@@ -671,15 +455,6 @@ const categories = [
   'ภาษาและการสื่อสาร',
 ];
 const faculties = ['คณะวิทยาการสารสนเทศ', 'คณะวิทยาศาสตร์', 'คณะวิศวกรรมศาสตร์'];
-const days = [
-  'วันจันทร์',
-  'วันอังคาร',
-  'วันพุธ',
-  'วันพฤหัสบดี',
-  'วันศุกร์',
-  'วันเสาร์',
-  'วันอาทิตย์',
-];
 
 const form = reactive({
   title: '',
@@ -735,19 +510,6 @@ const onFileRejected = () => {
 // Helper functions for dynamic lists
 const addObjective = () => form.objectives.push('');
 const removeObjective = (index: number) => form.objectives.splice(index, 1);
-const addSyllabus = () => form.syllabus.push({ topic: '', activities: [] });
-const removeSyllabus = (index: number) => form.syllabus.splice(index, 1);
-const addSchedule = () =>
-  form.schedules.push({ day: '', startTime: '09:00', endTime: '12:00', room: '' });
-const removeSchedule = (index: number) => form.schedules.splice(index, 1);
-
-// Activity methods
-const openActivityDialog = (weekIndex: number, type: 'quiz' | 'assign') => {
-  activityDialog.weekIndex = weekIndex;
-  activityDialog.type = type;
-  activityDialog.name = type === 'quiz' ? 'แบบทดสอบย่อย' : 'งานที่มอบหมาย';
-  activityDialog.show = true;
-};
 
 const saveActivity = () => {
   if (!activityDialog.name || activityDialog.weekIndex === -1) return;
@@ -761,13 +523,6 @@ const saveActivity = () => {
   }
 
   activityDialog.show = false;
-};
-
-const removeActivity = (weekIndex: number, actIndex: number) => {
-  const targetWeek = form.syllabus[weekIndex];
-  if (targetWeek) {
-    targetWeek.activities.splice(actIndex, 1);
-  }
 };
 
 const thaiShortMonths = [

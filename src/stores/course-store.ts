@@ -352,12 +352,7 @@ export const useCourseStore = defineStore('course', {
           return;
         }
 
-        const backendIds = new Set(backendCourses.map((course) => course.id));
-        this.courses = [
-          ...backendCourses,
-          ...this.courses.filter((course) => !backendIds.has(course.id)),
-        ].map(ensureCourseInstructorOwner);
-
+        this.courses = backendCourses.map(ensureCourseInstructorOwner);
         writeStoredCourses(this.courses);
       } catch (error) {
         console.warn('Failed to fetch backend courses', error);
@@ -366,30 +361,20 @@ export const useCourseStore = defineStore('course', {
         this.backendCoursesLoading = false;
       }
     },
-    /** Load courses from API — merges with MOCK_COURSES, replaces localStorage courses */
+    /** Load courses from API — shows only Moodle API courses (no mock data mixed in) */
     loadFromApi(apiCourses: Course[]) {
-      const mockIds = new Set(MOCK_COURSES.map((c) => c.id));
-      const apiIds = new Set(apiCourses.map((c) => c.id));
+      this.courses = apiCourses.map(ensureCourseInstructorOwner);
 
-      // MOCK_COURSES first, then API courses, skip mocks already in API
-      this.courses = [...MOCK_COURSES.filter((c) => !apiIds.has(c.id)), ...apiCourses].map(
-        ensureCourseInstructorOwner,
-      );
-
-      // Build course details: keep existing MOCK details, add fallbacks for API courses
       const storedDetails = readStoredCourseDetails() ?? {};
       const mergedMockDetails = mergeStoredCourseDetails(MOCK_COURSE_DETAILS, storedDetails);
 
       const apiDetails: Record<string, CourseDetail> = {};
       for (const course of apiCourses) {
-        if (!mockIds.has(course.id)) {
-          apiDetails[course.id] =
-            mergedMockDetails[course.id] ?? createFallbackCourseDetail(course);
-        }
+        apiDetails[course.id] = mergedMockDetails[course.id] ?? createFallbackCourseDetail(course);
       }
 
       this.courseDetails = Object.fromEntries(
-        Object.entries({ ...mergedMockDetails, ...apiDetails }).map(([id, detail]) => [
+        Object.entries(apiDetails).map(([id, detail]) => [
           id,
           ensureCourseDetailInstructorOwner(detail),
         ]),
