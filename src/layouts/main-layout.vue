@@ -661,6 +661,18 @@ const navItems = computed<NavItem[]>(() => {
         icon: 'description',
         to: '/central-finance/fund-sources',
       },
+      {
+        name: 'central-finance-transactions',
+        label: 'รายละเอียดรายการรับเงิน',
+        icon: 'gavel',
+        to: '/central-finance/transactions',
+      },
+      {
+        name: 'central-finance-daily-report',
+        label: 'รายงานการรับเงินประจำวัน',
+        icon: 'account_balance_wallet',
+        to: '/central-finance/daily-report',
+      },
     ];
   }
 

@@ -990,6 +990,55 @@ export default {
         available: 'รหัสนี้สามารถใช้งานได้',
       },
     },
+    transactions: {
+      hero: {
+        eyebrow: 'Audit & Compliance',
+        title: 'รายละเอียดรายการรับเงิน',
+        desc: 'ระบบตรวจสอบความถูกต้องเชิงลึกของรายการรับเงินแยกตามส่วนงาน',
+      },
+      filters: {
+        search: 'ค้นหาด้วยเลขที่ใบเสร็จ หรือ ชื่อบุคคล...',
+        faculty: 'เลือกคณะ/ส่วนงาน',
+        dateRange: 'ช่วงเวลา',
+      },
+      table: {
+        timestamp: 'วัน/เวลาที่ทำรายการ',
+        receiptNumber: 'เลขที่ใบเสร็จ',
+        payer: 'ผู้ชำระเงิน',
+        amount: 'จำนวนเงิน',
+        fundCode: 'แหล่งเงิน (Fund Source)',
+        faculty: 'คณะเจ้าของรายการ',
+        status: 'สถานะ',
+        actions: 'จัดการ',
+      },
+      status: {
+        valid: 'ปกติ',
+        flagged: 'ต้องตรวจสอบ',
+        void: 'ยกเลิก',
+      },
+    },
+    dailyReport: {
+      hero: {
+        eyebrow: 'Daily Cash Flow',
+        title: 'รายงานการรับเงินประจำวัน',
+        desc: 'ตรวจสอบยอดเงินรับเข้าและกระแสเงินสดแยกตามช่องทางแบบ Real-time',
+      },
+      summary: {
+        totalNet: 'ยอดเงินรับเข้าสุทธิ',
+        deducted: 'หักรายการยกเลิกแล้ว',
+        totalGross: 'ยอดรวมก่อนหักลบ',
+        voidCount: 'จำนวนรายการยกเลิก',
+      },
+      channels: {
+        title: 'ยอดรวมจำแนกตามช่องทาง',
+        transfer: 'โอนผ่านธนาคาร',
+        cash: 'เงินสด',
+        qrcode: 'QR Code / PromptPay',
+      },
+      table: {
+        title: 'รายการรับเงินวันนี้',
+      },
+    },
   },
   common: {
     faculties: {

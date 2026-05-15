@@ -140,7 +140,7 @@
         <!-- Result & Auto-Generate Section -->
         <div class="col-12 col-md-4">
           <div class="sticky-side">
-            <AdminSurfaceCard :title="$t('centralFinance.addFundSource.result.title')" tone="glass">
+            <AdminSurfaceCard :title="$t('centralFinance.addFundSource.result.title')">
               <div class="fund-code-display text-center q-pa-lg">
                 <div class="text-overline text-grey-7 q-mb-xs">
                   {{ $t('centralFinance.addFundSource.result.generatedCode') }}
@@ -175,7 +175,7 @@
                 />
 
                 <AdminActionButton
-                  variant="outline"
+                  variant="secondary"
                   :label="$t('centralFinance.addFundSource.result.checkDuplicateBtn')"
                   icon="spellcheck"
                   class="full-width q-mt-sm"
@@ -185,7 +185,7 @@
               </div>
             </AdminSurfaceCard>
 
-            <AdminSurfaceCard class="q-mt-md info-card" tone="glass">
+            <AdminSurfaceCard class="q-mt-md info-card">
               <div class="flex items-center gap-sm">
                 <q-icon name="info" color="primary" size="20px" />
                 <span class="text-weight-bold">{{
@@ -258,7 +258,7 @@ const savedCode = ref('');
 
 const form = reactive({
   fundType: '',
-  fiscalYear: '2568',
+  fiscalYear: '2569',
   nameTh: '',
   nameEn: '',
   description: '',

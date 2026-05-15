@@ -35,7 +35,7 @@
     <section class="admin-shell admin-content">
       <!-- ── Filter Section ────────────────────────────────────── -->
       <div class="filter-section">
-        <AdminSurfaceCard tone="glass" :accent="false" class="filter-card">
+        <AdminSurfaceCard :accent="false" class="filter-card">
           <div class="filter-grid">
             <q-input
               v-model="filters.search"

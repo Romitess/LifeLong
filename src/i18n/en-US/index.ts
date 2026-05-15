@@ -984,6 +984,55 @@ export default {
         available: 'This code is available for use',
       },
     },
+    transactions: {
+      hero: {
+        eyebrow: 'Audit & Compliance',
+        title: 'Transaction Details',
+        desc: 'In-depth audit system for tracking transactions by faculty and department.',
+      },
+      filters: {
+        search: 'Search by Receipt No. or Name...',
+        faculty: 'Select Faculty',
+        dateRange: 'Date Range',
+      },
+      table: {
+        timestamp: 'Date/Time',
+        receiptNumber: 'Receipt No.',
+        payer: 'Payer Name',
+        amount: 'Amount',
+        fundCode: 'Fund Source',
+        faculty: 'Owner Faculty',
+        status: 'Status',
+        actions: 'Actions',
+      },
+      status: {
+        valid: 'Valid',
+        flagged: 'Flagged',
+        void: 'Void',
+      },
+    },
+    dailyReport: {
+      hero: {
+        eyebrow: 'Daily Cash Flow',
+        title: 'Daily Revenue Report',
+        desc: 'Monitor incoming revenue and cash flow by channel in real-time.',
+      },
+      summary: {
+        totalNet: 'Net Total Revenue',
+        deducted: 'Voided items deducted',
+        totalGross: 'Gross Total',
+        voidCount: 'Voided Transactions',
+      },
+      channels: {
+        title: 'Total by Payment Channel',
+        transfer: 'Bank Transfer',
+        cash: 'Cash',
+        qrcode: 'QR Code / PromptPay',
+      },
+      table: {
+        title: "Today's Transactions",
+      },
+    },
   },
   common: {
     faculties: {

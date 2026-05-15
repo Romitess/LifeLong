@@ -34,6 +34,18 @@ export interface NotificationLog {
   sentAt: string;
 }
 
+export interface Transaction {
+  id: string;
+  timestamp: string;
+  receiptNumber: string;
+  payerName: string;
+  amount: number;
+  fundCode: string;
+  faculty: string;
+  paymentChannel: 'transfer' | 'cash' | 'qrcode';
+  status: 'valid' | 'flagged' | 'void';
+}
+
 export const useCentralFinanceStore = defineStore('central-finance', {
   state: () => ({
     // Mock requests from faculties
@@ -137,10 +149,69 @@ export const useCentralFinanceStore = defineStore('central-finance', {
 
     // History logs of sent notifications
     notificationLogs: [] as NotificationLog[],
+
+    // Transaction records for Audit & Daily Report
+    transactions: [
+      {
+        id: 'T1',
+        timestamp: '2026-05-15 09:30:15',
+        receiptNumber: 'RC-690515-0001',
+        payerName: 'นายสมเกียรติ ยั่งยืน',
+        amount: 3500.0,
+        fundCode: 'BG-2568-001',
+        faculty: 'คณะวิทยาการสารสนเทศ',
+        paymentChannel: 'transfer',
+        status: 'valid',
+      },
+      {
+        id: 'T2',
+        timestamp: '2026-05-15 10:15:22',
+        receiptNumber: 'RC-690515-0002',
+        payerName: 'บริษัท เทคโซลูชั่น จำกัด',
+        amount: 25000.0,
+        fundCode: 'RV-2569-042',
+        faculty: 'คณะวิศวกรรมศาสตร์',
+        paymentChannel: 'transfer',
+        status: 'valid',
+      },
+      {
+        id: 'T3',
+        timestamp: '2026-05-15 11:05:45',
+        receiptNumber: 'RC-690515-0003',
+        payerName: 'นางสาววิมลรัตน์ สายทอง',
+        amount: 1200.0,
+        fundCode: 'DN-2569-015',
+        faculty: 'คณะพยาบาลศาสตร์',
+        paymentChannel: 'qrcode',
+        status: 'flagged',
+      },
+      {
+        id: 'T4',
+        timestamp: '2026-05-15 14:20:10',
+        receiptNumber: 'RC-690515-0842',
+        payerName: 'นายปรีชา รุ่งเรือง',
+        amount: 5000.0,
+        fundCode: 'BG-2568-001',
+        faculty: 'คณะวิทยาศาสตร์',
+        paymentChannel: 'cash',
+        status: 'valid',
+      },
+      {
+        id: 'T5',
+        timestamp: '2026-05-15 15:45:30',
+        receiptNumber: 'RC-690515-0843',
+        payerName: 'บริษัท เอ็ดดูเคชั่นพลัส จำกัด',
+        amount: 45000.0,
+        fundCode: 'OT-2569-099',
+        faculty: 'สำนักคอมพิวเตอร์',
+        paymentChannel: 'transfer',
+        status: 'void',
+      },
+    ] as Transaction[],
   }),
 
   actions: {
-    addFundSource(fundSource: Omit<FundSource, 'id' | 'createdAt'>) {
+    addFundSource(fundSource: Omit<FundSource, 'id' | 'createdAt'>): FundSource {
       const newSource: FundSource = {
         ...fundSource,
         id: Date.now().toString(),
@@ -150,14 +221,14 @@ export const useCentralFinanceStore = defineStore('central-finance', {
       return newSource;
     },
 
-    updateRequestStatus(requestId: string, status: FundSourceRequest['status']) {
+    updateRequestStatus(requestId: string, status: FundSourceRequest['status']): void {
       const request = this.requests.find((r) => r.id === requestId);
       if (request) {
         request.status = status;
       }
     },
 
-    addNotificationLog(log: Omit<NotificationLog, 'id' | 'sentAt'>) {
+    addNotificationLog(log: Omit<NotificationLog, 'id' | 'sentAt'>): NotificationLog {
       const newLog: NotificationLog = {
         ...log,
         id: Date.now().toString(),
