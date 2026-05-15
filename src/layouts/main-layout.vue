@@ -639,10 +639,10 @@ const navItems = computed<NavItem[]>(() => {
         to: '/finance/payment-import',
       },
       {
-        name: 'finance-receipts',
-        label: 'จัดการใบเสร็จ',
-        icon: 'receipt_long',
-        to: '/finance/receipts',
+        name: 'finance-applicant-search',
+        label: 'ค้นหาข้อมูลผู้สมัคร',
+        icon: 'manage_search',
+        to: '/finance/applicant-search',
       },
     ];
   }
@@ -862,8 +862,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'finance-source-of-funds-chart';
   } else if (path.includes('/finance/payment-import')) {
     activeNav.value = 'finance-payment-import';
-  } else if (path.includes('/finance/receipts')) {
-    activeNav.value = 'finance-receipts';
+  } else if (path.includes('/finance/applicant-search')) {
+    activeNav.value = 'finance-applicant-search';
   } else if (path.includes('/finance/dashboard')) {
     activeNav.value = 'finance-dashboard';
   } else if (path.includes('/instructor/reports')) {
@@ -1538,12 +1538,12 @@ async function onCategoryClick(category: string) {
     min-width: 136px;
   }
 
-  :deep(.nav-tab--finance-receipts) {
-    --nav-tab-label-width: 116px;
-    flex-basis: 166px;
-    width: 166px;
-    max-width: 166px;
-    min-width: 166px;
+  :deep(.nav-tab--finance-applicant-search) {
+    --nav-tab-label-width: 168px;
+    flex-basis: 220px;
+    width: 220px;
+    max-width: 220px;
+    min-width: 220px;
   }
 
   :deep(.nav-tab--finance-dashboard) {
@@ -1598,12 +1598,12 @@ async function onCategoryClick(category: string) {
       margin-inline: 1px;
     }
 
-    :deep(.nav-tab--finance-receipts) {
-      --nav-tab-label-width: 104px;
-      flex-basis: 152px;
-      width: 152px;
-      max-width: 152px;
-      min-width: 152px;
+    :deep(.nav-tab--finance-applicant-search) {
+      --nav-tab-label-width: 152px;
+      flex-basis: 200px;
+      width: 200px;
+      max-width: 200px;
+      min-width: 200px;
     }
 
     :deep(.nav-tab--finance-dashboard) {

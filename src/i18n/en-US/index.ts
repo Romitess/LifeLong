@@ -382,7 +382,7 @@ export default {
         appRef: 'Application Ref (Ref2)',
         appRefPlaceholder: 'e.g. 6751300100003',
         learnerName: 'Learner Name',
-        learnerNamePlaceholder: 'e.g. Somchai JaiDee',
+        learnerNamePlaceholder: 'Search...',
       },
       columns: {
         no: 'No.',

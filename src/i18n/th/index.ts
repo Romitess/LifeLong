@@ -384,7 +384,7 @@ export default {
         appRef: 'เลขอ้างอิงการสมัคร (Ref2)',
         appRefPlaceholder: 'เช่น 6751300100003',
         learnerName: 'ชื่อผู้เรียน',
-        learnerNamePlaceholder: 'เช่น สมชาย ใจดี',
+        learnerNamePlaceholder: 'ค้นหา...',
       },
       columns: {
         no: 'ลำดับ',

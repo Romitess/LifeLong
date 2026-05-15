@@ -1,5 +1,7 @@
 <template>
-  <q-page class="admin-page finance-applicant-search-page">
+  <q-page
+    class="admin-page finance-applicant-search-page finance-applicant-search-page--static-cards"
+  >
     <AdminPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="person_search"
@@ -8,67 +10,8 @@
     />
 
     <section class="admin-shell admin-content">
-      <!-- Search Panel -->
-      <AdminSurfaceCard
-        :title="$t('finance.applicantSearch.searchCardTitle')"
-        icon="manage_search"
-        body-padding="lg"
-        class="q-mb-lg"
-      >
-        <div class="search-form-grid">
-          <div class="search-field">
-            <label class="search-label">{{
-              $t('finance.applicantSearch.fields.learnerRef')
-            }}</label>
-            <q-input
-              v-model="searchForm.learnerRef"
-              outlined
-              dense
-              :placeholder="$t('finance.applicantSearch.fields.learnerRefPlaceholder')"
-              class="admin-editor-field"
-            />
-          </div>
-          <div class="search-field">
-            <label class="search-label">{{ $t('finance.applicantSearch.fields.appRef') }}</label>
-            <q-input
-              v-model="searchForm.appRef"
-              outlined
-              dense
-              :placeholder="$t('finance.applicantSearch.fields.appRefPlaceholder')"
-              class="admin-editor-field"
-            />
-          </div>
-          <div class="search-field">
-            <label class="search-label">{{
-              $t('finance.applicantSearch.fields.learnerName')
-            }}</label>
-            <q-input
-              v-model="searchForm.learnerName"
-              outlined
-              dense
-              :placeholder="$t('finance.applicantSearch.fields.learnerNamePlaceholder')"
-              class="admin-editor-field"
-            />
-          </div>
-        </div>
-
-        <div class="row justify-center q-mt-lg">
-          <q-btn
-            unelevated
-            color="primary"
-            icon="search"
-            :label="$t('finance.applicantSearch.searchBtn')"
-            no-caps
-            class="search-submit-btn"
-            :loading="loading"
-            @click="handleSearch"
-          />
-        </div>
-      </AdminSurfaceCard>
-
       <!-- Results Panel -->
       <AdminSurfaceCard
-        v-if="hasSearched"
         :title="$t('finance.applicantSearch.resultsTitle')"
         :subtitle="
           $t('finance.applicantSearch.resultsSubtitle', {
@@ -79,6 +22,89 @@
         icon="list_alt"
         body-padding="none"
       >
+        <template #header-actions>
+          <q-input
+            v-model="searchForm.keyword"
+            dense
+            outlined
+            rounded
+            :placeholder="$t('finance.applicantSearch.fields.learnerNamePlaceholder')"
+            class="receipt-search"
+            debounce="500"
+            @update:model-value="handleSearch"
+            style="min-width: 300px"
+          >
+            <template v-slot:prepend>
+              <q-icon name="search" />
+            </template>
+            <template v-slot:append>
+              <q-separator vertical class="q-mx-xs" inset />
+              <q-btn flat round dense icon="filter_list" color="primary" class="q-ml-xs">
+                <q-tooltip>{{ $t('additionalFilters') }}</q-tooltip>
+                <q-menu padding class="filter-menu-premium shadow-15">
+                  <div class="q-pa-lg" style="min-width: 320px">
+                    <div class="text-h6 text-weight-bold q-mb-lg row items-center">
+                      <q-icon name="filter_alt" color="primary" class="q-mr-sm" />
+                      ตัวกรองเพิ่มเติม
+                    </div>
+
+                    <div class="filter-field-group q-mb-lg">
+                      <label class="filter-label">สถานะการชำระเงิน</label>
+                      <div class="row q-gutter-xs">
+                        <q-btn
+                          unelevated
+                          dense
+                          :color="searchForm.status === 'Paid' ? 'positive' : 'grey-2'"
+                          :text-color="searchForm.status === 'Paid' ? 'white' : 'dark'"
+                          :label="$t('finance.applicantSearch.status.paid')"
+                          class="q-px-md text-caption"
+                          no-caps
+                          @click="
+                            searchForm.status = searchForm.status === 'Paid' ? null : 'Paid';
+                            handleSearch();
+                          "
+                        />
+                        <q-btn
+                          unelevated
+                          dense
+                          :color="searchForm.status === 'Pending' ? 'warning' : 'grey-2'"
+                          :text-color="searchForm.status === 'Pending' ? 'white' : 'dark'"
+                          :label="$t('finance.applicantSearch.status.pending')"
+                          class="q-px-md text-caption"
+                          no-caps
+                          @click="
+                            searchForm.status = searchForm.status === 'Pending' ? null : 'Pending';
+                            handleSearch();
+                          "
+                        />
+                      </div>
+                    </div>
+
+                    <div class="row q-gutter-sm">
+                      <q-btn
+                        unelevated
+                        :label="$t('clear')"
+                        color="grey-2"
+                        text-color="dark"
+                        class="col rounded-borders"
+                        no-caps
+                        @click="resetSearch"
+                      />
+                      <q-btn
+                        unelevated
+                        :label="$t('ok')"
+                        color="primary"
+                        class="col rounded-borders"
+                        no-caps
+                        v-close-popup
+                      />
+                    </div>
+                  </div>
+                </q-menu>
+              </q-btn>
+            </template>
+          </q-input>
+        </template>
         <q-table
           :rows="results"
           :columns="columns"
@@ -142,7 +168,7 @@
 <script setup lang="ts">
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { QTableProps } from 'quasar';
 
@@ -163,10 +189,14 @@ const loading = ref(false);
 const hasSearched = ref(false);
 
 const searchForm = ref({
-  learnerRef: '',
-  appRef: '',
-  learnerName: '',
+  keyword: '',
+  status: null as 'Paid' | 'Pending' | null,
 });
+
+function resetSearch() {
+  searchForm.value.status = null;
+  handleSearch();
+}
 
 const columns = computed<QTableProps['columns']>(() => [
   {
@@ -271,14 +301,49 @@ function handleSearch() {
 
   // Simulate API delay
   setTimeout(() => {
-    results.value = [...mockData.value];
+    let filtered = [...mockData.value];
+
+    if (searchForm.value.keyword) {
+      const kw = searchForm.value.keyword.toLowerCase();
+      filtered = filtered.filter(
+        (item) =>
+          item.learnerName.toLowerCase().includes(kw) ||
+          item.learnerRef.includes(kw) ||
+          item.appRef.includes(kw) ||
+          item.courseInfo.toLowerCase().includes(kw),
+      );
+    }
+
+    if (searchForm.value.status) {
+      filtered = filtered.filter((item) => item.status === searchForm.value.status);
+    }
+
+    results.value = filtered;
     loading.value = false;
     hasSearched.value = true;
-  }, 800);
+  }, 600);
 }
+
+onMounted(() => {
+  handleSearch();
+});
 </script>
 
 <style scoped lang="scss">
+.finance-applicant-search-page--static-cards
+  :deep(.admin-surface-card:not(.admin-surface-card--glass)) {
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease !important;
+}
+
+.finance-applicant-search-page--static-cards
+  :deep(.admin-surface-card:not(.admin-surface-card--glass):hover) {
+  transform: none !important;
+  border-color: var(--admin-line) !important;
+  box-shadow: var(--admin-shadow-sm) !important;
+}
+
 .search-form-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
