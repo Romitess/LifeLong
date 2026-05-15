@@ -312,6 +312,8 @@ export default {
       clickToSelect: 'คลิกเพื่อเลือกไฟล์จ่ายเงิน',
       dragOrClick: 'ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกจากเครื่อง',
       savePaymentData: 'บันทึกข้อมูลไฟล์จ่ายเงิน',
+      fileCount: '{count} ไฟล์',
+      csvOnlyHint: 'รองรับเฉพาะไฟล์ .csv เลือกได้หลายไฟล์',
       importedRecords: 'รายการชำระเงินที่นำเข้า',
       showingRecords: 'แสดงข้อมูล {filtered} จาก {total} รายการ',
       searchPlaceholder: 'ค้นหา...',
