@@ -150,6 +150,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/centralfinance/finance-daily-report-page.vue'),
         meta: { role: 'central_finance' },
       },
+      {
+        path: 'central-finance/faculty-revenue',
+        component: () => import('pages/centralfinance/finance-faculty-revenue-report.vue'),
+        meta: { role: 'central_finance' },
+      },
     ],
   },
   {

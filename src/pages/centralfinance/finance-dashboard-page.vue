@@ -19,7 +19,7 @@
           icon="file_download"
           :label="$t('centralFinance.dashboard.actions.exportReport')"
           no-caps
-          @click="onGoToReports"
+          @click="onGoToDailyReport"
         />
       </template>
     </AdminPageHero>
@@ -161,7 +161,16 @@
               icon-right="arrow_forward"
               no-caps
               class="full-width"
-              @click="onGoToReports"
+              @click="onGoToDailyReport"
+            />
+            <AdminActionButton
+              variant="secondary"
+              icon="pie_chart"
+              :label="$t('centralFinance.dashboard.quickLinks.facultyRevenue')"
+              icon-right="arrow_forward"
+              no-caps
+              class="full-width"
+              @click="onGoToFacultyRevenue"
             />
           </div>
         </AdminSurfaceCard>
@@ -242,8 +251,11 @@ async function onAddFundSource() {
 async function onGotoFundSources() {
   await router.push('/central-finance/fund-sources');
 }
-async function onGoToReports() {
-  await router.push('/central-finance/reports');
+async function onGoToDailyReport() {
+  await router.push('/central-finance/daily-report');
+}
+async function onGoToFacultyRevenue() {
+  await router.push('/central-finance/faculty-revenue');
 }
 
 async function onShortcutClick(to: string) {
@@ -431,6 +443,14 @@ const shortcuts = computed(() => [
     bg: 'rgba(29, 78, 216, 0.1)',
     color: '#1d4ed8',
     to: '/central-finance/reports',
+  },
+  {
+    icon: 'pie_chart',
+    title: t('centralFinance.dashboard.quickLinks.facultyRevenue'),
+    detail: t('centralFinance.dashboard.shortcuts.facultyRevenueDetail'),
+    bg: 'rgba(245, 166, 35, 0.1)',
+    color: '#F5A623',
+    to: '/central-finance/faculty-revenue',
   },
 ]);
 </script>
