@@ -8,65 +8,76 @@
     >
       <template #actions>
         <AdminActionButton
-          variant="secondary"
           icon="file_download"
           label="Export Audit Log"
           no-caps
+          @click="onExportAuditLog"
         />
       </template>
     </AdminPageHero>
 
     <section class="admin-shell admin-content">
       <!-- Advanced Search / Filters -->
-      <div class="filter-section q-mb-lg">
-        <AdminSurfaceCard class="filter-card">
-          <div class="row q-col-gutter-md items-center">
-            <div class="col-12 col-md-5">
-              <q-input
-                v-model="search"
-                outlined
-                dense
-                bg-color="white"
-                :placeholder="$t('centralFinance.transactions.filters.search')"
-                class="search-input"
-              >
-                <template #prepend>
-                  <q-icon name="search" color="black" />
-                </template>
-              </q-input>
-            </div>
-            <div class="col-12 col-md-3">
-              <q-select
-                v-model="facultyFilter"
-                outlined
-                dense
-                bg-color="white"
-                :options="facultyOptions"
-                :label="$t('centralFinance.transactions.filters.faculty')"
-                clearable
-              />
-            </div>
-            <div class="col-12 col-md-3">
-              <q-input
-                v-model="dateRange"
-                outlined
-                dense
-                bg-color="white"
-                mask="####/##/## - ####/##/##"
-                :placeholder="$t('centralFinance.transactions.filters.dateRange')"
-              >
-                <template #append>
-                  <q-icon name="event" class="cursor-pointer" />
-                </template>
-              </q-input>
-            </div>
-            <div class="col-12 col-md-1">
+      <div class="filter-section">
+        <AdminSurfaceCard :accent="false" class="filter-card">
+          <div class="filter-grid">
+            <q-input
+              v-model="search"
+              outlined
+              dense
+              bg-color="white"
+              :placeholder="$t('centralFinance.transactions.filters.search')"
+              class="filter-item search-input"
+            >
+              <template #prepend>
+                <q-icon name="search" />
+              </template>
+            </q-input>
+
+            <q-select
+              v-model="facultyFilter"
+              :options="facultyOptions"
+              outlined
+              dense
+              bg-color="white"
+              :label="$t('centralFinance.transactions.filters.faculty')"
+              class="filter-item"
+              clearable
+            >
+              <template #prepend>
+                <q-icon name="business" />
+              </template>
+            </q-select>
+
+            <q-input
+              v-model="dateRange"
+              outlined
+              dense
+              bg-color="white"
+              :label="$t('centralFinance.transactions.filters.dateRange')"
+              class="filter-item"
+              mask="####/##/## - ####/##/##"
+            >
+              <template #prepend>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                    <q-date v-model="dateRange" mask="YYYY/MM/DD - YYYY/MM/DD" range>
+                      <div class="row items-center justify-end">
+                        <q-btn v-close-popup label="Close" color="primary" flat />
+                      </div>
+                    </q-date>
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
+
+            <div class="filter-item text-right">
               <q-btn
                 unelevated
                 color="primary"
                 icon="tune"
-                class="full-width"
-                style="height: 40px; border-radius: 8px"
+                class="filter-btn"
+                style="height: 40px; width: 40px; border-radius: 10px"
               />
             </div>
           </div>
@@ -74,7 +85,7 @@
       </div>
 
       <!-- Transaction Table -->
-      <AdminSurfaceCard :accent="true" body-padding="none">
+      <AdminSurfaceCard :accent="false" body-padding="none">
         <q-table
           flat
           :rows="filteredTransactions"
@@ -99,29 +110,33 @@
 
           <!-- Custom Amount Column -->
           <template #body-cell-amount="props">
-            <q-td :props="props" class="text-weight-bold">
+            <q-td :props="props">
               {{ formatCurrency(props.row.amount) }}
             </q-td>
           </template>
 
           <!-- Custom Actions Column -->
           <template #body-cell-actions="props">
-            <q-td :props="props" class="text-center">
-              <q-btn flat round dense color="grey-7" icon="more_vert">
-                <q-menu auto-close>
-                  <q-list style="min-width: 150px">
-                    <q-item clickable>
-                      <q-item-section avatar
-                        ><q-icon name="visibility" color="primary"
-                      /></q-item-section>
-                      <q-item-section>View Audit Log</q-item-section>
-                    </q-item>
-                    <q-item clickable>
-                      <q-item-section avatar><q-icon name="flag" color="warning" /></q-item-section>
-                      <q-item-section>Flag Transaction</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
+            <q-td :props="props" class="text-right">
+              <q-btn
+                flat
+                round
+                dense
+                color="primary"
+                icon="visibility"
+                @click="onViewAuditLog(props.row)"
+              >
+                <q-tooltip v-if="!$q.platform.is.mobile">View Audit Log</q-tooltip>
+              </q-btn>
+              <q-btn
+                flat
+                round
+                dense
+                color="warning"
+                icon="flag"
+                @click="onFlagTransaction(props.row)"
+              >
+                <q-tooltip v-if="!$q.platform.is.mobile">Flag Transaction</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -134,6 +149,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
@@ -141,6 +157,7 @@ import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import { useCentralFinanceStore, type Transaction } from 'src/stores/central-finance-store';
 
 const { t } = useI18n();
+const $q = useQuasar();
 const financeStore = useCentralFinanceStore();
 
 const search = ref<string>('');
@@ -224,6 +241,30 @@ const filteredTransactions = computed<Transaction[]>(() => {
   });
 });
 
+function onExportAuditLog() {
+  $q.notify({
+    type: 'positive',
+    message: 'Audit log exported successfully',
+    icon: 'file_download',
+  });
+}
+
+function onViewAuditLog(row: Transaction) {
+  $q.notify({
+    type: 'info',
+    message: `Viewing audit log for ${row.receiptNumber}`,
+    icon: 'visibility',
+  });
+}
+
+function onFlagTransaction(row: Transaction) {
+  $q.notify({
+    type: 'warning',
+    message: `Transaction ${row.receiptNumber} has been flagged for review`,
+    icon: 'flag',
+  });
+}
+
 function formatCurrency(val: number): string {
   return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(val);
 }
@@ -257,34 +298,60 @@ function getStatusIcon(status: Transaction['status']): string {
 
 <style lang="scss" scoped>
 .finance-transactions-page {
-  .search-input {
-    :deep(.q-field__control) {
-      border-radius: 12px;
-    }
+  .filter-section {
+    margin-bottom: 24px;
   }
 
-  .status-badge {
-    font-weight: 700;
-    font-size: 0.75rem;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+  .filter-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1.2fr 44px;
+    gap: 16px;
+    align-items: center;
   }
 
   .transactions-table {
     background: transparent;
 
+    :deep(.q-table__card) {
+      box-shadow: none;
+    }
+
     :deep(thead tr th) {
       font-weight: 800;
-      color: var(--admin-muted);
-      text-transform: uppercase;
-      font-size: 0.7rem;
-      letter-spacing: 0.1em;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      color: var(--admin-navy);
+      background: #f8fafc;
+      font-size: 0.88rem;
+      padding: 16px;
+    }
+
+    :deep(tbody tr td) {
+      padding: 16px;
+      font-size: 0.94rem;
     }
 
     :deep(tbody tr:hover) {
-      background: rgba(var(--q-primary), 0.03);
+      background: rgba(16, 35, 63, 0.02);
     }
+  }
+
+  .status-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+}
+
+@media (max-width: 1024px) {
+  .filter-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .filter-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

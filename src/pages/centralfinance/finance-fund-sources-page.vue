@@ -109,7 +109,7 @@
 
       <!-- ── Table Section ────────────────────────────────────── -->
       <div class="table-section">
-        <AdminSurfaceCard :accent="true" class="table-card">
+        <AdminSurfaceCard :accent="false" class="table-card" body-padding="none">
           <q-table
             :rows="filteredRows"
             :columns="columns"
@@ -140,10 +140,10 @@
                   icon="visibility"
                   @click="onViewDetail(props.row)"
                 >
-                  <q-tooltip>ดูรายละเอียด</q-tooltip>
+                  <q-tooltip v-if="!$q.platform.is.mobile">ดูรายละเอียด</q-tooltip>
                 </q-btn>
                 <q-btn flat round dense color="secondary" icon="edit" @click="onEdit(props.row)">
-                  <q-tooltip>แก้ไข/อัปเดต</q-tooltip>
+                  <q-tooltip v-if="!$q.platform.is.mobile">แก้ไข/อัปเดต</q-tooltip>
                 </q-btn>
               </q-td>
             </template>
@@ -635,7 +635,11 @@ async function onCreateNew() {
 }
 
 function onExport() {
-  console.log('Exporting report');
+  $q.notify({
+    type: 'positive',
+    message: 'Preparing export of all fund source requests',
+    icon: 'file_download',
+  });
 }
 
 function onViewDetail(row: FundSourceRequest) {

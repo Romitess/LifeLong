@@ -13,10 +13,24 @@
             color="white"
             text-color="primary"
             icon="today"
-            label="15 May 2026"
+            :label="reportDate"
             class="report-date-btn"
+          >
+            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+              <q-date v-model="reportDate" mask="DD MMM YYYY">
+                <div class="row items-center justify-end">
+                  <q-btn v-close-popup label="Close" color="primary" flat />
+                </div>
+              </q-date>
+            </q-popup-proxy>
+          </q-btn>
+          <AdminActionButton
+            variant="secondary"
+            icon="print"
+            label="Print Report"
+            no-caps
+            @click="onPrintReport"
           />
-          <AdminActionButton variant="secondary" icon="print" label="Print Report" no-caps />
         </div>
       </template>
     </AdminPageHero>
@@ -177,7 +191,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
+import { useQuasar } from 'quasar';
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
@@ -185,7 +200,10 @@ import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 
 import type { QTableColumn } from 'quasar';
 import type { Transaction } from 'src/stores/central-finance-store';
+const $q = useQuasar();
 const financeStore = useCentralFinanceStore();
+
+const reportDate = ref('15 May 2026');
 
 const todayTransactions = computed<Transaction[]>(() => {
   // Mock filter for today (2026-05-15)
@@ -281,6 +299,14 @@ function getChannelColor(channel: string): string {
     default:
       return 'grey';
   }
+}
+
+function onPrintReport() {
+  $q.notify({
+    type: 'positive',
+    message: 'Report is being prepared for printing',
+    icon: 'print',
+  });
 }
 </script>
 
