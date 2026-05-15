@@ -609,6 +609,12 @@ const navItems = computed<NavItem[]>(() => {
         icon: 'tune',
         to: '/admin/basics',
       },
+      {
+        name: 'admin-reports',
+        label: 'รายงาน',
+        icon: 'analytics',
+        to: '/admin/reports',
+      },
     ];
   }
 
@@ -815,6 +821,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'admin-categories';
   } else if (path.includes('/admin/images')) {
     activeNav.value = 'admin-images';
+  } else if (path.includes('/admin/reports')) {
+    activeNav.value = 'admin-reports';
   } else if (path.includes('/admin/basics')) {
     activeNav.value = 'admin-basics';
   } else if (path.includes('/admin')) {
@@ -1508,6 +1516,14 @@ async function onCategoryClick(category: string) {
     width: 188px;
     max-width: 188px;
     min-width: 188px;
+  }
+
+  :deep(.nav-tab--admin-reports) {
+    --nav-tab-label-width: 72px;
+    flex-basis: 136px;
+    width: 136px;
+    max-width: 136px;
+    min-width: 136px;
   }
 
   :deep(.nav-tab--finance-receipts) {
