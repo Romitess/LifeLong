@@ -829,6 +829,7 @@ export default {
         title: 'Quick Links',
         addFundSource: 'ออกเลขแหล่งเงินใหม่',
         dailyReport: 'ส่งออกรายงานประจำวัน',
+        facultyRevenue: 'รายงานแยกตามคณะ',
       },
       activities: {
         eyebrow: 'Audit Trail',
@@ -862,6 +863,7 @@ export default {
         openPage: 'เปิดหน้านี้',
         addFundSourceDetail: 'บันทึกและออกรหัสแหล่งเงินสำหรับคำขอที่ได้รับอนุมัติ',
         exportReportDetail: 'สร้างและดาวน์โหลดรายงานยอดรับเงินในรูปแบบ PDF หรือ Excel',
+        facultyRevenueDetail: 'วิเคราะห์สัดส่วนรายได้แยกตามคณะ พร้อมกราฟวงกลมเปรียบเทียบ',
       },
     },
     fundSources: {
