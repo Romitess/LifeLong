@@ -19,6 +19,17 @@
       subtitle="ติดตามจำนวนผู้เรียนและค่าลงทะเบียน แยกตามคณะหรือส่วนงานจากข้อมูลจริงในระบบ"
       body-padding="none"
     >
+      <template #header-actions>
+        <q-btn
+          unelevated
+          no-caps
+          color="teal-7"
+          icon="download"
+          label="ส่งออก"
+          class="registration-statistics-report__export-btn"
+          @click="exportDialogOpen = true"
+        />
+      </template>
       <div class="registration-statistics-report__filters">
         <BaseDateRangeFilter
           v-model="dateRange"
@@ -90,6 +101,15 @@
           </div>
         </div>
       </div>
+
+      <AdminRegistrationExportDialog
+        v-model="exportDialogOpen"
+        :date-range="dateRange"
+        :faculty-id="selectedFacultyId"
+        :type-course-id="selectedTypeCourseId"
+        :faculty-options="facultyOptions"
+        :course-type-options="courseTypeOptions"
+      />
 
       <q-banner v-if="error" rounded dense class="bg-negative text-white q-ma-md">
         {{ error }}
@@ -294,6 +314,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
+import AdminRegistrationExportDialog from 'components/admin/AdminRegistrationExportDialog.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BaseDateRangeFilter from 'components/base/BaseDateRangeFilter.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
@@ -309,6 +330,7 @@ interface DateRangeValue {
 const rowsPerPage = 10;
 const currentPage = ref(1);
 const paginationRef = ref<HTMLElement | null>(null);
+const exportDialogOpen = ref(false);
 const dateRange = ref<DateRangeValue>({
   start: null,
   end: null,
@@ -553,6 +575,16 @@ onMounted(() => {
 
 .registration-statistics-report__filter-btn--primary {
   box-shadow: 0 10px 22px rgba($primary, 0.2);
+}
+
+.registration-statistics-report__export-btn {
+  min-height: 38px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(0, 121, 107, 0.16);
 }
 
 .registration-statistics-report__action-spacer {

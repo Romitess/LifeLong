@@ -4,7 +4,7 @@
       eyebrow="Admin Reports"
       eyebrow-icon="analytics"
       title="รายงาน"
-      description="ติดตามรายวิชาที่ได้รับความสนใจจากจำนวนการเข้าชมและจำนวนผู้ลงทะเบียน โดยดึงข้อมูลจริงจาก backend"
+      description="ติดตามรายวิชาที่ได้รับความสนใจจากจำนวนการเข้าชมและจำนวนผู้ลงทะเบียน"
     >
       <template #aside>
         <q-badge
