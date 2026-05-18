@@ -20,10 +20,8 @@
       body-padding="none"
     >
       <template #header-actions>
-        <q-btn
-          unelevated
-          no-caps
-          color="teal-7"
+        <AdminActionButton
+          variant="primary"
           icon="download"
           label="ส่งออก"
           class="registration-statistics-report__export-btn"
@@ -79,20 +77,16 @@
           class="registration-statistics-report__field registration-statistics-report__field--actions"
         >
           <div class="registration-statistics-report__filter-actions">
-            <q-btn
-              unelevated
-              no-caps
-              color="primary"
+            <AdminActionButton
+              variant="primary"
               icon="filter_alt"
               label="แสดงผล"
               :loading="isLoading"
-              class="registration-statistics-report__filter-btn registration-statistics-report__filter-btn--primary"
+              class="registration-statistics-report__filter-btn"
               @click="applyFilters"
             />
-            <q-btn
-              flat
-              no-caps
-              color="grey-7"
+            <AdminActionButton
+              variant="secondary"
               icon="restart_alt"
               label="ล้างตัวกรอง"
               class="registration-statistics-report__filter-btn"
@@ -314,6 +308,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
+import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import AdminRegistrationExportDialog from 'components/admin/AdminRegistrationExportDialog.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BaseDateRangeFilter from 'components/base/BaseDateRangeFilter.vue';

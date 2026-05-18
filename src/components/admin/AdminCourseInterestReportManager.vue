@@ -20,16 +20,12 @@
       body-padding="none"
     >
       <template #header-actions>
-        <q-input
+        <AdminSearchInput
           v-model="search"
-          outlined
-          dense
-          debounce="250"
           placeholder="ค้นหาด้วยชื่อรายวิชา รหัสวิชา หรือผู้รับผิดชอบ..."
+          :debounce="250"
           class="course-interest-report__search"
-        >
-          <template #prepend><q-icon name="search" /></template>
-        </q-input>
+        />
       </template>
 
       <q-banner v-if="error" rounded dense class="bg-negative text-white q-ma-md">
@@ -197,6 +193,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';

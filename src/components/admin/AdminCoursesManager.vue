@@ -7,13 +7,12 @@
       body-padding="none"
     >
       <template #header-actions>
-        <q-btn
-          unelevated
-          no-caps
-          color="primary"
+        <AdminActionButton
+          variant="primary"
           icon="add"
           label="เพิ่มทะเบียนรายวิชา/หลักสูตรระยะสั้น"
           class="courses-manager__add-btn"
+          @click="void router.push('/admin/courses/new')"
         />
       </template>
 
@@ -71,20 +70,16 @@
 
           <div class="courses-manager__field courses-manager__field--actions">
             <div class="courses-manager__filter-actions">
-              <q-btn
-                unelevated
-                no-caps
-                color="primary"
+              <AdminActionButton
+                variant="primary"
                 icon="filter_alt"
                 label="แสดงผล"
                 :loading="isLoading"
-                class="courses-manager__filter-btn courses-manager__filter-btn--primary"
+                class="courses-manager__filter-btn"
                 @click="applyFilters"
               />
-              <q-btn
-                flat
-                no-caps
-                color="grey-7"
+              <AdminActionButton
+                variant="secondary"
                 icon="restart_alt"
                 label="ล้างตัวกรอง"
                 class="courses-manager__filter-btn"
@@ -95,20 +90,13 @@
         </div>
 
         <div class="courses-manager__search-row">
-          <q-input
+          <AdminSearchInput
             v-model="globalSearch"
-            outlined
-            dense
-            debounce="300"
             placeholder="ค้นหาจากทุกคอลัมน์..."
             class="courses-manager__search"
             @update:model-value="onSearchChange"
-          >
-            <template #prepend><q-icon name="search" /></template>
-            <template v-if="globalSearch" #append>
-              <q-icon name="close" class="cursor-pointer" @click="clearSearch" />
-            </template>
-          </q-input>
+            @clear="clearSearch"
+          />
         </div>
       </div>
 
@@ -315,14 +303,18 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
+import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
+import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
 import type { AdminCourseItem } from 'src/types/admin-courses';
 
 const $q = useQuasar();
+const router = useRouter();
 const { items, filterOptions, pagination, isLoading, error, fetchData, removeCourse } =
   useAdminCourses();
 

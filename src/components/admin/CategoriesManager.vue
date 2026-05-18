@@ -20,25 +20,16 @@
       body-padding="none"
     >
       <template #header-actions>
-        <q-input
+        <AdminSearchInput
           v-model="search"
-          outlined
-          dense
-          debounce="200"
           placeholder="ค้นหาหมวด/หมู่..."
+          :debounce="200"
           class="categories-manager__search"
-        >
-          <template #prepend><q-icon name="search" /></template>
-        </q-input>
-        <q-btn
-          unelevated
-          dense
-          no-caps
-          size="sm"
+        />
+        <AdminActionButton
+          variant="primary"
           icon="add"
           label="เพิ่มหมวด"
-          color="amber-8"
-          text-color="white"
           class="categories-manager__add-btn"
           @click="openCreateCategoryDialog"
         />
@@ -248,13 +239,10 @@
                 <td class="text-right">
                   <div class="category-cell__actions">
                     <template v-if="row.kind === 'category'">
-                      <q-btn
-                        dense
-                        unelevated
-                        no-caps
+                      <AdminActionButton
+                        variant="primary"
                         icon="add"
                         label="เพิ่มหมู่"
-                        size="sm"
                         class="categories-manager__sub-add-btn"
                         @click="openCreateSubcategoryDialog(row.category)"
                       />
@@ -420,6 +408,7 @@ import type { QForm, ValidationRule } from 'quasar';
 import { useQuasar } from 'quasar';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
+import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
@@ -895,17 +884,18 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   width: min(280px, 100%);
 }
 
-.categories-manager__add-btn,
-.categories-manager__sub-add-btn {
-  border-radius: 8px;
-  padding: 4px 12px;
-  font-weight: 800;
-  font-size: 0.82rem;
+.categories-manager__add-btn {
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  font-size: 0.875rem !important;
+  white-space: nowrap;
 }
 
 .categories-manager__sub-add-btn {
-  color: #8a5a00 !important;
-  background: rgba(245, 166, 35, 0.12) !important;
+  min-height: 32px !important;
+  padding: 0 12px !important;
+  font-size: 0.8rem !important;
+  white-space: nowrap;
 }
 
 .categories-manager__progress {

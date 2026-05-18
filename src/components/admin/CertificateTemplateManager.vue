@@ -7,10 +7,8 @@
       body-padding="none"
     >
       <template #header-actions>
-        <q-btn
-          unelevated
-          no-caps
-          color="primary"
+        <AdminActionButton
+          variant="primary"
           icon="add"
           label="เพิ่มรูปแบบ Certificate"
           class="cert-manager__add-btn"
@@ -19,20 +17,13 @@
       </template>
 
       <div class="cert-manager__toolbar">
-        <q-input
+        <AdminSearchInput
           v-model="globalSearch"
-          outlined
-          dense
-          debounce="300"
           placeholder="ค้นหาชื่อรูปแบบ..."
           class="cert-manager__search"
           @update:model-value="onSearchChange"
-        >
-          <template #prepend><q-icon name="search" /></template>
-          <template v-if="globalSearch" #append>
-            <q-icon name="close" class="cursor-pointer" @click="clearSearch" />
-          </template>
-        </q-input>
+          @clear="clearSearch"
+        />
       </div>
 
       <q-banner v-if="error" rounded dense class="bg-negative text-white q-ma-md">
@@ -336,18 +327,14 @@
         </q-card-section>
 
         <q-card-actions class="cert-manager-dialog__actions">
-          <q-btn
-            flat
-            no-caps
+          <AdminActionButton
+            variant="secondary"
             label="ยกเลิก"
-            color="grey-7"
             class="cert-manager-dialog__cancel-btn"
             @click="closeDialog"
           />
-          <q-btn
-            unelevated
-            no-caps
-            color="primary"
+          <AdminActionButton
+            variant="primary"
             icon="save"
             label="บันทึก"
             :loading="isSaving"
@@ -396,7 +383,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
+import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
+import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCertTemplates } from 'src/composables/use-admin-cert-templates';

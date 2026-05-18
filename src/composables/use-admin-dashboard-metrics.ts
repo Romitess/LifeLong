@@ -410,7 +410,7 @@ export function useAdminDashboardMetrics(): DashboardMetrics {
     const paidRate =
       totals.value.enrolledLearners === 0
         ? 0
-        : (totals.value.paidEnrollments / totals.value.enrolledLearners) * 100;
+        : Math.round((totals.value.paidEnrollments / totals.value.enrolledLearners) * 10000) / 100;
 
     return [
       {

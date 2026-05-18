@@ -268,20 +268,16 @@
                 <div class="text-subtitle2 q-mb-xs">ช่วงเวลาเปิดรับสมัคร *</div>
                 <div class="row q-col-gutter-sm">
                   <div class="col-6">
-                    <q-input
+                    <BaseDateInput
                       v-model="form.registrationStart"
-                      outlined
-                      dense
-                      type="date"
+                      value-format="YYYY-MM-DD"
                       label="เริ่ม"
                     />
                   </div>
                   <div class="col-6">
-                    <q-input
+                    <BaseDateInput
                       v-model="form.registrationEnd"
-                      outlined
-                      dense
-                      type="date"
+                      value-format="YYYY-MM-DD"
                       label="สิ้นสุด"
                     />
                   </div>
@@ -425,6 +421,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue';
 import { useQuasar, QStepper } from 'quasar';
+import BaseDateInput from 'components/base/BaseDateInput.vue';
 import type { Course, DeliveryMode } from 'src/types/course';
 
 interface Props {

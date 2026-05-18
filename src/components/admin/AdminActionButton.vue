@@ -33,6 +33,8 @@ withDefaults(defineProps<Props>(), {
   font-weight: 600 !important;
 
   :deep(.q-btn__content) {
+    flex-wrap: nowrap;
+    flex-direction: row;
     gap: 8px;
     letter-spacing: 0;
   }

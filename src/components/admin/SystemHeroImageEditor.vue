@@ -59,33 +59,27 @@
         </div>
 
         <div class="hero-slide-filters">
-          <q-input
+          <AdminSearchInput
             :model-value="slideSearch"
-            outlined
-            dense
-            debounce="200"
             placeholder="ค้นหาชื่อสไลด์..."
-            clearable
+            :debounce="200"
             @update:model-value="onSlideSearchUpdate"
             @clear="slideSearch = ''"
-          >
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
+          />
           <BaseDateRangeFilter
             v-model="slideDateFilter"
             label="ช่วงวันแสดงผล"
             from-hint="ตั้งแต่"
             to-hint="ถึง"
           />
-          <button
+          <AdminActionButton
             v-if="hasActiveSlideFilters"
-            type="button"
-            class="hero-slide-filters__reset"
+            variant="secondary"
+            icon="restart_alt"
+            label="ล้างตัวกรอง"
+            class="hero-slide-filters__reset-btn"
             @click="resetSlideFilters"
-          >
-            <q-icon name="restart_alt" size="16px" />
-            ล้างตัวกรอง
-          </button>
+          />
         </div>
 
         <div class="hero-slide-list">
@@ -166,19 +160,15 @@
             />
             <q-toggle v-model="selectedSlide.enabled" color="positive" label="แสดงผล" />
             <div class="hero-template-toolbar__save-actions">
-              <q-btn
-                outline
-                no-caps
-                color="grey-8"
+              <AdminActionButton
+                variant="secondary"
                 icon="undo"
                 label="ยกเลิก draft"
                 :disable="!hasUnsavedChanges"
                 @click="requestDiscardDraft"
               />
-              <q-btn
-                unelevated
-                no-caps
-                color="primary"
+              <AdminActionButton
+                variant="primary"
                 icon="check_circle"
                 label="ยืนยันการบันทึก"
                 :disable="!hasUnsavedChanges"
@@ -717,7 +707,9 @@ import {
   type CSSProperties,
 } from 'vue';
 import { useQuasar } from 'quasar';
+import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
+import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import HeroSlideFormDialog, {
   type HeroSlideFormPayload,

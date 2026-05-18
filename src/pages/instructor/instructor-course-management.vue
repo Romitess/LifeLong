@@ -757,19 +757,15 @@
                       popup-content-class="course-settings-select-menu"
                       class="course-settings-field"
                     />
-                    <q-input
+                    <BaseDateInput
                       v-model="courseSettings.registrationStartDate"
-                      dense
-                      outlined
-                      type="date"
+                      value-format="YYYY-MM-DD"
                       label="วันเปิดรับสมัคร"
                       class="course-settings-field"
                     />
-                    <q-input
+                    <BaseDateInput
                       v-model="courseSettings.registrationEndDate"
-                      dense
-                      outlined
-                      type="date"
+                      value-format="YYYY-MM-DD"
                       label="วันปิดรับสมัคร"
                       class="course-settings-field"
                     />
@@ -1426,6 +1422,7 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { getCourseStructure, type Lesson } from 'src/data/course-structure';
 import type { Course, DeliveryMode } from 'src/types/course';
+import BaseDateInput from 'components/base/BaseDateInput.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 
 type WorkspaceTab =

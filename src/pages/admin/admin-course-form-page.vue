@@ -1,0 +1,52 @@
+<template>
+  <q-page class="admin-page admin-course-form-page">
+    <AdminPageHero
+      eyebrow="Course Registry"
+      eyebrow-icon="menu_book"
+      :title="'เพิ่มทะเบียนรายวิชา/หลักสูตรระยะสั้น'"
+      description="กรอกข้อมูลรายวิชาหรือหลักสูตรระยะสั้นที่ได้รับอนุมัติให้ดำเนินการในระบบ"
+    />
+
+    <section class="admin-shell admin-content">
+      <div class="admin-course-form-page__back">
+        <AdminActionButton
+          variant="primary"
+          icon="arrow_back"
+          label="กลับไปรายการ"
+          no-caps
+          dense
+          @click="void router.push('/admin/courses')"
+        />
+      </div>
+
+      <AdminCourseForm @cancel="void router.push('/admin/courses')" @saved="onSaved" />
+    </section>
+  </q-page>
+</template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
+import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AdminCourseForm from 'components/admin/AdminCourseForm.vue';
+import AdminActionButton from 'components/admin/AdminActionButton.vue';
+
+const router = useRouter();
+const $q = useQuasar();
+
+function onSaved(courseId: number) {
+  $q.notify({
+    type: 'positive',
+    message: `บันทึกรายวิชาสำเร็จ (ID: ${courseId})`,
+    position: 'top',
+    timeout: 3000,
+  });
+  void router.push('/admin/courses');
+}
+</script>
+
+<style scoped lang="scss">
+.admin-course-form-page__back {
+  margin-bottom: 16px;
+}
+</style>
