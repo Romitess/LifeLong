@@ -1,20 +1,20 @@
 <template>
   <q-page class="admin-page finance-dashboard-page">
     <!-- ── Hero ─────────────────────────────────────────────── -->
-    <AdminPageHero
+    <CentralFinancePageHero
       :eyebrow="$t('centralFinance.dashboard.hero.eyebrow')"
       eyebrow-icon="account_balance"
       :title="$t('centralFinance.dashboard.hero.title')"
       :description="$t('centralFinance.dashboard.hero.desc')"
     >
       <template #actions>
-        <AdminActionButton
+        <CentralFinanceActionButton
           icon="description"
           :label="$t('centralFinance.dashboard.actions.fundRequests')"
           no-caps
           @click="onGotoFundSources"
         />
-        <AdminActionButton
+        <CentralFinanceActionButton
           variant="outline"
           icon="file_download"
           :label="$t('centralFinance.dashboard.actions.exportReport')"
@@ -22,13 +22,13 @@
           @click="onGoToDailyReport"
         />
       </template>
-    </AdminPageHero>
+    </CentralFinancePageHero>
 
     <!-- ── Content ───────────────────────────────────────────── -->
     <section class="admin-shell admin-content">
       <!-- Metric Cards -->
       <div class="finance-stat-grid">
-        <AdminMetricCard
+        <CentralFinanceMetricCard
           v-for="stat in metricCards"
           :key="stat.label"
           :icon="stat.icon"
@@ -43,13 +43,13 @@
               <span :class="`text-${stat.trendColor}`">{{ stat.trendText }}</span>
             </div>
           </template>
-        </AdminMetricCard>
+        </CentralFinanceMetricCard>
       </div>
 
       <!-- Main Grid: Revenue Chart + Fund Source Summary -->
       <div class="finance-main-grid">
         <!-- Revenue Chart -->
-        <AdminSurfaceCard
+        <CentralFinanceSurfaceCard
           :eyebrow="$t('centralFinance.dashboard.revenueChart.eyebrow')"
           :title="$t('centralFinance.dashboard.revenueChart.title')"
           card-class="finance-panel finance-panel--chart"
@@ -115,10 +115,10 @@
               </div>
             </div>
           </div>
-        </AdminSurfaceCard>
+        </CentralFinanceSurfaceCard>
 
         <!-- Fund Source Request Status -->
-        <AdminSurfaceCard
+        <CentralFinanceSurfaceCard
           :eyebrow="$t('centralFinance.dashboard.fundSourceStatus.eyebrow')"
           :title="$t('centralFinance.dashboard.fundSourceStatus.title')"
           card-class="finance-panel finance-panel--status"
@@ -145,7 +145,7 @@
             <p class="finance-quick-links__title">
               {{ $t('centralFinance.dashboard.quickLinks.title') }}
             </p>
-            <AdminActionButton
+            <CentralFinanceActionButton
               variant="secondary"
               icon="add_circle_outline"
               :label="$t('centralFinance.dashboard.quickLinks.addFundSource')"
@@ -154,7 +154,7 @@
               class="full-width"
               @click="onAddFundSource"
             />
-            <AdminActionButton
+            <CentralFinanceActionButton
               variant="secondary"
               icon="file_download"
               :label="$t('centralFinance.dashboard.quickLinks.dailyReport')"
@@ -163,7 +163,7 @@
               class="full-width"
               @click="onGoToDailyReport"
             />
-            <AdminActionButton
+            <CentralFinanceActionButton
               variant="secondary"
               icon="pie_chart"
               :label="$t('centralFinance.dashboard.quickLinks.facultyRevenue')"
@@ -173,13 +173,13 @@
               @click="onGoToFacultyRevenue"
             />
           </div>
-        </AdminSurfaceCard>
+        </CentralFinanceSurfaceCard>
       </div>
 
       <!-- Bottom Grid: Activities + Shortcuts -->
       <div class="finance-bottom-grid">
         <!-- Recent Activities -->
-        <AdminSurfaceCard
+        <CentralFinanceSurfaceCard
           :eyebrow="$t('centralFinance.dashboard.activities.eyebrow')"
           :title="$t('centralFinance.dashboard.activities.title')"
           card-class="finance-panel finance-panel--activity"
@@ -196,11 +196,11 @@
               <div class="finance-timeline__detail">{{ activity.detail }}</div>
             </q-timeline-entry>
           </q-timeline>
-        </AdminSurfaceCard>
+        </CentralFinanceSurfaceCard>
 
         <!-- Quick Access Shortcuts -->
         <div class="finance-shortcut-stack">
-          <AdminSurfaceCard
+          <CentralFinanceSurfaceCard
             v-for="item in shortcuts"
             :key="item.title"
             :eyebrow="$t('centralFinance.dashboard.shortcuts.eyebrow')"
@@ -215,7 +215,7 @@
                 <q-icon :name="item.icon" size="28px" />
               </div>
               <p>{{ item.detail }}</p>
-              <AdminActionButton
+              <CentralFinanceActionButton
                 variant="secondary"
                 :label="$t('centralFinance.dashboard.shortcuts.openPage')"
                 icon-right="arrow_forward"
@@ -223,7 +223,7 @@
                 @click="onShortcutClick(item.to)"
               />
             </div>
-          </AdminSurfaceCard>
+          </CentralFinanceSurfaceCard>
         </div>
       </div>
     </section>
@@ -234,10 +234,10 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
-import AdminMetricCard from 'components/admin/AdminMetricCard.vue';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
+import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
+import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
+import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 
 const router = useRouter();

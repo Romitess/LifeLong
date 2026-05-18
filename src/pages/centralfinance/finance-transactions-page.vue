@@ -1,25 +1,25 @@
 <template>
   <q-page class="admin-page finance-transactions-page">
-    <AdminPageHero
+    <CentralFinancePageHero
       :eyebrow="$t('centralFinance.transactions.hero.eyebrow')"
       eyebrow-icon="gavel"
       :title="$t('centralFinance.transactions.hero.title')"
       :description="$t('centralFinance.transactions.hero.desc')"
     >
       <template #actions>
-        <AdminActionButton
+        <CentralFinanceActionButton
           icon="file_download"
           :label="$t('centralFinance.transactions.actions.exportAuditLog')"
           no-caps
           @click="onExportAuditLog"
         />
       </template>
-    </AdminPageHero>
+    </CentralFinancePageHero>
 
     <section class="admin-shell admin-content">
       <!-- Advanced Search / Filters -->
       <div class="filter-section">
-        <AdminSurfaceCard :accent="false" class="filter-card">
+        <CentralFinanceSurfaceCard :accent="false" class="filter-card">
           <div class="filter-grid">
             <q-input
               v-model="search"
@@ -83,11 +83,11 @@
               />
             </div>
           </div>
-        </AdminSurfaceCard>
+        </CentralFinanceSurfaceCard>
       </div>
 
       <!-- Transaction Table -->
-      <AdminSurfaceCard :accent="false" body-padding="none">
+      <CentralFinanceSurfaceCard :accent="false" body-padding="none">
         <q-table
           flat
           :rows="filteredTransactions"
@@ -147,12 +147,12 @@
             </q-td>
           </template>
         </q-table>
-      </AdminSurfaceCard>
+      </CentralFinanceSurfaceCard>
     </section>
 
     <!-- ── Audit Log Dialog ─────────────────────────────────── -->
     <q-dialog v-model="showAuditDialog">
-      <AdminSurfaceCard
+      <CentralFinanceSurfaceCard
         :title="$t('centralFinance.transactions.auditLog.title')"
         body-padding="none"
         style="width: 500px; max-width: 90vw"
@@ -210,7 +210,7 @@
             {{ $t('centralFinance.transactions.auditLog.noLogs') }}
           </div>
         </div>
-      </AdminSurfaceCard>
+      </CentralFinanceSurfaceCard>
     </q-dialog>
 
     <!-- ── Flag Confirmation Dialog ─────────────────────────── -->
@@ -257,9 +257,9 @@ import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
+import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
 import { useCentralFinanceStore, type Transaction } from 'src/stores/central-finance-store';
 
 const { t, locale } = useI18n();

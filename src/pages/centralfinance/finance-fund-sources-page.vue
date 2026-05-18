@@ -1,27 +1,27 @@
 <template>
   <q-page class="admin-page fund-sources-page">
     <!-- ── Hero ─────────────────────────────────────────────── -->
-    <AdminPageHero
+    <CentralFinancePageHero
       :eyebrow="$t('centralFinance.dashboard.hero.eyebrow')"
       eyebrow-icon="account_balance"
       :title="$t('centralFinance.fundSources.hero.title')"
       :description="$t('centralFinance.fundSources.hero.desc')"
     >
       <template #actions>
-        <AdminActionButton
+        <CentralFinanceActionButton
           icon="add_circle_outline"
           :label="$t('centralFinance.dashboard.quickLinks.addFundSource')"
           no-caps
           @click="onCreateNew"
         />
-        <AdminActionButton
+        <CentralFinanceActionButton
           variant="outline"
           icon="history"
           :label="$t('centralFinance.fundSources.actions.history')"
           no-caps
           @click="showHistory = true"
         />
-        <AdminActionButton
+        <CentralFinanceActionButton
           variant="outline"
           icon="file_download"
           :label="$t('centralFinance.fundSources.actions.exportAll')"
@@ -29,13 +29,13 @@
           @click="onExport"
         />
       </template>
-    </AdminPageHero>
+    </CentralFinancePageHero>
 
     <!-- ── Content Section ───────────────────────────────────── -->
     <section class="admin-shell admin-content">
       <!-- ── Filter Section ────────────────────────────────────── -->
       <div class="filter-section">
-        <AdminSurfaceCard :accent="false" class="filter-card">
+        <CentralFinanceSurfaceCard :accent="false" class="filter-card">
           <div class="filter-grid">
             <q-input
               v-model="filters.search"
@@ -104,12 +104,12 @@
               </template>
             </q-select>
           </div>
-        </AdminSurfaceCard>
+        </CentralFinanceSurfaceCard>
       </div>
 
       <!-- ── Table Section ────────────────────────────────────── -->
       <div class="table-section">
-        <AdminSurfaceCard :accent="false" class="table-card" body-padding="none">
+        <CentralFinanceSurfaceCard :accent="false" class="table-card" body-padding="none">
           <q-table
             :rows="filteredRows"
             :columns="columns"
@@ -148,7 +148,7 @@
               </q-td>
             </template>
           </q-table>
-        </AdminSurfaceCard>
+        </CentralFinanceSurfaceCard>
       </div>
     </section>
 
@@ -240,7 +240,7 @@
 
             <!-- Right Side: Budget & Contact -->
             <div class="col-12 col-md-5">
-              <AdminSurfaceCard tone="default" body-padding="md" class="info-sidebar">
+              <CentralFinanceSurfaceCard tone="default" body-padding="md" class="info-sidebar">
                 <div class="budget-section text-center q-pa-md">
                   <div class="text-overline text-grey-7">
                     {{ $t('centralFinance.fundSources.detail.budgetRequested') }}
@@ -265,7 +265,7 @@
                     <div class="text-body2">{{ selectedRequest.contactPhone || '-' }}</div>
                   </div>
                 </div>
-              </AdminSurfaceCard>
+              </CentralFinanceSurfaceCard>
 
               <div class="action-summary q-mt-lg">
                 <div class="text-caption text-grey-7 q-mb-sm">
@@ -444,9 +444,9 @@ import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import type { FundSourceRequest } from 'src/stores/central-finance-store';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
+import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
 
 const router = useRouter();
 const { t } = useI18n();

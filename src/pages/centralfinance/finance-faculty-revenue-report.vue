@@ -1,26 +1,26 @@
 <template>
   <q-page class="admin-page finance-faculty-report">
-    <AdminPageHero
+    <CentralFinancePageHero
       :eyebrow="$t('centralFinance.dashboard.hero.eyebrow')"
       eyebrow-icon="analytics"
       :title="$t('centralFinance.facultyRevenue.hero.title')"
       :description="$t('centralFinance.facultyRevenue.hero.desc')"
     >
       <template #actions>
-        <AdminActionButton
+        <CentralFinanceActionButton
           icon="file_download"
           :label="$t('centralFinance.dashboard.actions.exportReport')"
           no-caps
           @click="onExport"
         />
       </template>
-    </AdminPageHero>
+    </CentralFinancePageHero>
 
     <section class="admin-shell admin-content">
       <!-- Period Selector -->
       <div class="row q-col-gutter-lg q-mb-lg">
         <div class="col-12">
-          <AdminSurfaceCard :accent="false">
+          <CentralFinanceSurfaceCard :accent="false">
             <div class="row items-center q-gutter-md">
               <div class="text-subtitle1 text-weight-bold text-navy">
                 {{ $t('centralFinance.facultyRevenue.filters.period') }}
@@ -48,7 +48,7 @@
                 style="width: 150px"
               />
             </div>
-          </AdminSurfaceCard>
+          </CentralFinanceSurfaceCard>
         </div>
       </div>
 
@@ -56,7 +56,7 @@
       <div class="row q-col-gutter-lg">
         <!-- Pie Chart -->
         <div class="col-12 col-lg-5">
-          <AdminSurfaceCard
+          <CentralFinanceSurfaceCard
             :accent="false"
             :title="$t('centralFinance.facultyRevenue.chart.title')"
             class="h-full"
@@ -72,12 +72,12 @@
                 </div>
               </div>
             </div>
-          </AdminSurfaceCard>
+          </CentralFinanceSurfaceCard>
         </div>
 
         <!-- Comparison Table -->
         <div class="col-12 col-lg-7">
-          <AdminSurfaceCard
+          <CentralFinanceSurfaceCard
             :accent="false"
             :title="$t('centralFinance.facultyRevenue.table.title')"
             body-padding="none"
@@ -113,7 +113,7 @@
                 </q-td>
               </template>
             </q-table>
-          </AdminSurfaceCard>
+          </CentralFinanceSurfaceCard>
         </div>
       </div>
     </section>
@@ -125,9 +125,9 @@ import { ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import type { QTableColumn } from 'quasar';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
+import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
 import RevenueDonutChart from 'components/finance/RevenueDonutChart.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 

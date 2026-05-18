@@ -1,13 +1,13 @@
 <template>
   <q-page class="admin-page finance-add-fund-page">
-    <AdminPageHero
+    <CentralFinancePageHero
       :eyebrow="$t('centralFinance.addFundSource.hero.eyebrow')"
       eyebrow-icon="account_balance"
       :title="$t('centralFinance.addFundSource.hero.title')"
       :description="$t('centralFinance.addFundSource.hero.desc')"
     >
       <template #actions>
-        <AdminActionButton
+        <CentralFinanceActionButton
           variant="outline"
           icon="arrow_back"
           :label="$t('centralFinance.addFundSource.actions.back')"
@@ -15,13 +15,16 @@
           @click="onBack"
         />
       </template>
-    </AdminPageHero>
+    </CentralFinancePageHero>
 
     <section class="admin-shell admin-content">
       <div class="row q-col-gutter-lg">
         <!-- Form Section -->
         <div class="col-12 col-md-8">
-          <AdminSurfaceCard :title="$t('centralFinance.addFundSource.form.title')" :accent="true">
+          <CentralFinanceSurfaceCard
+            :title="$t('centralFinance.addFundSource.form.title')"
+            :accent="true"
+          >
             <div class="row q-col-gutter-md">
               <!-- Fund Type -->
               <div class="col-12 col-sm-6">
@@ -134,13 +137,13 @@
                 </div>
               </template>
             </div>
-          </AdminSurfaceCard>
+          </CentralFinanceSurfaceCard>
         </div>
 
         <!-- Result & Auto-Generate Section -->
         <div class="col-12 col-md-4">
           <div class="sticky-side">
-            <AdminSurfaceCard :title="$t('centralFinance.addFundSource.result.title')">
+            <CentralFinanceSurfaceCard :title="$t('centralFinance.addFundSource.result.title')">
               <div class="fund-code-display text-center q-pa-lg">
                 <div class="text-overline text-grey-7 q-mb-xs">
                   {{ $t('centralFinance.addFundSource.result.generatedCode') }}
@@ -165,7 +168,7 @@
                   {{ $t('centralFinance.addFundSource.result.structureHint') }}
                 </p>
 
-                <AdminActionButton
+                <CentralFinanceActionButton
                   :label="$t('centralFinance.addFundSource.result.saveBtn')"
                   icon="save"
                   class="full-width q-mt-md"
@@ -174,7 +177,7 @@
                   @click="onSave"
                 />
 
-                <AdminActionButton
+                <CentralFinanceActionButton
                   variant="secondary"
                   :label="$t('centralFinance.addFundSource.result.checkDuplicateBtn')"
                   icon="spellcheck"
@@ -183,9 +186,9 @@
                   @click="checkDuplicate"
                 />
               </div>
-            </AdminSurfaceCard>
+            </CentralFinanceSurfaceCard>
 
-            <AdminSurfaceCard class="q-mt-md info-card">
+            <CentralFinanceSurfaceCard class="q-mt-md info-card">
               <div class="flex items-center gap-sm">
                 <q-icon name="info" color="primary" size="20px" />
                 <span class="text-weight-bold">{{
@@ -195,7 +198,7 @@
               <p class="text-caption q-mt-sm q-mb-none text-grey-8">
                 {{ $t('centralFinance.addFundSource.tips.content') }}
               </p>
-            </AdminSurfaceCard>
+            </CentralFinanceSurfaceCard>
           </div>
         </div>
       </div>
@@ -240,9 +243,9 @@
 import { ref, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
+import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
 import { useQuasar } from 'quasar';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 

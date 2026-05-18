@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page finance-daily-report-page">
-    <AdminPageHero
+    <CentralFinancePageHero
       :eyebrow="$t('centralFinance.dailyReport.hero.eyebrow')"
       eyebrow-icon="account_balance_wallet"
       :title="$t('centralFinance.dailyReport.hero.title')"
@@ -24,7 +24,7 @@
               </q-date>
             </q-popup-proxy>
           </q-btn>
-          <AdminActionButton
+          <CentralFinanceActionButton
             variant="secondary"
             icon="print"
             label="Print Report"
@@ -33,14 +33,14 @@
           />
         </div>
       </template>
-    </AdminPageHero>
+    </CentralFinancePageHero>
 
     <section class="admin-shell admin-content">
       <!-- Summary Metrics Row -->
       <div class="row q-col-gutter-lg q-mb-xl">
         <!-- Net Total Main Card -->
         <div class="col-12 col-lg-7">
-          <AdminSurfaceCard :accent="true" card-class="net-total-card">
+          <CentralFinanceSurfaceCard :accent="true" card-class="net-total-card">
             <div class="row items-center no-wrap">
               <div class="net-total-card__icon q-mr-lg">
                 <q-icon name="payments" size="42px" color="primary" />
@@ -65,12 +65,12 @@
                 </div>
               </div>
             </div>
-          </AdminSurfaceCard>
+          </CentralFinanceSurfaceCard>
         </div>
 
         <!-- Void Summary Card -->
         <div class="col-12 col-lg-5">
-          <AdminSurfaceCard card-class="void-summary-card h-full">
+          <CentralFinanceSurfaceCard card-class="void-summary-card h-full">
             <div class="column justify-between h-full">
               <div class="row justify-between items-center q-mb-md">
                 <span class="text-subtitle2 text-weight-bold text-grey-8">
@@ -88,7 +88,7 @@
                 }}</span>
               </div>
             </div>
-          </AdminSurfaceCard>
+          </CentralFinanceSurfaceCard>
         </div>
       </div>
 
@@ -100,7 +100,7 @@
         </h3>
         <div class="row q-col-gutter-lg">
           <div v-for="channel in channelBreakdown" :key="channel.key" class="col-12 col-md-4">
-            <AdminSurfaceCard card-class="channel-card">
+            <CentralFinanceSurfaceCard card-class="channel-card">
               <div class="column">
                 <div class="row items-center q-mb-md">
                   <div class="channel-icon" :class="`channel-icon--${channel.key}`">
@@ -130,13 +130,16 @@
                   class="q-mt-md bg-grey-2"
                 />
               </div>
-            </AdminSurfaceCard>
+            </CentralFinanceSurfaceCard>
           </div>
         </div>
       </div>
 
       <!-- Detail Table -->
-      <AdminSurfaceCard :title="$t('centralFinance.dailyReport.table.title')" body-padding="none">
+      <CentralFinanceSurfaceCard
+        :title="$t('centralFinance.dailyReport.table.title')"
+        body-padding="none"
+      >
         <q-table
           flat
           :rows="todayTransactions"
@@ -185,7 +188,7 @@
             </q-td>
           </template>
         </q-table>
-      </AdminSurfaceCard>
+      </CentralFinanceSurfaceCard>
     </section>
   </q-page>
 </template>
@@ -194,9 +197,9 @@
 import { ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
+import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 
 import type { QTableColumn } from 'quasar';
