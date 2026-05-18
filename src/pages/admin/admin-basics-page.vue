@@ -91,7 +91,6 @@ const menuItems: MenuItem[] = [
     label: 'รูปแบบ Certificate',
     icon: 'workspace_premium',
     caption: 'เทมเพลตใบประกาศ',
-    badge: 'เร็ว ๆ นี้',
   },
   {
     value: 'cert-signer',
