@@ -992,6 +992,9 @@ export default {
         title: 'Transaction Details',
         desc: 'In-depth audit system for tracking transactions by faculty and department.',
       },
+      actions: {
+        exportAuditLog: 'Export Audit Log',
+      },
       filters: {
         search: 'Search by Receipt No. or Name...',
         faculty: 'Select Faculty',
@@ -1023,6 +1026,8 @@ export default {
         flagConfirm: 'Do you want to flag transaction {id} for review?',
         flagSuccess: 'Transaction has been flagged successfully',
         alreadyFlagged: 'This transaction is already flagged',
+        confirm: 'Confirm',
+        cancel: 'Cancel',
         viewAudit: 'View Audit Log',
         flagTx: 'Flag Transaction',
         events: {

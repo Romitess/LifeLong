@@ -232,8 +232,20 @@
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat :label="$t('cancel')" color="grey-7" v-close-popup no-caps />
-          <q-btn unelevated :label="$t('confirm')" color="warning" @click="confirmFlag" no-caps />
+          <q-btn
+            flat
+            :label="$t('centralFinance.transactions.auditLog.cancel')"
+            color="grey-7"
+            v-close-popup
+            no-caps
+          />
+          <q-btn
+            unelevated
+            :label="$t('centralFinance.transactions.auditLog.confirm')"
+            color="warning"
+            @click="confirmFlag"
+            no-caps
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
