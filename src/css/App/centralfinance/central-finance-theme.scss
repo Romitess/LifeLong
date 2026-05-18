@@ -93,7 +93,8 @@
   border-radius: 999px !important;
 }
 
-:where(.finance-page, .finance-dialog) .q-btn.q-btn--round:not(.q-btn--active):not([aria-current='true']) {
+:where(.finance-page, .finance-dialog)
+  .q-btn.q-btn--round:not(.q-btn--active):not([aria-current='true']) {
   border: 1px solid rgba(16, 35, 63, 0.12) !important;
   background: #ffffff !important;
   box-shadow: 0 10px 22px rgba(16, 35, 63, 0.08);
@@ -103,7 +104,8 @@
   font-size: 20px !important;
 }
 
-:where(.finance-page, .finance-dialog) .q-btn.q-btn--round:not(.q-btn--active):not([aria-current='true']):hover {
+:where(.finance-page, .finance-dialog)
+  .q-btn.q-btn--round:not(.q-btn--active):not([aria-current='true']):hover {
   transform: translateY(-2px);
   border-color: rgba(245, 166, 35, 0.24) !important;
   box-shadow:
@@ -192,7 +194,9 @@
 }
 
 :where(.finance-page, .finance-dialog) .finance-editor-field.q-field--focused .q-field__control,
-:where(.finance-page, .finance-dialog) .finance-editor-field.q-field--highlighted .q-field__control {
+:where(.finance-page, .finance-dialog)
+  .finance-editor-field.q-field--highlighted
+  .q-field__control {
   box-shadow:
     inset 0 0 0 2px var(--finance-gold),
     0 8px 18px rgba(17, 24, 39, 0.05);

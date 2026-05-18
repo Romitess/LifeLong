@@ -8,28 +8,12 @@
     >
       <template #actions>
         <div class="row items-center q-gutter-sm">
-          <q-btn
-            unelevated
-            color="white"
-            text-color="primary"
-            icon="today"
-            :label="reportDate"
-            class="report-date-btn"
-          >
-            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-date v-model="reportDate" mask="DD MMM YYYY">
-                <div class="row items-center justify-end">
-                  <q-btn v-close-popup label="Close" color="primary" flat />
-                </div>
-              </q-date>
-            </q-popup-proxy>
-          </q-btn>
           <CentralFinanceActionButton
-            variant="secondary"
-            icon="print"
-            label="Print Report"
+            color="primary"
+            icon="file_download"
+            :label="$t('centralFinance.export.title')"
             no-caps
-            @click="onPrintReport"
+            @click="showExportDialog = true"
           />
         </div>
       </template>
@@ -167,11 +151,7 @@
 
           <template #body-cell-amount="props">
             <q-td :props="props">
-              <div
-                :class="
-                  props.row.status === 'void' ? 'text-strike text-grey-5' : 'text-weight-bold'
-                "
-              >
+              <div>
                 {{ formatCurrency(props.row.amount) }}
               </div>
             </q-td>
@@ -188,25 +168,31 @@
         </q-table>
       </CentralFinanceSurfaceCard>
     </section>
+    <!-- ── Export Dialog ────────────────────────────────────── -->
+    <CentralFinanceExportDialog
+      v-model="showExportDialog"
+      :filtered-count="todayTransactions.length"
+      :total-count="financeStore.transactions.length"
+      @export="onExport"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
+import CentralFinanceExportDialog from 'components/centralfinance/CentralFinanceExportDialog.vue';
+import type { ExportPayload } from 'components/centralfinance/CentralFinanceExportDialog.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 
 import type { QTableColumn } from 'quasar';
 import type { Transaction } from 'src/stores/central-finance-store';
-const $q = useQuasar();
 const { t } = useI18n();
 const financeStore = useCentralFinanceStore();
-
-const reportDate = ref('15 May 2026');
+const showExportDialog = ref(false);
 
 const todayTransactions = computed<Transaction[]>(() => {
   // Mock filter for today (2026-05-15)
@@ -332,12 +318,10 @@ function getChannelColor(channel: string): string {
   }
 }
 
-function onPrintReport(): void {
-  $q.notify({
-    type: 'positive',
-    message: t('centralFinance.dashboard.activities.items.exportSuccess'),
-    icon: 'print',
-  });
+function onExport(payload: ExportPayload): void {
+  // In production: call a composable/service to generate the file
+  // For now we log the payload and show success notification (handled by dialog)
+  console.info('[DailyReport] Export requested:', payload);
 }
 </script>
 
