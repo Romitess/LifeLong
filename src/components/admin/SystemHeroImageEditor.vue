@@ -1,7 +1,11 @@
 <template>
   <div class="hero-template-editor">
     <div class="hero-template-editor__layout">
-      <aside class="hero-template-sidebar">
+      <AdminSurfaceCard
+        card-class="hero-template-sidebar"
+        body-class="hero-template-sidebar__body"
+        body-padding="md"
+      >
         <div class="hero-template-sidebar__header">
           <div>
             <p>Hero Images</p>
@@ -114,9 +118,14 @@
           class="full-width"
           @click="requestResetTemplate"
         />
-      </aside>
+      </AdminSurfaceCard>
 
-      <section v-if="selectedSlide" class="hero-template-workspace">
+      <AdminSurfaceCard
+        v-if="selectedSlide"
+        card-class="hero-template-workspace"
+        body-class="hero-template-workspace__body"
+        body-padding="md"
+      >
         <div class="hero-template-toolbar">
           <div>
             <p>Template Preview</p>
@@ -156,24 +165,26 @@
               label="ยังไม่บันทึก"
             />
             <q-toggle v-model="selectedSlide.enabled" color="positive" label="แสดงผล" />
-            <q-btn
-              outline
-              no-caps
-              color="grey-8"
-              icon="undo"
-              label="ยกเลิก draft"
-              :disable="!hasUnsavedChanges"
-              @click="requestDiscardDraft"
-            />
-            <q-btn
-              unelevated
-              no-caps
-              color="primary"
-              icon="check_circle"
-              label="ยืนยันการบันทึก"
-              :disable="!hasUnsavedChanges"
-              @click="requestSaveTemplate"
-            />
+            <div class="hero-template-toolbar__save-actions">
+              <q-btn
+                outline
+                no-caps
+                color="grey-8"
+                icon="undo"
+                label="ยกเลิก draft"
+                :disable="!hasUnsavedChanges"
+                @click="requestDiscardDraft"
+              />
+              <q-btn
+                unelevated
+                no-caps
+                color="primary"
+                icon="check_circle"
+                label="ยืนยันการบันทึก"
+                :disable="!hasUnsavedChanges"
+                @click="requestSaveTemplate"
+              />
+            </div>
             <q-btn
               flat
               round
@@ -271,233 +282,238 @@
         </div>
 
         <div class="hero-control-grid">
-          <q-expansion-item
-            v-model="isHeroSettingsOpen"
-            class="hero-control-card hero-control-card--collapsible"
-          >
-            <template #header>
-              <q-item-section>
-                <div class="row items-center q-gutter-sm">
-                  <q-icon name="image" color="primary" size="24px" />
-                  <span class="text-h6">ตั้งค่าภาพ Hero</span>
-                </div>
-              </q-item-section>
-              <q-item-section side />
-            </template>
-
-            <div class="q-pa-md">
-              <div class="hero-form-grid">
-                <HeroEditorInput
-                  v-model="selectedSlide.name"
-                  label="ชื่อภาพ"
-                  class="hero-form-span-full"
-                />
-                <BaseDateRangeFilter
-                  v-model="selectedSlideSchedule"
-                  label="ช่วงวันแสดงผล"
-                  from-hint="วันเริ่มแสดง"
-                  to-hint="วันสิ้นสุด"
-                  class="hero-form-span-full"
-                />
-                <div class="hero-form-row">
-                  <HeroEditorInput
-                    v-model="bgPosX"
-                    type="number"
-                    label="ตำแหน่งภาพ X (%)"
-                    :min="0"
-                    :max="100"
-                    :error="!canDragBgX && (isXInputFocused || isDraggingBg)"
-                    @focus="isXInputFocused = true"
-                    @blur="isXInputFocused = false"
-                  >
-                    <template #error> พอดีกรอบแล้ว เลื่อนซ้ายขวาไม่มีผล </template>
-                  </HeroEditorInput>
-                  <HeroEditorInput
-                    v-model="bgPosY"
-                    type="number"
-                    label="ตำแหน่งภาพ Y (%)"
-                    :min="0"
-                    :max="100"
-                    :error="!canDragBgY && (isYInputFocused || isDraggingBg)"
-                    @focus="isYInputFocused = true"
-                    @blur="isYInputFocused = false"
-                  >
-                    <template #error> พอดีกรอบแล้ว เลื่อนขึ้นลงไม่มีผล </template>
-                  </HeroEditorInput>
-                </div>
-                <div class="hero-bg-hint hero-form-span-full">
-                  <q-icon name="swipe" size="sm" class="q-mr-sm" color="primary" />
-                  <span class="text-caption"
-                    >สามารถใช้เมาส์คลิกค้างแล้วลาก (Drag)
-                    ที่รูปภาพด้านบนเพื่อปรับตำแหน่งได้เลย</span
-                  >
-                </div>
-                <ColorPickerInput v-model="selectedSlide.overlayColor" label="สี Overlay" />
-                <HeroEditorSlider
-                  v-model="selectedSlide.overlayOpacity"
-                  label="ความทึบ Overlay"
-                  unit="%"
-                  is-percentage
-                  :min="0"
-                  :max="1"
-                  :step="0.01"
-                  class="hero-form-span-full"
-                />
-              </div>
-              <div class="hero-image-actions q-mt-md">
-                <BaseButton
-                  flat
-                  no-caps
-                  color="primary"
-                  icon="image"
-                  label="เปลี่ยนรูปของสไลด์นี้"
-                  class="hero-main-outline-button"
-                  @click="replacementFileInput?.click()"
-                />
-                <span>ระบบจะถามยืนยันก่อนเปลี่ยนรูปใน draft</span>
-                <input
-                  ref="replacementFileInput"
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  @change="onReplacementImageSelected"
-                />
-              </div>
-            </div>
-          </q-expansion-item>
-
-          <q-expansion-item
-            v-model="isTextBlockSettingsOpen"
-            class="hero-control-card hero-control-card--collapsible"
-          >
-            <template #header>
-              <q-item-section>
-                <div class="row items-center q-gutter-sm">
-                  <q-icon name="text_fields" color="primary" size="24px" />
-                  <span class="text-h6">กล่องข้อความ</span>
-                </div>
-              </q-item-section>
-              <q-item-section side />
-            </template>
-
-            <div class="q-pa-md">
-              <div class="hero-form-grid">
-                <div class="hero-form-toggle-row hero-form-span-full">
-                  <q-toggle
-                    v-model="selectedSlide.textBlock.enabled"
-                    color="primary"
-                    label="เปิดข้อความ"
-                    @click.stop
-                  />
-                  <q-toggle
-                    v-model="selectedSlide.textBlock.backgroundEnabled"
-                    color="primary"
-                    label="พื้นหลังกล่องข้อความ"
-                    :disable="!selectedSlide.textBlock.enabled"
-                    @click.stop
-                  />
-                </div>
-                <div class="hero-form-row">
-                  <HeroEditorInput
-                    v-model="selectedSlide.textBlock.xPercent"
-                    type="number"
-                    label="ตำแหน่งกล่อง X (%)"
-                  />
-                  <HeroEditorInput
-                    v-model="selectedSlide.textBlock.yPercent"
-                    type="number"
-                    label="ตำแหน่งกล่อง Y (%)"
-                  />
-                </div>
-                <HeroEditorSlider
-                  v-model="selectedSlide.textBlock.widthPercent"
-                  label="ความกว้างกล่องข้อความ"
-                  unit="%"
-                  :min="10"
-                  :max="100"
-                  :step="1"
-                  class="hero-form-span-full"
-                />
-                <HeroEditorSelect
-                  v-model="selectedSlide.textBlock.textAlign"
-                  :options="textAlignOptions"
-                  label="จัดแนวข้อความ"
-                />
-
-                <HeroEditorInput
-                  v-model="selectedSlide.textBlock.gapPx"
-                  type="number"
-                  label="ระยะห่างระหว่างบรรทัด (px)"
-                />
-
-                <q-expansion-item
-                  dense
-                  expand-separator
-                  icon="straighten"
-                  label="ตั้งค่า Padding (บน ขวา ล่าง ซ้าย)"
-                  header-class="text-grey-8"
-                  class="hero-padding-expansion hero-form-span-full"
-                >
-                  <div class="hero-padding-grid q-py-sm">
-                    <div>
-                      <HeroEditorInput
-                        v-model="selectedSlide.textBlock.paddingTopPx"
-                        type="number"
-                        label="บน"
-                        :min="0"
-                      />
-                    </div>
-                    <div>
-                      <HeroEditorInput
-                        v-model="selectedSlide.textBlock.paddingRightPx"
-                        type="number"
-                        label="ขวา"
-                        :min="0"
-                      />
-                    </div>
-                    <div>
-                      <HeroEditorInput
-                        v-model="selectedSlide.textBlock.paddingBottomPx"
-                        type="number"
-                        label="ล่าง"
-                        :min="0"
-                      />
-                    </div>
-                    <div>
-                      <HeroEditorInput
-                        v-model="selectedSlide.textBlock.paddingLeftPx"
-                        type="number"
-                        label="ซ้าย"
-                        :min="0"
-                      />
-                    </div>
+          <AdminSurfaceCard card-class="hero-control-card" body-padding="none">
+            <q-expansion-item v-model="isHeroSettingsOpen" class="hero-control-card--collapsible">
+              <template #header>
+                <q-item-section>
+                  <div class="row items-center q-gutter-sm">
+                    <q-icon name="image" color="primary" size="24px" />
+                    <span class="text-h6">ตั้งค่าภาพ Hero</span>
                   </div>
-                </q-expansion-item>
-                <ColorPickerInput
-                  v-model="selectedSlide.textBlock.backgroundColor"
-                  label="สีพื้นหลัง"
-                  :disable="
-                    !selectedSlide.textBlock.enabled || !selectedSlide.textBlock.backgroundEnabled
-                  "
-                />
-                <HeroEditorSlider
-                  v-model="selectedSlide.textBlock.borderRadiusPx"
-                  label="ความมนของกล่อง (Radius)"
-                  unit="px"
-                  :min="0"
-                  :max="100"
-                  :step="1"
-                  :disable="
-                    !selectedSlide.textBlock.enabled || !selectedSlide.textBlock.backgroundEnabled
-                  "
-                  class="hero-form-span-full"
-                />
+                </q-item-section>
+                <q-item-section side />
+              </template>
+
+              <div class="q-pa-md">
+                <div class="hero-form-grid">
+                  <HeroEditorInput
+                    v-model="selectedSlide.name"
+                    label="ชื่อภาพ"
+                    class="hero-form-span-full"
+                  />
+                  <BaseDateRangeFilter
+                    v-model="selectedSlideSchedule"
+                    label="ช่วงวันแสดงผล"
+                    from-hint="วันเริ่มแสดง"
+                    to-hint="วันสิ้นสุด"
+                    class="hero-form-span-full"
+                  />
+                  <div class="hero-form-row">
+                    <HeroEditorInput
+                      v-model="bgPosX"
+                      type="number"
+                      label="ตำแหน่งภาพ X (%)"
+                      :min="0"
+                      :max="100"
+                      :error="!canDragBgX && (isXInputFocused || isDraggingBg)"
+                      @focus="isXInputFocused = true"
+                      @blur="isXInputFocused = false"
+                    >
+                      <template #error> พอดีกรอบแล้ว เลื่อนซ้ายขวาไม่มีผล </template>
+                    </HeroEditorInput>
+                    <HeroEditorInput
+                      v-model="bgPosY"
+                      type="number"
+                      label="ตำแหน่งภาพ Y (%)"
+                      :min="0"
+                      :max="100"
+                      :error="!canDragBgY && (isYInputFocused || isDraggingBg)"
+                      @focus="isYInputFocused = true"
+                      @blur="isYInputFocused = false"
+                    >
+                      <template #error> พอดีกรอบแล้ว เลื่อนขึ้นลงไม่มีผล </template>
+                    </HeroEditorInput>
+                  </div>
+                  <div class="hero-bg-hint hero-form-span-full">
+                    <q-icon name="swipe" size="sm" class="q-mr-sm" color="primary" />
+                    <span class="text-caption"
+                      >สามารถใช้เมาส์คลิกค้างแล้วลาก (Drag)
+                      ที่รูปภาพด้านบนเพื่อปรับตำแหน่งได้เลย</span
+                    >
+                  </div>
+                  <ColorPickerInput v-model="selectedSlide.overlayColor" label="สี Overlay" />
+                  <HeroEditorSlider
+                    v-model="selectedSlide.overlayOpacity"
+                    label="ความทึบ Overlay"
+                    unit="%"
+                    is-percentage
+                    :min="0"
+                    :max="1"
+                    :step="0.01"
+                    class="hero-form-span-full"
+                  />
+                </div>
+                <div class="hero-image-actions q-mt-md">
+                  <BaseButton
+                    flat
+                    no-caps
+                    color="primary"
+                    icon="image"
+                    label="เปลี่ยนรูปของสไลด์นี้"
+                    class="hero-main-outline-button"
+                    @click="replacementFileInput?.click()"
+                  />
+                  <span>ระบบจะถามยืนยันก่อนเปลี่ยนรูปใน draft</span>
+                  <input
+                    ref="replacementFileInput"
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    @change="onReplacementImageSelected"
+                  />
+                </div>
               </div>
-            </div>
-          </q-expansion-item>
+            </q-expansion-item>
+          </AdminSurfaceCard>
+
+          <AdminSurfaceCard card-class="hero-control-card" body-padding="none">
+            <q-expansion-item
+              v-model="isTextBlockSettingsOpen"
+              class="hero-control-card--collapsible"
+            >
+              <template #header>
+                <q-item-section>
+                  <div class="row items-center q-gutter-sm">
+                    <q-icon name="text_fields" color="primary" size="24px" />
+                    <span class="text-h6">กล่องข้อความ</span>
+                  </div>
+                </q-item-section>
+                <q-item-section side />
+              </template>
+
+              <div class="q-pa-md">
+                <div class="hero-form-grid">
+                  <div class="hero-form-toggle-row hero-form-span-full">
+                    <q-toggle
+                      v-model="selectedSlide.textBlock.enabled"
+                      color="primary"
+                      label="เปิดข้อความ"
+                      @click.stop
+                    />
+                    <q-toggle
+                      v-model="selectedSlide.textBlock.backgroundEnabled"
+                      color="primary"
+                      label="พื้นหลังกล่องข้อความ"
+                      :disable="!selectedSlide.textBlock.enabled"
+                      @click.stop
+                    />
+                  </div>
+                  <div class="hero-form-row">
+                    <HeroEditorInput
+                      v-model="selectedSlide.textBlock.xPercent"
+                      type="number"
+                      label="ตำแหน่งกล่อง X (%)"
+                    />
+                    <HeroEditorInput
+                      v-model="selectedSlide.textBlock.yPercent"
+                      type="number"
+                      label="ตำแหน่งกล่อง Y (%)"
+                    />
+                  </div>
+                  <HeroEditorSlider
+                    v-model="selectedSlide.textBlock.widthPercent"
+                    label="ความกว้างกล่องข้อความ"
+                    unit="%"
+                    :min="10"
+                    :max="100"
+                    :step="1"
+                    class="hero-form-span-full"
+                  />
+                  <HeroEditorSelect
+                    v-model="selectedSlide.textBlock.textAlign"
+                    :options="textAlignOptions"
+                    label="จัดแนวข้อความ"
+                  />
+
+                  <HeroEditorInput
+                    v-model="selectedSlide.textBlock.gapPx"
+                    type="number"
+                    label="ระยะห่างระหว่างบรรทัด (px)"
+                  />
+
+                  <q-expansion-item
+                    dense
+                    expand-separator
+                    icon="straighten"
+                    label="ตั้งค่า Padding (บน ขวา ล่าง ซ้าย)"
+                    header-class="text-grey-8"
+                    class="hero-padding-expansion hero-form-span-full"
+                  >
+                    <div class="hero-padding-grid q-py-sm">
+                      <div>
+                        <HeroEditorInput
+                          v-model="selectedSlide.textBlock.paddingTopPx"
+                          type="number"
+                          label="บน"
+                          :min="0"
+                        />
+                      </div>
+                      <div>
+                        <HeroEditorInput
+                          v-model="selectedSlide.textBlock.paddingRightPx"
+                          type="number"
+                          label="ขวา"
+                          :min="0"
+                        />
+                      </div>
+                      <div>
+                        <HeroEditorInput
+                          v-model="selectedSlide.textBlock.paddingBottomPx"
+                          type="number"
+                          label="ล่าง"
+                          :min="0"
+                        />
+                      </div>
+                      <div>
+                        <HeroEditorInput
+                          v-model="selectedSlide.textBlock.paddingLeftPx"
+                          type="number"
+                          label="ซ้าย"
+                          :min="0"
+                        />
+                      </div>
+                    </div>
+                  </q-expansion-item>
+                  <ColorPickerInput
+                    v-model="selectedSlide.textBlock.backgroundColor"
+                    label="สีพื้นหลัง"
+                    :disable="
+                      !selectedSlide.textBlock.enabled || !selectedSlide.textBlock.backgroundEnabled
+                    "
+                  />
+                  <HeroEditorSlider
+                    v-model="selectedSlide.textBlock.borderRadiusPx"
+                    label="ความมนของกล่อง (Radius)"
+                    unit="px"
+                    :min="0"
+                    :max="100"
+                    :step="1"
+                    :disable="
+                      !selectedSlide.textBlock.enabled || !selectedSlide.textBlock.backgroundEnabled
+                    "
+                    class="hero-form-span-full"
+                  />
+                </div>
+              </div>
+            </q-expansion-item>
+          </AdminSurfaceCard>
         </div>
 
-        <q-card flat bordered class="hero-control-card hero-text-lines-card">
+        <AdminSurfaceCard
+          card-class="hero-control-card hero-text-lines-card"
+          body-class="hero-text-lines-card__body"
+          body-padding="md"
+        >
           <div class="hero-control-card__header">
             <div>
               <h5>ข้อความและ Animation</h5>
@@ -660,8 +676,8 @@
               </div>
             </div>
           </q-expansion-item>
-        </q-card>
-      </section>
+        </AdminSurfaceCard>
+      </AdminSurfaceCard>
     </div>
 
     <AdminConfirmDialog
@@ -702,6 +718,7 @@ import {
 } from 'vue';
 import { useQuasar } from 'quasar';
 import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
+import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import HeroSlideFormDialog, {
   type HeroSlideFormPayload,
 } from 'components/admin/HeroSlideFormDialog.vue';
@@ -1869,6 +1886,9 @@ onBeforeUnmount(() => {
 
 <style lang="scss" scoped>
 .hero-template-editor {
+  --hero-admin-card-border: rgba(245, 166, 35, 0.12);
+  --hero-admin-inner-border: rgba(15, 23, 42, 0.08);
+  --hero-admin-inner-border-strong: rgba(16, 35, 63, 0.12);
   display: grid;
   gap: 18px;
 }
@@ -1891,19 +1911,20 @@ onBeforeUnmount(() => {
   gap: 18px;
 }
 
+.hero-template-sidebar {
+  align-self: start;
+}
+
 .hero-template-sidebar,
 .hero-template-workspace,
 .hero-control-card {
-  border: 1px solid rgba(16, 35, 63, 0.09);
-  border-radius: 18px;
-  background: #ffffff;
+  min-width: 0;
 }
 
-.hero-template-sidebar {
-  align-self: start;
+:deep(.hero-template-sidebar__body),
+:deep(.hero-template-workspace__body) {
   display: grid;
   gap: 16px;
-  padding: 18px;
 }
 
 .hero-template-sidebar__header,
@@ -1940,14 +1961,14 @@ onBeforeUnmount(() => {
   gap: 7px;
   min-height: 160px;
   padding: 18px;
-  border: 1.5px dashed rgba(15, 118, 110, 0.34);
-  border-radius: 16px;
-  color: #0f766e;
-  background:
-    radial-gradient(circle at top right, rgba(245, 166, 35, 0.1), transparent 34%), #f8fffd;
+  border: 1px dashed var(--hero-admin-inner-border-strong);
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-accent-ink);
+  background: #fffdf8;
   cursor: pointer;
   text-align: center;
   transition:
+    background-color 0.2s ease,
     border-color 0.2s ease,
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -1964,8 +1985,11 @@ onBeforeUnmount(() => {
 
 .hero-drop-zone--active,
 .hero-drop-zone:hover {
-  border-color: #f5a623;
-  box-shadow: 0 14px 28px rgba(15, 118, 110, 0.1);
+  border-color: rgba(245, 166, 35, 0.72);
+  background: #ffffff;
+  box-shadow:
+    0 12px 24px rgba(17, 24, 39, 0.08),
+    var(--admin-gold-ring);
   transform: translateY(-2px);
 }
 
@@ -1978,9 +2002,9 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 10px;
   padding: 12px;
-  border: 1px dashed rgba(16, 35, 63, 0.12);
-  border-radius: 14px;
-  background: #fafbfd;
+  border: 1px solid var(--hero-admin-inner-border);
+  border-radius: var(--admin-radius-md);
+  background: #f8fafc;
 }
 
 .hero-slide-filters__reset {
@@ -2018,8 +2042,8 @@ onBeforeUnmount(() => {
   gap: 8px;
   margin: 0;
   padding: 14px 12px;
-  border: 1px dashed rgba(16, 35, 63, 0.12);
-  border-radius: 12px;
+  border: 1px dashed var(--hero-admin-inner-border-strong);
+  border-radius: var(--admin-radius-md);
   color: #6b7280;
   font-size: 0.84rem;
 }
@@ -2039,13 +2063,14 @@ onBeforeUnmount(() => {
   align-items: center;
   width: 100%;
   padding: 10px;
-  border: 1px solid rgba(16, 35, 63, 0.08);
-  border-radius: 20px;
-  background: #f8fafc;
+  border: 1px solid var(--hero-admin-card-border) !important;
+  border-radius: var(--admin-radius-md);
+  background: #ffffff;
   color: inherit;
   cursor: pointer;
   text-align: left;
   transition:
+    transform 0.2s ease,
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     background-color 0.2s ease;
@@ -2056,23 +2081,27 @@ onBeforeUnmount(() => {
 }
 
 .hero-slide-picker:hover {
-  border-color: rgba(245, 166, 35, 0.32);
-  background: #ffffff;
+  transform: translateY(-2px);
+  border-color: rgba(245, 166, 35, 0.4) !important;
+  background: rgba(245, 166, 35, 0.05);
   box-shadow:
-    0 10px 20px -5px rgba(17, 24, 39, 0.1),
-    0 8px 12px -6px rgba(17, 24, 39, 0.08);
+    0 12px 24px rgba(17, 24, 39, 0.08),
+    0 0 0 1px rgba(245, 166, 35, 0.08);
 }
 
 .hero-slide-picker--active {
-  border-color: rgba(245, 166, 35, 0.65);
+  border-color: rgba(245, 166, 35, 0.65) !important;
   background: #ffffff;
-  box-shadow: none;
+  box-shadow:
+    inset 4px 0 0 var(--admin-gold),
+    0 8px 18px rgba(17, 24, 39, 0.06);
 }
 
 .hero-slide-picker img {
   width: 72px;
   height: 44px;
-  border-radius: 11px;
+  border: 1px solid var(--hero-admin-inner-border);
+  border-radius: 8px;
   object-fit: cover;
 }
 
@@ -2094,18 +2123,20 @@ onBeforeUnmount(() => {
   font-size: 0.76rem;
 }
 
-.hero-template-workspace {
-  display: grid;
-  gap: 16px;
-  padding: 18px;
-}
-
 .hero-template-toolbar__actions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.hero-template-toolbar__save-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .hero-toolbar-icon-button {
@@ -2119,10 +2150,10 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
-  border: 1px solid rgba(15, 118, 110, 0.14);
-  border-radius: 18px;
-  color: #0f766e;
-  background: linear-gradient(135deg, rgba(15, 118, 110, 0.1), rgba(245, 166, 35, 0.09));
+  border: 1px solid rgba(245, 166, 35, 0.24) !important;
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-warning-ink);
+  background: var(--admin-warning-soft);
   font-size: 0.88rem;
   font-weight: 800;
 }
@@ -2132,7 +2163,8 @@ onBeforeUnmount(() => {
   overflow: hidden;
   width: min(100%, 1040px);
   margin: 0 auto;
-  border-radius: 24px;
+  border: 1px solid var(--hero-admin-card-border) !important;
+  border-radius: var(--admin-radius-lg);
   background: #111827;
   aspect-ratio: 1920 / 600;
   box-shadow: 0 20px 46px rgba(16, 35, 63, 0.15);
@@ -2190,10 +2222,11 @@ onBeforeUnmount(() => {
 .hero-bg-hint {
   display: flex;
   align-items: center;
-  background-color: rgba(15, 118, 110, 0.05);
+  background-color: rgba(245, 166, 35, 0.08);
   padding: 10px 14px;
-  border-radius: 12px;
-  color: #0f766e;
+  border: 1px solid rgba(245, 166, 35, 0.16) !important;
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-warning-ink);
   font-size: 0.86rem;
 }
 
@@ -2295,29 +2328,11 @@ onBeforeUnmount(() => {
 
 .hero-control-card {
   align-self: start;
-  padding: 18px;
-  border-radius: 16px;
-  background: white;
-  border: 1px solid rgba(16, 35, 63, 0.1);
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.hero-control-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(245, 166, 35, 0.24);
-  box-shadow:
-    0 12px 24px rgba(17, 24, 39, 0.08),
-    0 0 0 1px rgba(245, 166, 35, 0.08);
 }
 
 .hero-control-card--collapsible {
-  padding: 0 !important;
   overflow: hidden;
   background: #ffffff !important;
-  border: 1px solid rgba(16, 35, 63, 0.1);
 }
 
 .hero-control-card--collapsible :deep(.q-expansion-item__container),
@@ -2333,12 +2348,12 @@ onBeforeUnmount(() => {
 }
 
 .hero-control-card--collapsible :deep(.q-item:hover) {
-  background: rgba(15, 23, 42, 0.03) !important;
+  background: rgba(245, 166, 35, 0.06) !important;
 }
 
 .hero-control-card--collapsible :deep(.q-expansion-item__content) {
   background: white;
-  border-top: 1px solid rgba(16, 35, 63, 0.08);
+  border-top: 1px solid var(--hero-admin-inner-border);
 }
 
 .hero-control-card h5 {
@@ -2439,13 +2454,17 @@ onBeforeUnmount(() => {
 }
 
 .hero-text-lines-card {
+  align-self: stretch;
+}
+
+:deep(.hero-text-lines-card__body) {
   display: grid;
   gap: 10px;
 }
 
 .hero-line-editor {
-  border: 1px solid rgba(16, 35, 63, 0.08);
-  border-radius: 18px;
+  border: 1px solid var(--hero-admin-inner-border);
+  border-radius: var(--admin-radius-md);
   overflow: hidden;
 }
 
@@ -2532,6 +2551,13 @@ onBeforeUnmount(() => {
   .hero-control-card__header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .hero-template-toolbar__save-actions {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+    white-space: normal;
   }
 
   .hero-padding-grid {
