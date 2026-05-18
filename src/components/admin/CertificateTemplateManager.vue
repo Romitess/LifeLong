@@ -56,9 +56,9 @@
           <thead>
             <tr>
               <th class="cert-manager-table__index">ลำดับ</th>
-              <th>ชื่อรูปแบบ Certificate</th>
+              <th>ชื่อรูปแบบ</th>
               <th class="text-center">สถานะ</th>
-              <th class="text-center">รูปแบบ Certificate</th>
+              <th class="text-center">ตัวอย่าง</th>
               <th class="text-center">ดำเนินการ</th>
             </tr>
           </thead>
@@ -79,8 +79,8 @@
                 <td class="text-center">
                   <q-skeleton
                     type="rect"
-                    width="148px"
-                    height="90px"
+                    width="100px"
+                    height="60px"
                     class="q-mx-auto cert-manager-table__thumb-skeleton"
                   />
                 </td>
@@ -115,8 +115,8 @@
                       :src="item.url"
                       :alt="item.name"
                       class="cert-manager-table__thumb"
-                      width="148"
-                      height="90"
+                      width="100"
+                      height="60"
                       loading="lazy"
                       decoding="async"
                       @click="openPreview(item)"
@@ -419,7 +419,7 @@ const currentPage = ref(1);
 const paginationRef = ref<HTMLElement | null>(null);
 
 const rowsPerPage = 10;
-const tableRowHeight = 112;
+const tableRowHeight = 96;
 const tableHeaderHeight = 57;
 const tableViewportHeight = `${rowsPerPage * tableRowHeight + tableHeaderHeight}px`;
 
@@ -692,6 +692,7 @@ function formatFileSize(bytes: number): string {
 }
 
 .cert-manager__add-btn {
+  min-width: 210px;
   border-radius: 10px;
   font-weight: 700;
   font-size: 0.84rem;
@@ -759,7 +760,7 @@ function formatFileSize(bytes: number): string {
   width: 90px;
 }
 .cert-manager-table__col-preview {
-  width: 204px;
+  width: 160px;
 }
 .cert-manager-table__col-actions {
   width: 110px;
@@ -800,8 +801,11 @@ function formatFileSize(bytes: number): string {
   display: -webkit-box;
   overflow: hidden;
   color: var(--admin-navy);
-  font-size: 0.88rem;
+  font-size: 0.8rem;
   font-weight: 800;
+  line-height: 1.4;
+  min-height: calc(1.4em * 2);
+  word-break: break-word;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -817,8 +821,8 @@ function formatFileSize(bytes: number): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 148px;
-  height: 90px;
+  width: 100px;
+  height: 60px;
   margin: 0 auto;
 }
 

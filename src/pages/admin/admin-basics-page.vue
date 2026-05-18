@@ -97,7 +97,6 @@ const menuItems: MenuItem[] = [
     label: 'ผู้เซ็น Certificate',
     icon: 'draw',
     caption: 'รายชื่อผู้ลงนาม',
-    badge: 'เร็ว ๆ นี้',
   },
   {
     value: 'slides',
