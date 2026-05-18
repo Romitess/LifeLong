@@ -19,3 +19,8 @@ export interface CategoryWithUsage extends Category {
   courseCount: number;
   activeCourseCount: number;
 }
+
+export interface ApiCategory {
+  id: number;
+  name: string;
+}

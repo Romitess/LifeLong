@@ -1,5 +1,10 @@
 import { defineStore } from 'pinia';
-import type { Category, CategoryFormPayload, CategoryWithUsage } from 'src/types/category';
+import type {
+  ApiCategory,
+  Category,
+  CategoryFormPayload,
+  CategoryWithUsage,
+} from 'src/types/category';
 import { MOCK_CATEGORIES } from 'src/data/mock-categories';
 import { useCourseStore } from 'src/stores/course-store';
 
@@ -67,16 +72,35 @@ function mergeCategoriesWithStored(
 export const useCategoryStore = defineStore('category', {
   state: (): {
     categories: Category[];
+    apiCategories: ApiCategory[];
     isInitialized: boolean;
+    isApiLoaded: boolean;
   } => ({
     categories: [],
+    apiCategories: [],
     isInitialized: false,
+    isApiLoaded: false,
   }),
   getters: {
     sortedCategories(state): Category[] {
       return [...state.categories].sort((left, right) => left.displayOrder - right.displayOrder);
     },
     activeCategories(state): Category[] {
+      // หากโหลดจาก API แล้ว ให้ใช้ apiCategories แปลงเป็น Category shape
+      if (state.isApiLoaded && state.apiCategories.length > 0) {
+        return state.apiCategories.map((cat, index) => ({
+          id: String(cat.id),
+          name: cat.name,
+          slug: cat.name.toLowerCase().replace(/\s+/g, '-'),
+          icon: 'school',
+          color: '#1565C0',
+          isActive: true,
+          displayOrder: index,
+          createdAt: '',
+          updatedAt: '',
+        }));
+      }
+      // Fallback: ใช้ mock data (กรณี backend ไม่พร้อม)
       return state.categories
         .filter((category) => category.isActive)
         .sort((left, right) => left.displayOrder - right.displayOrder);
@@ -107,6 +131,10 @@ export const useCategoryStore = defineStore('category', {
       this.isInitialized = true;
 
       writeStoredCategories(this.categories);
+    },
+    loadFromApi(apiCategories: ApiCategory[]): void {
+      this.apiCategories = apiCategories;
+      this.isApiLoaded = true;
     },
     persist(): void {
       writeStoredCategories(this.categories);

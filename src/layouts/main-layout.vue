@@ -405,12 +405,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useCourseStore } from 'src/stores/course-store';
 import { useCategoryStore } from 'src/stores/category-store';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useCategoryList } from 'src/composables/use-category-list';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import AppFooter from 'components/AppFooter.vue';
@@ -433,7 +434,15 @@ const courseStore = useCourseStore();
 const categoryStore = useCategoryStore();
 const authStore = useAuthStore();
 const { t, locale } = useI18n({ useScope: 'global' });
+const { fetchCategories } = useCategoryList();
 categoryStore.init();
+
+onMounted(async () => {
+  const apiCategories = await fetchCategories();
+  if (apiCategories.length > 0) {
+    categoryStore.loadFromApi(apiCategories);
+  }
+});
 
 /**
  * Notification Helper Functions
