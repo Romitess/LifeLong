@@ -297,13 +297,11 @@ const navigateToLesson = async (lesson: Lesson) => {
 
 <style lang="scss" scoped>
 .course-page {
-  height: 100vh;
+  height: calc(100vh - 72px);
   overflow: hidden;
   background-color: #f8f6f1;
-
-  // The toolbar is now outside q-layout, so q-page must fill 100vh
-  display: flex;
-  flex-direction: column;
+  // display: flex;
+  // flex-direction: column;
 }
 
 .section-container {
