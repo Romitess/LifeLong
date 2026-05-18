@@ -34,7 +34,7 @@
           no-caps
           inline-label
           narrow-indicator
-          class="nav-tabs gt-sm q-ml-lg"
+          :class="['nav-tabs gt-sm q-ml-lg', { 'nav-tabs--compact': isFinanceRole }]"
         >
           <template v-for="nav in navItems" :key="nav.name">
             <!-- Special case for Category with Menu -->
@@ -637,27 +637,33 @@ const navItems = computed<NavItem[]>(() => {
     return [
       {
         name: 'finance-dashboard',
-        label: 'แดชบอร์ดการเงิน',
+        label: t('finance.menu.dashboard'),
         icon: 'payments',
         to: '/finance/dashboard',
       },
       {
         name: 'finance-source-of-funds-chart',
-        label: 'ผังแหล่งเงิน',
+        label: t('finance.menu.sourceOfFunds'),
         icon: 'schema',
         to: '/finance/source-of-funds-chart',
       },
       {
         name: 'finance-payment-import',
-        label: 'นำเข้าชำระเงิน',
+        label: t('finance.menu.paymentImport'),
         icon: 'upload_file',
         to: '/finance/payment-import',
       },
       {
         name: 'finance-applicant-search',
-        label: 'ค้นหาข้อมูลผู้สมัคร',
+        label: t('finance.menu.applicantSearch'),
         icon: 'manage_search',
         to: '/finance/applicant-search',
+      },
+      {
+        name: 'finance-receipt-summary',
+        label: t('finance.menu.receiptSummary'),
+        icon: 'receipt_long',
+        to: '/finance/receipt-summary',
       },
     ];
   }
@@ -1377,6 +1383,61 @@ async function onCategoryClick(category: string) {
   border-radius: 14px;
   padding: 4px;
 
+  &.nav-tabs--compact {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+
+    :deep(.q-tab) {
+      flex: 1 1 auto !important;
+      width: auto !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      padding: 0 8px !important;
+      font-size: 0.85rem !important;
+
+      .q-tab__content {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .q-tab__label {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+
+      .q-tab__icon {
+        font-size: 1.05rem !important;
+        margin-right: 6px !important;
+        color: #4b5563 !important;
+        flex: 0 0 16px !important;
+      }
+
+      &.q-tab--active {
+        .q-tab__icon {
+          color: $primary !important;
+        }
+      }
+    }
+
+    :deep(.nav-tab--finance-applicant-search),
+    :deep(.nav-tab--finance-dashboard),
+    :deep(.nav-tab--finance-source-of-funds-chart),
+    :deep(.nav-tab--finance-payment-import),
+    :deep(.nav-tab--finance-receipt-summary) {
+      flex: 1 1 auto !important;
+      width: auto !important;
+      min-width: 0 !important;
+      max-width: none !important;
+    }
+  }
+
   :deep(.q-tab) {
     color: #5c3d00;
     font-weight: 600;
@@ -1586,6 +1647,14 @@ async function onCategoryClick(category: string) {
     max-width: 174px;
     min-width: 174px;
   }
+
+  :deep(.nav-tab--finance-receipt-summary) {
+    --nav-tab-label-width: 144px;
+    flex-basis: 196px;
+    width: 196px;
+    max-width: 196px;
+    min-width: 196px;
+  }
 }
 
 // ── Category Menu ───────────────────────────────────────────
@@ -1645,6 +1714,14 @@ async function onCategoryClick(category: string) {
       width: 158px;
       max-width: 158px;
       min-width: 158px;
+    }
+
+    :deep(.nav-tab--finance-receipt-summary) {
+      --nav-tab-label-width: 126px;
+      flex-basis: 174px;
+      width: 174px;
+      max-width: 174px;
+      min-width: 174px;
     }
   }
 
