@@ -1084,6 +1084,15 @@ export default {
       },
       table: {
         title: 'รายการรับเงินวันนี้',
+        timestamp: 'วัน/เวลาที่ทำรายการ',
+        receiptNumber: 'เลขที่ใบเสร็จ',
+        payer: 'ผู้ชำระเงิน',
+        amount: 'จำนวนเงิน',
+        channel: 'ช่องทางชำระเงิน',
+        fundCode: 'แหล่งเงิน',
+        faculty: 'ส่วนงาน',
+        status: 'สถานะ',
+        actions: 'การจัดการ',
       },
     },
     facultyRevenue: {

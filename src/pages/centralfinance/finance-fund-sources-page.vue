@@ -142,8 +142,22 @@
                 >
                   <q-tooltip v-if="!$q.platform.is.mobile">ดูรายละเอียด</q-tooltip>
                 </q-btn>
-                <q-btn flat round dense color="secondary" icon="edit" @click="onEdit(props.row)">
-                  <q-tooltip v-if="!$q.platform.is.mobile">แก้ไข/อัปเดต</q-tooltip>
+                <q-btn
+                  flat
+                  round
+                  dense
+                  color="secondary"
+                  icon="edit"
+                  :disabled="props.row.status === 'completed'"
+                  @click="onEdit(props.row)"
+                >
+                  <q-tooltip v-if="!$q.platform.is.mobile">
+                    {{
+                      props.row.status === 'completed'
+                        ? 'ไม่สามารถแก้ไขคำขอที่ออกเลขแล้วได้'
+                        : 'แก้ไข/อัปเดต'
+                    }}
+                  </q-tooltip>
                 </q-btn>
               </q-td>
             </template>

@@ -135,11 +135,15 @@
         </div>
       </div>
 
+      <!-- Detail Table Section Header -->
+      <div class="q-mb-md q-mt-lg">
+        <h2 class="text-h6 text-weight-bold text-navy q-my-none">
+          {{ $t('centralFinance.dailyReport.table.title') }}
+        </h2>
+      </div>
+
       <!-- Detail Table -->
-      <CentralFinanceSurfaceCard
-        :title="$t('centralFinance.dailyReport.table.title')"
-        body-padding="none"
-      >
+      <CentralFinanceSurfaceCard :accent="false" body-padding="none">
         <q-table
           flat
           :rows="todayTransactions"
@@ -147,12 +151,6 @@
           row-key="id"
           class="report-table"
         >
-          <template #header-cell="props">
-            <q-th :props="props" class="report-table__header">
-              {{ props.col.label }}
-            </q-th>
-          </template>
-
           <template #body-cell-channel="props">
             <q-td :props="props">
               <div class="row items-center no-wrap">
@@ -392,13 +390,32 @@ function onPrintReport(): void {
   }
 
   .report-table {
-    &__header {
-      font-weight: 800;
-      color: var(--finance-muted);
-      text-transform: uppercase;
-      font-size: 0.72rem;
-      letter-spacing: 0.1em;
+    background: transparent;
+
+    :deep(.q-table__card) {
+      box-shadow: none;
     }
+
+    :deep(thead tr th) {
+      font-weight: 800;
+      color: var(--finance-navy);
+      background: #f8fafc;
+      font-size: 0.88rem;
+      padding: 16px;
+    }
+
+    :deep(tbody tr td) {
+      padding: 16px;
+      font-size: 0.94rem;
+    }
+
+    :deep(tbody tr:hover) {
+      background: rgba(16, 35, 63, 0.02);
+    }
+  }
+
+  .text-navy {
+    color: var(--finance-navy);
   }
 }
 
