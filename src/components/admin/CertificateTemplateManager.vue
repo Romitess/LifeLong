@@ -79,8 +79,8 @@
                 <td class="text-center">
                   <q-skeleton
                     type="rect"
-                    width="120px"
-                    height="72px"
+                    width="148px"
+                    height="90px"
                     class="q-mx-auto cert-manager-table__thumb-skeleton"
                   />
                 </td>
@@ -115,8 +115,8 @@
                       :src="item.url"
                       :alt="item.name"
                       class="cert-manager-table__thumb"
-                      width="120"
-                      height="72"
+                      width="148"
+                      height="90"
                       loading="lazy"
                       decoding="async"
                       @click="openPreview(item)"
@@ -419,7 +419,7 @@ const currentPage = ref(1);
 const paginationRef = ref<HTMLElement | null>(null);
 
 const rowsPerPage = 10;
-const tableRowHeight = 92;
+const tableRowHeight = 112;
 const tableHeaderHeight = 57;
 const tableViewportHeight = `${rowsPerPage * tableRowHeight + tableHeaderHeight}px`;
 
@@ -759,7 +759,7 @@ function formatFileSize(bytes: number): string {
   width: 90px;
 }
 .cert-manager-table__col-preview {
-  width: 168px;
+  width: 204px;
 }
 .cert-manager-table__col-actions {
   width: 110px;
@@ -800,7 +800,7 @@ function formatFileSize(bytes: number): string {
   display: -webkit-box;
   overflow: hidden;
   color: var(--admin-navy);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 800;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -817,8 +817,8 @@ function formatFileSize(bytes: number): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 120px;
-  height: 72px;
+  width: 148px;
+  height: 90px;
   margin: 0 auto;
 }
 
