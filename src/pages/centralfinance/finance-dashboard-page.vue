@@ -1,5 +1,5 @@
 <template>
-  <q-page class="admin-page finance-dashboard-page">
+  <q-page class="finance-page finance-dashboard-page">
     <!-- ── Hero ─────────────────────────────────────────────── -->
     <CentralFinancePageHero
       :eyebrow="$t('centralFinance.dashboard.hero.eyebrow')"
@@ -10,7 +10,7 @@
     </CentralFinancePageHero>
 
     <!-- ── Content ───────────────────────────────────────────── -->
-    <section class="admin-shell admin-content">
+    <section class="finance-shell finance-content">
       <!-- Metric Cards -->
       <div class="finance-stat-grid">
         <CentralFinanceMetricCard
@@ -574,7 +574,7 @@ const shortcuts = computed<ShortcutItem[]>(() => [
   display: block;
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--admin-muted);
+  color: var(--finance-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -583,7 +583,7 @@ const shortcuts = computed<ShortcutItem[]>(() => [
   display: block;
   font-size: 1.15rem;
   font-weight: 950;
-  color: var(--admin-navy);
+  color: var(--finance-navy);
   line-height: 1.2;
 }
 
@@ -648,7 +648,7 @@ const shortcuts = computed<ShortcutItem[]>(() => [
 .finance-bar-chart__day {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--admin-muted);
+  color: var(--finance-muted);
   white-space: nowrap;
 }
 
@@ -687,14 +687,14 @@ const shortcuts = computed<ShortcutItem[]>(() => [
   strong {
     font-size: 1.3rem;
     font-weight: 950;
-    color: var(--admin-navy);
+    color: var(--finance-navy);
     line-height: 1;
   }
 
   span {
     font-size: 0.82rem;
     font-weight: 700;
-    color: var(--admin-muted);
+    color: var(--finance-muted);
   }
 }
 
@@ -722,7 +722,7 @@ const shortcuts = computed<ShortcutItem[]>(() => [
 
 .finance-timeline__detail {
   font-size: 0.88rem;
-  color: var(--admin-muted);
+  color: var(--finance-muted);
   margin-top: 3px;
 }
 
@@ -743,7 +743,7 @@ const shortcuts = computed<ShortcutItem[]>(() => [
 
   p {
     margin: 0;
-    color: var(--admin-muted);
+    color: var(--finance-muted);
     font-size: 0.88rem;
     line-height: 1.6;
   }

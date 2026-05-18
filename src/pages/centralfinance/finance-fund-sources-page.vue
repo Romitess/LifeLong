@@ -1,5 +1,5 @@
 <template>
-  <q-page class="admin-page fund-sources-page">
+  <q-page class="finance-page fund-sources-page">
     <!-- ── Hero ─────────────────────────────────────────────── -->
     <CentralFinancePageHero
       :eyebrow="$t('centralFinance.dashboard.hero.eyebrow')"
@@ -32,7 +32,7 @@
     </CentralFinancePageHero>
 
     <!-- ── Content Section ───────────────────────────────────── -->
-    <section class="admin-shell admin-content">
+    <section class="finance-shell finance-content">
       <!-- ── Filter Section ────────────────────────────────────── -->
       <div class="filter-section">
         <CentralFinanceSurfaceCard :accent="false" class="filter-card">
@@ -698,7 +698,7 @@ function onSaveEdit() {
 
   :deep(thead tr th) {
     font-weight: 800;
-    color: var(--admin-navy);
+    color: var(--finance-navy);
     background: #f8fafc;
     font-size: 0.88rem;
     padding: 16px;
@@ -730,7 +730,7 @@ function onSaveEdit() {
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--admin-muted);
+    color: var(--finance-muted);
     margin-bottom: 4px;
   }
 }

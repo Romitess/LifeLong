@@ -40,7 +40,7 @@ withDefaults(defineProps<Props>(), {
 
 .cf-action-button--primary {
   color: #ffffff !important;
-  background: var(--admin-gold) !important;
+  background: var(--finance-gold) !important;
   border-color: rgba(245, 166, 35, 0.7) !important;
   box-shadow: none !important;
 }
@@ -66,7 +66,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .cf-action-button--ghost {
-  color: var(--admin-navy) !important;
+  color: var(--finance-navy) !important;
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;

@@ -53,13 +53,13 @@ withDefaults(defineProps<Props>(), {
 }
 
 .cf-metric-card__copy strong {
-  color: var(--admin-navy);
+  color: var(--finance-navy);
   font-size: 1.9rem;
   line-height: 1;
 }
 
 .cf-metric-card__copy span {
-  color: var(--admin-muted);
+  color: var(--finance-muted);
   font-weight: 800;
 }
 

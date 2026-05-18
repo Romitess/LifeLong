@@ -69,7 +69,7 @@ const showHeader = computed(() =>
   position: relative;
   overflow: hidden;
   border: 1px solid rgba($primary, 0.12) !important;
-  border-radius: var(--admin-radius-lg);
+  border-radius: var(--finance-radius-lg);
   background: #ffffff;
   box-shadow:
     0 1px 3px rgba($primary, 0.06),
@@ -113,7 +113,7 @@ const showHeader = computed(() =>
 
 .cf-surface-card__heading h2 {
   margin: 0;
-  color: var(--admin-navy);
+  color: var(--finance-navy);
   font-size: 1.2rem;
   font-weight: 950;
   line-height: 1.2;
@@ -126,7 +126,7 @@ const showHeader = computed(() =>
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin-top: 8px;
-  color: var(--admin-muted);
+  color: var(--finance-muted);
   font-size: 0.9rem;
   line-height: 1.55;
   min-height: 3.1em;

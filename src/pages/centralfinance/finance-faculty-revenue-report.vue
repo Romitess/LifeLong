@@ -1,5 +1,5 @@
 <template>
-  <q-page class="admin-page finance-faculty-report">
+  <q-page class="finance-page finance-faculty-report">
     <CentralFinancePageHero
       :eyebrow="$t('centralFinance.dashboard.hero.eyebrow')"
       eyebrow-icon="analytics"
@@ -16,7 +16,7 @@
       </template>
     </CentralFinancePageHero>
 
-    <section class="admin-shell admin-content">
+    <section class="finance-shell finance-content">
       <!-- Period Selector -->
       <div class="row q-col-gutter-lg q-mb-lg">
         <div class="col-12">
@@ -260,7 +260,7 @@ function onExport(): void {
 
     :deep(thead tr th) {
       font-weight: 800;
-      color: var(--admin-navy);
+      color: var(--finance-navy);
       background: #f8fafc;
       font-size: 0.88rem;
       padding: 16px;
@@ -277,7 +277,7 @@ function onExport(): void {
   }
 
   .text-navy {
-    color: var(--admin-navy);
+    color: var(--finance-navy);
   }
 }
 

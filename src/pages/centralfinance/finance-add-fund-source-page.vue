@@ -1,5 +1,5 @@
 <template>
-  <q-page class="admin-page finance-add-fund-page">
+  <q-page class="finance-page finance-add-fund-page">
     <CentralFinancePageHero
       :eyebrow="$t('centralFinance.addFundSource.hero.eyebrow')"
       eyebrow-icon="account_balance"
@@ -17,7 +17,7 @@
       </template>
     </CentralFinancePageHero>
 
-    <section class="admin-shell admin-content">
+    <section class="finance-shell finance-content">
       <div class="row q-col-gutter-lg">
         <!-- Form Section -->
         <div class="col-12 col-md-8">
@@ -36,7 +36,7 @@
                   :options="fundTypeOptions"
                   emit-value
                   map-options
-                  class="admin-editor-field"
+                  class="finance-editor-field"
                   @update:model-value="generateFundCode"
                 />
               </div>
@@ -49,7 +49,7 @@
                   dense
                   :label="$t('centralFinance.addFundSource.form.fiscalYear')"
                   :options="yearOptions"
-                  class="admin-editor-field"
+                  class="finance-editor-field"
                   @update:model-value="generateFundCode"
                 />
               </div>
@@ -62,7 +62,7 @@
                   dense
                   :label="$t('centralFinance.addFundSource.form.nameTh')"
                   :placeholder="$t('centralFinance.addFundSource.form.nameThPlaceholder')"
-                  class="admin-editor-field"
+                  class="finance-editor-field"
                 />
               </div>
 
@@ -74,7 +74,7 @@
                   dense
                   :label="$t('centralFinance.addFundSource.form.nameEn')"
                   :placeholder="$t('centralFinance.addFundSource.form.nameEnPlaceholder')"
-                  class="admin-editor-field"
+                  class="finance-editor-field"
                 />
               </div>
 
@@ -87,7 +87,7 @@
                   type="textarea"
                   :label="$t('centralFinance.addFundSource.form.note')"
                   rows="3"
-                  class="admin-editor-field"
+                  class="finance-editor-field"
                 />
               </div>
 
@@ -110,7 +110,7 @@
                     dense
                     :label="$t('centralFinance.addFundSource.form.notifyFaculty')"
                     :options="facultyOptions"
-                    class="admin-editor-field"
+                    class="finance-editor-field"
                   />
                 </div>
                 <div class="col-12 col-md-6">
@@ -120,7 +120,7 @@
                     dense
                     :label="$t('centralFinance.addFundSource.form.notifyApprover')"
                     :placeholder="$t('centralFinance.addFundSource.form.notifyApproverPlaceholder')"
-                    class="admin-editor-field"
+                    class="finance-editor-field"
                   />
                 </div>
                 <div class="col-12">
@@ -132,7 +132,7 @@
                     :label="$t('centralFinance.addFundSource.form.notifyNote')"
                     :placeholder="$t('centralFinance.addFundSource.form.notifyNotePlaceholder')"
                     rows="2"
-                    class="admin-editor-field"
+                    class="finance-editor-field"
                   />
                 </div>
               </template>
@@ -403,7 +403,7 @@ async function onDialogClose() {
 .fund-code-value {
   font-size: 2.2rem;
   font-weight: 950;
-  color: var(--admin-navy);
+  color: var(--finance-navy);
   letter-spacing: 0.05em;
   font-family: 'IBM Plex Mono', monospace;
 

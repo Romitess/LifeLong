@@ -2,7 +2,7 @@
   <section class="cf-page-hero">
     <div
       :class="[
-        'admin-shell',
+        'finance-shell',
         'cf-page-hero__content',
         { 'cf-page-hero__content--with-aside': hasAside },
       ]"

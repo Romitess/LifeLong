@@ -1,5 +1,5 @@
 <template>
-  <q-page class="admin-page finance-daily-report-page">
+  <q-page class="finance-page finance-daily-report-page">
     <CentralFinancePageHero
       :eyebrow="$t('centralFinance.dailyReport.hero.eyebrow')"
       eyebrow-icon="account_balance_wallet"
@@ -35,7 +35,7 @@
       </template>
     </CentralFinancePageHero>
 
-    <section class="admin-shell admin-content">
+    <section class="finance-shell finance-content">
       <!-- Summary Metrics Row -->
       <div class="row q-col-gutter-lg q-mb-xl">
         <!-- Net Total Main Card -->
@@ -394,7 +394,7 @@ function onPrintReport(): void {
   .report-table {
     &__header {
       font-weight: 800;
-      color: var(--admin-muted);
+      color: var(--finance-muted);
       text-transform: uppercase;
       font-size: 0.72rem;
       letter-spacing: 0.1em;

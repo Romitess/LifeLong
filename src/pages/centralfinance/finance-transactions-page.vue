@@ -1,5 +1,5 @@
 <template>
-  <q-page class="admin-page finance-transactions-page">
+  <q-page class="finance-page finance-transactions-page">
     <CentralFinancePageHero
       :eyebrow="$t('centralFinance.transactions.hero.eyebrow')"
       eyebrow-icon="gavel"
@@ -16,7 +16,7 @@
       </template>
     </CentralFinancePageHero>
 
-    <section class="admin-shell admin-content">
+    <section class="finance-shell finance-content">
       <!-- Advanced Search / Filters -->
       <div class="filter-section">
         <CentralFinanceSurfaceCard :accent="false" class="filter-card">
@@ -564,7 +564,7 @@ function getStatusIcon(status: Transaction['status']): string {
 
     :deep(thead tr th) {
       font-weight: 800;
-      color: var(--admin-navy);
+      color: var(--finance-navy);
       background: #f8fafc;
       font-size: 0.88rem;
       padding: 16px;
