@@ -174,7 +174,6 @@ import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 
-// ── Local Types ───────────────────────────────────────────────
 type ExportFormat = 'xlsx' | 'pdf' | 'csv';
 type ExportScope = 'currentFilter' | 'dateRange' | 'all';
 
@@ -201,7 +200,6 @@ export interface ExportPayload {
   pdfWithSummary: boolean;
 }
 
-// ── Props & Emits ─────────────────────────────────────────────
 interface Props {
   modelValue: boolean;
   filteredCount?: number;
@@ -218,17 +216,14 @@ const emit = defineEmits<{
   export: [payload: ExportPayload];
 }>();
 
-// ── Composables ───────────────────────────────────────────────
 const { t } = useI18n();
 const $q = useQuasar();
 
-// ── Dialog proxy ──────────────────────────────────────────────
 const isOpen = computed({
   get: () => props.modelValue,
   set: (v: boolean) => emit('update:modelValue', v),
 });
 
-// ── State ─────────────────────────────────────────────────────
 const selectedFormat = ref<ExportFormat>('xlsx');
 const selectedScope = ref<ExportScope>('currentFilter');
 const dateFrom = ref('');
@@ -237,7 +232,6 @@ const pdfWithHeader = ref(true);
 const pdfWithSummary = ref(true);
 const isExporting = ref(false);
 
-// ── Computed Data ─────────────────────────────────────────────
 const formats = computed<FormatItem[]>(() => [
   {
     value: 'xlsx',
@@ -289,7 +283,6 @@ const previewText = computed<string>(() => {
   return t('centralFinance.export.previewAll', { count: props.totalCount, format: fmtLabel });
 });
 
-// ── Methods ───────────────────────────────────────────────────
 function onConfirmExport(): void {
   if (selectedScope.value === 'dateRange' && (!dateFrom.value || !dateTo.value)) {
     $q.notify({
@@ -322,9 +315,7 @@ function onConfirmExport(): void {
 </script>
 
 <style lang="scss" scoped>
-// ── Shell ──────────────────────────────────────────────────────
 .export-dialog {
-  // Self-contained CSS variables — dialog renders outside .finance-page scope
   --finance-navy: #10233f;
   --finance-muted: #65758a;
   --finance-ink: #182333;
@@ -333,7 +324,6 @@ function onConfirmExport(): void {
   flex-direction: column;
   width: 480px;
   max-width: min(480px, 96vw);
-  // Hard cap so it never overflows viewport
   max-height: min(88vh, 720px);
   border-radius: 20px;
   overflow: hidden;
@@ -348,7 +338,7 @@ function onConfirmExport(): void {
   align-items: center;
   gap: 14px;
   padding: 20px 20px 18px;
-  background: linear-gradient(130deg, var(--finance-navy) 0%, #1d4080 100%);
+  background-color: var(--q-primary);
 }
 
 .export-dialog__header-icon {
@@ -585,7 +575,6 @@ function onConfirmExport(): void {
   flex-shrink: 0;
 }
 
-// Custom radio dot (avoids Quasar QRadio layout issues inside flex)
 .radio-dot {
   width: 18px;
   height: 18px;
@@ -703,18 +692,14 @@ function onConfirmExport(): void {
     }
   }
 
-  // &--confirm {
-  //   background: var(--finance-navy);
-  //   color: #fff;
-
-  //   &:hover {
-  //     background: #1d4080;
-  //   }
-  //   &:disabled {
-  //     opacity: 0.55;
-  //     cursor: not-allowed;
-  //   }
-  // }
+  &--confirm {
+    background: var(--q-primary);
+    color: #fff;
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+  }
 }
 
 // ── Expand Transition ─────────────────────────────────────────
