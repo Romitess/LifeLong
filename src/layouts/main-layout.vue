@@ -619,6 +619,12 @@ const navItems = computed<NavItem[]>(() => {
         to: '/admin/basics',
       },
       {
+        name: 'admin-courses',
+        label: 'ทะเบียนรายวิชา',
+        icon: 'menu_book',
+        to: '/admin/courses',
+      },
+      {
         name: 'admin-reports',
         label: 'รายงาน',
         icon: 'analytics',
@@ -844,6 +850,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'admin-images';
   } else if (path.includes('/admin/reports')) {
     activeNav.value = 'admin-reports';
+  } else if (path.includes('/admin/courses')) {
+    activeNav.value = 'admin-courses';
   } else if (path.includes('/admin/basics')) {
     activeNav.value = 'admin-basics';
   } else if (path.includes('/admin')) {
