@@ -7,21 +7,6 @@
       :title="$t('centralFinance.dashboard.hero.title')"
       :description="$t('centralFinance.dashboard.hero.desc')"
     >
-      <template #actions>
-        <CentralFinanceActionButton
-          icon="description"
-          :label="$t('centralFinance.dashboard.actions.fundRequests')"
-          no-caps
-          @click="onGotoFundSources"
-        />
-        <CentralFinanceActionButton
-          variant="outline"
-          icon="file_download"
-          :label="$t('centralFinance.dashboard.actions.exportReport')"
-          no-caps
-          @click="onGoToDailyReport"
-        />
-      </template>
     </CentralFinancePageHero>
 
     <!-- ── Content ───────────────────────────────────────────── -->
@@ -294,9 +279,6 @@ interface ShortcutItem {
 
 async function onAddFundSource(): Promise<void> {
   await router.push('/central-finance/fund-sources/add');
-}
-async function onGotoFundSources(): Promise<void> {
-  await router.push('/central-finance/fund-sources');
 }
 async function onGoToDailyReport(): Promise<void> {
   await router.push('/central-finance/daily-report');
