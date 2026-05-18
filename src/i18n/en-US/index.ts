@@ -637,6 +637,14 @@ export default {
       },
     },
   },
+  thisCourse: {
+    sections: 'Sections',
+    participants: 'Participants',
+    grades: 'Grades',
+    forum: 'Forum',
+    content: 'Content',
+    quiz: 'Quiz',
+  },
 
   // Sidebar
   sidebar: {
