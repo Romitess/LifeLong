@@ -216,21 +216,29 @@
 
           <!-- Verification View (Comparison Table) -->
           <div v-if="isVerifying" class="verification-view q-pa-md">
-            <div class="row items-center justify-between q-mb-lg">
-              <div class="row items-center q-gutter-sm">
-                <q-btn flat round icon="arrow_back" @click="isVerifying = false" />
-                <div class="text-h6 text-weight-bolder">
-                  {{ $t('finance.paymentImport.verificationTitle') }}
+            <div class="column q-mb-lg">
+              <div class="row items-center justify-between">
+                <div class="row items-center q-gutter-sm">
+                  <q-btn flat round icon="arrow_back" @click="isVerifying = false" />
+                  <div class="text-h6 text-weight-bolder">
+                    {{ $t('finance.paymentImport.verificationTitle') }}
+                  </div>
                 </div>
+                <q-btn
+                  unelevated
+                  color="cyan-7"
+                  :label="$t('finance.paymentImport.searchApplicantBtn')"
+                  no-caps
+                  class="rounded-borders"
+                  @click="router.push('/finance/applicant-search')"
+                />
               </div>
-              <q-btn
-                unelevated
-                color="cyan-7"
-                :label="$t('finance.paymentImport.searchApplicantBtn')"
-                no-caps
-                class="rounded-borders"
-                @click="router.push('/finance/applicant-search')"
-              />
+              <div
+                class="row items-center text-amber-9 text-weight-bold text-subtitle2 q-pl-xl q-mt-xs"
+              >
+                <q-icon name="warning" color="warning" size="20px" class="q-mr-xs" />
+                <span>{{ $t('finance.paymentImport.payerMismatchWarning') }}</span>
+              </div>
             </div>
 
             <q-table
@@ -249,11 +257,18 @@
                   <q-th colspan="3" class="text-center bg-grey-2 border-r">{{
                     $t('finance.paymentImport.colGeneral')
                   }}</q-th>
-                  <q-th colspan="4" class="text-center bg-blue-1 text-blue-9 border-r">{{
-                    $t('finance.paymentImport.colPaymentFile')
-                  }}</q-th>
-                  <q-th colspan="4" class="text-center bg-green-1 text-green-9 border-r">{{
-                    $t('finance.paymentImport.colApplicantData')
+                  <q-th
+                    colspan="4"
+                    class="text-center bg-blue-1 text-blue-9 border-r text-weight-bolder"
+                    >{{ $t('finance.paymentImport.colPaymentFile') }}</q-th
+                  >
+                  <q-th
+                    colspan="4"
+                    class="text-center bg-green-1 text-green-9 border-r text-weight-bolder"
+                    >{{ $t('finance.paymentImport.colApplicantData') }}</q-th
+                  >
+                  <q-th rowspan="2" class="text-center">{{
+                    $t('finance.paymentImport.status')
                   }}</q-th>
                   <q-th rowspan="2" class="text-center">{{
                     $t('finance.paymentImport.colEdit')
@@ -272,7 +287,12 @@
               </template>
 
               <template #body="props">
-                <q-tr :props="props">
+                <q-tr
+                  :props="props"
+                  class="cursor-pointer"
+                  :class="props.expand ? 'bg-grey-2' : ''"
+                  @click="props.expand = !props.expand"
+                >
                   <q-td key="index" :props="props">{{ props.rowIndex + 1 }}</q-td>
                   <q-td key="paymentDate" :props="props">{{ props.row.paymentDate }}</q-td>
                   <q-td key="paymentTime" :props="props" class="border-r">{{
@@ -295,8 +315,302 @@
                     props.row.dbAmount
                   }}</q-td>
 
-                  <q-td key="actions" :props="props">
-                    <q-btn flat round dense icon="edit" size="sm" color="grey-6" />
+                  <q-td key="status" :props="props" @click.stop="props.expand = !props.expand">
+                    <q-chip
+                      :color="props.row.status === 'verified' ? 'green-1' : 'amber-1'"
+                      :text-color="props.row.status === 'verified' ? 'green-9' : 'amber-9'"
+                      icon="fiber_manual_record"
+                      size="sm"
+                      class="text-weight-bold"
+                    >
+                      {{
+                        props.row.status === 'verified'
+                          ? $t('finance.paymentImport.statusVerified')
+                          : $t('finance.paymentImport.statusPending')
+                      }}
+                    </q-chip>
+                  </q-td>
+
+                  <q-td key="actions" :props="props" @click.stop="props.expand = !props.expand">
+                    <div class="row items-center justify-center no-wrap q-gutter-x-sm">
+                      <q-btn
+                        flat
+                        round
+                        dense
+                        icon="edit"
+                        color="primary"
+                        @click.stop="
+                          props.expand = true;
+                          editRow(props.row);
+                        "
+                      />
+                      <q-btn
+                        flat
+                        round
+                        dense
+                        :icon="props.expand ? 'expand_less' : 'expand_more'"
+                        color="grey-7"
+                        @click.stop="props.expand = !props.expand"
+                      />
+                    </div>
+                  </q-td>
+                </q-tr>
+
+                <q-tr v-show="props.expand" :props="props">
+                  <q-td colspan="100%" class="bg-grey-1 q-pt-lg q-pb-md q-px-md">
+                    <div class="column q-gutter-y-sm">
+                      <div class="row q-col-gutter-lg justify-center items-stretch q-py-sm">
+                        <!-- Left: File Data -->
+                        <div class="col-12 col-md-5">
+                          <q-card
+                            flat
+                            bordered
+                            class="bg-white"
+                            style="border-color: #bfdbfe; border-radius: 8px; height: 100%"
+                          >
+                            <q-card-section
+                              class="row items-center q-py-sm bg-blue-1 text-blue-9"
+                              style="border-top-left-radius: 7px; border-top-right-radius: 7px"
+                            >
+                              <q-icon
+                                name="description"
+                                color="blue-8"
+                                size="20px"
+                                class="q-mr-sm"
+                              />
+                              <div class="text-blue-9 text-weight-bold">
+                                {{ $t('finance.paymentImport.importedFileCardTitle') }}
+                              </div>
+                            </q-card-section>
+                            <q-separator style="background: #bfdbfe" />
+                            <q-card-section class="q-gutter-y-sm">
+                              <div class="file-card-field">
+                                <span class="text-grey-7">{{
+                                  $t('finance.paymentImport.fields.learnerRef')
+                                }}</span>
+                                <div class="row items-center q-gutter-x-sm">
+                                  <span class="text-weight-medium">{{ props.row.learnerRef }}</span>
+                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                </div>
+                              </div>
+                              <div class="file-card-field">
+                                <span class="text-grey-7">{{
+                                  $t('finance.paymentImport.fields.appRef')
+                                }}</span>
+                                <div class="row items-center q-gutter-x-sm">
+                                  <span class="text-weight-medium">{{
+                                    props.row.applicationRef
+                                  }}</span>
+                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                </div>
+                              </div>
+                              <div class="file-card-field">
+                                <span class="text-grey-7">{{
+                                  $t('finance.paymentImport.fields.payerName')
+                                }}</span>
+                                <div class="row items-center q-gutter-x-sm">
+                                  <span class="text-weight-medium">{{ props.row.payerName }}</span>
+                                  <q-icon
+                                    :name="
+                                      props.row.payerName === props.row.dbLearnerName
+                                        ? 'check_circle'
+                                        : 'warning'
+                                    "
+                                    :color="
+                                      props.row.payerName === props.row.dbLearnerName
+                                        ? 'positive'
+                                        : 'warning'
+                                    "
+                                    size="16px"
+                                  />
+                                </div>
+                              </div>
+                              <div class="file-card-field">
+                                <span class="text-grey-7">{{
+                                  $t('finance.paymentImport.fields.amount')
+                                }}</span>
+                                <div class="row items-center q-gutter-x-sm">
+                                  <span class="text-weight-bold">{{ props.row.amount }}</span>
+                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                </div>
+                              </div>
+                            </q-card-section>
+                          </q-card>
+                        </div>
+
+                        <!-- Center: Icon -->
+                        <div class="col-12 col-md-2 flex flex-center column gt-sm">
+                          <div class="row q-gutter-x-sm items-center">
+                            <div style="height: 2px; width: 30px; background: #cbd5e1"></div>
+                            <q-icon name="compare_arrows" color="grey-5" size="32px" />
+                            <div style="height: 2px; width: 30px; background: #cbd5e1"></div>
+                          </div>
+                        </div>
+
+                        <!-- Right: DB Data -->
+                        <div class="col-12 col-md-5">
+                          <q-card
+                            flat
+                            bordered
+                            class="bg-white"
+                            style="border-color: #bbf7d0; border-radius: 8px; height: 100%"
+                          >
+                            <q-card-section
+                              class="row items-center q-py-sm bg-green-1 text-green-9"
+                              style="border-top-left-radius: 7px; border-top-right-radius: 7px"
+                            >
+                              <q-icon name="person" color="green-8" size="20px" class="q-mr-sm" />
+                              <div class="text-green-9 text-weight-bold">
+                                {{ $t('finance.paymentImport.systemApplicantCardTitle') }}
+                              </div>
+                            </q-card-section>
+                            <q-separator style="background: #bbf7d0" />
+                            <q-card-section class="q-gutter-y-sm">
+                              <div class="db-card-field">
+                                <span class="text-grey-7">{{
+                                  $t('finance.paymentImport.fields.learnerRef')
+                                }}</span>
+                                <div
+                                  v-if="editingRow?.id === props.row.id"
+                                  class="db-input-wrapper"
+                                >
+                                  <q-input
+                                    v-model="editForm.dbLearnerRef"
+                                    dense
+                                    outlined
+                                    bg-color="white"
+                                  />
+                                </div>
+                                <div v-else class="row items-center q-gutter-x-sm">
+                                  <span class="text-weight-medium">{{
+                                    props.row.dbLearnerRef
+                                  }}</span>
+                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                </div>
+                              </div>
+                              <div class="db-card-field">
+                                <span class="text-grey-7">{{
+                                  $t('finance.paymentImport.fields.appRef')
+                                }}</span>
+                                <div
+                                  v-if="editingRow?.id === props.row.id"
+                                  class="db-input-wrapper"
+                                >
+                                  <q-input
+                                    v-model="editForm.dbAppRef"
+                                    dense
+                                    outlined
+                                    bg-color="white"
+                                  />
+                                </div>
+                                <div v-else class="row items-center q-gutter-x-sm">
+                                  <span class="text-weight-medium">{{ props.row.dbAppRef }}</span>
+                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                </div>
+                              </div>
+                              <div class="db-card-field">
+                                <span class="text-grey-7">{{
+                                  $t('finance.paymentImport.fields.learnerName')
+                                }}</span>
+                                <div
+                                  v-if="editingRow?.id === props.row.id"
+                                  class="db-input-wrapper"
+                                >
+                                  <q-input
+                                    v-model="editForm.dbLearnerName"
+                                    dense
+                                    outlined
+                                    bg-color="white"
+                                  />
+                                </div>
+                                <div v-else class="row items-center q-gutter-x-sm">
+                                  <span class="text-weight-medium">{{
+                                    props.row.dbLearnerName
+                                  }}</span>
+                                  <q-icon
+                                    :name="
+                                      props.row.payerName === props.row.dbLearnerName
+                                        ? 'check_circle'
+                                        : 'warning'
+                                    "
+                                    :color="
+                                      props.row.payerName === props.row.dbLearnerName
+                                        ? 'positive'
+                                        : 'warning'
+                                    "
+                                    size="16px"
+                                  />
+                                </div>
+                              </div>
+                              <div class="db-card-field">
+                                <span class="text-grey-7">{{
+                                  $t('finance.paymentImport.fields.amount')
+                                }}</span>
+                                <div
+                                  v-if="editingRow?.id === props.row.id"
+                                  class="db-input-wrapper"
+                                >
+                                  <q-input
+                                    v-model.number="editForm.dbAmount"
+                                    type="number"
+                                    dense
+                                    outlined
+                                    bg-color="white"
+                                  />
+                                </div>
+                                <div v-else class="row items-center q-gutter-x-sm">
+                                  <span class="text-weight-bold">{{ props.row.dbAmount }}</span>
+                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                </div>
+                              </div>
+                            </q-card-section>
+                          </q-card>
+                        </div>
+                      </div>
+
+                      <!-- Action Buttons under comparison cards -->
+
+                      <div class="row justify-center q-gutter-md q-pt-none">
+                        <template v-if="editingRow?.id === props.row.id">
+                          <q-btn
+                            outline
+                            color="grey-7"
+                            :label="$t('finance.paymentImport.cancelBtn')"
+                            no-caps
+                            class="q-px-lg rounded-borders text-weight-bold"
+                            @click.stop="editingRow = null"
+                          />
+                          <q-btn
+                            unelevated
+                            color="primary"
+                            icon="save"
+                            :label="$t('finance.paymentImport.saveBtn')"
+                            no-caps
+                            class="q-px-lg rounded-borders text-weight-bold"
+                            @click.stop="saveEditedRow"
+                          />
+                        </template>
+                        <template v-else>
+                          <q-btn
+                            outline
+                            color="grey-7"
+                            :label="$t('finance.paymentImport.cancelBtn')"
+                            no-caps
+                            class="q-px-lg rounded-borders text-weight-bold"
+                            @click.stop="cancelRow(props)"
+                          />
+                          <q-btn
+                            unelevated
+                            color="positive"
+                            icon="check_circle"
+                            :label="$t('finance.paymentImport.confirmRowBtn')"
+                            no-caps
+                            class="q-px-lg rounded-borders text-weight-bold"
+                            @click.stop="confirmRow(props)"
+                          />
+                        </template>
+                      </div>
+                    </div>
                   </q-td>
                 </q-tr>
               </template>
@@ -311,7 +625,7 @@
                     $t('finance.paymentImport.total')
                   }}</q-td>
                   <q-td class="text-center border-r text-primary">{{ totalAmount }}</q-td>
-                  <q-td></q-td>
+                  <q-td colspan="2"></q-td>
                 </q-tr>
               </template>
             </q-table>
@@ -371,6 +685,11 @@ type ImportedPaymentRow = {
   amount: number;
   importedAt: string;
   importedBy: string;
+  status: 'pending' | 'verified';
+  dbLearnerRef?: string;
+  dbAppRef?: string;
+  dbLearnerName?: string;
+  dbAmount?: number;
 };
 
 const defaultDivision = 'สำนักคอมพิวเตอร์ (82994)';
@@ -460,6 +779,14 @@ const comparisonColumns = computed<QTableProps['columns']>(() => [
     field: 'dbAmount',
     style: 'width: 80px',
   },
+  // Status
+  {
+    name: 'status',
+    label: t('finance.paymentImport.status'),
+    align: 'center',
+    field: 'status',
+    style: 'width: 120px',
+  },
   // Actions
   {
     name: 'actions',
@@ -473,10 +800,10 @@ const comparisonColumns = computed<QTableProps['columns']>(() => [
 const comparisonRows = computed(() => {
   return importedRows.value.map((row) => ({
     ...row,
-    dbLearnerRef: row.learnerRef,
-    dbAppRef: row.applicationRef,
-    dbLearnerName: row.payerName,
-    dbAmount: row.amount,
+    dbLearnerRef: row.dbLearnerRef || row.learnerRef,
+    dbAppRef: row.dbAppRef || row.applicationRef,
+    dbLearnerName: row.dbLearnerName || row.payerName,
+    dbAmount: row.dbAmount !== undefined ? row.dbAmount : row.amount,
   }));
 });
 
@@ -491,6 +818,11 @@ const importedRows = ref<ImportedPaymentRow[]>([
     amount: 1200,
     importedAt: '13/06/2568 14:14:40',
     importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
+    status: 'verified',
+    dbLearnerRef: '6700017',
+    dbAppRef: '6751300100003',
+    dbLearnerName: 'น.ส. สุกัญญา ประมงค์กิจ',
+    dbAmount: 1200,
   },
   {
     id: 'PAY-002',
@@ -502,6 +834,11 @@ const importedRows = ref<ImportedPaymentRow[]>([
     amount: 900,
     importedAt: '13/06/2568 14:14:40',
     importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
+    status: 'pending',
+    dbLearnerRef: '6600005',
+    dbAppRef: '6751300100002',
+    dbLearnerName: 'น.ส. วันนิสา ข่ายเพชร',
+    dbAmount: 900,
   },
   {
     id: 'PAY-003',
@@ -513,8 +850,70 @@ const importedRows = ref<ImportedPaymentRow[]>([
     amount: 900,
     importedAt: '13/06/2568 14:14:40',
     importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
+    status: 'pending',
+    dbLearnerRef: '6600005',
+    dbAppRef: '6751300100002',
+    dbLearnerName: 'น.ส. วันนิสา ข่ายเพชร',
+    dbAmount: 900,
   },
 ]);
+
+type TableRowProps = {
+  row: ImportedPaymentRow;
+  expand: boolean;
+};
+
+const editingRow = ref<ImportedPaymentRow | null>(null);
+const editForm = ref({
+  dbLearnerRef: '',
+  dbAppRef: '',
+  dbLearnerName: '',
+  dbAmount: 0,
+});
+
+const editRow = (row: ImportedPaymentRow) => {
+  if (editingRow.value?.id === row.id) {
+    editingRow.value = null;
+    return;
+  }
+  editingRow.value = row;
+  editForm.value = {
+    dbLearnerRef: row.dbLearnerRef || row.learnerRef,
+    dbAppRef: row.dbAppRef || row.applicationRef,
+    dbLearnerName: row.dbLearnerName || row.payerName,
+    dbAmount: row.dbAmount !== undefined ? row.dbAmount : row.amount,
+  };
+};
+
+const saveEditedRow = () => {
+  if (editingRow.value) {
+    editingRow.value.dbLearnerRef = editForm.value.dbLearnerRef;
+    editingRow.value.dbAppRef = editForm.value.dbAppRef;
+    editingRow.value.dbLearnerName = editForm.value.dbLearnerName;
+    editingRow.value.dbAmount = editForm.value.dbAmount;
+
+    editingRow.value = null;
+    $q.notify({
+      type: 'positive',
+      message: t('finance.paymentImport.notifications.rowUpdated'),
+      position: 'top',
+    });
+  }
+};
+
+const confirmRow = (props: TableRowProps) => {
+  props.row.status = 'verified';
+  props.expand = false;
+  $q.notify({
+    type: 'positive',
+    message: t('finance.paymentImport.notifications.rowVerified'),
+    position: 'top',
+  });
+};
+
+const cancelRow = (props: TableRowProps) => {
+  props.expand = false;
+};
 
 const pagination = ref({
   sortBy: 'paymentDate',
@@ -1230,20 +1629,22 @@ function confirmClearAll() {
     font-weight: 900;
     font-size: 0.74rem;
     padding: 10px 4px;
-    white-space: normal;
     line-height: 1.2;
     text-align: center !important;
     vertical-align: middle;
+    white-space: normal;
+    word-break: keep-all;
+    hyphens: none;
   }
 
   :deep(.q-table td) {
     padding: 10px 4px;
     font-size: 0.78rem;
-    white-space: normal;
-    word-break: break-word;
     line-height: 1.3;
     text-align: center !important;
     vertical-align: middle;
+    white-space: normal;
+    word-break: break-word;
   }
 
   .border-r {
@@ -1266,6 +1667,11 @@ function confirmClearAll() {
   .comparison-footer-row td {
     border-top: 2px solid #e2e8f0;
     font-size: 0.88rem;
+  }
+
+  :deep(.comparison-header-sub th) {
+    height: 48px;
+    max-height: 48px;
   }
 }
 
@@ -1312,5 +1718,38 @@ function confirmClearAll() {
   .payment-status-filter {
     width: 100%;
   }
+}
+
+.db-card-field {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  .db-input-wrapper {
+    width: 200px;
+    flex-shrink: 0;
+
+    :deep(.q-field--dense .q-field__control) {
+      height: 32px;
+      min-height: 32px;
+    }
+
+    :deep(.q-field__bottom) {
+      display: none;
+    }
+  }
+}
+
+.file-card-field {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 </style>

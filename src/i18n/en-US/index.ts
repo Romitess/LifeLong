@@ -334,6 +334,22 @@ export default {
         'Do you want to save registration payment data and proceed to issue receipts?',
       confirmBtn: 'Save and Issue Receipts',
       cancelBtn: 'Cancel',
+      payerMismatchWarning:
+        'Payer name does not have to match the learner name, but other data must match',
+      status: 'Status',
+      statusVerified: 'Verified',
+      statusPending: 'Pending',
+      importedFileCardTitle: 'Imported File Data',
+      systemApplicantCardTitle: 'System Applicant Data',
+      saveBtn: 'Save',
+      confirmRowBtn: 'Confirm',
+      fields: {
+        learnerRef: 'Ref1 (Learner Ref):',
+        appRef: 'Ref2 (App Ref):',
+        payerName: 'Payer Name:',
+        amount: 'Amount:',
+        learnerName: 'Learner Name:',
+      },
       columns: {
         no: 'No.',
         paymentDate: 'Payment Date',
@@ -352,6 +368,8 @@ export default {
         clearTitle: 'Clear all payment files?',
         clearMessage: 'Imported records will be emptied. Do you want to continue?',
         cleared: 'All payment files have been cleared',
+        rowUpdated: 'Record updated successfully',
+        rowVerified: 'Verification completed! Status changed to "Verified"',
       },
     },
     receipts: {
