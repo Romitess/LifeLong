@@ -478,6 +478,7 @@
 </template>
 
 <script setup lang="ts">
+// 1. Imports
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
@@ -486,20 +487,20 @@ import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import { getNavigation, type Lesson } from 'src/data/course-structure';
 import CourseLayout from 'layouts/course-layout.vue';
+import { useUiStore } from 'src/stores/ui-store';
+import { useCourseStore } from 'src/stores/course-store';
 
+// 4. Logic/State Init
 const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
 const { t } = useI18n();
 const progressStore = useCourseProgressStore();
-const leftDrawerOpen = ref(false);
-
-import { useUiStore } from 'src/stores/ui-store';
+const courseStore = useCourseStore();
 const uiStore = useUiStore();
-const isFullscreen = computed({
-  get: () => uiStore.isCourseFullscreen,
-  set: (val) => uiStore.setCourseFullscreen(val),
-});
+
+// 5. Reactive State
+const leftDrawerOpen = ref(false);
 const quizStarted = ref(false);
 const quizSubmitted = ref(false);
 const showSummary = ref(false);
@@ -509,30 +510,37 @@ const maxAttempts = ref(2);
 const currentQuestionIndex = ref(0);
 const answers = ref<Record<number, number>>({});
 
-const courseId = computed(() => {
+// 6. Computed
+const isFullscreen = computed<boolean>({
+  get: () => uiStore.isCourseFullscreen,
+  set: (val) => uiStore.setCourseFullscreen(val),
+});
+
+const courseId = computed<string>(() => {
   const id = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
   return id || '';
 });
 
-const quizId = computed(() =>
-  Array.isArray(route.params.quizId) ? route.params.quizId[0] : route.params.quizId,
+const quizId = computed<string>(() =>
+  Array.isArray(route.params.quizId) ? (route.params.quizId[0] ?? '') : (route.params.quizId ?? ''),
 );
 
-const quizTitle = computed(() => decodeURIComponent(quizId.value || ''));
+const quizTitle = computed<string>(() => decodeURIComponent(quizId.value || ''));
 
-import { getCourseDetailById } from 'src/data/mock-courses';
 const currentCourse = computed(() => {
   if (!courseId.value) return null;
-  return getCourseDetailById(courseId.value);
+  return courseStore.getCourseDetailById(courseId.value);
 });
-const courseTitle = computed(() => currentCourse.value?.title || 'Course');
 
-const isCompleted = computed(() => {
+const courseTitle = computed<string>(() => currentCourse.value?.title || 'Course');
+
+const isCompleted = computed<boolean>(() => {
   if (!courseId.value || !quizTitle.value) return false;
   return progressStore.isLessonCompleted(courseId.value, quizTitle.value);
 });
 
-const toggleDone = () => {
+// 7. Methods
+const toggleDone = (): void => {
   if (!courseId.value || !quizTitle.value) return;
   progressStore.toggleLessonCompletion(courseId.value, quizTitle.value);
 };

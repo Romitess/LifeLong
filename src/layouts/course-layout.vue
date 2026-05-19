@@ -68,7 +68,7 @@
               :key="course.id"
               clickable
               v-ripple
-              @click="$router.push(`/course/${course.id}/learn`)"
+              @click="goToCourse(course)"
               class="course-menu-item q-mx-sm"
               style="border-radius: 10px"
               :active="course.id === courseId"
@@ -392,6 +392,8 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useMyRegisteredCourses } from 'src/composables/use-my-registered-courses';
 import { useI18n } from 'vue-i18n';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
+import { useMoodleSso } from 'src/composables/use-moodle-sso';
+import type { Course } from 'src/types/course';
 
 const emit = defineEmits<{
   (e: 'toggleDrawer'): void;
@@ -402,17 +404,23 @@ const route = useRoute();
 const authStore = useAuthStore();
 const { t } = useI18n({ useScope: 'global' });
 const { myRegisteredCourseEntries } = useMyRegisteredCourses();
+const { getMoodleCourseUrl } = useMoodleSso();
 
-const courseId = computed(() => {
+const myCoursesMenu = ref(false);
+const thisCourseMenu = ref(false);
+let menuTimer: ReturnType<typeof setTimeout> | null = null;
+let thisCourseMenuTimer: ReturnType<typeof setTimeout> | null = null;
+
+const courseId = computed<string>(() => {
   const id = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
   return id || '';
 });
 
-const registeredCourses = computed(() => {
+const registeredCourses = computed<Course[]>(() => {
   return myRegisteredCourseEntries.value.map((entry) => entry.course);
 });
 
-const activeNav = computed({
+const activeNav = computed<string>({
   get: () => {
     const path = route.path;
     if (path === '/course-home') return 'home';
@@ -427,49 +435,104 @@ const activeNav = computed({
     if (path === '/main' || path === '/') return 'lll-system';
     return 'home';
   },
-  set: () => {
-    // Navigation is handled via @click in the template
-  },
+  set: () => {},
 });
 
-const myCoursesMenu = ref(false);
-const thisCourseMenu = ref(false);
+const isTeachingRole = computed<boolean>(() => isTeachingNotificationRole(authStore.user?.role));
+const isFinanceRole = computed<boolean>(() => authStore.user?.role === 'finance');
 
-let menuTimer: ReturnType<typeof setTimeout> | null = null;
-const openMenu = () => {
+const userRoleLabel = computed<string>(() => {
+  if (authStore.user?.role === 'admin') {
+    return 'Admin';
+  }
+
+  if (isTeachingRole.value) {
+    return t('profile.roles.instructor');
+  }
+
+  if (isFinanceRole.value) {
+    return t('profile.roles.finance');
+  }
+
+  if (authStore.user?.role === 'staff') {
+    return authStore.user.department || 'Staff';
+  }
+  return authStore.user?.studentId ?? '';
+});
+
+const notificationPreviewItems = computed(() =>
+  getNotificationItemsForRole(authStore.user?.role).slice(0, 3),
+);
+const notificationUnreadCount = computed<number>(
+  () => getNotificationItemsForRole(authStore.user?.role).filter((item) => !item.read).length,
+);
+const notificationPreviewSubtitle = computed<string>(() =>
+  isTeachingRole.value ? 'รายการสำคัญสำหรับผู้สอน' : 'ข่าวสารและกิจกรรมการเรียนของคุณ',
+);
+
+const goToCourse = async (course: Course): Promise<void> => {
+  const username = authStore.user?.username;
+  if (username) {
+    const url = await getMoodleCourseUrl(
+      String(course.moodleId ?? course.id),
+      username,
+      course.code,
+    );
+    if (url) {
+      void router.push({
+        path: `/course/${course.id}/learn`,
+        query: { moodleUrl: url },
+      });
+      return;
+    }
+  }
+  void router.push(`/course/${course.id}/learn`);
+};
+
+const openMenu = (): void => {
   if (menuTimer) clearTimeout(menuTimer);
   myCoursesMenu.value = true;
 };
-const closeMenu = () => {
+
+const closeMenu = (): void => {
   menuTimer = setTimeout(() => {
     myCoursesMenu.value = false;
   }, 150);
 };
 
-let thisCourseMenuTimer: ReturnType<typeof setTimeout> | null = null;
-const openThisCourseMenu = () => {
+const openThisCourseMenu = (): void => {
   if (thisCourseMenuTimer) clearTimeout(thisCourseMenuTimer);
   thisCourseMenu.value = true;
 };
-const closeThisCourseMenu = () => {
+
+const closeThisCourseMenu = (): void => {
   thisCourseMenuTimer = setTimeout(() => {
     thisCourseMenu.value = false;
   }, 150);
 };
 
-function onLogout() {
+function onLogout(): void {
   authStore.logout();
   void router.push('/main');
 }
 
-/**
- * Notification Helper Functions (Copied from main-layout.vue)
- */
 function isTeachingNotificationRole(role: string | undefined): boolean {
   return ['teach', 'instructor'].includes(role ?? '');
 }
 
-function getNotificationItemsForRole(role: string | undefined) {
+interface NotificationItem {
+  id: number;
+  title: string;
+  message: string;
+  time: string;
+  icon: string;
+  iconBg: string;
+  iconColor: string;
+  action: string;
+  read: boolean;
+}
+
+function getNotificationItemsForRole(role: string | undefined): NotificationItem[] {
   if (isTeachingNotificationRole(role)) {
     return [
       {
@@ -535,43 +598,11 @@ function getNotificationItemsForRole(role: string | undefined) {
   ];
 }
 
-const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
-const isFinanceRole = computed(() => authStore.user?.role === 'finance');
-
-const userRoleLabel = computed(() => {
-  if (authStore.user?.role === 'admin') {
-    return 'Admin';
-  }
-
-  if (isTeachingRole.value) {
-    return t('profile.roles.instructor');
-  }
-
-  if (isFinanceRole.value) {
-    return t('profile.roles.finance');
-  }
-
-  if (authStore.user?.role === 'staff') {
-    return authStore.user.department || 'Staff';
-  }
-  return authStore.user?.studentId ?? '';
-});
-
-const notificationPreviewItems = computed(() =>
-  getNotificationItemsForRole(authStore.user?.role).slice(0, 3),
-);
-const notificationUnreadCount = computed(
-  () => getNotificationItemsForRole(authStore.user?.role).filter((item) => !item.read).length,
-);
-const notificationPreviewSubtitle = computed(() =>
-  isTeachingRole.value ? 'รายการสำคัญสำหรับผู้สอน' : 'ข่าวสารและกิจกรรมการเรียนของคุณ',
-);
-
-async function goToNotifications() {
+async function goToNotifications(): Promise<void> {
   await router.push('/notifications');
 }
 
-async function openNotificationPreview(notification: { action?: string }) {
+async function openNotificationPreview(notification: { action?: string }): Promise<void> {
   if (isTeachingRole.value && notification.action) {
     await router.push(notification.action);
     return;
@@ -582,7 +613,6 @@ async function openNotificationPreview(notification: { action?: string }) {
 </script>
 
 <style lang="scss" scoped>
-// ── Top Toolbar — identical to main-layout.vue ───────────────
 .top-toolbar {
   padding: 8px 24px;
   min-height: 72px;

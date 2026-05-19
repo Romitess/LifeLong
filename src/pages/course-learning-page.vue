@@ -3,7 +3,6 @@
     <!-- Course Toolbar -->
     <CourseLayout @toggleDrawer="leftDrawerOpen = !leftDrawerOpen" />
 
-    <!-- Inner layout for sidebar drawer + content -->
     <q-layout
       view="lHh Lpr lFf"
       container
@@ -16,6 +15,23 @@
       </q-drawer>
 
       <q-page-container>
+        <div class="course-breadcrumb-bar">
+          <div class="course-breadcrumb-inner section-container">
+            <q-breadcrumbs active-color="primary" class="breadcrumb-nav">
+              <template v-slot:separator>
+                <q-icon name="chevron_right" size="16px" color="grey-4" />
+              </template>
+              <q-breadcrumbs-el
+                icon="home"
+                label="หน้าแรก"
+                to="/course-home"
+                class="breadcrumb-el"
+              />
+              <q-breadcrumbs-el :label="courseTitle" class="breadcrumb-el breadcrumb-el--current" />
+            </q-breadcrumbs>
+          </div>
+        </div>
+
         <div class="content-area" :class="contentAreaClass" :style="contentAreaStyle">
           <div v-if="moodleUrl" class="moodle-wrapper">
             <iframe
@@ -28,20 +44,6 @@
 
           <!-- Course Content -->
           <div v-else class="course-content-wrapper">
-            <!-- Breadcrumbs -->
-            <q-breadcrumbs class="text-grey-8 q-mb-xl modern-breadcrumbs" active-color="primary">
-              <template v-slot:separator>
-                <q-icon size="1.4em" name="chevron_right" color="grey-4" />
-              </template>
-              <q-breadcrumbs-el
-                label="หน้าแรก"
-                icon="home"
-                to="/course-home"
-                class="breadcrumb-link"
-              />
-              <q-breadcrumbs-el :label="courseTitle" class="text-weight-bold text-dark q-px-sm" />
-            </q-breadcrumbs>
-
             <div class="row items-center justify-between q-mb-xl">
               <div class="row items-center">
                 <div class="title-accent bg-primary q-mr-md"></div>
@@ -185,63 +187,58 @@ import { useRouter, useRoute } from 'vue-router';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import CourseLayout from 'layouts/course-layout.vue';
-import { getCourseDetailById } from 'src/data/mock-courses';
 import { getCourseStructure, type CourseModule, type Lesson } from 'src/data/course-structure';
 import { useUiStore } from 'src/stores/ui-store';
+import { useCourseStore } from 'src/stores/course-store';
 
+// 2. Local Types
+interface CourseModuleState extends CourseModule {
+  expanded: boolean;
+}
+
+// 4. Logic/State Init
 const router = useRouter();
 const route = useRoute();
 const progressStore = useCourseProgressStore();
+const courseStore = useCourseStore();
+const uiStore = useUiStore();
 
-const courseId = computed(() => {
+// 5. Reactive State
+const leftDrawerOpen = ref(false);
+const courseModules = ref<CourseModuleState[]>([]);
+
+// 6. Computed
+const courseId = computed<string>(() => {
   const id = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
   return id || '';
 });
 
 const currentCourse = computed(() => {
   if (!courseId.value) return null;
-  return getCourseDetailById(courseId.value);
+  return courseStore.getCourseDetailById(courseId.value);
 });
 
-const courseTitle = computed(() => currentCourse.value?.title || 'Course Learning');
-const moodleUrl = computed(() => {
+const courseTitle = computed<string>(() => currentCourse.value?.title || 'Course Learning');
+
+const moodleUrl = computed<string>(() => {
   const value = route.query.moodleUrl;
   return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
 });
 
-const leftDrawerOpen = ref(false);
-const uiStore = useUiStore();
-const isFullscreen = computed({
+const isFullscreen = computed<boolean>({
   get: () => uiStore.isCourseFullscreen,
   set: (val) => uiStore.setCourseFullscreen(val),
 });
+
 const contentAreaClass = computed(() => [
   isFullscreen.value ? 'content-fullscreen' : 'section-container content-standard',
   { 'content-area--moodle': Boolean(moodleUrl.value) },
 ]);
+
 const contentAreaStyle = computed(() => ({
   paddingTop: moodleUrl.value ? '0' : '64px',
   paddingBottom: moodleUrl.value ? '0' : '64px',
 }));
-
-interface CourseModuleState extends CourseModule {
-  expanded: boolean;
-}
-
-const courseModules = ref<CourseModuleState[]>([]);
-
-watch(
-  courseId,
-  (newId) => {
-    if (newId) {
-      courseModules.value = getCourseStructure(newId).map((m) => ({
-        ...m,
-        expanded: false,
-      }));
-    }
-  },
-  { immediate: true },
-);
 
 const courseModulesWithProgress = computed(() => {
   const cid = courseId.value;
@@ -270,18 +267,19 @@ const courseModulesWithProgress = computed(() => {
   });
 });
 
-const allExpanded = computed(() => {
+const allExpanded = computed<boolean>(() => {
   return courseModules.value.every((m) => m.expanded);
 });
 
-const toggleAll = () => {
+// 7. Methods
+const toggleAll = (): void => {
   const targetState = !allExpanded.value;
   courseModules.value.forEach((m) => {
     m.expanded = targetState;
   });
 };
 
-const navigateToLesson = async (lesson: Lesson) => {
+const navigateToLesson = async (lesson: Lesson): Promise<void> => {
   const courseIdValue = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
   if (!courseIdValue) return;
 
@@ -293,6 +291,20 @@ const navigateToLesson = async (lesson: Lesson) => {
     await router.push(`/course/${courseIdValue}/quiz/${lessonId}`);
   }
 };
+
+// 8. Watchers
+watch(
+  courseId,
+  (newId) => {
+    if (newId) {
+      courseModules.value = getCourseStructure(newId).map((m) => ({
+        ...m,
+        expanded: false,
+      }));
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <style lang="scss" scoped>
@@ -302,6 +314,53 @@ const navigateToLesson = async (lesson: Lesson) => {
   background-color: #f8f6f1;
   // display: flex;
   // flex-direction: column;
+}
+
+// Breadcrumb Bar
+.course-breadcrumb-bar {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 10px 0;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.course-breadcrumb-inner {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-nav {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.breadcrumb-el {
+  color: #6b7280;
+  text-decoration: none;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+
+  :deep(.q-breadcrumbs__el) {
+    color: inherit;
+  }
+
+  &:hover {
+    color: var(--q-primary);
+    background: rgba(247, 208, 70, 0.12);
+  }
+
+  &--current {
+    color: #1a1a1a;
+    font-weight: 700;
+    cursor: default;
+
+    &:hover {
+      background: transparent;
+      color: #1a1a1a;
+    }
+  }
 }
 
 .section-container {
