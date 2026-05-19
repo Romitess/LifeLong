@@ -171,6 +171,7 @@
             color="positive"
             icon="table_chart"
             :label="$t('finance.receiptSummary.exportExcel')"
+            @click="exportToExcel"
           />
         </template>
 
@@ -291,6 +292,7 @@ import { useI18n } from 'vue-i18n';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import SarabunFontUrl from 'src/assets/fonts/Sarabun-Regular.ttf';
+import * as XLSX from 'xlsx';
 
 const { t } = useI18n();
 
@@ -401,10 +403,10 @@ async function exportToPdf() {
       0: { halign: 'center', cellWidth: 28 },
       1: { halign: 'center', cellWidth: 80 },
       2: { cellWidth: 100 },
-      3: { halign: 'center', cellWidth: 40 },
+      3: { halign: 'center', cellWidth: 55 },
       4: { halign: 'center', cellWidth: 75 },
       5: { cellWidth: 100 },
-      6: { cellWidth: 168 },
+      6: { cellWidth: 153 },
       7: { halign: 'center', cellWidth: 120 },
       8: { halign: 'center', cellWidth: 90 },
     },
@@ -588,6 +590,64 @@ const generateMockData = (): ReceiptSummaryItem[] => {
 };
 
 const mockData = generateMockData();
+
+function exportToExcel() {
+  // สร้าง header row
+  const header = [
+    'ลำดับ',
+    'เลขที่ใบเสร็จรับเงิน',
+    'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
+    'จำนวนเงิน',
+    'วันที่ชำระเงิน (effective date)',
+    'ชื่อ-สกุล ผู้เรียน',
+    'ชื่อโครงการ/อบรม/หลักสูตร',
+    'ผู้รับเงิน (Collector) วันที่ใบเสร็จรับเงิน',
+    'สถานะ',
+  ];
+
+  // สร้าง data rows
+  const rows = mockData.map((row) => [
+    row.no,
+    row.receiptNo,
+    row.customerName,
+    row.amount,
+    row.effectiveDate.replace('\n', ' '),
+    row.learnerName,
+    row.courseName.replace(/\n/g, ' '),
+    row.collector.replace('\n', ' '),
+    row.status === 'ยกเลิก'
+      ? `ยกเลิก ${row.cancelBy ?? ''} ${row.cancelDate?.replace('\n', ' ') ?? ''}`
+      : 'ใช้งาน',
+  ]);
+
+  // สร้าง title row
+  const title = 'รายงานสรุปการรับเงินค่าลงทะเบียน LifeLong Learning มหาวิทยาลัยบูรพา';
+
+  // รวม worksheet data: title + blank row + header + rows
+  const wsData = [[title], [], header, ...rows];
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Merge title across all columns (A1:I1)
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
+
+  // กำหนดความกว้างคอลัมน์
+  ws['!cols'] = [
+    { wch: 8 }, // ลำดับ
+    { wch: 18 }, // เลขที่ใบเสร็จ
+    { wch: 25 }, // ชื่อผู้ชำระเงิน
+    { wch: 12 }, // จำนวนเงิน
+    { wch: 22 }, // วันที่ชำระเงิน
+    { wch: 25 }, // ชื่อผู้เรียน
+    { wch: 40 }, // ชื่อโครงการ
+    { wch: 30 }, // ผู้รับเงิน
+    { wch: 30 }, // สถานะ
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'รายงาน');
+  XLSX.writeFile(wb, 'receipt-summary.xlsx');
+}
 </script>
 
 <style lang="scss" scoped>
