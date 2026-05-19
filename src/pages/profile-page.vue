@@ -1403,12 +1403,12 @@
                         </div>
                         <BaseButton
                           color="primary"
-                          icon="receipt"
-                          :label="$t('profile.payments.viewReceipt')"
+                          icon="download"
+                          :label="locale === 'th' ? 'ดาวน์โหลดใบเสร็จ' : 'Download Receipt'"
                           no-caps
                           hover-lift
                           class="payment-card__action"
-                          @click="viewReceipt(payment)"
+                          @click="downloadReceipt(payment)"
                         />
                       </div>
                     </q-card-section>
@@ -1982,6 +1982,7 @@
     </q-dialog>
 
     <CourseReceiptDialog
+      ref="receiptDialogRef"
       v-model="showReceiptDialog"
       :receipt-id="receiptId"
       :issued-at="selectedPayment?.paymentDate ?? null"
@@ -2456,6 +2457,7 @@ const payments = computed<CoursePaymentRecord[]>(() => {
 });
 const selectedPayment = ref<CoursePaymentRecord | null>(null);
 const showReceiptDialog = ref(false);
+const receiptDialogRef = ref<InstanceType<typeof CourseReceiptDialog> | null>(null);
 
 const receiptId = computed(() => selectedPayment.value?.receiptId || '');
 const receiptCustomerName = computed(() => {
@@ -2513,9 +2515,12 @@ watch(activeMenu, () => {
   scrollToProfileContentTop();
 });
 
-function viewReceipt(payment: CoursePaymentRecord) {
+async function downloadReceipt(payment: CoursePaymentRecord) {
   selectedPayment.value = payment;
-  showReceiptDialog.value = true;
+  await nextTick();
+  if (receiptDialogRef.value) {
+    receiptDialogRef.value.downloadReceiptPdf();
+  }
 }
 
 function openPendingPayment(courseId: string): void {
