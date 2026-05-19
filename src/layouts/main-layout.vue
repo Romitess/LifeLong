@@ -261,8 +261,6 @@
       v-model="drawerOpen"
       bordered
       overlay
-      behavior="mobile"
-      :no-backdrop="$q.platform.is.desktop"
       class="sidebar-drawer"
       v-if="showNavBar"
       :width="280"
