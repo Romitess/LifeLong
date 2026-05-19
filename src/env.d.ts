@@ -19,6 +19,16 @@ declare module '*.jpg' {
   export default src;
 }
 
+declare module '*?base64' {
+  const content: string;
+  export default content;
+}
+
+declare module '*.ttf' {
+  const src: string;
+  export default src;
+}
+
 interface ImportMetaHot {
   accept(cb?: (mod: unknown) => void): void;
   accept(deps: string[], cb: (mods: unknown[]) => void): void;

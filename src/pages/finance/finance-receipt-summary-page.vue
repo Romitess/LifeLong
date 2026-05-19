@@ -164,6 +164,7 @@
             icon="picture_as_pdf"
             :label="$t('finance.receiptSummary.exportPdf')"
             class="q-mr-sm"
+            @click="exportToPdf"
           />
           <q-btn
             outline
@@ -287,6 +288,9 @@ import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import { ref, computed } from 'vue';
 import type { QTableProps } from 'quasar';
 import { useI18n } from 'vue-i18n';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import SarabunFontUrl from 'src/assets/fonts/Sarabun-Regular.ttf';
 
 const { t } = useI18n();
 
@@ -312,6 +316,112 @@ function clearDates() {
   filters.value.receiptDateEnd = '';
   filters.value.effectiveDateStart = '';
   filters.value.effectiveDateEnd = '';
+}
+
+async function exportToPdf() {
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'pt',
+    format: 'a4',
+  });
+
+  // Fetch font and convert to base64
+  const response = await fetch(SarabunFontUrl);
+  const blob = await response.blob();
+  const base64Font = await new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      resolve(dataUrl.split(',')[1] || '');
+    };
+    reader.readAsDataURL(blob);
+  });
+
+  // Embed Sarabun font
+  doc.addFileToVFS('Sarabun-Regular.ttf', base64Font);
+  doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+  doc.setFont('Sarabun');
+
+  // Title
+  doc.setFontSize(13);
+  const title = 'รายงานสรุปการรับเงินค่าลงทะเบียน LifeLong Learning มหาวิทยาลัยบูรพา';
+  doc.text(title, doc.internal.pageSize.getWidth() / 2, 40, { align: 'center' });
+
+  const rows = mockData.map((row) => [
+    row.no,
+    row.receiptNo,
+    row.customerName,
+    row.amount,
+    row.effectiveDate,
+    row.learnerName,
+    row.courseName,
+    row.collector,
+    row.status === 'ยกเลิก'
+      ? 'ยกเลิก\n' + (row.cancelBy ?? '') + '\n' + (row.cancelDate ?? '')
+      : 'ใช้งาน',
+  ]);
+
+  autoTable(doc, {
+    startY: 55,
+    rowPageBreak: 'avoid',
+    showHead: 'everyPage',
+    head: [
+      [
+        'ลำดับ',
+        'เลขที่ใบเสร็จรับเงิน',
+        'ชื่อ-สกุล ผู้ชำระเงิน\n(Customer Name)',
+        'จำนวนเงิน',
+        'วันที่ชำระเงิน\n(effective date)',
+        'ชื่อ-สกุล ผู้เรียน',
+        'ชื่อโครงการ/อบรม/\nหลักสูตร',
+        'ผู้รับเงิน (Collector)\nวันที่ใบเสร็จรับเงิน',
+        'สถานะ',
+      ],
+    ],
+    body: rows,
+    styles: {
+      font: 'Sarabun', // ← เปลี่ยนตรงนี้
+      fontSize: 8,
+      cellPadding: 4,
+      valign: 'top',
+      lineColor: [180, 180, 180],
+      lineWidth: 0.5,
+      overflow: 'linebreak',
+    },
+    headStyles: {
+      font: 'Sarabun', // ← และตรงนี้
+      fillColor: [226, 232, 240],
+      textColor: [51, 65, 85],
+      fontStyle: 'normal', // ← bold ไม่มีใน Sarabun-Regular ให้ใช้ normal
+      fontSize: 8,
+      halign: 'center',
+      valign: 'middle',
+    },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 28 },
+      1: { halign: 'center', cellWidth: 80 },
+      2: { cellWidth: 100 },
+      3: { halign: 'center', cellWidth: 40 },
+      4: { halign: 'center', cellWidth: 75 },
+      5: { cellWidth: 100 },
+      6: { cellWidth: 168 },
+      7: { halign: 'center', cellWidth: 120 },
+      8: { halign: 'center', cellWidth: 90 },
+    },
+    alternateRowStyles: { fillColor: [255, 255, 255] },
+    didParseCell(data) {
+      if (data.section === 'body' && data.column.index === 8) {
+        const val = typeof data.cell.raw === 'string' ? data.cell.raw : '';
+        if (val.startsWith('ยกเลิก')) {
+          data.cell.styles.textColor = [220, 38, 38];
+        }
+      }
+    },
+    margin: { top: 20, left: 20, right: 20 },
+    tableWidth: 'auto',
+  });
+
+  doc.save('receipt-summary.pdf');
 }
 
 const columns = computed<QTableProps['columns']>(() => [
@@ -387,8 +497,23 @@ const columns = computed<QTableProps['columns']>(() => [
   },
 ]);
 
-const generateMockData = () => {
-  const data = [];
+interface ReceiptSummaryItem {
+  id: number;
+  no: number;
+  receiptNo: string;
+  customerName: string;
+  amount: number;
+  effectiveDate: string;
+  learnerName: string;
+  courseName: string;
+  collector: string;
+  status: string;
+  cancelBy?: string | undefined;
+  cancelDate?: string | undefined;
+}
+
+const generateMockData = (): ReceiptSummaryItem[] => {
+  const data: ReceiptSummaryItem[] = [];
   data.push({
     id: 1,
     no: 1,
@@ -448,12 +573,12 @@ const generateMockData = () => {
       id: i,
       no: i,
       receiptNo: '256706' + String(i).padStart(6, '0'),
-      customerName: names[i % names.length],
+      customerName: names[i % names.length] ?? '',
       amount: 1,
       effectiveDate: `30 พ.ย. 2566\n13:${20 + (i % 39)}:28`,
-      learnerName: names[i % names.length],
-      courseName: courses[i % courses.length],
-      collector: collectors[i % collectors.length],
+      learnerName: names[i % names.length] ?? '',
+      courseName: courses[i % courses.length] ?? '',
+      collector: collectors[i % collectors.length] ?? '',
       status: isCancelled ? 'ยกเลิก' : 'ใช้งาน',
       cancelBy: isCancelled ? 'นัธพร ยะโสวงษ์' : undefined,
       cancelDate: isCancelled ? '15/05/2567\nทดสอบยกเลิก' : undefined,
