@@ -100,6 +100,11 @@ export default defineConfig((ctx) => {
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#devserver
     devServer: {
       // https: true,
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
       open: true, // opens browser window automatically
       host: '0.0.0.0', // เครื่องอื่นในวงแลนเข้าได้
       proxy: {

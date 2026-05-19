@@ -45,6 +45,48 @@ export default defineRouter(({ store /*, ssrContext */ }) => {
     });
   }
 
+  function getErrorMessage(error: unknown): string {
+    if (error instanceof Error) return error.message;
+
+    if (typeof error === 'object' && error !== null && 'message' in error) {
+      return String((error as { message?: unknown }).message);
+    }
+
+    return String(error);
+  }
+
+  function isDynamicImportError(error: unknown): boolean {
+    const message = getErrorMessage(error);
+
+    return (
+      message.includes('Failed to fetch dynamically imported module') ||
+      message.includes('error loading dynamically imported module') ||
+      message.includes('Importing a module script failed') ||
+      message.includes('Unable to preload CSS') ||
+      message.includes('dynamically imported module') ||
+      /Loading chunk \d+ failed/i.test(message)
+    );
+  }
+
+  function reloadForUpdatedChunk(fullPath?: string): void {
+    const targetFullPath =
+      fullPath ?? window.location.hash.replace(/^#/, '') ?? window.location.pathname;
+    const reloadKey = `chunk-reload:v2:${targetFullPath}`;
+
+    if (sessionStorage.getItem(reloadKey) === 'true') {
+      console.error('[Router Guard] Dynamic route chunk is still unavailable after reload.');
+      return;
+    }
+
+    sessionStorage.setItem(reloadKey, 'true');
+
+    if (targetFullPath) {
+      window.location.hash = targetFullPath;
+    }
+
+    window.location.reload();
+  }
+
   let isInitialLoad = true;
 
   Router.beforeEach(async (to, from) => {
@@ -145,9 +187,23 @@ export default defineRouter(({ store /*, ssrContext */ }) => {
     hideAuthNavigationLoading();
   });
 
-  Router.onError(() => {
+  Router.onError((error, to) => {
     hideAuthNavigationLoading();
+
+    if (process.env.CLIENT && isDynamicImportError(error)) {
+      reloadForUpdatedChunk(to.fullPath);
+    }
   });
+
+  if (process.env.CLIENT) {
+    window.addEventListener('unhandledrejection', (event) => {
+      if (isDynamicImportError(event.reason)) {
+        event.preventDefault();
+        hideAuthNavigationLoading();
+        reloadForUpdatedChunk();
+      }
+    });
+  }
 
   return Router;
 });

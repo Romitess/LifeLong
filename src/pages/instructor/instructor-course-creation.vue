@@ -625,8 +625,8 @@ async function onSubmit() {
       data?: { moodleId?: number; imageUrl?: string | null };
     }>('/api/moodle/courses', formData);
 
-    const dbCourseId = String(courseData.id);
-    const moodleCourseId = courseData.data?.moodleId ?? courseData.id;
+    const dbCourseId = `db-${courseData.id}`;
+    const moodleCourseId = courseData.data?.moodleId;
     const imageUrl = courseData.data?.imageUrl || fallbackImageUrl;
 
     // 2. Create Activities for each week

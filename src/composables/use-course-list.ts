@@ -23,13 +23,14 @@ interface ApiLltcourse {
   status: string | null;
   hours: number | null;
   imageUrl: string | null;
+  moodleId: number | null;
 }
 
 function mapApiCourse(raw: ApiLltcourse): Course {
   const today = new Date().toISOString().substring(0, 10);
   return {
     id: `db-${raw.id}`,
-    moodleId: raw.id,
+    ...(raw.moodleId ? { moodleId: raw.moodleId } : {}),
     code: raw.code ?? '',
     title: raw.titleTh ?? '',
     ...(raw.titleEn ? { titleEn: raw.titleEn } : {}),

@@ -11,6 +11,7 @@ import {
 
 const STORAGE_KEY = 'lll-courses';
 const DETAIL_STORAGE_KEY = 'lll-course-details';
+let backendCoursesLoadPromise: Promise<void> | null = null;
 
 type CourseInstructorOwner = {
   id?: string;
@@ -35,6 +36,7 @@ interface BackendCourse {
   status?: string | null;
   createUser?: string | null;
   imageUrl?: string | null;
+  moodleId?: number | null;
 }
 
 function normalizeInstructorEmail(email?: string): string {
@@ -72,14 +74,12 @@ function mapBackendCourse(course: BackendCourse): Course | null {
   return {
     id: `db-${course.id}`,
     code: course.code,
-    moodleId: course.id,
+    ...(course.moodleId ? { moodleId: course.moodleId } : {}),
     title: course.titleTh,
     titleEn: course.titleEn ?? course.titleTh,
     instructorId: DEMO_INSTRUCTOR_ID,
     instructorEmail: DEMO_INSTRUCTOR_EMAIL,
-    imageUrl:
-      course.imageUrl ||
-      'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80',
+    imageUrl: course.imageUrl ?? '',
     cover: {
       icon: 'school',
       accentColor: '#f5a623',
@@ -237,6 +237,31 @@ function createFallbackCourseDetail(course: Course): CourseDetail {
   };
 }
 
+function mergeCourseIntoDetail(detail: CourseDetail, course: Course): CourseDetail {
+  const instructorDepartmentEn = course.facultyEn ?? detail.instructor.departmentEn;
+  const departmentEn = course.facultyEn ?? detail.departmentEn;
+  const previewPosterUrl = course.imageUrl || detail.previewPosterUrl;
+
+  return ensureCourseDetailInstructorOwner({
+    ...detail,
+    ...course,
+    instructor: {
+      ...detail.instructor,
+      ...(course.instructorId ? { userId: course.instructorId } : {}),
+      ...(course.instructorEmail ? { email: course.instructorEmail } : {}),
+      department: course.faculty || detail.instructor.department,
+      ...(instructorDepartmentEn ? { departmentEn: instructorDepartmentEn } : {}),
+    },
+    department: course.faculty || detail.department,
+    ...(departmentEn ? { departmentEn } : {}),
+    maxSeats: course.maxSeats,
+    enrolledCount: course.enrolledCount,
+    certificateType: course.status,
+    certificateTypeEn: course.status,
+    ...(previewPosterUrl ? { previewPosterUrl } : {}),
+  });
+}
+
 export const useCourseStore = defineStore('course', {
   state: (): {
     courses: Course[];
@@ -275,10 +300,15 @@ export const useCourseStore = defineStore('course', {
         ),
       );
       this.courseDetails = Object.fromEntries(
-        Object.entries(cleanedDetails).map(([courseId, detail]) => [
-          courseId,
-          ensureCourseDetailInstructorOwner(detail),
-        ]),
+        Object.entries(cleanedDetails).map(([courseId, detail]) => {
+          const latestCourse = this.courses.find((course) => course.id === courseId);
+          return [
+            courseId,
+            latestCourse
+              ? mergeCourseIntoDetail(detail, latestCourse)
+              : ensureCourseDetailInstructorOwner(detail),
+          ];
+        }),
       );
 
       writeStoredCourses(this.courses);
@@ -286,33 +316,40 @@ export const useCourseStore = defineStore('course', {
       void this.fetchBackendCourses();
     },
     async fetchBackendCourses() {
-      if (this.backendCoursesLoaded || this.backendCoursesLoading) {
+      if (this.backendCoursesLoaded) {
         return;
       }
 
-      this.backendCoursesLoading = true;
-
-      try {
-        const { data } = await api.get<BackendCourseResponse | BackendCourse[]>(
-          '/api/moodle/courses',
-        );
-        const rawCourses = Array.isArray(data) ? data : (data.value ?? []);
-        const backendCourses = rawCourses
-          .map(mapBackendCourse)
-          .filter((course): course is Course => Boolean(course));
-
-        if (backendCourses.length === 0) {
-          return;
-        }
-
-        this.courses = backendCourses.map(ensureCourseInstructorOwner);
-        writeStoredCourses(this.courses);
-      } catch (error) {
-        console.warn('Failed to fetch backend courses', error);
-      } finally {
-        this.backendCoursesLoaded = true;
-        this.backendCoursesLoading = false;
+      if (backendCoursesLoadPromise) {
+        return backendCoursesLoadPromise;
       }
+
+      this.backendCoursesLoading = true;
+      backendCoursesLoadPromise = (async () => {
+        try {
+          const { data } = await api.get<BackendCourseResponse | BackendCourse[]>(
+            '/api/moodle/courses',
+          );
+          const rawCourses = Array.isArray(data) ? data : (data.value ?? []);
+          const backendCourses = rawCourses
+            .map(mapBackendCourse)
+            .filter((course): course is Course => Boolean(course));
+
+          if (backendCourses.length === 0) {
+            return;
+          }
+
+          this.loadFromApi(backendCourses);
+        } catch (error) {
+          console.warn('Failed to fetch backend courses', error);
+        } finally {
+          this.backendCoursesLoaded = true;
+          this.backendCoursesLoading = false;
+          backendCoursesLoadPromise = null;
+        }
+      })();
+
+      return backendCoursesLoadPromise;
     },
     /** Load courses from API — replaces all courses with backend data */
     loadFromApi(apiCourses: Course[]) {
@@ -323,7 +360,9 @@ export const useCourseStore = defineStore('course', {
       for (const course of apiCourses) {
         const stored = storedDetails[course.id];
         const isValidStored = stored && stored.code === course.code;
-        apiDetails[course.id] = isValidStored ? stored : createFallbackCourseDetail(course);
+        apiDetails[course.id] = isValidStored
+          ? mergeCourseIntoDetail(stored, course)
+          : createFallbackCourseDetail(course);
       }
 
       this.courseDetails = Object.fromEntries(
@@ -356,10 +395,13 @@ export const useCourseStore = defineStore('course', {
       );
 
       if (this.courseDetails[id]) {
-        this.courseDetails[id] = {
-          ...this.courseDetails[id],
-          ...changes,
-        };
+        const updatedCourse = this.courses.find((course) => course.id === id);
+        this.courseDetails[id] = updatedCourse
+          ? mergeCourseIntoDetail(this.courseDetails[id], updatedCourse)
+          : {
+              ...this.courseDetails[id],
+              ...changes,
+            };
       }
 
       writeStoredCourses(this.courses);
@@ -405,7 +447,15 @@ export const useCourseStore = defineStore('course', {
       this.init();
       const detail = this.courseDetails[id];
       if (detail) {
-        return detail;
+        const latestCourse = this.courses.find((candidate) => candidate.id === id);
+        if (!latestCourse) {
+          return detail;
+        }
+
+        const mergedDetail = mergeCourseIntoDetail(detail, latestCourse);
+        this.courseDetails[id] = mergedDetail;
+        writeStoredCourseDetails(this.courseDetails);
+        return mergedDetail;
       }
 
       const course = this.courses.find((candidate) => candidate.id === id);

@@ -54,6 +54,7 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
 
     try {
       await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      await courseStore.fetchBackendCourses();
 
       const detail = courseStore.getCourseDetailById(readCourseId(courseId));
       if (!detail) {
