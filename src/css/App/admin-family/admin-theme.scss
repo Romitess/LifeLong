@@ -92,7 +92,8 @@
   border-radius: 999px !important;
 }
 
-:where(.admin-page, .admin-dialog) .q-btn.q-btn--round:not(.q-btn--active):not([aria-current='true']) {
+:where(.admin-page, .admin-dialog)
+  .q-btn.q-btn--round:not(.q-btn--active):not([aria-current='true']) {
   border: 1px solid rgba(16, 35, 63, 0.12) !important;
   background: #ffffff !important;
   box-shadow: 0 10px 22px rgba(16, 35, 63, 0.08);
@@ -102,7 +103,8 @@
   font-size: 20px !important;
 }
 
-:where(.admin-page, .admin-dialog) .q-btn.q-btn--round:not(.q-btn--active):not([aria-current='true']):hover {
+:where(.admin-page, .admin-dialog)
+  .q-btn.q-btn--round:not(.q-btn--active):not([aria-current='true']):hover {
   transform: translateY(-2px);
   border-color: rgba(245, 166, 35, 0.24) !important;
   box-shadow:
@@ -218,8 +220,10 @@
   box-shadow: 0 12px 24px rgba(245, 166, 35, 0.2) !important;
 }
 
-:where(.admin-page, .admin-dialog) .q-btn.q-btn--outline.text-primary:not(.q-btn--round):hover::before,
-:where(.admin-page, .admin-dialog) .q-btn.q-btn--outline.text-primary:not(.q-btn--round):focus::before {
+:where(.admin-page, .admin-dialog)
+  .q-btn.q-btn--outline.text-primary:not(.q-btn--round):hover::before,
+:where(.admin-page, .admin-dialog)
+  .q-btn.q-btn--outline.text-primary:not(.q-btn--round):focus::before {
   border-color: rgba(245, 166, 35, 0.24) !important;
 }
 

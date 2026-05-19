@@ -8,8 +8,8 @@
           dense
           round
           icon="menu"
-          class="lt-md text-dark q-mr-sm"
-          @click="drawerOpen = !drawerOpen"
+          class="text-dark q-mr-md hamburger-btn"
+          @click="toggleDrawer"
         />
 
         <div class="logo row items-center cursor-pointer" @click="onLogoClick">
@@ -21,78 +21,6 @@
             decoding="sync"
           />
         </div>
-
-        <div v-if="showNavBar" class="gt-sm vertical-divider q-mx-lg"></div>
-
-        <q-tabs
-          v-if="showNavBar"
-          v-model="activeNav"
-          align="left"
-          active-color="primary"
-          indicator-color="primary"
-          dense
-          no-caps
-          inline-label
-          narrow-indicator
-          :class="['nav-tabs gt-sm q-ml-lg', { 'nav-tabs--compact': isFinanceRole }]"
-        >
-          <template v-for="nav in navItems" :key="nav.name">
-            <!-- Special case for Category with Menu -->
-            <q-tab
-              v-if="nav.name === 'category'"
-              :name="nav.name"
-              :icon="nav.icon"
-              :label="nav.label"
-              :class="['nav-tab', `nav-tab--${nav.name}`]"
-            >
-              <q-menu
-                fit
-                anchor="bottom left"
-                self="top left"
-                class="category-mega-menu"
-                transition-show="jump-down"
-                transition-hide="jump-up"
-              >
-                <div class="category-menu-content">
-                  <div class="category-menu-grid">
-                    <q-item
-                      v-for="cat in categories"
-                      :key="cat.id"
-                      clickable
-                      v-ripple
-                      class="category-item"
-                      @click="onCategoryClick(cat.name)"
-                      v-close-popup
-                    >
-                      <q-item-section>
-                        <div class="row items-center justify-between no-wrap full-width">
-                          <span
-                            class="text-subtitle1 text-weight-medium text-blue-grey-9 text-no-wrap q-mr-lg"
-                          >
-                            {{ cat.displayLabel }}
-                          </span>
-                          <q-badge rounded color="teal" class="category-badge">{{
-                            cat.count
-                          }}</q-badge>
-                        </div>
-                      </q-item-section>
-                    </q-item>
-                  </div>
-                </div>
-              </q-menu>
-            </q-tab>
-
-            <!-- Standard Tabs -->
-            <q-tab
-              v-else
-              :name="nav.name"
-              :icon="nav.icon"
-              :label="nav.label"
-              :class="['nav-tab', `nav-tab--${nav.name}`]"
-              @click="onNavClick(nav)"
-            />
-          </template>
-        </q-tabs>
 
         <q-space />
 
@@ -321,56 +249,121 @@
       </q-toolbar>
     </q-header>
 
-    <!-- Mobile Drawer -->
-    <q-drawer v-model="drawerOpen" bordered overlay behavior="mobile" v-if="showNavBar">
-      <q-list padding>
-        <q-item-label header class="mobile-drawer-logo">
-          <img
-            src="~assets/brand/buu-lll-logo.png"
-            class="mobile-drawer-logo__image"
-            alt="BUU LLL"
-          />
+    <!-- Hover trigger zone for opening sidebar on PC -->
+    <div
+      v-if="showNavBar && $q.platform.is.desktop && !drawerOpen"
+      class="sidebar-hover-trigger"
+      @mouseenter="onHoverTriggerEnter"
+    />
+
+    <!-- Sidebar Drawer -->
+    <q-drawer
+      v-model="drawerOpen"
+      bordered
+      overlay
+      behavior="mobile"
+      :no-backdrop="$q.platform.is.desktop"
+      class="sidebar-drawer"
+      v-if="showNavBar"
+      :width="280"
+      @mouseleave="onDrawerMouseLeave"
+    >
+      <q-list padding class="sidebar-list">
+        <q-item-label header class="drawer-logo-container">
+          <img src="~assets/brand/buu-lll-logo.png" class="drawer-logo__image" alt="BUU LLL" />
         </q-item-label>
-        <q-separator class="q-mb-sm" />
-        <div class="mobile-language-wrapper">
+        <q-separator class="q-mb-md" />
+
+        <div class="drawer-language-wrapper">
           <LanguageToggle wide />
         </div>
-        <q-separator class="q-my-sm" />
-        <q-item v-for="nav in navItems" :key="nav.name" clickable v-ripple @click="onNavClick(nav)">
-          <q-item-section avatar>
-            <q-icon :name="nav.icon" color="primary" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{ nav.label }}</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-separator class="q-my-sm" />
+        <q-separator class="q-my-md" />
 
+        <!-- Navigation Items -->
+        <template v-for="nav in navItems" :key="nav.name">
+          <!-- Special case for Category with Menu (Expansion) -->
+          <q-expansion-item
+            v-if="nav.name === 'category'"
+            :icon="nav.icon"
+            :label="nav.label"
+            header-class="drawer-expansion-header"
+            class="drawer-expansion-item"
+            :default-opened="true"
+          >
+            <q-list class="q-pl-sm">
+              <q-item
+                v-for="cat in categories"
+                :key="cat.id"
+                clickable
+                v-ripple
+                class="drawer-subitem"
+                :active="route.query.category === cat.name"
+                active-class="drawer-subitem--active"
+                @click="onCategoryClick(cat.name)"
+              >
+                <q-item-section>
+                  <div class="row items-center justify-between no-wrap full-width">
+                    <span class="drawer-subitem-label text-weight-medium">
+                      {{ cat.displayLabel }}
+                    </span>
+                    <q-badge rounded color="teal" class="drawer-subitem-badge">{{
+                      cat.count
+                    }}</q-badge>
+                  </div>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-expansion-item>
+
+          <!-- Standard Item -->
+          <q-item
+            v-else
+            clickable
+            v-ripple
+            :active="activeNav === nav.name"
+            active-class="drawer-item--active"
+            class="drawer-item"
+            @click="onNavClick(nav)"
+          >
+            <q-item-section avatar class="drawer-item-icon-section">
+              <q-icon :name="nav.icon" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label class="drawer-item-label">{{ nav.label }}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </template>
+
+        <q-separator class="q-my-md" />
+
+        <!-- Auth Items for non-logged in users in sidebar -->
         <template v-if="!authStore.isLoggedIn">
-          <q-item clickable v-ripple @click="goToAuthPage('/login')">
-            <q-item-section avatar>
+          <q-item clickable v-ripple class="drawer-item" @click="goToAuthPage('/login')">
+            <q-item-section avatar class="drawer-item-icon-section">
               <q-icon name="login" color="primary" />
             </q-item-section>
             <q-item-section>
-              <q-item-label>{{ $t('login') }}</q-item-label>
+              <q-item-label class="drawer-item-label">{{ $t('login') }}</q-item-label>
             </q-item-section>
           </q-item>
-          <q-item clickable v-ripple @click="goToAuthPage('/register')">
-            <q-item-section avatar>
+          <q-item clickable v-ripple class="drawer-item" @click="goToAuthPage('/register')">
+            <q-item-section avatar class="drawer-item-icon-section">
               <q-icon name="person_add" color="primary" />
             </q-item-section>
             <q-item-section>
-              <q-item-label>{{ $t('register') }}</q-item-label>
+              <q-item-label class="drawer-item-label">{{ $t('register') }}</q-item-label>
             </q-item-section>
           </q-item>
         </template>
         <template v-else>
-          <q-item clickable v-ripple @click="onLogout">
-            <q-item-section avatar>
-              <q-icon name="logout" color="negative" />
+          <q-item clickable v-ripple class="drawer-item drawer-item--danger" @click="onLogout">
+            <q-item-section avatar class="drawer-item-icon-section text-negative">
+              <q-icon name="logout" />
             </q-item-section>
             <q-item-section>
-              <q-item-label class="text-negative">{{ $t('logout') }}</q-item-label>
+              <q-item-label class="drawer-item-label text-negative">{{
+                $t('logout')
+              }}</q-item-label>
             </q-item-section>
           </q-item>
         </template>
@@ -792,6 +785,28 @@ const drawerOpen = ref(false);
 const activeNav = ref('');
 const isPageSwitchLoading = ref(false);
 const logoutDialogOpen = ref(false);
+
+const wasOpenedByClick = ref(false);
+
+function toggleDrawer() {
+  drawerOpen.value = !drawerOpen.value;
+  if (drawerOpen.value) {
+    wasOpenedByClick.value = true;
+  } else {
+    wasOpenedByClick.value = false;
+  }
+}
+
+function onHoverTriggerEnter() {
+  drawerOpen.value = true;
+  wasOpenedByClick.value = false;
+}
+
+function onDrawerMouseLeave() {
+  if ($q.platform.is.desktop && !wasOpenedByClick.value) {
+    drawerOpen.value = false;
+  }
+}
 let pageSwitchLoadingTimer: ReturnType<typeof setTimeout> | null = null;
 
 const PAGE_SWITCH_LOADING_MS = 450;
@@ -1009,6 +1024,7 @@ async function onNavClick(nav: NavItem) {
 
 async function onCategoryClick(category: string) {
   activeNav.value = 'category';
+  drawerOpen.value = false;
   await router.push({
     path: '/short-courses',
     query: { category },
@@ -1834,5 +1850,141 @@ async function onCategoryClick(category: string) {
     transform: translateY(-5px);
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
   }
+}
+
+// ── Sidebar Premium Navigation Styles ──────────────────────────
+.sidebar-hover-trigger {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 15px;
+  z-index: 9999;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.sidebar-drawer {
+  :deep(.q-drawer) {
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    background: #ffffff;
+  }
+}
+
+.drawer-logo-container {
+  padding: 16px 20px 8px;
+}
+
+.drawer-logo__image {
+  display: block;
+  width: 148px;
+  height: auto;
+  object-fit: contain;
+}
+
+.drawer-language-wrapper {
+  padding: 0 16px;
+}
+
+.drawer-item {
+  margin: 4px 12px;
+  border-radius: 12px;
+  color: #4b5563;
+  font-weight: 600;
+  transition: all 0.24s ease;
+
+  &:hover {
+    color: $primary;
+    background: rgba(247, 208, 70, 0.08);
+
+    .drawer-item-icon-section {
+      color: $primary;
+    }
+  }
+
+  &--active {
+    color: #3d2600 !important;
+    background: rgba(247, 208, 70, 0.16) !important;
+    font-weight: 700;
+
+    .drawer-item-icon-section {
+      color: $primary !important;
+    }
+  }
+}
+
+.drawer-item-icon-section {
+  color: #6b7280;
+  min-width: 40px;
+  transition: color 0.24s ease;
+}
+
+.drawer-item-label {
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+.drawer-item--danger {
+  &:hover {
+    background: rgba(239, 68, 68, 0.08);
+  }
+}
+
+.drawer-expansion-item {
+  margin: 4px 12px;
+  border-radius: 12px;
+  overflow: hidden;
+
+  :deep(.q-expansion-item__container) {
+    border-radius: 12px;
+  }
+
+  :deep(.q-item) {
+    border-radius: 12px;
+    color: #4b5563;
+    font-weight: 600;
+
+    &:hover {
+      color: $primary;
+      background: rgba(247, 208, 70, 0.08);
+    }
+  }
+}
+
+.drawer-expansion-header {
+  font-size: 0.92rem;
+}
+
+.drawer-subitem {
+  margin: 2px 8px 2px 24px;
+  border-radius: 8px;
+  min-height: 36px;
+  padding: 4px 12px;
+  color: #6b7280;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: $primary;
+    background: rgba(247, 208, 70, 0.06);
+    transform: translateX(4px);
+  }
+
+  &--active {
+    color: $primary !important;
+    background: rgba(247, 208, 70, 0.1) !important;
+    font-weight: 700;
+  }
+}
+
+.drawer-subitem-label {
+  font-size: 0.86rem;
+}
+
+.drawer-subitem-badge {
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  font-weight: 700;
 }
 </style>
