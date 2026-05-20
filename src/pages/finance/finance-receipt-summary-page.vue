@@ -313,7 +313,7 @@ import CourseReceiptDialog from 'components/receipt/CourseReceiptDialog.vue';
 import type { QTableProps } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { autoTable, type CellHookData } from 'jspdf-autotable';
 import SarabunFontUrl from 'src/assets/fonts/Sarabun-Regular.ttf';
 import * as XLSX from 'xlsx';
 
@@ -515,7 +515,7 @@ async function exportToPdf() {
       8: { halign: 'center', cellWidth: 90 },
     },
     alternateRowStyles: { fillColor: [255, 255, 255] },
-    didParseCell(data) {
+    didParseCell(data: CellHookData) {
       if (data.section === 'body' && data.column.index === 8) {
         const val = typeof data.cell.raw === 'string' ? data.cell.raw : '';
         if (val.startsWith('ยกเลิก')) {
