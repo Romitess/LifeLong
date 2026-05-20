@@ -7,169 +7,134 @@
   >
     <q-card
       class="receipt-card column no-wrap bg-white"
-      style="width: 850px; max-width: 95vw; max-height: 90vh"
+      style="width: 900px; max-width: 98vw; max-height: 98vh"
     >
-      <q-card-section
-        class="q-pa-lg col scroll text-black font-sarabun relative-position"
-        id="printable-area"
-      >
-        <!-- Background Watermark -->
-        <div class="watermark-bg" :style="{ backgroundImage: `url(${buuLogoSvg})` }"></div>
-
-        <!-- Header -->
-        <div class="row justify-between items-start relative-position" style="margin-bottom: 10px">
-          <div class="row items-start" style="gap: 10px">
-            <img :src="buuLogoSvg" class="receipt-logo" alt="BUU logo" />
-            <div class="column" style="margin-top: 0">
-              <div style="font-size: 16px; font-weight: 700; line-height: 1.3">
-                มหาวิทยาลัยบูรพา BURAPHA UNIVERSITY
-              </div>
-              <div style="font-size: 13px; line-height: 1.3">
-                169 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมือง จังหวัดชลบุรี 20131
-              </div>
-              <div style="font-size: 13px; line-height: 1.3">
-                169 Longhard Bangsaen Road, Saensuk, Mueang, Chonburi 20131
-              </div>
-              <div style="font-size: 13px; line-height: 1.3">
-                เลขประจำตัวผู้เสียภาษีอากร (Tax ID) 0994000249357
+      <q-card-section class="q-pa-none col scroll text-black font-sarabun" id="printable-area">
+        <div class="receipt-page">
+          <!-- HEADER ROW -->
+          <div class="receipt-header">
+            <div class="header-left">
+              <img :src="buuLogoSvg" class="receipt-logo" alt="BUU logo" />
+              <div class="uni-info">
+                <div class="uni-name">มหาวิทยาลัยบูรพา BURAPHA UNIVERSITY</div>
+                <div class="uni-addr">
+                  169 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมือง จังหวัดชลบุรี 20131
+                </div>
+                <div class="uni-addr">
+                  169 Longhard Bangsaen Road, Saensuk, Mueang, Chonburi 20131
+                </div>
+                <div class="uni-addr">เลขที่ประจำตัวผู้เสียภาษีอากร (Tax ID) 0994000249357</div>
               </div>
             </div>
-          </div>
-          <div class="column items-end" style="margin-top: 0">
-            <div style="font-size: 16px; font-weight: 700; line-height: 1.3">
-              สำเนาใบเสร็จรับเงิน
+            <div class="header-right">
+              <div class="receipt-title">สำเนาใบเสร็จรับเงิน</div>
+              <div class="receipt-title">RECEIPT COPY</div>
+              <div class="receipt-date">วันที่ (Date) {{ thaiPrintDate }}</div>
             </div>
-            <div style="font-size: 16px; font-weight: 700; line-height: 1.3">RECEIPT COPY</div>
-            <div style="font-size: 13px; margin-top: 10px">วันที่ (Date) {{ thaiPrintDate }}</div>
           </div>
-        </div>
 
-        <!-- Customer Info -->
-        <div class="relative-position" style="font-size: 14px; margin-bottom: 6px">
-          <div class="row" style="margin-bottom: 2px">
-            <div style="width: 280px; flex-shrink: 0">เลขที่ใบเสร็จรับเงิน (Receipt No.)</div>
-            <div>{{ receiptId }}</div>
-          </div>
-          <div class="row" style="margin-bottom: 2px">
-            <div style="width: 280px; flex-shrink: 0">ได้รับเงินจาก (Received from)</div>
-            <div>{{ customerName || '-' }}</div>
-          </div>
-          <div class="row" style="margin-bottom: 2px">
-            <div style="width: 280px; flex-shrink: 0">เลขประจำตัวผู้เสียภาษีอากร (Tax ID)</div>
-            <div>{{ customerTaxId || '-' }}</div>
-          </div>
-          <div class="row" style="margin-bottom: 2px">
-            <div style="width: 280px; flex-shrink: 0">
-              ที่อยู่สำหรับออกใบเสร็จรับเงิน (Billing Address)
+          <!-- CUSTOMER INFO -->
+          <div class="customer-section">
+            <div class="info-row">
+              <div class="info-label">เลขที่ใบเสร็จรับเงิน (Receipt No.)</div>
+              <div class="info-value">{{ receiptId }}</div>
             </div>
-            <div>{{ customerAddress || '-' }}</div>
+            <div class="info-row">
+              <div class="info-label">ได้รับเงินจาก (Received from)</div>
+              <div class="info-value">{{ customerName || '-' }}</div>
+            </div>
+            <div class="info-row-spacer"></div>
+            <div class="info-row">
+              <div class="info-label">เลขประจำตัวผู้เสียภาษีอากร (Tax ID)</div>
+              <div class="info-value">{{ customerTaxId || '-' }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">ที่อยู่ (Address)</div>
+              <div class="info-value">{{ customerAddress || '-' }}</div>
+            </div>
           </div>
-        </div>
 
-        <!-- Table -->
-        <div
-          class="receipt-table-wrapper relative-position overflow-hidden"
-          style="margin-bottom: 8px"
-        >
-          <table class="receipt-table w-full relative-position" style="z-index: 1; font-size: 14px">
+          <!-- TABLE -->
+          <table class="receipt-table">
             <thead>
               <tr>
-                <th style="width: 12%" class="text-center">ลำดับที่<br />(No.)</th>
-                <th style="width: 63%" class="text-center">รายการ<br />(Description)</th>
-                <th style="width: 25%" class="text-center">จำนวนเงิน/บาท<br />(Amount/Baht)</th>
+                <th class="col-no">ลำดับที่<br />(No.)</th>
+                <th class="col-desc">รายการ<br />(Description)</th>
+                <th class="col-amount">จำนวนเงิน/บาท<br />(Amount/Baht)</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td
-                  class="text-center"
-                  style="height: 150px; vertical-align: top; padding-top: 8px"
-                >
-                  1
+                <td class="body-no">1</td>
+                <td class="body-desc">
+                  <!-- Watermark inside cell -->
+                  <div class="cell-watermark-wrap">
+                    <img :src="buuLogoSvg" class="cell-watermark-img" alt="" />
+                  </div>
+                  <span class="desc-text">
+                    ค่าธรรมเนียมในการอบรมรายวิชา {{ courseCode ? courseCode + ' : ' : ''
+                    }}{{ courseTitle }}
+                  </span>
                 </td>
-                <td style="vertical-align: top; padding-top: 8px; padding-left: 12px">
-                  ค่าธรรมเนียมในการอบรมรายวิชา {{ courseCode ? courseCode + ' : ' : ''
-                  }}{{ courseTitle }}
-                </td>
-                <td class="text-right" style="vertical-align: top; padding-top: 8px">
-                  {{ amountLabel }}
-                </td>
+                <td class="body-amount">{{ amountLabel }}</td>
               </tr>
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="2" class="text-left text-weight-medium" style="padding-left: 12px">
-                  รวมเงิน (Total) {{ bahtTextValue }}
-                </td>
-                <td class="text-right text-weight-medium">{{ amountLabel }}</td>
+                <td colspan="2" class="tfoot-total">รวมเงิน (Total) {{ bahtTextValue }}</td>
+                <td class="tfoot-amount">{{ amountLabel }}</td>
               </tr>
             </tfoot>
           </table>
-        </div>
 
-        <!-- Bottom Layout -->
-        <div class="row justify-between items-stretch relative-position">
-          <!-- Left Column -->
-          <div class="col-12 col-md-7 column justify-between">
-            <div style="font-size: 11px; line-height: 1.5">
-              <div>URL ตรวจสอบใบเสร็จอิเล็กทรอนิกส์/E-receipt verification URL</div>
-              <div style="margin-bottom: 2px">
-                <a
-                  href="https://e-sign.buu.ac.th/verify"
-                  target="_blank"
-                  class="text-black"
-                  style="text-decoration: none"
-                  >https://e-sign.buu.ac.th/verify</a
-                >
+          <!-- FOOTER -->
+          <div class="receipt-footer">
+            <!-- Left: Notes -->
+            <div class="footer-left">
+              <div class="notes-url-label">
+                URL ตรวจสอบใบเสร็จอิเล็กทรอนิกส์/E-receipt verification URL
               </div>
-              <div style="font-weight: 600">หมายเหตุ :</div>
-              <div style="padding-left: 14px">
-                <div>
+              <div class="notes-url">https://e-sign.buu.ac.th/verify</div>
+              <div class="notes-head">หมายเหตุ :</div>
+              <div class="notes-body">
+                <p>
                   1.ใบเสร็จรับเงินนี้ได้ดำเนินการด้วยวิธีการทางอิเล็กทรอนิกส์
                   และผู้ชำระเงินสามารถสแกน QR Code นี้เพื่อตรวจสอบความถูกต้อง/
-                </div>
-                <div style="padding-left: 8px; margin-bottom: 1px">
+                </p>
+                <p class="notes-en">
                   This receipt was processed electronically, and the person making the payment can
                   scan this QR Code to check its correctness.
-                </div>
-                <div>
+                </p>
+                <p>
                   2. ใบเสร็จรับเงินฉบับนี้จะสมบูรณ์เมื่อได้รับชำระเงินเรียบร้อยแล้ว
                   และมีลายมือชื่อของผู้รับเงินครบถ้วน/
-                </div>
-                <div style="padding-left: 8px">
+                </p>
+                <p class="notes-en">
                   This receipt will be considered finalized once we have received full payment and
                   the payee's signature is complete.
-                </div>
+                </p>
+              </div>
+              <div class="digitally">
+                <div>Digitally signed by BUU</div>
+                <div>Date: {{ shortThaiDate }}</div>
               </div>
             </div>
-            <div style="font-size: 11px; color: #444; margin-top: 6px">
-              <div>Digitally signed by BUU</div>
-              <div>Date: {{ shortThaiDate }}</div>
-            </div>
-          </div>
 
-          <!-- Right Column -->
-          <div class="col-12 col-md-5 column items-end">
-            <div class="column items-center" style="margin-top: 2px">
-              <div style="font-size: 14px; margin-bottom: 2px; min-height: 22px"></div>
-              <div style="width: 160px; border-bottom: 1px solid #666; margin-bottom: 4px"></div>
-              <div style="font-size: 13px; font-weight: 500">( นางสาวณัฐพงศ์ ไม่อยู่ )</div>
-              <div style="font-size: 12px; color: #444">ผู้รับเงิน (Collector)</div>
+            <!-- Right: Signature + QR -->
+            <div class="footer-right">
+              <div class="sig-block">
+                <div class="sig-italic">test</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">( นางสาวณัฐพงศ์ ไม่อยู่ )</div>
+                <div class="sig-title">ผู้รับเงิน (Collector)</div>
+              </div>
+              <img :src="receiptQrCode" class="qr-img" alt="QR Code" />
             </div>
-            <img
-              :src="receiptQrCode"
-              style="width: 80px; height: 80px; margin-top: 8px"
-              alt="QR Code"
-            />
           </div>
         </div>
       </q-card-section>
 
-      <q-card-actions
-        align="center"
-        class="q-pa-md bg-grey-1 border-top"
-        style="border-top: 1px solid #eee"
-      >
+      <q-card-actions align="center" class="q-pa-md bg-grey-1" style="border-top: 1px solid #eee">
         <q-btn
           flat
           :label="t('receipt.close')"
@@ -239,19 +204,17 @@ const dialogModel = computed<boolean>({
   set: (value) => emit('update:modelValue', value),
 });
 
-const amountLabel = computed<string>(() => {
-  return `${(props.amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-});
+const amountLabel = computed<string>(
+  () =>
+    `${(props.amount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+);
 
-const bahtTextValue = computed<string>(() => {
-  return getBahtText(props.amount ?? 0);
-});
+const bahtTextValue = computed<string>(() => getBahtText(props.amount ?? 0));
 
 function getBahtText(number: number): string {
   if (number === 0) return 'ศูนย์บาทถ้วน';
   const numbers = ['ศูนย์', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า'];
   const positions = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน', 'ล้าน'];
-
   const numStr = number.toFixed(2);
   const [baht, satang] = numStr.split('.');
   if (!baht || !satang) return '';
@@ -263,37 +226,24 @@ function getBahtText(number: number): string {
       const digit = parseInt(nStr.charAt(i));
       const pos = len - i - 1;
       if (digit !== 0) {
-        if (pos === 0 && digit === 1 && len > 1 && nStr !== '01') {
-          result += 'เอ็ด';
-        } else if (pos === 1 && digit === 2) {
-          result += 'ยี่สิบ';
-        } else if (pos === 1 && digit === 1) {
-          result += 'สิบ';
-        } else {
-          result += (numbers[digit] ?? '') + (positions[pos] ?? '');
-        }
+        if (pos === 0 && digit === 1 && len > 1 && nStr !== '01') result += 'เอ็ด';
+        else if (pos === 1 && digit === 2) result += 'ยี่สิบ';
+        else if (pos === 1 && digit === 1) result += 'สิบ';
+        else result += (numbers[digit] ?? '') + (positions[pos] ?? '');
       }
     }
     return result;
   }
 
   let text = '';
-  if (parseInt(baht) > 0) {
-    text += readNumber(baht) + 'บาท';
-  }
-  if (parseInt(satang) > 0) {
-    text += readNumber(satang) + 'สตางค์';
-  } else {
-    text += 'ถ้วน';
-  }
-
+  if (parseInt(baht) > 0) text += readNumber(baht) + 'บาท';
+  if (parseInt(satang) > 0) text += readNumber(satang) + 'สตางค์';
+  else text += 'ถ้วน';
   return text;
 }
 
 function normalizeDate(input: Date | string | number | null | undefined): Date | null {
-  if (!input) {
-    return null;
-  }
+  if (!input) return null;
   const date = input instanceof Date ? input : new Date(input);
   return Number.isNaN(date.getTime()) ? null : date;
 }
@@ -314,18 +264,14 @@ const thaiPrintDate = computed<string>(() => {
     'พฤศจิกายน',
     'ธันวาคม',
   ];
-  const d = date.getDate();
-  const m = thaiMonths[date.getMonth()];
-  const y = date.getFullYear() + 543;
-  return `${d} ${m} พ.ศ. ${y}`;
+  return `${date.getDate()} ${thaiMonths[date.getMonth()]} พ.ศ. ${date.getFullYear() + 543}`;
 });
 
 const shortThaiDate = computed<string>(() => {
   const date = normalizeDate(props.issuedAt) || new Date();
   const d = date.getDate().toString().padStart(2, '0');
   const m = (date.getMonth() + 1).toString().padStart(2, '0');
-  const y = (date.getFullYear() + 543).toString();
-  return `${d}/${m}/${y}`;
+  return `${d}/${m}/${date.getFullYear() + 543}`;
 });
 
 function closeReceipt(): void {
@@ -342,15 +288,79 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
-function printReceipt(): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
+// ─── Shared print CSS ────────────────────────────────────────────────────────
+function getPrintStyles(): string {
+  return `
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: 'Sarabun', 'TH Sarabun New', sans-serif; font-size: 13px; color: #3a3a3a; background: #fff; }
+    .receipt-page {
+      width: 210mm; min-height: 297mm;
+      margin: 0 auto;
+      padding: 16mm 20mm 14mm;
+      display: flex; flex-direction: column;
+    }
+    /* HEADER */
+    .receipt-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+    .header-left { display: flex; gap: 12px; align-items: flex-start; }
+    .receipt-logo { width: 60px; height: 60px; object-fit: contain; }
+    .uni-info { display: flex; flex-direction: column; gap: 1px; }
+    .uni-name { font-size: 15px; font-weight: 700; line-height: 1.35; color: #2a2a2a; }
+    .uni-addr { font-size: 11px; line-height: 1.5; color: #444; }
+    .header-right { text-align: right; }
+    .receipt-title { font-size: 18px; font-weight: 700; line-height: 1.3; color: #2a2a2a; }
+    .receipt-date { font-size: 12px; margin-top: 14px; color: #3a3a3a; }
+    /* CUSTOMER */
+    .customer-section { margin: 10px 0 12px; padding-bottom: 8px; }
+    .info-row { display: flex; margin-bottom: 5px; font-size: 13px; color: #3a3a3a; }
+    .info-label { width: 260px; flex-shrink: 0; color: #555; }
+    .info-value { flex: 1; color: #2a2a2a; }
+    /* TABLE */
+    .receipt-table { width: 100%; border-collapse: collapse; flex: 1; }
+    .receipt-table th, .receipt-table td { border: 1px solid #bbb; padding: 6px 10px; font-size: 13px; color: #3a3a3a; }
+    .receipt-table th { text-align: center; font-weight: 400; background: #fafafa; color: #444; }
+    .col-no { width: 11%; text-align: center; }
+    .col-desc { width: 64%; }
+    .col-amount { width: 25%; text-align: right; }
+    .body-no { text-align: center; vertical-align: top; padding-top: 10px; height: 320px; }
+    .body-desc { vertical-align: top; padding-top: 10px; padding-left: 10px; position: relative; }
+    .body-amount { text-align: right; vertical-align: top; padding-top: 10px; }
+    .tfoot-total { font-weight: 700; padding-left: 10px; color: #2a2a2a; }
+    .tfoot-amount { text-align: right; font-weight: 700; color: #2a2a2a; }
+    /* Cell watermark */
+    .cell-watermark-wrap {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .cell-watermark-img { width: 230px; height: 230px; object-fit: contain; opacity: 0.08; }
+    .desc-text { position: relative; z-index: 2; display: block; }
+    /* FOOTER */
+    .receipt-footer { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 14px; gap: 16px; }
+    .footer-left { flex: 1; }
+    .notes-url-label { font-size: 10px; margin-bottom: 1px; color: #444; }
+    .notes-url { font-size: 10px; margin-bottom: 5px; color: #444; }
+    .notes-head { font-size: 10.5px; font-weight: 700; margin-bottom: 3px; color: #2a2a2a; }
+    .notes-body { font-size: 10px; padding-left: 12px; line-height: 1.55; color: #444; }
+    .notes-body p { margin-bottom: 2px; }
+    .notes-en { color: #666; padding-left: 8px; font-size: 9.5px; }
+    .digitally { font-size: 9px; color: #777; margin-top: 12px; }
+    .footer-right { width: 175px; display: flex; flex-direction: column; align-items: center; }
+    .sig-block { display: flex; flex-direction: column; align-items: center; width: 100%; margin-bottom: 10px; }
+    .sig-italic { font-style: italic; font-size: 18px; font-family: Georgia, 'Times New Roman', serif; color: #2a2a2a; }
+    .sig-line { width: 160px; border-bottom: 1px solid #888; margin-bottom: 5px; }
+    .sig-name { font-size: 12px; font-weight: 600; text-align: center; color: #2a2a2a; }
+    .sig-title { font-size: 11px; color: #555; text-align: center; }
+    .qr-img { width: 86px; height: 86px; margin-top: 4px; }
+    @page { size: A4; margin: 0; }
+    @media print { body { padding: 0; } }
+  `;
+}
 
-  const printWindow = window.open('', '_blank', 'width=900,height=1200');
-  if (!printWindow) {
-    return;
-  }
+function buildReceiptHtml(isPixelVersion = false): string {
+  const w = isPixelVersion ? '794px' : '210mm';
+  const h = isPixelVersion ? '1123px' : '297mm';
+  const pad = isPixelVersion ? '60px 76px 53px' : '16mm 20mm 14mm';
 
   const printableReceiptId = escapeHtml(props.receiptId);
   const printableTitle = escapeHtml(props.courseTitle);
@@ -361,171 +371,111 @@ function printReceipt(): void {
   const printableCustomerAddress = escapeHtml(props.customerAddress || '-');
   const printableBahtText = escapeHtml(bahtTextValue.value);
   const logoUrl = buuLogoSvg;
+  const qrUrl = receiptQrCode;
 
-  printWindow.document.write(`<!doctype html>
+  return `<!doctype html>
 <html lang="th">
-  <head>
-    <meta charset="utf-8" />
-    <title>Receipt ${printableReceiptId}</title>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
-      * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      body {
-        font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
-        font-size: 13px;
-        color: #000;
-        background: #fff;
-      }
-      .page {
-        width: 210mm;
-        min-height: 297mm;
-        margin: 0 auto;
-        padding: 14mm 18mm 12mm;
-        display: flex;
-        flex-direction: column;
-      }
-      /* Header */
-      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-      .header-left { display: flex; gap: 10px; align-items: flex-start; }
-      .logo { width: 52px; height: 52px; object-fit: contain; }
-      .uni-info { display: flex; flex-direction: column; gap: 1px; }
-      .uni-name { font-size: 14px; font-weight: 700; line-height: 1.3; }
-      .uni-addr { font-size: 10.5px; line-height: 1.4; color: #222; }
-      .header-right { text-align: right; }
-      .receipt-title { font-size: 15px; font-weight: 700; line-height: 1.3; }
-      .receipt-date { font-size: 11.5px; margin-top: 10px; }
-      /* Customer Info */
-      .customer-section { margin: 8px 0 10px; }
-      .info-row { display: flex; margin-bottom: 4px; font-size: 12px; }
-      .info-label { width: 250px; flex-shrink: 0; }
-      /* Table */
-      .receipt-table { width: 100%; border-collapse: collapse; flex: 1; }
-      .receipt-table th, .receipt-table td { border: 1px solid #000; padding: 5px 8px; font-size: 12px; }
-      .receipt-table th { text-align: center; font-weight: 400; background: #fff; }
-      .receipt-table .col-no { width: 12%; text-align: center; }
-      .receipt-table .col-desc { width: 63%; }
-      .receipt-table .col-amount { width: 25%; text-align: right; }
-      .receipt-table .body-no { text-align: center; vertical-align: top; padding-top: 10px; height: 340px; }
-      .receipt-table .body-desc { vertical-align: top; padding-top: 10px; position: relative; }
-      .receipt-table .body-amount { text-align: right; vertical-align: top; padding-top: 10px; }
-      .receipt-table tfoot td { font-weight: 600; font-size: 12px; }
-      /* Watermark inside table cell */
-      .watermark-wrap { position: relative; }
-      .watermark-img {
-        position: absolute;
-        top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        width: 220px; height: 220px;
-        object-fit: contain;
-        opacity: 0.09;
-        pointer-events: none;
-      }
-      /* Footer */
-      .footer { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 10px; gap: 12px; }
-      .footer-left { flex: 1; }
-      .notes-title { font-size: 10px; margin-bottom: 1px; }
-      .notes-url { font-size: 10px; margin-bottom: 3px; }
-      .notes-head { font-size: 10px; font-weight: 700; margin-bottom: 2px; }
-      .notes-body { font-size: 9.5px; padding-left: 10px; line-height: 1.45; color: #222; }
-      .notes-body p { margin-bottom: 2px; }
-      .notes-en { color: #555; padding-left: 8px; font-size: 9px; }
-      .digitally { font-size: 9px; color: #555; margin-top: 8px; }
-      .footer-right { width: 180px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-      .sig-italic { font-style: italic; font-size: 13px; font-family: Georgia, serif; margin-bottom: 1px; }
-      .sig-line { width: 160px; border-bottom: 1px solid #555; margin-bottom: 3px; }
-      .sig-name { font-size: 11px; font-weight: 600; text-align: center; }
-      .sig-title { font-size: 10px; color: #444; text-align: center; }
-      .qr-img { width: 76px; height: 76px; margin-top: 4px; }
-      @page { size: A4; margin: 0; }
-      @media print { body { padding: 0; } }
-    </style>
-  </head>
-  <body>
-    <div class="page">
-      <!-- Header -->
-      <div class="header">
-        <div class="header-left">
-          <img src="${logoUrl}" class="logo" alt="BUU logo" onerror="this.style.display='none'">
-          <div class="uni-info">
-            <div class="uni-name">มหาวิทยาลัยบูรพา BURAPHA UNIVERSITY</div>
-            <div class="uni-addr">169 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมือง จังหวัดชลบุรี 20131</div>
-            <div class="uni-addr">169 Longhard Bangsaen Road, Saensuk, Mueang, Chonburi 20131</div>
-            <div class="uni-addr">เลขประจำตัวผู้เสียภาษีอากร (Tax ID) 0994000249357</div>
-          </div>
-        </div>
-        <div class="header-right">
-          <div class="receipt-title">สำเนาใบเสร็จรับเงิน</div>
-          <div class="receipt-title">RECEIPT COPY</div>
-          <div class="receipt-date">วันที่ (Date) ${thaiPrintDate.value}</div>
-        </div>
-      </div>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    ${getPrintStyles()}
+    .receipt-page { width: ${w}; ${isPixelVersion ? `height: ${h};` : `min-height: ${h};`} padding: ${pad}; }
+  </style>
+</head>
+<body>
+<div class="receipt-page">
 
-      <!-- Customer Info -->
-      <div class="customer-section">
-        <div class="info-row"><div class="info-label">เลขที่ใบเสร็จรับเงิน (Receipt No.)</div><div>${printableReceiptId}</div></div>
-        <div class="info-row"><div class="info-label">ได้รับเงินจาก (Received from)</div><div>${printableCustomerName}</div></div>
-        <div class="info-row"><div class="info-label">เลขประจำตัวผู้เสียภาษีอากร (Tax ID)</div><div>${printableCustomerTaxId}</div></div>
-        <div class="info-row"><div class="info-label">ที่อยู่ (Address)</div><div>${printableCustomerAddress}</div></div>
-      </div>
-
-      <!-- Table -->
-      <table class="receipt-table">
-        <thead>
-          <tr>
-            <th class="col-no">ลำดับที่<br>(No.)</th>
-            <th class="col-desc">รายการ<br>(Description)</th>
-            <th class="col-amount">จำนวนเงิน/บาท<br>(Amount/Baht)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="body-no">1</td>
-            <td class="body-desc watermark-wrap">
-              <img src="${logoUrl}" class="watermark-img" alt="">
-              ค่าธรรมเนียมในการอบรมรายวิชา ${printableCode ? printableCode + ' : ' : ''}${printableTitle}
-            </td>
-            <td class="body-amount">${printablePrice}</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2">รวมเงิน (Total) ${printableBahtText}</td>
-            <td class="col-amount">${printablePrice}</td>
-          </tr>
-        </tfoot>
-      </table>
-
-      <!-- Footer -->
-      <div class="footer">
-        <div class="footer-left">
-          <div class="notes-title">URL ตรวจสอบใบเสร็จอิเล็กทรอนิกส์/E-receipt verification URL</div>
-          <div class="notes-url">https://e-sign.buu.ac.th/verify</div>
-          <div class="notes-head">หมายเหตุ :</div>
-          <div class="notes-body">
-            <p>1.ใบเสร็จรับเงินนี้ได้ดำเนินการด้วยวิธีการทางอิเล็กทรอนิกส์ และผู้ชำระเงินสามารถสแกน QR Code นี้เพื่อตรวจสอบความถูกต้อง/</p>
-            <p class="notes-en">This receipt was processed electronically, and the person making the payment can scan this QR Code to check its correctness.</p>
-            <p>2. ใบเสร็จรับเงินฉบับนี้จะสมบูรณ์เมื่อได้รับชำระเงินเรียบร้อยแล้ว และมีลายมือชื่อของผู้รับเงินครบถ้วน/</p>
-            <p class="notes-en">This receipt will be considered finalized once we have received full payment and the payee's signature is complete.</p>
-          </div>
-          <div class="digitally">
-            <div>Digitally signed by BUU</div>
-            <div>Date: ${shortThaiDate.value}</div>
-          </div>
-        </div>
-        <div class="footer-right">
-          <div class="sig-italic">Natrue</div>
-          <div class="sig-line"></div>
-          <div class="sig-name">( นางสาวณัฐพงศ์ ไม่อยู่ )</div>
-          <div class="sig-title">ผู้รับเงิน (Collector)</div>
-          <img src="${receiptQrCode}" class="qr-img" alt="QR Code">
-        </div>
+  <div class="receipt-header">
+    <div class="header-left">
+      <img src="${logoUrl}" class="receipt-logo" alt="BUU logo" onerror="this.style.display='none'">
+      <div class="uni-info">
+        <div class="uni-name">มหาวิทยาลัยบูรพา BURAPHA UNIVERSITY</div>
+        <div class="uni-addr">169 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมือง จังหวัดชลบุรี 20131</div>
+        <div class="uni-addr">169 Longhard Bangsaen Road, Saensuk, Mueang, Chonburi 20131</div>
+        <div class="uni-addr">เลขที่ประจำตัวผู้เสียภาษีอากร (Tax ID) 0994000249357</div>
       </div>
     </div>
-  </body>
-</html>`);
-  printWindow.document.close();
+    <div class="header-right">
+      <div class="receipt-title">สำเนาใบเสร็จรับเงิน</div>
+      <div class="receipt-title">RECEIPT COPY</div>
+      <div class="receipt-date">วันที่ (Date) ${thaiPrintDate.value}</div>
+    </div>
+  </div>
 
-  // Wait for resources (font, images) to load before printing
+  <div class="customer-section">
+    <div class="info-row"><div class="info-label">เลขที่ใบเสร็จรับเงิน (Receipt No.)</div><div class="info-value">${printableReceiptId}</div></div>
+    <div class="info-row"><div class="info-label">ได้รับเงินจาก (Received from)</div><div class="info-value">${printableCustomerName}</div></div>
+    <div class="info-row-spacer" style="height:10px;"></div>
+    <div class="info-row"><div class="info-label">เลขประจำตัวผู้เสียภาษีอากร (Tax ID)</div><div class="info-value">${printableCustomerTaxId}</div></div>
+    <div class="info-row"><div class="info-label">ที่อยู่ (Address)</div><div class="info-value">${printableCustomerAddress}</div></div>
+  </div>
+
+  <table class="receipt-table">
+    <thead>
+      <tr>
+        <th class="col-no">ลำดับที่<br>(No.)</th>
+        <th class="col-desc">รายการ<br>(Description)</th>
+        <th class="col-amount">จำนวนเงิน/บาท<br>(Amount/Baht)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="body-no">1</td>
+        <td class="body-desc">
+          <div class="cell-watermark-wrap">
+            <img src="${logoUrl}" class="cell-watermark-img" alt="">
+          </div>
+          <span class="desc-text">ค่าธรรมเนียมในการอบรมรายวิชา ${printableCode ? printableCode + ' : ' : ''}${printableTitle}</span>
+        </td>
+        <td class="body-amount">${printablePrice}</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2" class="tfoot-total">รวมเงิน (Total) ${printableBahtText}</td>
+        <td class="tfoot-amount">${printablePrice}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="receipt-footer">
+    <div class="footer-left">
+      <div class="notes-url-label">URL ตรวจสอบใบเสร็จอิเล็กทรอนิกส์/E-receipt verification URL</div>
+      <div class="notes-url">https://e-sign.buu.ac.th/verify</div>
+      <div class="notes-head">หมายเหตุ :</div>
+      <div class="notes-body">
+        <p>1.ใบเสร็จรับเงินนี้ได้ดำเนินการด้วยวิธีการทางอิเล็กทรอนิกส์ และผู้ชำระเงินสามารถสแกน QR Code นี้เพื่อตรวจสอบความถูกต้อง/</p>
+        <p class="notes-en">This receipt was processed electronically, and the person making the payment can scan this QR Code to check its correctness.</p>
+        <p>2. ใบเสร็จรับเงินฉบับนี้จะสมบูรณ์เมื่อได้รับชำระเงินเรียบร้อยแล้ว และมีลายมือชื่อของผู้รับเงินครบถ้วน/</p>
+        <p class="notes-en">This receipt will be considered finalized once we have received full payment and the payee's signature is complete.</p>
+      </div>
+      <div class="digitally">
+        <div>Digitally signed by BUU</div>
+        <div>Date: ${shortThaiDate.value}</div>
+      </div>
+    </div>
+    <div class="footer-right">
+      <div class="sig-block">
+        <div class="sig-italic">test</div>
+        <div class="sig-line"></div>
+        <div class="sig-name">( นางสาวณัฐพงศ์ ไม่อยู่ )</div>
+        <div class="sig-title">ผู้รับเงิน (Collector)</div>
+      </div>
+      <img src="${qrUrl}" class="qr-img" alt="QR Code">
+    </div>
+  </div>
+
+</div>
+</body>
+</html>`;
+}
+
+function printReceipt(): void {
+  if (typeof window === 'undefined') return;
+  const printWindow = window.open('', '_blank', 'width=900,height=1200');
+  if (!printWindow) return;
+  printWindow.document.write(buildReceiptHtml(false));
+  printWindow.document.close();
   setTimeout(() => {
     printWindow.focus();
     printWindow.print();
@@ -535,181 +485,8 @@ function printReceipt(): void {
 function downloadReceiptPdf(): void {
   if (typeof window === 'undefined') return;
 
-  const printableReceiptId = escapeHtml(props.receiptId);
-  const printableTitle = escapeHtml(props.courseTitle);
-  const printableCode = escapeHtml(props.courseCode || '');
-  const printablePrice = escapeHtml(amountLabel.value);
-  const printableCustomerName = escapeHtml(props.customerName || '-');
-  const printableCustomerTaxId = escapeHtml(props.customerTaxId || '-');
-  const printableCustomerAddress = escapeHtml(props.customerAddress || '-');
-  const printableBahtText = escapeHtml(bahtTextValue.value);
-  const logoUrl = buuLogoSvg;
-
-  const htmlContent = `<!doctype html>
-<html lang="th">
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-        font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
-        font-size: 13px;
-        color: #000;
-        background: #fff;
-      }
-      .page {
-        width: 794px;
-        height: 1123px;
-        margin: 0 auto;
-        padding: 53px 68px 45px;
-        display: flex;
-        flex-direction: column;
-        box-sizing: border-box;
-      }
-      /* Header */
-      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-      .header-left { display: flex; gap: 10px; align-items: flex-start; }
-      .logo { width: 52px; height: 52px; object-fit: contain; }
-      .uni-info { display: flex; flex-direction: column; gap: 1px; }
-      .uni-name { font-size: 14px; font-weight: 700; line-height: 1.3; }
-      .uni-addr { font-size: 10.5px; line-height: 1.4; color: #222; }
-      .header-right { text-align: right; }
-      .receipt-title { font-size: 15px; font-weight: 700; line-height: 1.3; }
-      .receipt-date { font-size: 11.5px; margin-top: 10px; }
-      /* Customer Info */
-      .customer-section { margin: 8px 0 10px; }
-      .info-row { display: flex; margin-bottom: 4px; font-size: 12px; }
-      .info-label { width: 250px; flex-shrink: 0; }
-      /* Table */
-      .receipt-table { width: 100%; border-collapse: collapse; flex: 1; }
-      .receipt-table th, .receipt-table td { border: 1px solid #000; padding: 5px 8px; font-size: 12px; }
-      .receipt-table th { text-align: center; font-weight: 400; background: #fff; }
-      .receipt-table .col-no { width: 12%; text-align: center; }
-      .receipt-table .col-desc { width: 63%; }
-      .receipt-table .col-amount { width: 25%; text-align: right; }
-      .receipt-table .body-no { text-align: center; vertical-align: top; padding-top: 10px; height: 340px; }
-      .receipt-table .body-desc { vertical-align: top; padding-top: 10px; position: relative; }
-      .receipt-table .body-amount { text-align: right; vertical-align: top; padding-top: 10px; }
-      .receipt-table tfoot td { font-weight: 600; font-size: 12px; }
-      /* Watermark inside table cell */
-      .watermark-wrap { position: relative; }
-      .watermark-img {
-        position: absolute;
-        top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        width: 220px; height: 220px;
-        object-fit: contain;
-        opacity: 0.09;
-        pointer-events: none;
-      }
-      /* Footer */
-      .footer { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 10px; gap: 12px; }
-      .footer-left { flex: 1; }
-      .notes-title { font-size: 10px; margin-bottom: 1px; }
-      .notes-url { font-size: 10px; margin-bottom: 3px; }
-      .notes-head { font-size: 10px; font-weight: 700; margin-bottom: 2px; }
-      .notes-body { font-size: 9.5px; padding-left: 10px; line-height: 1.45; color: #222; }
-      .notes-body p { margin-bottom: 2px; }
-      .notes-en { color: #555; padding-left: 8px; font-size: 9px; }
-      .digitally { font-size: 9px; color: #555; margin-top: 8px; }
-      .footer-right { width: 180px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-      .sig-italic { font-style: italic; font-size: 13px; font-family: Georgia, serif; margin-bottom: 1px; }
-      .sig-line { width: 160px; border-bottom: 1px solid #555; margin-bottom: 3px; }
-      .sig-name { font-size: 11px; font-weight: 600; text-align: center; }
-      .sig-title { font-size: 10px; color: #444; text-align: center; }
-      .qr-img { width: 76px; height: 76px; margin-top: 4px; }
-    </style>
-  </head>
-  <body>
-    <div class="page">
-      <!-- Header -->
-      <div class="header">
-        <div class="header-left">
-          <img src="${logoUrl}" class="logo" alt="BUU logo" onerror="this.style.display='none'">
-          <div class="uni-info">
-            <div class="uni-name">มหาวิทยาลัยบูรพา BURAPHA UNIVERSITY</div>
-            <div class="uni-addr">169 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมือง จังหวัดชลบุรี 20131</div>
-            <div class="uni-addr">169 Longhard Bangsaen Road, Saensuk, Mueang, Chonburi 20131</div>
-            <div class="uni-addr">เลขประจำตัวผู้เสียภาษีอากร (Tax ID) 0994000249357</div>
-          </div>
-        </div>
-        <div class="header-right">
-          <div class="receipt-title">สำเนาใบเสร็จรับเงิน</div>
-          <div class="receipt-title">RECEIPT COPY</div>
-          <div class="receipt-date">วันที่ (Date) ${thaiPrintDate.value}</div>
-        </div>
-      </div>
-
-      <!-- Customer Info -->
-      <div class="customer-section">
-        <div class="info-row"><div class="info-label">เลขที่ใบเสร็จรับเงิน (Receipt No.)</div><div>${printableReceiptId}</div></div>
-        <div class="info-row"><div class="info-label">ได้รับเงินจาก (Received from)</div><div>${printableCustomerName}</div></div>
-        <div class="info-row"><div class="info-label">เลขประจำตัวผู้เสียภาษีอากร (Tax ID)</div><div>${printableCustomerTaxId}</div></div>
-        <div class="info-row"><div class="info-label">ที่อยู่ (Address)</div><div>${printableCustomerAddress}</div></div>
-      </div>
-
-      <!-- Table -->
-      <table class="receipt-table">
-        <thead>
-          <tr>
-            <th class="col-no">ลำดับที่<br>(No.)</th>
-            <th class="col-desc">รายการ<br>(Description)</th>
-            <th class="col-amount">จำนวนเงิน/บาท<br>(Amount/Baht)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="body-no">1</td>
-            <td class="body-desc watermark-wrap">
-              <img src="${logoUrl}" class="watermark-img" alt="">
-              ค่าธรรมเนียมในการอบรมรายวิชา ${printableCode ? printableCode + ' : ' : ''}${printableTitle}
-            </td>
-            <td class="body-amount">${printablePrice}</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2">รวมเงิน (Total) ${printableBahtText}</td>
-            <td class="col-amount">${printablePrice}</td>
-          </tr>
-        </tfoot>
-      </table>
-
-      <!-- Footer -->
-      <div class="footer">
-        <div class="footer-left">
-          <div class="notes-title">URL ตรวจสอบใบเสร็จอิเล็กทรอนิกส์/E-receipt verification URL</div>
-          <div class="notes-url">https://e-sign.buu.ac.th/verify</div>
-          <div class="notes-head">หมายเหตุ :</div>
-          <div class="notes-body">
-            <p>1.ใบเสร็จรับเงินนี้ได้ดำเนินการด้วยวิธีการทางอิเล็กทรอนิกส์ และผู้ชำระเงินสามารถสแกน QR Code นี้เพื่อตรวจสอบความถูกต้อง/</p>
-            <p class="notes-en">This receipt was processed electronically, and the person making the payment can scan this QR Code to check its correctness.</p>
-            <p>2. ใบเสร็จรับเงินฉบับนี้จะสมบูรณ์เมื่อได้รับชำระเงินเรียบร้อยแล้ว และมีลายมือชื่อของผู้รับเงินครบถ้วน/</p>
-            <p class="notes-en">This receipt will be considered finalized once we have received full payment and the payee's signature is complete.</p>
-          </div>
-          <div class="digitally">
-            <div>Digitally signed by BUU</div>
-            <div>Date: ${shortThaiDate.value}</div>
-          </div>
-        </div>
-        <div class="footer-right">
-          <div class="sig-italic">Natrue</div>
-          <div class="sig-line"></div>
-          <div class="sig-name">( นางสาวณัฐพงศ์ ไม่อยู่ )</div>
-          <div class="sig-title">ผู้รับเงิน (Collector)</div>
-          <img src="${receiptQrCode}" class="qr-img" alt="QR Code">
-        </div>
-      </div>
-    </div>
-  </body>
-</html>`;
-
   const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.left = '-9999px';
-  iframe.style.width = '794px';
-  iframe.style.height = '1123px';
+  iframe.style.cssText = 'position:fixed;left:-9999px;width:794px;height:1123px;border:none;';
   document.body.appendChild(iframe);
 
   const iframeDoc = iframe.contentWindow?.document;
@@ -717,8 +494,9 @@ function downloadReceiptPdf(): void {
     document.body.removeChild(iframe);
     return;
   }
+
   iframeDoc.open();
-  iframeDoc.write(htmlContent);
+  iframeDoc.write(buildReceiptHtml(true));
   iframeDoc.close();
 
   setTimeout(() => {
@@ -748,22 +526,10 @@ function downloadReceiptPdf(): void {
   }, 1500);
 }
 
-defineExpose({
-  printReceipt,
-  downloadReceiptPdf,
-});
+defineExpose({ printReceipt, downloadReceiptPdf });
 </script>
 
 <style lang="scss" scoped>
-.receipt-card {
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  border-radius: 8px !important;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
 @font-face {
   font-family: 'THSarabunNew';
   src: url('https://cdn.jsdelivr.net/gh/itds-consulting/thai-fonts/fonts/THSarabunNew.ttf')
@@ -779,52 +545,269 @@ defineExpose({
 .font-sarabun {
   font-family:
     'THSarabunNew', 'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', 'Noto Sans Thai', sans-serif;
-  font-size: 13px;
 }
 
+.receipt-card {
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  border-radius: 8px !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Page wrapper inside dialog — fills full card */
+.receipt-page {
+  padding: 32px 40px 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 1060px; /* approximate A4 proportion inside dialog */
+  color: #3a3a3a; /* match original: dark-grey, not pure black */
+}
+
+/* HEADER */
+.receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.header-left {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
 .receipt-logo {
-  width: 60px;
-  height: 60px;
+  width: 62px;
+  height: 62px;
   object-fit: contain;
+  flex-shrink: 0;
+}
+.uni-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.uni-name {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #2a2a2a;
+}
+.uni-addr {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #444;
+}
+.header-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+.receipt-title {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #2a2a2a;
+}
+.receipt-date {
+  font-size: 12px;
+  margin-top: 14px;
+  color: #3a3a3a;
 }
 
-.receipt-table-wrapper {
-  z-index: 1;
-  overflow: hidden;
+/* CUSTOMER */
+.customer-section {
+  margin-bottom: 14px;
+}
+.info-row {
+  display: flex;
+  margin-bottom: 5px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #3a3a3a;
+}
+.info-label {
+  width: 270px;
+  flex-shrink: 0;
+  color: #555;
+}
+.info-value {
+  flex: 1;
+  color: #2a2a2a;
+}
+.info-row-spacer {
+  height: 10px;
 }
 
+/* TABLE */
 .receipt-table {
+  width: 100%;
   border-collapse: collapse;
+  margin-bottom: 14px;
+  flex: 1;
 }
-
 .receipt-table th,
 .receipt-table td {
-  border: 1px solid #000;
+  border: 1px solid #bbb;
   padding: 6px 10px;
+  font-size: 13px;
+  color: #3a3a3a;
 }
-
 .receipt-table th {
-  font-weight: normal;
+  font-weight: 400;
+  text-align: center;
+  color: #444;
+  background: #fafafa;
+}
+.col-no {
+  width: 11%;
+  text-align: center;
+}
+.col-desc {
+  width: 64%;
+}
+.col-amount {
+  width: 25%;
+  text-align: right;
 }
 
-.watermark-bg {
+.body-no {
+  text-align: center;
+  vertical-align: top;
+  padding-top: 10px;
+  height: 320px; /* tall cell like original */
+}
+.body-desc {
+  vertical-align: top;
+  padding-top: 10px;
+  padding-left: 10px;
+  position: relative;
+}
+.body-amount {
+  text-align: right;
+  vertical-align: top;
+  padding-top: 10px;
+}
+.tfoot-total {
+  font-weight: 700;
+  padding-left: 10px;
+  color: #2a2a2a;
+}
+.tfoot-amount {
+  text-align: right;
+  font-weight: 700;
+  color: #2a2a2a;
+}
+
+/* Cell watermark */
+.cell-watermark-wrap {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-  max-width: 350px;
-  max-height: 350px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.04;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
   z-index: 0;
 }
+.cell-watermark-img {
+  width: 230px;
+  height: 230px;
+  object-fit: contain;
+  opacity: 0.08;
+}
+.desc-text {
+  position: relative;
+  z-index: 2;
+  display: block;
+}
 
-.w-full {
+/* FOOTER */
+.receipt-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.footer-left {
+  flex: 1;
+  min-width: 0;
+}
+.notes-url-label {
+  font-size: 10px;
+  margin-bottom: 1px;
+  color: #444;
+}
+.notes-url {
+  font-size: 10px;
+  margin-bottom: 5px;
+  color: #444;
+}
+.notes-head {
+  font-size: 10.5px;
+  font-weight: 700;
+  margin-bottom: 3px;
+  color: #2a2a2a;
+}
+.notes-body {
+  font-size: 10px;
+  padding-left: 12px;
+  line-height: 1.55;
+  color: #444;
+}
+.notes-body p {
+  margin-bottom: 2px;
+}
+.notes-en {
+  color: #666;
+  padding-left: 8px;
+  font-size: 9.5px;
+}
+.digitally {
+  font-size: 9px;
+  color: #777;
+  margin-top: 12px;
+}
+
+.footer-right {
+  width: 175px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sig-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
+  margin-bottom: 10px;
+}
+.sig-italic {
+  font-style: italic;
+  font-size: 18px;
+  font-family: Georgia, 'Times New Roman', serif;
+  margin-bottom: 0px;
+  color: #2a2a2a;
+}
+.sig-line {
+  width: 160px;
+  border-bottom: 1px solid #888;
+  margin-bottom: 5px;
+}
+.sig-name {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  color: #2a2a2a;
+}
+.sig-title {
+  font-size: 11px;
+  color: #555;
+  text-align: center;
+}
+.qr-img {
+  width: 86px;
+  height: 86px;
 }
 </style>

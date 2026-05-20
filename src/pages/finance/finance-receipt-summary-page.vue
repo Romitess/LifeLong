@@ -238,7 +238,15 @@
               <span v-if="props.row.status === 'ยกเลิก'" class="text-grey-6">
                 {{ $t('finance.receiptSummary.statusCancelled') }}
               </span>
-              <q-btn v-else flat round dense icon="download" color="warning">
+              <q-btn
+                v-else
+                flat
+                round
+                dense
+                icon="download"
+                color="warning"
+                @click="downloadReceipt(props.row)"
+              >
                 <q-tooltip>{{ $t('finance.receipts.printReceipt') }}</q-tooltip>
               </q-btn>
             </q-td>
@@ -280,13 +288,28 @@
         </q-table>
       </AdminSurfaceCard>
     </section>
+
+    <CourseReceiptDialog
+      ref="receiptDialogRef"
+      v-model="showReceiptDialog"
+      :receipt-id="receiptId"
+      :issued-at="issuedAt"
+      :customer-name="customerName"
+      :customer-tax-id="customerTaxId"
+      :customer-address="customerAddress"
+      :show-customer="true"
+      :course-title="courseTitle"
+      :course-code="courseCode"
+      :amount="amount"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
+import CourseReceiptDialog from 'components/receipt/CourseReceiptDialog.vue';
 import type { QTableProps } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import jsPDF from 'jspdf';
@@ -312,6 +335,87 @@ const filters = ref({
   effectiveDateStart: '',
   effectiveDateEnd: '',
 });
+
+const receiptDialogRef = ref<InstanceType<typeof CourseReceiptDialog> | null>(null);
+const showReceiptDialog = ref(false);
+const selectedReceipt = ref<ReceiptSummaryItem | null>(null);
+
+const receiptId = computed(() => selectedReceipt.value?.receiptNo || '');
+const issuedAt = computed(() => {
+  return selectedReceipt.value ? parseThaiDate(selectedReceipt.value.effectiveDate) : null;
+});
+const customerName = computed(() => selectedReceipt.value?.customerName || '');
+const customerTaxId = computed(() => '0994000249357');
+const customerAddress = computed(
+  () => '169 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมือง จังหวัดชลบุรี 20131',
+);
+
+const courseCode = computed(() => {
+  if (!selectedReceipt.value) return '';
+  const parts = selectedReceipt.value.courseName.split(':');
+  return parts[0] || '';
+});
+
+const courseTitle = computed(() => {
+  if (!selectedReceipt.value) return '';
+  const parts = selectedReceipt.value.courseName.split(':');
+  return parts.slice(1).join(':').replace(/\n/g, ' ') || selectedReceipt.value.courseName;
+});
+
+const amount = computed(() => selectedReceipt.value?.amount ?? 0);
+
+function parseThaiDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  try {
+    const cleanStr = dateStr.replace('\n', ' ').trim();
+    const parts = cleanStr.split(' ');
+    if (parts.length < 3) return null;
+    const day = parseInt(parts[0] || '0');
+    const monthThai = parts[1] || '';
+    const yearThai = parseInt(parts[2] || '0');
+
+    const months = [
+      'ม.ค.',
+      'ก.พ.',
+      'มี.ค.',
+      'เม.ย.',
+      'พ.ค.',
+      'มิ.ย.',
+      'ก.ค.',
+      'ส.ค.',
+      'ก.ย.',
+      'ต.ค.',
+      'พ.ย.',
+      'ธ.ค.',
+    ];
+    const monthIndex = months.indexOf(monthThai);
+    if (monthIndex === -1) return null;
+
+    const year = yearThai - 543;
+
+    let hour = 0,
+      minute = 0,
+      second = 0;
+    if (parts[3]) {
+      const timeParts = parts[3].split(':');
+      hour = parseInt(timeParts[0] || '0');
+      minute = parseInt(timeParts[1] || '0');
+      second = parseInt(timeParts[2] || '0');
+    }
+
+    return new Date(year, monthIndex, day, hour, minute, second);
+  } catch {
+    return null;
+  }
+}
+
+async function downloadReceipt(row: ReceiptSummaryItem) {
+  selectedReceipt.value = row;
+  await nextTick();
+  if (receiptDialogRef.value) {
+    receiptDialogRef.value.downloadReceiptPdf();
+  }
+}
 
 function clearDates() {
   filters.value.receiptDateStart = '';
