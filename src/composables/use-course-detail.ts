@@ -7,6 +7,7 @@ import { useCourseStore } from 'src/stores/course-store';
 type CourseIdSource = string | Ref<string>;
 
 interface BackendCourseDetailResponse {
+  lo?: string | null;
   evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
   targets?: CourseTarget[] | null;
 }
@@ -79,8 +80,15 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
             `/api/moodle/courses/${numId}`,
           );
           if (data) {
+            const loLines: string[] =
+              data.lo
+                ?.split('\n')
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0) ?? [];
+
             course.value = {
               ...detail,
+              ...(loLines.length > 0 ? { objectives: loLines } : {}),
               targets: data.targets ?? [],
               evaluation: data.evaluationDetail ?? null,
             };

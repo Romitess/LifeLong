@@ -144,7 +144,9 @@
                     <q-icon name="flag" size="24px" color="primary" />
                     <h2 class="detail-card__title">{{ $t('objectives') }}</h2>
                   </div>
-                  <q-list class="q-mt-md">
+
+                  <!-- Real objectives from DB -->
+                  <q-list v-if="getTranslatedObjectives(course).length > 0" class="q-mt-md">
                     <q-item
                       v-for="(obj, idx) in getTranslatedObjectives(course)"
                       :key="idx"
@@ -158,6 +160,18 @@
                       </q-item-section>
                     </q-item>
                   </q-list>
+
+                  <!-- Placeholder when no objectives yet -->
+                  <div v-else class="q-mt-md q-pa-md objectives-pending">
+                    <q-icon name="schedule" size="20px" class="q-mr-sm" color="grey-5" />
+                    <span class="text-body2 text-grey-6">
+                      {{
+                        locale === 'th'
+                          ? 'วัตถุประสงค์จะประกาศให้ทราบในภายหลัง'
+                          : 'Learning objectives will be announced soon'
+                      }}
+                    </span>
+                  </div>
                 </q-card-section>
               </q-card>
 
@@ -633,9 +647,15 @@ function getTranslatedDescription(course: CourseDetail): string {
   return course.descriptionFullEn || course.descriptionFull;
 }
 
+const MOCK_OBJECTIVE_PLACEHOLDERS = [
+  'รายละเอียดวัตถุประสงค์จะประกาศเพิ่มเติม',
+  'Learning objectives will be announced.',
+];
+
 function getTranslatedObjectives(course: CourseDetail): string[] {
-  if (locale.value === 'th') return course.objectives;
-  return course.objectivesEn || course.objectives;
+  const raw =
+    locale.value === 'th' ? course.objectives : (course.objectivesEn ?? course.objectives);
+  return raw.filter((obj) => !MOCK_OBJECTIVE_PLACEHOLDERS.includes(obj.trim()));
 }
 
 function getTranslatedTargetAudience(course: CourseDetail): string {
@@ -1675,5 +1695,14 @@ watch(
       padding-top: 12px;
     }
   }
+}
+
+.objectives-pending {
+  display: flex;
+  align-items: center;
+  border: 1.5px dashed #bdbdbd;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #9e9e9e;
 }
 </style>
