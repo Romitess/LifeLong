@@ -52,8 +52,10 @@ export function useAdminCourseForm() {
       const form = new FormData();
       form.append('nameTh', payload.nameTh);
       form.append('nameEn', payload.nameEn);
+      if (payload.summary) form.append('summary', payload.summary);
       form.append('facultyId', String(payload.facultyId));
       form.append('typeCourseId', String(payload.typeCourseId));
+      if (payload.creditBank) form.append('creditBank', payload.creditBank);
       if (payload.theoryHours != null) form.append('theoryHours', String(payload.theoryHours));
       if (payload.practiceHours != null)
         form.append('practiceHours', String(payload.practiceHours));
@@ -72,11 +74,21 @@ export function useAdminCourseForm() {
       if (payload.classTypeId != null) form.append('classTypeId', String(payload.classTypeId));
       if (payload.classFee != null) form.append('classFee', String(payload.classFee));
       if (payload.classFeeRemark) form.append('classFeeRemark', payload.classFeeRemark);
+      if (payload.precondition) form.append('precondition', payload.precondition);
+      if (payload.certificate) form.append('certificate', payload.certificate);
+      if (payload.certificateName) form.append('certificateName', payload.certificateName);
+      if (payload.registrationStart) form.append('registrationStart', payload.registrationStart);
+      if (payload.registrationEnd) form.append('registrationEnd', payload.registrationEnd);
+      if (payload.maxSeats != null) form.append('maxSeats', String(payload.maxSeats));
       form.append('contactName', payload.contactName);
       form.append('contactTel', payload.contactTel);
       form.append('contactEmail', payload.contactEmail);
       if (payload.contactUrl) form.append('contactUrl', payload.contactUrl);
+      if (payload.image) form.append('image', payload.image);
       if (payload.file) form.append('file', payload.file);
+      if (payload.createUser) form.append('createUser', payload.createUser);
+      if (payload.instructors?.length)
+        form.append('instructorsJson', JSON.stringify(payload.instructors));
 
       const { data } = await api.post<{ courseId: number }>('/api/admin/courses', form, {
         headers: { 'Content-Type': 'multipart/form-data' },

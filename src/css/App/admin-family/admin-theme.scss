@@ -162,6 +162,20 @@
   border-width: 2px;
 }
 
+// Error state: ลด border เหลือ 1.5px เพื่อให้เบาลง ตรงกับ design token ของ admin theme
+:where(.admin-page, .admin-dialog) .q-field--outlined.q-field--error .q-field__control::after {
+  border-width: 1.5px;
+}
+
+// Borderless q-field ที่ใช้ wrap radio/checkbox groups — เพิ่ม subtle indicator ตอน error
+// เพื่อให้ consistent กับ outlined fields ที่มี red border
+:where(.admin-page, .admin-dialog) .q-field--borderless.q-field--error .q-field__control {
+  border-radius: var(--admin-radius-md);
+  outline: 1.5px solid var(--admin-danger-ink);
+  background: rgba(225, 29, 72, 0.03);
+  padding: 4px 8px;
+}
+
 :where(.admin-page, .admin-dialog) .q-field__label {
   color: #718096;
   font-weight: 700;

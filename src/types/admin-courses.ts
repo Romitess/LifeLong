@@ -45,8 +45,10 @@ export interface CourseTargetPayload {
 export interface CreateCoursePayload {
   nameTh: string;
   nameEn: string;
+  summary?: string | undefined;
   facultyId: number;
   typeCourseId: number;
+  creditBank?: string | undefined;
   theoryHours?: number | undefined;
   practiceHours?: number | undefined;
   studyTypeId: number;
@@ -59,11 +61,20 @@ export interface CreateCoursePayload {
   classTypeId?: number | undefined;
   classFee?: number | undefined;
   classFeeRemark?: string | undefined;
+  precondition?: string | undefined;
+  certificate?: 'Y' | 'N' | undefined;
+  certificateName?: string | undefined;
+  registrationStart?: string | undefined;
+  registrationEnd?: string | undefined;
+  maxSeats?: number | undefined;
   contactName: string;
   contactTel: string;
   contactEmail: string;
   contactUrl?: string | undefined;
+  image?: File | undefined;
   file?: File | undefined;
+  createUser?: string | undefined;
+  instructors?: { username?: string; email?: string }[] | undefined;
 }
 
 export interface AdminCourseItem {

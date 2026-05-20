@@ -81,11 +81,6 @@ const routes: RouteRecordRaw[] = [
         meta: { role: 'teach' },
       },
       {
-        path: 'instructor/create-course',
-        component: () => import('pages/instructor/instructor-course-creation.vue'),
-        meta: { role: 'teach' },
-      },
-      {
         path: 'instructor/students',
         component: () => import('pages/instructor/instructor-students.vue'),
         meta: { role: 'teach' },

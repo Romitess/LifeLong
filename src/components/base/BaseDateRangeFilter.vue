@@ -27,6 +27,7 @@
         </template>
       </q-input>
       <q-input
+        ref="endInputRef"
         class="base-date-range-filter__input"
         :model-value="modelValue.end"
         :mask="inputMask"
@@ -34,6 +35,8 @@
         dense
         clearable
         :hint="toHint"
+        :rules="[endDateRule]"
+        hide-bottom-space
         @update:model-value="onEndUpdate"
       >
         <template #append>
@@ -44,6 +47,7 @@
                 :mask="dateMask"
                 color="primary"
                 :locale="dateLocale"
+                :options="endDateOptions"
                 @update:model-value="onEndPicked"
               />
             </q-popup-proxy>
@@ -55,8 +59,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { QPopupProxy } from 'quasar';
+import { nextTick, ref, watch } from 'vue';
+import type { QInput, QPopupProxy } from 'quasar';
 import { useDateLocale } from 'src/composables/use-date-locale';
 
 export interface DateRangeValue {
@@ -88,6 +92,34 @@ const emit = defineEmits<{
 const dateLocale = useDateLocale();
 const startProxy = ref<QPopupProxy | null>(null);
 const endProxy = ref<QPopupProxy | null>(null);
+const endInputRef = ref<QInput | null>(null);
+
+watch(
+  () => props.modelValue.start,
+  () => {
+    if (props.modelValue.end) void nextTick(() => endInputRef.value?.validate());
+  },
+);
+
+// DD/MM/YYYY → YYYY/MM/DD for comparison
+function toComparable(ddmmyyyy: string): string {
+  const [d, m, y] = ddmmyyyy.split('/');
+  if (!d || !m || !y || y.length < 4) return '';
+  return `${y}/${m}/${d}`;
+}
+
+function endDateOptions(dateStr: string): boolean {
+  const start = props.modelValue.start;
+  if (!start || start.length < 10) return true;
+  return dateStr >= toComparable(start);
+}
+
+const endDateRule = (v: string | null): true | string => {
+  if (!v || v.length < 10) return true;
+  const start = props.modelValue.start;
+  if (!start || start.length < 10) return true;
+  return toComparable(v) >= toComparable(start) || 'วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น';
+};
 
 function emitUpdate(next: DateRangeValue): void {
   emit('update:modelValue', next);
@@ -122,6 +154,7 @@ function onEndPicked(value: string | null): void {
 
 .base-date-range-filter__row {
   display: flex;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: 8px;
 }

@@ -1,16 +1,16 @@
 <template>
-  <div class="course-form">
+  <q-form ref="qFormRef" class="course-form" scroll-to-first-error @submit.prevent>
     <q-banner v-if="error" rounded dense class="bg-negative text-white q-mb-md">
       {{ error }}
     </q-banner>
 
-    <!-- ข้อมูลทั่วไป -->
-    <AdminSurfaceCard
-      eyebrow="Course Registry"
-      title="ข้อมูลทั่วไป"
-      body-padding="lg"
-      class="q-mb-md"
-    >
+    <p class="text-caption text-grey-7 q-mb-lg">
+      ช่องที่มีเครื่องหมาย <span class="text-negative text-weight-bold">*</span>
+      คือข้อมูลที่จำเป็นต้องกรอก
+    </p>
+
+    <!-- ─── ข้อมูลทั่วไป ─── -->
+    <AdminSurfaceCard title="ข้อมูลทั่วไป" body-padding="lg" class="q-mb-md">
       <div class="course-form__grid">
         <!-- ชื่อรายวิชา TH -->
         <div class="course-form__field course-form__field--full">
@@ -21,9 +21,8 @@
             v-model="form.nameTh"
             outlined
             dense
-            placeholder="กรอกชื่อรายวิชาภาษาไทย"
+            placeholder="เช่น การพัฒนาแอปพลิเคชันมือถือเบื้องต้น"
             :rules="[requiredRule]"
-            hide-bottom-space
             class="course-form__input"
           />
         </div>
@@ -37,9 +36,8 @@
             v-model="form.nameEn"
             outlined
             dense
-            placeholder="Enter course name in English"
+            placeholder="e.g. Introduction to Mobile Application Development"
             :rules="[requiredRule]"
-            hide-bottom-space
             class="course-form__input"
           />
         </div>
@@ -60,7 +58,6 @@
             option-value="id"
             placeholder="เลือกคณะ/ส่วนงาน"
             :rules="[requiredRule]"
-            hide-bottom-space
             class="course-form__select"
           />
         </div>
@@ -81,7 +78,6 @@
             option-value="id"
             placeholder="เลือกหมวดวิชา"
             :rules="[requiredRule]"
-            hide-bottom-space
             class="course-form__select"
             @update:model-value="form.subcategoryId = undefined"
           />
@@ -89,7 +85,9 @@
 
         <!-- หมู่วิชา -->
         <div class="course-form__field">
-          <div class="course-form__label">หมู่วิชา</div>
+          <div class="course-form__label">
+            หมู่วิชา <span class="course-form__optional">(ไม่บังคับ)</span>
+          </div>
           <q-select
             v-model="form.subcategoryId"
             outlined
@@ -107,20 +105,158 @@
           />
         </div>
 
+        <!-- ผู้รับผิดชอบรายวิชา -->
+        <div class="course-form__field course-form__field--full">
+          <div class="course-form__label">
+            ผู้รับผิดชอบรายวิชา
+            <span class="course-form__optional">(ไม่บังคับ — สามารถเพิ่มภายหลังได้)</span>
+          </div>
+          <!-- Chips แสดงผู้สอนที่เลือกแล้ว -->
+          <div v-if="selectedInstructors.length" class="course-form__instructor-chips">
+            <q-chip
+              v-for="inst in selectedInstructors"
+              :key="inst.email || inst.username"
+              removable
+              dense
+              color="primary"
+              text-color="white"
+              class="course-form__instructor-chip"
+              @remove="removeInstructor(inst)"
+            >
+              {{ inst.fullName || inst.username }}
+            </q-chip>
+          </div>
+          <!-- Search dropdown เพื่อเพิ่มผู้สอน -->
+          <q-select
+            v-model="instructorSearchModel"
+            outlined
+            dense
+            use-input
+            input-debounce="400"
+            :options="instructorOptions"
+            :loading="instructorSearching"
+            option-label="fullName"
+            hide-bottom-space
+            placeholder="ค้นหาชื่อหรืออีเมลเพื่อเพิ่มผู้สอน..."
+            class="course-form__select"
+            @filter="filterInstructors"
+            @update:model-value="addInstructor"
+          >
+            <template #option="scope">
+              <q-item v-bind="scope.itemProps">
+                <q-item-section>
+                  <q-item-label>{{ scope.opt.fullName || scope.opt.username }}</q-item-label>
+                  <q-item-label caption>{{ scope.opt.email }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+            <template #no-option="{ inputValue }">
+              <q-item>
+                <q-item-section class="text-grey">
+                  {{
+                    inputValue.length < 2 ? 'พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อค้นหา' : 'ไม่พบผู้สอน'
+                  }}
+                </q-item-section>
+              </q-item>
+            </template>
+            <template #selected-item />
+          </q-select>
+        </div>
+
         <!-- ประเภทของรายวิชา -->
         <div class="course-form__field course-form__field--full">
           <div class="course-form__label">
             ประเภทของรายวิชา <span class="course-form__required">*</span>
           </div>
-          <div class="course-form__options-list">
-            <q-radio
-              v-for="opt in formOptions.courseTypes"
+          <q-field
+            :model-value="form.typeCourseId"
+            :rules="[(v) => !!v || 'กรุณาเลือกประเภทรายวิชา']"
+            borderless
+            no-error-icon
+            class="course-form__radio-field"
+          >
+            <template #control>
+              <div class="course-form__options-list">
+                <q-radio
+                  v-for="opt in formOptions.courseTypes"
+                  :key="opt.id"
+                  v-model="form.typeCourseId"
+                  :val="opt.id"
+                  :label="opt.label"
+                  color="primary"
+                  class="course-form__radio"
+                />
+              </div>
+            </template>
+          </q-field>
+        </div>
+
+        <!-- หน่วยกิตสะสม -->
+        <div v-if="form.typeCourseId === 2" ref="creditBankFieldRef" class="course-form__field">
+          <div class="course-form__label">
+            หน่วยกิตสะสม <span class="course-form__required">*</span>
+          </div>
+          <div class="course-form__fee-input-wrap">
+            <q-input
+              ref="creditBankInputRef"
+              v-model="form.creditBank"
+              outlined
+              dense
+              type="number"
+              min="0"
+              step="0.5"
+              placeholder="3.0"
+              class="course-form__fee-input"
+              :rules="[(v: unknown) => !!v || v === '0' || 'กรุณากรอกหน่วยกิต']"
+              hide-bottom-space
+              @keypress="onNumberKeypress"
+            />
+            <span class="course-form__fee-unit">หน่วยกิต</span>
+          </div>
+        </div>
+
+        <!-- รูปแบบการเรียนการสอน -->
+        <div class="course-form__field course-form__field--full">
+          <div class="course-form__label">
+            รูปแบบการเรียนการสอน <span class="course-form__required">*</span>
+          </div>
+          <q-field
+            :model-value="form.studyTypeId"
+            :rules="[(v) => !!v || 'กรุณาเลือกรูปแบบการเรียนการสอน']"
+            borderless
+            no-error-icon
+            class="course-form__radio-field"
+          >
+            <template #control>
+              <div class="course-form__options-row">
+                <q-radio
+                  v-for="opt in formOptions.studyTypes"
+                  :key="opt.id"
+                  v-model="form.studyTypeId"
+                  :val="opt.id"
+                  :label="opt.label"
+                  color="primary"
+                  class="course-form__radio"
+                />
+              </div>
+            </template>
+          </q-field>
+        </div>
+
+        <!-- ทักษะที่ผู้เรียนจะได้รับ -->
+        <div class="course-form__field course-form__field--full">
+          <div class="course-form__label">
+            ทักษะที่ผู้เรียนจะได้รับ <span class="course-form__optional">(ไม่บังคับ)</span>
+          </div>
+          <div class="course-form__options-row">
+            <q-checkbox
+              v-for="opt in formOptions.skills"
               :key="opt.id"
-              v-model="form.typeCourseId"
+              v-model="form.skillIds"
               :val="opt.id"
               :label="opt.label"
               color="primary"
-              class="course-form__radio"
+              class="course-form__checkbox"
             />
           </div>
         </div>
@@ -128,7 +264,7 @@
         <!-- ระยะเวลาในการเรียนการสอน -->
         <div class="course-form__field course-form__field--full">
           <div class="course-form__label">
-            ระยะเวลาในการเรียนการสอน <span class="course-form__required">*</span>
+            ระยะเวลาในการเรียนการสอน <span class="course-form__optional">(ไม่บังคับ)</span>
           </div>
           <div class="course-form__hours-row">
             <div class="course-form__hours-item">
@@ -164,37 +300,83 @@
           </div>
         </div>
 
-        <!-- รูปแบบการเรียนการสอน -->
+        <!-- รายละเอียด/วัตถุประสงค์ -->
         <div class="course-form__field course-form__field--full">
           <div class="course-form__label">
-            รูปแบบการเรียนการสอน <span class="course-form__required">*</span>
+            รายละเอียดและวัตถุประสงค์รายวิชา <span class="course-form__optional">(ไม่บังคับ)</span>
           </div>
-          <div class="course-form__options-row">
-            <q-radio
-              v-for="opt in formOptions.studyTypes"
-              :key="opt.id"
-              v-model="form.studyTypeId"
-              :val="opt.id"
-              :label="opt.label"
+          <q-input
+            v-model="form.summary"
+            outlined
+            dense
+            type="textarea"
+            rows="3"
+            placeholder="อธิบายเนื้อหาหลักสูตรและสิ่งที่ผู้เรียนจะได้รับ..."
+            class="course-form__input"
+          />
+        </div>
+
+        <!-- คุณสมบัติเบื้องต้น -->
+        <div class="course-form__field course-form__field--full">
+          <div class="course-form__label">
+            คุณสมบัติเบื้องต้นของผู้เรียน <span class="course-form__optional">(ไม่บังคับ)</span>
+          </div>
+          <q-input
+            v-model="form.precondition"
+            outlined
+            dense
+            type="textarea"
+            rows="2"
+            placeholder="เช่น ไม่มีข้อกำหนด / ต้องผ่านรายวิชา..."
+            class="course-form__input"
+          />
+        </div>
+
+        <!-- วุฒิบัตร -->
+        <div class="course-form__field course-form__field--full">
+          <div class="course-form__label">
+            วุฒิบัตร/ประกาศนียบัตร <span class="course-form__optional">(ไม่บังคับ)</span>
+          </div>
+          <div class="row items-center q-gutter-md">
+            <q-checkbox
+              v-model="form.hasCertificate"
+              label="มีวุฒิบัตร/ประกาศนียบัตร"
+              dense
               color="primary"
-              class="course-form__radio"
+            />
+            <q-input
+              v-if="form.hasCertificate"
+              v-model="form.certificateName"
+              outlined
+              dense
+              placeholder="ระบุชื่อวุฒิบัตร เช่น ประกาศนียบัตรวิชาชีพ..."
+              style="min-width: 300px"
+              class="course-form__input"
             />
           </div>
         </div>
 
-        <!-- รูปแบบของรายวิชา -->
+        <!-- รูปปก -->
         <div class="course-form__field course-form__field--full">
-          <div class="course-form__label">รูปแบบของรายวิชา</div>
-          <div class="course-form__options-row">
-            <q-checkbox
-              v-for="opt in formOptions.skills"
-              :key="opt.id"
-              v-model="form.skillIds"
-              :val="opt.id"
-              :label="opt.label"
-              color="primary"
-              class="course-form__checkbox"
-            />
+          <div class="course-form__label">
+            รูปหน้าปกรายวิชา <span class="course-form__optional">(ไม่บังคับ)</span>
+          </div>
+          <q-file
+            v-model="form.image"
+            outlined
+            dense
+            accept=".jpg,.jpeg,.png,.webp"
+            label="เลือกรูปภาพ"
+            hide-bottom-space
+            class="course-form__input"
+            @rejected="onImageRejected"
+          >
+            <template #prepend>
+              <q-icon name="image" />
+            </template>
+          </q-file>
+          <div class="text-caption text-grey-6 q-mt-xs">
+            แนะนำขนาด 1280×720px (สัดส่วน 16:9) · ไฟล์ jpg / png / webp · ขนาดไม่เกิน 2MB
           </div>
         </div>
 
@@ -220,9 +402,50 @@
           </div>
         </div>
 
+        <!-- ช่วงเปิดรับสมัคร -->
+        <div class="course-form__field course-form__field--full">
+          <div class="course-form__label">
+            ช่วงเวลาเปิดรับสมัคร
+            <span class="course-form__optional"
+              >(ไม่บังคับ — ถ้าไม่ระบุ ระบบจะไม่จำกัดช่วงเวลา)</span
+            >
+          </div>
+          <div class="course-form__date-range">
+            <BaseDateInput v-model="form.registrationStart" class="course-form__date-input" />
+            <span class="course-form__date-sep">ถึง</span>
+            <BaseDateInput
+              ref="regEndDateInputRef"
+              v-model="form.registrationEnd"
+              :rules="[regEndDateRule]"
+              :options="(d: string) => !regStartDateForCalendar || d >= regStartDateForCalendar"
+              class="course-form__date-input"
+            />
+          </div>
+        </div>
+
+        <!-- จำนวนที่นั่ง -->
+        <div class="course-form__field">
+          <div class="course-form__label">
+            จำนวนที่นั่งสูงสุด <span class="course-form__optional">(ไม่บังคับ)</span>
+          </div>
+          <q-input
+            v-model.number="form.maxSeats"
+            outlined
+            dense
+            type="number"
+            min="1"
+            placeholder="เช่น 30"
+            class="course-form__hours-input"
+            @keypress="onNumberKeypress"
+          />
+          <div class="text-caption text-grey-6">เว้นว่างไว้ถ้าไม่จำกัดจำนวน</div>
+        </div>
+
         <!-- แนบไฟล์ CBS -->
         <div class="course-form__field course-form__field--full">
-          <div class="course-form__label">แนบไฟล์ CBS 001 หรือ CBS 002</div>
+          <div class="course-form__label">
+            แนบไฟล์ CBS 001 หรือ CBS 002 <span class="course-form__optional">(ไม่บังคับ)</span>
+          </div>
           <div class="course-form__upload-area" @dragover.prevent @drop.prevent="onFileDrop">
             <template v-if="!form.file">
               <q-icon name="upload_file" size="32px" color="grey-5" />
@@ -235,9 +458,7 @@
                 size="sm"
                 @click="triggerFileInput"
               />
-              <p class="course-form__upload-note">
-                เลือกไฟล์เฉพาะนามสกุล pdf ที่มีขนาดไม่เกิน 2MB เท่านั้น
-              </p>
+              <p class="course-form__upload-note">เฉพาะไฟล์ .pdf ขนาดไม่เกิน 2MB</p>
             </template>
             <template v-else>
               <q-icon name="picture_as_pdf" size="28px" color="negative" />
@@ -266,7 +487,9 @@
 
         <!-- กลุ่มเป้าหมาย -->
         <div class="course-form__field course-form__field--full">
-          <div class="course-form__label">กลุ่มเป้าหมายที่เข้ารับการศึกษา</div>
+          <div class="course-form__label">
+            กลุ่มเป้าหมายที่เข้ารับการศึกษา <span class="course-form__optional">(ไม่บังคับ)</span>
+          </div>
           <div class="course-form__targets">
             <div
               v-for="target in formOptions.targets"
@@ -320,71 +543,86 @@
           <div class="course-form__label">
             การจัดการเรียนการสอน <span class="course-form__required">*</span>
           </div>
-          <div class="course-form__options-list">
-            <div
-              v-for="classType in formOptions.classTypes"
-              :key="classType.id"
-              class="course-form__mgmt-option"
-            >
-              <q-radio
-                v-model="form.classTypeId"
-                :val="classType.id"
-                :label="classType.label"
-                color="primary"
-                class="course-form__radio"
-              />
-              <div v-if="form.classTypeId === classType.id" class="course-form__fee-row">
-                <div class="course-form__fee-field">
-                  <div class="course-form__label-sm">
-                    ค่าธรรมเนียม <span class="course-form__required">*</span>
-                  </div>
-                  <div class="course-form__fee-input-wrap">
-                    <q-input
-                      v-model.number="form.classFee"
-                      outlined
-                      dense
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      :rules="[feeRule]"
-                      hide-bottom-space
-                      class="course-form__fee-input"
-                      @keypress="onNumberKeypress"
-                    />
-                    <span class="course-form__fee-unit">บาท (ถ้าฟรีให้ใส่ 0)</span>
-                  </div>
-                </div>
-                <div class="course-form__fee-field">
-                  <div class="course-form__label-sm">หมายเหตุค่าธรรมเนียม</div>
-                  <q-input
-                    v-model="form.classFeeRemark"
-                    outlined
-                    dense
-                    placeholder="หมายเหตุ (ถ้ามี)"
-                    class="course-form__remark-input"
+          <q-field
+            :model-value="form.classTypeId"
+            :rules="[(v) => !!v || 'กรุณาเลือกรูปแบบการจัดการเรียนการสอน']"
+            borderless
+            no-error-icon
+            class="course-form__radio-field"
+          >
+            <template #control>
+              <div class="course-form__options-list">
+                <div
+                  v-for="classType in formOptions.classTypes"
+                  :key="classType.id"
+                  class="course-form__mgmt-option"
+                >
+                  <q-radio
+                    v-model="form.classTypeId"
+                    :val="classType.id"
+                    :label="classType.label"
+                    color="primary"
+                    class="course-form__radio"
                   />
+                  <div v-if="form.classTypeId === classType.id" class="course-form__fee-row">
+                    <div class="course-form__fee-field">
+                      <div class="course-form__label-sm">
+                        ค่าธรรมเนียม <span class="course-form__required">*</span>
+                      </div>
+                      <div class="course-form__fee-input-wrap">
+                        <q-input
+                          v-model.number="form.classFee"
+                          outlined
+                          dense
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          :rules="[feeRule]"
+                          hide-bottom-space
+                          class="course-form__fee-input"
+                          @keypress="onNumberKeypress"
+                        />
+                        <span class="course-form__fee-unit">บาท</span>
+                      </div>
+                      <div class="text-caption text-grey-6 q-mt-xs">
+                        ถ้าไม่มีค่าธรรมเนียมให้ใส่ 0
+                      </div>
+                    </div>
+                    <div class="course-form__fee-field">
+                      <div class="course-form__label-sm">
+                        หมายเหตุค่าธรรมเนียม
+                        <span class="course-form__optional">(ไม่บังคับ)</span>
+                      </div>
+                      <q-input
+                        v-model="form.classFeeRemark"
+                        outlined
+                        dense
+                        placeholder="เช่น ราคาพิเศษสำหรับนิสิตปัจจุบัน"
+                        class="course-form__remark-input"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+            </template>
+          </q-field>
         </div>
       </div>
     </AdminSurfaceCard>
 
-    <!-- ข้อมูลในการติดต่อสอบถาม -->
+    <!-- ─── ข้อมูลในการติดต่อสอบถาม ─── -->
     <AdminSurfaceCard title="ข้อมูลในการติดต่อสอบถาม" body-padding="lg" class="q-mb-lg">
       <div class="course-form__grid">
         <div class="course-form__field">
           <div class="course-form__label">
-            ชื่อ - สกุล <span class="course-form__required">*</span>
+            ชื่อ-สกุลผู้ติดต่อ <span class="course-form__required">*</span>
           </div>
           <q-input
             v-model="form.contactName"
             outlined
             dense
-            placeholder="ชื่อ - นามสกุล"
+            placeholder="ชื่อ-นามสกุล ผู้ประสานงาน"
             :rules="[requiredRule]"
-            hide-bottom-space
             class="course-form__input"
           />
         </div>
@@ -397,9 +635,8 @@
             v-model="form.contactTel"
             outlined
             dense
-            placeholder="0812345678"
+            placeholder="038-123-456"
             :rules="[requiredRule, phoneRule]"
-            hide-bottom-space
             class="course-form__input"
             @keypress="onPhoneKeypress"
           />
@@ -414,18 +651,19 @@
             type="email"
             placeholder="example@buu.ac.th"
             :rules="[requiredRule, emailRule]"
-            hide-bottom-space
             class="course-form__input"
           />
         </div>
 
         <div class="course-form__field">
-          <div class="course-form__label">เว็บไซต์</div>
+          <div class="course-form__label">
+            เว็บไซต์ <span class="course-form__optional">(ไม่บังคับ)</span>
+          </div>
           <q-input
             v-model="form.contactUrl"
             outlined
             dense
-            placeholder="https://"
+            placeholder="https://www.example.com"
             hide-bottom-space
             class="course-form__input"
           />
@@ -450,30 +688,51 @@
         @click="submit"
       />
     </div>
-  </div>
+  </q-form>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue';
+import { AxiosError } from 'axios';
+import { QForm, QInput } from 'quasar';
+import { api } from 'src/boot/axios';
 import { useAdminCourseForm } from 'src/composables/use-admin-course-form';
-import type { CourseTargetPayload } from 'src/types/admin-courses';
+import { useAuthStore } from 'src/stores/auth-store';
+import type { CourseTargetPayload, CreateCoursePayload } from 'src/types/admin-courses';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
 import AdminSurfaceCard from './AdminSurfaceCard.vue';
 import AdminActionButton from './AdminActionButton.vue';
+
+const props = defineProps<{
+  submitOverride?: (payload: CreateCoursePayload) => Promise<{ courseId: number }>;
+}>();
 
 const emit = defineEmits<{
   cancel: [];
   saved: [courseId: number];
 }>();
 
+const authStore = useAuthStore();
 const { formOptions, isSaving, error, fetchFormOptions, createCourse } = useAdminCourseForm();
+const qFormRef = ref<InstanceType<typeof QForm> | null>(null);
+
+function extractMsg(e: unknown): string {
+  if (e instanceof AxiosError) {
+    const msg = e.response?.data?.message;
+    if (Array.isArray(msg)) return (msg as string[]).join(', ');
+    if (typeof msg === 'string') return msg;
+  }
+  return e instanceof Error ? e.message : 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+}
 void fetchFormOptions();
 
 const form = reactive({
   nameTh: '',
   nameEn: '',
+  summary: '',
   facultyId: undefined as number | undefined,
   typeCourseId: undefined as number | undefined,
+  creditBank: '',
   theoryHours: undefined as number | undefined,
   practiceHours: undefined as number | undefined,
   studyTypeId: undefined as number | undefined,
@@ -483,12 +742,19 @@ const form = reactive({
   categoryId: undefined as number | undefined,
   subcategoryId: undefined as number | undefined,
   classTypeId: undefined as number | undefined,
-  classFee: undefined as number | undefined,
+  classFee: 0,
   classFeeRemark: '',
+  precondition: '',
+  hasCertificate: false,
+  certificateName: '',
+  registrationStart: '',
+  registrationEnd: '',
+  maxSeats: undefined as number | undefined,
   contactName: '',
   contactTel: '',
   contactEmail: '',
   contactUrl: '',
+  image: undefined as File | undefined,
   file: undefined as File | undefined,
 });
 
@@ -497,15 +763,86 @@ const selectedSubtargetIds = ref<number[]>([]);
 const subtargetOtherText = ref<Record<number, string>>({});
 const targetOtherText = ref<Record<number, string>>({});
 
+interface InstructorOption {
+  username: string;
+  email: string;
+  fullName: string;
+}
+
+const selectedInstructors = ref<InstructorOption[]>([]);
+const instructorSearchModel = ref<InstructorOption | null>(null);
+const instructorOptions = ref<InstructorOption[]>([]);
+const instructorSearching = ref(false);
+
+function addInstructor(inst: InstructorOption | null) {
+  if (!inst) return;
+  const key = inst.email || inst.username;
+  if (!selectedInstructors.value.some((i) => (i.email || i.username) === key)) {
+    selectedInstructors.value.push(inst);
+  }
+  instructorSearchModel.value = null;
+}
+
+function removeInstructor(inst: InstructorOption) {
+  const key = inst.email || inst.username;
+  selectedInstructors.value = selectedInstructors.value.filter(
+    (i) => (i.email || i.username) !== key,
+  );
+}
+
+async function filterInstructors(val: string, update: (fn: () => void) => void, abort: () => void) {
+  if (val.length < 2) {
+    abort();
+    return;
+  }
+  instructorSearching.value = true;
+  try {
+    const { data } = await api.get<InstructorOption[]>('/api/admin/courses/instructors/search', {
+      params: { q: val },
+    });
+    update(() => {
+      const selectedKeys = new Set(selectedInstructors.value.map((i) => i.email || i.username));
+      instructorOptions.value = data.filter((d) => !selectedKeys.has(d.email || d.username));
+    });
+  } catch {
+    abort();
+  } finally {
+    instructorSearching.value = false;
+  }
+}
+
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const fileError = ref<string | null>(null);
+const creditBankFieldRef = ref<HTMLElement | null>(null);
+const creditBankInputRef = ref<InstanceType<typeof QInput> | null>(null);
 const endDateInputRef = ref<InstanceType<typeof BaseDateInput> | null>(null);
+const regEndDateInputRef = ref<InstanceType<typeof BaseDateInput> | null>(null);
 
-// Re-validate end date whenever start date changes (catches reversed date entry order)
+interface OrderedConditionalValidation {
+  when: () => boolean;
+  validate: () => Promise<boolean>;
+}
+
+watch(
+  () => form.typeCourseId,
+  (v) => {
+    if (v !== 2) form.creditBank = '';
+  },
+);
+
+// Re-validate end date whenever start date changes
 watch(
   () => form.startDate,
   () => {
     if (form.endDate) void nextTick(() => endDateInputRef.value?.validate());
+  },
+);
+
+// Re-validate registration end whenever registration start changes
+watch(
+  () => form.registrationStart,
+  () => {
+    if (form.registrationEnd) void nextTick(() => regEndDateInputRef.value?.validate());
   },
 );
 
@@ -520,10 +857,11 @@ const filteredSubcategories = computed(() =>
 const requiredRule = (v: unknown) => !!v || 'กรุณากรอกข้อมูล';
 const emailRule = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'รูปแบบอีเมลไม่ถูกต้อง';
 const phoneRule = (v: string) =>
-  /^\d{9,10}$/.test(v) || 'กรุณากรอกเบอร์โทรศัพท์เป็นตัวเลข 9-10 หลัก';
+  /^[\d\s\-()+]{4,30}$/.test(v) || 'รูปแบบเบอร์โทรไม่ถูกต้อง (ตัวอย่าง 038-123-456)';
 const feeRule = (v: unknown) =>
   (v !== undefined && v !== null && v !== '' && Number(v) >= 0) ||
   'กรุณากรอกค่าธรรมเนียม (ถ้าฟรีใส่ 0)';
+
 // Convert DD/MM/YYYY → YYYY-MM-DD for backend submission
 function toDatabaseDate(ddmmyyyy: string): string {
   const [d, m, y] = ddmmyyyy.split('/');
@@ -531,7 +869,6 @@ function toDatabaseDate(ddmmyyyy: string): string {
 }
 
 // Convert DD/MM/YYYY → YYYY/MM/DD for q-date options callback comparison
-// (q-date always passes YYYY/MM/DD to options regardless of mask)
 const startDateForCalendar = computed(() => {
   if (!form.startDate || form.startDate.length < 10) return '';
   const [d, m, y] = form.startDate.split('/');
@@ -545,8 +882,22 @@ const endDateRule = (v: string) => {
   );
 };
 
+const regStartDateForCalendar = computed(() => {
+  if (!form.registrationStart || form.registrationStart.length < 10) return '';
+  const [d, m, y] = form.registrationStart.split('/');
+  return `${y}/${m}/${d}`;
+});
+
+const regEndDateRule = (v: string) => {
+  if (!form.registrationStart || form.registrationStart.length < 10 || v.length < 10) return true;
+  return (
+    toDatabaseDate(v) >= toDatabaseDate(form.registrationStart) ||
+    'วันสิ้นสุดต้องไม่น้อยกว่าวันเริ่มรับสมัคร'
+  );
+};
+
 function onPhoneKeypress(e: KeyboardEvent) {
-  if (!/\d/.test(e.key)) e.preventDefault();
+  if (!/[\d\s\-()+]/.test(e.key)) e.preventDefault();
 }
 
 function onNumberKeypress(e: KeyboardEvent) {
@@ -588,6 +939,11 @@ function onFileDrop(e: DragEvent) {
   if (file) validateAndSetFile(file);
 }
 
+function onImageRejected() {
+  fileError.value = null;
+  error.value = 'ไฟล์รูปต้องเป็น jpg, png หรือ webp และไม่เกิน 2MB';
+}
+
 function buildTargets(): CourseTargetPayload[] {
   const targets: CourseTargetPayload[] = [];
 
@@ -618,61 +974,110 @@ function buildTargets(): CourseTargetPayload[] {
   return targets;
 }
 
+async function validateCreditBankField(): Promise<boolean> {
+  if (!form.typeCourseId || form.typeCourseId !== 2) return true;
+  if (form.creditBank) return true;
+
+  await nextTick();
+  await creditBankInputRef.value?.validate();
+  creditBankFieldRef.value?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const input = creditBankFieldRef.value?.querySelector('input');
+  if (input instanceof HTMLInputElement) input.focus();
+  return false;
+}
+
+const orderedConditionalValidations: OrderedConditionalValidation[] = [
+  {
+    when: () => form.typeCourseId === 2,
+    validate: validateCreditBankField,
+  },
+];
+
+async function validateOrderedConditionalFields(): Promise<boolean> {
+  for (const rule of orderedConditionalValidations) {
+    if (!rule.when()) continue;
+    const valid = await rule.validate();
+    if (!valid) return false;
+  }
+  return true;
+}
+
 async function submit() {
-  if (
-    !form.nameTh ||
-    !form.nameEn ||
-    !form.facultyId ||
-    !form.typeCourseId ||
-    !form.studyTypeId ||
-    !form.startDate ||
-    !form.endDate ||
-    !form.categoryId ||
-    !form.classTypeId ||
-    !form.contactName ||
-    !form.contactTel ||
-    !form.contactEmail
-  ) {
-    error.value = 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน';
+  error.value = null;
+
+  const conditionalFieldsValid = await validateOrderedConditionalFields();
+  if (!conditionalFieldsValid) {
     return;
   }
 
-  if (
-    form.endDate.length === 10 &&
-    form.startDate.length === 10 &&
-    toDatabaseDate(form.endDate) < toDatabaseDate(form.startDate)
-  ) {
-    error.value = 'วันสิ้นสุดต้องไม่น้อยกว่าวันเริ่มต้น';
+  const valid = await qFormRef.value?.validate();
+  if (!valid) {
+    await nextTick();
+    await nextTick();
+    const formEl = qFormRef.value?.$el as HTMLElement | null;
+    (formEl ?? document)
+      .querySelector('.q-field--error')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
-  try {
-    const result = await createCourse({
-      nameTh: form.nameTh,
-      nameEn: form.nameEn,
-      facultyId: form.facultyId,
-      typeCourseId: form.typeCourseId,
-      theoryHours: form.theoryHours,
-      practiceHours: form.practiceHours,
-      studyTypeId: form.studyTypeId,
-      skillIds: form.skillIds,
-      startDate: toDatabaseDate(form.startDate),
-      endDate: toDatabaseDate(form.endDate),
-      categoryId: form.categoryId,
-      subcategoryId: form.subcategoryId,
-      targets: buildTargets(),
-      classTypeId: form.classTypeId,
-      classFee: form.classFee,
-      classFeeRemark: form.classFeeRemark,
-      contactName: form.contactName,
-      contactTel: form.contactTel,
-      contactEmail: form.contactEmail,
-      contactUrl: form.contactUrl || undefined,
-      file: form.file,
-    });
-    emit('saved', result.courseId);
-  } catch {
-    // error is set in composable
+  const payload: CreateCoursePayload = {
+    nameTh: form.nameTh,
+    nameEn: form.nameEn,
+    summary: form.summary || undefined,
+    facultyId: form.facultyId!,
+    typeCourseId: form.typeCourseId!,
+    creditBank: form.typeCourseId === 2 && form.creditBank ? form.creditBank : undefined,
+    theoryHours: form.theoryHours,
+    practiceHours: form.practiceHours,
+    studyTypeId: form.studyTypeId!,
+    skillIds: form.skillIds,
+    startDate: toDatabaseDate(form.startDate),
+    endDate: toDatabaseDate(form.endDate),
+    categoryId: form.categoryId!,
+    subcategoryId: form.subcategoryId,
+    targets: buildTargets(),
+    classTypeId: form.classTypeId,
+    classFee: form.classFee,
+    classFeeRemark: form.classFeeRemark,
+    precondition: form.precondition || undefined,
+    certificate: form.hasCertificate ? 'Y' : 'N',
+    certificateName: form.hasCertificate ? form.certificateName || undefined : undefined,
+    registrationStart:
+      form.registrationStart.length === 10 ? toDatabaseDate(form.registrationStart) : undefined,
+    registrationEnd:
+      form.registrationEnd.length === 10 ? toDatabaseDate(form.registrationEnd) : undefined,
+    maxSeats: form.maxSeats,
+    contactName: form.contactName,
+    contactTel: form.contactTel,
+    contactEmail: form.contactEmail,
+    contactUrl: form.contactUrl || undefined,
+    image: form.image,
+    file: form.file,
+    createUser: authStore.user?.username ?? undefined,
+    instructors: selectedInstructors.value.length
+      ? selectedInstructors.value.map((i) => ({ username: i.username, email: i.email }))
+      : undefined,
+  };
+
+  if (props.submitOverride) {
+    isSaving.value = true;
+    error.value = null;
+    try {
+      const result = await props.submitOverride(payload);
+      emit('saved', result.courseId);
+    } catch (e) {
+      error.value = extractMsg(e);
+    } finally {
+      isSaving.value = false;
+    }
+  } else {
+    try {
+      const result = await createCourse(payload);
+      emit('saved', result.courseId);
+    } catch {
+      // error is set in composable
+    }
   }
 }
 </script>
@@ -689,9 +1094,18 @@ async function submit() {
 }
 
 .course-form__field {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding-bottom: 22px;
+
+  :deep(.q-field__bottom) {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+  }
 }
 
 .course-form__field--full {
@@ -707,6 +1121,13 @@ async function submit() {
 .course-form__required {
   color: #e53e3e;
   margin-left: 2px;
+}
+
+.course-form__optional {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #a0aec0;
+  margin-left: 4px;
 }
 
 .course-form__input,
@@ -763,10 +1184,18 @@ async function submit() {
 }
 
 .course-form__date-range {
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   flex-wrap: wrap;
+  padding-bottom: 22px;
+
+  :deep(.q-field__bottom) {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+  }
 }
 
 .course-form__date-input {
@@ -776,6 +1205,7 @@ async function submit() {
 .course-form__date-sep {
   font-size: 0.85rem;
   color: #718096;
+  padding-top: 9px;
 }
 
 .course-form__upload-area {
@@ -908,6 +1338,31 @@ async function submit() {
 
 .course-form__btn--save {
   min-width: 120px;
+}
+
+.course-form__radio-field {
+  padding: 0;
+
+  :deep(.q-field__control) {
+    min-height: unset;
+    height: auto;
+    padding: 0;
+  }
+
+  :deep(.q-field__bottom) {
+    padding-top: 4px;
+  }
+}
+
+.course-form__instructor-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.course-form__instructor-chip {
+  font-size: 0.8rem;
 }
 
 .hidden {

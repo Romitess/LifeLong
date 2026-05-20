@@ -13,14 +13,6 @@
         </div>
         <div class="row q-gutter-md">
           <q-btn
-            unelevated
-            color="primary"
-            icon="add"
-            label="สร้างรายวิชาใหม่"
-            class="action-btn"
-            @click="showDevelopmentDialog('สร้างรายวิชาใหม่')"
-          />
-          <q-btn
             outline
             color="primary"
             icon="analytics"
@@ -208,11 +200,6 @@ const instructorCourses = computed<Course[]>(() =>
 );
 
 function showDevelopmentDialog(featureName: string) {
-  if (featureName === 'สร้างรายวิชาใหม่') {
-    void router.push('/instructor/create-course');
-    return;
-  }
-
   $q.dialog({
     title: 'ฟีเจอร์นี้กำลังอยู่ระหว่างการพัฒนา',
     message: `ขออภัย ฟีเจอร์ "${featureName}" กำลังจะเปิดให้บริการในเร็วๆ นี้`,

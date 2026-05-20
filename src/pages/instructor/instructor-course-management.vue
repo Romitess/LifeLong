@@ -179,16 +179,6 @@
                 class="course-table-filter-btn"
                 @click="goToActiveInstructorCoursesTable"
               />
-
-              <q-btn
-                unelevated
-                color="primary"
-                icon="add"
-                label="สร้างรายวิชา"
-                no-caps
-                class="course-table-create-btn"
-                @click="openCreateCourseDialog"
-              />
             </div>
           </div>
 
@@ -1267,15 +1257,7 @@
         <main v-else class="course-workspace empty-course-state">
           <q-icon name="library_books" size="52px" color="grey-5" />
           <h2>ยังไม่มีรายวิชา</h2>
-          <p>สร้างรายวิชาใหม่เพื่อเริ่มจัดการข้อมูลรายวิชา</p>
-          <q-btn
-            unelevated
-            color="primary"
-            icon="add"
-            label="สร้างรายวิชา"
-            no-caps
-            @click="openCreateCourseDialog"
-          />
+          <p>ติดต่อผู้ดูแลระบบเพื่อเพิ่มรายวิชา</p>
         </main>
       </section>
     </div>
@@ -1975,10 +1957,6 @@ watch(
   },
   { immediate: true },
 );
-
-function openCreateCourseDialog(): void {
-  void router.push('/instructor/create-course');
-}
 
 function openLearnerRoster(courseId: string): void {
   selectedCourseId.value = courseId;
