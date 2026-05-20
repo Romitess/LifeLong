@@ -222,6 +222,43 @@
                 </q-card-section>
               </q-card>
 
+              <!-- Evaluation and Score Criteria -->
+              <q-card
+                v-if="course?.evaluation"
+                flat
+                bordered
+                class="detail-card q-mb-lg evaluation-card"
+              >
+                <q-card-section>
+                  <div class="detail-card__header">
+                    <q-icon name="assignment_turned_in" size="24px" color="primary" />
+                    <h2 class="detail-card__title">
+                      {{
+                        locale === 'th'
+                          ? 'เกณฑ์การวัดและประเมินผล'
+                          : 'Evaluation and Score Criteria'
+                      }}
+                    </h2>
+                  </div>
+
+                  <div class="q-mt-md">
+                    <div class="evaluation-rules q-pa-md">
+                      <div
+                        class="text-body2 text-grey-9"
+                        style="white-space: pre-line; line-height: 1.6"
+                      >
+                        {{
+                          course.evaluation.name ||
+                          (locale === 'th'
+                            ? 'ไม่มีรายละเอียดการประเมิน'
+                            : 'No evaluation details provided')
+                        }}
+                      </div>
+                    </div>
+                  </div>
+                </q-card-section>
+              </q-card>
+
               <!-- Schedule -->
               <q-card flat bordered class="detail-card q-mb-lg">
                 <q-card-section>
@@ -1469,6 +1506,15 @@ watch(
   :deep(.q-item) {
     padding: 10px 0;
     min-height: auto;
+  }
+}
+
+// ── Evaluation Card ──────────────────────────────────────────
+.evaluation-card {
+  .evaluation-rules {
+    background: #fdfbf7;
+    border: 1px dashed rgba($primary, 0.3);
+    border-radius: 8px;
   }
 }
 

@@ -36,4 +36,5 @@ export interface Course {
   maxSeats: number;
   enrolledCount: number;
   totalHours?: number;
+  evaluation?: { id: number; name: string | null; other: string | null } | null;
 }
