@@ -550,6 +550,7 @@ import type { Course, DeliveryMode } from 'src/types/course';
 import type { CourseDetail, CourseSchedule, CourseSyllabus } from 'src/types/course-detail';
 import { useI18n } from 'vue-i18n';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
+import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 
 type RegistrationWindowStatus = 'upcoming' | 'open' | 'closed';
 
@@ -894,10 +895,7 @@ async function goToLearningPage(targetCourseId = courseId.value): Promise<void> 
     const moodleCourseId = String(course.value?.moodleId ?? targetCourseId);
     const url = await getMoodleCourseUrl(moodleCourseId, username, courseCode);
     if (url) {
-      void router.push({
-        path: `/course/${targetCourseId}/learn`,
-        query: { moodleUrl: url },
-      });
+      pushMoodleLearningRoute(router, targetCourseId, url);
       return;
     }
   }

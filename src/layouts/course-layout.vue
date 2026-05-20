@@ -16,7 +16,7 @@
 
     <!-- Course-specific navigation tabs -->
     <q-tabs
-      v-model="activeNav"
+      :model-value="activeNav"
       align="left"
       active-color="primary"
       indicator-color="primary"
@@ -393,6 +393,7 @@ import { useMyRegisteredCourses } from 'src/composables/use-my-registered-course
 import { useI18n } from 'vue-i18n';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
+import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 import type { Course } from 'src/types/course';
 
 const emit = defineEmits<{
@@ -479,10 +480,7 @@ const goToCourse = async (course: Course): Promise<void> => {
       course.code,
     );
     if (url) {
-      void router.push({
-        path: `/course/${course.id}/learn`,
-        query: { moodleUrl: url },
-      });
+      pushMoodleLearningRoute(router, course.id, url);
       return;
     }
   }

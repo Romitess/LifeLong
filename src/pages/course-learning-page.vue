@@ -3,7 +3,17 @@
     <!-- Course Toolbar -->
     <CourseLayout @toggleDrawer="leftDrawerOpen = !leftDrawerOpen" />
 
+    <div v-if="moodleUrl" class="moodle-standalone-shell">
+      <iframe
+        class="moodle-frame"
+        :src="moodleUrl"
+        title="Moodle course content"
+        allow="fullscreen; clipboard-write"
+      />
+    </div>
+
     <q-layout
+      v-else
       view="lHh Lpr lFf"
       container
       style="height: calc(100vh - 72px)"
@@ -17,33 +27,20 @@
       <q-page-container>
         <div class="course-breadcrumb-bar">
           <div class="course-breadcrumb-inner section-container">
-            <q-breadcrumbs active-color="primary" class="breadcrumb-nav">
-              <template v-slot:separator>
-                <q-icon name="chevron_right" size="16px" color="grey-4" />
-              </template>
-              <q-breadcrumbs-el
-                icon="home"
-                label="หน้าแรก"
-                to="/course-home"
-                class="breadcrumb-el"
-              />
-              <q-breadcrumbs-el :label="courseTitle" class="breadcrumb-el breadcrumb-el--current" />
-            </q-breadcrumbs>
+            <nav class="breadcrumb-nav" aria-label="Course breadcrumb">
+              <RouterLink to="/course-home" class="breadcrumb-el">
+                <q-icon name="home" size="18px" />
+                <span>หน้าแรก</span>
+              </RouterLink>
+              <q-icon name="chevron_right" size="16px" color="grey-4" />
+              <span class="breadcrumb-el breadcrumb-el--current">{{ courseTitle }}</span>
+            </nav>
           </div>
         </div>
 
         <div class="content-area" :class="contentAreaClass" :style="contentAreaStyle">
-          <div v-if="moodleUrl" class="moodle-wrapper">
-            <iframe
-              class="moodle-frame"
-              :src="moodleUrl"
-              title="Moodle course content"
-              allow="fullscreen; clipboard-write"
-            />
-          </div>
-
           <!-- Course Content -->
-          <div v-else class="course-content-wrapper">
+          <div class="course-content-wrapper">
             <div class="row items-center justify-between q-mb-xl">
               <div class="row items-center">
                 <div class="title-accent bg-primary q-mr-md"></div>
@@ -183,13 +180,14 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { RouterLink, useRouter, useRoute } from 'vue-router';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import CourseLayout from 'layouts/course-layout.vue';
 import { getCourseStructure, type CourseModule, type Lesson } from 'src/data/course-structure';
 import { useUiStore } from 'src/stores/ui-store';
 import { useCourseStore } from 'src/stores/course-store';
+import { getStoredMoodleUrl } from 'src/utils/moodle-navigation';
 
 // 2. Local Types
 interface CourseModuleState extends CourseModule {
@@ -221,8 +219,7 @@ const currentCourse = computed(() => {
 const courseTitle = computed<string>(() => currentCourse.value?.title || 'Course Learning');
 
 const moodleUrl = computed<string>(() => {
-  const value = route.query.moodleUrl;
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
+  return getStoredMoodleUrl(courseId.value, route.query.moodleKey, route.query.moodleUrl);
 });
 
 const isFullscreen = computed<boolean>({
@@ -331,20 +328,22 @@ watch(
 }
 
 .breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.875rem;
   font-weight: 500;
 }
 
 .breadcrumb-el {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #6b7280;
   text-decoration: none;
   padding: 4px 6px;
   border-radius: 6px;
   transition: all 0.2s ease;
-
-  :deep(.q-breadcrumbs__el) {
-    color: inherit;
-  }
 
   &:hover {
     color: var(--q-primary);
@@ -382,11 +381,12 @@ watch(
   padding-right: 0 !important;
 }
 
-.moodle-wrapper {
+.moodle-standalone-shell {
   width: 100%;
   height: calc(100vh - 72px);
   min-height: 520px;
   background: #fff;
+  overflow: hidden;
 }
 
 .moodle-frame {

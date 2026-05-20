@@ -126,6 +126,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
 import { useAuthStore } from 'src/stores/auth-store';
+import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 import BaseButton from 'components/base/BaseButton.vue';
 import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
@@ -176,10 +177,7 @@ const goToCourse = async (
   if (username) {
     const url = await getMoodleCourseUrl(String(moodleCourseId ?? id), username, courseCode);
     if (url) {
-      void router.push({
-        path: `/course/${id}/learn`,
-        query: { moodleUrl: url },
-      });
+      pushMoodleLearningRoute(router, id, url);
       return;
     }
   }

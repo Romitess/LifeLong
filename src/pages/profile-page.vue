@@ -2027,6 +2027,7 @@ import { getCourseDetailById } from 'src/data/mock-courses';
 import { useAuthStore, type User, type UserProfileUpdate } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
+import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 
 interface AvatarOption {
   label: string;
@@ -3575,10 +3576,7 @@ async function goToCourse(
       courseCode,
     );
     if (url) {
-      void router.push({
-        path: `/course/${courseId}/learn`,
-        query: { moodleUrl: url },
-      });
+      pushMoodleLearningRoute(router, courseId, url);
       return;
     }
   }
