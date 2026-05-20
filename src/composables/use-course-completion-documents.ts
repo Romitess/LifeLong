@@ -68,8 +68,8 @@ export function useCourseCompletionDocuments() {
     };
 
     const courseHours =
-      entry.courseDetail.totalHours > 0
-        ? entry.courseDetail.totalHours
+      (entry.courseDetail.totalHours ?? 0) > 0
+        ? entry.courseDetail.totalHours!
         : entry.courseDetail.creditHours > 0
           ? entry.courseDetail.creditHours
           : entry.progress.totalLessons;

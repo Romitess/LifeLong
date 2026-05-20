@@ -35,4 +35,5 @@ export interface Course {
   categoryEn?: string;
   maxSeats: number;
   enrolledCount: number;
+  totalHours?: number;
 }

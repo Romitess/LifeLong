@@ -39,7 +39,7 @@ export interface CourseDetail extends Course {
   prerequisites: string;
   prerequisitesEn?: string;
   creditHours: number;
-  totalHours: number;
+  totalHours?: number;
   maxSeats: number;
   enrolledCount: number;
   department: string;

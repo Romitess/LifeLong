@@ -103,6 +103,7 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     categoryEn: `Category ${course.categoryId ?? 1}`,
     maxSeats: 40,
     enrolledCount: 0,
+    totalHours: course.hours ?? 0,
   };
 }
 
@@ -212,7 +213,7 @@ function createFallbackCourseDetail(course: Course): CourseDetail {
     prerequisites: 'ไม่มี',
     prerequisitesEn: 'None',
     creditHours: 0,
-    totalHours: 0,
+    totalHours: course.totalHours ?? 0,
     department: course.faculty,
     departmentEn: course.facultyEn ?? course.faculty,
     instructor: {

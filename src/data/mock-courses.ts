@@ -1,7 +1,7 @@
 import type { Course } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
 
-type CourseDetailContent = Omit<CourseDetail, keyof Course>;
+type CourseDetailContent = Omit<CourseDetail, keyof Course> & { totalHours?: number };
 
 export const DEMO_INSTRUCTOR_ID = '1';
 export const DEMO_INSTRUCTOR_EMAIL = 'instructor@example.com';

@@ -169,21 +169,55 @@
                     <h2 class="detail-card__title">{{ $t('courseSyllabus') }}</h2>
                   </div>
                   <q-list separator class="q-mt-md">
-                    <q-expansion-item
-                      v-for="item in course.syllabus"
-                      :key="item.week"
-                      :label="`${$t('week')} ${item.week}: ${getTranslatedTopic(item)}`"
-                      header-class="syllabus-header"
-                      expand-icon-class="text-primary"
-                    >
-                      <q-card class="syllabus-content">
-                        <q-card-section class="q-py-md">
-                          <div class="text-body2 text-grey-8">
-                            {{ getTranslatedSyllabusDesc(item) }}
-                          </div>
-                        </q-card-section>
-                      </q-card>
-                    </q-expansion-item>
+                    <!-- DB Chapters -->
+                    <template v-if="dbChapters && dbChapters.length > 0">
+                      <q-expansion-item
+                        v-for="(chapter, idx) in dbChapters"
+                        :key="chapter.id"
+                        :label="`${$t('week') || 'บทเรียน'} ${chapter.seq || idx + 1}: ${chapter.name}`"
+                        header-class="syllabus-header"
+                        expand-icon-class="text-primary"
+                      >
+                        <q-card class="syllabus-content">
+                          <q-card-section class="q-py-md">
+                            <div class="text-body2 text-grey-8">
+                              {{ chapter.name }}
+                              <div
+                                v-if="chapter.hour"
+                                class="q-mt-sm text-caption text-grey-6 flex items-center"
+                              >
+                                <q-icon
+                                  name="schedule"
+                                  size="16px"
+                                  color="primary"
+                                  class="q-mr-xs"
+                                />
+                                {{ $t('totalHours') || 'เวลาเรียน' }}: {{ chapter.hour }}
+                                {{ $t('hours') || 'ชั่วโมง' }}
+                              </div>
+                            </div>
+                          </q-card-section>
+                        </q-card>
+                      </q-expansion-item>
+                    </template>
+                    <!-- Fallback to Mock Syllabus if no DB chapters are loaded -->
+                    <template v-else>
+                      <q-expansion-item
+                        v-for="item in course.syllabus"
+                        :key="item.week"
+                        :label="`${$t('week')} ${item.week}: ${getTranslatedTopic(item)}`"
+                        header-class="syllabus-header"
+                        expand-icon-class="text-primary"
+                      >
+                        <q-card class="syllabus-content">
+                          <q-card-section class="q-py-md">
+                            <div class="text-body2 text-grey-8">
+                              {{ getTranslatedSyllabusDesc(item) }}
+                            </div>
+                          </q-card-section>
+                        </q-card>
+                      </q-expansion-item>
+                    </template>
                   </q-list>
                 </q-card-section>
               </q-card>
@@ -465,6 +499,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { api } from 'src/boot/axios';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue';
 import CourseRecommendationSection from 'components/course/CourseRecommendationSection.vue';
@@ -884,10 +919,35 @@ function onToggleBookmark(): void {
   courseBookmarkStore.toggleBookmark(course.value);
 }
 
+interface DBChapter {
+  id: number;
+  courseId: number;
+  name: string | null;
+  hour: number | null;
+  seq: number | null;
+}
+
+const dbChapters = ref<DBChapter[]>([]);
+
+async function fetchChapters() {
+  dbChapters.value = [];
+  const rawId = courseId.value ? courseId.value.replace('db-', '') : '';
+  const moodleId = Number(rawId);
+  if (!moodleId || Number.isNaN(moodleId)) return;
+
+  try {
+    const { data } = await api.get<DBChapter[]>(`/api/lltcoursechapter/course/${moodleId}`);
+    dbChapters.value = data || [];
+  } catch (err) {
+    console.error('Failed to fetch course chapters:', err);
+  }
+}
+
 watch(
   courseId,
   () => {
     void fetchCourseDetail();
+    void fetchChapters();
   },
   { immediate: true },
 );
