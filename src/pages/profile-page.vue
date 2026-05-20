@@ -324,10 +324,10 @@
                   <q-btn
                     unelevated
                     color="primary"
-                    icon="add"
-                    label="สร้างรายวิชาใหม่"
+                    icon="menu_book"
+                    label="ดูรายวิชาที่รับผิดชอบ"
                     no-caps
-                    @click="router.push('/instructor/create-course')"
+                    @click="goToInstructorCourses"
                   />
                 </div>
 
@@ -493,7 +493,8 @@
                     <q-icon name="school" size="44px" color="primary" />
                     <strong>ยังไม่มีรายวิชาที่รับผิดชอบ</strong>
                     <span
-                      >เริ่มจากการสร้างรายวิชาใหม่ หรือเข้าสู่ระบบด้วยบัญชีผู้สอนที่มีรายวิชา</span
+                      >เข้าสู่ระบบด้วยบัญชีผู้สอนที่มีรายวิชา
+                      หรือให้ผู้ดูแลระบบสร้างรายวิชาให้</span
                     >
                   </div>
                 </q-card>
