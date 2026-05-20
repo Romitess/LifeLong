@@ -390,7 +390,19 @@
                                 }}</span>
                                 <div class="row items-center q-gutter-x-sm">
                                   <span class="text-weight-medium">{{ props.row.learnerRef }}</span>
-                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                  <q-icon
+                                    :name="
+                                      props.row.learnerRef === props.row.dbLearnerRef
+                                        ? 'check_circle'
+                                        : 'warning'
+                                    "
+                                    :color="
+                                      props.row.learnerRef === props.row.dbLearnerRef
+                                        ? 'positive'
+                                        : 'warning'
+                                    "
+                                    size="16px"
+                                  />
                                 </div>
                               </div>
                               <div class="file-card-field">
@@ -401,7 +413,19 @@
                                   <span class="text-weight-medium">{{
                                     props.row.applicationRef
                                   }}</span>
-                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                  <q-icon
+                                    :name="
+                                      props.row.applicationRef === props.row.dbAppRef
+                                        ? 'check_circle'
+                                        : 'warning'
+                                    "
+                                    :color="
+                                      props.row.applicationRef === props.row.dbAppRef
+                                        ? 'positive'
+                                        : 'warning'
+                                    "
+                                    size="16px"
+                                  />
                                 </div>
                               </div>
                               <div class="file-card-field">
@@ -431,7 +455,19 @@
                                 }}</span>
                                 <div class="row items-center q-gutter-x-sm">
                                   <span class="text-weight-bold">{{ props.row.amount }}</span>
-                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                  <q-icon
+                                    :name="
+                                      props.row.amount === props.row.dbAmount
+                                        ? 'check_circle'
+                                        : 'warning'
+                                    "
+                                    :color="
+                                      props.row.amount === props.row.dbAmount
+                                        ? 'positive'
+                                        : 'warning'
+                                    "
+                                    size="16px"
+                                  />
                                 </div>
                               </div>
                             </q-card-section>
@@ -485,7 +521,19 @@
                                   <span class="text-weight-medium">{{
                                     props.row.dbLearnerRef
                                   }}</span>
-                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                  <q-icon
+                                    :name="
+                                      props.row.learnerRef === props.row.dbLearnerRef
+                                        ? 'check_circle'
+                                        : 'warning'
+                                    "
+                                    :color="
+                                      props.row.learnerRef === props.row.dbLearnerRef
+                                        ? 'positive'
+                                        : 'warning'
+                                    "
+                                    size="16px"
+                                  />
                                 </div>
                               </div>
                               <div class="db-card-field">
@@ -505,7 +553,19 @@
                                 </div>
                                 <div v-else class="row items-center q-gutter-x-sm">
                                   <span class="text-weight-medium">{{ props.row.dbAppRef }}</span>
-                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                  <q-icon
+                                    :name="
+                                      props.row.applicationRef === props.row.dbAppRef
+                                        ? 'check_circle'
+                                        : 'warning'
+                                    "
+                                    :color="
+                                      props.row.applicationRef === props.row.dbAppRef
+                                        ? 'positive'
+                                        : 'warning'
+                                    "
+                                    size="16px"
+                                  />
                                 </div>
                               </div>
                               <div class="db-card-field">
@@ -560,7 +620,19 @@
                                 </div>
                                 <div v-else class="row items-center q-gutter-x-sm">
                                   <span class="text-weight-bold">{{ props.row.dbAmount }}</span>
-                                  <q-icon name="check_circle" color="positive" size="16px" />
+                                  <q-icon
+                                    :name="
+                                      props.row.amount === props.row.dbAmount
+                                        ? 'check_circle'
+                                        : 'warning'
+                                    "
+                                    :color="
+                                      props.row.amount === props.row.dbAmount
+                                        ? 'positive'
+                                        : 'warning'
+                                    "
+                                    size="16px"
+                                  />
                                 </div>
                               </div>
                             </q-card-section>
@@ -891,6 +963,14 @@ const saveEditedRow = () => {
     editingRow.value.dbAppRef = editForm.value.dbAppRef;
     editingRow.value.dbLearnerName = editForm.value.dbLearnerName;
     editingRow.value.dbAmount = editForm.value.dbAmount;
+
+    const isMatched =
+      (editingRow.value.learnerRef || '').trim() === (editingRow.value.dbLearnerRef || '').trim() &&
+      (editingRow.value.applicationRef || '').trim() === (editingRow.value.dbAppRef || '').trim() &&
+      (editingRow.value.payerName || '').trim() === (editingRow.value.dbLearnerName || '').trim() &&
+      Number(editingRow.value.amount) === Number(editingRow.value.dbAmount);
+
+    editingRow.value.status = isMatched ? 'verified' : 'pending';
 
     editingRow.value = null;
     $q.notify({
