@@ -20,7 +20,8 @@ export interface User {
     | 'teach'
     | 'admin'
     | 'finance'
-    | 'central_finance';
+    | 'central_finance'
+    | 'lifelong2';
   username?: string;
   avatar: string;
 }
@@ -158,6 +159,21 @@ const MOCK_CENTRAL_FINANCE_BASE: Omit<User, 'avatar'> = {
   username: 'central_finance_test',
 };
 
+const MOCK_LIFELONG2_BASE: Omit<User, 'avatar'> = {
+  id: 'mock-lifelong2-user',
+  studentId: 'LLL0001',
+  firstNameTh: 'แอดมิน LLL',
+  lastNameTh: 'ทดสอบ',
+  firstNameEn: 'LLL',
+  lastNameEn: 'ADMIN',
+  email: 'lifelong2@example.com',
+  phone: '',
+  faculty: 'Lifelong Learning',
+  department: 'Lifelong2 Admin',
+  role: 'lifelong2',
+  username: 'lifelong2_test',
+};
+
 const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
   {
     ...MOCK_USER_BASE,
@@ -203,6 +219,14 @@ const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
     ...MOCK_CENTRAL_FINANCE_BASE,
     email: MOCK_CENTRAL_FINANCE_BASE.email.toLowerCase(),
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CentralFinance',
+    password: 'P@ssword123!',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    source: 'mock',
+  },
+  {
+    ...MOCK_LIFELONG2_BASE,
+    email: MOCK_LIFELONG2_BASE.email.toLowerCase(),
+    avatar: 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=BUU-LLL-Lifelong2',
     password: 'P@ssword123!',
     createdAt: '2026-01-01T00:00:00.000Z',
     source: 'mock',
@@ -272,7 +296,8 @@ function isUserRole(value: unknown): value is User['role'] {
     value === 'teach' ||
     value === 'admin' ||
     value === 'finance' ||
-    value === 'central_finance'
+    value === 'central_finance' ||
+    value === 'lifelong2'
   );
 }
 
@@ -491,6 +516,7 @@ export const useAuthStore = defineStore('auth', {
             if (r === 'finance') return 'finance';
             if (r === 'central_finance' || r === 'central-finance' || r === 'central finance')
               return 'central_finance';
+            if (r === 'lifelong2') return 'lifelong2';
             console.warn('[AuthStore] Role not recognized, defaulting to student');
             return 'student';
           })(),

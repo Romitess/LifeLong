@@ -17,7 +17,7 @@ export function useCategoryList(): UseCategoryListReturn {
     error.value = null;
 
     try {
-      const { data } = await api.get<ApiCategory[]>('/api/categories');
+      const { data } = await api.get<ApiCategory[]>('/categories');
       return data;
     } catch {
       error.value = 'ไม่สามารถโหลดข้อมูลหมวดหมู่ได้';

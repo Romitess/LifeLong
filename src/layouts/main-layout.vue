@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="hHh lpR fFf">
+  <q-layout view="hHh lpR fFf" :class="layoutClass">
     <q-header v-if="showNavBar" style="background: transparent">
       <!-- Top Bar -->
       <q-toolbar class="top-toolbar">
@@ -249,33 +249,47 @@
       </q-toolbar>
     </q-header>
 
-    <!-- Hover trigger zone for opening sidebar on PC -->
+    <!-- Hover trigger zone: only for non-admin roles on PC -->
     <div
-      v-if="showNavBar && $q.platform.is.desktop && !drawerOpen"
+      v-if="showNavBar && $q.platform.is.desktop && !drawerOpen && !isLifelong2Role"
       class="sidebar-hover-trigger"
       @mouseenter="onHoverTriggerEnter"
     />
 
-    <!-- Sidebar Drawer -->
+    <!-- Sidebar Drawer
+         - lifelong2/admin: persistent on desktop (pushes content), mini mode when collapsed
+         - other roles: overlay drawer (current LLL behavior)
+    -->
     <q-drawer
       v-model="drawerOpen"
       bordered
-      overlay
+      :overlay="!isLifelong2Role"
+      :mini="isLifelong2Role && sidebarMini"
+      :mini-width="72"
       class="sidebar-drawer"
       v-if="showNavBar"
       :width="280"
       @mouseleave="onDrawerMouseLeave"
     >
       <q-list padding class="sidebar-list">
-        <q-item-label header class="drawer-logo-container">
+        <!-- Full logo: hidden in admin mini mode -->
+        <q-item-label
+          header
+          class="drawer-logo-container"
+          v-show="!isLifelong2Role || !sidebarMini"
+        >
           <img src="~assets/brand/buu-lll-logo.png" class="drawer-logo__image" alt="BUU LLL" />
         </q-item-label>
+        <!-- Mini logo: shown only in admin mini mode -->
+        <div v-if="isLifelong2Role && sidebarMini" class="drawer-mini-logo">
+          <q-icon name="school" size="28px" />
+        </div>
         <q-separator class="q-mb-md" />
 
-        <div class="drawer-language-wrapper">
+        <div class="drawer-language-wrapper" v-show="!isLifelong2Role || !sidebarMini">
           <LanguageToggle wide />
         </div>
-        <q-separator class="q-my-md" />
+        <q-separator class="q-my-md" v-show="!isLifelong2Role || !sidebarMini" />
 
         <!-- Navigation Items -->
         <template v-for="nav in navItems" :key="nav.name">
@@ -447,6 +461,33 @@ function isAdminNotificationRole(role: string | undefined): boolean {
 }
 
 function getNotificationItemsForRole(role: string | undefined) {
+  if (role === 'lifelong2') {
+    return [
+      {
+        id: 801,
+        title: 'ผู้เรียนลงทะเบียนใหม่ 25 คน',
+        message: 'มีผู้เรียนสมัครเรียนหลักสูตรอบรมระยะสั้นเพิ่มขึ้นในวันนี้',
+        time: 'วันนี้ 10:30',
+        icon: 'people',
+        iconBg: 'rgba(245, 166, 35, 0.15)',
+        iconColor: '#f5a623',
+        action: '/lifelong2/dashboard',
+        read: false,
+      },
+      {
+        id: 802,
+        title: 'Moodle Sync สำเร็จ',
+        message: 'ซิงค์ข้อมูลผู้เรียนและคะแนนจากระบบ Moodle เรียบร้อยแล้ว',
+        time: 'วันนี้ 09:15',
+        icon: 'sync',
+        iconBg: 'rgba(76, 175, 80, 0.15)',
+        iconColor: '#4caf50',
+        action: '/lifelong2/dashboard',
+        read: false,
+      },
+    ];
+  }
+
   if (isAdminNotificationRole(role)) {
     return [
       {
@@ -554,11 +595,26 @@ const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?
 const isAdminRole = computed(() => isAdminNotificationRole(authStore.user?.role));
 const isFinanceRole = computed(() => authStore.user?.role === 'finance');
 const isCentralFinanceRole = computed(() => authStore.user?.role === 'central_finance');
+const isLifelong2Role = computed(() => authStore.user?.role === 'lifelong2');
 const isPrivilegedRole = computed(
   () =>
-    isTeachingRole.value || isAdminRole.value || isFinanceRole.value || isCentralFinanceRole.value,
+    isTeachingRole.value ||
+    isAdminRole.value ||
+    isFinanceRole.value ||
+    isCentralFinanceRole.value ||
+    isLifelong2Role.value,
 );
+const layoutClass = computed(() => {
+  if (isLifelong2Role.value || route.path.startsWith('/lifelong2')) {
+    return 'lifelong2-theme-wrapper';
+  }
+  return '';
+});
 const userRoleLabel = computed(() => {
+  if (isLifelong2Role.value) {
+    return 'แอดมิน LLL';
+  }
+
   if (isAdminRole.value) {
     return t('profile.roles.admin');
   }
@@ -595,6 +651,35 @@ const homeNav = computed<NavItem>(() => ({
 }));
 
 const navItems = computed<NavItem[]>(() => {
+  if (isLifelong2Role.value) {
+    return [
+      {
+        name: 'lifelong2-dashboard',
+        label: 'แดชบอร์ด LLL',
+        icon: 'dashboard_customize',
+        to: '/lifelong2/dashboard',
+      },
+      {
+        name: 'lifelong2-courses',
+        label: 'จัดการหลักสูตร LLL',
+        icon: 'menu_book',
+        to: '/lifelong2/dashboard',
+      },
+      {
+        name: 'lifelong2-students',
+        label: 'จัดการข้อมูลผู้เรียน',
+        icon: 'people',
+        to: '/lifelong2/dashboard',
+      },
+      {
+        name: 'lifelong2-analytics',
+        label: 'รายงานเชิงลึก & Analytics',
+        icon: 'analytics',
+        to: '/lifelong2/dashboard',
+      },
+    ];
+  }
+
   if (isAdminRole.value) {
     return [
       {
@@ -780,28 +865,45 @@ const categories = computed(() => {
 });
 
 const drawerOpen = ref(false);
+const sidebarMini = ref(false);
 const activeNav = ref('');
 const isPageSwitchLoading = ref(false);
 const logoutDialogOpen = ref(false);
 
 const wasOpenedByClick = ref(false);
 
+// Open persistent sidebar for admin; close for other roles
+watch(
+  isLifelong2Role,
+  (isAdmin) => {
+    drawerOpen.value = isAdmin;
+    if (!isAdmin) sidebarMini.value = false;
+  },
+  { immediate: true },
+);
+
 function toggleDrawer() {
-  drawerOpen.value = !drawerOpen.value;
-  if (drawerOpen.value) {
-    wasOpenedByClick.value = true;
+  if (isLifelong2Role.value) {
+    // Admin: toggle mini mode (burger collapses/expands persistent sidebar)
+    sidebarMini.value = !sidebarMini.value;
   } else {
-    wasOpenedByClick.value = false;
+    // Other roles: toggle overlay drawer open/close
+    drawerOpen.value = !drawerOpen.value;
+    wasOpenedByClick.value = drawerOpen.value;
   }
 }
 
 function onHoverTriggerEnter() {
-  drawerOpen.value = true;
-  wasOpenedByClick.value = false;
+  // Hover-open only for non-admin roles
+  if (!isLifelong2Role.value) {
+    drawerOpen.value = true;
+    wasOpenedByClick.value = false;
+  }
 }
 
 function onDrawerMouseLeave() {
-  if ($q.platform.is.desktop && !wasOpenedByClick.value) {
+  // Auto-close on mouse leave only for non-admin overlay drawer
+  if (!isLifelong2Role.value && $q.platform.is.desktop && !wasOpenedByClick.value) {
     drawerOpen.value = false;
   }
 }
@@ -861,7 +963,9 @@ async function goToAuthPage(path: AuthPath): Promise<void> {
 }
 
 function syncActiveNavWithRoute(path: string) {
-  if (path === '/main' || path === '/') {
+  if (path.includes('/lifelong2/dashboard') || path.includes('/lifelong2')) {
+    activeNav.value = 'lifelong2-dashboard';
+  } else if (path === '/main' || path === '/') {
     activeNav.value = courseStore.selectedCategory ? 'category' : 'home';
   } else if (path.includes('/admin/categories')) {
     activeNav.value = 'admin-categories';
@@ -945,7 +1049,10 @@ function confirmLogout() {
 async function onLogoClick() {
   courseStore.setSelectedCategory(null);
 
-  if (isAdminRole.value) {
+  if (isLifelong2Role.value) {
+    activeNav.value = 'lifelong2-dashboard';
+    await navigateWithPageLoading('/lifelong2/dashboard');
+  } else if (isAdminRole.value) {
     activeNav.value = 'admin-dashboard';
     await navigateWithPageLoading('/admin/dashboard');
   } else if (isCentralFinanceRole.value) {
