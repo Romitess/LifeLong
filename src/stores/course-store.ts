@@ -37,7 +37,7 @@ interface BackendCourse {
   createUser?: string | null;
   imageUrl?: string | null;
   moodleId?: number | null;
-  evaluation?: { id: number; name: string | null; other: string | null } | null;
+  evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
 }
 
 function normalizeInstructorEmail(email?: string): string {
@@ -105,7 +105,7 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     maxSeats: 40,
     enrolledCount: 0,
     totalHours: course.hours ?? 0,
-    evaluation: course.evaluation ?? null,
+    evaluation: course.evaluationDetail ?? null,
   };
 }
 

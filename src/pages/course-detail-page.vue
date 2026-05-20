@@ -223,12 +223,7 @@
               </q-card>
 
               <!-- Evaluation and Score Criteria -->
-              <q-card
-                v-if="course?.evaluation"
-                flat
-                bordered
-                class="detail-card q-mb-lg evaluation-card"
-              >
+              <q-card v-if="course?.evaluation" flat bordered class="detail-card q-mb-lg">
                 <q-card-section>
                   <div class="detail-card__header">
                     <q-icon name="assignment_turned_in" size="24px" color="primary" />
@@ -1504,15 +1499,6 @@ watch(
   :deep(.q-item) {
     padding: 10px 0;
     min-height: auto;
-  }
-}
-
-// ── Evaluation Card ──────────────────────────────────────────
-.evaluation-card {
-  .evaluation-rules {
-    background: #fdfbf7;
-    border: 1px dashed rgba($primary, 0.3);
-    border-radius: 8px;
   }
 }
 
