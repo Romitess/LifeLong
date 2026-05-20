@@ -254,6 +254,49 @@
                 </q-card-section>
               </q-card>
 
+              <!-- Target Audience -->
+              <q-card
+                v-if="course?.targets && course.targets.length > 0"
+                flat
+                bordered
+                class="detail-card q-mb-lg"
+              >
+                <q-card-section>
+                  <div class="detail-card__header">
+                    <q-icon name="groups" size="24px" color="primary" />
+                    <h2 class="detail-card__title">
+                      {{ locale === 'th' ? 'กลุ่มเป้าหมายที่เข้ารับการศึกษา' : 'Target Audience' }}
+                    </h2>
+                  </div>
+
+                  <div class="q-mt-md">
+                    <q-list class="info-list">
+                      <q-item
+                        v-for="target in course.targets"
+                        :key="target.id"
+                        class="objective-item"
+                        style="padding: 8px 0"
+                      >
+                        <q-item-section avatar>
+                          <q-icon name="check_circle" color="primary" size="20px" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label class="text-body2 text-grey-9 text-weight-medium">
+                            {{ target.targetName }}
+                            <span v-if="target.subtargetName" class="text-primary text-weight-bold">
+                              {{ target.subtargetName }}
+                            </span>
+                            <span v-if="target.other" class="text-grey-6 text-italic">
+                              ({{ target.other }})
+                            </span>
+                          </q-item-label>
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </div>
+                </q-card-section>
+              </q-card>
+
               <!-- Schedule -->
               <q-card flat bordered class="detail-card q-mb-lg">
                 <q-card-section>

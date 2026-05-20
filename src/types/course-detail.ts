@@ -29,6 +29,16 @@ export interface CourseSyllabus {
   descriptionEn?: string;
 }
 
+export interface CourseTarget {
+  id: number;
+  targetId: number | null;
+  subtargetId: number | null;
+  targetName: string | null;
+  subtargetName: string | null;
+  other: string | null;
+  sequence: number | null;
+}
+
 export interface CourseDetail extends Course {
   descriptionFull: string;
   descriptionFullEn?: string;
@@ -53,4 +63,5 @@ export interface CourseDetail extends Course {
   contactPhone: string;
   previewVideoUrl?: string;
   previewPosterUrl?: string;
+  targets?: CourseTarget[];
 }

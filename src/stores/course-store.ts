@@ -440,11 +440,6 @@ export const useCourseStore = defineStore('course', {
       this.init();
       return this.courses.find((c) => c.id === id);
     },
-    /** Add a course detail */
-    addCourseDetail(detail: CourseDetail) {
-      this.courseDetails[detail.id] = ensureCourseDetailInstructorOwner(detail);
-      writeStoredCourseDetails(this.courseDetails);
-    },
     /** Return a course detail by its ID or undefined */
     getCourseDetailById(id: string): CourseDetail | undefined {
       this.init();

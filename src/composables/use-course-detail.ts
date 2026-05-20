@@ -1,9 +1,15 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
+import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
-import type { CourseDetail } from 'src/types/course-detail';
+import type { CourseDetail, CourseTarget } from 'src/types/course-detail';
 import { useCourseStore } from 'src/stores/course-store';
 
 type CourseIdSource = string | Ref<string>;
+
+interface BackendCourseDetailResponse {
+  evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
+  targets?: CourseTarget[] | null;
+}
 
 interface UseCourseDetailReturn {
   course: Ref<CourseDetail | null>;
@@ -56,11 +62,33 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
       await new Promise<void>((resolve) => setTimeout(resolve, 500));
       await courseStore.fetchBackendCourses();
 
-      const detail = courseStore.getCourseDetailById(readCourseId(courseId));
+      const currentId = readCourseId(courseId);
+      const detail = courseStore.getCourseDetailById(currentId);
       if (!detail) {
         course.value = null;
         error.value = 'ไม่พบข้อมูลรายละเอียดคอร์สนี้';
         return;
+      }
+
+      // Fetch dynamic details (targets, evaluation) directly from NestJS API
+      const rawId = currentId.replace('db-', '');
+      const numId = Number(rawId);
+      if (!Number.isNaN(numId)) {
+        try {
+          const { data } = await api.get<BackendCourseDetailResponse>(
+            `/api/moodle/courses/${numId}`,
+          );
+          if (data) {
+            course.value = {
+              ...detail,
+              targets: data.targets ?? [],
+              evaluation: data.evaluationDetail ?? null,
+            };
+            return;
+          }
+        } catch (apiError) {
+          console.warn('Failed to fetch individual course detail from backend:', apiError);
+        }
       }
 
       course.value = detail;
