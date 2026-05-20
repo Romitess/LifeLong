@@ -1397,7 +1397,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -1475,6 +1475,13 @@ const courseStore = useCourseStore();
 
 // Initialize store
 courseStore.init();
+
+onMounted(() => {
+  const email = authStore.user?.email;
+  if (email) {
+    void courseStore.fetchInstructorCourses(email);
+  }
+});
 
 const courseSearch = ref('');
 const activeWorkspaceTab = ref<WorkspaceTab>('overview');

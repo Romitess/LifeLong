@@ -3,11 +3,7 @@ import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
-import {
-  DEMO_INSTRUCTOR_EMAIL,
-  DEMO_INSTRUCTOR_ID,
-  getMockCourseInstructorOwner,
-} from 'src/data/mock-courses';
+import { getMockCourseInstructorOwner } from 'src/data/mock-courses';
 
 const STORAGE_KEY = 'lll-courses';
 const DETAIL_STORAGE_KEY = 'lll-course-details';
@@ -37,6 +33,7 @@ interface BackendCourse {
   createUser?: string | null;
   imageUrl?: string | null;
   moodleId?: number | null;
+  instructorEmail?: string | null;
   evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
 }
 
@@ -78,8 +75,8 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     ...(course.moodleId ? { moodleId: course.moodleId } : {}),
     title: course.titleTh,
     titleEn: course.titleEn ?? course.titleTh,
-    instructorId: DEMO_INSTRUCTOR_ID,
-    instructorEmail: DEMO_INSTRUCTOR_EMAIL,
+    instructorId: '',
+    instructorEmail: course.instructorEmail ?? '',
     imageUrl: course.imageUrl ?? '',
     cover: {
       icon: 'school',
@@ -110,30 +107,21 @@ function mapBackendCourse(course: BackendCourse): Course | null {
 }
 
 function ensureCourseInstructorOwner(course: Course): Course {
-  const mockOwner = getMockCourseInstructorOwner(course.id);
-  if (mockOwner) {
-    return {
-      ...course,
-      ...mockOwner,
-    };
-  }
-
+  // real DB data takes priority — only fall back to mock for legacy localStorage courses
   if (course.instructorEmail || course.instructorId) {
     return course;
   }
-
-  return {
-    ...course,
-    instructorId: DEMO_INSTRUCTOR_ID,
-    instructorEmail: DEMO_INSTRUCTOR_EMAIL,
-  };
+  const mockOwner = getMockCourseInstructorOwner(course.id);
+  if (mockOwner) {
+    return { ...course, ...mockOwner };
+  }
+  return course;
 }
 
 function ensureCourseDetailInstructorOwner(detail: CourseDetail): CourseDetail {
   const mockOwner = getMockCourseInstructorOwner(detail.id);
-  const instructorId = mockOwner?.instructorId ?? detail.instructorId ?? DEMO_INSTRUCTOR_ID;
-  const instructorEmail =
-    mockOwner?.instructorEmail ?? detail.instructorEmail ?? DEMO_INSTRUCTOR_EMAIL;
+  const instructorId = detail.instructorId ?? mockOwner?.instructorId ?? '';
+  const instructorEmail = detail.instructorEmail ?? mockOwner?.instructorEmail ?? '';
 
   return {
     ...detail,
@@ -353,6 +341,28 @@ export const useCourseStore = defineStore('course', {
       })();
 
       return backendCoursesLoadPromise;
+    },
+    async fetchInstructorCourses(email: string) {
+      if (!email?.trim()) return;
+      try {
+        const { data } = await api.get<BackendCourse[]>(
+          `/api/moodle/courses/by-instructor?email=${encodeURIComponent(email.trim())}`,
+        );
+        const instructorCourses = (Array.isArray(data) ? data : [])
+          .map(mapBackendCourse)
+          .filter((c): c is Course => Boolean(c));
+
+        for (const course of instructorCourses) {
+          const exists = this.courses.findIndex((c) => c.id === course.id);
+          if (exists >= 0) {
+            this.courses[exists] = course;
+          } else {
+            this.courses.push(course);
+          }
+        }
+      } catch (error) {
+        console.warn('Failed to fetch instructor courses', error);
+      }
     },
     /** Load courses from API — replaces all courses with backend data */
     loadFromApi(apiCourses: Course[]) {

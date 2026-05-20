@@ -193,6 +193,10 @@ const courseStore = useCourseStore();
 
 onMounted(() => {
   courseStore.init();
+  const email = authStore.user?.email;
+  if (email) {
+    void courseStore.fetchInstructorCourses(email);
+  }
 });
 
 const instructorCourses = computed<Course[]>(() =>

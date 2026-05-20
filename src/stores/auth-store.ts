@@ -60,8 +60,6 @@ const USER_PROFILE_STORAGE_KEY = 'lll-user-profile';
 const AUTH_ACCOUNTS_STORAGE_KEY = 'lll-auth-accounts';
 const CURRENT_USER_EMAIL_STORAGE_KEY = 'userEmail';
 const LOGIN_STATE_STORAGE_KEY = 'isLoggedIn';
-const DEFAULT_PROFILE_AVATAR = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Natthaphong';
-
 export type UserProfileUpdate = Pick<
   User,
   'firstNameTh' | 'lastNameTh' | 'firstNameEn' | 'lastNameEn' | 'phone'
@@ -69,171 +67,8 @@ export type UserProfileUpdate = Pick<
 
 type StoredUserProfile = UserProfileUpdate;
 
-const MOCK_USER_BASE: Omit<User, 'avatar'> = {
-  id: 'mock-student-test-user',
-  studentId: 'STD0001',
-  firstNameTh: 'ผู้เรียน',
-  lastNameTh: 'ทดสอบ',
-  firstNameEn: 'STUDENT',
-  lastNameEn: 'TEST',
-  email: 'student@example.com',
-  phone: '',
-  faculty: 'Lifelong Learning',
-  department: 'Student',
-  role: 'student',
-  username: 'student_test',
-};
-
-const MOCK_INSTRUCTOR_BASE: Omit<User, 'avatar'> = {
-  id: 'mock-instructor-user',
-  studentId: 'INS0001',
-  firstNameTh: 'ผู้สอน',
-  lastNameTh: 'ทดสอบ',
-  firstNameEn: 'INSTRUCTOR',
-  lastNameEn: 'TEST',
-  email: 'teach1@go.buu.ac.th',
-  phone: '',
-  faculty: 'Lifelong Learning',
-  department: 'Instructor',
-  role: 'teach',
-  username: 'teach1',
-};
-
-const MOCK_INSTRUCTOR_1_BASE: Omit<User, 'avatar'> = {
-  id: 'mock-instructor-alt-user',
-  studentId: 'INS0002',
-  firstNameTh: 'ผู้สอน',
-  lastNameTh: 'สำรอง',
-  firstNameEn: 'INSTRUCTOR',
-  lastNameEn: 'ALT',
-  email: 'instructor@example.com',
-  phone: '',
-  faculty: 'Lifelong Learning',
-  department: 'Instructor',
-  role: 'teach',
-  username: 'instructor_test',
-};
-
-const MOCK_ADMIN_BASE: Omit<User, 'avatar'> = {
-  id: 'mock-admin-user',
-  studentId: 'ADM0001',
-  firstNameTh: 'ผู้ดูแล',
-  lastNameTh: 'ทดสอบ',
-  firstNameEn: 'ADMIN',
-  lastNameEn: 'TEST',
-  email: 'admin@go.buu.ac.th',
-  phone: '',
-  faculty: 'Lifelong Learning',
-  department: 'Admin',
-  role: 'admin',
-  username: 'admin_test',
-};
-
-const MOCK_FINANCE_BASE: Omit<User, 'avatar'> = {
-  id: 'mock-finance-user',
-  studentId: 'FIN0001',
-  firstNameTh: 'การเงิน',
-  lastNameTh: 'ทดสอบ',
-  firstNameEn: 'FINANCE',
-  lastNameEn: 'TEST',
-  email: 'finance@go.buu.ac.th',
-  phone: '',
-  faculty: 'Lifelong Learning',
-  department: 'Finance',
-  role: 'finance',
-  username: 'finance_test',
-};
-
-const MOCK_CENTRAL_FINANCE_BASE: Omit<User, 'avatar'> = {
-  id: 'mock-central-finance-user',
-  studentId: 'CFIN001',
-  firstNameTh: 'การเงินกลาง',
-  lastNameTh: 'ทดสอบ',
-  firstNameEn: 'CENTRAL',
-  lastNameEn: 'FINANCE',
-  email: 'central-finance@example.com',
-  phone: '',
-  faculty: 'Lifelong Learning',
-  department: 'Central Finance',
-  role: 'central_finance',
-  username: 'central_finance_test',
-};
-
-const MOCK_LIFELONG2_BASE: Omit<User, 'avatar'> = {
-  id: 'mock-lifelong2-user',
-  studentId: 'LLL0001',
-  firstNameTh: 'แอดมิน LLL',
-  lastNameTh: 'ทดสอบ',
-  firstNameEn: 'LLL',
-  lastNameEn: 'ADMIN',
-  email: 'lifelong2@example.com',
-  phone: '',
-  faculty: 'Lifelong Learning',
-  department: 'Lifelong2 Admin',
-  role: 'lifelong2',
-  username: 'lifelong2_test',
-};
-
-const DEFAULT_AUTH_ACCOUNTS: StoredAuthAccount[] = [
-  {
-    ...MOCK_USER_BASE,
-    email: MOCK_USER_BASE.email.toLowerCase(),
-    avatar: DEFAULT_PROFILE_AVATAR,
-    password: 'P@ssword123!',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    source: 'mock',
-  },
-  {
-    ...MOCK_INSTRUCTOR_BASE,
-    email: MOCK_INSTRUCTOR_BASE.email.toLowerCase(),
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nitithorn',
-    password: 'P@ssword123!',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    source: 'mock',
-  },
-  {
-    ...MOCK_INSTRUCTOR_1_BASE,
-    email: MOCK_INSTRUCTOR_1_BASE.email.toLowerCase(),
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pitcha',
-    password: 'P@ssword123!',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    source: 'mock',
-  },
-  {
-    ...MOCK_ADMIN_BASE,
-    email: 'admin@example.com',
-    avatar: 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=BUU-LLL-Admin',
-    password: 'P@ssword123!',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    source: 'mock',
-  },
-  {
-    ...MOCK_FINANCE_BASE,
-    email: 'finance@example.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=SomsriFinance',
-    password: 'P@ssword123!',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    source: 'mock',
-  },
-  {
-    ...MOCK_CENTRAL_FINANCE_BASE,
-    email: MOCK_CENTRAL_FINANCE_BASE.email.toLowerCase(),
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CentralFinance',
-    password: 'P@ssword123!',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    source: 'mock',
-  },
-  {
-    ...MOCK_LIFELONG2_BASE,
-    email: MOCK_LIFELONG2_BASE.email.toLowerCase(),
-    avatar: 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=BUU-LLL-Lifelong2',
-    password: 'P@ssword123!',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    source: 'mock',
-  },
-];
-
-export const AUTH_DEMO_ACCOUNTS: AuthDemoAccount[] = DEFAULT_AUTH_ACCOUNTS.map((account) => ({
+// removed: AUTH_DEMO_ACCOUNTS — no longer used; kept export to avoid breaking imports temporarily
+export const AUTH_DEMO_ACCOUNTS: AuthDemoAccount[] = [].map((account: StoredAuthAccount) => ({
   identifier: account.username ?? account.email,
   email: account.email,
   password: account.password,
@@ -357,7 +192,7 @@ function writeStoredAuthAccounts(accounts: StoredAuthAccount[]): void {
 }
 
 function getAllAuthAccounts(): StoredAuthAccount[] {
-  return [...DEFAULT_AUTH_ACCOUNTS, ...readStoredAuthAccounts()];
+  return readStoredAuthAccounts();
 }
 
 function findAuthAccountByEmail(email: string): StoredAuthAccount | null {
@@ -524,9 +359,12 @@ export const useAuthStore = defineStore('auth', {
           avatar: createDefaultAvatar(apiUser.email),
           password: password,
           createdAt: new Date().toISOString(),
-          source: 'mock',
+          source: 'registered',
         };
 
+        // persist so session survives refresh
+        const others = readStoredAuthAccounts().filter((a) => a.email !== account.email);
+        writeStoredAuthAccounts([...others, account]);
         this.setAuthenticatedUser(account);
         return true;
       } catch (error) {

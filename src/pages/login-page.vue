@@ -85,9 +85,9 @@
     </q-form>
 
     <div class="auth-demo">
-      <div class="auth-demo__title">{{ $t('auth.login.demoTitle') }}</div>
-      <div v-for="account in demoAccounts" :key="account.email">
-        {{ account.identifier }} / {{ account.password }}
+      <div class="auth-demo__title">Test Accounts</div>
+      <div v-for="acc in TEST_ACCOUNTS" :key="acc.username">
+        {{ acc.username }} / {{ acc.password }}
       </div>
     </div>
 
@@ -126,7 +126,7 @@ import { useRoute, useRouter } from 'vue-router';
 import AuthPageShell, { type AuthVisualItem } from 'components/auth/AuthPageShell.vue';
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
-import { AUTH_DEMO_ACCOUNTS, useAuthStore } from 'src/stores/auth-store';
+import { useAuthStore } from 'src/stores/auth-store';
 
 interface LoginForm {
   username: string;
@@ -140,6 +140,14 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
+const TEST_ACCOUNTS = [
+  { username: 'admin_test', password: 'P@ssword123!' },
+  { username: 'instructor_test', password: 'P@ssword123!' },
+  { username: 'student_test', password: 'P@ssword123!' },
+  { username: 'finance_test', password: 'P@ssword123!' },
+  { username: 'central_finance_test', password: 'P@ssword123!' },
+];
+
 const isLoading = ref(false);
 const isPasswordVisible = ref(false);
 const showForgotLoading = ref(false);
@@ -150,8 +158,6 @@ const loginForm = reactive<LoginForm>({
   password: '',
   remember: false,
 });
-
-const demoAccounts = AUTH_DEMO_ACCOUNTS;
 
 const visualItems = computed<AuthVisualItem[]>(() => [
   {
@@ -364,6 +370,18 @@ async function onLogin(): Promise<void> {
 .auth-demo__title {
   color: #b7791f;
   font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.auth-demo__row {
+  display: flex;
+  gap: 8px;
+}
+
+.auth-demo__role {
+  min-width: 110px;
+  font-weight: 600;
+  color: #475467;
 }
 
 .auth-switch {
