@@ -173,7 +173,7 @@
             :rules="[(v) => !!v || 'กรุณาเลือกประเภทรายวิชา']"
             borderless
             no-error-icon
-            class="course-form__radio-field"
+            class="course-form__radio-group"
           >
             <template #control>
               <div class="course-form__options-list">
@@ -225,7 +225,7 @@
             :rules="[(v) => !!v || 'กรุณาเลือกรูปแบบการเรียนการสอน']"
             borderless
             no-error-icon
-            class="course-form__radio-field"
+            class="course-form__radio-group"
           >
             <template #control>
               <div class="course-form__options-row">
@@ -548,7 +548,7 @@
             :rules="[(v) => !!v || 'กรุณาเลือกรูปแบบการจัดการเรียนการสอน']"
             borderless
             no-error-icon
-            class="course-form__radio-field"
+            class="course-form__radio-group"
           >
             <template #control>
               <div class="course-form__options-list">
@@ -564,8 +564,8 @@
                     color="primary"
                     class="course-form__radio"
                   />
-                  <div v-if="form.classTypeId === classType.id" class="course-form__fee-row">
-                    <div class="course-form__fee-field">
+                  <div v-if="form.classTypeId === classType.id" class="course-form__inline-grid">
+                    <div class="course-form__inline-field">
                       <div class="course-form__label-sm">
                         ค่าธรรมเนียม <span class="course-form__required">*</span>
                       </div>
@@ -579,7 +579,7 @@
                           placeholder="0"
                           :rules="[feeRule]"
                           hide-bottom-space
-                          class="course-form__fee-input"
+                          class="course-form__input course-form__input--compact"
                           @keypress="onNumberKeypress"
                         />
                         <span class="course-form__fee-unit">บาท</span>
@@ -588,7 +588,7 @@
                         ถ้าไม่มีค่าธรรมเนียมให้ใส่ 0
                       </div>
                     </div>
-                    <div class="course-form__fee-field">
+                    <div class="course-form__inline-field">
                       <div class="course-form__label-sm">
                         หมายเหตุค่าธรรมเนียม
                         <span class="course-form__optional">(ไม่บังคับ)</span>
@@ -598,7 +598,7 @@
                         outlined
                         dense
                         placeholder="เช่น ราคาพิเศษสำหรับนิสิตปัจจุบัน"
-                        class="course-form__remark-input"
+                        class="course-form__input course-form__input--wide"
                       />
                     </div>
                   </div>
@@ -1289,18 +1289,35 @@ async function submit() {
   gap: 8px;
 }
 
-.course-form__fee-row {
-  display: flex;
-  flex-wrap: wrap;
+.course-form__inline-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(360px, 1fr);
   gap: 12px 24px;
   padding-left: 32px;
   padding-bottom: 4px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
 }
 
-.course-form__fee-field {
+.course-form__inline-field {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.course-form__inline-field :deep(.q-field--dense .q-field__control) {
+  min-height: 44px;
+  height: 44px;
+}
+
+.course-form__inline-field :deep(.q-field--dense .q-field__native),
+.course-form__inline-field :deep(.q-field--dense .q-field__input) {
+  min-height: 44px;
+  padding-top: 0;
+  padding-bottom: 0;
+  align-items: center;
 }
 
 .course-form__label-sm {
@@ -1315,7 +1332,7 @@ async function submit() {
   gap: 8px;
 }
 
-.course-form__fee-input {
+.course-form__input--compact {
   width: 120px;
 }
 
@@ -1325,8 +1342,8 @@ async function submit() {
   white-space: nowrap;
 }
 
-.course-form__remark-input {
-  width: 280px;
+.course-form__input--wide {
+  min-width: 360px;
 }
 
 .course-form__actions {
@@ -1340,16 +1357,16 @@ async function submit() {
   min-width: 120px;
 }
 
-.course-form__radio-field {
+.course-form__radio-group {
   padding: 0;
 
-  :deep(.q-field__control) {
+  > :deep(.q-field__control) {
     min-height: unset;
     height: auto;
     padding: 0;
   }
 
-  :deep(.q-field__bottom) {
+  > :deep(.q-field__bottom) {
     padding-top: 4px;
   }
 }
