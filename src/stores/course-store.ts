@@ -1,7 +1,7 @@
 // src/stores/course-store.ts
 import { defineStore } from 'pinia';
 import { api } from 'src/boot/axios';
-import type { Course } from 'src/types/course';
+import type { Course, DeliveryMode } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
 import { getMockCourseInstructorOwner } from 'src/data/mock-courses';
 
@@ -35,6 +35,7 @@ interface BackendCourse {
   moodleId?: number | null;
   instructorEmail?: string | null;
   evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
+  typestudyDetail?: { id: number; name: string | null } | null;
 }
 
 function normalizeInstructorEmail(email?: string): string {
@@ -56,6 +57,25 @@ function formatDisplayDate(value?: string | null): string {
     month: 'short',
     year: 'numeric',
   }).format(date);
+}
+
+export function mapDeliveryModes(typestudyName?: string | null): DeliveryMode[] {
+  if (!typestudyName) {
+    return ['Online'];
+  }
+  if (typestudyName === 'Online') {
+    return ['Online'];
+  }
+  if (typestudyName === 'Onsite') {
+    return ['Onsite'];
+  }
+  if (typestudyName === 'Online & Onsite') {
+    return ['Online', 'Onsite'];
+  }
+  if (typestudyName === 'Self-Paced Learning') {
+    return ['Self-Paced Learning'];
+  }
+  return ['Online'];
 }
 
 function mapBackendCourse(course: BackendCourse): Course | null {
@@ -93,7 +113,7 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     isFree: true,
     views: 0,
     status: isActive ? activeStatus : inactiveStatus,
-    deliveryModes: ['Online'],
+    deliveryModes: mapDeliveryModes(course.typestudyDetail?.name),
     isActive,
     faculty: 'Lifelong Learning',
     facultyEn: 'Lifelong Learning',

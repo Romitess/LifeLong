@@ -1,5 +1,5 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
-import { useCourseStore } from 'src/stores/course-store';
+import { useCourseStore, mapDeliveryModes } from 'src/stores/course-store';
 import type { Course } from 'src/types/course';
 import { api } from 'src/boot/axios';
 
@@ -24,6 +24,7 @@ interface ApiLltcourse {
   hours: number | null;
   imageUrl: string | null;
   moodleId: number | null;
+  typestudyDetail?: { id: number; name: string | null } | null;
 }
 
 function mapApiCourse(raw: ApiLltcourse): Course {
@@ -44,7 +45,7 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     isFree: true,
     views: 0,
     status: 'เปิดรับสมัคร',
-    deliveryModes: ['Online'],
+    deliveryModes: mapDeliveryModes(raw.typestudyDetail?.name),
     isActive: raw.status === 'Y' || raw.status === null,
     faculty: '',
     category: '',
