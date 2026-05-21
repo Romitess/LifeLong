@@ -65,6 +65,7 @@ export interface CreateCoursePayload {
   nameTh: string;
   nameEn: string;
   summary?: string | undefined;
+  description?: string | undefined;
   facultyId: number;
   typeCourseId: number;
   creditBank?: string | undefined;
@@ -91,7 +92,9 @@ export interface CreateCoursePayload {
   contactEmail: string;
   contactUrl?: string | undefined;
   image?: File | undefined;
+  removeImage?: boolean | undefined;
   file?: File | undefined;
+  removeFile?: boolean | undefined;
   createUser?: string | undefined;
   instructors?: { username?: string; email?: string }[] | undefined;
   chapters?: CourseChapterPayload[] | undefined;
@@ -132,4 +135,43 @@ export interface AdminCoursesResponse {
   items: AdminCourseItem[];
   filterOptions: AdminCoursesFilterOptions;
   pagination: AdminCoursesPagination;
+}
+
+export interface AdminCourseDetail {
+  courseId: number;
+  courseCode: string | null;
+  nameTh: string;
+  nameEn: string;
+  summary: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  fileUrl: string | null;
+  fileName: string | null;
+  facultyId: number | null;
+  typeCourseId: number | null;
+  creditBank: string | null;
+  theoryHours: number | null;
+  practiceHours: number | null;
+  studyTypeId: number | null;
+  skillIds: number[];
+  startDate: string | null;
+  endDate: string | null;
+  categoryId: number | null;
+  subcategoryId: number | null;
+  targets: { targetId: number; subtargetId: number | null; other: string | null }[];
+  classTypeId: number | null;
+  classFee: number | null;
+  classFeeRemark: string | null;
+  precondition: string | null;
+  certificate: string | null;
+  certificateName: string | null;
+  registrationStart: string | null;
+  registrationEnd: string | null;
+  maxSeats: number | null;
+  contactName: string | null;
+  contactTel: string | null;
+  contactEmail: string | null;
+  contactUrl: string | null;
+  instructors: { username: string | null; email: string | null }[];
+  chapters: CourseChapterPayload[];
 }

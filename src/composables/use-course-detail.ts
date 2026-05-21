@@ -8,6 +8,7 @@ type CourseIdSource = string | Ref<string>;
 
 interface BackendCourseDetailResponse {
   objective?: string | null;
+  description?: string | null;
   evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
   typestudyDetail?: { id: number; name: string | null } | null;
   targets?: CourseTarget[] | null;
@@ -94,6 +95,9 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
               ...detail,
               // Always override objectives from API response (even if empty, clears the placeholder)
               objectives: objectiveLines,
+              ...(data.description
+                ? { descriptionFull: data.description, descriptionFullEn: data.description }
+                : {}),
               targets: data.targets ?? [],
               evaluation: data.evaluationDetail ?? null,
               precondition: data.precondition ?? null,

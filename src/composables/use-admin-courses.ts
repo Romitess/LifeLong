@@ -2,6 +2,8 @@ import { computed, ref } from 'vue';
 import { AxiosError } from 'axios';
 import { api } from 'src/boot/axios';
 import type {
+  AdminCourseDetail,
+  AdminCourseFormOptions,
   AdminCourseItem,
   AdminCoursesFilterOptions,
   AdminCoursesPagination,
@@ -90,6 +92,26 @@ export function useAdminCourses() {
     pagination.value = { ...pagination.value, total: Math.max(0, pagination.value.total - 1) };
   }
 
+  async function fetchCourseDetail(id: number): Promise<AdminCourseDetail> {
+    const { data } = await api.get<AdminCourseDetail>(`/api/admin/courses/${id}`);
+    return data;
+  }
+
+  const formOptions = ref<AdminCourseFormOptions | null>(null);
+
+  async function fetchFormOptions(): Promise<void> {
+    if (formOptions.value) return;
+    const { data } = await api.get<AdminCourseFormOptions>('/api/admin/courses/form-options');
+    formOptions.value = data;
+  }
+
+  async function updateCourse(id: number, payload: FormData): Promise<{ courseId: number }> {
+    const { data } = await api.patch<{ courseId: number }>(`/api/admin/courses/${id}`, payload, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+  }
+
   return {
     items,
     filterOptions,
@@ -99,5 +121,9 @@ export function useAdminCourses() {
     isEmpty,
     fetchData,
     removeCourse,
+    fetchCourseDetail,
+    updateCourse,
+    formOptions,
+    fetchFormOptions,
   };
 }

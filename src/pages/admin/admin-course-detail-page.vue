@@ -1,0 +1,64 @@
+<template>
+  <q-page class="admin-page admin-course-detail-page">
+    <AdminPageHero
+      eyebrow="Course Registry"
+      eyebrow-icon="menu_book"
+      :title="course?.nameTh ?? 'รายละเอียดรายวิชา'"
+      :description="course?.nameEn ?? ''"
+    />
+
+    <section class="admin-shell admin-content">
+      <div class="admin-course-detail-page__back">
+        <AdminActionButton
+          variant="primary"
+          icon="arrow_back"
+          label="กลับไปรายการ"
+          no-caps
+          dense
+          @click="void router.push('/admin/courses')"
+        />
+      </div>
+
+      <div v-if="loading" class="admin-course-detail-page__loading">
+        <q-spinner size="40px" color="primary" />
+      </div>
+
+      <AdminCourseForm v-else :readonly="true" :initial-data="course" />
+    </section>
+  </q-page>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import type { AdminCourseDetail } from 'src/types/admin-courses';
+import { useAdminCourses } from 'src/composables/use-admin-courses';
+import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AdminCourseForm from 'components/admin/AdminCourseForm.vue';
+import AdminActionButton from 'components/admin/AdminActionButton.vue';
+
+const router = useRouter();
+const route = useRoute();
+const { fetchCourseDetail, fetchFormOptions } = useAdminCourses();
+
+const course = ref<AdminCourseDetail | null>(null);
+const loading = ref(true);
+
+onMounted(async () => {
+  const id = Number(route.params.id);
+  [course.value] = await Promise.all([fetchCourseDetail(id), fetchFormOptions()]);
+  loading.value = false;
+});
+</script>
+
+<style scoped lang="scss">
+.admin-course-detail-page__back {
+  margin-bottom: 16px;
+}
+
+.admin-course-detail-page__loading {
+  display: flex;
+  justify-content: center;
+  padding: 60px;
+}
+</style>

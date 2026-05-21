@@ -227,6 +227,7 @@
                       size="sm"
                       class="courses-manager-action-btn courses-manager-action-btn--view"
                       aria-label="ดูรายละเอียด"
+                      @click="void openDetail(item)"
                     >
                       <q-tooltip>ดูรายละเอียด</q-tooltip>
                     </q-btn>
@@ -238,6 +239,7 @@
                       size="sm"
                       class="courses-manager-action-btn courses-manager-action-btn--edit"
                       aria-label="แก้ไข"
+                      @click="void router.push(`/admin/courses/${item.courseId}/edit`)"
                     >
                       <q-tooltip>แก้ไข</q-tooltip>
                     </q-btn>
@@ -410,6 +412,10 @@ async function handlePageChange(page: number): Promise<void> {
     currentPage.value = page;
     await load(page);
   });
+}
+
+function openDetail(item: AdminCourseItem): void {
+  void router.push(`/admin/courses/${item.courseId}`);
 }
 
 function askDelete(item: AdminCourseItem): void {

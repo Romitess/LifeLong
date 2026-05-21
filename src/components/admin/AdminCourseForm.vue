@@ -1,5 +1,10 @@
 <template>
-  <q-form ref="qFormRef" class="course-form" scroll-to-first-error @submit.prevent>
+  <q-form
+    ref="qFormRef"
+    :class="['course-form', { 'course-form--readonly': props.readonly }]"
+    scroll-to-first-error
+    @submit.prevent
+  >
     <q-banner v-if="error" rounded dense class="bg-negative text-white q-mb-md">
       {{ error }}
     </q-banner>
@@ -31,6 +36,7 @@
                 v-model="form.nameTh"
                 outlined
                 dense
+                maxlength="255"
                 placeholder="เช่น การพัฒนาแอปพลิเคชันมือถือเบื้องต้น"
                 :rules="[requiredRule]"
                 class="course-form__input"
@@ -46,6 +52,7 @@
                 v-model="form.nameEn"
                 outlined
                 dense
+                maxlength="255"
                 placeholder="e.g. Introduction to Mobile Application Development"
                 :rules="[requiredRule]"
                 class="course-form__input"
@@ -126,7 +133,7 @@
                 <q-chip
                   v-for="inst in selectedInstructors"
                   :key="inst.email || inst.username"
-                  removable
+                  :removable="!props.readonly"
                   dense
                   color="primary"
                   text-color="white"
@@ -138,6 +145,7 @@
               </div>
               <!-- Search dropdown เพื่อเพิ่มผู้สอน -->
               <q-select
+                v-if="!props.readonly"
                 v-model="instructorSearchModel"
                 outlined
                 dense
@@ -312,21 +320,72 @@
               </div>
             </div>
 
-            <!-- รายละเอียด/วัตถุประสงค์ -->
+            <!-- เกี่ยวกับรายวิชา -->
             <div class="course-form__field course-form__field--full">
               <div class="course-form__label">
-                รายละเอียดและวัตถุประสงค์รายวิชา
+                เกี่ยวกับรายวิชา
                 <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
               <q-input
-                v-model="form.summary"
+                v-model="form.description"
                 outlined
                 dense
                 type="textarea"
-                rows="3"
-                placeholder="อธิบายเนื้อหาหลักสูตรและสิ่งที่ผู้เรียนจะได้รับ..."
+                rows="2"
+                placeholder="อธิบายภาพรวมของรายวิชา เนื้อหา และสิ่งที่ผู้เรียนจะได้รับ..."
                 class="course-form__input"
               />
+            </div>
+
+            <!-- วัตถุประสงค์ -->
+            <div class="course-form__field course-form__field--full">
+              <div class="course-form__label-row">
+                <span class="course-form__label">
+                  วัตถุประสงค์รายวิชา
+                  <span class="course-form__optional">(ไม่บังคับ)</span>
+                </span>
+                <q-btn
+                  v-if="!props.readonly"
+                  flat
+                  dense
+                  no-caps
+                  color="primary"
+                  icon="add"
+                  label="เพิ่มวัตถุประสงค์"
+                  class="course-form__add-btn"
+                  @click="form.summaryItems.push('')"
+                />
+              </div>
+              <div
+                v-if="form.summaryItems.length === 0 && !props.readonly"
+                class="course-form__summary-empty"
+              >
+                กดเพิ่มวัตถุประสงค์เพื่อระบุสิ่งที่ผู้เรียนจะได้รับ
+              </div>
+              <div
+                v-for="(_, idx) in form.summaryItems"
+                :key="idx"
+                class="course-form__summary-row"
+              >
+                <span class="course-form__summary-seq">{{ idx + 1 }}.</span>
+                <q-input
+                  v-model="form.summaryItems[idx]"
+                  outlined
+                  dense
+                  placeholder="ผู้เรียนสามารถ..."
+                  class="course-form__input course-form__summary-input"
+                />
+                <q-btn
+                  v-if="!props.readonly"
+                  flat
+                  round
+                  dense
+                  icon="delete"
+                  color="negative"
+                  size="sm"
+                  @click="form.summaryItems.splice(idx, 1)"
+                />
+              </div>
             </div>
 
             <!-- คุณสมบัติเบื้องต้น -->
@@ -362,6 +421,7 @@
                   v-model="form.certificateName"
                   outlined
                   dense
+                  maxlength="255"
                   placeholder="ระบุชื่อวุฒิบัตร เช่น ประกาศนียบัตรวิชาชีพ..."
                   style="min-width: 300px"
                   class="course-form__input"
@@ -374,22 +434,79 @@
               <div class="course-form__label">
                 รูปหน้าปกรายวิชา <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
+              <!-- มีรูปเดิมจากเซิร์ฟเวอร์ ยังไม่ได้อัปโหลดใหม่ -->
+              <div
+                v-if="props.initialData?.imageUrl && !form.image && !existingImageCleared"
+                class="course-form__existing-field"
+              >
+                <q-icon name="image" size="18px" color="grey-7" />
+                <span class="course-form__existing-filename">{{ existingImageFilename }}</span>
+                <q-icon
+                  v-if="!props.readonly"
+                  name="close"
+                  class="cursor-pointer"
+                  color="negative"
+                  size="18px"
+                  @click.stop.prevent="existingImageCleared = true"
+                />
+              </div>
+              <!-- ไม่มีรูปเดิม หรือถูกลบแล้ว หรืออัปโหลดใหม่แล้ว -->
               <q-file
+                v-else
                 v-model="form.image"
                 outlined
                 dense
                 accept=".jpg,.jpeg,.png,.webp"
+                :max-file-size="2097152"
                 label="เลือกรูปภาพ"
                 hide-bottom-space
                 class="course-form__input"
+                @update:model-value="imageError = null"
                 @rejected="onImageRejected"
               >
                 <template #prepend>
                   <q-icon name="image" />
                 </template>
+                <template v-if="form.image" #append>
+                  <q-icon
+                    name="close"
+                    class="cursor-pointer"
+                    color="negative"
+                    @click.stop.prevent="form.image = undefined"
+                  />
+                </template>
               </q-file>
-              <div class="text-caption text-grey-6 q-mt-xs">
+              <div v-if="!props.readonly || form.image" class="text-caption text-grey-6 q-mt-xs">
                 แนะนำขนาด 1280×720px (สัดส่วน 16:9) · ไฟล์ jpg / png / webp · ขนาดไม่เกิน 2MB
+              </div>
+              <div v-if="imageError" class="course-form__file-error">{{ imageError }}</div>
+              <div
+                v-if="imagePreviewUrl"
+                class="course-form__image-preview"
+                style="pointer-events: auto"
+              >
+                <img
+                  :src="imagePreviewUrl"
+                  class="course-form__image-thumb"
+                  alt="รูปหน้าปก"
+                  @click="imageZoomOpen = true"
+                />
+                <q-dialog v-model="imageZoomOpen" transition-show="scale" transition-hide="scale">
+                  <div class="course-form__zoom-wrap">
+                    <div class="course-form__zoom-toolbar">
+                      <q-btn
+                        flat
+                        round
+                        dense
+                        icon="close"
+                        color="white"
+                        class="course-form__zoom-close"
+                        v-close-popup
+                      />
+                    </div>
+                    <img :src="imagePreviewUrl" class="course-form__zoom-img" alt="รูปหน้าปก" />
+                  </div>
+                </q-dialog>
               </div>
             </div>
 
@@ -460,42 +577,59 @@
               <div class="course-form__label">
                 แนบไฟล์ CBS 001 หรือ CBS 002 <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <div class="course-form__upload-area" @dragover.prevent @drop.prevent="onFileDrop">
-                <template v-if="!form.file">
-                  <q-icon name="upload_file" size="32px" color="grey-5" />
-                  <p class="course-form__upload-hint">สามารถเลือกไฟล์ได้สูงสุด 1 ไฟล์</p>
-                  <q-btn
-                    outline
-                    no-caps
-                    color="primary"
-                    label="เลือกไฟล์"
-                    size="sm"
-                    @click="triggerFileInput"
-                  />
-                  <p class="course-form__upload-note">เฉพาะไฟล์ .pdf ขนาดไม่เกิน 2MB</p>
-                </template>
-                <template v-else>
-                  <q-icon name="picture_as_pdf" size="28px" color="negative" />
-                  <span class="course-form__file-name">{{ form.file.name }}</span>
-                  <span class="course-form__file-size">{{ formatSize(form.file.size) }}</span>
-                  <q-btn
-                    flat
-                    round
-                    dense
-                    icon="close"
-                    color="grey-6"
-                    size="sm"
-                    @click="form.file = undefined"
-                  />
-                </template>
+              <!-- มีไฟล์เดิมจากเซิร์ฟเวอร์ ยังไม่ได้อัปโหลดใหม่ -->
+              <div
+                v-if="props.initialData?.fileUrl && !form.file && !existingFileCleared"
+                class="course-form__existing-field"
+                style="pointer-events: auto"
+              >
+                <q-icon name="picture_as_pdf" size="18px" color="negative" />
+                <a
+                  :href="props.initialData.fileUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="course-form__existing-filename course-form__file-link"
+                >
+                  {{ props.initialData.fileName ?? 'เปิดไฟล์ CBS' }}
+                </a>
+                <q-icon
+                  v-if="!props.readonly"
+                  name="close"
+                  class="cursor-pointer"
+                  color="negative"
+                  size="18px"
+                  @click.stop.prevent="existingFileCleared = true"
+                />
               </div>
-              <input
-                ref="fileInputRef"
-                type="file"
+              <!-- ไม่มีไฟล์เดิม หรือถูกลบแล้ว หรืออัปโหลดใหม่แล้ว -->
+              <q-file
+                v-else
+                v-model="form.file"
+                outlined
+                dense
                 accept=".pdf,application/pdf"
-                class="hidden"
-                @change="onFileChange"
-              />
+                :max-file-size="2097152"
+                label="เลือกไฟล์ CBS"
+                hide-bottom-space
+                class="course-form__input"
+                @update:model-value="fileError = null"
+                @rejected="onCbsRejected"
+              >
+                <template #prepend>
+                  <q-icon name="upload_file" />
+                </template>
+                <template v-if="form.file" #append>
+                  <q-icon
+                    name="close"
+                    class="cursor-pointer"
+                    color="negative"
+                    @click.stop.prevent="form.file = undefined"
+                  />
+                </template>
+              </q-file>
+              <div v-if="!props.readonly" class="text-caption text-grey-6 q-mt-xs">
+                เฉพาะไฟล์ .pdf ขนาดไม่เกิน 2MB
+              </div>
               <div v-if="fileError" class="course-form__file-error">{{ fileError }}</div>
             </div>
 
@@ -648,6 +782,7 @@
                 v-model="form.contactName"
                 outlined
                 dense
+                maxlength="100"
                 placeholder="ชื่อ-นามสกุล ผู้ประสานงาน"
                 :rules="[requiredRule]"
                 class="course-form__input"
@@ -662,6 +797,7 @@
                 v-model="form.contactTel"
                 outlined
                 dense
+                maxlength="30"
                 placeholder="038-123-456"
                 :rules="[requiredRule, phoneRule]"
                 class="course-form__input"
@@ -677,6 +813,7 @@
                 v-model="form.contactEmail"
                 outlined
                 dense
+                maxlength="100"
                 type="email"
                 placeholder="example@buu.ac.th"
                 :rules="[requiredRule, emailRule]"
@@ -692,6 +829,7 @@
                 v-model="form.contactUrl"
                 outlined
                 dense
+                maxlength="255"
                 placeholder="https://www.example.com"
                 hide-bottom-space
                 class="course-form__input"
@@ -706,12 +844,16 @@
         ref="chaptersSectionRef"
         data-course-form-section="chapters"
       >
-        <AdminCourseChapterTab v-model="chapters" :chapter-types="formOptions.chapterTypes" />
+        <AdminCourseChapterTab
+          v-model="chapters"
+          :chapter-types="formOptions.chapterTypes"
+          :readonly="props.readonly"
+        />
       </section>
     </div>
 
     <!-- Actions -->
-    <div class="course-form__actions">
+    <div v-if="!props.readonly" class="course-form__actions">
       <AdminActionButton
         variant="secondary"
         label="ยกเลิก"
@@ -738,6 +880,7 @@ import { api } from 'src/boot/axios';
 import { useAdminCourseForm } from 'src/composables/use-admin-course-form';
 import { useAuthStore } from 'src/stores/auth-store';
 import type {
+  AdminCourseDetail,
   CourseChapterPayload,
   CourseTargetPayload,
   CreateCoursePayload,
@@ -750,6 +893,8 @@ import AdminSectionNav, { type AdminSectionNavItem } from './AdminSectionNav.vue
 
 const props = defineProps<{
   submitOverride?: (payload: CreateCoursePayload) => Promise<{ courseId: number }>;
+  readonly?: boolean;
+  initialData?: AdminCourseDetail | null;
 }>();
 
 const emit = defineEmits<{
@@ -780,7 +925,8 @@ void fetchFormOptions();
 const form = reactive({
   nameTh: '',
   nameEn: '',
-  summary: '',
+  description: '',
+  summaryItems: [] as string[],
   facultyId: undefined as number | undefined,
   typeCourseId: undefined as number | undefined,
   creditBank: '',
@@ -809,6 +955,13 @@ const form = reactive({
   file: undefined as File | undefined,
 });
 
+// Convert YYYY-MM-DD → DD/MM/YYYY for form display
+function toFormDate(s: string | null | undefined): string {
+  if (!s || s.length < 10) return '';
+  const [y, m, d] = s.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 const selectedTargetIds = ref<number[]>([]);
 const selectedSubtargetIds = ref<number[]>([]);
 const subtargetOtherText = ref<Record<number, string>>({});
@@ -824,6 +977,92 @@ const selectedInstructors = ref<InstructorOption[]>([]);
 const instructorSearchModel = ref<InstructorOption | null>(null);
 const instructorOptions = ref<InstructorOption[]>([]);
 const instructorSearching = ref(false);
+
+const existingImageCleared = ref(false);
+const existingFileCleared = ref(false);
+
+const imageBlobUrl = ref<string | null>(null);
+const imageZoomOpen = ref(false);
+watch(
+  () => form.image,
+  (file, prev) => {
+    if (prev && imageBlobUrl.value) URL.revokeObjectURL(imageBlobUrl.value);
+    imageBlobUrl.value = file ? URL.createObjectURL(file) : null;
+  },
+);
+const imagePreviewUrl = computed(
+  () =>
+    imageBlobUrl.value ??
+    (existingImageCleared.value ? null : (props.initialData?.imageUrl ?? null)),
+);
+
+const existingImageFilename = computed(() => {
+  const url = props.initialData?.imageUrl;
+  if (!url) return '';
+  try {
+    return new URL(url).pathname.split('/').pop() ?? url;
+  } catch {
+    return url.split('/').pop() ?? url;
+  }
+});
+
+watch(
+  () => props.initialData,
+  (data) => {
+    if (!data) return;
+    existingImageCleared.value = false;
+    existingFileCleared.value = false;
+    form.nameTh = data.nameTh ?? '';
+    form.nameEn = data.nameEn ?? '';
+    form.description = data.description ?? '';
+    form.summaryItems = (data.summary ?? '').split('\n').filter(Boolean);
+    form.facultyId = data.facultyId ?? undefined;
+    form.typeCourseId = data.typeCourseId ?? undefined;
+    form.creditBank = data.creditBank ?? '';
+    form.theoryHours = data.theoryHours ?? undefined;
+    form.practiceHours = data.practiceHours ?? undefined;
+    form.studyTypeId = data.studyTypeId ?? undefined;
+    form.skillIds = data.skillIds ?? [];
+    form.startDate = toFormDate(data.startDate);
+    form.endDate = toFormDate(data.endDate);
+    form.categoryId = data.categoryId ?? undefined;
+    form.subcategoryId = data.subcategoryId ?? undefined;
+    form.classTypeId = data.classTypeId ?? undefined;
+    form.classFee = data.classFee ?? 0;
+    form.classFeeRemark = data.classFeeRemark ?? '';
+    form.precondition = data.precondition ?? '';
+    form.hasCertificate = data.certificate === 'Y';
+    form.certificateName = data.certificateName ?? '';
+    form.registrationStart = toFormDate(data.registrationStart);
+    form.registrationEnd = toFormDate(data.registrationEnd);
+    form.maxSeats = data.maxSeats ?? undefined;
+    form.contactName = data.contactName ?? '';
+    form.contactTel = data.contactTel ?? '';
+    form.contactEmail = data.contactEmail ?? '';
+    form.contactUrl = data.contactUrl ?? '';
+    selectedInstructors.value = data.instructors
+      .filter((i) => i.email)
+      .map((i) => ({ username: '', email: i.email ?? '', fullName: i.email ?? '' }));
+    chapters.value = data.chapters.map((ch) => {
+      const entry: CourseChapterPayload = { subject: ch.subject };
+      if (ch.hour != null) entry.hour = ch.hour;
+      if (ch.chapterTypeId != null) entry.chapterTypeId = ch.chapterTypeId;
+      if (ch.chapterTypeOther) entry.chapterTypeOther = ch.chapterTypeOther;
+      if (ch.subchapters?.length) entry.subchapters = ch.subchapters;
+      return entry;
+    });
+    selectedTargetIds.value = data.targets.map((t) => t.targetId);
+    selectedSubtargetIds.value = data.targets
+      .filter((t) => t.subtargetId != null)
+      .map((t) => t.subtargetId as number);
+    subtargetOtherText.value = Object.fromEntries(
+      data.targets
+        .filter((t) => t.subtargetId != null && t.other)
+        .map((t) => [t.subtargetId as number, t.other as string]),
+    );
+  },
+  { immediate: true },
+);
 
 function addInstructor(inst: InstructorOption | null) {
   if (!inst) return;
@@ -862,8 +1101,8 @@ async function filterInstructors(val: string, update: (fn: () => void) => void, 
   }
 }
 
-const fileInputRef = ref<HTMLInputElement | null>(null);
 const fileError = ref<string | null>(null);
+const imageError = ref<string | null>(null);
 const creditBankFieldRef = ref<HTMLElement | null>(null);
 const creditBankInputRef = ref<InstanceType<typeof QInput> | null>(null);
 const endDateInputRef = ref<InstanceType<typeof BaseDateInput> | null>(null);
@@ -981,44 +1220,21 @@ function onNumberKeypress(e: KeyboardEvent) {
   if (!/[\d.]/.test(e.key)) e.preventDefault();
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+function onCbsRejected(entries: { failedPropValidation: string }[]) {
+  const entry = entries[0];
+  if (!entry) return;
+  fileError.value =
+    entry.failedPropValidation === 'max-file-size'
+      ? 'ขนาดไฟล์ต้องไม่เกิน 2MB'
+      : 'รองรับเฉพาะไฟล์ PDF เท่านั้น';
 }
 
-function triggerFileInput() {
-  fileInputRef.value?.click();
-}
-
-function validateAndSetFile(file: File) {
-  fileError.value = null;
-  const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-  if (!isPdf) {
-    fileError.value = 'รองรับเฉพาะไฟล์ PDF เท่านั้น';
-    return;
-  }
-  if (file.size > 2 * 1024 * 1024) {
-    fileError.value = 'ขนาดไฟล์ต้องไม่เกิน 2MB';
-    return;
-  }
-  form.file = file;
-}
-
-function onFileChange(e: Event) {
-  const input = e.target as HTMLInputElement;
-  if (input.files?.[0]) validateAndSetFile(input.files[0]);
-  input.value = '';
-}
-
-function onFileDrop(e: DragEvent) {
-  const file = e.dataTransfer?.files[0];
-  if (file) validateAndSetFile(file);
-}
-
-function onImageRejected() {
-  fileError.value = null;
-  error.value = 'ไฟล์รูปต้องเป็น jpg, png หรือ webp และไม่เกิน 2MB';
+function onImageRejected(entries: { failedPropValidation: string }[]) {
+  const entry = entries[0];
+  imageError.value =
+    entry?.failedPropValidation === 'max-file-size'
+      ? 'ขนาดรูปต้องไม่เกิน 2MB'
+      : 'ไฟล์รูปต้องเป็น jpg, png หรือ webp และไม่เกิน 2MB';
 }
 
 function buildTargets(): CourseTargetPayload[] {
@@ -1097,7 +1313,8 @@ async function submit() {
   const payload: CreateCoursePayload = {
     nameTh: form.nameTh,
     nameEn: form.nameEn,
-    summary: form.summary || undefined,
+    summary: form.summaryItems.filter((s) => s.trim()).join('\n') || undefined,
+    description: form.description.trim() || undefined,
     facultyId: form.facultyId!,
     typeCourseId: form.typeCourseId!,
     creditBank: form.typeCourseId === 2 && form.creditBank ? form.creditBank : undefined,
@@ -1126,7 +1343,9 @@ async function submit() {
     contactEmail: form.contactEmail,
     contactUrl: form.contactUrl || undefined,
     image: form.image,
+    removeImage: existingImageCleared.value || undefined,
     file: form.file,
+    removeFile: existingFileCleared.value || undefined,
     createUser: authStore.user?.username ?? undefined,
     instructors: selectedInstructors.value.length
       ? selectedInstructors.value.map((i) => ({ username: i.username, email: i.email }))
@@ -1282,47 +1501,24 @@ async function submit() {
   padding-top: 9px;
 }
 
-.course-form__upload-area {
+.course-form__existing-field {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  min-height: 120px;
-  border: 2px dashed #cbd5e0;
-  border-radius: 10px;
-  padding: 20px;
-  cursor: pointer;
-  transition: border-color 0.2s;
-  background: #fafbfc;
-
-  &:hover {
-    border-color: var(--q-primary);
-  }
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 0, 0, 0.24);
+  border-radius: 4px;
+  background: transparent;
 }
 
-.course-form__upload-hint {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #718096;
-}
-
-.course-form__upload-note {
-  margin: 0;
-  font-size: 0.75rem;
-  color: #a0aec0;
-  text-align: center;
-}
-
-.course-form__file-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--admin-navy, #1a2240);
-}
-
-.course-form__file-size {
-  font-size: 0.75rem;
-  color: #718096;
+.course-form__existing-filename {
+  flex: 1;
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.87);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .course-form__file-error {
@@ -1463,5 +1659,99 @@ async function submit() {
 
 .course-form__panels {
   background: transparent;
+}
+
+.course-form__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.course-form__add-btn {
+  padding: 0 4px !important;
+  min-height: 32px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.course-form__summary-empty {
+  font-size: 0.82rem;
+  color: #a0aec0;
+  padding: 8px 4px;
+}
+
+.course-form__summary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.course-form__summary-seq {
+  font-size: 0.82rem;
+  color: #a0aec0;
+  min-width: 20px;
+  text-align: right;
+}
+
+.course-form__summary-input {
+  flex: 1;
+}
+
+.course-form--readonly .course-form__panels {
+  pointer-events: none;
+  user-select: text;
+}
+
+.course-form__image-preview {
+  margin-top: 8px;
+}
+
+.course-form__image-thumb {
+  display: block;
+  width: 320px;
+  height: 180px;
+  border-radius: 8px;
+  cursor: zoom-in;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  object-fit: cover;
+}
+
+.course-form__zoom-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: transparent;
+  box-shadow: none;
+  max-width: min(720px, 86vw);
+}
+
+.course-form__zoom-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 0 4px;
+}
+
+.course-form__zoom-close {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.course-form__zoom-img {
+  display: block;
+  width: 100%;
+  max-height: 86vh;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.course-form__file-link {
+  color: $primary;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  &:hover {
+    text-decoration: underline;
+  }
 }
 </style>

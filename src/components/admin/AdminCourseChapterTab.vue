@@ -6,13 +6,15 @@
       subtitle="โครงสร้างบทเรียนและหัวข้อย่อยของรายวิชา"
       body-padding="lg"
     >
-      <template #header-actions>
+      <template v-if="!readonly" #header-actions>
         <AdminActionButton variant="primary" icon="add" label="เพิ่มบทเรียน" @click="addChapter" />
       </template>
 
       <div v-if="chapters.length === 0" class="chapter-tab__empty">
         <q-icon name="menu_book" size="40px" color="grey-4" />
-        <p class="text-grey-5">ยังไม่มีบทเรียน กดเพิ่มบทเรียนเพื่อเริ่มต้น</p>
+        <p class="text-grey-5">
+          {{ readonly ? 'ไม่มีบทเรียน' : 'ยังไม่มีบทเรียน กดเพิ่มบทเรียนเพื่อเริ่มต้น' }}
+        </p>
       </div>
 
       <div v-else class="chapter-tab__list">
@@ -21,7 +23,7 @@
             <!-- Header row -->
             <div class="chapter-tab__card-header">
               <span class="chapter-tab__seq">{{ idx + 1 }}</span>
-              <div class="chapter-tab__card-actions">
+              <div v-if="!readonly" class="chapter-tab__card-actions">
                 <q-btn
                   flat
                   round
@@ -128,6 +130,7 @@
               <div class="chapter-tab__sub-header">
                 <span class="chapter-tab__sub-title">หัวข้อย่อย</span>
                 <BaseButton
+                  v-if="!readonly"
                   flat
                   dense
                   no-caps
@@ -154,11 +157,12 @@
                   class="chapter-tab__input chapter-tab__sub-input"
                 />
                 <q-btn
+                  v-if="!readonly"
                   flat
                   round
                   dense
                   icon="close"
-                  color="grey-6"
+                  color="negative"
                   size="sm"
                   @click="removeSubchapter(idx, sIdx)"
                 />
@@ -181,6 +185,7 @@ import AdminActionButton from './AdminActionButton.vue';
 interface Props {
   modelValue: CourseChapterPayload[];
   chapterTypes: ChapterTypeFormOption[];
+  readonly?: boolean;
 }
 
 const props = defineProps<Props>();
