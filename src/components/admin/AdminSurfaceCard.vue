@@ -4,6 +4,7 @@
     :class="[
       'admin-surface-card',
       `admin-surface-card--${tone}`,
+      `admin-surface-card--${surface}`,
       { 'admin-surface-card--accent': accent },
       cardClass,
     ]"
@@ -43,6 +44,7 @@ interface Props {
   title?: string;
   subtitle?: string;
   tone?: 'default' | 'glass';
+  surface?: 'default' | 'subtle';
   accent?: boolean;
   bodyPadding?: 'none' | 'md' | 'lg';
   cardClass?: string | string[] | Record<string, boolean>;
@@ -54,6 +56,7 @@ const props = withDefaults(defineProps<Props>(), {
   title: '',
   subtitle: '',
   tone: 'default',
+  surface: 'default',
   accent: false,
   bodyPadding: 'lg',
   cardClass: '',
@@ -84,6 +87,14 @@ const showHeader = computed(() =>
   border-color: rgba(255, 255, 255, 0.16);
   box-shadow: none;
   backdrop-filter: blur(18px);
+}
+
+.admin-surface-card--subtle {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  border-color: rgba($primary, 0.08) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 1px 2px rgba($primary, 0.04);
 }
 
 .admin-surface-card--glass:hover {

@@ -25,6 +25,12 @@ export interface TargetFormOption {
   subtargets: SubtargetFormOption[];
 }
 
+export interface ChapterTypeFormOption {
+  id: number;
+  label: string;
+  isOther: boolean;
+}
+
 export interface AdminCourseFormOptions {
   faculties: CourseFormOption[];
   courseTypes: CourseFormOption[];
@@ -34,6 +40,19 @@ export interface AdminCourseFormOptions {
   categories: CourseFormOption[];
   subcategories: SubcategoryFormOption[];
   targets: TargetFormOption[];
+  chapterTypes: ChapterTypeFormOption[];
+}
+
+export interface CourseSubchapterPayload {
+  subject: string;
+}
+
+export interface CourseChapterPayload {
+  subject: string;
+  hour?: number;
+  chapterTypeId?: number;
+  chapterTypeOther?: string;
+  subchapters?: CourseSubchapterPayload[];
 }
 
 export interface CourseTargetPayload {
@@ -75,6 +94,7 @@ export interface CreateCoursePayload {
   file?: File | undefined;
   createUser?: string | undefined;
   instructors?: { username?: string; email?: string }[] | undefined;
+  chapters?: CourseChapterPayload[] | undefined;
 }
 
 export interface AdminCourseItem {

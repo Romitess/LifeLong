@@ -23,6 +23,7 @@ function emptyOptions(): AdminCourseFormOptions {
     categories: [],
     subcategories: [],
     targets: [],
+    chapterTypes: [],
   };
 }
 
@@ -89,6 +90,7 @@ export function useAdminCourseForm() {
       if (payload.createUser) form.append('createUser', payload.createUser);
       if (payload.instructors?.length)
         form.append('instructorsJson', JSON.stringify(payload.instructors));
+      if (payload.chapters?.length) form.append('chaptersJson', JSON.stringify(payload.chapters));
 
       const { data } = await api.post<{ courseId: number }>('/api/admin/courses', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
