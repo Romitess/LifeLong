@@ -40,7 +40,8 @@
                 {{ $t('finance.sourceOfFunds.code') }} <span class="text-negative">*</span>
               </label>
               <q-input
-                :model-value="form.code"
+                ref="codeInputRef"
+                v-model="form.code"
                 outlined
                 dense
                 :placeholder="$t('finance.sourceOfFunds.codePlaceholder')"
@@ -49,7 +50,11 @@
                 class="admin-editor-field"
                 :rules="codeFieldRules"
                 lazy-rules
-                @update:model-value="onCodeInput"
+                @keypress="
+                  (e: KeyboardEvent) => {
+                    if (!/^\d$/.test(e.key)) e.preventDefault();
+                  }
+                "
               />
             </div>
 
@@ -286,19 +291,41 @@
         </div>
       </AdminSurfaceCard>
     </section>
+
+    <AdminConfirmDialog
+      v-model="confirmDeleteOpen"
+      title="ลบผังแหล่งเงิน"
+      :message="
+        pendingDeleteRow
+          ? `ต้องการลบผังแหล่งเงิน '${pendingDeleteRow.code} - ${pendingDeleteRow.name}' ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้`
+          : 'ต้องการลบรายการนี้ใช่หรือไม่?'
+      "
+      confirm-label="ลบ"
+      cancel-label="ยกเลิก"
+      confirm-color="negative"
+      icon-color="negative"
+      @confirm="confirmDelete"
+      @cancel="pendingDeleteRow = null"
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import { useQuasar, type QTableProps } from 'quasar';
-import { computed, onMounted, ref, watch } from 'vue';
+import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
+import { useQuasar, type QTableProps, type QInput } from 'quasar';
+import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from 'boot/axios';
 
 const $q = useQuasar();
 const { t } = useI18n();
+
+const codeInputRef = ref<InstanceType<typeof QInput> | null>(null);
+
+const confirmDeleteOpen = ref(false);
+const pendingDeleteRow = ref<FundChartRow | null>(null);
 
 // -- Backend response type --
 interface CostplanApiRow {
@@ -447,9 +474,13 @@ const codeFieldRules = computed(() => [
   (v: string) => /^\d+$/.test(String(v ?? '')) || t('finance.sourceOfFunds.validation.codeNumeric'),
 ]);
 
-function onCodeInput(v: string | number | null | undefined) {
-  form.value.code = String(v ?? '').replace(/\D/g, '');
-}
+watch(
+  () => form.value.code,
+  (val) => {
+    const cleaned = String(val ?? '').replace(/\D/g, '');
+    if (cleaned !== val) form.value.code = cleaned;
+  },
+);
 
 const columns = computed<QTableProps['columns']>(() => [
   {
@@ -507,6 +538,9 @@ function resetForm() {
     name: '',
     active: true,
   };
+  void nextTick(() => {
+    codeInputRef.value?.resetValidation();
+  });
 }
 
 async function onSave() {
@@ -573,34 +607,35 @@ function onEdit(row: FundChartRow) {
     name: row.name,
     active: row.active,
   };
+  void nextTick(() => {
+    codeInputRef.value?.resetValidation();
+  });
 }
 
 function onDelete(row: FundChartRow) {
   if (row.referencedInCourse) {
     return;
   }
+  pendingDeleteRow.value = row;
+  confirmDeleteOpen.value = true;
+}
 
-  $q.dialog({
-    title: 'ยืนยันการลบ',
-    message: `ต้องการลบ "${row.name}" (${row.code}) หรือไม่`,
-    cancel: { flat: true, color: 'grey-8', label: 'ยกเลิก' },
-    ok: { color: 'negative', label: 'ลบ', unelevated: true },
-    persistent: true,
-  }).onOk(() => {
-    void (async () => {
-      try {
-        await api.delete(`/api/lltcostplan/${row.backendId}`);
-        if (editingId.value === row.id) {
-          resetForm();
-        }
-        $q.notify({ type: 'positive', message: 'ลบรายการแล้ว' });
-        await fetchRows();
-      } catch (err) {
-        console.error('Error deleting costplan:', err);
-        $q.notify({ type: 'negative', message: 'เกิดข้อผิดพลาดในการลบข้อมูล' });
-      }
-    })();
-  });
+async function confirmDelete() {
+  if (!pendingDeleteRow.value) return;
+  const row = pendingDeleteRow.value;
+  pendingDeleteRow.value = null;
+
+  try {
+    await api.delete(`/api/lltcostplan/${row.backendId}`);
+    if (editingId.value === row.id) {
+      resetForm();
+    }
+    $q.notify({ type: 'positive', message: 'ลบรายการแล้ว' });
+    await fetchRows();
+  } catch (err) {
+    console.error('Error deleting costplan:', err);
+    $q.notify({ type: 'negative', message: 'เกิดข้อผิดพลาดในการลบข้อมูล' });
+  }
 }
 </script>
 
