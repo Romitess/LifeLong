@@ -39,6 +39,12 @@ export interface CourseTarget {
   sequence: number | null;
 }
 
+export interface EvaluationDetail {
+  id: number;
+  name: string | null;
+  other: string | null;
+}
+
 export interface CourseDetail extends Course {
   descriptionFull: string;
   descriptionFullEn?: string;
@@ -64,6 +70,16 @@ export interface CourseDetail extends Course {
   previewVideoUrl?: string;
   previewPosterUrl?: string;
   targets?: CourseTarget[];
+  evaluation?: EvaluationDetail | null;
   precondition?: string | null;
   property?: string | null;
+}
+
+export type RegistrationWindowStatus = 'upcoming' | 'open' | 'closed';
+
+export interface EnrollmentAction {
+  label: string;
+  icon: string;
+  color: string;
+  disabled: boolean;
 }

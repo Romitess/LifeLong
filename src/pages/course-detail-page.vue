@@ -205,12 +205,6 @@
                           :key="`precondition-${idx}`"
                           class="applicant-req__item row items-start q-mb-xs"
                         >
-                          <q-icon
-                            name="remove"
-                            size="18px"
-                            color="grey-6"
-                            class="q-mr-xs q-mt-xs"
-                          />
                           <span class="text-body2 text-grey-9">{{ line.trim() }}</span>
                         </div>
                       </template>
@@ -237,12 +231,6 @@
                           :key="`property-${idx}`"
                           class="applicant-req__item row items-start q-mb-xs"
                         >
-                          <q-icon
-                            name="remove"
-                            size="18px"
-                            color="grey-6"
-                            class="q-mr-xs q-mt-xs"
-                          />
                           <span class="text-body2 text-grey-9">{{ line.trim() }}</span>
                         </div>
                       </template>
@@ -668,30 +656,27 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { api } from 'src/boot/axios';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue';
 import CourseRecommendationSection from 'components/course/CourseRecommendationSection.vue';
 import BaseConfirmDialog from 'components/base/BaseConfirmDialog.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import { useCourseDetail } from 'src/composables/use-course-detail';
+import { useCourseChapers } from 'src/composables/use-course-chapters';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseRegistrationStore } from 'src/stores/course-registration-store';
 import { useCourseBookmarkStore } from 'src/stores/course-bookmark-store';
 import type { Course, DeliveryMode } from 'src/types/course';
-import type { CourseDetail, CourseSchedule, CourseSyllabus } from 'src/types/course-detail';
+import type {
+  CourseDetail,
+  CourseSchedule,
+  CourseSyllabus,
+  EnrollmentAction,
+  RegistrationWindowStatus,
+} from 'src/types/course-detail';
 import { useI18n } from 'vue-i18n';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
-
-type RegistrationWindowStatus = 'upcoming' | 'open' | 'closed';
-
-interface EnrollmentAction {
-  label: string;
-  icon: string;
-  color: string;
-  disabled: boolean;
-}
 
 const { locale, t } = useI18n();
 
@@ -861,6 +846,7 @@ function getYoutubeEmbedUrl(videoUrl: string, showControls: boolean): string {
 const courseId = computed<string>(getRouteCourseId);
 const { course, recommendedCourses, isLoading, error, fetchCourseDetail } =
   useCourseDetail(courseId);
+const { chapters: dbChapters, fetchChapters } = useCourseChapers();
 
 const enrollmentDialogCourse = ref<CourseDetail | null>(null);
 const enrollmentDialogOpenKey = ref(0);
@@ -1092,35 +1078,15 @@ function onToggleBookmark(): void {
   courseBookmarkStore.toggleBookmark(course.value);
 }
 
-interface DBChapter {
-  id: number;
-  courseId: number;
-  name: string | null;
-  hour: number | null;
-  seq: number | null;
-}
-
-const dbChapters = ref<DBChapter[]>([]);
-
-async function fetchChapters() {
-  dbChapters.value = [];
-  const rawId = courseId.value ? courseId.value.replace('db-', '') : '';
-  const moodleId = Number(rawId);
-  if (!moodleId || Number.isNaN(moodleId)) return;
-
-  try {
-    const { data } = await api.get<DBChapter[]>(`/api/lltcoursechapter/course/${moodleId}`);
-    dbChapters.value = data || [];
-  } catch (err) {
-    console.error('Failed to fetch course chapters:', err);
-  }
-}
-
 watch(
   courseId,
   () => {
     void fetchCourseDetail();
-    void fetchChapters();
+    const rawId = courseId.value ? courseId.value.replace('db-', '') : '';
+    const moodleId = Number(rawId);
+    if (moodleId && !Number.isNaN(moodleId)) {
+      void fetchChapters(moodleId);
+    }
   },
   { immediate: true },
 );
