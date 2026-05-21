@@ -7,7 +7,7 @@ import { useCourseStore } from 'src/stores/course-store';
 type CourseIdSource = string | Ref<string>;
 
 interface BackendCourseDetailResponse {
-  lo?: string | null;
+  objective?: string | null;
   evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
   targets?: CourseTarget[] | null;
   precondition?: string | null;
@@ -82,15 +82,17 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
             `/api/moodle/courses/${numId}`,
           );
           if (data) {
-            const loLines: string[] =
-              data.lo
-                ?.split('\n')
-                .map((line) => line.trim())
-                .filter((line) => line.length > 0) ?? [];
+            // Parse objective: support newline or semicolon as separator
+            const rawObjective = data.objective ?? '';
+            const objectiveLines: string[] = rawObjective
+              .split(/\n|;/)
+              .map((line) => line.trim())
+              .filter((line) => line.length > 0);
 
             course.value = {
               ...detail,
-              ...(loLines.length > 0 ? { objectives: loLines } : {}),
+              // Always override objectives from API response (even if empty, clears the placeholder)
+              objectives: objectiveLines,
               targets: data.targets ?? [],
               evaluation: data.evaluationDetail ?? null,
               precondition: data.precondition ?? null,
