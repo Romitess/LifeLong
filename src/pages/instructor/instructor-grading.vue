@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="grading-page bg-grey-1">
     <div class="section-container q-py-lg">
       <!-- ─── HEADER ─── -->
@@ -177,9 +177,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from 'src/stores/auth-store';
+import { useCourseStore } from 'src/stores/course-store';
+import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 
 interface Submission {
   id: string;
@@ -193,20 +196,113 @@ interface Submission {
 
 const $q = useQuasar();
 const router = useRouter();
+const authStore = useAuthStore();
+const courseStore = useCourseStore();
+const instructorBackend = useInstructorBackend();
 
-const assignmentTitle = ref('ใบงานวิเคราะห์กรณีศึกษา');
-const courseCode = ref('GEM201');
-const totalStudents = 40;
-const submittedCount = 31;
 const filter = ref('');
 const loading = ref(false);
 
-const stats = [
-  { label: 'ส่งแล้ว', value: '31', icon: 'send', color: '#1976d2', bg: '#e3f2fd' },
-  { label: 'ตรวจแล้ว', value: '22', icon: 'fact_check', color: '#2e7d32', bg: '#e8f5e9' },
-  { label: 'รอการตรวจ', value: '9', icon: 'pending_actions', color: '#f57c00', bg: '#fff3e0' },
-  { label: 'คะแนนเฉลี่ย', value: '84.5', icon: 'analytics', color: '#673ab7', bg: '#f3e5f5' },
-];
+onMounted(() => {
+  courseStore.init();
+  const email = authStore.user?.email;
+  if (email) {
+    void courseStore.fetchInstructorCourses(email);
+  }
+});
+
+const instructorCourses = computed(() => courseStore.getInstructorCourses(authStore.user));
+const selectedCourse = computed(() => instructorCourses.value[0]);
+const assignmentTitle = computed(() => selectedCourse.value?.title ?? 'รายการคะแนน');
+const courseCode = computed(() => selectedCourse.value?.code ?? '-');
+
+watch(
+  selectedCourse,
+  async (course) => {
+    const email = authStore.user?.email;
+    if (!course || !email) return;
+    loading.value = true;
+    try {
+      await Promise.all([
+        instructorBackend.fetchLearners(email, course.id),
+        instructorBackend.fetchGrades(email, course.id),
+      ]);
+    } finally {
+      loading.value = false;
+    }
+  },
+  { immediate: true },
+);
+
+const submissions = computed<Submission[]>(() => {
+  const course = selectedCourse.value;
+  if (!course) return [];
+  const learners = instructorBackend.learnersByCourseId.value[course.id] ?? [];
+  const grades = instructorBackend.gradesByCourseId.value[course.id] ?? [];
+
+  return learners.map((learner) => {
+    const grade = grades.find(
+      (candidate) =>
+        candidate.learnerUserId === learner.userId || candidate.studentId === learner.studentId,
+    );
+    return {
+      id: learner.studentId,
+      name: learner.fullName,
+      submittedAt: grade?.updatedAt ? formatDateTime(grade.updatedAt) : null,
+      fileName: grade?.grade ?? null,
+      status: getGradeStatus(grade?.status),
+      score: grade?.score ?? null,
+      feedback: '',
+    };
+  });
+});
+
+const totalStudents = computed(() => submissions.value.length);
+const submittedCount = computed(() => submissions.value.filter((row) => row.score !== null).length);
+const reviewedCount = computed(
+  () => submissions.value.filter((row) => row.status === 'ตรวจแล้ว').length,
+);
+const pendingCount = computed(
+  () => submissions.value.filter((row) => row.status !== 'ตรวจแล้ว').length,
+);
+const averageScore = computed(() => {
+  const scores = submissions.value
+    .map((row) => row.score)
+    .filter((score): score is number => typeof score === 'number');
+  if (!scores.length) return '-';
+  return (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(2);
+});
+
+const stats = computed(() => [
+  {
+    label: 'มีคะแนนแล้ว',
+    value: submittedCount.value.toLocaleString('th-TH'),
+    icon: 'send',
+    color: '#1976d2',
+    bg: '#e3f2fd',
+  },
+  {
+    label: 'ตรวจแล้ว',
+    value: reviewedCount.value.toLocaleString('th-TH'),
+    icon: 'fact_check',
+    color: '#2e7d32',
+    bg: '#e8f5e9',
+  },
+  {
+    label: 'รอคะแนน',
+    value: pendingCount.value.toLocaleString('th-TH'),
+    icon: 'pending_actions',
+    color: '#f57c00',
+    bg: '#fff3e0',
+  },
+  {
+    label: 'คะแนนเฉลี่ย',
+    value: averageScore.value,
+    icon: 'analytics',
+    color: '#673ab7',
+    bg: '#f3e5f5',
+  },
+]);
 
 const columns: QTableColumn<Submission>[] = [
   {
@@ -218,7 +314,7 @@ const columns: QTableColumn<Submission>[] = [
   },
   {
     name: 'submission',
-    label: 'ไฟล์ที่ส่ง / วันเวลา',
+    label: 'ข้อมูลคะแนนจากระบบ',
     align: 'left',
     field: (row) => row.submittedAt || '',
     sortable: true,
@@ -234,54 +330,6 @@ const columns: QTableColumn<Submission>[] = [
   { name: 'actions', label: '', align: 'right', field: 'id' },
 ];
 
-const submissions = ref<Submission[]>([
-  {
-    id: '6501001',
-    name: 'นายกิตติคุณ มั่งมี',
-    submittedAt: '30 เม.ย. 14:22',
-    fileName: 'case_study_v1.pdf',
-    status: 'ตรวจแล้ว',
-    score: 85,
-    feedback: '',
-  },
-  {
-    id: '6501002',
-    name: 'นางสาวนลินี มีสุข',
-    submittedAt: '30 เม.ย. 15:10',
-    fileName: 'analysis_final.pdf',
-    status: 'รอตรวจ',
-    score: null,
-    feedback: '',
-  },
-  {
-    id: '6501003',
-    name: 'นายวรวุฒิ ใจดี',
-    submittedAt: '29 เม.ย. 09:45',
-    fileName: 'homework2.pdf',
-    status: 'ตรวจแล้ว',
-    score: 78,
-    feedback: '',
-  },
-  {
-    id: '6501004',
-    name: 'นางสาวอลิสา สดใส',
-    submittedAt: '29 เม.ย. 11:30',
-    fileName: 'final_report.pdf',
-    status: 'รอตรวจ',
-    score: null,
-    feedback: '',
-  },
-  {
-    id: '6501005',
-    name: 'นายธนกร ร่ำรวย',
-    submittedAt: null,
-    fileName: null,
-    status: 'ยังไม่ส่ง',
-    score: 0,
-    feedback: '',
-  },
-]);
-
 const feedbackDialog = reactive({
   show: false,
   studentName: '',
@@ -289,22 +337,36 @@ const feedbackDialog = reactive({
   currentIndex: -1,
 });
 
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
+
+function getGradeStatus(status: 'passed' | 'failed' | 'pending' | undefined): string {
+  if (status === 'passed' || status === 'failed') return 'ตรวจแล้ว';
+  return 'รอคะแนน';
+}
+
 function getStatusColor(status: string) {
   if (status === 'ตรวจแล้ว') return 'positive';
-  if (status === 'รอตรวจ') return 'warning';
+  if (status === 'รอคะแนน') return 'warning';
   return 'grey-6';
 }
 
 function onScoreChange(row: Submission) {
-  if (row.score !== null) {
-    row.status = 'ตรวจแล้ว';
-    $q.notify({
-      type: 'info',
-      message: `บันทึกคะแนนให้ ${row.name} แล้ว`,
-      position: 'bottom-right',
-      timeout: 1000,
-    });
-  }
+  $q.notify({
+    type: 'info',
+    message: `คะแนนของ ${row.name} มาจาก backend/Moodle โดยตรง`,
+    position: 'bottom-right',
+    timeout: 1000,
+  });
 }
 
 function openFeedback(row: Submission) {
@@ -315,15 +377,11 @@ function openFeedback(row: Submission) {
 }
 
 function saveFeedback() {
-  const index = feedbackDialog.currentIndex;
-  if (index > -1 && submissions.value[index]) {
-    submissions.value[index].feedback = feedbackDialog.text;
-    $q.notify({
-      type: 'positive',
-      message: 'บันทึกข้อเสนอแนะแล้ว',
-      position: 'top',
-    });
-  }
+  $q.notify({
+    type: 'info',
+    message: 'การบันทึก feedback จะเชื่อม backend ในขั้นถัดไป',
+    position: 'top',
+  });
   feedbackDialog.show = false;
 }
 </script>

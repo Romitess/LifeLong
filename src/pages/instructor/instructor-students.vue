@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="instructor-students-page">
     <div class="section-container instructor-students">
       <section class="students-hero">
@@ -6,7 +6,7 @@
           <div class="students-hero__eyebrow">Student Roster</div>
           <h1>รายชื่อนิสิต</h1>
           <p v-if="selectedCourse">
-            {{ selectedCourse.code }} · {{ selectedCourse.titleEn || selectedCourse.title }}
+            {{ selectedCourse.code }} ยท {{ selectedCourse.titleEn || selectedCourse.title }}
           </p>
           <p v-else>เลือกคอร์สเพื่อดูรายชื่อนิสิตและรายละเอียดรายบุคคล</p>
         </div>
@@ -156,7 +156,7 @@
         <div class="student-roster-panel__summary">
           <div>
             <span>ลงทะเบียนแล้ว</span>
-            <strong>{{ selectedCourse.enrolledCount.toLocaleString() }}</strong>
+            <strong>{{ displayedEnrolledCount.toLocaleString() }}</strong>
           </div>
           <div>
             <span>จำนวนที่นั่ง</span>
@@ -594,7 +594,7 @@
           <div>
             <div class="text-h6 text-weight-bold">{{ selectedLearner.name }}</div>
             <div class="text-body2 text-grey-7">
-              {{ selectedLearner.studentId }} · {{ selectedLearner.email }}
+              {{ selectedLearner.studentId }} ยท {{ selectedLearner.email }}
             </div>
             <q-badge
               rounded
@@ -659,12 +659,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { getCourseStructure } from 'src/data/course-structure';
+import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import type { Course } from 'src/types/course';
 
 interface LearnerRow {
@@ -707,6 +708,7 @@ const $q = useQuasar();
 const route = useRoute();
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
+const instructorBackend = useInstructorBackend();
 courseStore.init();
 
 const selectedCourseId = ref('');
@@ -743,88 +745,104 @@ const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
 );
 
-const learnerNamePool = [
-  'ณัฐพงศ์ ไม้อยู่',
-  'สมชาย รักดี',
-  'มานี มีใจ',
-  'วิชัย ใจตรง',
-  'ฟ้า สดใส',
-  'กิตติคุณ มั่งมี',
-  'นลินี มีสุข',
-  'วรวุฒิ ใจดี',
-  'อลิสา สดใส',
-  'ธนกร ร่ำรวย',
-  'ปาณิสรา แสงดาว',
-  'ชยพล ตั้งใจ',
-  'สุภาวดี เรียนดี',
-  'ภานุวัฒน์ กล้าคิด',
-  'ณิชา พัฒนา',
-  'พีรพล ศึกษา',
-];
+onMounted(() => {
+  const email = authStore.user?.email;
+  if (email) {
+    void courseStore.fetchInstructorCourses(email);
+  }
+});
 
-const facultyPool = [
-  { faculty: 'คณะวิทยาการสารสนเทศ', department: 'สาขาวิทยาการคอมพิวเตอร์' },
-  { faculty: 'คณะวิทยาศาสตร์', department: 'ภาควิชาเคมี' },
-  { faculty: 'คณะวิศวกรรมศาสตร์', department: 'สาขาวิศวกรรมคอมพิวเตอร์' },
-  { faculty: 'คณะมนุษยศาสตร์และสังคมศาสตร์', department: 'สาขานิเทศศาสตร์' },
-];
-const defaultLearnerUnit = facultyPool[0] ?? {
-  faculty: 'มหาวิทยาลัยบูรพา',
-  department: 'Lifelong Learning',
-};
+watch(
+  selectedCourse,
+  (course) => {
+    const email = authStore.user?.email;
+    if (!course || !email) return;
+    void instructorBackend.fetchLearners(email, course.id, course.moodleId ?? null);
+    void instructorBackend.fetchGrades(email, course.id);
+  },
+  { immediate: true },
+);
 
 function getLearnerStatus(progress: number): Pick<LearnerRow, 'status' | 'statusColor'> {
   if (progress >= 85) return { status: 'เรียนต่อเนื่อง', statusColor: 'positive' };
   if (progress >= 60) return { status: 'ปกติ', statusColor: 'primary' };
   if (progress >= 35) return { status: 'ควรติดตาม', statusColor: 'warning' };
-  return { status: 'เสี่ยงหลุด', statusColor: 'negative' };
+  return { status: 'รอข้อมูลความคืบหน้า', statusColor: 'grey-7' };
+}
+
+function formatBackendDate(value: string | null | undefined): string {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
+
+function formatPaymentStatus(value: string | null | undefined, isFree: boolean): string {
+  if (isFree) return 'ไม่มีค่าใช้จ่าย';
+  if (value === 'Y') return 'ชำระแล้ว';
+  if (value === 'N') return 'ยังไม่ชำระ';
+  return value || '-';
+}
+
+function getResultStatus(status: 'passed' | 'failed' | 'pending' | undefined): string {
+  if (status === 'passed') return 'ผ่าน';
+  if (status === 'failed') return 'ไม่ผ่าน';
+  return '';
 }
 
 function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
-  if (!course || course.enrolledCount <= 0) return [];
+  if (!course) return [];
 
+  const backendLearners = instructorBackend.learnersByCourseId.value[course.id] ?? [];
+  const backendGrades = instructorBackend.gradesByCourseId.value[course.id] ?? [];
   const totalLessons =
-    getCourseStructure(course.id).reduce((sum, module) => sum + module.lessons.length, 0) || 8;
+    getCourseStructure(course.id).reduce((sum, module) => sum + module.lessons.length, 0) || 0;
 
-  return Array.from({ length: course.enrolledCount }, (_, index) => {
-    const name = learnerNamePool[index % learnerNamePool.length] ?? `ผู้เรียน ${index + 1}`;
-    const unit = facultyPool[index % facultyPool.length] ?? defaultLearnerUnit;
-    const progress = (course.id.charCodeAt(0) * 9 + index * 17) % 101;
-    const completedLessons = Math.min(totalLessons, Math.round((progress / 100) * totalLessons));
+  return backendLearners.map((learner) => {
+    const grade = backendGrades.find(
+      (candidate) =>
+        candidate.learnerUserId === learner.userId || candidate.studentId === learner.studentId,
+    );
+    const importedResult = importedLearningResults.value[learner.studentId];
+    const score = importedResult?.score ?? grade?.score ?? 0;
+    const resultStatus = importedResult?.status ?? getResultStatus(grade?.status);
+    const progress = grade?.status === 'passed' ? 100 : 0;
     const status = getLearnerStatus(progress);
-    const studentNumber = `C69${String(index + 1355).padStart(5, '0')}`;
-    const importedResult = importedLearningResults.value[studentNumber];
-    const emailPrefix =
-      index === 0 && course.id === '4'
-        ? 'student'
-        : `student${course.id}${String(index + 1).padStart(3, '0')}`;
 
     return {
-      id: `${course.id}-${studentNumber}`,
-      studentId: index === 0 && course.id === '4' ? 'C6901355' : studentNumber,
-      name,
-      email: `${emailPrefix}@go.buu.ac.th`,
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(`${course.id}-${name}-${index}`)}`,
-      faculty: unit.faculty,
-      department: unit.department,
-      phone: `08${String((course.id.charCodeAt(0) + index * 37) % 100000000).padStart(8, '0')}`,
+      id: `${course.id}-${learner.userId}`,
+      studentId: learner.studentId,
+      name: learner.fullName,
+      email: learner.email ?? '-',
+      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(`${course.id}-${learner.userId}`)}`,
+      faculty: '-',
+      department: '-',
+      phone: learner.phone ?? '-',
       progress,
-      lastActive:
-        index % 5 === 0 ? 'วันนี้ 10:24' : index % 5 === 1 ? 'เมื่อวาน' : `${index + 1} วันที่แล้ว`,
-      score: progress < 30 ? 'ยังไม่ประเมิน' : `${Math.min(100, Math.max(55, progress + 6))}/100`,
+      lastActive: grade?.updatedAt ? formatBackendDate(grade.updatedAt) : '-',
+      score:
+        grade?.score === null || grade?.score === undefined
+          ? 'ยังไม่มีคะแนน'
+          : `${grade.score}/${grade.maxScore ?? 100}`,
       ...status,
-      enrolledAt: `2569-04-${String((index % 20) + 1).padStart(2, '0')}`,
-      paymentStatus: course.isFree ? 'ไม่มีค่าใช้จ่าย' : index % 4 === 0 ? 'รอตรวจสอบ' : 'ชำระแล้ว',
-      completedLessons,
+      enrolledAt: formatBackendDate(learner.enrolledAt),
+      paymentStatus: formatPaymentStatus(learner.paymentStatus, course.isFree),
+      completedLessons: progress === 100 ? totalLessons : 0,
       totalLessons,
-      finalScore: importedResult?.score ?? 0,
-      resultStatus: importedResult?.status ?? '',
-      resultNote: importedResult ? `นำเข้าเกรด ${importedResult.grade}` : '',
+      finalScore: score,
+      resultStatus,
+      resultNote: importedResult ? `นำเข้าเกรด ${importedResult.grade}` : (grade?.grade ?? ''),
     };
   });
 }
-
 const learners = computed<LearnerRow[]>(() => buildLearnersForCourse(selectedCourse.value));
+const displayedEnrolledCount = computed(() =>
+  Math.max(selectedCourse.value?.enrolledCount ?? 0, learners.value.length),
+);
 const averageProgress = computed(() => {
   if (learners.value.length === 0) return 0;
   const total = learners.value.reduce((sum, learner) => sum + learner.progress, 0);

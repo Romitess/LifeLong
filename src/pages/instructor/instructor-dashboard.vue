@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="instructor-dashboard q-pa-xl">
     <div class="section-container">
       <!-- ─── HEADER ─── -->
@@ -184,24 +184,83 @@ import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
+import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import type { Course } from 'src/types/course';
 
 const $q = useQuasar();
 const router = useRouter();
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
+const instructorBackend = useInstructorBackend();
 
 onMounted(() => {
   courseStore.init();
   const email = authStore.user?.email;
   if (email) {
     void courseStore.fetchInstructorCourses(email);
+    void instructorBackend.fetchSummary(email);
   }
 });
 
 const instructorCourses = computed<Course[]>(() =>
   courseStore.getInstructorCourses(authStore.user).slice(0, 6),
 );
+
+const stats = computed(() => [
+  {
+    label: 'นิสิตทั้งหมด',
+    value: (instructorBackend.summary.value?.totalStudents ?? 0).toLocaleString('th-TH'),
+    icon: 'people',
+    color: '#1976D2',
+    bgColor: '#E3F2FD',
+  },
+  {
+    label: 'รายวิชาที่เปิด',
+    value: (
+      instructorBackend.summary.value?.activeCourses ?? instructorCourses.value.length
+    ).toLocaleString('th-TH'),
+    icon: 'menu_book',
+    color: '#388E3C',
+    bgColor: '#E8F5E9',
+  },
+  {
+    label: 'คะแนนเฉลี่ย',
+    value: instructorBackend.summary.value?.averageScore?.toFixed(2) ?? '-',
+    icon: 'star',
+    color: '#FBC02D',
+    bgColor: '#FFFDE7',
+  },
+  {
+    label: 'ห้องสนทนา',
+    value: (instructorBackend.summary.value?.conversations ?? 0).toLocaleString('th-TH'),
+    icon: 'forum',
+    color: '#D32F2F',
+    bgColor: '#FFEBEE',
+  },
+]);
+
+const activities = computed(() =>
+  (instructorBackend.summary.value?.recentActivities ?? []).map((activity) => ({
+    id: activity.id,
+    userName: activity.learnerName,
+    action: activity.action,
+    time: formatActivityDate(activity.createdAt),
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(activity.learnerName)}`,
+  })),
+);
+
+function formatActivityDate(value: string | null): string {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+}
 
 function showDevelopmentDialog(featureName: string) {
   $q.dialog({
@@ -221,50 +280,6 @@ function goToCourseManagement(courseId: string) {
     query: { courseId },
   });
 }
-
-const stats = [
-  { label: 'นิสิตทั้งหมด', value: '1,248', icon: 'people', color: '#1976D2', bgColor: '#E3F2FD' },
-  { label: 'รายวิชาที่เปิด', value: '12', icon: 'menu_book', color: '#388E3C', bgColor: '#E8F5E9' },
-  { label: 'คะแนนเฉลี่ย', value: '4.8', icon: 'star', color: '#FBC02D', bgColor: '#FFFDE7' },
-  {
-    label: 'รายได้เดือนนี้',
-    value: '฿45K',
-    icon: 'payments',
-    color: '#D32F2F',
-    bgColor: '#FFEBEE',
-  },
-];
-
-const activities = [
-  {
-    id: 1,
-    userName: 'นายสมชาย รักดี',
-    action: 'ลงทะเบียนในรายวิชา อัญมณีและศาสตร์แห่งดวงดาว',
-    time: '2 นาทีที่แล้ว',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Somchai',
-  },
-  {
-    id: 2,
-    userName: 'นางสาวมานี มีใจ',
-    action: 'ส่งงาน "วิเคราะห์พลอยไพลิน"',
-    time: '15 นาทีที่แล้ว',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Manee',
-  },
-  {
-    id: 3,
-    userName: 'นายวิชัย ใจตรง',
-    action: 'ตั้งคำถามในกระดานสนทนา',
-    time: '1 ชั่วโมงที่แล้ว',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wichai',
-  },
-  {
-    id: 4,
-    userName: 'นางฟ้า สดใส',
-    action: 'ลงทะเบียนในรายวิชา Canva AI',
-    time: '3 ชั่วโมงที่แล้ว',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fah',
-  },
-];
 </script>
 
 <style lang="scss" scoped>

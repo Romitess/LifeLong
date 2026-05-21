@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="instructor-chat-page">
     <div v-if="isTeachingRole" class="section-container instructor-chat-page__inner">
       <section class="chat-hero">
@@ -176,11 +176,8 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import { useAuthStore } from 'src/stores/auth-store';
-import {
-  useCourseRegistrationStore,
-  type CourseRegistration,
-} from 'src/stores/course-registration-store';
 import { useCourseStore } from 'src/stores/course-store';
+import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import type { Course } from 'src/types/course';
 
 type ChatMessageSender = 'learner' | 'system';
@@ -195,77 +192,60 @@ interface ChatMessage {
   status: ChatMessageStatus;
 }
 
-interface StoredChatMessage {
-  id: string;
-  courseId: string;
-  sender: ChatMessageSender;
-  body: string;
-  sentAt: string;
-  status?: ChatMessageStatus;
-}
-
 interface ConversationEntry {
   id: string;
   course: Course;
-  registration: CourseRegistration;
+  learnerUserId: number;
   learnerName: string;
   learnerInitials: string;
   messageCount: number;
   latestMessagePreview: string;
 }
 
-const CHAT_MESSAGES_STORAGE_KEY = 'lll-instructor-chat-messages';
-
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
-const registrationStore = useCourseRegistrationStore();
+const instructorBackend = useInstructorBackend();
 
 courseStore.init();
 
 const selectedConversationId = ref('');
 const replyDraft = ref('');
-const chatMessages = ref<ChatMessage[]>(readStoredChatMessages());
 const messageListRef = ref<HTMLElement | null>(null);
 
 const isTeachingRole = computed(
   () => authStore.user?.role === 'teach' || authStore.user?.role === 'instructor',
 );
 
-const instructorCourses = computed<Course[]>(() => {
-  const instructorId = authStore.user?.id;
-  const instructorEmail = authStore.user?.email?.toLowerCase();
-
-  return courseStore.courses.filter((course) => {
-    const ownerIdMatches = instructorId && course.instructorId === instructorId;
-    const ownerEmailMatches =
-      instructorEmail && course.instructorEmail?.toLowerCase() === instructorEmail;
-
-    return ownerIdMatches || ownerEmailMatches;
-  });
+onMounted(() => {
+  const email = authStore.user?.email;
+  if (email) {
+    void courseStore.fetchInstructorCourses(email);
+    void instructorBackend.fetchConversations(email);
+  }
+  scrollToLatestMessage();
 });
 
-const conversationEntries = computed<ConversationEntry[]>(() => {
-  const courseMap = new Map(instructorCourses.value.map((course) => [course.id, course]));
+const instructorCourses = computed<Course[]>(() =>
+  courseStore.getInstructorCourses(authStore.user),
+);
 
-  return registrationStore.registrations
-    .filter((registration) => courseMap.has(registration.courseId))
-    .map((registration) => {
-      const course = courseMap.get(registration.courseId)!;
-      const messages = getMessagesForCourse(course.id);
-      const latestMessage = messages[messages.length - 1];
-      const learnerName = getLearnerName(registration);
+const conversationEntries = computed<ConversationEntry[]>(() =>
+  instructorBackend.conversations.value.map((conversation) => {
+    const course =
+      instructorCourses.value.find((candidate) => candidate.id === `db-${conversation.courseId}`) ??
+      createFallbackCourse(conversation.courseId);
 
-      return {
-        id: registration.id,
-        course,
-        registration,
-        learnerName,
-        learnerInitials: getLearnerInitials(learnerName),
-        messageCount: messages.length,
-        latestMessagePreview: latestMessage?.body ?? 'ยังไม่มีข้อความจากผู้เรียน',
-      };
-    });
-});
+    return {
+      id: conversation.id,
+      course,
+      learnerUserId: conversation.learnerUserId,
+      learnerName: conversation.learnerName,
+      learnerInitials: getLearnerInitials(conversation.learnerName),
+      messageCount: conversation.messageCount,
+      latestMessagePreview: conversation.latestMessagePreview || 'ยังไม่มีข้อความจาก Moodle',
+    };
+  }),
+);
 
 const selectedConversation = computed<ConversationEntry | null>(
   () =>
@@ -275,12 +255,19 @@ const selectedConversation = computed<ConversationEntry | null>(
 );
 
 const selectedMessages = computed<ChatMessage[]>(() => {
-  const courseId = selectedConversation.value?.course.id;
-  if (!courseId) {
-    return [];
-  }
-
-  return getMessagesForCourse(courseId);
+  const current = selectedConversation.value;
+  if (!current) return [];
+  const backendConversation = instructorBackend.conversations.value.find(
+    (conversation) => conversation.id === current.id,
+  );
+  return (backendConversation?.messages ?? []).map((message) => ({
+    id: message.id,
+    courseId: current.course.id,
+    sender: message.sender === 'instructor' ? 'system' : 'learner',
+    body: message.body,
+    sentAt: new Date(message.sentAt),
+    status: message.status,
+  }));
 });
 
 const canSendReply = computed(
@@ -306,24 +293,40 @@ watch(selectedMessages, () => {
   void nextTick(scrollToLatestMessage);
 });
 
-onMounted(() => {
-  scrollToLatestMessage();
-});
+function createFallbackCourse(courseId: number): Course {
+  return {
+    id: `db-${courseId}`,
+    code: String(courseId),
+    title: `Course ${courseId}`,
+    titleEn: `Course ${courseId}`,
+    instructorId: '',
+    instructorEmail: authStore.user?.email ?? '',
+    imageUrl: '',
+    cover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#26364d' },
+    registrationStart: '-',
+    registrationStartEn: '-',
+    registrationEnd: '-',
+    registrationEndEn: '-',
+    registrationStartDate: '-',
+    registrationEndDate: '-',
+    price: 0,
+    isFree: true,
+    views: 0,
+    status: 'เปิดรับสมัคร',
+    deliveryModes: [],
+    isActive: true,
+    faculty: '-',
+    facultyEn: '-',
+    category: '-',
+    categoryEn: '-',
+    maxSeats: 0,
+    enrolledCount: 0,
+    totalHours: 0,
+  };
+}
 
 function getCourseTitle(course: Course): string {
   return course.titleEn || course.title;
-}
-
-function getLearnerName(registration: CourseRegistration): string {
-  if (registration.registrantInfo?.fullName?.trim()) {
-    return registration.registrantInfo.fullName.trim();
-  }
-
-  if (registration.userId === 'mock-student-user') {
-    return 'ณัฐพงศ์ ไม่อยู่';
-  }
-
-  return `ผู้เรียน ${registration.userId.slice(-6)}`;
 }
 
 function getLearnerInitials(name: string): string {
@@ -333,59 +336,6 @@ function getLearnerInitials(name: string): string {
     .join('')
     .slice(0, 2);
   return initials || 'ผร';
-}
-
-function getMessagesForCourse(courseId: string): ChatMessage[] {
-  return chatMessages.value
-    .filter((message) => message.courseId === courseId)
-    .sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime());
-}
-
-function readStoredChatMessages(): ChatMessage[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
-  const rawValue = window.localStorage.getItem(CHAT_MESSAGES_STORAGE_KEY);
-  if (!rawValue) {
-    return [];
-  }
-
-  try {
-    const storedMessages = JSON.parse(rawValue) as StoredChatMessage[];
-    if (!Array.isArray(storedMessages)) {
-      return [];
-    }
-
-    return storedMessages
-      .filter(
-        (message) =>
-          typeof message.id === 'string' &&
-          typeof message.courseId === 'string' &&
-          (message.sender === 'learner' || message.sender === 'system') &&
-          typeof message.body === 'string' &&
-          typeof message.sentAt === 'string',
-      )
-      .map((message) => ({
-        ...message,
-        sentAt: new Date(message.sentAt),
-        status: message.status ?? 'sent',
-      }));
-  } catch {
-    return [];
-  }
-}
-
-function writeStoredChatMessages(messages: ChatMessage[]): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  const storedMessages: StoredChatMessage[] = messages.map((message) => ({
-    ...message,
-    sentAt: message.sentAt.toISOString(),
-  }));
-  window.localStorage.setItem(CHAT_MESSAGES_STORAGE_KEY, JSON.stringify(storedMessages));
 }
 
 function formatMessageTime(date: Date): string {
@@ -402,22 +352,13 @@ async function sendReply(): Promise<void> {
     return;
   }
 
-  const now = new Date();
-  const nextMessages: ChatMessage[] = [
-    ...chatMessages.value,
-    {
-      id: `${selectedConversation.value.course.id}-instructor-${now.getTime()}`,
-      courseId: selectedConversation.value.course.id,
-      sender: 'system',
-      body: replyDraft.value.trim(),
-      sentAt: now,
-      status: 'sent',
-    },
-  ];
-
-  chatMessages.value = nextMessages;
-  writeStoredChatMessages(nextMessages);
+  const body = replyDraft.value.trim();
   replyDraft.value = '';
+  await instructorBackend.sendMessage(
+    authStore.user?.email,
+    selectedConversation.value.learnerUserId,
+    body,
+  );
   await nextTick();
   scrollToLatestMessage();
 }

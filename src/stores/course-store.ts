@@ -17,6 +17,12 @@ type CourseInstructorOwner = {
 
 interface BackendCourseResponse {
   value?: BackendCourse[];
+  Count?: number;
+}
+
+interface WrappedListResponse<T> {
+  value?: T[];
+  Count?: number;
 }
 
 interface BackendCourse {
@@ -36,6 +42,24 @@ interface BackendCourse {
   instructorEmail?: string | null;
   evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
   typestudyDetail?: { id: number; name: string | null } | null;
+  maxSeats?: number | null;
+  enrolledCount?: number | null;
+  amount?: number | null;
+}
+
+interface BackendInstructorCourse {
+  id: number;
+  code?: string | null;
+  titleTh?: string | null;
+  titleEn?: string | null;
+  imageUrl?: string | null;
+  status?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  moodleId?: number | null;
+  maxSeats?: number | null;
+  enrolledCount?: number | null;
+  amount?: number | null;
 }
 
 function normalizeInstructorEmail(email?: string): string {
@@ -78,6 +102,26 @@ export function mapDeliveryModes(typestudyName?: string | null): DeliveryMode[] 
   return ['Online'];
 }
 
+function extractArrayPayload<T>(payload: T[] | WrappedListResponse<T> | null | undefined): T[] {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (payload && Array.isArray(payload.value)) {
+    return payload.value;
+  }
+
+  return [];
+}
+
+function extractCountPayload<T>(payload: T[] | WrappedListResponse<T> | null | undefined): number {
+  if (payload && !Array.isArray(payload) && typeof payload.Count === 'number') {
+    return payload.Count;
+  }
+
+  return extractArrayPayload(payload).length;
+}
+
 function mapBackendCourse(course: BackendCourse): Course | null {
   if (course.id === undefined || !course.code || !course.titleTh) {
     return null;
@@ -109,8 +153,8 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     registrationEndEn: endDate,
     registrationStartDate: startDate,
     registrationEndDate: endDate,
-    price: 0,
-    isFree: true,
+    price: course.amount ?? 0,
+    isFree: !course.amount,
     views: 0,
     status: isActive ? activeStatus : inactiveStatus,
     deliveryModes: mapDeliveryModes(course.typestudyDetail?.name),
@@ -119,8 +163,8 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     facultyEn: 'Lifelong Learning',
     category: `Category ${course.categoryId ?? 1}`,
     categoryEn: `Category ${course.categoryId ?? 1}`,
-    maxSeats: 40,
-    enrolledCount: 0,
+    maxSeats: course.maxSeats ?? 40,
+    enrolledCount: course.enrolledCount ?? 0,
     totalHours: course.hours ?? 0,
     evaluation: course.evaluationDetail ?? null,
   };
@@ -341,7 +385,7 @@ export const useCourseStore = defineStore('course', {
           const { data } = await api.get<BackendCourseResponse | BackendCourse[]>(
             '/api/moodle/courses',
           );
-          const rawCourses = Array.isArray(data) ? data : (data.value ?? []);
+          const rawCourses = extractArrayPayload(data);
           const backendCourses = rawCourses
             .map(mapBackendCourse)
             .filter((course): course is Course => Boolean(course));
@@ -365,12 +409,46 @@ export const useCourseStore = defineStore('course', {
     async fetchInstructorCourses(email: string) {
       if (!email?.trim()) return;
       try {
-        const { data } = await api.get<BackendCourse[]>(
-          `/api/moodle/courses/by-instructor?email=${encodeURIComponent(email.trim())}`,
-        );
-        const instructorCourses = (Array.isArray(data) ? data : [])
-          .map(mapBackendCourse)
+        const { data } = await api.get<
+          BackendInstructorCourse[] | WrappedListResponse<BackendInstructorCourse>
+        >(`/api/instructor/courses?email=${encodeURIComponent(email.trim())}`);
+        const instructorCourses = extractArrayPayload(data)
+          .map((course) =>
+            mapBackendCourse({
+              id: course.id,
+              code: course.code ?? null,
+              titleTh: course.titleTh ?? null,
+              titleEn: course.titleEn ?? null,
+              startDate: course.startDate ?? null,
+              endDate: course.endDate ?? null,
+              status: course.status ?? null,
+              imageUrl: course.imageUrl ?? null,
+              moodleId: course.moodleId ?? null,
+              instructorEmail: email,
+              maxSeats: course.maxSeats ?? null,
+              enrolledCount: course.enrolledCount ?? null,
+              amount: course.amount ?? null,
+            }),
+          )
           .filter((c): c is Course => Boolean(c));
+
+        await Promise.all(
+          instructorCourses.map(async (course) => {
+            if (!course.moodleId) return;
+
+            try {
+              const response = await api.get<WrappedListResponse<unknown> | unknown[]>(
+                `/api/instructor/moodle-courses/${course.moodleId}/learners`,
+              );
+              const count = extractCountPayload(response.data);
+              if (count > 0) {
+                course.enrolledCount = count;
+              }
+            } catch (error) {
+              console.warn(`Failed to refresh Moodle learner count for ${course.code}`, error);
+            }
+          }),
+        );
 
         for (const course of instructorCourses) {
           const exists = this.courses.findIndex((c) => c.id === course.id);
