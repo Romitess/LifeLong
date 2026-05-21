@@ -305,7 +305,7 @@
               </q-card>
 
               <!-- Evaluation and Score Criteria -->
-              <q-card v-if="course?.evaluation" flat bordered class="detail-card q-mb-lg">
+              <q-card flat bordered class="detail-card q-mb-lg">
                 <q-card-section>
                   <div class="detail-card__header">
                     <q-icon name="assignment_turned_in" size="24px" color="primary" />
@@ -325,9 +325,9 @@
                         style="white-space: pre-line; line-height: 1.6"
                       >
                         {{
-                          course.evaluation.name ||
+                          course.evaluation?.name ||
                           (locale === 'th'
-                            ? 'ไม่มีรายละเอียดการประเมิน'
+                            ? 'ไม่มีรายละเอียดเกณฑ์การวัดและการประเมินผล'
                             : 'No evaluation details provided')
                         }}
                       </div>
