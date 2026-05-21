@@ -597,6 +597,7 @@
                         v-model="form.classFeeRemark"
                         outlined
                         dense
+                        type="text"
                         placeholder="เช่น ราคาพิเศษสำหรับนิสิตปัจจุบัน"
                         class="course-form__input course-form__input--wide"
                       />
@@ -1295,6 +1296,7 @@ async function submit() {
   gap: 12px 24px;
   padding-left: 32px;
   padding-bottom: 4px;
+  align-items: start;
 
   @media (max-width: 720px) {
     grid-template-columns: 1fr;
