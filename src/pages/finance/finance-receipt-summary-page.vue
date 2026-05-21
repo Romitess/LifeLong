@@ -215,9 +215,11 @@
           :columns="columns"
           row-key="id"
           flat
+          dense
           :filter="search"
           class="receipt-table"
           v-model:pagination="pagination"
+          :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
         >
           <template v-slot:body-cell-status="props">
             <q-td :props="props">
@@ -549,8 +551,9 @@ const columns = computed<QTableProps['columns']>(() => [
     name: 'customerName',
     label: t('finance.receiptSummary.columns.fullName'),
     field: 'customerName',
-    align: 'left',
+    align: 'center',
     sortable: true,
+    style: 'white-space: nowrap;',
   },
   {
     name: 'amount',
@@ -570,16 +573,18 @@ const columns = computed<QTableProps['columns']>(() => [
     name: 'learnerName',
     label: t('finance.receiptSummary.columns.learnerName'),
     field: 'learnerName',
-    align: 'left',
+    align: 'center',
     sortable: true,
+    style: 'white-space: nowrap;',
   },
   {
     name: 'courseName',
     label: t('finance.receiptSummary.columns.courseName'),
     field: 'courseName',
-    align: 'left',
+    align: 'center',
     sortable: true,
     style: 'width: 250px',
+    headerStyle: 'white-space: pre-wrap; width: 250px',
   },
   {
     name: 'collector',
@@ -587,6 +592,7 @@ const columns = computed<QTableProps['columns']>(() => [
     field: 'collector',
     align: 'center',
     sortable: true,
+    headerStyle: 'white-space: pre-wrap;',
   },
   {
     name: 'status',
@@ -767,14 +773,17 @@ function exportToExcel() {
     background: #e2e8f0; // slightly darker for header as in screenshot
   }
   :deep(th) {
-    font-weight: 700;
+    font-weight: 600;
     color: #334155;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     white-space: pre-wrap; // To allow \n in labels
     text-align: center;
+    vertical-align: middle;
+    line-height: 1.3;
+    padding: 8px 6px;
   }
   :deep(tbody td) {
-    vertical-align: top;
+    vertical-align: middle;
     padding-top: 12px;
     padding-bottom: 12px;
     white-space: pre-wrap; // To allow \n in content like dates

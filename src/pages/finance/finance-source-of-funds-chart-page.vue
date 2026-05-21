@@ -293,61 +293,92 @@
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import { useQuasar, type QTableProps } from 'quasar';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { api } from 'boot/axios';
 
 const $q = useQuasar();
 const { t } = useI18n();
 
+// -- Backend response type --
+interface CostplanApiRow {
+  id: number;
+  facId: number | null;
+  costplanCode: string | null;
+  costplanName: string | null;
+  costplanStatus: string | null;
+}
+
 type FundChartRow = {
   id: string;
+  backendId: number | null;
   division: string;
+  facId: number | null;
   code: string;
   name: string;
   active: boolean;
   referencedInCourse: boolean;
 };
 
-const divisionOptions = [
-  { label: 'สำนักคอมพิวเตอร์', value: 'สำนักคอมพิวเตอร์' },
-  { label: 'คณะวิทยาศาสตร์', value: 'คณะวิทยาศาสตร์' },
-  { label: 'สำนักงานอธิการบดี', value: 'สำนักงานอธิการบดี' },
+// -- Faculty mapping (facId <-> display name) --
+const facMap: { facId: number; label: string }[] = [
+  { facId: 1, label: 'สำนักคอมพิวเตอร์' },
+  { facId: 2, label: 'คณะวิทยาศาสตร์' },
+  { facId: 3, label: 'สำนักงานอธิการบดี' },
 ];
+
+const divisionOptions = facMap.map((f) => ({ label: f.label, value: f.facId }));
+
+function facIdToLabel(facId: number | null): string {
+  return facMap.find((f) => f.facId === facId)?.label ?? 'ไม่ระบุ';
+}
 
 const statusOptions = [
   { label: 'เปิด', value: true },
   { label: 'ปิด', value: false },
 ];
 
-const facultyFilterMenuOptions: { label: string; value: string | null }[] = [
+const facultyFilterMenuOptions: { label: string; value: number | null }[] = [
   { label: 'ทุกคณะ', value: null },
   ...divisionOptions.map((o) => ({ label: o.label, value: o.value })),
 ];
 
-const rows = ref<FundChartRow[]>([
-  {
-    id: '1',
-    division: 'สำนักคอมพิวเตอร์',
-    code: '42245',
-    name: 'งบดำเนินการสำนักคอมพิวเตอร์',
-    active: true,
+const rows = ref<FundChartRow[]>([]);
+
+// -- Map backend row to frontend row --
+function mapApiRow(r: CostplanApiRow): FundChartRow {
+  return {
+    id: String(r.id),
+    backendId: r.id,
+    division: facIdToLabel(r.facId),
+    facId: r.facId,
+    code: r.costplanCode ?? '',
+    name: r.costplanName ?? '',
+    active: r.costplanStatus === 'Y',
     referencedInCourse: false,
-  },
-  {
-    id: '2',
-    division: 'สำนักคอมพิวเตอร์',
-    code: '88302',
-    name: 'เงินรายได้จากหลักสูตรระยะสั้น',
-    active: true,
-    referencedInCourse: true,
-  },
-]);
+  };
+}
+
+// -- Fetch all from backend --
+async function fetchRows() {
+  try {
+    const { data } = await api.get<CostplanApiRow[]>('/api/lltcostplan');
+    rows.value = data.map(mapApiRow);
+  } catch (err) {
+    console.error('Error fetching costplans:', err);
+    $q.notify({ type: 'negative', message: 'ไม่สามารถโหลดข้อมูลได้' });
+  }
+}
+
+onMounted(() => {
+  void fetchRows();
+});
 
 const tableSearch = ref('');
 
 /** ตัวกรองในเมนู (รูปแบบเดียวกับหน้า short-courses) */
 const listFilter = ref<{
-  faculty: string | null;
+  faculty: number | null;
   status: 'open' | 'closed' | null;
 }>({
   faculty: null,
@@ -357,7 +388,7 @@ const listFilter = ref<{
 const editingId = ref<string | null>(null);
 
 const form = ref({
-  division: 'สำนักคอมพิวเตอร์',
+  division: 1,
   code: '',
   name: '',
   active: true,
@@ -374,8 +405,8 @@ const filteredRows = computed(() => {
   let list = rows.value;
 
   const faculty = listFilter.value.faculty;
-  if (faculty) {
-    list = list.filter((r) => r.division === faculty);
+  if (faculty !== null) {
+    list = list.filter((r) => r.facId === faculty);
   }
 
   const st = listFilter.value.status;
@@ -471,14 +502,14 @@ const columns = computed<QTableProps['columns']>(() => [
 function resetForm() {
   editingId.value = null;
   form.value = {
-    division: 'สำนักคอมพิวเตอร์',
+    division: 1,
     code: '',
     name: '',
     active: true,
   };
 }
 
-function onSave() {
+async function onSave() {
   if (!form.value.division || !form.value.code || !form.value.name) {
     $q.notify({ type: 'negative', message: 'กรุณากรอกข้อมูลที่จำเป็นให้ครบ' });
     return;
@@ -497,32 +528,38 @@ function onSave() {
     return;
   }
 
-  if (editingId.value) {
-    const row = rows.value.find((r) => r.id === editingId.value);
-    if (row) {
-      if (row.referencedInCourse) {
-        $q.notify({ type: 'warning', message: 'รายการนี้ถูกอ้างอิงในการเปิดรายวิชาแล้ว' });
-        return;
+  try {
+    if (editingId.value) {
+      const row = rows.value.find((r) => r.id === editingId.value);
+      if (row) {
+        if (row.referencedInCourse) {
+          $q.notify({ type: 'warning', message: 'รายการนี้ถูกอ้างอิงในการเปิดรายวิชาแล้ว' });
+          return;
+        }
+        await api.patch(`/api/lltcostplan/${row.backendId}`, {
+          facId: form.value.division,
+          costplanCode: form.value.code,
+          costplanName: form.value.name,
+          costplanStatus: form.value.active ? 'Y' : 'N',
+        });
+        $q.notify({ type: 'positive', message: 'บันทึกการแก้ไขเรียบร้อย' });
       }
-      row.division = form.value.division;
-      row.code = form.value.code;
-      row.name = form.value.name;
-      row.active = form.value.active;
+    } else {
+      await api.post('/api/lltcostplan', {
+        facId: form.value.division,
+        costplanCode: form.value.code,
+        costplanName: form.value.name,
+        costplanStatus: form.value.active ? 'Y' : 'N',
+      });
+      $q.notify({ type: 'positive', message: 'บันทึกข้อมูลใหม่เรียบร้อย' });
     }
-    $q.notify({ type: 'positive', message: 'บันทึกการแก้ไขเรียบร้อย' });
-  } else {
-    rows.value.unshift({
-      id: crypto.randomUUID(),
-      division: form.value.division,
-      code: form.value.code,
-      name: form.value.name,
-      active: form.value.active,
-      referencedInCourse: false,
-    });
-    $q.notify({ type: 'positive', message: 'บันทึกข้อมูลใหม่เรียบร้อย' });
-  }
 
-  resetForm();
+    resetForm();
+    await fetchRows();
+  } catch (err) {
+    console.error('Error saving costplan:', err);
+    $q.notify({ type: 'negative', message: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' });
+  }
 }
 
 function onEdit(row: FundChartRow) {
@@ -531,7 +568,7 @@ function onEdit(row: FundChartRow) {
   }
   editingId.value = row.id;
   form.value = {
-    division: row.division,
+    division: row.facId ?? 1,
     code: row.code,
     name: row.name,
     active: row.active,
@@ -550,11 +587,19 @@ function onDelete(row: FundChartRow) {
     ok: { color: 'negative', label: 'ลบ', unelevated: true },
     persistent: true,
   }).onOk(() => {
-    rows.value = rows.value.filter((r) => r.id !== row.id);
-    if (editingId.value === row.id) {
-      resetForm();
-    }
-    $q.notify({ type: 'positive', message: 'ลบรายการแล้ว' });
+    void (async () => {
+      try {
+        await api.delete(`/api/lltcostplan/${row.backendId}`);
+        if (editingId.value === row.id) {
+          resetForm();
+        }
+        $q.notify({ type: 'positive', message: 'ลบรายการแล้ว' });
+        await fetchRows();
+      } catch (err) {
+        console.error('Error deleting costplan:', err);
+        $q.notify({ type: 'negative', message: 'เกิดข้อผิดพลาดในการลบข้อมูล' });
+      }
+    })();
   });
 }
 </script>
