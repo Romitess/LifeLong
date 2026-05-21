@@ -10,6 +10,8 @@ interface BackendCourseDetailResponse {
   lo?: string | null;
   evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
   targets?: CourseTarget[] | null;
+  precondition?: string | null;
+  property?: string | null;
 }
 
 interface UseCourseDetailReturn {
@@ -91,6 +93,8 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
               ...(loLines.length > 0 ? { objectives: loLines } : {}),
               targets: data.targets ?? [],
               evaluation: data.evaluationDetail ?? null,
+              precondition: data.precondition ?? null,
+              property: data.property ?? null,
             };
             return;
           }

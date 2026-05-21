@@ -144,8 +144,6 @@
                     <q-icon name="flag" size="24px" color="primary" />
                     <h2 class="detail-card__title">{{ $t('objectives') }}</h2>
                   </div>
-
-                  <!-- Real objectives from DB -->
                   <q-list v-if="getTranslatedObjectives(course).length > 0" class="q-mt-md">
                     <q-item
                       v-for="(obj, idx) in getTranslatedObjectives(course)"
@@ -171,6 +169,88 @@
                           : 'Learning objectives will be announced soon'
                       }}
                     </span>
+                  </div>
+                </q-card-section>
+              </q-card>
+
+              <!-- Applicant Requirements -->
+              <q-card flat bordered class="detail-card q-mb-lg">
+                <q-card-section>
+                  <div class="detail-card__header">
+                    <q-icon name="how_to_reg" size="24px" color="primary" />
+                    <h2 class="detail-card__title">
+                      {{
+                        locale === 'th' ? 'เงื่อนไขคุณสมบัติของผู้สมัคร' : 'Applicant Requirements'
+                      }}
+                    </h2>
+                  </div>
+
+                  <!-- Sub-section: Precondition -->
+                  <div class="q-mt-md">
+                    <div class="applicant-req__subtitle">
+                      <span class="text-subtitle2 text-weight-bold text-dark">
+                        {{
+                          locale === 'th'
+                            ? 'ความรู้พื้นฐานหรือเงื่อนไขที่ผู้สมัครควรมีก่อนเข้าเรียน'
+                            : 'Prerequisites / Prior Knowledge'
+                        }}
+                      </span>
+                    </div>
+                    <div class="q-mt-sm q-pl-sm">
+                      <template v-if="course.precondition && course.precondition.trim()">
+                        <div
+                          v-for="(line, idx) in course.precondition
+                            .split('\n')
+                            .filter((l) => l.trim())"
+                          :key="`precondition-${idx}`"
+                          class="applicant-req__item row items-start q-mb-xs"
+                        >
+                          <q-icon
+                            name="remove"
+                            size="18px"
+                            color="grey-6"
+                            class="q-mr-xs q-mt-xs"
+                          />
+                          <span class="text-body2 text-grey-9">{{ line.trim() }}</span>
+                        </div>
+                      </template>
+                      <!-- <div v-else class="row items-center q-gutter-xs text-grey-6">
+                        <q-icon name="remove" size="18px" color="grey-5" />
+                        <span class="text-body2">-</span>
+                      </div> -->
+                    </div>
+                  </div>
+
+                  <q-separator class="q-my-md" />
+
+                  <!-- Sub-section: Property -->
+                  <div>
+                    <div class="applicant-req__subtitle">
+                      <span class="text-subtitle2 text-weight-bold text-dark">
+                        {{ locale === 'th' ? 'คุณสมบัติของผู้สมัคร' : 'Applicant Qualifications' }}
+                      </span>
+                    </div>
+                    <div class="q-mt-sm q-pl-sm">
+                      <template v-if="course.property && course.property.trim()">
+                        <div
+                          v-for="(line, idx) in course.property.split('\n').filter((l) => l.trim())"
+                          :key="`property-${idx}`"
+                          class="applicant-req__item row items-start q-mb-xs"
+                        >
+                          <q-icon
+                            name="remove"
+                            size="18px"
+                            color="grey-6"
+                            class="q-mr-xs q-mt-xs"
+                          />
+                          <span class="text-body2 text-grey-9">{{ line.trim() }}</span>
+                        </div>
+                      </template>
+                      <!-- <div v-else class="row items-center q-gutter-xs text-grey-6">
+                        <q-icon name="remove" size="18px" color="grey-5" />
+                        <span class="text-body2">-</span>
+                      </div> -->
+                    </div>
                   </div>
                 </q-card-section>
               </q-card>
@@ -1704,5 +1784,18 @@ watch(
   border-radius: 8px;
   background: #fafafa;
   color: #9e9e9e;
+}
+
+// ── Applicant Requirements ───────────────────────────────────
+.applicant-req {
+  &__subtitle {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  &__item {
+    line-height: 1.6;
+  }
 }
 </style>

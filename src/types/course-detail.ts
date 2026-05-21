@@ -64,4 +64,6 @@ export interface CourseDetail extends Course {
   previewVideoUrl?: string;
   previewPosterUrl?: string;
   targets?: CourseTarget[];
+  precondition?: string | null;
+  property?: string | null;
 }
