@@ -363,7 +363,9 @@
                     <td class="text-center">{{ getLearnerLmsUpdatedAt(learner) }}</td>
                   </tr>
                   <tr v-if="learners.length === 0">
-                    <td colspan="6" class="learning-result-empty-cell">ไม่พบรายชื่อผู้เรียน</td>
+                    <td colspan="6" class="learning-result-empty-cell">
+                      {{ emptyLearnerStateMessage }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -570,7 +572,7 @@
             style="border: 2px dashed rgba(0, 0, 0, 0.05); border-radius: 12px"
           >
             <q-icon name="search_off" size="3rem" class="q-mb-md" />
-            <div class="text-body1">ไม่พบรายชื่อนิสิตที่ตรงกับการค้นหา</div>
+            <div class="text-body1">{{ emptyLearnerStateMessage }}</div>
             <q-btn
               v-if="searchQuery || statusFilter !== 'ทั้งหมด'"
               flat
@@ -661,7 +663,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { getCourseStructure } from 'src/data/course-structure';
@@ -706,12 +708,13 @@ interface ImportPreviewRow extends ImportedLearningResult {
 
 const $q = useQuasar();
 const route = useRoute();
+const router = useRouter();
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
 const instructorBackend = useInstructorBackend();
 courseStore.init();
 
-const selectedCourseId = ref('');
+const selectedCourseId = ref(typeof route.query.courseId === 'string' ? route.query.courseId : '');
 const initialStudentTab = route.query.tab === 'results' ? 'results' : 'roster';
 const activeStudentTab = ref<'roster' | 'results'>(initialStudentTab);
 const learnerDetailDialogOpen = ref(false);
@@ -738,8 +741,27 @@ const gradeScoreMap: Record<string, number> = {
 };
 const passingGrades = new Set(['A', 'B+', 'B', 'C+', 'P']);
 
+watch(
+  () => route.query.tab,
+  (tab) => {
+    activeStudentTab.value = tab === 'results' ? 'results' : 'roster';
+  },
+);
+
+watch(
+  () => route.query.courseId,
+  (courseId) => {
+    selectedCourseId.value = typeof courseId === 'string' ? courseId : '';
+  },
+);
+
 const instructorCourses = computed<Course[]>(() =>
-  courseStore.getInstructorCourses(authStore.user),
+  [...courseStore.getInstructorCourses(authStore.user)].sort((left, right) => {
+    if (right.enrolledCount !== left.enrolledCount) {
+      return right.enrolledCount - left.enrolledCount;
+    }
+    return left.code.localeCompare(right.code);
+  }),
 );
 const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
@@ -864,6 +886,14 @@ const filteredLearners = computed(() => {
   }
 
   return result;
+});
+
+const emptyLearnerStateMessage = computed(() => {
+  if (searchQuery.value || statusFilter.value !== 'ทั้งหมด') {
+    return 'ไม่พบรายชื่อนิสิตที่ตรงกับการค้นหา';
+  }
+
+  return 'รายวิชานี้ยังไม่มีผู้ลงทะเบียนในฐานข้อมูล';
 });
 
 const resultImportPreviewRows = computed<ImportPreviewRow[]>(() => {
@@ -995,12 +1025,21 @@ const learningResultColumns: QTableColumn<LearnerRow>[] = [
 function selectCourse(courseId: string): void {
   selectedCourseId.value = courseId;
   selectedLearner.value = null;
+  void router.replace({
+    query: {
+      ...route.query,
+      courseId,
+    },
+  });
 }
 
 function clearSelectedCourse(): void {
   selectedCourseId.value = '';
   selectedLearner.value = null;
   clearFilters();
+  const nextQuery = { ...route.query };
+  delete nextQuery.courseId;
+  void router.replace({ query: nextQuery });
 }
 
 function clearFilters(): void {

@@ -317,6 +317,18 @@ function mergeCourseIntoDetail(detail: CourseDetail, course: Course): CourseDeta
   });
 }
 
+function mergeCourseOwnerData(baseCourse: Course, ownerCourse?: Partial<Course> | null): Course {
+  if (!ownerCourse) {
+    return ensureCourseInstructorOwner(baseCourse);
+  }
+
+  return ensureCourseInstructorOwner({
+    ...baseCourse,
+    ...(ownerCourse.instructorId ? { instructorId: ownerCourse.instructorId } : {}),
+    ...(ownerCourse.instructorEmail ? { instructorEmail: ownerCourse.instructorEmail } : {}),
+  });
+}
+
 export const useCourseStore = defineStore('course', {
   state: (): {
     courses: Course[];
@@ -453,22 +465,37 @@ export const useCourseStore = defineStore('course', {
         for (const course of instructorCourses) {
           const exists = this.courses.findIndex((c) => c.id === course.id);
           if (exists >= 0) {
-            this.courses[exists] = course;
+            this.courses[exists] = mergeCourseOwnerData(course, this.courses[exists]);
           } else {
-            this.courses.push(course);
+            this.courses.push(ensureCourseInstructorOwner(course));
+          }
+
+          const latestCourse =
+            this.courses.find((candidate) => candidate.id === course.id) ?? course;
+          const existingDetail = this.courseDetails[course.id];
+          if (existingDetail) {
+            this.courseDetails[course.id] = mergeCourseIntoDetail(existingDetail, latestCourse);
+          } else {
+            this.courseDetails[course.id] = createFallbackCourseDetail(latestCourse);
           }
         }
+
+        writeStoredCourses(this.courses);
+        writeStoredCourseDetails(this.courseDetails);
       } catch (error) {
         console.warn('Failed to fetch instructor courses', error);
       }
     },
     /** Load courses from API — replaces all courses with backend data */
     loadFromApi(apiCourses: Course[]) {
-      this.courses = apiCourses.map(ensureCourseInstructorOwner);
+      const existingCourseMap = new Map(this.courses.map((course) => [course.id, course]));
+      this.courses = apiCourses.map((course) =>
+        mergeCourseOwnerData(course, existingCourseMap.get(course.id)),
+      );
 
       const storedDetails = readStoredCourseDetails() ?? {};
       const apiDetails: Record<string, CourseDetail> = {};
-      for (const course of apiCourses) {
+      for (const course of this.courses) {
         const stored = storedDetails[course.id];
         const isValidStored = stored && stored.code === course.code;
         apiDetails[course.id] = isValidStored

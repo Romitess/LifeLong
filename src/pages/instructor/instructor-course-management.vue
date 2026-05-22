@@ -45,110 +45,6 @@
       </section>
 
       <section v-if="isCourseTableView" class="course-table-layout">
-        <aside class="instructor-table-nav">
-          <q-card flat bordered class="instructor-table-nav__card">
-            <q-list padding>
-              <q-item
-                clickable
-                v-ripple
-                class="instructor-table-nav__item"
-                @click="goToInstructorDashboard"
-              >
-                <q-item-section avatar>
-                  <q-icon name="dashboard" color="primary" size="20px" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-primary text-weight-bold text-body2">
-                    หน้าหลักผู้สอน
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-item
-                clickable
-                v-ripple
-                class="instructor-table-nav__item"
-                :class="{ 'instructor-table-nav__item--active': courseStatusFilter === 'all' }"
-                @click="goToInstructorCoursesTable"
-              >
-                <q-item-section avatar>
-                  <q-icon name="menu_book" color="primary" size="20px" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-primary text-weight-bold text-body2">
-                    รายวิชาของฉัน
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-item
-                clickable
-                v-ripple
-                class="instructor-table-nav__item"
-                :class="{ 'instructor-table-nav__item--active': courseStatusFilter === 'active' }"
-                @click="goToActiveInstructorCoursesTable"
-              >
-                <q-item-section avatar>
-                  <q-icon name="campaign" color="primary" size="20px" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-primary text-weight-bold text-body2">
-                    รายวิชาที่เปิดสอน
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-item
-                clickable
-                v-ripple
-                class="instructor-table-nav__item"
-                @click="goToInstructorStudents"
-              >
-                <q-item-section avatar>
-                  <q-icon name="fact_check" color="primary" size="20px" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-primary text-weight-bold text-body2">
-                    ตรวจสอบและพิมพ์รายชื่อผู้เรียน
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-item
-                clickable
-                v-ripple
-                class="instructor-table-nav__item"
-                @click="goToInstructorLearningResults"
-              >
-                <q-item-section avatar>
-                  <q-icon name="grading" color="primary" size="20px" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-primary text-weight-bold text-body2">
-                    บันทึกผลการเรียน
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-item
-                clickable
-                v-ripple
-                class="instructor-table-nav__item"
-                @click="goToInstructorCertificates"
-              >
-                <q-item-section avatar>
-                  <q-icon name="workspace_premium" color="primary" size="20px" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label class="text-primary text-weight-bold text-body2">
-                    สร้าง Certificate
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-card>
-        </aside>
-
         <div class="course-table-view">
           <div class="course-table-view__toolbar">
             <div>
@@ -2097,37 +1993,11 @@ function openCourseWorkspace(courseId: string): void {
   });
 }
 
-function goToInstructorDashboard(): void {
-  void router.push('/instructor/dashboard');
-}
-
-function goToInstructorCoursesTable(): void {
-  void router.push({
-    path: '/instructor/courses',
-    query: { view: 'table' },
-  });
-}
-
 function goToActiveInstructorCoursesTable(): void {
   void router.push({
     path: '/instructor/courses',
     query: { view: 'table', status: 'active' },
   });
-}
-
-function goToInstructorStudents(): void {
-  void router.push('/instructor/students');
-}
-
-function goToInstructorLearningResults(): void {
-  void router.push({
-    path: '/instructor/students',
-    query: { tab: 'results' },
-  });
-}
-
-function goToInstructorCertificates(): void {
-  void router.push('/instructor/certificates');
 }
 
 function previewCourse(): void {
@@ -2493,10 +2363,7 @@ function openQuickDialog(title: string): void {
 .course-table-layout {
   width: calc(100vw - 48px);
   margin-left: calc(50% - 50vw + 24px);
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
+  display: block;
 }
 
 .instructor-table-nav__card {

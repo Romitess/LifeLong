@@ -188,6 +188,7 @@
     <!-- Right: View Mode + User Actions -->
     <div class="gt-sm nav-actions row items-center no-wrap">
       <LanguageToggle class="nav-actions__language" />
+      <LearnerProgressPill />
 
       <div class="nav-user-group">
         <div class="nav-profile-summary column items-start justify-center gt-xs">
@@ -392,6 +393,7 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useMyRegisteredCourses } from 'src/composables/use-my-registered-courses';
 import { useI18n } from 'vue-i18n';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
+import LearnerProgressPill from 'components/navigation/LearnerProgressPill.vue';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 import type { Course } from 'src/types/course';
@@ -805,10 +807,10 @@ async function openNotificationPreview(notification: { action?: string }): Promi
 .nav-actions {
   display: flex;
   align-items: center;
-  flex: 0 0 460px;
+  flex: 0 1 620px;
   flex-wrap: nowrap;
   gap: 8px;
-  width: 460px;
+  width: min(620px, 42vw);
   min-width: 0;
 }
 

@@ -42,6 +42,8 @@
             </div>
           </template>
           <template v-else>
+            <LearnerProgressPill />
+
             <div class="nav-user-group">
               <div class="nav-profile-summary column items-start justify-center gt-xs">
                 <span class="nav-profile-name"
@@ -422,6 +424,7 @@ import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import AppFooter from 'components/AppFooter.vue';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
 import HeaderAuthButton from 'components/navigation/header-auth-button.vue';
+import LearnerProgressPill from 'components/navigation/LearnerProgressPill.vue';
 import { useI18n } from 'vue-i18n';
 
 interface NavItem {
@@ -783,27 +786,39 @@ const navItems = computed<NavItem[]>(() => {
       },
       {
         name: 'my-courses-mgmt',
-        label: 'จัดการรายวิชา',
-        icon: 'library_books',
-        to: '/instructor/courses',
+        label: 'รายวิชาของฉัน',
+        icon: 'menu_book',
+        to: '/instructor/courses?view=table',
+      },
+      {
+        name: 'active-courses-mgmt',
+        label: 'รายวิชาที่เปิดสอน',
+        icon: 'campaign',
+        to: '/instructor/courses?view=table&status=active',
       },
       {
         name: 'students-mgmt',
-        label: 'รายชื่อนิสิต',
-        icon: 'group',
+        label: 'ตรวจสอบและพิมพ์รายชื่อผู้เรียน',
+        icon: 'fact_check',
         to: '/instructor/students',
+      },
+      {
+        name: 'learning-results',
+        label: 'บันทึกผลการเรียน',
+        icon: 'grading',
+        to: '/instructor/students?tab=results',
+      },
+      {
+        name: 'certificates',
+        label: 'สร้าง Certificate',
+        icon: 'workspace_premium',
+        to: '/instructor/certificates',
       },
       {
         name: 'learner-chat',
         label: 'สนทนากับผู้เรียน',
         icon: 'forum',
         to: '/instructor/chat',
-      },
-      {
-        name: 'reports',
-        label: 'รายงานผล',
-        icon: 'bar_chart',
-        to: '/instructor/reports',
       },
     ];
   }
@@ -985,9 +1000,9 @@ function syncActiveNavWithRoute(path: string) {
   } else if (path.includes('/instructor/dashboard')) {
     activeNav.value = 'dashboard';
   } else if (path.includes('/instructor/courses')) {
-    activeNav.value = route.query.view === 'table' ? '' : 'my-courses-mgmt';
+    activeNav.value = route.query.status === 'active' ? 'active-courses-mgmt' : 'my-courses-mgmt';
   } else if (path.includes('/instructor/students')) {
-    activeNav.value = 'students-mgmt';
+    activeNav.value = route.query.tab === 'results' ? 'learning-results' : 'students-mgmt';
   } else if (path.includes('/instructor/chat')) {
     activeNav.value = 'learner-chat';
   } else if (path.includes('/instructor/certificates')) {
@@ -1104,17 +1119,18 @@ async function onNavClick(nav: NavItem) {
       syncActiveNavWithRoute(route.path);
     }, 50);
   } else if (nav.to) {
+    const navPath = nav.to.split('?')[0] ?? nav.to;
     // Show dialog for unimplemented instructor routes
     if (
       isTeachingRole.value &&
-      nav.to.startsWith('/instructor/') &&
+      navPath.startsWith('/instructor/') &&
       ![
         '/instructor/dashboard',
         '/instructor/courses',
         '/instructor/students',
         '/instructor/certificates',
         '/instructor/chat',
-      ].includes(nav.to)
+      ].includes(navPath)
     ) {
       $q.dialog({
         title: 'อยู่ระหว่างการพัฒนา',
@@ -1330,11 +1346,11 @@ async function onCategoryClick(category: string) {
 .nav-actions {
   display: flex;
   align-items: center;
-  flex: 0 1 460px;
+  flex: 0 1 620px;
   flex-wrap: nowrap;
   gap: 8px;
   justify-content: flex-end;
-  width: min(460px, 38vw);
+  width: min(620px, 52vw);
   min-width: 0;
 }
 

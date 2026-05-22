@@ -17,65 +17,180 @@
           class="hero-carousel"
         >
           <q-carousel-slide
-            v-for="slide in activeHeroSlides"
+            v-for="slide in homeHeroSlides"
             :key="slide.id"
             :name="slide.id"
             :img-src="slide.imageUrl"
             class="hero-slide"
+            :class="{ 'hero-slide--learner': slide.kind === 'learner' }"
             :style="getHeroSlideStyle(slide)"
           >
-            <div
-              class="hero-slide__overlay"
-              :style="{ backgroundColor: slide.overlayColor, opacity: slide.overlayOpacity }"
-            />
-            <div
-              v-if="slide.textBlock.enabled"
-              class="hero-copy"
-              :class="{ 'hero-copy--active': heroSlide === slide.id }"
-            >
-              <div class="hero-copy__content" :style="getHeroTextBlockStyle(slide)">
-                <div
-                  v-for="(line, lineIndex) in getEnabledHeroLines(slide)"
-                  :key="line.id"
-                  class="hero-type-line"
-                  :class="[
-                    getHeroLineEffectClass(line),
-                    { 'hero-type-line--visible': isHeroLineVisible(lineIndex) },
-                  ]"
-                  :style="getHeroLineStyle(line)"
-                >
-                  <span
-                    class="hero-type-line__text"
-                    :style="{ color: getHeroLineCaretColor(line) }"
+            <template v-if="slide.kind === 'template'">
+              <div
+                class="hero-slide__overlay"
+                :style="{
+                  backgroundColor: slide.template.overlayColor,
+                  opacity: slide.template.overlayOpacity,
+                }"
+              />
+              <div
+                v-if="slide.template.textBlock.enabled"
+                class="hero-copy"
+                :class="{ 'hero-copy--active': heroSlide === slide.id }"
+              >
+                <div class="hero-copy__content" :style="getHeroTextBlockStyle(slide.template)">
+                  <div
+                    v-for="(line, lineIndex) in getEnabledHeroLines(slide.template)"
+                    :key="line.id"
+                    class="hero-type-line"
+                    :class="[
+                      getHeroLineEffectClass(line),
+                      { 'hero-type-line--visible': isHeroLineVisible(lineIndex) },
+                    ]"
+                    :style="getHeroLineStyle(line)"
                   >
                     <span
-                      v-for="segment in getVisibleHeroSegments(line, lineIndex)"
-                      :key="segment.id"
-                      :style="{
-                        color: segment.color,
-                        fontWeight: segment.fontWeight ?? line.fontWeight,
-                      }"
-                      v-text="segment.text"
-                    />
-                    <span v-if="shouldShowHeroCaret(lineIndex)" class="hero-type-caret"></span>
-                  </span>
+                      class="hero-type-line__text"
+                      :style="{ color: getHeroLineCaretColor(line) }"
+                    >
+                      <span
+                        v-for="segment in getVisibleHeroSegments(line, lineIndex)"
+                        :key="segment.id"
+                        :style="{
+                          color: segment.color,
+                          fontWeight: segment.fontWeight ?? line.fontWeight,
+                        }"
+                        v-text="segment.text"
+                      />
+                      <span v-if="shouldShowHeroCaret(lineIndex)" class="hero-type-caret"></span>
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            </template>
+
+            <template v-else>
+              <div class="hero-slide__overlay hero-slide__overlay--learner" />
+              <div class="hero-learner">
+                <div class="hero-learner__copy">
+                  <div class="hero-learner__eyebrow">Learner Spotlight</div>
+                  <h2>{{ slide.learner.name }}</h2>
+                  <p>
+                    สถานะการเข้าเรียนเด่นในรายวิชา
+                    <strong>{{ slide.learner.courseTitle }}</strong>
+                  </p>
+                  <div class="hero-learner__badges">
+                    <q-badge rounded color="positive" text-color="white">
+                      {{ slide.learner.statusLabel }}
+                    </q-badge>
+                    <q-badge rounded color="primary" text-color="white">
+                      {{ slide.learner.attendanceRate }}% Attendance
+                    </q-badge>
+                  </div>
+                </div>
+
+                <div class="hero-learner__card">
+                  <div class="hero-learner__card-top">
+                    <q-avatar size="72px" class="hero-learner__avatar">
+                      <img :src="slide.learner.avatarUrl" :alt="slide.learner.name" />
+                    </q-avatar>
+
+                    <div class="hero-learner__identity">
+                      <div class="hero-learner__name">{{ slide.learner.name }}</div>
+                      <div class="hero-learner__meta">
+                        {{ slide.learner.faculty }} • {{ slide.learner.courseCode }}
+                      </div>
+                      <div class="hero-learner__status-note">{{ slide.learner.statusNote }}</div>
+                    </div>
+
+                    <img
+                      class="hero-learner__course-image"
+                      :src="slide.learner.courseImageUrl"
+                      :alt="slide.learner.courseTitle"
+                    />
+                  </div>
+
+                  <div class="hero-learner__metrics">
+                    <div class="hero-learner__metric">
+                      <q-icon name="local_fire_department" size="18px" color="deep-orange-6" />
+                      <div>
+                        <div class="hero-learner__metric-value">
+                          {{ slide.learner.streakDays }} วัน
+                        </div>
+                        <div class="hero-learner__metric-label">streak</div>
+                      </div>
+                    </div>
+                    <div class="hero-learner__metric">
+                      <q-icon name="stars" size="18px" color="amber-8" />
+                      <div>
+                        <div class="hero-learner__metric-value">
+                          {{ formatHeroXp(slide.learner.xp) }} XP
+                        </div>
+                        <div class="hero-learner__metric-label">
+                          level {{ slide.learner.level }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="hero-learner__progress">
+                    <div class="hero-learner__progress-head">
+                      <span>ความคืบหน้าการเรียน</span>
+                      <strong>
+                        {{ slide.learner.completedLessons }}/{{ slide.learner.totalLessons }}
+                        บทเรียน
+                      </strong>
+                    </div>
+                    <q-linear-progress
+                      rounded
+                      size="10px"
+                      color="positive"
+                      track-color="grey-3"
+                      :value="slide.learner.completedLessons / slide.learner.totalLessons"
+                    />
+                  </div>
+
+                  <div class="hero-learner__peers">
+                    <div class="hero-learner__peers-label">กำลังเรียนร่วมกับ</div>
+                    <div class="hero-learner__peer-list">
+                      <div
+                        v-for="peer in slide.learner.peers"
+                        :key="peer.id"
+                        class="hero-learner__peer"
+                      >
+                        <q-avatar size="28px">
+                          <img :src="peer.avatarUrl" :alt="peer.name" />
+                        </q-avatar>
+                        <span>{{ peer.name }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
           </q-carousel-slide>
         </q-carousel>
         <GoldenUnderline />
       </section>
 
       <!-- ─── FLOATING STATS BAR ─── -->
-      <section class="stats-floating-section">
+      <section
+        ref="statsSection"
+        class="stats-floating-section"
+        :class="{ 'stats-floating-section--animated': isStatsVisible }"
+      >
         <div class="section-container stats-floating-section__inner">
           <div class="row q-col-gutter-lg stats-grid">
             <div
               v-for="(item, index) in stats"
               :key="item.label"
-              class="col-12 col-sm-6 col-lg-3 entrance-animate"
-              :style="{ '--delay': `${index * 0.1}s` }"
+              class="col-12 col-sm-6 col-lg-3"
+              :style="{
+                animation: isStatsVisible
+                  ? `statsBounceIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both`
+                  : 'none',
+                animationDelay: isStatsVisible ? `${index * 0.15}s` : '0s',
+              }"
             >
               <BaseInfoCard
                 class="home-info-card home-info-card--stat"
@@ -254,6 +369,8 @@ import {
   type HeroTextSegment,
 } from 'src/stores/system-image-store';
 import { useCourseList } from 'src/composables/use-course-list';
+import { useLearnerProgress } from 'src/composables/use-learner-progress';
+import { useAuthStore } from 'src/stores/auth-store';
 import type { Course } from 'src/types/course';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
@@ -262,7 +379,9 @@ import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import { useQuasar } from 'quasar';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const courseStore = useCourseStore();
+const { learnerProgress } = useLearnerProgress();
 const categoryStore = useCategoryStore();
 const systemImageStore = useSystemImageStore();
 const $q = useQuasar();
@@ -271,6 +390,8 @@ categoryStore.init();
 systemImageStore.init();
 
 const heroSlide = ref(systemImageStore.activeHeroSlides[0]?.id ?? '');
+const statsSection = ref<HTMLElement | null>(null);
+const isStatsVisible = ref(false);
 
 interface HomeInfoItem {
   icon: string;
@@ -279,6 +400,49 @@ interface HomeInfoItem {
   value?: string;
   tone: 'gold' | 'blue' | 'positive' | 'accent';
 }
+
+interface LearnerHeroPeer {
+  id: string;
+  name: string;
+  avatarUrl: string;
+}
+
+interface LearnerHeroSlide {
+  id: string;
+  name: string;
+  faculty: string;
+  courseTitle: string;
+  courseCode: string;
+  courseImageUrl: string;
+  imageUrl: string;
+  backgroundPosition: string;
+  avatarUrl: string;
+  attendanceRate: number;
+  statusLabel: string;
+  statusNote: string;
+  streakDays: number;
+  xp: number;
+  level: number;
+  completedLessons: number;
+  totalLessons: number;
+  peers: LearnerHeroPeer[];
+}
+
+type HomeHeroSlide =
+  | {
+      kind: 'template';
+      id: string;
+      imageUrl: string;
+      backgroundPosition: string;
+      template: HeroSlideTemplate;
+    }
+  | {
+      kind: 'learner';
+      id: string;
+      imageUrl: string;
+      backgroundPosition: string;
+      learner: LearnerHeroSlide;
+    };
 
 const { courses, isLoading, error, activeCourses, fetchCourses } = useCourseList();
 
@@ -302,6 +466,17 @@ const categoryMap: Record<string, string> = {
   ศิลปวัฒนธรรมและศาสนา: 'artCult',
   เกษตรและสิ่งแวดล้อม: 'agriEnv',
 };
+const heroPublicBaseUrl = (
+  import.meta.env.VITE_BACKEND_PUBLIC_URL ||
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:3000'
+)
+  .replace(/\/api\/?$/, '')
+  .replace(/\/+$/, '');
+
+function createHeroAvatar(seed: string): string {
+  return `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(seed)}`;
+}
 
 watch(
   () => courseStore.selectedCategory,
@@ -396,19 +571,103 @@ const infoCards = computed<HomeInfoItem[]>(() => [
 ]);
 
 const activeHeroSlides = computed(() => systemImageStore.activeHeroSlides);
+
+// Show only logged-in student's profile on HERO section
+const learnerHeroSlides = computed<LearnerHeroSlide[]>(() => {
+  // Only show learner spotlight if user is logged in and is a student role
+  if (!authStore.isLoggedIn || !authStore.user || authStore.user.role !== 'student') {
+    return [];
+  }
+
+  const user = authStore.user;
+  const progress = learnerProgress.value;
+
+  // Get the primary active course for the student
+  const primaryCourse = activeCourses.value[0] ??
+    courses.value[0] ?? {
+      title: 'เส้นทางการเรียนรู้ดิจิทัล',
+      code: 'BUU-LLL-001',
+      imageUrl: `${heroPublicBaseUrl}/uploads/system/homepicture1.png`,
+    };
+
+  const fullName = `${user.firstNameTh} ${user.lastNameTh}`.trim() || user.firstNameTh;
+
+  return [
+    {
+      id: 'learner-spotlight-current',
+      name: fullName,
+      faculty: user.faculty,
+      courseTitle: primaryCourse?.title ?? 'เส้นทางการเรียนรู้ดิจิทัล',
+      courseCode: primaryCourse?.code ?? 'BUU-LLL-001',
+      courseImageUrl:
+        primaryCourse?.imageUrl ?? `${heroPublicBaseUrl}/uploads/system/homepicture1.png`,
+      imageUrl: primaryCourse?.imageUrl ?? `${heroPublicBaseUrl}/uploads/system/homepicture1.png`,
+      backgroundPosition: 'center 56%',
+      avatarUrl: user.avatar || createHeroAvatar(user.email),
+      attendanceRate: 92,
+      statusLabel: 'ผู้เรียนที่ใช้งาน',
+      statusNote: `กำลังศึกษา ${primaryCourse?.title ?? 'คอร์สปัจจุบัน'}`,
+      streakDays: progress?.streakDays ?? 5,
+      xp: progress?.xp ?? 1250,
+      level: progress?.level ?? 7,
+      completedLessons: 18,
+      totalLessons: 20,
+      peers: [], // Show no peers to keep focus on current user
+    },
+  ];
+});
+const homeHeroSlides = computed<HomeHeroSlide[]>(() => {
+  const templateSlides: HomeHeroSlide[] = activeHeroSlides.value.map((slide) => ({
+    kind: 'template',
+    id: slide.id,
+    imageUrl: slide.imageUrl,
+    backgroundPosition: slide.backgroundPosition,
+    template: slide,
+  }));
+
+  const learnerSlides: HomeHeroSlide[] = learnerHeroSlides.value.map((slide) => ({
+    kind: 'learner',
+    id: slide.id,
+    imageUrl: slide.imageUrl,
+    backgroundPosition: slide.backgroundPosition,
+    learner: slide,
+  }));
+
+  // Merge template slides with learner profile (keep carousel rotation)
+  if (learnerSlides.length === 0) {
+    return templateSlides;
+  }
+
+  const mergedSlides: HomeHeroSlide[] = [];
+  templateSlides.forEach((slide, index) => {
+    mergedSlides.push(slide);
+    if (learnerSlides[index]) {
+      mergedSlides.push(learnerSlides[index]);
+    }
+  });
+
+  if (learnerSlides.length > templateSlides.length) {
+    mergedSlides.push(...learnerSlides.slice(templateSlides.length));
+  }
+
+  return mergedSlides;
+});
 const heroSlideDurationMs = computed(() => systemImageStore.heroConfig.slideDurationMs);
-const currentHeroSlide = computed<HeroSlideTemplate | null>(
-  () =>
-    activeHeroSlides.value.find((slide) => slide.id === heroSlide.value) ??
-    activeHeroSlides.value[0] ??
-    null,
-);
+const currentHeroSlide = computed<HeroSlideTemplate | null>(() => {
+  const activeSlide =
+    homeHeroSlides.value.find((slide) => slide.id === heroSlide.value) ?? homeHeroSlides.value[0];
+  if (!activeSlide || activeSlide.kind !== 'template') {
+    return null;
+  }
+
+  return activeSlide.template;
+});
 const currentHeroTypeLines = computed<HeroTextLine[]>(() =>
   currentHeroSlide.value ? getEnabledHeroLines(currentHeroSlide.value) : [],
 );
 
 watch(
-  activeHeroSlides,
+  homeHeroSlides,
   (slides) => {
     if (!slides.some((slide) => slide.id === heroSlide.value)) {
       heroSlide.value = slides[0]?.id ?? '';
@@ -447,17 +706,13 @@ function clearHeroSlideTimer(): void {
 function restartHeroSlideTimer(): void {
   clearHeroSlideTimer();
 
-  if (activeHeroSlides.value.length < 2) {
+  const slides = homeHeroSlides.value;
+
+  if (slides.length < 2) {
     return;
   }
 
   heroSlideTimer = window.setInterval(() => {
-    const slides = activeHeroSlides.value;
-    if (slides.length < 2) {
-      clearHeroSlideTimer();
-      return;
-    }
-
     const currentIndex = slides.findIndex((slide) => slide.id === heroSlide.value);
     const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % slides.length : 0;
     heroSlide.value = slides[nextIndex]?.id ?? slides[0]?.id ?? '';
@@ -652,13 +907,17 @@ function getHeroTextBlockStyle(slide: HeroSlideTemplate): CSSProperties {
   };
 }
 
-function getHeroSlideStyle(slide: HeroSlideTemplate): CSSProperties {
+function getHeroSlideStyle(slide: HomeHeroSlide): CSSProperties {
   return {
     backgroundImage: `url("${slide.imageUrl}")`,
     backgroundPosition: slide.backgroundPosition,
     backgroundSize: 'cover',
     backgroundRepeat: 'no-repeat',
   };
+}
+
+function formatHeroXp(value: number): string {
+  return value.toLocaleString('en-US');
 }
 
 function getHeroLineStyle(line: HeroTextLine): CSSProperties {
@@ -711,6 +970,25 @@ onMounted(() => {
   void fetchCourses();
   startHeroTyping();
   restartHeroSlideTimer();
+
+  // Intersection Observer for stats animation
+  setTimeout(() => {
+    if (statsSection.value) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !isStatsVisible.value) {
+              isStatsVisible.value = true;
+              console.log('[Stats Animation] Triggered!');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.05, rootMargin: '0px 0px -50px 0px' },
+      );
+      observer.observe(statsSection.value);
+    }
+  }, 100);
 });
 
 onBeforeUnmount(() => {
@@ -788,6 +1066,205 @@ onBeforeUnmount(() => {
   inset: 0;
   z-index: 1;
   pointer-events: none;
+}
+
+.hero-slide__overlay--learner {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.72) 0%,
+    rgba(15, 23, 42, 0.18) 44%,
+    rgba(15, 23, 42, 0.56) 100%
+  );
+}
+
+.hero-learner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
+  align-items: end;
+  gap: 28px;
+  height: 100%;
+  padding: clamp(28px, 4vw, 56px) clamp(28px, 4vw, 72px);
+}
+
+.hero-learner__copy {
+  max-width: 560px;
+  color: #ffffff;
+  align-self: center;
+}
+
+.hero-learner__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-learner__copy h2 {
+  margin: 18px 0 10px;
+  font-size: clamp(2.4rem, 4vw, 4.2rem);
+  line-height: 0.98;
+  font-weight: 800;
+}
+
+.hero-learner__copy p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: clamp(1rem, 1.4vw, 1.24rem);
+  line-height: 1.6;
+}
+
+.hero-learner__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.hero-learner__card {
+  align-self: center;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 22px 50px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(12px);
+}
+
+.hero-learner__card-top {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 92px;
+  gap: 16px;
+  align-items: center;
+}
+
+.hero-learner__avatar {
+  outline: 4px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+}
+
+.hero-learner__identity {
+  min-width: 0;
+}
+
+.hero-learner__name {
+  color: #10213f;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.hero-learner__meta,
+.hero-learner__status-note {
+  color: #5f6b7a;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.hero-learner__status-note {
+  margin-top: 6px;
+}
+
+.hero-learner__course-image {
+  width: 92px;
+  height: 92px;
+  border-radius: 20px;
+  object-fit: cover;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+}
+
+.hero-learner__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.hero-learner__metric {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.hero-learner__metric-value {
+  color: #10213f;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.hero-learner__metric-label {
+  margin-top: 4px;
+  color: #748092;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.hero-learner__progress {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.hero-learner__progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: #5f6b7a;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.hero-learner__progress-head strong {
+  color: #10213f;
+  font-weight: 800;
+}
+
+.hero-learner__peers {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.hero-learner__peers-label {
+  color: #7a8698;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.hero-learner__peer-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.hero-learner__peer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #405065;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .hero-type-line {
@@ -962,6 +1439,36 @@ onBeforeUnmount(() => {
   }
 }
 
+@keyframes statsBounceIn {
+  0% {
+    opacity: 0;
+    transform: translateY(60px) scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-12px) scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes flameFlicker {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-360deg) translateY(20px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.3) rotate(20deg) translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg) translateY(0);
+  }
+}
+
 // ── Stats Bar ─────────────────────────────────────────────────
 .stats-floating-section {
   padding: 0 0 18px;
@@ -972,6 +1479,24 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 30;
   margin-top: -52px;
+}
+
+.stats-grid {
+  &--animated {
+    .stats-item {
+      animation: statsBounceIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      animation-delay: var(--stats-delay, 0s);
+
+      :deep(.q-icon) {
+        animation: flameFlicker 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        animation-delay: var(--stats-delay, 0s);
+      }
+    }
+  }
+}
+
+.stats-item {
+  opacity: 1;
 }
 
 .home-info-card {
@@ -1076,6 +1601,47 @@ onBeforeUnmount(() => {
 @media (max-width: 767px) {
   .hero-section {
     aspect-ratio: 16 / 10;
+  }
+
+  .hero-learner {
+    grid-template-columns: 1fr;
+    align-items: end;
+    gap: 16px;
+    padding: 24px 18px;
+  }
+
+  .hero-learner__copy {
+    max-width: 100%;
+  }
+
+  .hero-learner__copy h2 {
+    font-size: 2rem;
+  }
+
+  .hero-learner__card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .hero-learner__card-top {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+
+  .hero-learner__course-image {
+    display: none;
+  }
+
+  .hero-learner__metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-learner__peers {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .hero-learner__peer-list {
+    justify-content: flex-start;
   }
 
   .hero-copy {

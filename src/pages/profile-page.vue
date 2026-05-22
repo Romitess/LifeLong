@@ -91,121 +91,8 @@
       <div class="section-container">
         <div class="row q-col-gutter-xl">
           <!-- Sidebar Menu -->
-          <div class="col-12 col-md-3">
-            <q-card
-              v-if="isTeachingRole"
-              flat
-              bordered
-              class="profile-menu-card profile-menu-card--empty"
-            >
-              <q-list padding>
-                <q-item clickable v-ripple class="profile-menu-item" @click="goToInstructorHome">
-                  <q-item-section avatar>
-                    <q-icon name="dashboard" color="primary" size="20px" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label class="text-primary text-weight-bold text-body2">
-                      หน้าหลักผู้สอน
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-
-                <q-item clickable v-ripple class="profile-menu-item" @click="goToInstructorCourses">
-                  <q-item-section avatar>
-                    <q-icon name="menu_book" color="primary" size="20px" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label class="text-primary text-weight-bold text-body2">
-                      รายวิชาของฉัน
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-
-                <q-item
-                  clickable
-                  v-ripple
-                  class="profile-menu-item"
-                  @click="goToActiveInstructorCourses"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="campaign" color="primary" size="20px" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label class="text-primary text-weight-bold text-body2">
-                      รายวิชาที่เปิดสอน
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-
-                <q-item
-                  clickable
-                  v-ripple
-                  class="profile-menu-item"
-                  @click="goToInstructorStudents"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="fact_check" color="primary" size="20px" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label
-                      class="text-primary text-weight-bold text-body2 profile-menu-item__wrap-label"
-                    >
-                      ตรวจสอบและพิมพ์รายชื่อผู้เรียน
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-
-                <q-item
-                  clickable
-                  v-ripple
-                  class="profile-menu-item"
-                  @click="goToInstructorLearningResults"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="grading" color="primary" size="20px" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label class="text-primary text-weight-bold text-body2">
-                      บันทึกผลการเรียน
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-
-                <q-item
-                  clickable
-                  v-ripple
-                  class="profile-menu-item"
-                  @click="goToInstructorCertificates"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="workspace_premium" color="primary" size="20px" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label class="text-primary text-weight-bold text-body2">
-                      สร้าง Certificate
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-
-                <q-item
-                  clickable
-                  v-ripple
-                  class="profile-menu-item"
-                  @click="goToInstructorLearnerChat"
-                >
-                  <q-item-section avatar>
-                    <q-icon name="forum" color="primary" size="20px" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label class="text-primary text-weight-bold text-body2">
-                      สนทนากับผู้เรียน
-                    </q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-card>
-
-            <q-card v-else flat bordered class="profile-menu-card">
+          <div v-if="!isTeachingRole" class="col-12 col-md-3">
+            <q-card flat bordered class="profile-menu-card">
               <q-list padding>
                 <q-item-label
                   header
@@ -310,7 +197,7 @@
           </div>
 
           <!-- Main Content -->
-          <div class="col-12 col-md-9">
+          <div :class="isTeachingRole ? 'col-12' : 'col-12 col-md-9'">
             <div class="profile-tab-panel">
               <!-- My Courses Tab -->
               <div v-if="isTeachingRole" class="instructor-home-panel">
@@ -3583,21 +3470,10 @@ async function goToCourse(
   void router.push(`/course/${courseId}/learn`);
 }
 
-function goToInstructorHome(): void {
-  void router.push('/instructor/dashboard');
-}
-
 function goToInstructorCourses(): void {
   void router.push({
     path: '/instructor/courses',
     query: { view: 'table' },
-  });
-}
-
-function goToActiveInstructorCourses(): void {
-  void router.push({
-    path: '/instructor/courses',
-    query: { view: 'table', status: 'active' },
   });
 }
 
@@ -3614,16 +3490,6 @@ function goToInstructorLearningResults(): void {
 
 function goToInstructorCertificates(): void {
   void router.push('/instructor/certificates');
-}
-
-function goToInstructorLearnerChat(): void {
-  void router.push('/instructor/chat').catch(() => {
-    $q.notify({
-      type: 'info',
-      message: 'เมนูสนทนากับผู้เรียนอยู่ระหว่างเตรียมหน้าสนทนา',
-      position: 'top',
-    });
-  });
 }
 
 function goToInstructorCourseWorkspace(courseId: string): void {
