@@ -179,24 +179,7 @@
           {{ $t('finance.receiptSummary.title') }}
         </div>
 
-        <div class="row justify-between items-center q-px-md q-pb-md">
-          <div class="row items-center q-gutter-sm">
-            <span class="text-subtitle2 text-grey-8">{{
-              $t('finance.receiptSummary.showEntries')
-            }}</span>
-            <q-select
-              v-model="pagination.rowsPerPage"
-              :options="[10, 25, 50, 100]"
-              outlined
-              dense
-              options-dense
-              style="width: 80px"
-              class="bg-white"
-            />
-            <span class="text-subtitle2 text-grey-8">{{
-              $t('finance.receiptSummary.entries')
-            }}</span>
-          </div>
+        <div class="row justify-end items-center q-px-md q-pb-md">
           <q-input
             v-model="search"
             dense
@@ -219,6 +202,7 @@
           :filter="search"
           class="receipt-table"
           v-model:pagination="pagination"
+          :rows-per-page-options="[10, 25, 50, 100]"
           :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
         >
           <template v-slot:body-cell-status="props">
@@ -261,30 +245,72 @@
           </template>
 
           <template v-slot:bottom="scope">
-            <div class="row full-width justify-between items-center q-py-md">
-              <div class="text-caption text-grey-8 text-weight-medium">
-                {{
-                  $t('finance.receiptSummary.showing', {
-                    start: (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1,
-                    end: Math.min(
-                      scope.pagination.page * scope.pagination.rowsPerPage,
-                      mockData.length,
-                    ),
-                    total: mockData.length,
-                  })
-                }}
+            <div class="row full-width justify-between items-center q-py-sm">
+              <div class="row items-center q-gutter-sm">
+                <span class="text-subtitle2 text-grey-8">{{
+                  $t('finance.receiptSummary.showEntries')
+                }}</span>
+                <q-select
+                  v-model="pagination.rowsPerPage"
+                  :options="[10, 25, 50, 100]"
+                  outlined
+                  dense
+                  options-dense
+                  style="width: 80px"
+                  class="bg-white receipt-rows-select"
+                />
+                <span class="text-subtitle2 text-grey-8">{{
+                  $t('finance.receiptSummary.entries')
+                }}</span>
               </div>
-              <q-pagination
-                v-model="pagination.page"
-                :max="scope.pagesNumber"
-                direction-links
-                flat
-                color="grey-8"
-                active-color="warning"
-                active-text-color="black"
-                :max-pages="6"
-                boundary-numbers
-              />
+              <div class="row items-center q-gutter-sm">
+                <span class="text-caption text-grey-8 q-mr-sm">
+                  {{
+                    mockData.length > 0
+                      ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
+                      : 0
+                  }}-{{
+                    Math.min(scope.pagination.page * scope.pagination.rowsPerPage, mockData.length)
+                  }}
+                  of {{ mockData.length }}
+                </span>
+                <q-btn
+                  icon="first_page"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isFirstPage"
+                  @click="scope.firstPage"
+                />
+                <q-btn
+                  icon="chevron_left"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isFirstPage"
+                  @click="scope.prevPage"
+                />
+                <q-btn
+                  icon="chevron_right"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isLastPage"
+                  @click="scope.nextPage"
+                />
+                <q-btn
+                  icon="last_page"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isLastPage"
+                  @click="scope.lastPage"
+                />
+              </div>
             </div>
           </template>
         </q-table>
@@ -327,7 +353,7 @@ const pagination = ref({
   sortBy: 'no',
   descending: false,
   page: 1,
-  rowsPerPage: 25,
+  rowsPerPage: 10,
 });
 
 const filters = ref({
@@ -777,7 +803,7 @@ function exportToExcel() {
     color: #334155;
     font-size: 0.75rem;
     white-space: pre-wrap; // To allow \n in labels
-    text-align: center;
+    text-align: center !important;
     vertical-align: middle;
     line-height: 1.3;
     padding: 8px 6px;

@@ -160,7 +160,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import buuLogoSvg from 'src/assets/logo-1.svg';
+import buuLogoSvg from 'src/assets/buu-logo-receipt.png';
 import receiptQrCode from 'src/assets/reciept-qrcode.png';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -291,9 +291,9 @@ function escapeHtml(value: string): string {
 // ─── Shared print CSS ────────────────────────────────────────────────────────
 function getPrintStyles(): string {
   return `
-    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    body { font-family: 'Sarabun', 'TH Sarabun New', sans-serif; font-size: 13px; color: #3a3a3a; background: #fff; }
+    body { font-family: 'Sarabun', 'TH Sarabun New', 'Noto Sans Thai', sans-serif; font-size: 13px; color: #333; background: #fff; }
     .receipt-page {
       width: 210mm; min-height: 297mm;
       margin: 0 auto;
@@ -305,28 +305,28 @@ function getPrintStyles(): string {
     .header-left { display: flex; gap: 12px; align-items: flex-start; }
     .receipt-logo { width: 60px; height: 60px; object-fit: contain; }
     .uni-info { display: flex; flex-direction: column; gap: 1px; }
-    .uni-name { font-size: 15px; font-weight: 700; line-height: 1.35; color: #2a2a2a; }
-    .uni-addr { font-size: 11px; line-height: 1.5; color: #444; }
+    .uni-name { font-size: 16px; font-weight: 700; line-height: 1.35; color: #2a2a2a; }
+    .uni-addr { font-size: 12px; line-height: 1.5; color: #333; }
     .header-right { text-align: right; }
-    .receipt-title { font-size: 18px; font-weight: 700; line-height: 1.3; color: #2a2a2a; }
-    .receipt-date { font-size: 12px; margin-top: 14px; color: #3a3a3a; }
+    .receipt-title { font-size: 20px; font-weight: 700; line-height: 1.3; color: #111; }
+    .receipt-date { font-size: 13px; margin-top: 16px; color: #3a3a3a; }
     /* CUSTOMER */
     .customer-section { margin: 10px 0 12px; padding-bottom: 8px; }
-    .info-row { display: flex; margin-bottom: 5px; font-size: 13px; color: #3a3a3a; }
-    .info-label { width: 260px; flex-shrink: 0; color: #555; }
-    .info-value { flex: 1; color: #2a2a2a; }
+    .info-row { display: flex; margin-bottom: 6px; font-size: 13px; line-height: 1.5; color: #3a3a3a; }
+    .info-label { width: 265px; flex-shrink: 0; color: #333; }
+    .info-value { flex: 1; color: #111; }
     /* TABLE */
     .receipt-table { width: 100%; border-collapse: collapse; flex: 1; }
-    .receipt-table th, .receipt-table td { border: 1px solid #bbb; padding: 6px 10px; font-size: 13px; color: #3a3a3a; }
-    .receipt-table th { text-align: center; font-weight: 400; background: #fafafa; color: #444; }
+    .receipt-table th, .receipt-table td { border: 1px solid #999; padding: 6px 10px; font-size: 13px; color: #333; }
+    .receipt-table th { text-align: center; font-weight: 400; background: #fff; color: #333; }
     .col-no { width: 11%; text-align: center; }
     .col-desc { width: 64%; }
     .col-amount { width: 25%; text-align: right; }
-    .body-no { text-align: center; vertical-align: top; padding-top: 10px; height: 320px; }
+    .body-no { text-align: center; vertical-align: top; padding-top: 10px; height: 340px; }
     .body-desc { vertical-align: top; padding-top: 10px; padding-left: 10px; position: relative; }
     .body-amount { text-align: right; vertical-align: top; padding-top: 10px; }
-    .tfoot-total { font-weight: 700; padding-left: 10px; color: #2a2a2a; }
-    .tfoot-amount { text-align: right; font-weight: 700; color: #2a2a2a; }
+    .tfoot-total { font-size: 13px; font-weight: 700; padding-left: 10px; color: #111; }
+    .tfoot-amount { font-size: 13px; text-align: right; font-weight: 700; color: #111; }
     /* Cell watermark */
     .cell-watermark-wrap {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -338,20 +338,20 @@ function getPrintStyles(): string {
     /* FOOTER */
     .receipt-footer { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 14px; gap: 16px; }
     .footer-left { flex: 1; }
-    .notes-url-label { font-size: 10px; margin-bottom: 1px; color: #444; }
-    .notes-url { font-size: 10px; margin-bottom: 5px; color: #444; }
-    .notes-head { font-size: 10.5px; font-weight: 700; margin-bottom: 3px; color: #2a2a2a; }
-    .notes-body { font-size: 10px; padding-left: 12px; line-height: 1.55; color: #444; }
+    .notes-url-label { font-size: 11px; margin-bottom: 1px; color: #444; }
+    .notes-url { font-size: 11px; margin-bottom: 5px; color: #444; }
+    .notes-head { font-size: 11px; font-weight: 700; margin-bottom: 3px; color: #2a2a2a; }
+    .notes-body { font-size: 10.5px; padding-left: 12px; line-height: 1.6; color: #444; }
     .notes-body p { margin-bottom: 2px; }
-    .notes-en { color: #666; padding-left: 8px; font-size: 9.5px; }
-    .digitally { font-size: 9px; color: #777; margin-top: 12px; }
+    .notes-en { color: #666; padding-left: 8px; font-size: 10px; }
+    .digitally { font-size: 10px; color: #777; margin-top: 12px; }
     .footer-right { width: 175px; display: flex; flex-direction: column; align-items: center; }
     .sig-block { display: flex; flex-direction: column; align-items: center; width: 100%; margin-bottom: 10px; }
-    .sig-italic { font-style: italic; font-size: 18px; font-family: Georgia, 'Times New Roman', serif; color: #2a2a2a; }
-    .sig-line { width: 160px; border-bottom: 1px solid #888; margin-bottom: 5px; }
-    .sig-name { font-size: 12px; font-weight: 600; text-align: center; color: #2a2a2a; }
-    .sig-title { font-size: 11px; color: #555; text-align: center; }
-    .qr-img { width: 86px; height: 86px; margin-top: 4px; }
+    .sig-italic { font-style: italic; font-size: 20px; font-family: Georgia, 'Times New Roman', serif; color: #111; margin-bottom: 0px; }
+    .sig-line { width: 170px; border-bottom: 1px solid #666; margin-bottom: 5px; }
+    .sig-name { font-size: 13px; font-weight: 600; text-align: center; color: #2a2a2a; }
+    .sig-title { font-size: 12px; color: #555; text-align: center; }
+    .qr-img { width: 90px; height: 90px; margin-top: 4px; }
     @page { size: A4; margin: 0; }
     @media print { body { padding: 0; } }
   `;
@@ -377,6 +377,7 @@ function buildReceiptHtml(isPixelVersion = false): string {
 <html lang="th">
 <head>
   <meta charset="utf-8" />
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     ${getPrintStyles()}
     .receipt-page { width: ${w}; ${isPixelVersion ? `height: ${h};` : `min-height: ${h};`} padding: ${pad}; }
@@ -479,7 +480,7 @@ function printReceipt(): void {
   setTimeout(() => {
     printWindow.focus();
     printWindow.print();
-  }, 1000);
+  }, 1500);
 }
 
 function downloadReceiptPdf(): void {
@@ -530,21 +531,8 @@ defineExpose({ printReceipt, downloadReceiptPdf });
 </script>
 
 <style lang="scss" scoped>
-@font-face {
-  font-family: 'THSarabunNew';
-  src: url('https://cdn.jsdelivr.net/gh/itds-consulting/thai-fonts/fonts/THSarabunNew.ttf')
-    format('truetype');
-}
-@font-face {
-  font-family: 'THSarabunNew';
-  font-weight: bold;
-  src: url('https://cdn.jsdelivr.net/gh/itds-consulting/thai-fonts/fonts/THSarabunNew%20Bold.ttf')
-    format('truetype');
-}
-
 .font-sarabun {
-  font-family:
-    'THSarabunNew', 'TH Sarabun New', 'TH Sarabun PSK', 'Sarabun', 'Noto Sans Thai', sans-serif;
+  font-family: 'Sarabun', 'TH Sarabun New', 'Noto Sans Thai', sans-serif;
 }
 
 .receipt-card {
@@ -556,11 +544,15 @@ defineExpose({ printReceipt, downloadReceiptPdf });
 
 /* Page wrapper inside dialog — fills full card */
 .receipt-page {
-  padding: 32px 40px 28px;
+  padding: 36px 44px 32px;
   display: flex;
   flex-direction: column;
-  min-height: 1060px; /* approximate A4 proportion inside dialog */
-  color: #3a3a3a; /* match original: dark-grey, not pure black */
+  min-height: 1123px; /* approximate A4 proportion inside dialog */
+  font-family: 'Sarabun', 'TH Sarabun New', 'Noto Sans Thai', sans-serif;
+  font-size: 13px;
+  color: #333;
+  letter-spacing: normal;
+  word-spacing: normal;
 }
 
 /* HEADER */
@@ -587,29 +579,29 @@ defineExpose({ printReceipt, downloadReceiptPdf });
   gap: 1px;
 }
 .uni-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.35;
   color: #2a2a2a;
 }
 .uni-addr {
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.5;
-  color: #444;
+  color: #333;
 }
 .header-right {
   text-align: right;
   flex-shrink: 0;
 }
 .receipt-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.3;
-  color: #2a2a2a;
+  color: #111;
 }
 .receipt-date {
-  font-size: 12px;
-  margin-top: 14px;
+  font-size: 13px;
+  margin-top: 16px;
   color: #3a3a3a;
 }
 
@@ -619,22 +611,22 @@ defineExpose({ printReceipt, downloadReceiptPdf });
 }
 .info-row {
   display: flex;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: #3a3a3a;
 }
 .info-label {
-  width: 270px;
+  width: 265px;
   flex-shrink: 0;
-  color: #555;
+  color: #333;
 }
 .info-value {
   flex: 1;
-  color: #2a2a2a;
+  color: #111;
 }
 .info-row-spacer {
-  height: 10px;
+  height: 8px;
 }
 
 /* TABLE */
@@ -646,16 +638,16 @@ defineExpose({ printReceipt, downloadReceiptPdf });
 }
 .receipt-table th,
 .receipt-table td {
-  border: 1px solid #bbb;
+  border: 1px solid #999;
   padding: 6px 10px;
   font-size: 13px;
-  color: #3a3a3a;
+  color: #333;
 }
 .receipt-table th {
   font-weight: 400;
   text-align: center;
-  color: #444;
-  background: #fafafa;
+  color: #333;
+  background: #fff;
 }
 .col-no {
   width: 11%;
@@ -673,7 +665,7 @@ defineExpose({ printReceipt, downloadReceiptPdf });
   text-align: center;
   vertical-align: top;
   padding-top: 10px;
-  height: 320px; /* tall cell like original */
+  height: 340px; /* tall cell like original */
 }
 .body-desc {
   vertical-align: top;
@@ -687,14 +679,16 @@ defineExpose({ printReceipt, downloadReceiptPdf });
   padding-top: 10px;
 }
 .tfoot-total {
+  font-size: 13px;
   font-weight: 700;
   padding-left: 10px;
-  color: #2a2a2a;
+  color: #111;
 }
 .tfoot-amount {
+  font-size: 13px;
   text-align: right;
   font-weight: 700;
-  color: #2a2a2a;
+  color: #111;
 }
 
 /* Cell watermark */
@@ -734,25 +728,25 @@ defineExpose({ printReceipt, downloadReceiptPdf });
   min-width: 0;
 }
 .notes-url-label {
-  font-size: 10px;
+  font-size: 11px;
   margin-bottom: 1px;
   color: #444;
 }
 .notes-url {
-  font-size: 10px;
+  font-size: 11px;
   margin-bottom: 5px;
   color: #444;
 }
 .notes-head {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   margin-bottom: 3px;
   color: #2a2a2a;
 }
 .notes-body {
-  font-size: 10px;
+  font-size: 10.5px;
   padding-left: 12px;
-  line-height: 1.55;
+  line-height: 1.6;
   color: #444;
 }
 .notes-body p {
@@ -761,10 +755,10 @@ defineExpose({ printReceipt, downloadReceiptPdf });
 .notes-en {
   color: #666;
   padding-left: 8px;
-  font-size: 9.5px;
+  font-size: 10px;
 }
 .digitally {
-  font-size: 9px;
+  font-size: 10px;
   color: #777;
   margin-top: 12px;
 }
@@ -785,29 +779,29 @@ defineExpose({ printReceipt, downloadReceiptPdf });
 }
 .sig-italic {
   font-style: italic;
-  font-size: 18px;
+  font-size: 20px;
   font-family: Georgia, 'Times New Roman', serif;
   margin-bottom: 0px;
-  color: #2a2a2a;
+  color: #111;
 }
 .sig-line {
-  width: 160px;
-  border-bottom: 1px solid #888;
+  width: 170px;
+  border-bottom: 1px solid #666;
   margin-bottom: 5px;
 }
 .sig-name {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   text-align: center;
   color: #2a2a2a;
 }
 .sig-title {
-  font-size: 11px;
+  font-size: 12px;
   color: #555;
   text-align: center;
 }
 .qr-img {
-  width: 86px;
-  height: 86px;
+  width: 90px;
+  height: 90px;
 }
 </style>

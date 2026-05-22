@@ -10,29 +10,28 @@
     />
 
     <section class="admin-shell admin-content">
-      <!-- Results Panel -->
-      <AdminSurfaceCard
-        :title="$t('finance.applicantSearch.resultsTitle')"
-        :subtitle="
-          $t('finance.applicantSearch.resultsSubtitle', {
-            faculty: $t('common.faculties.computerCenter'),
-            code: '82994',
-          })
-        "
-        icon="list_alt"
-        body-padding="none"
-      >
-        <template #header-actions>
+      <AdminSurfaceCard class="q-mt-md" card-class="q-pa-none">
+        <div class="text-center q-pt-lg q-pb-xs text-weight-bold text-subtitle1">
+          {{ $t('finance.applicantSearch.resultsTitle') }}
+        </div>
+        <div class="text-center q-pb-md text-caption text-grey-7">
+          {{
+            $t('finance.applicantSearch.resultsSubtitle', {
+              faculty: $t('common.faculties.computerCenter'),
+              code: '82994',
+            })
+          }}
+        </div>
+
+        <div class="row justify-end items-center q-px-md q-pb-md">
           <q-input
             v-model="searchForm.keyword"
             dense
             outlined
-            rounded
             :placeholder="$t('finance.applicantSearch.fields.learnerNamePlaceholder')"
             class="receipt-search"
             debounce="500"
             @update:model-value="handleSearch"
-            style="min-width: 300px"
           >
             <template v-slot:prepend>
               <q-icon name="search" />
@@ -45,11 +44,13 @@
                   <div class="q-pa-lg" style="min-width: 320px">
                     <div class="text-h6 text-weight-bold q-mb-lg row items-center">
                       <q-icon name="filter_alt" color="primary" class="q-mr-sm" />
-                      ตัวกรองเพิ่มเติม
+                      {{ $t('additionalFilters') }}
                     </div>
 
                     <div class="filter-field-group q-mb-lg">
-                      <label class="filter-label">สถานะการชำระเงิน</label>
+                      <label class="filter-label">{{
+                        $t('finance.applicantSearch.columns.status')
+                      }}</label>
                       <div class="row q-gutter-xs">
                         <q-btn
                           unelevated
@@ -61,7 +62,7 @@
                           no-caps
                           @click="
                             searchForm.status = searchForm.status === 'Paid' ? null : 'Paid';
-                            handleSearch();
+                            void handleSearch();
                           "
                         />
                         <q-btn
@@ -74,7 +75,7 @@
                           no-caps
                           @click="
                             searchForm.status = searchForm.status === 'Pending' ? null : 'Pending';
-                            handleSearch();
+                            void handleSearch();
                           "
                         />
                       </div>
@@ -104,23 +105,40 @@
               </q-btn>
             </template>
           </q-input>
-        </template>
+        </div>
+
         <q-table
+          v-model:pagination="pagination"
           :rows="results"
           :columns="columns"
           row-key="id"
           flat
-          class="applicant-results-table"
-          :pagination="{ rowsPerPage: 10 }"
+          dense
+          class="receipt-table applicant-results-table"
+          :loading="loading"
+          :rows-per-page-options="[10, 25, 50, 100]"
+          :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
         >
           <template #body-cell-index="props">
-            <q-td :props="props" class="text-grey-7 font-weight-bold">
+            <q-td :props="props" class="text-center">
               {{ props.rowIndex + 1 }}
             </q-td>
           </template>
 
-          <template #body-cell-status="props">
+          <template #body-cell-amount="props">
+            <q-td :props="props" class="text-center text-weight-medium">
+              &#3647;{{ props.value.toLocaleString() }}
+            </q-td>
+          </template>
+
+          <template #body-cell-courseInfo="props">
             <q-td :props="props">
+              <div style="white-space: pre-wrap; word-break: break-word">{{ props.value }}</div>
+            </q-td>
+          </template>
+
+          <template #body-cell-status="props">
+            <q-td :props="props" class="text-center">
               <q-badge
                 rounded
                 class="status-badge"
@@ -134,14 +152,8 @@
             </q-td>
           </template>
 
-          <template #body-cell-amount="props">
-            <q-td :props="props" class="text-weight-bolder">
-              ฿{{ props.value.toLocaleString() }}
-            </q-td>
-          </template>
-
           <template #body-cell-contact="props">
-            <q-td :props="props">
+            <q-td :props="props" class="text-center">
               <div
                 v-if="props.value"
                 class="row items-center justify-center text-primary cursor-pointer"
@@ -159,6 +171,70 @@
               <span>{{ $t('finance.applicantSearch.noData') }}</span>
             </div>
           </template>
+
+          <template #bottom="scope">
+            <div class="row full-width justify-between items-center q-py-sm">
+              <div class="row items-center q-gutter-sm">
+                <span class="text-subtitle2 text-grey-8">{{
+                  $t('finance.receiptSummary.showEntries')
+                }}</span>
+                <q-select
+                  v-model="pagination.rowsPerPage"
+                  :options="[10, 25, 50, 100]"
+                  outlined
+                  dense
+                  options-dense
+                  style="width: 80px"
+                  class="bg-white receipt-rows-select"
+                />
+                <span class="text-subtitle2 text-grey-8">{{
+                  $t('finance.receiptSummary.entries')
+                }}</span>
+              </div>
+              <div class="row items-center q-gutter-sm">
+                <span class="text-caption text-grey-8 q-mr-sm">
+                  {{ pageStart(scope.pagination) }}-{{ pageEnd(scope.pagination) }} of
+                  {{ results.length }}
+                </span>
+                <q-btn
+                  icon="first_page"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isFirstPage"
+                  @click="scope.firstPage"
+                />
+                <q-btn
+                  icon="chevron_left"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isFirstPage"
+                  @click="scope.prevPage"
+                />
+                <q-btn
+                  icon="chevron_right"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isLastPage"
+                  @click="scope.nextPage"
+                />
+                <q-btn
+                  icon="last_page"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isLastPage"
+                  @click="scope.lastPage"
+                />
+              </div>
+            </div>
+          </template>
         </q-table>
       </AdminSurfaceCard>
     </section>
@@ -168,6 +244,7 @@
 <script setup lang="ts">
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import { api } from 'src/boot/axios';
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { QTableProps } from 'quasar';
@@ -185,8 +262,48 @@ interface ApplicantSearchResult {
   contact: string;
 }
 
+interface ApplicantSearchApiItem {
+  id: number;
+  enrollId: number;
+  userId: number | null;
+  courseId: number | null;
+  learnerRef: string;
+  appRef: string;
+  learnerName: string;
+  amount: number;
+  courseInfo: string;
+  status: 'Paid' | 'Pending';
+  contact: string | null;
+  enrollDate: string | null;
+  payDate: string | null;
+}
+
+interface ApplicantSearchApiResponse {
+  generatedAt: string;
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+  };
+  items: ApplicantSearchApiItem[];
+}
+
+interface TablePagination {
+  sortBy: string;
+  descending: boolean;
+  page: number;
+  rowsPerPage: number;
+}
+
 const loading = ref(false);
-const hasSearched = ref(false);
+
+const pagination = ref<TablePagination>({
+  sortBy: 'index',
+  descending: false,
+  page: 1,
+  rowsPerPage: 10,
+});
 
 const searchForm = ref({
   keyword: '',
@@ -195,7 +312,8 @@ const searchForm = ref({
 
 function resetSearch() {
   searchForm.value.status = null;
-  handleSearch();
+  pagination.value.page = 1;
+  void handleSearch();
 }
 
 const columns = computed<QTableProps['columns']>(() => [
@@ -204,43 +322,53 @@ const columns = computed<QTableProps['columns']>(() => [
     label: t('finance.applicantSearch.columns.no'),
     align: 'center',
     field: 'index',
+    sortable: true,
     style: 'width: 50px',
   },
   {
     name: 'learnerRef',
     label: t('finance.applicantSearch.columns.learnerRef'),
-    align: 'left',
+    align: 'center',
     field: 'learnerRef',
+    sortable: true,
   },
   {
     name: 'appRef',
     label: t('finance.applicantSearch.columns.appRef'),
-    align: 'left',
+    align: 'center',
     field: 'appRef',
+    sortable: true,
   },
   {
     name: 'learnerName',
     label: t('finance.applicantSearch.columns.learnerName'),
-    align: 'left',
+    align: 'center',
     field: 'learnerName',
+    sortable: true,
+    style: 'white-space: nowrap;',
   },
   {
     name: 'amount',
     label: t('finance.applicantSearch.columns.amount'),
-    align: 'right',
+    align: 'center',
     field: 'amount',
+    sortable: true,
   },
   {
     name: 'courseInfo',
     label: t('finance.applicantSearch.columns.courseInfo'),
-    align: 'left',
+    align: 'center',
     field: 'courseInfo',
+    sortable: true,
+    style: 'width: 320px',
+    headerStyle: 'white-space: pre-wrap; width: 320px',
   },
   {
     name: 'status',
     label: t('finance.applicantSearch.columns.status'),
     align: 'center',
     field: 'status',
+    sortable: true,
   },
   {
     name: 'contact',
@@ -251,81 +379,72 @@ const columns = computed<QTableProps['columns']>(() => [
 ]);
 
 const results = ref<ApplicantSearchResult[]>([]);
+let latestSearchId = 0;
 
-const mockData = computed<ApplicantSearchResult[]>(() => [
-  {
-    id: 1,
-    learnerRef: '6700017',
-    appRef: '6751300100003',
-    learnerName: 'สา ทดสอบ',
-    amount: 1,
-    courseInfo: `C67513001 : ทดสอบ direct link (${t('common.faculties.computerCenter')} 82994)`,
-    status: 'Paid',
-    contact: '',
-  },
-  {
-    id: 2,
-    learnerRef: '6600001',
-    appRef: '6751300100004',
-    learnerName: 'นัฐพร ยะโสวงษ์',
-    amount: 1,
-    courseInfo: `C67513001 : ทดสอบ direct link (${t('common.faculties.computerCenter')} 82994)`,
-    status: 'Pending',
-    contact: '2788',
-  },
-  {
-    id: 3,
-    learnerRef: '6600001',
-    appRef: '6851300100002',
-    learnerName: 'นัฐพร ยะโสวงษ์',
-    amount: 1,
-    courseInfo: 'C68513001 : ทดสอบเพิ่มวิชา แล้วเพิ่ม skill จาก trigger',
-    status: 'Pending',
-    contact: '2788',
-  },
-  {
-    id: 4,
-    learnerRef: '6600003',
-    appRef: '6851300100001',
-    learnerName: 'ชื่อตัว ชื่อสกุล',
-    amount: 1,
-    courseInfo: 'C68513001 : ทดสอบเพิ่มวิชา แล้วเพิ่ม skill จาก trigger',
-    status: 'Pending',
-    contact: '',
-  },
-]);
+function normalizeResult(item: ApplicantSearchApiItem): ApplicantSearchResult {
+  return {
+    id: item.id,
+    learnerRef: item.learnerRef,
+    appRef: item.appRef,
+    learnerName: item.learnerName,
+    amount: Number(item.amount) || 0,
+    courseInfo: item.courseInfo,
+    status: item.status,
+    contact: item.contact ?? '',
+  };
+}
 
-function handleSearch() {
+function pageStart(tablePagination: { page: number; rowsPerPage: number }): number {
+  if (results.value.length === 0) {
+    return 0;
+  }
+
+  return (tablePagination.page - 1) * tablePagination.rowsPerPage + 1;
+}
+
+function pageEnd(tablePagination: { page: number; rowsPerPage: number }): number {
+  return Math.min(tablePagination.page * tablePagination.rowsPerPage, results.value.length);
+}
+
+async function handleSearch() {
+  const searchId = ++latestSearchId;
   loading.value = true;
-  hasSearched.value = false;
+  pagination.value.page = 1;
 
-  // Simulate API delay
-  setTimeout(() => {
-    let filtered = [...mockData.value];
+  try {
+    const params: Record<string, string | number> = {
+      page: 1,
+      pageSize: 500,
+    };
+    const keyword = searchForm.value.keyword.trim();
 
-    if (searchForm.value.keyword) {
-      const kw = searchForm.value.keyword.toLowerCase();
-      filtered = filtered.filter(
-        (item) =>
-          item.learnerName.toLowerCase().includes(kw) ||
-          item.learnerRef.includes(kw) ||
-          item.appRef.includes(kw) ||
-          item.courseInfo.toLowerCase().includes(kw),
-      );
+    if (keyword) {
+      params.keyword = keyword;
     }
 
     if (searchForm.value.status) {
-      filtered = filtered.filter((item) => item.status === searchForm.value.status);
+      params.status = searchForm.value.status;
     }
 
-    results.value = filtered;
-    loading.value = false;
-    hasSearched.value = true;
-  }, 600);
+    const { data } = await api.get<ApplicantSearchApiResponse>('/api/lltenroll', { params });
+
+    if (searchId === latestSearchId) {
+      results.value = data.items.map(normalizeResult);
+    }
+  } catch (error) {
+    console.error('Failed to load applicant enrollment data', error);
+    if (searchId === latestSearchId) {
+      results.value = [];
+    }
+  } finally {
+    if (searchId === latestSearchId) {
+      loading.value = false;
+    }
+  }
 }
 
 onMounted(() => {
-  handleSearch();
+  void handleSearch();
 });
 </script>
 
@@ -344,57 +463,35 @@ onMounted(() => {
   box-shadow: var(--admin-shadow-sm) !important;
 }
 
-.search-form-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
+.receipt-search {
+  width: 250px;
 }
 
-.search-label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #475569;
-  margin-bottom: 8px;
-}
-
-.search-submit-btn {
-  min-width: 180px;
-  height: 48px;
-  border-radius: 12px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  box-shadow: 0 4px 15px rgba(var(--admin-primary-rgb), 0.25);
-}
-
-.applicant-results-table {
-  :deep(.q-table__top) {
-    padding: 0;
+.receipt-table {
+  :deep(.q-table__card) {
+    box-shadow: none;
   }
 
-  :deep(thead tr th) {
-    background: #f8fafc;
-    font-weight: 800;
-    color: #475569;
-    font-size: 0.8rem;
-    padding: 16px 8px;
+  :deep(thead tr) {
+    background: #e2e8f0;
+  }
+
+  :deep(th) {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    text-align: center !important;
+    vertical-align: middle;
+    line-height: 1.3;
+    padding: 8px 6px;
   }
 
   :deep(tbody td) {
-    font-size: 0.88rem;
-    padding: 12px 8px;
-    white-space: normal;
-    word-break: break-word;
-    line-height: 1.4;
-  }
-
-  :deep(tbody tr:nth-child(even)) {
-    background: rgba(241, 245, 249, 0.3);
+    vertical-align: middle;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    white-space: pre-wrap;
   }
 }
 
@@ -412,5 +509,9 @@ onMounted(() => {
     background: rgba(239, 68, 68, 0.1) !important;
     color: #dc2626 !important;
   }
+}
+
+:deep(.q-field__label) {
+  font-weight: 400 !important;
 }
 </style>
