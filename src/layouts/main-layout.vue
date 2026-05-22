@@ -300,7 +300,7 @@
             :label="nav.label"
             header-class="drawer-expansion-header"
             class="drawer-expansion-item"
-            :default-opened="true"
+            :default-opened="false"
           >
             <q-list class="q-pl-sm">
               <q-item
