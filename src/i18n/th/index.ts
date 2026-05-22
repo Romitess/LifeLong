@@ -499,8 +499,8 @@ export default {
       studentId: 'รหัสประจำตัวผู้เรียน',
     },
     roles: {
-      admin: 'ผู้ดูแลระบบ',
-      instructor: 'อาจารย์ผู้สอน',
+      admin: 'ผู้ดูแล',
+      instructor: 'ผู้สอน',
       finance: 'เจ้าหน้าที่การเงินคณะ',
       student: 'ผู้เรียน',
     },
