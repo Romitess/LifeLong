@@ -1,7 +1,7 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
-import type { CourseDetail, CourseTarget } from 'src/types/course-detail';
+import type { CourseDetail, CourseTarget, CourseTypeClass } from 'src/types/course-detail';
 import { useCourseStore, mapDeliveryModes } from 'src/stores/course-store';
 
 type CourseIdSource = string | Ref<string>;
@@ -18,6 +18,7 @@ interface BackendCourseDetailResponse {
   contractTel?: string | null;
   contractEmail?: string | null;
   contractUrl?: string | null;
+  typeClasses?: CourseTypeClass[] | null;
 }
 
 interface UseCourseDetailReturn {
@@ -114,6 +115,7 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
               contractTel: data.contractTel ?? null,
               contractEmail: data.contractEmail ?? null,
               contractUrl: data.contractUrl ?? null,
+              typeClasses: data.typeClasses ?? null,
             };
             return;
           }

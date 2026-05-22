@@ -524,59 +524,57 @@
                 </q-card-section>
               </q-card>
 
-              <!-- Course Info Card -->
+              <!-- Course Class Type Card -->
               <q-card flat bordered class="detail-card q-mb-lg">
                 <q-card-section>
                   <div class="detail-card__header">
-                    <q-icon name="info" size="24px" color="primary" />
-                    <h2 class="detail-card__title">{{ $t('additionalInfo') }}</h2>
+                    <q-icon name="school" size="24px" color="primary" />
+                    <h2 class="detail-card__title">
+                      {{ locale === 'th' ? 'การจัดการเรียนการสอน' : 'Teaching Management' }}
+                    </h2>
                   </div>
-                  <q-list class="q-mt-md info-list">
-                    <q-item>
-                      <q-item-section avatar>
-                        <q-icon name="groups" color="primary" size="20px" />
+
+                  <!-- Loading state -->
+                  <div v-if="isLoading" class="q-mt-md">
+                    <q-skeleton type="text" width="80%" />
+                    <q-skeleton type="text" width="60%" class="q-mt-sm" />
+                  </div>
+
+                  <!-- Has typeClasses data -->
+                  <q-list
+                    v-else-if="course.typeClasses && course.typeClasses.length > 0"
+                    class="q-mt-md"
+                  >
+                    <q-item v-for="tc in course.typeClasses" :key="tc.typeclassId">
+                      <q-item-section avatar top>
+                        <q-icon name="class" color="primary" size="20px" />
                       </q-item-section>
                       <q-item-section>
-                        <q-item-label caption>{{ $t('targetAudience') }}</q-item-label>
-                        <q-item-label class="text-body2">{{
-                          getTranslatedTargetAudience(course)
-                        }}</q-item-label>
-                      </q-item-section>
-                    </q-item>
-                    <q-item>
-                      <q-item-section avatar>
-                        <q-icon name="checklist" color="primary" size="20px" />
-                      </q-item-section>
-                      <q-item-section>
-                        <q-item-label caption>{{ $t('prerequisites') }}</q-item-label>
-                        <q-item-label class="text-body2">{{
-                          getTranslatedPrerequisites(course)
-                        }}</q-item-label>
-                      </q-item-section>
-                    </q-item>
-                    <q-item>
-                      <q-item-section avatar>
-                        <q-icon name="apartment" color="primary" size="20px" />
-                      </q-item-section>
-                      <q-item-section>
-                        <q-item-label caption>{{ $t('department') }}</q-item-label>
-                        <q-item-label class="text-body2">{{
-                          getTranslatedDepartment(course)
-                        }}</q-item-label>
-                      </q-item-section>
-                    </q-item>
-                    <q-item>
-                      <q-item-section avatar>
-                        <q-icon name="workspace_premium" color="primary" size="20px" />
-                      </q-item-section>
-                      <q-item-section>
-                        <q-item-label caption>{{ $t('certType') }}</q-item-label>
-                        <q-item-label class="text-body2">{{
-                          getTranslatedCertType(course)
-                        }}</q-item-label>
+                        <q-item-label class="text-body2 text-weight-medium">
+                          {{
+                            locale === 'th' ? `แบบที่ ${tc.typeclassId}` : `Type ${tc.typeclassId}`
+                          }}
+                          <span class="text-grey-6"> — </span>
+                          {{ tc.typeclassName ?? '-' }}
+                        </q-item-label>
                       </q-item-section>
                     </q-item>
                   </q-list>
+
+                  <!-- No data fallback -->
+                  <div v-else class="q-mt-md">
+                    <q-item>
+                      <q-item-section>
+                        <q-item-label class="text-body2 text-grey-5">
+                          {{
+                            locale === 'th'
+                              ? 'ไม่มีข้อมูลการจัดการเรียนการสอน'
+                              : 'No teaching type information available'
+                          }}
+                        </q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </div>
                 </q-card-section>
               </q-card>
 
@@ -593,7 +591,7 @@
                     <!-- ชื่อ-สกุล -->
                     <q-item v-if="course.contractName">
                       <q-item-section avatar>
-                        <q-icon name="person" color="secondary" size="20px" />
+                        <q-icon name="person" color="primary" size="20px" />
                       </q-item-section>
                       <q-item-section>
                         <q-item-label caption>{{
@@ -614,13 +612,13 @@
                       tag="a"
                     >
                       <q-item-section avatar>
-                        <q-icon name="phone" color="secondary" size="20px" />
+                        <q-icon name="phone" color="primary" size="20px" />
                       </q-item-section>
                       <q-item-section>
                         <q-item-label caption>{{
                           locale === 'th' ? 'เบอร์โทรศัพท์' : 'Phone'
                         }}</q-item-label>
-                        <q-item-label class="text-body2 text-secondary">{{
+                        <q-item-label class="text-body2 text-grey-9">{{
                           course.contractTel
                         }}</q-item-label>
                       </q-item-section>
@@ -635,11 +633,11 @@
                       tag="a"
                     >
                       <q-item-section avatar>
-                        <q-icon name="email" color="secondary" size="20px" />
+                        <q-icon name="email" color="primary" size="20px" />
                       </q-item-section>
                       <q-item-section>
                         <q-item-label caption>E-mail</q-item-label>
-                        <q-item-label class="text-body2 text-secondary">{{
+                        <q-item-label class="text-body2 text-grey-9">{{
                           course.contractEmail
                         }}</q-item-label>
                       </q-item-section>
@@ -656,11 +654,11 @@
                       tag="a"
                     >
                       <q-item-section avatar>
-                        <q-icon name="link" color="secondary" size="20px" />
+                        <q-icon name="link" color="primary" size="20px" />
                       </q-item-section>
                       <q-item-section>
                         <q-item-label caption>URL</q-item-label>
-                        <q-item-label class="text-body2 text-secondary ellipsis">{{
+                        <q-item-label class="text-body2 text-grey-9 ellipsis">{{
                           course.contractUrl
                         }}</q-item-label>
                       </q-item-section>
@@ -798,21 +796,6 @@ function getTranslatedObjectives(course: CourseDetail): string[] {
   const raw =
     locale.value === 'th' ? course.objectives : (course.objectivesEn ?? course.objectives);
   return raw.filter((obj) => !MOCK_OBJECTIVE_PLACEHOLDERS.includes(obj.trim()));
-}
-
-function getTranslatedTargetAudience(course: CourseDetail): string {
-  if (locale.value === 'th') return course.targetAudience;
-  return course.targetAudienceEn || course.targetAudience;
-}
-
-function getTranslatedPrerequisites(course: CourseDetail): string {
-  if (locale.value === 'th') return course.prerequisites;
-  return course.prerequisitesEn || course.prerequisites;
-}
-
-function getTranslatedDepartment(course: CourseDetail): string {
-  if (locale.value === 'th') return course.department;
-  return course.departmentEn || course.department;
 }
 
 function getTranslatedInstructorName(course: CourseDetail): string {

@@ -45,6 +45,13 @@ export interface EvaluationDetail {
   other: string | null;
 }
 
+export interface CourseTypeClass {
+  typeclassId: number;
+  typeclassName: string | null;
+  amount: number | null;
+  remark: string | null;
+}
+
 export interface CourseDetail extends Course {
   descriptionFull: string;
   descriptionFullEn?: string;
@@ -77,6 +84,7 @@ export interface CourseDetail extends Course {
   contractTel?: string | null;
   contractEmail?: string | null;
   contractUrl?: string | null;
+  typeClasses?: CourseTypeClass[] | null;
 }
 
 export type RegistrationWindowStatus = 'upcoming' | 'open' | 'closed';
