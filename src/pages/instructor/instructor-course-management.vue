@@ -307,6 +307,9 @@
                       label="เข้าระบบ Moodle"
                       no-caps
                       class="course-action-btn course-action-btn--moodle"
+                      :disable="!course.moodleId"
+                      :loading="moodleOpenLoading === course.id"
+                      @click="openInMoodle(course)"
                     />
                     <q-btn
                       outline
@@ -435,6 +438,9 @@
                       no-caps
                       size="sm"
                       class="moodle-link-btn"
+                      :disable="!course.moodleId"
+                      :loading="moodleOpenLoading === course.id"
+                      @click="openInMoodle(course)"
                     />
                   </td>
                   <td class="actions-cell">
@@ -605,6 +611,20 @@
                 no-caps
                 @click="previewCourse"
               />
+              <q-btn
+                unelevated
+                color="positive"
+                icon="school"
+                label="จัดการใน Moodle"
+                no-caps
+                :disable="!selectedCourse?.moodleId"
+                :loading="moodleOpenLoading === selectedCourse?.id"
+                @click="selectedCourse && openInMoodle(selectedCourse)"
+              >
+                <q-tooltip v-if="!selectedCourse?.moodleId"
+                  >รายวิชานี้ยังไม่ได้ sync กับ Moodle</q-tooltip
+                >
+              </q-btn>
               <q-btn
                 unelevated
                 color="primary"
@@ -1407,6 +1427,7 @@ import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import type { Course, DeliveryMode } from 'src/types/course';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
+import { api } from 'src/boot/axios';
 
 type WorkspaceTab =
   | 'overview'
@@ -1592,15 +1613,36 @@ async function fetchMoodleContents(shortname: string): Promise<void> {
   isMoodleLoading.value = true;
   moodleContents.value = [];
   try {
-    const url = `http://localhost:3000/api/moodle/activities?shortname=${encodeURIComponent(shortname)}`;
-    const res = await fetch(url);
-    if (res.ok) {
-      moodleContents.value = (await res.json()) as MoodleModule[];
-    }
+    const { data } = await api.get<MoodleModule[]>(
+      `/api/moodle/activities?shortname=${encodeURIComponent(shortname)}`,
+    );
+    moodleContents.value = data;
   } catch {
     // silent fail — Moodle unavailable
   } finally {
     isMoodleLoading.value = false;
+  }
+}
+
+const moodleOpenLoading = ref<string>('');
+
+async function openInMoodle(course: Course): Promise<void> {
+  const moodleId = course.moodleId;
+  const username = authStore.user?.username || authStore.user?.email;
+  if (!moodleId || !username) {
+    $q.notify({ type: 'warning', message: 'ยังไม่มีข้อมูล Moodle สำหรับรายวิชานี้' });
+    return;
+  }
+  moodleOpenLoading.value = course.id;
+  try {
+    const { data } = await api.get<{ url: string }>(
+      `/api/moodle/instructor-course-url/${moodleId}?username=${encodeURIComponent(username)}`,
+    );
+    window.open(data.url, '_blank', 'noopener,noreferrer');
+  } catch {
+    $q.notify({ type: 'negative', message: 'ไม่สามารถเชื่อมต่อ Moodle ได้ในขณะนี้' });
+  } finally {
+    moodleOpenLoading.value = '';
   }
 }
 
