@@ -79,6 +79,13 @@ async function submitOverride(payload: CreateCoursePayload): Promise<{ courseId:
   if (payload.classTypeId != null) form.append('classTypeId', String(payload.classTypeId));
   if (payload.classFee != null) form.append('classFee', String(payload.classFee));
   if (payload.classFeeRemark) form.append('classFeeRemark', payload.classFeeRemark);
+  if (payload.lo) form.append('lo', payload.lo);
+  if (payload.keyword) form.append('keyword', payload.keyword);
+  if (payload.privilege) form.append('privilege', payload.privilege);
+  if (payload.remarkChapter) form.append('remarkChapter', payload.remarkChapter);
+  if (payload.property) form.append('property', payload.property);
+  if (payload.evaluation) form.append('evaluation', payload.evaluation);
+  if (payload.competency) form.append('competency', payload.competency);
   if (payload.precondition) form.append('precondition', payload.precondition);
   if (payload.certificate) form.append('certificate', payload.certificate);
   if (payload.certificateName) form.append('certificateName', payload.certificateName);

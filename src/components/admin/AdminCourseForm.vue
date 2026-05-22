@@ -456,6 +456,57 @@
               />
             </div>
 
+            <!-- ผลลัพธ์การเรียนรู้ -->
+            <div class="course-form__field course-form__field--full">
+              <div class="course-form__label">
+                ผลลัพธ์การเรียนรู้ (LO) <span class="course-form__optional">(ไม่บังคับ)</span>
+              </div>
+              <q-input
+                v-model="form.lo"
+                outlined
+                dense
+                type="textarea"
+                rows="3"
+                placeholder="กรอกจาก มคอ./TQF/CBS เช่น ผู้เรียนสามารถอธิบาย... / ผู้เรียนสามารถประยุกต์..."
+                class="course-form__input"
+                :readonly="props.readonly"
+              />
+            </div>
+
+            <!-- สิทธิประโยชน์ผู้สำเร็จหลักสูตร -->
+            <div class="course-form__field course-form__field--full">
+              <div class="course-form__label">
+                สิทธิประโยชน์ผู้สำเร็จหลักสูตร
+                <span class="course-form__optional">(ไม่บังคับ)</span>
+              </div>
+              <q-input
+                v-model="form.privilege"
+                outlined
+                dense
+                type="textarea"
+                rows="2"
+                placeholder="เช่น รับวุฒิบัตร / ใช้เทียบโอนหน่วยกิต / สะสมหน่วยกิตได้..."
+                class="course-form__input"
+                :readonly="props.readonly"
+              />
+            </div>
+
+            <!-- คำค้นหา -->
+            <div class="course-form__field course-form__field--full">
+              <div class="course-form__label">
+                คำค้นหา (Keyword) <span class="course-form__optional">(ไม่บังคับ)</span>
+              </div>
+              <q-input
+                v-model="form.keyword"
+                outlined
+                dense
+                maxlength="400"
+                placeholder="เช่น programming, data science, AI, machine learning"
+                class="course-form__input"
+                :readonly="props.readonly"
+              />
+            </div>
+
             <!-- วุฒิบัตร -->
             <div class="course-form__field course-form__field--full">
               <div class="course-form__label">
@@ -627,7 +678,11 @@
             <!-- แนบไฟล์ CBS -->
             <div class="course-form__field course-form__field--full">
               <div class="course-form__label">
-                แนบไฟล์ CBS 001 หรือ CBS 002 <span class="course-form__optional">(ไม่บังคับ)</span>
+                แนบเอกสารต้นทางหลักสูตร <span class="course-form__optional">(ไม่บังคับ)</span>
+              </div>
+              <div class="text-caption text-grey-6 q-mb-xs">
+                เอกสาร CBS 001, CBS 002 หรือแบบฟอร์มหลักสูตรระยะสั้น เก็บเป็นหลักฐานอ้างอิง
+                ไม่ใช่ไฟล์บทเรียนสำหรับผู้เรียน
               </div>
               <!-- มีไฟล์เดิมจากเซิร์ฟเวอร์ ยังไม่ได้อัปโหลดใหม่ -->
               <div
@@ -642,7 +697,7 @@
                   rel="noopener"
                   class="course-form__existing-filename course-form__file-link"
                 >
-                  {{ props.initialData.fileName ?? 'เปิดไฟล์ CBS' }}
+                  {{ props.initialData.fileName ?? 'เปิดไฟล์เอกสารต้นทาง' }}
                 </a>
                 <q-icon
                   v-if="!props.readonly"
@@ -661,7 +716,7 @@
                 dense
                 accept=".pdf,application/pdf"
                 :max-file-size="2097152"
-                label="เลือกไฟล์ CBS"
+                label="เลือกไฟล์เอกสาร"
                 hide-bottom-space
                 class="course-form__input"
                 @update:model-value="fileError = null"
@@ -896,6 +951,11 @@
         ref="chaptersSectionRef"
         data-course-form-section="chapters"
       >
+        <div class="text-caption text-grey-6 q-mb-md">
+          โครงสร้างนี้ใช้สร้าง Section ตั้งต้นใน Moodle
+          เพื่อให้ผู้สอนเริ่มเพิ่มเนื้อหาและกิจกรรมได้ทันที — ผู้สอนเป็นผู้จัดการ
+          resource/quiz/assignment จริงใน Moodle
+        </div>
         <AdminCourseChapterTab
           v-model="chapters"
           :chapter-types="formOptions.chapterTypes"
@@ -978,7 +1038,7 @@ const activeTab = ref<'info' | 'chapters'>('info');
 const chapters = ref<CourseChapterPayload[]>([]);
 const sectionNavItems: AdminSectionNavItem[] = [
   { value: 'info', label: 'ข้อมูลรายวิชา', icon: 'description' },
-  { value: 'chapters', label: 'บทเรียน', icon: 'menu_book' },
+  { value: 'chapters', label: 'โครงสร้างบทเรียน', icon: 'menu_book' },
 ];
 
 function extractMsg(e: unknown): string {
@@ -1010,6 +1070,9 @@ const form = reactive({
   classTypeId: undefined as number | undefined,
   classFee: 0,
   classFeeRemark: '',
+  lo: '',
+  keyword: '',
+  privilege: '',
   remarkChapter: '',
   property: '',
   evaluation: '',
@@ -1103,6 +1166,9 @@ watch(
     form.classTypeId = data.classTypeId ?? undefined;
     form.classFee = data.classFee ?? 0;
     form.classFeeRemark = data.classFeeRemark ?? '';
+    form.lo = data.lo ?? '';
+    form.keyword = data.keyword ?? '';
+    form.privilege = data.privilege ?? '';
     form.remarkChapter = data.remarkChapter ?? '';
     form.property = data.property ?? '';
     form.evaluation = data.evaluation ?? '';
@@ -1407,6 +1473,9 @@ async function submit() {
     classTypeId: form.classTypeId,
     classFee: form.classFee,
     classFeeRemark: form.classFeeRemark,
+    lo: form.lo.trim() || undefined,
+    keyword: form.keyword.trim() || undefined,
+    privilege: form.privilege.trim() || undefined,
     remarkChapter: form.remarkChapter || undefined,
     property: form.property || undefined,
     evaluation: form.evaluation || undefined,

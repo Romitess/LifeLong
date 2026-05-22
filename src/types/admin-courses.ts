@@ -81,6 +81,9 @@ export interface CreateCoursePayload {
   classTypeId?: number | undefined;
   classFee?: number | undefined;
   classFeeRemark?: string | undefined;
+  lo?: string | undefined;
+  keyword?: string | undefined;
+  privilege?: string | undefined;
   remarkChapter?: string | undefined;
   property?: string | undefined;
   evaluation?: string | undefined;
@@ -166,6 +169,9 @@ export interface AdminCourseDetail {
   classTypeId: number | null;
   classFee: number | null;
   classFeeRemark: string | null;
+  lo: string | null;
+  keyword: string | null;
+  privilege: string | null;
   remarkChapter: string | null;
   property: string | null;
   evaluation: string | null;
