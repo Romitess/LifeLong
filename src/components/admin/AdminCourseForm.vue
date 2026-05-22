@@ -401,6 +401,58 @@
                 rows="2"
                 placeholder="เช่น ไม่มีข้อกำหนด / ต้องผ่านรายวิชา..."
                 class="course-form__input"
+                :readonly="props.readonly"
+              />
+            </div>
+
+            <!-- คุณสมบัติผู้สมัคร -->
+            <div class="course-form__field course-form__field--full">
+              <div class="course-form__label">
+                คุณสมบัติผู้สมัคร <span class="course-form__optional">(ไม่บังคับ)</span>
+              </div>
+              <q-input
+                v-model="form.property"
+                outlined
+                dense
+                type="textarea"
+                rows="2"
+                placeholder="เช่น นักศึกษาปริญญาตรีเท่านั้น / อายุ 18 ปีขึ้นไป..."
+                class="course-form__input"
+                :readonly="props.readonly"
+              />
+            </div>
+
+            <!-- เกณฑ์การวัดและประเมินผล -->
+            <div class="course-form__field course-form__field--full">
+              <div class="course-form__label">
+                เกณฑ์การวัดและประเมินผล <span class="course-form__optional">(ไม่บังคับ)</span>
+              </div>
+              <q-input
+                v-model="form.evaluation"
+                outlined
+                dense
+                type="textarea"
+                rows="2"
+                placeholder="เช่น ตัดเกรดอิงเกณฑ์ / ผ่านเมื่อทำแบบทดสอบได้ 70% ขึ้นไป..."
+                class="course-form__input"
+                :readonly="props.readonly"
+              />
+            </div>
+
+            <!-- สมรรถนะเด่น -->
+            <div class="course-form__field course-form__field--full">
+              <div class="course-form__label">
+                สมรรถนะเด่น <span class="course-form__optional">(ไม่บังคับ)</span>
+              </div>
+              <q-input
+                v-model="form.competency"
+                outlined
+                dense
+                type="textarea"
+                rows="2"
+                placeholder="เช่น ทักษะการคิดเชิงวิเคราะห์ / ความสามารถในการสื่อสาร..."
+                class="course-form__input"
+                :readonly="props.readonly"
               />
             </div>
 
@@ -849,6 +901,23 @@
           :chapter-types="formOptions.chapterTypes"
           :readonly="props.readonly"
         />
+
+        <!-- หมายเหตุบทเรียน -->
+        <div class="course-form__field course-form__field--full q-mt-md">
+          <div class="course-form__label">
+            หมายเหตุเพิ่มเติมเกี่ยวกับบทเรียน <span class="course-form__optional">(ไม่บังคับ)</span>
+          </div>
+          <q-input
+            v-model="form.remarkChapter"
+            outlined
+            dense
+            type="textarea"
+            rows="3"
+            placeholder="เช่น ผู้เรียนควรเตรียมอุปกรณ์เพิ่มเติม / หมายเหตุสำหรับอาจารย์ผู้สอน..."
+            class="course-form__input"
+            :readonly="props.readonly"
+          />
+        </div>
       </section>
     </div>
 
@@ -941,6 +1010,10 @@ const form = reactive({
   classTypeId: undefined as number | undefined,
   classFee: 0,
   classFeeRemark: '',
+  remarkChapter: '',
+  property: '',
+  evaluation: '',
+  competency: '',
   precondition: '',
   hasCertificate: false,
   certificateName: '',
@@ -1030,6 +1103,10 @@ watch(
     form.classTypeId = data.classTypeId ?? undefined;
     form.classFee = data.classFee ?? 0;
     form.classFeeRemark = data.classFeeRemark ?? '';
+    form.remarkChapter = data.remarkChapter ?? '';
+    form.property = data.property ?? '';
+    form.evaluation = data.evaluation ?? '';
+    form.competency = data.competency ?? '';
     form.precondition = data.precondition ?? '';
     form.hasCertificate = data.certificate === 'Y';
     form.certificateName = data.certificateName ?? '';
@@ -1330,6 +1407,10 @@ async function submit() {
     classTypeId: form.classTypeId,
     classFee: form.classFee,
     classFeeRemark: form.classFeeRemark,
+    remarkChapter: form.remarkChapter || undefined,
+    property: form.property || undefined,
+    evaluation: form.evaluation || undefined,
+    competency: form.competency || undefined,
     precondition: form.precondition || undefined,
     certificate: form.hasCertificate ? 'Y' : 'N',
     certificateName: form.hasCertificate ? form.certificateName || undefined : undefined,
