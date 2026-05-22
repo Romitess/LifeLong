@@ -263,10 +263,35 @@
                         <q-card class="syllabus-content">
                           <q-card-section class="q-py-md">
                             <div class="text-body2 text-grey-8">
-                              {{ chapter.name }}
+                              <div
+                                v-if="chapter.subchapters && chapter.subchapters.length > 0"
+                                class="q-gutter-y-sm"
+                              >
+                                <div
+                                  v-for="sub in chapter.subchapters"
+                                  :key="sub.id"
+                                  class="flex items-start no-wrap q-py-xs"
+                                >
+                                  <q-icon
+                                    name="subdirectory_arrow_right"
+                                    color="primary"
+                                    size="18px"
+                                    class="q-mr-sm q-mt-xs"
+                                  />
+                                  <div class="text-body2 text-grey-9">{{ sub.subject }}</div>
+                                </div>
+                              </div>
+                              <div v-else class="text-grey-5 text-italic q-py-xs">
+                                {{
+                                  locale === 'th'
+                                    ? 'ไม่มีรายละเอียดหัวข้อย่อย'
+                                    : 'No subchapters available'
+                                }}
+                              </div>
+
                               <div
                                 v-if="chapter.hour"
-                                class="q-mt-sm text-caption text-grey-6 flex items-center"
+                                class="q-mt-md text-caption text-grey-6 flex items-center"
                               >
                                 <q-icon
                                   name="schedule"
@@ -547,10 +572,10 @@
                   >
                     <q-item v-for="tc in course.typeClasses" :key="tc.typeclassId">
                       <q-item-section avatar top>
-                        <q-icon name="class" color="primary" size="20px" />
+                        <q-icon name="groups" color="primary" size="20px" />
                       </q-item-section>
                       <q-item-section>
-                        <q-item-label class="text-body2 text-weight-medium">
+                        <q-item-label class="text-body2 text-grey-9">
                           {{
                             locale === 'th' ? `แบบที่ ${tc.typeclassId}` : `Type ${tc.typeclassId}`
                           }}

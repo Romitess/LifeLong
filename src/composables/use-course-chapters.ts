@@ -1,12 +1,20 @@
 import { ref, type Ref } from 'vue';
 import { api } from 'src/boot/axios';
 
+export interface CourseSubchapter {
+  id: number;
+  chapterId: number;
+  subject: string | null;
+  seq: number | null;
+}
+
 export interface CourseChapter {
   id: number;
   courseId: number;
   name: string | null;
   hour: number | null;
   seq: number | null;
+  subchapters?: CourseSubchapter[];
 }
 
 export interface UseCourseChapers {
