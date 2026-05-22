@@ -981,6 +981,33 @@
       </section>
     </div>
 
+    <!-- Status badges -->
+    <div v-if="props.initialData" class="course-form__status">
+      <q-chip
+        :icon="publishedFlag === 'Y' ? 'public' : 'lock'"
+        :color="publishedFlag === 'Y' ? 'positive' : 'grey-6'"
+        text-color="white"
+        size="md"
+        :label="publishedFlag === 'Y' ? 'เผยแพร่แล้ว' : 'ยังไม่เผยแพร่ (Draft)'"
+      />
+      <q-chip
+        :icon="moodleSyncIcon"
+        :color="moodleSyncColor"
+        text-color="white"
+        size="md"
+        :label="moodleSyncLabel"
+      />
+      <AdminActionButton
+        v-if="!props.readonly && moodleSyncFlag !== 'Y'"
+        variant="secondary"
+        icon="refresh"
+        label="ลอง sync Moodle อีกครั้ง"
+        :loading="isRetrying"
+        class="course-form__retry-btn"
+        @click="$emit('retry-sync')"
+      />
+    </div>
+
     <!-- Actions -->
     <div v-if="!props.readonly" class="course-form__actions">
       <AdminActionButton
@@ -988,6 +1015,24 @@
         label="ยกเลิก"
         class="course-form__btn"
         @click="$emit('cancel')"
+      />
+      <AdminActionButton
+        v-if="props.initialData && publishedFlag === 'Y'"
+        variant="secondary"
+        icon="lock"
+        label="ยกเลิกการเผยแพร่"
+        :loading="isPublishing"
+        class="course-form__btn"
+        @click="$emit('unpublish')"
+      />
+      <AdminActionButton
+        v-else-if="props.initialData"
+        variant="secondary"
+        icon="public"
+        label="เผยแพร่"
+        :loading="isPublishing"
+        class="course-form__btn"
+        @click="$emit('publish')"
       />
       <AdminActionButton
         variant="primary"
@@ -1024,12 +1069,32 @@ const props = defineProps<{
   submitOverride?: (payload: CreateCoursePayload) => Promise<{ courseId: number }>;
   readonly?: boolean;
   initialData?: AdminCourseDetail | null;
+  isPublishing?: boolean;
+  isRetrying?: boolean;
 }>();
 
 const emit = defineEmits<{
   cancel: [];
   saved: [courseId: number];
+  publish: [];
+  unpublish: [];
+  'retry-sync': [];
 }>();
+
+const publishedFlag = computed<'Y' | 'N'>(() => props.initialData?.published ?? 'N');
+const moodleSyncFlag = computed<'Y' | 'N'>(() => props.initialData?.moodleSyncStatus ?? 'N');
+const moodleSyncIcon = computed(() => {
+  if (moodleSyncFlag.value === 'Y') return 'cloud_done';
+  return props.initialData?.moodleCourseId ? 'cloud_off' : 'cloud_queue';
+});
+const moodleSyncColor = computed(() => {
+  if (moodleSyncFlag.value === 'Y') return 'primary';
+  return props.initialData?.moodleCourseId ? 'negative' : 'warning';
+});
+const moodleSyncLabel = computed(() => {
+  if (moodleSyncFlag.value === 'Y') return 'Moodle: synced';
+  return props.initialData?.moodleCourseId ? 'Moodle: sync ล้มเหลว' : 'Moodle: ยังไม่ sync';
+});
 
 const authStore = useAuthStore();
 const { formOptions, isSaving, error, fetchFormOptions, createCourse } = useAdminCourseForm();
@@ -1772,6 +1837,18 @@ async function submit() {
   justify-content: center;
   gap: 12px;
   padding-bottom: 32px;
+}
+
+.course-form__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 0 16px;
+}
+
+.course-form__retry-btn {
+  margin-left: 4px;
 }
 
 .course-form__btn--save {

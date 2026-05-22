@@ -112,6 +112,18 @@ export function useAdminCourses() {
     return data;
   }
 
+  async function publishCourse(id: number): Promise<{ courseId: number; warnings: string[] }> {
+    const { data } = await api.patch<{ courseId: number; warnings: string[] }>(
+      `/api/admin/courses/${id}/publish`,
+    );
+    return data;
+  }
+
+  async function unpublishCourse(id: number): Promise<{ courseId: number }> {
+    const { data } = await api.patch<{ courseId: number }>(`/api/admin/courses/${id}/unpublish`);
+    return data;
+  }
+
   return {
     items,
     filterOptions,
@@ -123,6 +135,8 @@ export function useAdminCourses() {
     removeCourse,
     fetchCourseDetail,
     updateCourse,
+    publishCourse,
+    unpublishCourse,
     formOptions,
     fetchFormOptions,
   };

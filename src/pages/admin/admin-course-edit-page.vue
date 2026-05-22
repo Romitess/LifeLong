@@ -27,8 +27,13 @@
         v-else
         :initial-data="course"
         :submit-override="submitOverride"
+        :is-publishing="isPublishing"
+        :is-retrying="isRetrying"
         @cancel="void router.push('/admin/courses')"
         @saved="onSaved"
+        @publish="onPublish"
+        @unpublish="onUnpublish"
+        @retry-sync="onRetrySync"
       />
     </section>
   </q-page>
@@ -47,11 +52,101 @@ import AdminActionButton from 'components/admin/AdminActionButton.vue';
 const router = useRouter();
 const route = useRoute();
 const $q = useQuasar();
-const { fetchCourseDetail, fetchFormOptions, updateCourse } = useAdminCourses();
+const { fetchCourseDetail, fetchFormOptions, updateCourse, publishCourse, unpublishCourse } =
+  useAdminCourses();
 
 const course = ref<AdminCourseDetail | null>(null);
 const loading = ref(true);
+const isPublishing = ref(false);
+const isRetrying = ref(false);
 const courseId = Number(route.params.id);
+
+function extractErr(e: unknown): string {
+  if (e && typeof e === 'object' && 'response' in e) {
+    const resp = (e as { response?: { data?: { message?: unknown; missing?: string[] } } })
+      .response;
+    const data = resp?.data;
+    if (data?.missing?.length) return `ข้อมูลยังไม่ครบ: ${data.missing.join(', ')}`;
+    if (typeof data?.message === 'string') return data.message;
+  }
+  return e instanceof Error ? e.message : 'เกิดข้อผิดพลาด';
+}
+
+async function reload(): Promise<void> {
+  const fresh = await fetchCourseDetail(courseId);
+  course.value = fresh;
+}
+
+async function onPublish(): Promise<void> {
+  isPublishing.value = true;
+  try {
+    const { warnings } = await publishCourse(courseId);
+    $q.notify({
+      type: warnings.length ? 'warning' : 'positive',
+      message: warnings.length
+        ? `เผยแพร่สำเร็จ (คำเตือน: ${warnings.join(', ')})`
+        : 'เผยแพร่รายวิชาสำเร็จ',
+      position: 'top',
+      timeout: 4000,
+    });
+    await reload();
+  } catch (e) {
+    $q.notify({ type: 'negative', message: extractErr(e), position: 'top', timeout: 5000 });
+  } finally {
+    isPublishing.value = false;
+  }
+}
+
+async function onUnpublish(): Promise<void> {
+  isPublishing.value = true;
+  try {
+    await unpublishCourse(courseId);
+    $q.notify({
+      type: 'positive',
+      message: 'ยกเลิกการเผยแพร่แล้ว',
+      position: 'top',
+      timeout: 3000,
+    });
+    await reload();
+  } catch (e) {
+    $q.notify({ type: 'negative', message: extractErr(e), position: 'top', timeout: 5000 });
+  } finally {
+    isPublishing.value = false;
+  }
+}
+
+async function onRetrySync(): Promise<void> {
+  if (!course.value) return;
+  isRetrying.value = true;
+  try {
+    await submitOverride({
+      nameTh: course.value.nameTh,
+      nameEn: course.value.nameEn,
+      summary: course.value.summary ?? undefined,
+      description: course.value.description ?? undefined,
+      facultyId: course.value.facultyId ?? 0,
+      typeCourseId: course.value.typeCourseId ?? 0,
+      studyTypeId: course.value.studyTypeId ?? 0,
+      categoryId: course.value.categoryId ?? 0,
+      startDate: course.value.startDate ?? '',
+      endDate: course.value.endDate ?? '',
+      contactName: course.value.contactName ?? '',
+      contactTel: course.value.contactTel ?? '',
+      contactEmail: course.value.contactEmail ?? '',
+    });
+    $q.notify({
+      type: 'positive',
+      message: 'sync Moodle ใหม่แล้ว',
+      position: 'top',
+      timeout: 3000,
+    });
+    await reload();
+  } catch (e) {
+    $q.notify({ type: 'negative', message: extractErr(e), position: 'top', timeout: 5000 });
+  } finally {
+    isRetrying.value = false;
+  }
+}
 
 onMounted(async () => {
   [course.value] = await Promise.all([fetchCourseDetail(courseId), fetchFormOptions()]);

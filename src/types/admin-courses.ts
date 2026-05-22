@@ -177,6 +177,10 @@ export interface AdminCourseDetail {
   evaluation: string | null;
   competency: string | null;
   precondition: string | null;
+  status: 'Y' | 'N';
+  published: 'Y' | 'N';
+  moodleSyncStatus: 'Y' | 'N';
+  moodleCourseId: number | null;
   certificate: string | null;
   certificateName: string | null;
   registrationStart: string | null;
