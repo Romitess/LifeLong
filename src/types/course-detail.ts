@@ -73,6 +73,10 @@ export interface CourseDetail extends Course {
   evaluation?: EvaluationDetail | null;
   precondition?: string | null;
   property?: string | null;
+  contractName?: string | null;
+  contractTel?: string | null;
+  contractEmail?: string | null;
+  contractUrl?: string | null;
 }
 
 export type RegistrationWindowStatus = 'upcoming' | 'open' | 'closed';

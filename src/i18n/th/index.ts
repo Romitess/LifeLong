@@ -58,7 +58,7 @@ export default {
   day: 'วัน',
   time: 'เวลา',
   room: 'ห้องเรียน',
-  instructor: 'ผู้สอน',
+  instructor: 'ผู้รับผิดชอบรายวิชา/ผู้สอน',
   additionalInfo: 'ข้อมูลเพิ่มเติม',
   targetAudience: 'กลุ่มเป้าหมาย',
   prerequisites: 'คุณสมบัติเบื้องต้น',

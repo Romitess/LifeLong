@@ -254,9 +254,9 @@
                     <!-- DB Chapters -->
                     <template v-if="dbChapters && dbChapters.length > 0">
                       <q-expansion-item
-                        v-for="(chapter, idx) in dbChapters"
+                        v-for="chapter in dbChapters"
                         :key="chapter.id"
-                        :label="`${$t('week') || 'บทเรียน'} ${chapter.seq || idx + 1}: ${chapter.name}`"
+                        :label="` ${chapter.name}`"
                         header-class="syllabus-header"
                         expand-icon-class="text-primary"
                       >
@@ -585,27 +585,104 @@
                 <q-card-section>
                   <div class="detail-card__header">
                     <q-icon name="support_agent" size="24px" color="primary" />
-                    <h2 class="detail-card__title">{{ $t('contact') }}</h2>
+                    <h2 class="detail-card__title">
+                      {{ locale === 'th' ? 'ข้อมูลในการติดต่อสอบถาม' : 'Contact Information' }}
+                    </h2>
                   </div>
                   <q-list class="q-mt-md">
-                    <q-item clickable v-ripple>
+                    <!-- ชื่อ-สกุล -->
+                    <q-item v-if="course.contractName">
                       <q-item-section avatar>
-                        <q-icon name="email" color="secondary" size="20px" />
+                        <q-icon name="person" color="secondary" size="20px" />
                       </q-item-section>
                       <q-item-section>
-                        <q-item-label class="text-body2 text-secondary">{{
-                          course.contactEmail
+                        <q-item-label caption>{{
+                          locale === 'th' ? 'ชื่อ-สกุล' : 'Name'
+                        }}</q-item-label>
+                        <q-item-label class="text-body2 text-grey-9">{{
+                          course.contractName
                         }}</q-item-label>
                       </q-item-section>
                     </q-item>
-                    <q-item clickable v-ripple>
+
+                    <!-- เบอร์โทรศัพท์ -->
+                    <q-item
+                      v-if="course.contractTel"
+                      clickable
+                      v-ripple
+                      :href="`tel:${course.contractTel}`"
+                      tag="a"
+                    >
                       <q-item-section avatar>
                         <q-icon name="phone" color="secondary" size="20px" />
                       </q-item-section>
                       <q-item-section>
-                        <q-item-label class="text-body2 text-secondary">{{
-                          course.contactPhone
+                        <q-item-label caption>{{
+                          locale === 'th' ? 'เบอร์โทรศัพท์' : 'Phone'
                         }}</q-item-label>
+                        <q-item-label class="text-body2 text-secondary">{{
+                          course.contractTel
+                        }}</q-item-label>
+                      </q-item-section>
+                    </q-item>
+
+                    <!-- E-mail -->
+                    <q-item
+                      v-if="course.contractEmail"
+                      clickable
+                      v-ripple
+                      :href="`mailto:${course.contractEmail}`"
+                      tag="a"
+                    >
+                      <q-item-section avatar>
+                        <q-icon name="email" color="secondary" size="20px" />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label caption>E-mail</q-item-label>
+                        <q-item-label class="text-body2 text-secondary">{{
+                          course.contractEmail
+                        }}</q-item-label>
+                      </q-item-section>
+                    </q-item>
+
+                    <!-- URL -->
+                    <q-item
+                      v-if="course.contractUrl"
+                      clickable
+                      v-ripple
+                      :href="course.contractUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      tag="a"
+                    >
+                      <q-item-section avatar>
+                        <q-icon name="link" color="secondary" size="20px" />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label caption>URL</q-item-label>
+                        <q-item-label class="text-body2 text-secondary ellipsis">{{
+                          course.contractUrl
+                        }}</q-item-label>
+                      </q-item-section>
+                    </q-item>
+
+                    <!-- Fallback: ถ้าไม่มีข้อมูลติดต่อเลย -->
+                    <q-item
+                      v-if="
+                        !course.contractName &&
+                        !course.contractTel &&
+                        !course.contractEmail &&
+                        !course.contractUrl
+                      "
+                    >
+                      <q-item-section>
+                        <q-item-label class="text-body2 text-grey-5">
+                          {{
+                            locale === 'th'
+                              ? 'ไม่มีข้อมูลการติดต่อ'
+                              : 'No contact information available'
+                          }}
+                        </q-item-label>
                       </q-item-section>
                     </q-item>
                   </q-list>

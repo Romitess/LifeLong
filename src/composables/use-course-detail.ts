@@ -14,6 +14,10 @@ interface BackendCourseDetailResponse {
   targets?: CourseTarget[] | null;
   precondition?: string | null;
   property?: string | null;
+  contractName?: string | null;
+  contractTel?: string | null;
+  contractEmail?: string | null;
+  contractUrl?: string | null;
 }
 
 interface UseCourseDetailReturn {
@@ -95,6 +99,7 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
               ...detail,
               // Always override objectives from API response (even if empty, clears the placeholder)
               objectives: objectiveLines,
+              objectivesEn: objectiveLines,
               ...(data.description
                 ? { descriptionFull: data.description, descriptionFullEn: data.description }
                 : {}),
@@ -105,6 +110,10 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
               ...(data.typestudyDetail
                 ? { deliveryModes: mapDeliveryModes(data.typestudyDetail.name) }
                 : {}),
+              contractName: data.contractName ?? null,
+              contractTel: data.contractTel ?? null,
+              contractEmail: data.contractEmail ?? null,
+              contractUrl: data.contractUrl ?? null,
             };
             return;
           }
