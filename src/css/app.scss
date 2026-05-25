@@ -16,6 +16,17 @@ body,
     sans-serif;
 }
 
+// ── GOLDEN TEXT SELECTION ──
+*::selection {
+  background-color: #f6e073;
+  color: #ffffff;
+}
+
+*::moz-selection {
+  background-color: #f6e073;
+  color: #ffffff;
+}
+
 body {
   background-color: #f8f6f1;
 }
