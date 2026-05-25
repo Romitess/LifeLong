@@ -1913,7 +1913,6 @@ import ReceiptCard from 'components/receipt/receipt-card.vue';
 import { getCourseDetailById } from 'src/data/mock-courses';
 import { useAuthStore, type User, type UserProfileUpdate } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
-import { useMoodleSso } from 'src/composables/use-moodle-sso';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 
 interface AvatarOption {
@@ -2017,7 +2016,6 @@ const courseBookmarkStore = useCourseBookmarkStore();
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
 courseStore.init();
-const { getMoodleCourseUrl } = useMoodleSso();
 const {
   myRegistrations,
   myRegisteredCourseEntries,
@@ -3449,24 +3447,22 @@ function isLatestLearnerMessage(message: ChatMessage): boolean {
   return latestLearnerMessage?.id === message.id;
 }
 
-async function goToCourse(
-  courseId: string,
-  courseCode?: string,
-  moodleCourseId?: number,
-): Promise<void> {
-  const username = authStore.user?.username;
-  if (username) {
+function goToCourse(courseId: string, courseCode?: string, moodleCourseId?: number): void {
+  if (authStore.user?.username) {
     const courseDetail = getCourseDetailById(courseId);
-    const url = await getMoodleCourseUrl(
-      String(moodleCourseId ?? courseDetail?.moodleId ?? courseId),
-      username,
+    $q.notify({
+      type: 'info',
+      message: 'กำลังพาเข้าสู่ Moodle',
+      position: 'top',
+      timeout: 1800,
+    });
+    pushMoodleLearningRoute(router, courseId, undefined, {
+      moodleCourseId: moodleCourseId ?? courseDetail?.moodleId ?? courseId,
       courseCode,
-    );
-    if (url) {
-      pushMoodleLearningRoute(router, courseId, url);
-      return;
-    }
+    });
+    return;
   }
+
   void router.push(`/course/${courseId}/learn`);
 }
 

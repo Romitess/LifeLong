@@ -124,7 +124,7 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { useMoodleSso } from 'src/composables/use-moodle-sso';
+import { useQuasar } from 'quasar';
 import { useAuthStore } from 'src/stores/auth-store';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 import BaseButton from 'components/base/BaseButton.vue';
@@ -138,11 +138,11 @@ import {
 } from 'src/composables/use-my-registered-courses';
 
 const router = useRouter();
+const $q = useQuasar();
 const { locale } = useI18n({ useScope: 'global' });
 const { myRegisteredCourseEntries } = useMyRegisteredCourses();
 const { t } = useI18n({ useScope: 'global' });
 const authStore = useAuthStore();
-const { getMoodleCourseUrl } = useMoodleSso();
 
 const leftDrawerOpen = ref(false);
 const searchQuery = ref('');
@@ -168,19 +168,21 @@ const filteredCourses = computed<RegisteredCourseEntry[]>(() => {
 const getTranslatedCourseTitle = (course: { title: string; titleEn?: string }) =>
   locale.value === 'th' ? course.title : course.titleEn || course.title;
 
-const goToCourse = async (
-  id: string,
-  courseCode?: string,
-  moodleCourseId?: number,
-): Promise<void> => {
-  const username = authStore.user?.username;
-  if (username) {
-    const url = await getMoodleCourseUrl(String(moodleCourseId ?? id), username, courseCode);
-    if (url) {
-      pushMoodleLearningRoute(router, id, url);
-      return;
-    }
+const goToCourse = (id: string, courseCode?: string, moodleCourseId?: number): void => {
+  if (authStore.user?.username) {
+    $q.notify({
+      type: 'info',
+      message: 'กำลังพาเข้าสู่ Moodle',
+      position: 'top',
+      timeout: 1800,
+    });
+    pushMoodleLearningRoute(router, id, undefined, {
+      moodleCourseId: moodleCourseId ?? id,
+      courseCode,
+    });
+    return;
   }
+
   void router.push(`/course/${id}/learn`);
 };
 

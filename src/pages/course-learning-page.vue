@@ -1,6 +1,14 @@
 <template>
   <q-page class="bg-grey-1 course-page overflow-hidden">
-    <div v-if="moodleUrl" class="moodle-standalone-shell">
+    <div v-if="isPreparingMoodle" class="moodle-loading-shell">
+      <q-spinner color="primary" size="48px" />
+      <div class="moodle-loading-shell__title">กำลังพาเข้าสู่ Moodle</div>
+      <div class="moodle-loading-shell__subtitle">
+        ระบบกำลังเตรียมสิทธิ์เข้าเรียน กรุณารอสักครู่
+      </div>
+    </div>
+
+    <div v-else-if="moodleUrl" class="moodle-standalone-shell">
       <iframe
         class="moodle-frame"
         :src="moodleUrl"
@@ -172,6 +180,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { RouterLink, useRouter, useRoute } from 'vue-router';
+import { useQuasar } from 'quasar';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import { getCourseStructure, type CourseModule, type Lesson } from 'src/data/course-structure';
@@ -189,6 +198,7 @@ interface CourseModuleState extends CourseModule {
 // 4. Logic/State Init
 const router = useRouter();
 const route = useRoute();
+const $q = useQuasar();
 const progressStore = useCourseProgressStore();
 const courseStore = useCourseStore();
 const uiStore = useUiStore();
@@ -199,6 +209,9 @@ const { getMoodleCourseUrl } = useMoodleSso();
 const leftDrawerOpen = ref(false);
 const courseModules = ref<CourseModuleState[]>([]);
 const freshMoodleUrl = ref('');
+const isPreparingMoodle = ref(false);
+const hasShownPreparingNotice = ref(false);
+const activeSsoRequestKey = ref('');
 
 // 6. Computed
 const courseId = computed<string>(() => {
@@ -216,6 +229,10 @@ const courseTitle = computed<string>(() => currentCourse.value?.title || 'Course
 const storedMoodleUrl = computed<string>(() =>
   getStoredMoodleUrl(courseId.value, route.query.moodleKey, route.query.moodleUrl),
 );
+
+const shouldOpenMoodle = computed<boolean>(() => {
+  return route.query.openMoodle === '1' || Boolean(storedMoodleUrl.value);
+});
 
 const moodleUrl = computed<string>(() => {
   if (freshMoodleUrl.value) return freshMoodleUrl.value;
@@ -291,6 +308,9 @@ const navigateToLesson = async (lesson: Lesson): Promise<void> => {
 };
 
 async function refreshMoodleSsoUrl(): Promise<void> {
+  if (!shouldOpenMoodle.value) return;
+  if (storedMoodleUrl.value && !isUserkeyLoginUrl(storedMoodleUrl.value)) return;
+
   const id = courseId.value;
   const username = authStore.user?.username || authStore.user?.email || '';
   const moodleCourseId = getMoodleCourseIdForSso(id, storedMoodleUrl.value);
@@ -299,13 +319,36 @@ async function refreshMoodleSsoUrl(): Promise<void> {
     return;
   }
 
-  const url = await getMoodleCourseUrl(moodleCourseId, username, currentCourse.value?.code);
-  if (url) {
-    freshMoodleUrl.value = url;
+  const requestKey = `${moodleCourseId}:${username}:${getCourseCodeForSso() ?? ''}`;
+  if (activeSsoRequestKey.value === requestKey) return;
+
+  isPreparingMoodle.value = true;
+  activeSsoRequestKey.value = requestKey;
+  showPreparingNoticeOnce();
+
+  try {
+    const url = await getMoodleCourseUrl(moodleCourseId, username, getCourseCodeForSso());
+    if (url) {
+      freshMoodleUrl.value = url;
+      return;
+    }
+
+    $q.notify({
+      type: 'negative',
+      message: 'ไม่สามารถเชื่อมต่อ Moodle ได้ในขณะนี้',
+      position: 'top',
+      timeout: 3500,
+    });
+  } finally {
+    activeSsoRequestKey.value = '';
+    isPreparingMoodle.value = false;
   }
 }
 
 function getMoodleCourseIdForSso(courseIdValue: string, existingUrl: string): string {
+  const queryMoodleCourseId = getQueryString(route.query.moodleCourseId);
+  if (queryMoodleCourseId) return queryMoodleCourseId;
+
   const courseMoodleId = currentCourse.value?.moodleId;
   if (courseMoodleId) return String(courseMoodleId);
 
@@ -314,6 +357,27 @@ function getMoodleCourseIdForSso(courseIdValue: string, existingUrl: string): st
 
   const numericId = courseIdValue.replace(/^db-/, '');
   return /^\d+$/.test(numericId) ? numericId : '';
+}
+
+function getCourseCodeForSso(): string | undefined {
+  return currentCourse.value?.code || getQueryString(route.query.courseCode) || undefined;
+}
+
+function getQueryString(value: unknown): string {
+  if (Array.isArray(value)) return String(value[0] ?? '');
+  return typeof value === 'string' ? value : '';
+}
+
+function showPreparingNoticeOnce(): void {
+  if (hasShownPreparingNotice.value) return;
+  hasShownPreparingNotice.value = true;
+  $q.notify({
+    type: 'info',
+    message: 'กำลังเตรียมหน้าเรียนใน Moodle',
+    caption: 'หาก Moodle ตอบช้า ระบบจะแสดงหน้านี้ไว้ระหว่างรอ',
+    position: 'top',
+    timeout: 2500,
+  });
 }
 
 function isUserkeyLoginUrl(url: string): boolean {
@@ -350,6 +414,9 @@ watch(
   (newId) => {
     if (newId) {
       freshMoodleUrl.value = '';
+      isPreparingMoodle.value = false;
+      hasShownPreparingNotice.value = false;
+      activeSsoRequestKey.value = '';
       courseModules.value = getCourseStructure(newId).map((m) => ({
         ...m,
         expanded: false,
@@ -361,7 +428,13 @@ watch(
 );
 
 watch(
-  () => [authStore.user?.username, authStore.user?.email, currentCourse.value?.moodleId],
+  () => [
+    authStore.user?.username,
+    authStore.user?.email,
+    currentCourse.value?.moodleId,
+    route.query.openMoodle,
+    route.query.moodleCourseId,
+  ],
   () => {
     freshMoodleUrl.value = '';
     void refreshMoodleSsoUrl();
@@ -376,6 +449,29 @@ watch(
   background-color: #f8f6f1;
   // display: flex;
   // flex-direction: column;
+}
+
+.moodle-loading-shell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #f8f6f1;
+  color: #1f2933;
+  text-align: center;
+  padding: 24px;
+}
+
+.moodle-loading-shell__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.moodle-loading-shell__subtitle {
+  color: #667085;
+  font-size: 0.95rem;
 }
 
 // Breadcrumb Bar

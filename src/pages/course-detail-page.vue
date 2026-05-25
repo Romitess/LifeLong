@@ -756,6 +756,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useQuasar } from 'quasar';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue';
 import CourseRecommendationSection from 'components/course/CourseRecommendationSection.vue';
@@ -775,17 +776,16 @@ import type {
   RegistrationWindowStatus,
 } from 'src/types/course-detail';
 import { useI18n } from 'vue-i18n';
-import { useMoodleSso } from 'src/composables/use-moodle-sso';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 
 const { locale, t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
+const $q = useQuasar();
 const authStore = useAuthStore();
 const courseRegistrationStore = useCourseRegistrationStore();
 const courseBookmarkStore = useCourseBookmarkStore();
-const { getMoodleCourseUrl } = useMoodleSso();
 
 function getRouteCourseId(): string {
   const routeCourseId = route.params.id;
@@ -1097,17 +1097,21 @@ function onCourseClick(courseItem: Course): void {
   void router.push(`/course/${courseItem.id}`);
 }
 
-async function goToLearningPage(targetCourseId = courseId.value): Promise<void> {
-  const username = authStore.user?.username;
-  if (username) {
-    const courseCode = course.value?.code;
-    const moodleCourseId = String(course.value?.moodleId ?? targetCourseId);
-    const url = await getMoodleCourseUrl(moodleCourseId, username, courseCode);
-    if (url) {
-      pushMoodleLearningRoute(router, targetCourseId, url);
-      return;
-    }
+function goToLearningPage(targetCourseId = courseId.value): void {
+  if (authStore.user?.username) {
+    $q.notify({
+      type: 'info',
+      message: 'กำลังพาเข้าสู่ Moodle',
+      position: 'top',
+      timeout: 1800,
+    });
+    pushMoodleLearningRoute(router, targetCourseId, undefined, {
+      moodleCourseId: course.value?.moodleId ?? targetCourseId,
+      courseCode: course.value?.code,
+    });
+    return;
   }
+
   void router.push(`/course/${targetCourseId}/learn`);
 }
 

@@ -389,12 +389,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useQuasar } from 'quasar';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useMyRegisteredCourses } from 'src/composables/use-my-registered-courses';
 import { useI18n } from 'vue-i18n';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
 import LearnerProgressPill from 'components/navigation/LearnerProgressPill.vue';
-import { useMoodleSso } from 'src/composables/use-moodle-sso';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 import type { Course } from 'src/types/course';
 
@@ -404,10 +404,10 @@ const emit = defineEmits<{
 
 const router = useRouter();
 const route = useRoute();
+const $q = useQuasar();
 const authStore = useAuthStore();
 const { t } = useI18n({ useScope: 'global' });
 const { myRegisteredCourseEntries } = useMyRegisteredCourses();
-const { getMoodleCourseUrl } = useMoodleSso();
 
 const myCoursesMenu = ref(false);
 const thisCourseMenu = ref(false);
@@ -473,19 +473,21 @@ const notificationPreviewSubtitle = computed<string>(() =>
   isTeachingRole.value ? 'รายการสำคัญสำหรับผู้สอน' : 'ข่าวสารและกิจกรรมการเรียนของคุณ',
 );
 
-const goToCourse = async (course: Course): Promise<void> => {
-  const username = authStore.user?.username;
-  if (username) {
-    const url = await getMoodleCourseUrl(
-      String(course.moodleId ?? course.id),
-      username,
-      course.code,
-    );
-    if (url) {
-      pushMoodleLearningRoute(router, course.id, url);
-      return;
-    }
+const goToCourse = (course: Course): void => {
+  if (authStore.user?.username) {
+    $q.notify({
+      type: 'info',
+      message: 'กำลังพาเข้าสู่ Moodle',
+      position: 'top',
+      timeout: 1800,
+    });
+    pushMoodleLearningRoute(router, course.id, undefined, {
+      moodleCourseId: course.moodleId ?? course.id,
+      courseCode: course.code,
+    });
+    return;
   }
+
   void router.push(`/course/${course.id}/learn`);
 };
 
