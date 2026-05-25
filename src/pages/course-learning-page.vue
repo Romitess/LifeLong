@@ -1,8 +1,5 @@
 <template>
   <q-page class="bg-grey-1 course-page overflow-hidden">
-    <!-- Course Toolbar -->
-    <CourseLayout @toggleDrawer="leftDrawerOpen = !leftDrawerOpen" />
-
     <div v-if="moodleUrl" class="moodle-standalone-shell">
       <iframe
         class="moodle-frame"
@@ -12,13 +9,7 @@
       />
     </div>
 
-    <q-layout
-      v-else
-      view="lHh Lpr lFf"
-      container
-      style="height: calc(100vh - 72px)"
-      class="learning-layout"
-    >
+    <q-layout v-else view="lHh Lpr lFf" container style="height: 100vh" class="learning-layout">
       <!-- Sidebar Navigation (Drawer) -->
       <q-drawer v-model="leftDrawerOpen" bordered :width="300" :breakpoint="1024" class="bg-white">
         <SidebarNavigation />
@@ -183,11 +174,12 @@ import { ref, computed, watch } from 'vue';
 import { RouterLink, useRouter, useRoute } from 'vue-router';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
-import CourseLayout from 'layouts/course-layout.vue';
 import { getCourseStructure, type CourseModule, type Lesson } from 'src/data/course-structure';
 import { useUiStore } from 'src/stores/ui-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { getStoredMoodleUrl } from 'src/utils/moodle-navigation';
+import { useAuthStore } from 'src/stores/auth-store';
+import { useMoodleSso } from 'src/composables/use-moodle-sso';
 
 // 2. Local Types
 interface CourseModuleState extends CourseModule {
@@ -200,10 +192,13 @@ const route = useRoute();
 const progressStore = useCourseProgressStore();
 const courseStore = useCourseStore();
 const uiStore = useUiStore();
+const authStore = useAuthStore();
+const { getMoodleCourseUrl } = useMoodleSso();
 
 // 5. Reactive State
 const leftDrawerOpen = ref(false);
 const courseModules = ref<CourseModuleState[]>([]);
+const freshMoodleUrl = ref('');
 
 // 6. Computed
 const courseId = computed<string>(() => {
@@ -218,8 +213,14 @@ const currentCourse = computed(() => {
 
 const courseTitle = computed<string>(() => currentCourse.value?.title || 'Course Learning');
 
+const storedMoodleUrl = computed<string>(() =>
+  getStoredMoodleUrl(courseId.value, route.query.moodleKey, route.query.moodleUrl),
+);
+
 const moodleUrl = computed<string>(() => {
-  return getStoredMoodleUrl(courseId.value, route.query.moodleKey, route.query.moodleUrl);
+  if (freshMoodleUrl.value) return freshMoodleUrl.value;
+  if (isUserkeyLoginUrl(storedMoodleUrl.value)) return '';
+  return storedMoodleUrl.value;
 });
 
 const isFullscreen = computed<boolean>({
@@ -289,24 +290,88 @@ const navigateToLesson = async (lesson: Lesson): Promise<void> => {
   }
 };
 
+async function refreshMoodleSsoUrl(): Promise<void> {
+  const id = courseId.value;
+  const username = authStore.user?.username || authStore.user?.email || '';
+  const moodleCourseId = getMoodleCourseIdForSso(id, storedMoodleUrl.value);
+
+  if (!moodleCourseId || !username) {
+    return;
+  }
+
+  const url = await getMoodleCourseUrl(moodleCourseId, username, currentCourse.value?.code);
+  if (url) {
+    freshMoodleUrl.value = url;
+  }
+}
+
+function getMoodleCourseIdForSso(courseIdValue: string, existingUrl: string): string {
+  const courseMoodleId = currentCourse.value?.moodleId;
+  if (courseMoodleId) return String(courseMoodleId);
+
+  const extractedMoodleId = extractMoodleCourseId(existingUrl);
+  if (extractedMoodleId) return extractedMoodleId;
+
+  const numericId = courseIdValue.replace(/^db-/, '');
+  return /^\d+$/.test(numericId) ? numericId : '';
+}
+
+function isUserkeyLoginUrl(url: string): boolean {
+  return url.includes('/auth/userkey/login.php');
+}
+
+function extractMoodleCourseId(url: string): string {
+  if (!url) return '';
+
+  try {
+    const parsedUrl = new URL(url);
+    const candidates = [parsedUrl.searchParams.get('wantsurl'), url].filter(
+      (value): value is string => Boolean(value),
+    );
+
+    for (const candidate of candidates) {
+      const courseUrl = new URL(candidate, parsedUrl.origin);
+      const id = courseUrl.searchParams.get('id');
+      if (courseUrl.pathname.includes('/course/view.php') && id && /^\d+$/.test(id)) {
+        return id;
+      }
+    }
+  } catch {
+    const match = url.match(/\/course\/view\.php\?[^#]*\bid=(\d+)/);
+    return match?.[1] ?? '';
+  }
+
+  return '';
+}
+
 // 8. Watchers
 watch(
   courseId,
   (newId) => {
     if (newId) {
+      freshMoodleUrl.value = '';
       courseModules.value = getCourseStructure(newId).map((m) => ({
         ...m,
         expanded: false,
       }));
+      void refreshMoodleSsoUrl();
     }
   },
   { immediate: true },
+);
+
+watch(
+  () => [authStore.user?.username, authStore.user?.email, currentCourse.value?.moodleId],
+  () => {
+    freshMoodleUrl.value = '';
+    void refreshMoodleSsoUrl();
+  },
 );
 </script>
 
 <style lang="scss" scoped>
 .course-page {
-  height: calc(100vh - 72px);
+  height: 100vh;
   overflow: hidden;
   background-color: #f8f6f1;
   // display: flex;
@@ -383,7 +448,7 @@ watch(
 
 .moodle-standalone-shell {
   width: 100%;
-  height: calc(100vh - 72px);
+  height: 100vh;
   min-height: 520px;
   background: #fff;
   overflow: hidden;
