@@ -11,6 +11,7 @@ export interface User {
   email: string;
   phone: string;
   faculty: string;
+  facName?: string | null;
   department: string;
   role:
     | 'student'
@@ -277,6 +278,7 @@ function createUserFromAccount(account: StoredAuthAccount): User {
     email: account.email,
     phone: storedProfile?.phone || account.phone,
     faculty: account.faculty,
+    facName: account.facName ?? null,
     department: account.department,
     role: account.role,
     ...(account.username !== undefined ? { username: account.username } : {}),
@@ -342,6 +344,7 @@ export const useAuthStore = defineStore('auth', {
           email: apiUser.email,
           phone: '',
           faculty: 'Lifelong Learning',
+          facName: apiUser.facName ?? null,
           department: apiUser.role,
           role: ((): User['role'] => {
             const r = apiUser.role.toLowerCase();

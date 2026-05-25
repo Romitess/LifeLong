@@ -438,7 +438,7 @@ const rawFinanceStats: FinanceStat[] = [
   },
 ];
 
-const currentUserFaculty = computed(() => authStore.user?.faculty);
+const currentUserFaculty = computed(() => authStore.user?.facName ?? authStore.user?.faculty);
 
 const financeStats = computed(() => {
   const faculty = currentUserFaculty.value;
