@@ -4,6 +4,7 @@ import { api } from 'src/boot/axios';
 import type { Course, DeliveryMode } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
 import { getMockCourseInstructorOwner } from 'src/data/mock-courses';
+import { useCategoryStore } from './category-store';
 
 const STORAGE_KEY = 'lll-courses';
 const DETAIL_STORAGE_KEY = 'lll-course-details';
@@ -133,6 +134,19 @@ function mapBackendCourse(course: BackendCourse): Course | null {
   const activeStatus = 'เปิดรับสมัคร';
   const inactiveStatus = 'เปิดรับสมัคร';
 
+  let categoryName = `Category ${course.categoryId ?? 1}`;
+  try {
+    const categoryStore = useCategoryStore();
+    if (categoryStore.isApiLoaded && course.categoryId) {
+      const matched = categoryStore.apiCategories.find((c) => c.id === course.categoryId);
+      if (matched) {
+        categoryName = matched.name;
+      }
+    }
+  } catch {
+    // Pinia not initialized yet
+  }
+
   return {
     id: `db-${course.id}`,
     code: course.code,
@@ -161,8 +175,9 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     isActive,
     faculty: 'Lifelong Learning',
     facultyEn: 'Lifelong Learning',
-    category: `Category ${course.categoryId ?? 1}`,
-    categoryEn: `Category ${course.categoryId ?? 1}`,
+    category: categoryName,
+    categoryEn: categoryName,
+    categoryId: course.categoryId ?? undefined,
     maxSeats: course.maxSeats ?? 40,
     enrolledCount: course.enrolledCount ?? 0,
     totalHours: course.hours ?? 0,

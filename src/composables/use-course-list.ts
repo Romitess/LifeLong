@@ -1,5 +1,6 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
 import { useCourseStore, mapDeliveryModes } from 'src/stores/course-store';
+import { useCategoryStore } from 'src/stores/category-store';
 import type { Course } from 'src/types/course';
 import { api } from 'src/boot/axios';
 
@@ -29,6 +30,19 @@ interface ApiLltcourse {
 
 function mapApiCourse(raw: ApiLltcourse): Course {
   const today = new Date().toISOString().substring(0, 10);
+  let categoryName = `Category ${raw.categoryId ?? 1}`;
+  try {
+    const categoryStore = useCategoryStore();
+    if (categoryStore.isApiLoaded && raw.categoryId) {
+      const matched = categoryStore.apiCategories.find((c) => c.id === raw.categoryId);
+      if (matched) {
+        categoryName = matched.name;
+      }
+    }
+  } catch {
+    // Pinia not initialized yet
+  }
+
   return {
     id: `db-${raw.id}`,
     ...(raw.moodleId ? { moodleId: raw.moodleId } : {}),
@@ -48,7 +62,9 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     deliveryModes: mapDeliveryModes(raw.typestudyDetail?.name),
     isActive: raw.status === 'Y' || raw.status === null,
     faculty: '',
-    category: '',
+    category: categoryName,
+    categoryEn: categoryName,
+    categoryId: raw.categoryId ?? undefined,
     maxSeats: 9999,
     enrolledCount: 0,
   };

@@ -135,6 +135,23 @@ export const useCategoryStore = defineStore('category', {
     loadFromApi(apiCategories: ApiCategory[]): void {
       this.apiCategories = apiCategories;
       this.isApiLoaded = true;
+
+      const courseStore = useCourseStore();
+      if (courseStore.courses.length > 0) {
+        courseStore.courses = courseStore.courses.map((course) => {
+          if (course.categoryId) {
+            const matched = apiCategories.find((cat) => cat.id === course.categoryId);
+            if (matched) {
+              return {
+                ...course,
+                category: matched.name,
+                categoryEn: matched.name,
+              };
+            }
+          }
+          return course;
+        });
+      }
     },
     persist(): void {
       writeStoredCategories(this.categories);

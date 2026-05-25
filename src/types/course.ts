@@ -33,6 +33,7 @@ export interface Course {
   facultyEn?: string;
   category: string;
   categoryEn?: string;
+  categoryId?: number | undefined;
   maxSeats: number;
   enrolledCount: number;
   totalHours?: number;
