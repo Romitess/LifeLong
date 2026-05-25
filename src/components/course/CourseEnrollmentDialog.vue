@@ -241,7 +241,7 @@
   </q-dialog>
 
   <!-- 5. Receipt Dialog -->
-  <CourseReceiptDialog
+  <ReceiptCard
     v-model="showReceiptDialog"
     :receipt-id="receiptId"
     :issued-at="receiptIssuedAt"
@@ -261,7 +261,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue';
 import BaseButton from 'components/base/BaseButton.vue';
-import CourseReceiptDialog from 'components/receipt/CourseReceiptDialog.vue';
+import ReceiptCard from 'components/receipt/receipt-card.vue';
 import type { CourseDetail } from 'src/types/course-detail';
 import { useCoursePaymentStore } from 'src/stores/course-payment-store';
 import { useCourseRegistrationStore } from 'src/stores/course-registration-store';

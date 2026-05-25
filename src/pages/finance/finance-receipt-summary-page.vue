@@ -317,7 +317,7 @@
       </AdminSurfaceCard>
     </section>
 
-    <CourseReceiptDialog
+    <ReceiptCard
       ref="receiptDialogRef"
       v-model="showReceiptDialog"
       :receipt-id="receiptId"
@@ -337,12 +337,12 @@
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import { ref, computed, nextTick } from 'vue';
-import CourseReceiptDialog from 'components/receipt/CourseReceiptDialog.vue';
+import ReceiptCard from 'components/receipt/receipt-card.vue';
 import type { QTableProps } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import jsPDF from 'jspdf';
 import { autoTable, type CellHookData } from 'jspdf-autotable';
-import SarabunFontUrl from 'src/assets/fonts/Sarabun-Regular.ttf';
+import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
 import * as XLSX from 'xlsx';
 
 const { t } = useI18n();
@@ -364,7 +364,7 @@ const filters = ref({
   effectiveDateEnd: '',
 });
 
-const receiptDialogRef = ref<InstanceType<typeof CourseReceiptDialog> | null>(null);
+const receiptDialogRef = ref<InstanceType<typeof ReceiptCard> | null>(null);
 const showReceiptDialog = ref(false);
 const selectedReceipt = ref<ReceiptSummaryItem | null>(null);
 
@@ -472,8 +472,8 @@ async function exportToPdf() {
   });
 
   // Embed Sarabun font
-  doc.addFileToVFS('Sarabun-Regular.ttf', base64Font);
-  doc.addFont('Sarabun-Regular.ttf', 'Sarabun', 'normal');
+  doc.addFileToVFS('THSarabunPSK.ttf', base64Font);
+  doc.addFont('THSarabunPSK.ttf', 'Sarabun', 'normal');
   doc.setFont('Sarabun');
 
   // Title

@@ -1869,7 +1869,7 @@
       </q-card>
     </q-dialog>
 
-    <CourseReceiptDialog
+    <ReceiptCard
       ref="receiptDialogRef"
       v-model="showReceiptDialog"
       :receipt-id="receiptId"
@@ -1909,7 +1909,7 @@ import {
 import type { Course } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
 import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue';
-import CourseReceiptDialog from 'components/receipt/CourseReceiptDialog.vue';
+import ReceiptCard from 'components/receipt/receipt-card.vue';
 import { getCourseDetailById } from 'src/data/mock-courses';
 import { useAuthStore, type User, type UserProfileUpdate } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
@@ -2346,7 +2346,7 @@ const payments = computed<CoursePaymentRecord[]>(() => {
 });
 const selectedPayment = ref<CoursePaymentRecord | null>(null);
 const showReceiptDialog = ref(false);
-const receiptDialogRef = ref<InstanceType<typeof CourseReceiptDialog> | null>(null);
+const receiptDialogRef = ref<InstanceType<typeof ReceiptCard> | null>(null);
 
 const receiptId = computed(() => selectedPayment.value?.receiptId || '');
 const receiptCustomerName = computed(() => {
