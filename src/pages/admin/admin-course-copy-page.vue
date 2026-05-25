@@ -70,7 +70,7 @@
       v-model="confirmCopyOpen"
       title="คัดลอกทะเบียนรายวิชา"
       :message="`ยืนยันการคัดลอกรายวิชา &quot;${course?.nameTh ?? ''}&quot; ระบบจะสร้างรายวิชาใหม่พร้อม generate รหัสวิชาใหม่อัตโนมัติ`"
-      confirm-label="ยืนยัน คัดลอก"
+      confirm-label="คัดลอก"
       cancel-label="ยกเลิก"
       confirm-icon="content_copy"
       :persistent="isCopying"

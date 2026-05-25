@@ -2,7 +2,6 @@
   <q-form
     ref="qFormRef"
     :class="['course-form', { 'course-form--readonly': props.readonly }]"
-    scroll-to-first-error
     @submit.prevent
   >
     <q-banner v-if="error" rounded dense class="bg-negative text-white q-mb-md">
@@ -707,59 +706,73 @@
                 เอกสาร CBS 001, CBS 002 หรือแบบฟอร์มหลักสูตรระยะสั้น เก็บเป็นหลักฐานอ้างอิง
                 ไม่ใช่ไฟล์บทเรียนสำหรับผู้เรียน
               </div>
-              <!-- มีไฟล์เดิมจากเซิร์ฟเวอร์ ยังไม่ได้อัปโหลดใหม่ -->
+
+              <!-- ไฟล์เดิมที่บันทึกในระบบ -->
               <div
-                v-if="props.initialData?.fileUrl && !form.file && !existingFileCleared"
+                v-for="f in props.initialData?.files ?? []"
+                v-show="!removedFileIds.includes(f.fileId)"
+                :key="f.fileId"
                 class="course-form__existing-field"
                 style="pointer-events: auto"
               >
                 <q-icon name="picture_as_pdf" size="18px" color="negative" />
                 <a
-                  :href="props.initialData.fileUrl"
+                  :href="f.fileUrl"
                   target="_blank"
                   rel="noopener"
                   class="course-form__existing-filename course-form__file-link"
+                  >{{ f.fileName }}</a
                 >
-                  {{ props.initialData.fileName ?? 'เปิดไฟล์เอกสารต้นทาง' }}
-                </a>
                 <q-icon
                   v-if="!props.readonly"
                   name="close"
                   class="cursor-pointer"
                   color="negative"
                   size="18px"
-                  @click.stop.prevent="existingFileCleared = true"
+                  @click.stop.prevent="removedFileIds.push(f.fileId)"
                 />
               </div>
-              <!-- ไม่มีไฟล์เดิม หรือถูกลบแล้ว หรืออัปโหลดใหม่แล้ว -->
+
+              <!-- ไฟล์ใหม่ที่รอบันทึก -->
+              <div
+                v-for="(nf, idx) in form.newFiles"
+                :key="idx"
+                class="course-form__existing-field"
+                style="pointer-events: auto"
+              >
+                <q-icon name="upload_file" size="18px" color="primary" />
+                <span class="course-form__existing-filename">{{ nf.name }}</span>
+                <q-icon
+                  name="close"
+                  class="cursor-pointer"
+                  color="negative"
+                  size="18px"
+                  @click.stop.prevent="form.newFiles.splice(idx, 1)"
+                />
+              </div>
+
+              <!-- ปุ่มเพิ่มไฟล์ -->
               <q-file
-                v-else
-                v-model="form.file"
+                v-if="!props.readonly"
+                v-model="cbsPickerModel"
                 outlined
                 dense
+                multiple
                 accept=".pdf,application/pdf"
                 :max-file-size="2097152"
-                label="เลือกไฟล์เอกสาร"
+                label="เพิ่มไฟล์เอกสาร"
                 hide-bottom-space
-                class="course-form__input"
-                :disable="props.readonly"
-                @update:model-value="fileError = null"
+                class="course-form__input q-mt-xs"
+                @update:model-value="onCbsPicked"
                 @rejected="onCbsRejected"
               >
                 <template #prepend>
                   <q-icon name="upload_file" />
                 </template>
-                <template v-if="form.file" #append>
-                  <q-icon
-                    name="close"
-                    class="cursor-pointer"
-                    color="negative"
-                    @click.stop.prevent="form.file = undefined"
-                  />
-                </template>
               </q-file>
+
               <div v-if="!props.readonly" class="text-caption text-grey-6 q-mt-xs">
-                เฉพาะไฟล์ .pdf ขนาดไม่เกิน 2MB
+                เฉพาะไฟล์ .pdf ขนาดไม่เกิน 2MB ต่อไฟล์ (สูงสุด 5 ไฟล์)
               </div>
               <div v-if="fileError" class="course-form__file-error">{{ fileError }}</div>
             </div>
@@ -1188,7 +1201,7 @@ const form = reactive({
   contactEmail: '',
   contactUrl: '',
   image: undefined as File | undefined,
-  file: undefined as File | undefined,
+  newFiles: [] as File[],
 });
 
 // Convert YYYY-MM-DD → DD/MM/YYYY for form display
@@ -1215,7 +1228,8 @@ const instructorOptions = ref<InstructorOption[]>([]);
 const instructorSearching = ref(false);
 
 const existingImageCleared = ref(false);
-const existingFileCleared = ref(false);
+const removedFileIds = ref<number[]>([]);
+const cbsPickerModel = ref<File | File[] | null>(null);
 
 const imageBlobUrl = ref<string | null>(null);
 const imageZoomOpen = ref(false);
@@ -1247,7 +1261,9 @@ watch(
   (data) => {
     if (!data) return;
     existingImageCleared.value = false;
-    existingFileCleared.value = false;
+    removedFileIds.value = [];
+    form.newFiles = [];
+    cbsPickerModel.value = null;
     form.nameTh = data.nameTh ?? '';
     form.nameEn = data.nameEn ?? '';
     form.description = data.description ?? '';
@@ -1379,7 +1395,7 @@ async function revealAndFocusFirstError(): Promise<void> {
   const scrollTarget =
     firstErrorField?.closest<HTMLElement>('.course-form__field') ??
     (firstErrorField as HTMLElement | null);
-  scrollTarget?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  scrollTarget?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   const input = firstErrorField?.querySelector('input, textarea, [tabindex]') as HTMLElement | null;
   input?.focus();
 }
@@ -1464,6 +1480,16 @@ function onPhoneKeypress(e: KeyboardEvent) {
 
 function onNumberKeypress(e: KeyboardEvent) {
   if (!/[\d.]/.test(e.key)) e.preventDefault();
+}
+
+function onCbsPicked(picked: File | File[] | null) {
+  if (!picked) return;
+  fileError.value = null;
+  const arr = Array.isArray(picked) ? picked : [picked];
+  form.newFiles.push(...arr);
+  void nextTick(() => {
+    cbsPickerModel.value = null;
+  });
 }
 
 function onCbsRejected(entries: { failedPropValidation: string }[]) {
@@ -1597,8 +1623,8 @@ async function submit() {
     contactUrl: form.contactUrl || undefined,
     image: form.image,
     removeImage: existingImageCleared.value || undefined,
-    file: form.file,
-    removeFile: existingFileCleared.value || undefined,
+    files: form.newFiles.length ? form.newFiles : undefined,
+    removeFileIds: removedFileIds.value.length ? removedFileIds.value : undefined,
     createUser: authStore.user?.username ?? undefined,
     instructors: selectedInstructors.value.length
       ? selectedInstructors.value.map((i) => ({ username: i.username, email: i.email }))
