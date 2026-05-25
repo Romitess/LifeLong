@@ -124,6 +124,15 @@ export function useAdminCourses() {
     return data;
   }
 
+  async function copyCourse(id: number): Promise<{ courseId: number }> {
+    const { data } = await api.post<{ courseId: number }>(`/api/admin/courses/${id}/copy`);
+    return data;
+  }
+
+  async function retryMoodleSync(id: number): Promise<void> {
+    await api.post(`/api/admin/courses/${id}/retry-moodle`);
+  }
+
   return {
     items,
     filterOptions,
@@ -137,6 +146,8 @@ export function useAdminCourses() {
     updateCourse,
     publishCourse,
     unpublishCourse,
+    copyCourse,
+    retryMoodleSync,
     formOptions,
     fetchFormOptions,
   };

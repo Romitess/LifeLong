@@ -39,6 +39,7 @@
                 maxlength="255"
                 placeholder="เช่น การพัฒนาแอปพลิเคชันมือถือเบื้องต้น"
                 :rules="[requiredRule]"
+                :readonly="props.readonly"
                 class="course-form__input"
               />
             </div>
@@ -55,6 +56,7 @@
                 maxlength="255"
                 placeholder="e.g. Introduction to Mobile Application Development"
                 :rules="[requiredRule]"
+                :readonly="props.readonly"
                 class="course-form__input"
               />
             </div>
@@ -75,6 +77,7 @@
                 option-value="id"
                 placeholder="เลือกคณะ/ส่วนงาน"
                 :rules="[requiredRule]"
+                :disable="props.readonly"
                 class="course-form__select"
               />
             </div>
@@ -95,6 +98,7 @@
                 option-value="id"
                 placeholder="เลือกหมวดวิชา"
                 :rules="[requiredRule]"
+                :disable="props.readonly"
                 class="course-form__select"
                 @update:model-value="form.subcategoryId = undefined"
               />
@@ -116,7 +120,7 @@
                 option-label="label"
                 option-value="id"
                 placeholder="เลือกหมู่วิชา"
-                :disable="!form.categoryId"
+                :disable="props.readonly || !form.categoryId"
                 hide-bottom-space
                 class="course-form__select"
               />
@@ -204,6 +208,7 @@
                       :val="opt.id"
                       :label="opt.label"
                       color="primary"
+                      :disable="props.readonly"
                       class="course-form__radio"
                     />
                   </div>
@@ -229,6 +234,7 @@
                   class="course-form__fee-input"
                   :rules="[(v: unknown) => !!v || v === '0' || 'กรุณากรอกหน่วยกิต']"
                   hide-bottom-space
+                  :readonly="props.readonly"
                   @keypress="onNumberKeypress"
                 />
                 <span class="course-form__fee-unit">หน่วยกิต</span>
@@ -256,6 +262,7 @@
                       :val="opt.id"
                       :label="opt.label"
                       color="primary"
+                      :disable="props.readonly"
                       class="course-form__radio"
                     />
                   </div>
@@ -276,6 +283,7 @@
                   :val="opt.id"
                   :label="opt.label"
                   color="primary"
+                  :disable="props.readonly"
                   class="course-form__checkbox"
                 />
               </div>
@@ -296,6 +304,7 @@
                     min="0"
                     placeholder="0"
                     class="course-form__hours-input"
+                    :readonly="props.readonly"
                     @keypress="onNumberKeypress"
                   />
                   <span class="course-form__hours-label">ชั่วโมง ทฤษฎี</span>
@@ -309,6 +318,7 @@
                     min="0"
                     placeholder="0"
                     class="course-form__hours-input"
+                    :readonly="props.readonly"
                     @keypress="onNumberKeypress"
                   />
                   <span class="course-form__hours-label">ชั่วโมง ปฏิบัติ</span>
@@ -334,6 +344,7 @@
                 rows="2"
                 placeholder="อธิบายภาพรวมของรายวิชา เนื้อหา และสิ่งที่ผู้เรียนจะได้รับ..."
                 class="course-form__input"
+                :readonly="props.readonly"
               />
             </div>
 
@@ -374,6 +385,7 @@
                   dense
                   placeholder="ผู้เรียนสามารถ..."
                   class="course-form__input course-form__summary-input"
+                  :readonly="props.readonly"
                 />
                 <q-btn
                   v-if="!props.readonly"
@@ -518,6 +530,7 @@
                   label="มีวุฒิบัตร/ประกาศนียบัตร"
                   dense
                   color="primary"
+                  :disable="props.readonly"
                 />
                 <q-input
                   v-if="form.hasCertificate"
@@ -528,6 +541,7 @@
                   placeholder="ระบุชื่อวุฒิบัตร เช่น ประกาศนียบัตรวิชาชีพ..."
                   style="min-width: 300px"
                   class="course-form__input"
+                  :readonly="props.readonly"
                 />
               </div>
             </div>
@@ -564,6 +578,7 @@
                 label="เลือกรูปภาพ"
                 hide-bottom-space
                 class="course-form__input"
+                :disable="props.readonly"
                 @update:model-value="imageError = null"
                 @rejected="onImageRejected"
               >
@@ -623,6 +638,7 @@
                 <BaseDateInput
                   v-model="form.startDate"
                   :rules="[requiredRule]"
+                  :disable="props.readonly"
                   class="course-form__date-input"
                 />
                 <span class="course-form__date-sep">ถึง</span>
@@ -631,6 +647,7 @@
                   v-model="form.endDate"
                   :rules="[requiredRule, endDateRule]"
                   :options="(d: string) => !startDateForCalendar || d >= startDateForCalendar"
+                  :disable="props.readonly"
                   class="course-form__date-input"
                 />
               </div>
@@ -645,13 +662,18 @@
                 >
               </div>
               <div class="course-form__date-range">
-                <BaseDateInput v-model="form.registrationStart" class="course-form__date-input" />
+                <BaseDateInput
+                  v-model="form.registrationStart"
+                  :disable="props.readonly"
+                  class="course-form__date-input"
+                />
                 <span class="course-form__date-sep">ถึง</span>
                 <BaseDateInput
                   ref="regEndDateInputRef"
                   v-model="form.registrationEnd"
                   :rules="[regEndDateRule]"
                   :options="(d: string) => !regStartDateForCalendar || d >= regStartDateForCalendar"
+                  :disable="props.readonly"
                   class="course-form__date-input"
                 />
               </div>
@@ -670,6 +692,7 @@
                 min="1"
                 placeholder="เช่น 30"
                 class="course-form__hours-input"
+                :readonly="props.readonly"
                 @keypress="onNumberKeypress"
               />
               <div class="text-caption text-grey-6">เว้นว่างไว้ถ้าไม่จำกัดจำนวน</div>
@@ -719,6 +742,7 @@
                 label="เลือกไฟล์เอกสาร"
                 hide-bottom-space
                 class="course-form__input"
+                :disable="props.readonly"
                 @update:model-value="fileError = null"
                 @rejected="onCbsRejected"
               >
@@ -757,6 +781,7 @@
                     :val="target.id"
                     :label="target.label"
                     color="primary"
+                    :disable="props.readonly"
                     class="course-form__target-checkbox"
                   />
                   <template
@@ -770,6 +795,7 @@
                           :label="sub.label"
                           color="primary"
                           dense
+                          :disable="props.readonly"
                           class="course-form__subtarget-checkbox"
                         />
                         <q-input
@@ -779,6 +805,7 @@
                           dense
                           placeholder="ระบุ"
                           class="course-form__subtarget-other"
+                          :readonly="props.readonly"
                         />
                       </template>
                     </div>
@@ -790,6 +817,7 @@
                       dense
                       placeholder="ระบุ"
                       class="course-form__target-other"
+                      :readonly="props.readonly"
                     />
                   </template>
                 </div>
@@ -820,6 +848,7 @@
                         :val="classType.id"
                         :label="classType.label"
                         color="primary"
+                        :disable="props.readonly"
                         class="course-form__radio"
                       />
                       <div
@@ -841,6 +870,7 @@
                               :rules="[feeRule]"
                               hide-bottom-space
                               class="course-form__input course-form__input--compact"
+                              :readonly="props.readonly"
                               @keypress="onNumberKeypress"
                             />
                             <span class="course-form__fee-unit">บาท</span>
@@ -861,6 +891,7 @@
                             type="text"
                             placeholder="เช่น ราคาพิเศษสำหรับนิสิตปัจจุบัน"
                             class="course-form__input course-form__input--wide"
+                            :readonly="props.readonly"
                           />
                         </div>
                       </div>
@@ -892,6 +923,7 @@
                 maxlength="100"
                 placeholder="ชื่อ-นามสกุล ผู้ประสานงาน"
                 :rules="[requiredRule]"
+                :readonly="props.readonly"
                 class="course-form__input"
               />
             </div>
@@ -907,6 +939,7 @@
                 maxlength="30"
                 placeholder="038-123-456"
                 :rules="[requiredRule, phoneRule]"
+                :readonly="props.readonly"
                 class="course-form__input"
                 @keypress="onPhoneKeypress"
               />
@@ -924,6 +957,7 @@
                 type="email"
                 placeholder="example@buu.ac.th"
                 :rules="[requiredRule, emailRule]"
+                :readonly="props.readonly"
                 class="course-form__input"
               />
             </div>
@@ -939,6 +973,7 @@
                 maxlength="255"
                 placeholder="https://www.example.com"
                 hide-bottom-space
+                :readonly="props.readonly"
                 class="course-form__input"
               />
             </div>
@@ -1032,7 +1067,7 @@
         label="เผยแพร่"
         :loading="isPublishing"
         class="course-form__btn"
-        @click="$emit('publish')"
+        @click="submitAndPublish"
       />
       <AdminActionButton
         variant="primary"
@@ -1341,7 +1376,10 @@ async function revealAndFocusFirstError(): Promise<void> {
   setActiveTabForElement(firstErrorField);
   await nextTick();
   await nextTick();
-  firstErrorField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const scrollTarget =
+    firstErrorField?.closest<HTMLElement>('.course-form__field') ??
+    (firstErrorField as HTMLElement | null);
+  scrollTarget?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const input = firstErrorField?.querySelector('input, textarea, [tabindex]') as HTMLElement | null;
   input?.focus();
 }
@@ -1587,6 +1625,18 @@ async function submit() {
       // error is set in composable
     }
   }
+}
+
+async function submitAndPublish() {
+  error.value = null;
+  const conditionalFieldsValid = await validateOrderedConditionalFields();
+  if (!conditionalFieldsValid) return;
+  const valid = await qFormRef.value?.validate();
+  if (!valid) {
+    await revealAndFocusFirstError();
+    return;
+  }
+  emit('publish');
 }
 </script>
 

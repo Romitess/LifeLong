@@ -52,8 +52,14 @@ import AdminActionButton from 'components/admin/AdminActionButton.vue';
 const router = useRouter();
 const route = useRoute();
 const $q = useQuasar();
-const { fetchCourseDetail, fetchFormOptions, updateCourse, publishCourse, unpublishCourse } =
-  useAdminCourses();
+const {
+  fetchCourseDetail,
+  fetchFormOptions,
+  updateCourse,
+  publishCourse,
+  unpublishCourse,
+  retryMoodleSync,
+} = useAdminCourses();
 
 const course = ref<AdminCourseDetail | null>(null);
 const loading = ref(true);
@@ -116,24 +122,9 @@ async function onUnpublish(): Promise<void> {
 }
 
 async function onRetrySync(): Promise<void> {
-  if (!course.value) return;
   isRetrying.value = true;
   try {
-    await submitOverride({
-      nameTh: course.value.nameTh,
-      nameEn: course.value.nameEn,
-      summary: course.value.summary ?? undefined,
-      description: course.value.description ?? undefined,
-      facultyId: course.value.facultyId ?? 0,
-      typeCourseId: course.value.typeCourseId ?? 0,
-      studyTypeId: course.value.studyTypeId ?? 0,
-      categoryId: course.value.categoryId ?? 0,
-      startDate: course.value.startDate ?? '',
-      endDate: course.value.endDate ?? '',
-      contactName: course.value.contactName ?? '',
-      contactTel: course.value.contactTel ?? '',
-      contactEmail: course.value.contactEmail ?? '',
-    });
+    await retryMoodleSync(courseId);
     $q.notify({
       type: 'positive',
       message: 'sync Moodle ใหม่แล้ว',

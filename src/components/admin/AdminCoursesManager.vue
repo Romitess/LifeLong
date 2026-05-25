@@ -213,6 +213,7 @@
                     size="sm"
                     class="courses-manager-action-btn courses-manager-action-btn--copy"
                     aria-label="คัดลอก"
+                    @click="void router.push(`/admin/courses/${item.courseId}/copy`)"
                   >
                     <q-tooltip>คัดลอก</q-tooltip>
                   </q-btn>

@@ -69,6 +69,7 @@
                   type="text"
                   placeholder="เช่น แนะนำรายวิชาและเครื่องมือที่ใช้"
                   class="chapter-tab__input"
+                  :readonly="readonly"
                 />
               </div>
 
@@ -85,6 +86,7 @@
                     min="0"
                     placeholder="0"
                     class="chapter-tab__input chapter-tab__input--compact"
+                    :readonly="readonly"
                   />
                   <span class="chapter-tab__unit">ชม.</span>
                 </div>
@@ -106,6 +108,7 @@
                   clearable
                   placeholder="เลือกรูปแบบ"
                   class="chapter-tab__input"
+                  :disable="readonly"
                 />
               </div>
 
@@ -121,6 +124,7 @@
                   type="text"
                   placeholder="ระบุรูปแบบการเรียนอื่นๆ"
                   class="chapter-tab__input"
+                  :readonly="readonly"
                 />
               </div>
             </div>
@@ -155,6 +159,7 @@
                   type="text"
                   placeholder="ชื่อหัวข้อย่อย"
                   class="chapter-tab__input chapter-tab__sub-input"
+                  :readonly="readonly"
                 />
                 <q-btn
                   v-if="!readonly"
