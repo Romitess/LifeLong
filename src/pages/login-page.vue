@@ -116,6 +116,17 @@
     full
     :message="$t('auth.login.loading')"
   />
+
+  <LoginCheckInDialog
+    v-model="showCheckInDialog"
+    :days="checkInDays"
+    :streak-days="checkInStreakDays"
+    :streak-label="checkInStreakLabel"
+    :description="checkInDescription"
+    :continue-label="checkInContinueLabel"
+    :secondary-label="checkInSecondaryLabel"
+    @continue="handleCheckInContinue"
+  />
 </template>
 
 <script setup lang="ts">
@@ -124,8 +135,14 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import AuthPageShell, { type AuthVisualItem } from 'components/auth/AuthPageShell.vue';
+import LoginCheckInDialog from 'components/auth/LoginCheckInDialog.vue';
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
+import {
+  recordLoginCheckIn,
+  type LoginCheckInDay,
+  type LoginCheckInSnapshot,
+} from 'src/composables/use-login-check-in';
 import { useAuthStore } from 'src/stores/auth-store';
 
 interface LoginForm {
@@ -135,7 +152,7 @@ interface LoginForm {
 }
 
 const $q = useQuasar();
-const { t } = useI18n({ useScope: 'global' });
+const { locale, t } = useI18n({ useScope: 'global' });
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -151,7 +168,10 @@ const TEST_ACCOUNTS = [
 const isLoading = ref(false);
 const isPasswordVisible = ref(false);
 const showForgotLoading = ref(false);
+const showCheckInDialog = ref(false);
 const switchingTo = ref<'register' | null>(null);
+const pendingPostLoginPath = ref('');
+const checkInSnapshot = ref<LoginCheckInSnapshot | null>(null);
 
 const loginForm = reactive<LoginForm>({
   username: typeof route.query.email === 'string' ? route.query.email : '',
@@ -171,6 +191,35 @@ const visualItems = computed<AuthVisualItem[]>(() => [
     text: t('auth.login.support'),
   },
 ]);
+
+const checkInDays = computed<LoginCheckInDay[]>(() => checkInSnapshot.value?.days ?? []);
+const checkInStreakDays = computed<number>(() => checkInSnapshot.value?.streakDays ?? 0);
+const checkInStreakLabel = computed<string>(() => {
+  if (locale.value === 'th') {
+    return 'วันต่อเนื่อง';
+  }
+
+  return checkInStreakDays.value === 1 ? 'day streak' : 'days streak';
+});
+const checkInDescription = computed<string>(() => {
+  if (locale.value === 'th') {
+    if (checkInSnapshot.value?.isNewCheckIn) {
+      return 'เช็กอินวันนี้สำเร็จแล้ว พรุ่งนี้กลับมาอีกเพื่อรักษา streak ของคุณนะ';
+    }
+
+    return 'วันนี้คุณเช็กอินแล้ว พรุ่งนี้กลับมาอีกเพื่อไม่ให้ streak หลุด';
+  }
+
+  if (checkInSnapshot.value?.isNewCheckIn) {
+    return 'You checked in today. Come back tomorrow to keep your streak glowing.';
+  }
+
+  return "You're already checked in for today. Come back tomorrow to keep your streak going.";
+});
+const checkInContinueLabel = computed<string>(() => (locale.value === 'th' ? 'ไปต่อ' : 'CONTINUE'));
+const checkInSecondaryLabel = computed<string>(() =>
+  locale.value === 'th' ? 'ดูอีกครั้ง' : 'REVIEW STREAK',
+);
 
 function requiredRule(value: string): true | string {
   return Boolean(value.trim()) || t('auth.validation.required');
@@ -223,6 +272,13 @@ function getPostLoginPath(): string {
   return typeof route.query.redirect === 'string' ? route.query.redirect : '/main';
 }
 
+function handleCheckInContinue(): void {
+  showCheckInDialog.value = false;
+  const nextPath = pendingPostLoginPath.value || '/main';
+  pendingPostLoginPath.value = '';
+  void router.push(nextPath);
+}
+
 async function onLogin(): Promise<void> {
   if (!loginForm.username.trim() || !loginForm.password.trim()) {
     $q.notify({
@@ -261,6 +317,19 @@ async function onLogin(): Promise<void> {
       'Redirecting to:',
       targetPath,
     );
+
+    if (!authStore.user) {
+      void router.push(targetPath);
+      return;
+    }
+
+    if (authStore.user.role === 'student') {
+      pendingPostLoginPath.value = targetPath;
+      checkInSnapshot.value = recordLoginCheckIn(authStore.user);
+      showCheckInDialog.value = true;
+      return;
+    }
+
     void router.push(targetPath);
   } catch {
     $q.notify({

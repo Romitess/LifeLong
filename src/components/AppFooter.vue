@@ -83,10 +83,13 @@
         <!-- Right Section: Logo & Copyright -->
         <div class="col-12 col-md-5 text-right flex column items-end">
           <div class="logo-container q-mb-sm">
-            <img src="../assets/brand/buu-lll-logo.png" alt="BUU LLL Logo" class="footer-logo" />
+            <img
+              src="../assets/brand/bul-shark-logo.png"
+              alt="BUL Logo"
+              class="footer-logo footer-logo--shark"
+            />
           </div>
           <div class="copyright-info text-right">
-            <div class="q-mb-xs">© 2026 Lifelong Learning Burapha University</div>
             <div class="crafted-by">
               {{ t('footer.craftedBy') }}
               <span class="text-orange-8">{{ t('footer.computerCenter') }}</span>
@@ -123,6 +126,12 @@ const { t } = useI18n();
   max-width: 180px;
   height: auto;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4)); // Glow to separate logo from grey bg
+
+  &--shark {
+    max-width: 150px;
+    max-height: 150px;
+    object-fit: contain;
+  }
 }
 
 .footer-title {

@@ -21,7 +21,7 @@ function hashString(value: string): number {
   return hash;
 }
 
-function isLearnerRole(role: User['role'] | undefined): boolean {
+export function isLearnerRole(role: User['role'] | undefined): boolean {
   return role === 'student' || role === 'external' || role === 'staff';
 }
 
@@ -66,6 +66,25 @@ function getStoredProgress(user: User): LearnerProgressSnapshot | null {
   }
 }
 
+export function readLearnerProgress(user: User): LearnerProgressSnapshot {
+  return getStoredProgress(user) ?? buildMockProgress(user);
+}
+
+export function writeLearnerProgress(user: User, snapshot: LearnerProgressSnapshot): void {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  window.localStorage.setItem(
+    `${LEARNER_PROGRESS_STORAGE_PREFIX}${user.id}`,
+    JSON.stringify({
+      streakDays: Math.max(0, Math.round(snapshot.streakDays)),
+      level: Math.max(1, Math.round(snapshot.level)),
+      xp: Math.max(0, Math.round(snapshot.xp)),
+    }),
+  );
+}
+
 export function useLearnerProgress() {
   const authStore = useAuthStore();
 
@@ -79,7 +98,7 @@ export function useLearnerProgress() {
       return null;
     }
 
-    return getStoredProgress(user) ?? buildMockProgress(user);
+    return readLearnerProgress(user);
   });
 
   return {
