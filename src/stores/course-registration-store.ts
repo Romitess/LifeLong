@@ -189,6 +189,60 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
       writeStoredRegistrations(nextRegistrations);
     },
 
+    async syncEnrollmentFromApi(
+      courseCode: string,
+      courseId: string,
+      courseTitle?: string,
+      courseImageUrl?: string,
+    ): Promise<void> {
+      const authStore = useAuthStore();
+      const username = authStore.user?.username;
+      if (!username || !courseCode) return;
+
+      const userId = getAuthenticatedUserId();
+      if (!userId) return;
+
+      try {
+        const { data } = await api.get<{
+          enrolled: boolean;
+          enrollId: number | null;
+          moodleId: number | null;
+        }>('/api/moodle/enroll/check', { params: { courseCode, username } });
+
+        const alreadyInStore = this.registrations.some(
+          (r) => r.courseId === courseId && r.userId === userId,
+        );
+
+        if (data.enrolled && !alreadyInStore) {
+          const nextRegistrations: CourseRegistration[] = [
+            ...this.registrations,
+            {
+              id: `${userId}-${courseId}`,
+              courseId,
+              courseCode,
+              courseTitle: courseTitle ?? courseId,
+              courseImageUrl: courseImageUrl ?? '',
+              courseCover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
+              eligibility: 'student',
+              paymentStatus: 'free',
+              registeredAt: new Date().toISOString(),
+              userId,
+            },
+          ];
+          this.registrations = nextRegistrations;
+          writeStoredRegistrations(nextRegistrations);
+        } else if (!data.enrolled && alreadyInStore) {
+          const nextRegistrations = this.registrations.filter(
+            (r) => !(r.courseId === courseId && r.userId === userId),
+          );
+          this.registrations = nextRegistrations;
+          writeStoredRegistrations(nextRegistrations);
+        }
+      } catch {
+        // Silently fail — localStorage state is kept as fallback
+      }
+    },
+
     unregisterCourse(courseId: string): void {
       const userId = getAuthenticatedUserId();
 

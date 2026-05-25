@@ -17,19 +17,26 @@ interface ApiLltcourse {
   code: string | null;
   titleTh: string | null;
   titleEn: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  categoryId: number | null;
   objective: string | null;
   status: string | null;
   hours: number | null;
   imageUrl: string | null;
   moodleId: number | null;
+  maxSeats: number | null;
+  amount: number | null;
+  regStartDate: string | null;
+  regEndDate: string | null;
+  enrolledCount: number;
+  categoryId?: number | null;
   typestudyDetail?: { id: number; name: string | null } | null;
 }
 
 function mapApiCourse(raw: ApiLltcourse): Course {
   const today = new Date().toISOString().substring(0, 10);
+  const regStart = raw.regStartDate ?? today;
+  const regEnd = raw.regEndDate ?? '2099-12-31';
+  const amount = raw.amount ?? 0;
+
   let categoryName = `Category ${raw.categoryId ?? 1}`;
   try {
     const categoryStore = useCategoryStore();
@@ -51,12 +58,12 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     ...(raw.titleEn ? { titleEn: raw.titleEn } : {}),
     imageUrl: raw.imageUrl ?? '',
     cover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
-    registrationStart: raw.startDate ?? today,
-    registrationEnd: raw.endDate ?? '2099-12-31',
-    registrationStartDate: raw.startDate ?? today,
-    registrationEndDate: raw.endDate ?? '2099-12-31',
-    price: 0,
-    isFree: true,
+    registrationStart: regStart,
+    registrationEnd: regEnd,
+    registrationStartDate: regStart,
+    registrationEndDate: regEnd,
+    price: amount,
+    isFree: amount === 0,
     views: 0,
     status: 'เปิดรับสมัคร',
     deliveryModes: mapDeliveryModes(raw.typestudyDetail?.name),
@@ -65,8 +72,8 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     category: categoryName,
     categoryEn: categoryName,
     categoryId: raw.categoryId ?? undefined,
-    maxSeats: 9999,
-    enrolledCount: 0,
+    maxSeats: raw.maxSeats ?? 9999,
+    enrolledCount: raw.enrolledCount ?? 0,
   };
 }
 
@@ -76,16 +83,8 @@ export function useCourseList(): UseCourseListReturn {
   const error = ref<string | null>(null);
 
   const courses = computed<Course[]>(() => courseStore.courses);
-  const activeCourses = computed<Course[]>(() => {
-    const today = new Date().toISOString().substring(0, 10);
-    return courses.value.filter(
-      (course) =>
-        course.isActive &&
-        course.registrationStartDate <= today &&
-        today <= course.registrationEndDate &&
-        course.enrolledCount < course.maxSeats,
-    );
-  });
+  // Backend already filters published courses — activeCourses = all returned courses
+  const activeCourses = computed<Course[]>(() => courses.value);
 
   const fetchCourses = async (): Promise<void> => {
     isLoading.value = true;

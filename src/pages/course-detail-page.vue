@@ -1179,6 +1179,16 @@ watch(
   },
   { immediate: true },
 );
+
+watch(
+  course,
+  (c) => {
+    if (c?.code && authStore.isLoggedIn) {
+      void courseRegistrationStore.syncEnrollmentFromApi(c.code, c.id, c.title, c.imageUrl);
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <style lang="scss" scoped>
