@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf" :class="layoutClass">
-    <q-header v-if="showNavBar" style="background: transparent">
+    <q-header style="background: transparent">
       <!-- Top Bar -->
       <q-toolbar class="top-toolbar">
         <q-btn
@@ -253,7 +253,7 @@
 
     <!-- Hover trigger zone: only for non-admin roles on PC -->
     <div
-      v-if="showNavBar && $q.platform.is.desktop && !drawerOpen && !isLifelong2Role"
+      v-if="$q.platform.is.desktop && !drawerOpen && !isLifelong2Role"
       class="sidebar-hover-trigger"
       @mouseenter="onHoverTriggerEnter"
     />
@@ -269,7 +269,6 @@
       :mini="isLifelong2Role && sidebarMini"
       :mini-width="72"
       class="sidebar-drawer"
-      v-if="showNavBar"
       :width="280"
       @mouseleave="onDrawerMouseLeave"
     >
@@ -389,7 +388,7 @@
       <router-view v-else />
 
       <!-- Footer -->
-      <AppFooter v-if="showNavBar" />
+      <AppFooter />
 
       <!-- Scroll to top button -->
       <q-page-scroller position="bottom-right" :scroll-offset="200" :offset="[24, 24]">
@@ -639,11 +638,6 @@ const userRoleLabel = computed(() => {
   }
 
   return authStore.user?.studentId ?? '';
-});
-
-const showNavBar = computed(() => {
-  const excludedPaths = ['/learn', '/grades', '/video', '/quiz', '/course-home'];
-  return !excludedPaths.some((path) => route.path.includes(path));
 });
 
 const homeNav = computed<NavItem>(() => ({

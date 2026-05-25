@@ -444,7 +444,7 @@ watch(
 
 <style lang="scss" scoped>
 .course-page {
-  height: 100vh;
+  height: calc(100vh - 64px);
   overflow: hidden;
   background-color: #f8f6f1;
   // display: flex;
@@ -452,7 +452,7 @@ watch(
 }
 
 .moodle-loading-shell {
-  height: 100vh;
+  height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -544,7 +544,7 @@ watch(
 
 .moodle-standalone-shell {
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - 64px);
   min-height: 520px;
   background: #fff;
   overflow: hidden;
