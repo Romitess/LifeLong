@@ -184,8 +184,8 @@ async function submitOverride(payload: CreateCoursePayload): Promise<{ courseId:
   if (payload.contactUrl) form.append('contactUrl', payload.contactUrl);
   if (payload.image) form.append('image', payload.image);
   if (payload.removeImage) form.append('removeImage', 'true');
-  if (payload.file) form.append('file', payload.file);
-  if (payload.removeFile) form.append('removeFile', 'true');
+  for (const f of payload.files ?? []) form.append('files', f);
+  if (payload.removeFileIds?.length) form.append('removeFileIds', payload.removeFileIds.join(','));
   if (payload.instructors?.length)
     form.append('instructorsJson', JSON.stringify(payload.instructors));
   if (payload.chapters?.length) form.append('chaptersJson', JSON.stringify(payload.chapters));

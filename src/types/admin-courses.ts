@@ -100,11 +100,17 @@ export interface CreateCoursePayload {
   contactUrl?: string | undefined;
   image?: File | undefined;
   removeImage?: boolean | undefined;
-  file?: File | undefined;
-  removeFile?: boolean | undefined;
+  files?: File[] | undefined;
+  removeFileIds?: number[] | undefined;
   createUser?: string | undefined;
   instructors?: { username?: string; email?: string }[] | undefined;
   chapters?: CourseChapterPayload[] | undefined;
+}
+
+export interface CourseFile {
+  fileId: number;
+  fileUrl: string;
+  fileName: string;
 }
 
 export interface AdminCourseItem {
@@ -152,8 +158,7 @@ export interface AdminCourseDetail {
   summary: string | null;
   description: string | null;
   imageUrl: string | null;
-  fileUrl: string | null;
-  fileName: string | null;
+  files: CourseFile[];
   facultyId: number | null;
   typeCourseId: number | null;
   creditBank: string | null;
