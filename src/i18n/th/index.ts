@@ -68,7 +68,7 @@ export default {
   saveCourse: 'บันทึกคอร์ส',
   enroll: 'ลงทะเบียน',
   enrollNow: 'ลงทะเบียนตอนนี้',
-  registration: 'ลงทะเบียน',
+  coursePeriod: 'วันเปิดเรียน - วันปิดเรียน',
   searchPlaceholder: 'ค้นหาด้วย ชื่อวิชา หรือ รหัสวิชา...',
   additionalFilters: 'ตัวกรองเพิ่มเติม',
   dateRange: 'ช่วงเวลา',

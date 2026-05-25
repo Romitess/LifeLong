@@ -85,6 +85,7 @@ export interface CourseDetail extends Course {
   contractEmail?: string | null;
   contractUrl?: string | null;
   typeClasses?: CourseTypeClass[] | null;
+  privilege?: string | null;
 }
 
 export type RegistrationWindowStatus = 'upcoming' | 'open' | 'closed';

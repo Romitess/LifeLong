@@ -68,7 +68,7 @@ export default {
   saveCourse: 'Save Course',
   enroll: 'Enroll',
   enrollNow: 'Enroll Now',
-  registration: 'Registration',
+  coursePeriod: 'Course Start Date - Course End Date',
   searchPlaceholder: 'Search by course name or code...',
   additionalFilters: 'Additional Filters',
   dateRange: 'Date Range',

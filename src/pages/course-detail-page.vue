@@ -70,7 +70,7 @@
               <div class="quick-info-item">
                 <q-icon name="event" size="22px" color="primary" />
                 <div>
-                  <div class="quick-info-item__label">{{ $t('registration') }}</div>
+                  <div class="quick-info-item__label">{{ $t('coursePeriod') }}</div>
                   <div class="quick-info-item__value">
                     {{ getTranslatedRegStart(course) }} – {{ getTranslatedRegEnd(course) }}
                   </div>
@@ -429,6 +429,29 @@
                   </q-markup-table>
                 </q-card-section>
               </q-card>
+              <!-- Privilege -->
+              <q-card
+                v-if="course.privilege && course.privilege.trim()"
+                flat
+                bordered
+                class="detail-card q-mb-lg"
+              >
+                <q-card-section>
+                  <div class="detail-card__header">
+                    <q-icon name="school" size="24px" color="primary" />
+                    <h2 class="detail-card__title">
+                      {{
+                        locale === 'th'
+                          ? 'สิทธิประโยชน์ของผู้สำเร็จหลักสูตรนี้'
+                          : 'Benefits of Completing this Course'
+                      }}
+                    </h2>
+                  </div>
+                  <div class="q-mt-md">
+                    <div class="text-body2 text-grey-9">{{ course.privilege }}</div>
+                  </div>
+                </q-card-section>
+              </q-card>
             </div>
 
             <!-- Right Column (Sidebar) -->
@@ -661,7 +684,9 @@
                         <q-icon name="email" color="primary" size="20px" />
                       </q-item-section>
                       <q-item-section>
-                        <q-item-label caption>E-mail</q-item-label>
+                        <q-item-label caption>{{
+                          locale === 'th' ? 'อีเมล' : 'E-mail'
+                        }}</q-item-label>
                         <q-item-label class="text-body2 text-grey-9">{{
                           course.contractEmail
                         }}</q-item-label>
@@ -682,7 +707,9 @@
                         <q-icon name="link" color="primary" size="20px" />
                       </q-item-section>
                       <q-item-section>
-                        <q-item-label caption>URL</q-item-label>
+                        <q-item-label caption>{{
+                          locale === 'th' ? 'เว็บไซต์' : 'Website'
+                        }}</q-item-label>
                         <q-item-label class="text-body2 text-grey-9 ellipsis">{{
                           course.contractUrl
                         }}</q-item-label>
@@ -756,7 +783,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue';
 import CourseRecommendationSection from 'components/course/CourseRecommendationSection.vue';
@@ -776,16 +802,17 @@ import type {
   RegistrationWindowStatus,
 } from 'src/types/course-detail';
 import { useI18n } from 'vue-i18n';
+import { useMoodleSso } from 'src/composables/use-moodle-sso';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 
 const { locale, t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
-const $q = useQuasar();
 const authStore = useAuthStore();
 const courseRegistrationStore = useCourseRegistrationStore();
 const courseBookmarkStore = useCourseBookmarkStore();
+const { getMoodleCourseUrl } = useMoodleSso();
 
 function getRouteCourseId(): string {
   const routeCourseId = route.params.id;
@@ -1097,21 +1124,17 @@ function onCourseClick(courseItem: Course): void {
   void router.push(`/course/${courseItem.id}`);
 }
 
-function goToLearningPage(targetCourseId = courseId.value): void {
-  if (authStore.user?.username) {
-    $q.notify({
-      type: 'info',
-      message: 'กำลังพาเข้าสู่ Moodle',
-      position: 'top',
-      timeout: 1800,
-    });
-    pushMoodleLearningRoute(router, targetCourseId, undefined, {
-      moodleCourseId: course.value?.moodleId ?? targetCourseId,
-      courseCode: course.value?.code,
-    });
-    return;
+async function goToLearningPage(targetCourseId = courseId.value): Promise<void> {
+  const username = authStore.user?.username;
+  if (username) {
+    const courseCode = course.value?.code;
+    const moodleCourseId = String(course.value?.moodleId ?? targetCourseId);
+    const url = await getMoodleCourseUrl(moodleCourseId, username, courseCode);
+    if (url) {
+      pushMoodleLearningRoute(router, targetCourseId, url);
+      return;
+    }
   }
-
   void router.push(`/course/${targetCourseId}/learn`);
 }
 
@@ -1175,16 +1198,6 @@ watch(
     const moodleId = Number(rawId);
     if (moodleId && !Number.isNaN(moodleId)) {
       void fetchChapters(moodleId);
-    }
-  },
-  { immediate: true },
-);
-
-watch(
-  course,
-  (c) => {
-    if (c?.code && authStore.isLoggedIn) {
-      void courseRegistrationStore.syncEnrollmentFromApi(c.code, c.id, c.title, c.imageUrl);
     }
   },
   { immediate: true },

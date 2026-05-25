@@ -61,6 +61,7 @@ interface BackendInstructorCourse {
   maxSeats?: number | null;
   enrolledCount?: number | null;
   amount?: number | null;
+  categoryId?: number | null;
 }
 
 function normalizeInstructorEmail(email?: string): string {
@@ -455,6 +456,7 @@ export const useCourseStore = defineStore('course', {
               maxSeats: course.maxSeats ?? null,
               enrolledCount: course.enrolledCount ?? null,
               amount: course.amount ?? null,
+              categoryId: course.categoryId ?? null,
             }),
           )
           .filter((c): c is Course => Boolean(c));

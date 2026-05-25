@@ -19,6 +19,7 @@ interface BackendCourseDetailResponse {
   contractEmail?: string | null;
   contractUrl?: string | null;
   typeClasses?: CourseTypeClass[] | null;
+  privilege?: string | null;
 }
 
 interface UseCourseDetailReturn {
@@ -116,6 +117,7 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
               contractEmail: data.contractEmail ?? null,
               contractUrl: data.contractUrl ?? null,
               typeClasses: data.typeClasses ?? null,
+              privilege: data.privilege ?? null,
             };
             return;
           }
