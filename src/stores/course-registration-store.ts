@@ -29,6 +29,7 @@ export interface CourseRegistration {
   registrantInfo?: RegistrantInfo;
   registeredAt: string;
   userId: string;
+  enrollId?: number | null | undefined;
 }
 
 interface CourseRegistrationState {
@@ -159,6 +160,8 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
       if (username && course.code) {
         try {
           await api.post('/api/moodle/enroll', { courseCode: course.code, username });
+          // Fetch from API to sync enrollId
+          await this.syncEnrollmentFromApi(course.code, course.id, course.title, course.imageUrl);
         } catch (err) {
           console.warn('Backend enrollment failed (saving locally only):', err);
         }
@@ -209,29 +212,40 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
           moodleId: number | null;
         }>('/api/moodle/enroll/check', { params: { courseCode, username } });
 
-        const alreadyInStore = this.registrations.some(
+        const existingIndex = this.registrations.findIndex(
           (r) => r.courseId === courseId && r.userId === userId,
         );
 
-        if (data.enrolled && !alreadyInStore) {
-          const nextRegistrations: CourseRegistration[] = [
-            ...this.registrations,
-            {
-              id: `${userId}-${courseId}`,
-              courseId,
-              courseCode,
-              courseTitle: courseTitle ?? courseId,
-              courseImageUrl: courseImageUrl ?? '',
-              courseCover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
-              eligibility: 'student',
-              paymentStatus: 'free',
-              registeredAt: new Date().toISOString(),
-              userId,
-            },
-          ];
-          this.registrations = nextRegistrations;
-          writeStoredRegistrations(nextRegistrations);
-        } else if (!data.enrolled && alreadyInStore) {
+        if (data.enrolled) {
+          if (existingIndex !== -1) {
+            // Update existing registration with the correct enrollId
+            const updated = { ...this.registrations[existingIndex], enrollId: data.enrollId };
+            const nextRegistrations = [...this.registrations];
+            nextRegistrations[existingIndex] = updated as CourseRegistration;
+            this.registrations = nextRegistrations;
+            writeStoredRegistrations(nextRegistrations);
+          } else {
+            // Add new registration
+            const nextRegistrations: CourseRegistration[] = [
+              ...this.registrations,
+              {
+                id: `${userId}-${courseId}`,
+                courseId,
+                courseCode,
+                courseTitle: courseTitle ?? courseId,
+                courseImageUrl: courseImageUrl ?? '',
+                courseCover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
+                eligibility: 'student',
+                paymentStatus: 'free',
+                registeredAt: new Date().toISOString(),
+                userId,
+                enrollId: data.enrollId,
+              },
+            ];
+            this.registrations = nextRegistrations;
+            writeStoredRegistrations(nextRegistrations);
+          }
+        } else if (!data.enrolled && existingIndex !== -1) {
           const nextRegistrations = this.registrations.filter(
             (r) => !(r.courseId === courseId && r.userId === userId),
           );

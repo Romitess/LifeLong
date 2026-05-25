@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="instructor-chat-page">
     <div v-if="isTeachingRole" class="section-container instructor-chat-page__inner">
       <section class="chat-hero">
@@ -14,17 +14,35 @@
         </q-badge>
       </section>
 
-      <div v-if="conversationEntries.length > 0" class="row q-col-gutter-lg">
+      <div v-if="conversationEntriesUnsorted.length > 0" class="row q-col-gutter-lg">
         <div class="col-12 col-lg-4">
           <q-card flat bordered class="chat-panel">
             <q-card-section class="chat-panel__header">
               <div class="text-subtitle1 text-weight-bolder">รายการสนทนา</div>
               <div class="text-caption text-grey-6">แยกตามรายวิชาและผู้เรียน</div>
+              <q-select
+                v-model="selectedCourseFilter"
+                :options="courseFilterOptions"
+                outlined
+                dense
+                emit-value
+                map-options
+                class="q-mt-sm"
+                label="กรองข้อมูลตามรายวิชา"
+              >
+                <template #prepend>
+                  <q-icon name="filter_alt" size="xs" color="primary" />
+                </template>
+              </q-select>
             </q-card-section>
 
             <q-separator />
 
             <q-list class="conversation-list">
+              <div v-if="conversationEntries.length === 0" class="q-pa-lg text-center text-grey-6">
+                <q-icon name="info" size="md" color="grey-4" class="q-mb-sm" />
+                <div>ไม่พบรายการสนทนาในรายวิชานี้</div>
+              </div>
               <q-item
                 v-for="entry in conversationEntries"
                 :key="entry.id"
@@ -46,7 +64,12 @@
                   <q-item-label caption lines="1">
                     {{ entry.course.code }} : {{ getCourseTitle(entry.course) }}
                   </q-item-label>
-                  <q-item-label caption lines="1" class="q-mt-xs">
+                  <q-item-label
+                    caption
+                    lines="1"
+                    class="q-mt-xs"
+                    :class="entry.messageCount > 0 ? 'text-weight-bold text-dark' : ''"
+                  >
                     {{ entry.latestMessagePreview }}
                   </q-item-label>
                 </q-item-section>
@@ -173,7 +196,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
@@ -200,6 +223,8 @@ interface ConversationEntry {
   learnerInitials: string;
   messageCount: number;
   latestMessagePreview: string;
+  latestMessageTime: number;
+  enrollId: number;
 }
 
 const authStore = useAuthStore();
@@ -220,20 +245,39 @@ onMounted(() => {
   const email = authStore.user?.email;
   if (email) {
     void courseStore.fetchInstructorCourses(email);
-    void instructorBackend.fetchConversations(email);
+    void instructorBackend.fetchConversations(email).then(() => {
+      instructorBackend.connectSocket(email);
+    });
   }
   scrollToLatestMessage();
+});
+
+onUnmounted(() => {
+  instructorBackend.disconnectSocket();
 });
 
 const instructorCourses = computed<Course[]>(() =>
   courseStore.getInstructorCourses(authStore.user),
 );
 
-const conversationEntries = computed<ConversationEntry[]>(() =>
+const selectedCourseFilter = ref<string>('all');
+
+const conversationEntriesUnsorted = computed<ConversationEntry[]>(() =>
   instructorBackend.conversations.value.map((conversation) => {
     const course =
       instructorCourses.value.find((candidate) => candidate.id === `db-${conversation.courseId}`) ??
       createFallbackCourse(conversation.courseId);
+
+    const latestMessage =
+      conversation.messages && conversation.messages.length > 0
+        ? conversation.messages[conversation.messages.length - 1]
+        : null;
+    const latestMessageTime = latestMessage ? new Date(latestMessage.sentAt).getTime() : 0;
+
+    // Count unread messages from learner
+    const unreadCount = (conversation.messages ?? []).filter(
+      (m) => m.sender === 'learner' && m.status === 'sent',
+    ).length;
 
     return {
       id: conversation.id,
@@ -241,11 +285,54 @@ const conversationEntries = computed<ConversationEntry[]>(() =>
       learnerUserId: conversation.learnerUserId,
       learnerName: conversation.learnerName,
       learnerInitials: getLearnerInitials(conversation.learnerName),
-      messageCount: conversation.messageCount,
-      latestMessagePreview: conversation.latestMessagePreview || 'ยังไม่มีข้อความจาก Moodle',
+      messageCount: unreadCount,
+      latestMessagePreview: conversation.latestMessagePreview || 'ยังไม่มีข้อความ',
+      latestMessageTime,
+      enrollId: conversation.enrollId,
     };
   }),
 );
+
+const conversationEntries = computed<ConversationEntry[]>(() => {
+  let filtered = conversationEntriesUnsorted.value;
+
+  if (selectedCourseFilter.value !== 'all') {
+    filtered = filtered.filter((entry) => entry.course.id === selectedCourseFilter.value);
+  }
+
+  // Sort: most recent messages first, otherwise alphabetical/fallback
+  return [...filtered].sort((a, b) => {
+    if (a.latestMessageTime > 0 && b.latestMessageTime > 0) {
+      return b.latestMessageTime - a.latestMessageTime;
+    }
+    if (a.latestMessageTime > 0) return -1;
+    if (b.latestMessageTime > 0) return 1;
+    return a.course.code.localeCompare(b.course.code) || a.learnerName.localeCompare(b.learnerName);
+  });
+});
+
+const courseFilterOptions = computed(() => {
+  const options = [{ label: 'แสดงทุกวิชา (All Courses)', value: 'all' }];
+
+  const activeCourseIds = new Set<string>();
+  conversationEntriesUnsorted.value.forEach((entry) => {
+    activeCourseIds.add(entry.course.id);
+  });
+
+  activeCourseIds.forEach((courseId) => {
+    const course =
+      instructorCourses.value.find((c) => c.id === courseId) ||
+      conversationEntriesUnsorted.value.find((e) => e.course.id === courseId)?.course;
+    if (course) {
+      options.push({
+        label: `${course.code} : ${getCourseTitle(course)}`,
+        value: course.id,
+      });
+    }
+  });
+
+  return options;
+});
 
 const selectedConversation = computed<ConversationEntry | null>(
   () =>
@@ -289,7 +376,32 @@ watch(
   { immediate: true },
 );
 
-watch(selectedMessages, () => {
+watch(
+  () => selectedConversation.value,
+  (conversation) => {
+    if (conversation) {
+      const courseId = Number(conversation.course.id.replace('db-', ''));
+      void instructorBackend.markAsRead(
+        authStore.user?.email,
+        courseId,
+        conversation.learnerUserId,
+      );
+      instructorBackend.joinConversationRoom(conversation.enrollId);
+    }
+  },
+  { immediate: true },
+);
+
+watch(selectedMessages, (messages) => {
+  const hasUnread = messages.some((m) => m.sender === 'learner' && m.status === 'sent');
+  if (hasUnread && selectedConversation.value) {
+    const courseId = Number(selectedConversation.value.course.id.replace('db-', ''));
+    void instructorBackend.markAsRead(
+      authStore.user?.email,
+      courseId,
+      selectedConversation.value.learnerUserId,
+    );
+  }
   void nextTick(scrollToLatestMessage);
 });
 
@@ -354,8 +466,10 @@ async function sendReply(): Promise<void> {
 
   const body = replyDraft.value.trim();
   replyDraft.value = '';
+  const courseId = Number(selectedConversation.value.course.id.replace('db-', ''));
   await instructorBackend.sendMessage(
     authStore.user?.email,
+    courseId,
     selectedConversation.value.learnerUserId,
     body,
   );

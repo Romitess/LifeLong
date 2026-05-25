@@ -2077,10 +2077,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, reactive, nextTick } from 'vue';
+import { ref, computed, watch, reactive, nextTick, onMounted, onUnmounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { api } from 'src/boot/axios';
+import { io } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 import {
   useCourseRegistrationStore,
   type CourseRegistration,
@@ -2152,7 +2155,7 @@ const DEFAULT_AVATAR_EXTRAS = {
   accessoryColor: 'violet',
 } satisfies Pick<CartoonAvatarConfig, 'eyeColor' | 'accessoryColor'>;
 
-type ChatMessageSender = 'learner' | 'system';
+type ChatMessageSender = 'learner' | 'system' | 'instructor';
 type ChatMessageStatus = 'sent' | 'read';
 
 interface ChatMessage {
@@ -2162,15 +2165,6 @@ interface ChatMessage {
   body: string;
   sentAt: Date;
   status: ChatMessageStatus;
-}
-
-interface StoredChatMessage {
-  id: string;
-  courseId: string;
-  sender: ChatMessageSender;
-  body: string;
-  sentAt: string;
-  status?: ChatMessageStatus;
 }
 
 interface MenuItem {
@@ -2202,8 +2196,6 @@ interface RadarPoint {
   x: number;
   y: number;
 }
-
-const CHAT_MESSAGES_STORAGE_KEY = 'lll-instructor-chat-messages';
 
 const { t, locale } = useI18n();
 const $q = useQuasar();
@@ -2245,8 +2237,9 @@ const isSavingProfile = ref(false);
 const benefitsCheckedAt = ref(new Date('2026-04-29T10:52:45+07:00'));
 const selectedChatCourseId = ref<string | null>(null);
 const chatDraft = ref('');
-const chatMessages = ref<ChatMessage[]>(readStoredChatMessages());
+const chatMessages = ref<ChatMessage[]>([]);
 const chatMessagesRef = ref<HTMLElement | null>(null);
+let socket: Socket | null = null;
 const savedEnrollmentDialogCourse = ref<CourseDetail | null>(null);
 const savedEnrollmentDialogOpenKey = ref(0);
 
@@ -2905,57 +2898,6 @@ function persistCartoonAvatar(config: CartoonAvatarConfig): void {
     return;
   }
   window.localStorage.setItem(CARTOON_AVATAR_STORAGE_KEY, JSON.stringify(config));
-}
-
-function readStoredChatMessages(): ChatMessage[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
-  const rawValue = window.localStorage.getItem(CHAT_MESSAGES_STORAGE_KEY);
-  if (!rawValue) {
-    return [];
-  }
-
-  try {
-    const storedMessages = JSON.parse(rawValue) as StoredChatMessage[];
-    if (!Array.isArray(storedMessages)) {
-      return [];
-    }
-
-    const normalizedMessages = storedMessages
-      .filter(
-        (message) =>
-          typeof message.id === 'string' &&
-          typeof message.courseId === 'string' &&
-          (message.sender === 'learner' || message.sender === 'system') &&
-          typeof message.body === 'string' &&
-          typeof message.sentAt === 'string' &&
-          (message.status === undefined || message.status === 'sent' || message.status === 'read'),
-      )
-      .map((message) => ({
-        ...message,
-        sentAt: new Date(message.sentAt),
-        status: message.status ?? 'sent',
-      }));
-
-    writeStoredChatMessages(normalizedMessages);
-    return normalizedMessages;
-  } catch {
-    return [];
-  }
-}
-
-function writeStoredChatMessages(messages: ChatMessage[]): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  const storedMessages: StoredChatMessage[] = messages.map((message) => ({
-    ...message,
-    sentAt: message.sentAt.toISOString(),
-  }));
-  window.localStorage.setItem(CHAT_MESSAGES_STORAGE_KEY, JSON.stringify(storedMessages));
 }
 
 function getAvatarOptionLabel(options: AvatarOption[], value: string): string {
@@ -3822,13 +3764,115 @@ watch(
   { immediate: true },
 );
 
+interface ApiChatMessage {
+  id: number;
+  typeSender: string | null;
+  message: string | null;
+  chatTime: string | null;
+  status: string | null;
+}
+
+async function fetchChatMessages(): Promise<void> {
+  const enrollId = selectedChatEntry.value?.registration?.enrollId;
+  if (!enrollId) {
+    chatMessages.value = [];
+    return;
+  }
+
+  try {
+    const { data } = await api.get<ApiChatMessage[]>(`/api/lltchat/enroll/${enrollId}`);
+    chatMessages.value = data.map((chat: ApiChatMessage) => ({
+      id: String(chat.id),
+      courseId: selectedChatEntry.value?.course.id || '',
+      sender:
+        chat.typeSender === 'T' ? 'instructor' : chat.typeSender === 'U' ? 'learner' : 'system',
+      body: chat.message || '',
+      sentAt: chat.chatTime ? new Date(chat.chatTime) : new Date(),
+      status: chat.status === 'R' ? 'read' : 'sent',
+    }));
+  } catch (error) {
+    console.error('Failed to fetch chat messages', error);
+  }
+}
+
+function connectChatSocket() {
+  if (socket) return;
+  const baseUrl =
+    (import.meta.env.VITE_API_URL as string) || (import.meta.env.VITE_BACKEND_URL as string) || '';
+  const origin = baseUrl.startsWith('http') ? new URL(baseUrl).origin : window.location.origin;
+
+  socket = io(`${origin}/chat`);
+
+  socket.on('connect', () => {
+    const enrollId = selectedChatEntry.value?.registration?.enrollId;
+    if (enrollId) {
+      socket?.emit('joinRoom', { enrollId });
+    }
+  });
+
+  socket.on(
+    'newMessage',
+    (msg: {
+      enrollId: number;
+      id: number;
+      sender: ChatMessageSender;
+      body: string;
+      sentAt: string;
+      status: ChatMessageStatus;
+    }) => {
+      const enrollId = selectedChatEntry.value?.registration?.enrollId;
+      if (enrollId && msg.enrollId === enrollId) {
+        const exists = chatMessages.value.some((m) => String(m.id) === String(msg.id));
+        if (!exists) {
+          chatMessages.value.push({
+            id: String(msg.id),
+            courseId: selectedChatEntry.value?.course.id || '',
+            sender: msg.sender,
+            body: msg.body,
+            sentAt: new Date(msg.sentAt),
+            status: msg.status === 'read' ? 'read' : 'sent',
+          });
+          void nextTick(scrollChatToLatestMessage);
+        }
+      }
+    },
+  );
+
+  socket.on('messagesRead', (data: { enrollId: number; senderType: 'learner' | 'instructor' }) => {
+    const enrollId = selectedChatEntry.value?.registration?.enrollId;
+    if (enrollId && data.enrollId === enrollId) {
+      chatMessages.value.forEach((m) => {
+        if (m.sender === data.senderType) {
+          m.status = 'read';
+        }
+      });
+    }
+  });
+}
+
+function disconnectChatSocket() {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+}
+
+function joinChatRoom(enrollId: number) {
+  if (socket) {
+    socket.emit('joinRoom', { enrollId });
+  }
+}
+
 watch(
   () => activeMenu.value,
   async (menuValue) => {
     if (menuValue !== 'chat') {
+      disconnectChatSocket();
       return;
     }
 
+    connectChatSocket();
+    void fetchChatMessages();
     await nextTick();
     scrollChatToLatestMessage();
   },
@@ -3839,8 +3883,33 @@ watch(selectedChatCourseId, async () => {
     return;
   }
 
+  void fetchChatMessages();
+  const enrollId = selectedChatEntry.value?.registration?.enrollId;
+  if (enrollId) {
+    joinChatRoom(enrollId);
+  }
   await nextTick();
   scrollChatToLatestMessage();
+});
+
+onMounted(() => {
+  // Sync registrations to make sure we have their enrollIds
+  if (myRegistrations.value && myRegistrations.value.length > 0) {
+    myRegistrations.value.forEach((reg) => {
+      if (reg.courseCode && reg.courseId) {
+        void courseRegistrationStore.syncEnrollmentFromApi(reg.courseCode, reg.courseId);
+      }
+    });
+  }
+
+  if (activeMenu.value === 'chat') {
+    connectChatSocket();
+    void fetchChatMessages();
+  }
+});
+
+onUnmounted(() => {
+  disconnectChatSocket();
 });
 
 watch(
@@ -4169,26 +4238,44 @@ async function sendChatMessage(): Promise<void> {
     return;
   }
 
-  const now = new Date();
-  const selectedCourseId = selectedChatEntry.value.course.id;
-  const messageId = `${selectedCourseId}-${now.getTime()}`;
-  const nextMessages: ChatMessage[] = [
-    ...chatMessages.value,
-    {
-      id: messageId,
-      courseId: selectedCourseId,
-      sender: 'learner',
-      body: chatDraft.value.trim(),
-      sentAt: now,
-      status: 'sent',
-    },
-  ];
+  const enrollId = selectedChatEntry.value.registration.enrollId;
+  if (!enrollId) {
+    $q.notify({
+      type: 'negative',
+      message: 'ไม่พบรหัสการลงทะเบียนเรียน กรุณาลองใหม่อีกครั้ง',
+      position: 'top',
+    });
+    return;
+  }
 
-  chatMessages.value = nextMessages;
-  writeStoredChatMessages(nextMessages);
+  const draftText = chatDraft.value.trim();
   chatDraft.value = '';
-  await nextTick();
-  scrollChatToLatestMessage();
+
+  try {
+    await api.post('/api/lltchat', {
+      enrollId,
+      sender: authStore.user?.id ? Number(authStore.user.id) : null,
+      userId: authStore.user?.username || null,
+      message: draftText,
+      chatTime: new Date().toISOString(),
+      typeSender: 'U',
+      status: 'S',
+      createUser: authStore.user?.username || 'system',
+      updateUser: authStore.user?.username || 'system',
+      updateProgram: 'student_chat',
+    });
+
+    await fetchChatMessages();
+    await nextTick();
+    scrollChatToLatestMessage();
+  } catch (error) {
+    console.error('Failed to send chat message', error);
+    $q.notify({
+      type: 'negative',
+      message: 'ส่งข้อความล้มเหลว กรุณาลองใหม่อีกครั้ง',
+      position: 'top',
+    });
+  }
 }
 
 function savePersonalInfo(): void {
@@ -5337,6 +5424,7 @@ function saveCroppedAvatar(): void {
     }
   }
 
+  &--instructor,
   &--system {
     justify-content: flex-start;
 

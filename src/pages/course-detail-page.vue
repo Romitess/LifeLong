@@ -430,12 +430,7 @@
                 </q-card-section>
               </q-card>
               <!-- Privilege -->
-              <q-card
-                v-if="course.privilege && course.privilege.trim()"
-                flat
-                bordered
-                class="detail-card q-mb-lg"
-              >
+              <q-card flat bordered class="detail-card q-mb-lg">
                 <q-card-section>
                   <div class="detail-card__header">
                     <q-icon name="school" size="24px" color="primary" />
@@ -448,7 +443,22 @@
                     </h2>
                   </div>
                   <div class="q-mt-md">
-                    <div class="text-body2 text-grey-9">{{ course.privilege }}</div>
+                    <div
+                      v-if="course?.privilege && course.privilege.trim()"
+                      class="text-body2 text-grey-9"
+                    >
+                      {{ course.privilege }}
+                    </div>
+                    <!-- Placeholder when no privilege yet -->
+                    <div v-else class="q-pa-md objectives-pending">
+                      <span class="text-body2 text-grey-6">
+                        {{
+                          locale === 'th'
+                            ? 'สิทธิประโยชน์จะประกาศให้ทราบในภายหลัง'
+                            : 'Benefits of completing this course will be announced soon'
+                        }}
+                      </span>
+                    </div>
                   </div>
                 </q-card-section>
               </q-card>
@@ -1853,15 +1863,6 @@ watch(
       padding-top: 12px;
     }
   }
-}
-
-.objectives-pending {
-  display: flex;
-  align-items: center;
-  border: 1.5px dashed #bdbdbd;
-  border-radius: 8px;
-  background: #fafafa;
-  color: #9e9e9e;
 }
 
 // ── Applicant Requirements ───────────────────────────────────

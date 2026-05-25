@@ -1,5 +1,7 @@
 import { computed, ref } from 'vue';
 import { api } from 'src/boot/axios';
+import { io } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 
 interface WrappedListResponse<T> {
   value?: T[];
@@ -70,6 +72,7 @@ export interface InstructorConversation {
   learnerEmail: string | null;
   latestMessagePreview: string;
   messageCount: number;
+  enrollId: number;
   messages: InstructorConversationMessage[];
 }
 
@@ -78,6 +81,8 @@ const learnersByCourseId = ref<Record<string, InstructorLearner[]>>({});
 const gradesByCourseId = ref<Record<string, InstructorGrade[]>>({});
 const conversations = ref<InstructorConversation[]>([]);
 const loading = ref(false);
+
+let socket: Socket | null = null;
 
 function getBackendCourseId(courseId: string | number): number | null {
   if (typeof courseId === 'number') return courseId;
@@ -183,15 +188,118 @@ export function useInstructorBackend() {
       InstructorConversation[] | WrappedListResponse<InstructorConversation>
     >(`/api/instructor/conversations?email=${encodeURIComponent(email.trim())}`);
     conversations.value = extractArrayPayload(data);
+
+    // If socket is connected, auto join all conversation rooms
+    if (socket) {
+      conversations.value.forEach((conv) => {
+        socket?.emit('joinRoom', { enrollId: conv.enrollId });
+      });
+    }
   }
 
-  async function sendMessage(email: string | undefined, learnerUserId: number, body: string) {
+  async function sendMessage(
+    email: string | undefined,
+    courseId: number,
+    learnerUserId: number,
+    body: string,
+  ): Promise<void> {
     if (!email?.trim() || !body.trim()) return;
     await api.post(
-      `/api/instructor/conversations/${learnerUserId}/messages?email=${encodeURIComponent(email.trim())}`,
+      `/api/instructor/conversations/${courseId}/${learnerUserId}/messages?email=${encodeURIComponent(email.trim())}`,
       { body: body.trim() },
     );
-    await fetchConversations(email);
+  }
+
+  async function markAsRead(
+    email: string | undefined,
+    courseId: number,
+    learnerUserId: number,
+  ): Promise<void> {
+    if (!email?.trim()) return;
+    try {
+      await api.post(
+        `/api/instructor/conversations/${courseId}/${learnerUserId}/read?email=${encodeURIComponent(email.trim())}`,
+      );
+    } catch (error) {
+      console.warn('Failed to mark messages as read', error);
+    }
+  }
+
+  function connectSocket(email?: string): void {
+    if (socket || !email) return;
+
+    const baseUrl =
+      (import.meta.env.VITE_API_URL as string) ||
+      (import.meta.env.VITE_BACKEND_URL as string) ||
+      '';
+    const origin = baseUrl.startsWith('http') ? new URL(baseUrl).origin : window.location.origin;
+
+    socket = io(`${origin}/chat`);
+
+    socket.on('connect', () => {
+      // Join rooms for all current conversations
+      conversations.value.forEach((conv) => {
+        socket?.emit('joinRoom', { enrollId: conv.enrollId });
+      });
+    });
+
+    socket.on(
+      'newMessage',
+      (msg: {
+        enrollId: number;
+        id: number;
+        sender: 'learner' | 'instructor';
+        body: string;
+        sentAt: string;
+        status: 'sent' | 'read';
+      }) => {
+        const conv = conversations.value.find((c) => c.enrollId === msg.enrollId);
+        if (conv) {
+          const exists = conv.messages.some((m) => String(m.id) === String(msg.id));
+          if (!exists) {
+            conv.messages.push({
+              id: String(msg.id),
+              sender: msg.sender,
+              body: msg.body,
+              sentAt: msg.sentAt,
+              status: msg.status,
+            });
+            conv.latestMessagePreview = msg.body;
+            conv.messageCount = conv.messages.length;
+          }
+        } else {
+          // Conversation entry does not exist in local state (first message), refetch
+          void fetchConversations(email);
+        }
+      },
+    );
+
+    socket.on(
+      'messagesRead',
+      (data: { enrollId: number; senderType: 'learner' | 'instructor' }) => {
+        const conv = conversations.value.find((c) => c.enrollId === data.enrollId);
+        if (conv) {
+          conv.messages.forEach((m) => {
+            if (m.sender === data.senderType) {
+              m.status = 'read';
+            }
+          });
+        }
+      },
+    );
+  }
+
+  function disconnectSocket(): void {
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
+  }
+
+  function joinConversationRoom(enrollId: number): void {
+    if (socket) {
+      socket.emit('joinRoom', { enrollId });
+    }
   }
 
   return {
@@ -206,5 +314,9 @@ export function useInstructorBackend() {
     fetchGrades,
     fetchConversations,
     sendMessage,
+    markAsRead,
+    connectSocket,
+    disconnectSocket,
+    joinConversationRoom,
   };
 }
