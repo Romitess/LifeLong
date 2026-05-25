@@ -63,6 +63,7 @@
                 {{ $t('finance.sourceOfFunds.name') }} <span class="text-negative">*</span>
               </label>
               <q-input
+                ref="nameInputRef"
                 v-model.trim="form.name"
                 outlined
                 dense
@@ -323,6 +324,7 @@ const $q = useQuasar();
 const { t } = useI18n();
 
 const codeInputRef = ref<InstanceType<typeof QInput> | null>(null);
+const nameInputRef = ref<InstanceType<typeof QInput> | null>(null);
 
 const confirmDeleteOpen = ref(false);
 const pendingDeleteRow = ref<FundChartRow | null>(null);
@@ -540,6 +542,7 @@ function resetForm() {
   };
   void nextTick(() => {
     codeInputRef.value?.resetValidation();
+    nameInputRef.value?.resetValidation();
   });
 }
 
@@ -609,6 +612,7 @@ function onEdit(row: FundChartRow) {
   };
   void nextTick(() => {
     codeInputRef.value?.resetValidation();
+    nameInputRef.value?.resetValidation();
   });
 }
 
