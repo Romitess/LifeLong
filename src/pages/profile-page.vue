@@ -1,6 +1,6 @@
-<template>
+﻿<template>
   <q-page class="profile-page">
-    <!-- ─── PROFILE HERO ─── -->
+    <!-- โ”€โ”€โ”€ PROFILE HERO โ”€โ”€โ”€ -->
     <section class="profile-hero">
       <div class="profile-hero__particles" />
       <div class="profile-hero__overlay" />
@@ -86,7 +86,7 @@
       </div>
     </section>
 
-    <!-- ─── CONTENT ─── -->
+    <!-- โ”€โ”€โ”€ CONTENT โ”€โ”€โ”€ -->
     <section ref="profileContentRef" class="profile-content q-py-xl">
       <div class="section-container">
         <div class="row q-col-gutter-xl">
@@ -203,16 +203,16 @@
               <div v-if="isTeachingRole" class="instructor-home-panel">
                 <div class="instructor-home-header">
                   <div>
-                    <div class="text-h5 text-weight-bolder text-primary">หน้าหลักผู้สอน</div>
+                    <div class="text-h5 text-weight-bolder text-primary">Instructor Overview</div>
                     <div class="text-caption text-grey-6 q-mt-xs">
-                      ภาพรวมรายวิชา งานที่ต้องดำเนินการ และสถานะ Certificate
+                      Course summary, teaching tasks, and certificate progress
                     </div>
                   </div>
                   <q-btn
                     unelevated
                     color="primary"
                     icon="menu_book"
-                    label="ดูรายวิชาที่รับผิดชอบ"
+                    label="เธ”เธนเธฃเธฒเธขเธงเธดเธเธฒเธ—เธตเนเธฃเธฑเธเธเธดเธ”เธเธญเธ"
                     no-caps
                     @click="goToInstructorCourses"
                   />
@@ -238,8 +238,10 @@
                   <q-card flat bordered class="instructor-work-card">
                     <div class="instructor-work-card__head">
                       <div>
-                        <h2>งานที่ต้องทำต่อ</h2>
-                        <span>รายการที่ควรจัดการจากรายวิชาที่คุณรับผิดชอบ</span>
+                        <h2>เธเธฒเธเธ—เธตเนเธ•เนเธญเธเธ—เธณเธ•เนเธญ</h2>
+                        <span
+                          >เธฃเธฒเธขเธเธฒเธฃเธ—เธตเนเธเธงเธฃเธเธฑเธ”เธเธฒเธฃเธเธฒเธเธฃเธฒเธขเธงเธดเธเธฒเธ—เธตเนเธเธธเธ“เธฃเธฑเธเธเธดเธ”เธเธญเธ</span
+                        >
                       </div>
                       <q-icon name="task_alt" size="30px" color="primary" />
                     </div>
@@ -252,10 +254,14 @@
                       >
                         <q-icon name="fact_check" />
                         <div>
-                          <strong>ตรวจสอบรายชื่อผู้เรียน</strong>
+                          <strong
+                            >เธ•เธฃเธงเธเธชเธญเธเธฃเธฒเธขเธเธทเนเธญเธเธนเนเน€เธฃเธตเธขเธ</strong
+                          >
                           <span
-                            >{{ totalInstructorLearners.toLocaleString('th-TH') }} คนในระบบ
-                            mockup</span
+                            >{{
+                              totalInstructorLearners.toLocaleString('th-TH')
+                            }}
+                            เธเธเนเธเธฃเธฐเธเธ mockup</span
                           >
                         </div>
                       </button>
@@ -266,12 +272,12 @@
                       >
                         <q-icon name="grading" />
                         <div>
-                          <strong>บันทึกผลการเรียน</strong>
+                          <strong>เธเธฑเธเธ—เธถเธเธเธฅเธเธฒเธฃเน€เธฃเธตเธขเธ</strong>
                           <span
                             >{{
                               pendingResultCourses.toLocaleString('th-TH')
                             }}
-                            รายวิชายังต้องตรวจผล</span
+                            เธฃเธฒเธขเธงเธดเธเธฒเธขเธฑเธเธ•เนเธญเธเธ•เธฃเธงเธเธเธฅ</span
                           >
                         </div>
                       </button>
@@ -282,12 +288,12 @@
                       >
                         <q-icon name="workspace_premium" />
                         <div>
-                          <strong>สร้าง Certificate</strong>
+                          <strong>เธชเธฃเนเธฒเธ Certificate</strong>
                           <span
                             >{{
                               certificateReadyLearners.toLocaleString('th-TH')
                             }}
-                            คนผ่านเกณฑ์พร้อมออกเอกสาร</span
+                            เธเธเธเนเธฒเธเน€เธเธ“เธ‘เนเธเธฃเนเธญเธกเธญเธญเธเน€เธญเธเธชเธฒเธฃ</span
                           >
                         </div>
                       </button>
@@ -297,8 +303,11 @@
                   <q-card flat bordered class="instructor-work-card">
                     <div class="instructor-work-card__head">
                       <div>
-                        <h2>สถานะ Certificate</h2>
-                        <span>ประเมินจากคะแนน mockup สำหรับเตรียม flow ก่อนต่อ backend</span>
+                        <h2>เธชเธ–เธฒเธเธฐ Certificate</h2>
+                        <span
+                          >เธเธฃเธฐเน€เธกเธดเธเธเธฒเธเธเธฐเนเธเธ mockup
+                          เธชเธณเธซเธฃเธฑเธเน€เธ•เธฃเธตเธขเธก flow เธเนเธญเธเธ•เนเธญ backend</span
+                        >
                       </div>
                       <q-icon name="workspace_premium" size="30px" color="amber-8" />
                     </div>
@@ -306,15 +315,15 @@
                     <div class="certificate-status-row">
                       <div>
                         <strong>{{ certificateReadyLearners.toLocaleString('th-TH') }}</strong>
-                        <span>พร้อมสร้าง</span>
+                        <span>เธเธฃเนเธญเธกเธชเธฃเนเธฒเธ</span>
                       </div>
                       <div>
                         <strong>{{ generatedCertificateCount.toLocaleString('th-TH') }}</strong>
-                        <span>สร้างแล้ว</span>
+                        <span>เธชเธฃเนเธฒเธเนเธฅเนเธง</span>
                       </div>
                       <div>
                         <strong>{{ pendingCertificateCount.toLocaleString('th-TH') }}</strong>
-                        <span>ยังไม่ได้สร้าง</span>
+                        <span>เธขเธฑเธเนเธกเนเนเธ”เนเธชเธฃเนเธฒเธ</span>
                       </div>
                     </div>
                   </q-card>
@@ -323,14 +332,19 @@
                 <q-card flat bordered class="instructor-course-work-card">
                   <div class="instructor-course-work-card__head">
                     <div>
-                      <h2>รายวิชาที่รับผิดชอบ</h2>
-                      <span>{{ instructorCourses.length.toLocaleString('th-TH') }} รายวิชา</span>
+                      <h2>เธฃเธฒเธขเธงเธดเธเธฒเธ—เธตเนเธฃเธฑเธเธเธดเธ”เธเธญเธ</h2>
+                      <span
+                        >{{
+                          instructorCourses.length.toLocaleString('th-TH')
+                        }}
+                        เธฃเธฒเธขเธงเธดเธเธฒ</span
+                      >
                     </div>
                     <q-btn
                       flat
                       color="primary"
                       icon-right="arrow_forward"
-                      label="ดูทั้งหมด"
+                      label="เธ”เธนเธ—เธฑเนเธเธซเธกเธ”"
                       no-caps
                       @click="goToInstructorCourses"
                     />
@@ -350,7 +364,7 @@
                           {{ course.enrolledCount.toLocaleString('th-TH') }}/{{
                             course.maxSeats.toLocaleString('th-TH')
                           }}
-                          ผู้เรียน
+                          เธเธนเนเน€เธฃเธตเธขเธ
                         </div>
                       </div>
                       <div class="instructor-course-item__actions">
@@ -359,7 +373,7 @@
                           outline
                           color="primary"
                           icon="edit"
-                          label="จัดการ"
+                          label="เธเธฑเธ”เธเธฒเธฃ"
                           no-caps
                           @click="goToInstructorCourseWorkspace(course.id)"
                         />
@@ -378,10 +392,12 @@
 
                   <div v-else class="instructor-empty-state">
                     <q-icon name="school" size="44px" color="primary" />
-                    <strong>ยังไม่มีรายวิชาที่รับผิดชอบ</strong>
+                    <strong
+                      >เธขเธฑเธเนเธกเนเธกเธตเธฃเธฒเธขเธงเธดเธเธฒเธ—เธตเนเธฃเธฑเธเธเธดเธ”เธเธญเธ</strong
+                    >
                     <span
-                      >เข้าสู่ระบบด้วยบัญชีผู้สอนที่มีรายวิชา
-                      หรือให้ผู้ดูแลระบบสร้างรายวิชาให้</span
+                      >เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธเธ”เนเธงเธขเธเธฑเธเธเธตเธเธนเนเธชเธญเธเธ—เธตเนเธกเธตเธฃเธฒเธขเธงเธดเธเธฒ
+                      เธซเธฃเธทเธญเนเธซเนเธเธนเนเธ”เธนเนเธฅเธฃเธฐเธเธเธชเธฃเนเธฒเธเธฃเธฒเธขเธงเธดเธเธฒเนเธซเน</span
                     >
                   </div>
                 </q-card>
@@ -821,24 +837,25 @@
                   <div class="avatar-preview shadow-1">
                     <div class="avatar-preview__header">
                       <div>
-                        <p class="avatar-preview__eyebrow">Tokyo Mood</p>
-                        <h3 class="avatar-preview__title">Live Character Preview</h3>
+                        <p class="avatar-preview__eyebrow">LLL Character Lab</p>
+                        <h3 class="avatar-preview__title">Live Avatar Preview</h3>
                       </div>
-                      <div class="avatar-preview__stamp">LLL</div>
+                      <div class="avatar-preview__stamp">PROFILE</div>
                     </div>
 
                     <div class="avatar-preview__stage">
                       <img
-                        :src="animeAvatarPreviewUrl"
-                        alt="Anime avatar preview"
+                        :src="avatarPreviewUrl"
+                        alt="Avatar preview"
                         class="avatar-preview__image"
                       />
                     </div>
 
                     <div class="avatar-preview__footer">
-                      <span class="avatar-preview__chip">{{ selectedHairLabel }}</span>
-                      <span class="avatar-preview__chip">{{ selectedFaceLabel }}</span>
-                      <span class="avatar-preview__chip">{{ selectedOutfitLabel }}</span>
+                      <span class="avatar-preview__chip">{{ selectedSkinLabel }}</span>
+                      <span class="avatar-preview__chip">{{ selectedEyesLabel }}</span>
+                      <span class="avatar-preview__chip">{{ selectedTopLabel }}</span>
+                      <span class="avatar-preview__chip">{{ selectedAccessoryLabel }}</span>
                     </div>
                   </div>
 
@@ -847,135 +864,300 @@
                       {{ $t('profile.personal.editAvatar') }}
                     </h3>
 
-                    <div class="editor-grid q-mt-md">
-                      <q-select
-                        v-model="cartoonAvatar.body"
-                        :options="animeBodyOptions"
-                        :label="$t('profile.avatar.body')"
-                        outlined
+                    <div class="avatar-editor__tabs q-mt-md">
+                      <q-tabs
+                        v-model="activeAvatarTab"
                         dense
-                        emit-value
-                        map-options
-                        options-dense
-                        dropdown-icon="expand_more"
-                        popup-content-class="avatar-select-menu"
-                        popup-content-style="max-height: 280px"
-                        class="avatar-select"
-                      />
-                      <q-select
-                        v-model="cartoonAvatar.face"
-                        :options="animeFaceOptions"
-                        :label="$t('profile.avatar.face')"
-                        outlined
-                        dense
-                        emit-value
-                        map-options
-                        options-dense
-                        dropdown-icon="expand_more"
-                        popup-content-class="avatar-select-menu"
-                        popup-content-style="max-height: 280px"
-                        class="avatar-select"
-                      />
-                      <q-select
-                        v-model="cartoonAvatar.hair"
-                        :options="animeHairOptions"
-                        :label="$t('profile.avatar.hair')"
-                        outlined
-                        dense
-                        emit-value
-                        map-options
-                        options-dense
-                        dropdown-icon="expand_more"
-                        popup-content-class="avatar-select-menu"
-                        popup-content-style="max-height: 280px"
-                        class="avatar-select"
-                      />
-                      <q-select
-                        v-model="cartoonAvatar.hairColor"
-                        :options="animeColorOptions"
-                        :label="$t('profile.avatar.hairColor')"
-                        outlined
-                        dense
-                        emit-value
-                        map-options
-                        options-dense
-                        dropdown-icon="expand_more"
-                        popup-content-class="avatar-select-menu"
-                        popup-content-style="max-height: 280px"
-                        class="avatar-select"
-                      />
-                      <q-select
-                        v-model="cartoonAvatar.shirt"
-                        :options="animeShirtOptions"
-                        :label="$t('profile.avatar.shirt')"
-                        outlined
-                        dense
-                        emit-value
-                        map-options
-                        options-dense
-                        dropdown-icon="expand_more"
-                        popup-content-class="avatar-select-menu"
-                        popup-content-style="max-height: 280px"
-                        class="avatar-select"
-                      />
-                      <q-select
-                        v-model="cartoonAvatar.shirtColor"
-                        :options="animeColorOptions"
-                        :label="$t('profile.avatar.shirtColor')"
-                        outlined
-                        dense
-                        emit-value
-                        map-options
-                        options-dense
-                        dropdown-icon="expand_more"
-                        popup-content-class="avatar-select-menu"
-                        popup-content-style="max-height: 280px"
-                        class="avatar-select"
-                      />
-                      <q-select
-                        v-model="cartoonAvatar.pants"
-                        :options="animePantsOptions"
-                        :label="$t('profile.avatar.pants')"
-                        outlined
-                        dense
-                        emit-value
-                        map-options
-                        options-dense
-                        dropdown-icon="expand_more"
-                        popup-content-class="avatar-select-menu"
-                        popup-content-style="max-height: 280px"
-                        class="avatar-select"
-                      />
-                      <q-select
-                        v-model="cartoonAvatar.pantsColor"
-                        :options="animeColorOptions"
-                        :label="$t('profile.avatar.pantsColor')"
-                        outlined
-                        dense
-                        emit-value
-                        map-options
-                        options-dense
-                        dropdown-icon="expand_more"
-                        popup-content-class="avatar-select-menu"
-                        popup-content-style="max-height: 280px"
-                        class="avatar-select"
-                      />
-                      <q-select
-                        v-model="cartoonAvatar.shoes"
-                        :options="animeShoesOptions"
-                        :label="$t('profile.avatar.shoes')"
-                        outlined
-                        dense
-                        emit-value
-                        map-options
-                        options-dense
-                        dropdown-icon="expand_more"
-                        popup-content-class="avatar-select-menu"
-                        popup-content-style="max-height: 280px"
-                        class="avatar-select full"
-                      />
-                    </div>
+                        inline-label
+                        indicator-color="primary"
+                        active-color="primary"
+                        class="avatar-editor__tab-bar"
+                      >
+                        <q-tab name="skin" icon="face_3" />
+                        <q-tab name="face" icon="visibility" />
+                        <q-tab name="hair" icon="content_cut" />
+                        <q-tab name="accessory" icon="styler" />
+                        <q-tab name="top" icon="checkroom" />
+                        <q-tab name="background" icon="crop_landscape" />
+                      </q-tabs>
 
+                      <q-tab-panels
+                        v-model="activeAvatarTab"
+                        animated
+                        class="avatar-editor__panels bg-transparent"
+                      >
+                        <q-tab-panel name="skin" class="avatar-editor__panel">
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>{{ $t('profile.avatar.body') }}</h4>
+                              <span>{{ selectedSkinLabel }}</span>
+                            </div>
+                            <div class="avatar-swatch-grid">
+                              <button
+                                v-for="option in skinToneOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-swatch"
+                                :class="{
+                                  'avatar-swatch--active': cartoonAvatar.body === option.value,
+                                }"
+                                :style="{ '--avatar-swatch-color': option.swatch || '#e5e7eb' }"
+                                :aria-label="option.label"
+                                @click="cartoonAvatar.body = option.value"
+                              />
+                            </div>
+                          </section>
+
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>{{ $t('profile.avatar.pants') }}</h4>
+                              <span>{{ selectedBodyLabel }}</span>
+                            </div>
+                            <div class="avatar-tile-grid avatar-tile-grid--quad">
+                              <button
+                                v-for="option in bodyStyleOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-tile avatar-tile--body"
+                                :class="{
+                                  'avatar-tile--active': cartoonAvatar.pants === option.value,
+                                }"
+                                @click="cartoonAvatar.pants = option.value"
+                              >
+                                <img
+                                  :src="createAvatarOptionPreview({ pants: option.value })"
+                                  :alt="option.label"
+                                  class="avatar-tile__preview"
+                                />
+                                <strong>{{ option.label }}</strong>
+                              </button>
+                            </div>
+                          </section>
+                        </q-tab-panel>
+
+                        <q-tab-panel name="face" class="avatar-editor__panel">
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>Eye color</h4>
+                              <span>{{ selectedEyeColorLabel }}</span>
+                            </div>
+                            <div class="avatar-swatch-grid">
+                              <button
+                                v-for="option in eyeColorOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-swatch"
+                                :class="{
+                                  'avatar-swatch--active': cartoonAvatar.eyeColor === option.value,
+                                }"
+                                :style="{ '--avatar-swatch-color': option.swatch || '#e5e7eb' }"
+                                :aria-label="option.label"
+                                @click="cartoonAvatar.eyeColor = option.value"
+                              />
+                            </div>
+                          </section>
+
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>Expression</h4>
+                              <span>{{ selectedEyesLabel }}</span>
+                            </div>
+                            <div class="avatar-tile-grid avatar-tile-grid--quad">
+                              <button
+                                v-for="option in eyeOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-tile"
+                                :class="{
+                                  'avatar-tile--active': cartoonAvatar.face === option.value,
+                                }"
+                                @click="cartoonAvatar.face = option.value"
+                              >
+                                <img
+                                  :src="createAvatarOptionPreview({ face: option.value })"
+                                  :alt="option.label"
+                                  class="avatar-tile__preview avatar-tile__preview--face"
+                                />
+                                <strong>{{ option.label }}</strong>
+                              </button>
+                            </div>
+                          </section>
+                        </q-tab-panel>
+
+                        <q-tab-panel name="hair" class="avatar-editor__panel">
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>{{ $t('profile.avatar.hair') }}</h4>
+                              <span>{{ selectedHairLabel }}</span>
+                            </div>
+                            <div class="avatar-tile-grid avatar-tile-grid--quad">
+                              <button
+                                v-for="option in hairStyleOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-tile"
+                                :class="{
+                                  'avatar-tile--active': cartoonAvatar.hair === option.value,
+                                }"
+                                @click="cartoonAvatar.hair = option.value"
+                              >
+                                <img
+                                  :src="createAvatarOptionPreview({ hair: option.value })"
+                                  :alt="option.label"
+                                  class="avatar-tile__preview avatar-tile__preview--face"
+                                />
+                                <strong>{{ option.label }}</strong>
+                              </button>
+                            </div>
+                          </section>
+
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>{{ $t('profile.avatar.hairColor') }}</h4>
+                              <span>{{ selectedHairColorLabel }}</span>
+                            </div>
+                            <div class="avatar-swatch-grid">
+                              <button
+                                v-for="option in hairColorOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-swatch"
+                                :class="{
+                                  'avatar-swatch--active': cartoonAvatar.hairColor === option.value,
+                                }"
+                                :style="{ '--avatar-swatch-color': option.swatch || '#e5e7eb' }"
+                                :aria-label="option.label"
+                                @click="cartoonAvatar.hairColor = option.value"
+                              />
+                            </div>
+                          </section>
+                        </q-tab-panel>
+
+                        <q-tab-panel name="accessory" class="avatar-editor__panel">
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>Accessory color</h4>
+                              <span>{{ selectedAccessoryColorLabel }}</span>
+                            </div>
+                            <div class="avatar-swatch-grid">
+                              <button
+                                v-for="option in accessoryColorOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-swatch"
+                                :class="{
+                                  'avatar-swatch--active':
+                                    cartoonAvatar.accessoryColor === option.value,
+                                }"
+                                :style="{ '--avatar-swatch-color': option.swatch || '#e5e7eb' }"
+                                :aria-label="option.label"
+                                @click="cartoonAvatar.accessoryColor = option.value"
+                              />
+                            </div>
+                          </section>
+
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>{{ $t('profile.avatar.shoes') }}</h4>
+                              <span>{{ selectedAccessoryLabel }}</span>
+                            </div>
+                            <div class="avatar-tile-grid avatar-tile-grid--quad">
+                              <button
+                                v-for="option in accessoryOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-tile"
+                                :class="{
+                                  'avatar-tile--active': cartoonAvatar.shoes === option.value,
+                                }"
+                                @click="cartoonAvatar.shoes = option.value"
+                              >
+                                <img
+                                  :src="createAvatarOptionPreview({ shoes: option.value })"
+                                  :alt="option.label"
+                                  class="avatar-tile__preview avatar-tile__preview--face"
+                                />
+                                <strong>{{ option.label }}</strong>
+                              </button>
+                            </div>
+                          </section>
+                        </q-tab-panel>
+
+                        <q-tab-panel name="top" class="avatar-editor__panel">
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>{{ $t('profile.avatar.shirt') }}</h4>
+                              <span>{{ selectedTopLabel }}</span>
+                            </div>
+                            <div class="avatar-tile-grid avatar-tile-grid--quad">
+                              <button
+                                v-for="option in topStyleOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-tile avatar-tile--body"
+                                :class="{
+                                  'avatar-tile--active': cartoonAvatar.shirt === option.value,
+                                }"
+                                @click="cartoonAvatar.shirt = option.value"
+                              >
+                                <img
+                                  :src="createAvatarOptionPreview({ shirt: option.value })"
+                                  :alt="option.label"
+                                  class="avatar-tile__preview"
+                                />
+                                <strong>{{ option.label }}</strong>
+                              </button>
+                            </div>
+                          </section>
+
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>{{ $t('profile.avatar.shirtColor') }}</h4>
+                              <span>{{ selectedTopColorLabel }}</span>
+                            </div>
+                            <div class="avatar-swatch-grid">
+                              <button
+                                v-for="option in topColorOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-swatch"
+                                :class="{
+                                  'avatar-swatch--active':
+                                    cartoonAvatar.shirtColor === option.value,
+                                }"
+                                :style="{ '--avatar-swatch-color': option.swatch || '#e5e7eb' }"
+                                :aria-label="option.label"
+                                @click="cartoonAvatar.shirtColor = option.value"
+                              />
+                            </div>
+                          </section>
+                        </q-tab-panel>
+
+                        <q-tab-panel name="background" class="avatar-editor__panel">
+                          <section class="avatar-control-card">
+                            <div class="avatar-control-card__header">
+                              <h4>{{ $t('profile.avatar.pantsColor') }}</h4>
+                              <span>{{ selectedBackdropLabel }}</span>
+                            </div>
+                            <div class="avatar-swatch-grid">
+                              <button
+                                v-for="option in backdropOptions"
+                                :key="option.value"
+                                type="button"
+                                class="avatar-swatch avatar-swatch--large"
+                                :class="{
+                                  'avatar-swatch--active':
+                                    cartoonAvatar.pantsColor === option.value,
+                                }"
+                                :style="{ '--avatar-swatch-color': option.swatch || '#e5e7eb' }"
+                                :aria-label="option.label"
+                                @click="cartoonAvatar.pantsColor = option.value"
+                              />
+                            </div>
+                          </section>
+                        </q-tab-panel>
+                      </q-tab-panels>
+                    </div>
                     <div class="avatar-editor__hint">
                       {{ $t('profile.avatar.hint') }}
                     </div>
@@ -1020,7 +1202,8 @@
                         </div>
                       </div>
                       <div class="skill-radar-card__meta-copy">
-                        สรุปคะแนนจากทักษะย่อย {{ allSkillMetrics.length }} ด้าน
+                        เธชเธฃเธธเธเธเธฐเนเธเธเธเธฒเธเธ—เธฑเธเธฉเธฐเธขเนเธญเธข
+                        {{ allSkillMetrics.length }} เธ”เนเธฒเธ
                       </div>
                     </div>
 
@@ -1118,7 +1301,9 @@
                       </div>
 
                       <div class="skill-radar-legend">
-                        <div class="skill-radar-legend__title">รายการทักษะในกราฟ</div>
+                        <div class="skill-radar-legend__title">
+                          เธฃเธฒเธขเธเธฒเธฃเธ—เธฑเธเธฉเธฐเนเธเธเธฃเธฒเธ
+                        </div>
                         <div class="skill-radar-legend__items">
                           <div
                             v-for="axis in radarAxisItems"
@@ -1134,7 +1319,7 @@
                             <div class="skill-radar-legend__copy">
                               <strong>{{ axis.shortLabel }}</strong>
                               <span
-                                >{{ axis.categoryShortTitle }} •
+                                >{{ axis.categoryShortTitle }} โ€ข
                                 {{ formatSkillScore(axis.score) }}/5</span
                               >
                             </div>
@@ -1292,7 +1477,11 @@
                         <BaseButton
                           color="primary"
                           icon="download"
-                          :label="locale === 'th' ? 'ดาวน์โหลดใบเสร็จ' : 'Download Receipt'"
+                          :label="
+                            locale === 'th'
+                              ? 'เธ”เธฒเธงเธเนเนเธซเธฅเธ”เนเธเน€เธชเธฃเนเธ'
+                              : 'Download Receipt'
+                          "
                           no-caps
                           hover-lift
                           class="payment-card__action"
@@ -1612,7 +1801,7 @@
       </div>
     </section>
 
-    <!-- ─── CONFIRM UNREGISTER DIALOG ─── -->
+    <!-- โ”€โ”€โ”€ CONFIRM UNREGISTER DIALOG โ”€โ”€โ”€ -->
     <q-dialog v-model="showUnregisterDialog" transition-show="scale" transition-hide="scale">
       <q-card class="modern-card unregister-dialog-card">
         <q-card-section class="q-pa-xl text-center">
@@ -1662,7 +1851,7 @@
       </q-card>
     </q-dialog>
 
-    <!-- ─── AVATAR CROP DIALOG ─── -->
+    <!-- โ”€โ”€โ”€ AVATAR CROP DIALOG โ”€โ”€โ”€ -->
     <q-dialog
       v-model="showSaveConfirmDialog"
       persistent
@@ -1768,7 +1957,7 @@
       </q-card>
     </q-dialog>
 
-    <!-- ─── STUDENT CARD DIALOG ─── -->
+    <!-- โ”€โ”€โ”€ STUDENT CARD DIALOG โ”€โ”€โ”€ -->
     <q-dialog v-model="showStudentCardDialog" transition-show="scale" transition-hide="scale">
       <q-card class="student-card-dialog">
         <q-card-section class="student-card-dialog__content">
@@ -1847,7 +2036,7 @@
       </q-card>
     </q-dialog>
 
-    <!-- ─── FULL AVATAR DIALOG ─── -->
+    <!-- โ”€โ”€โ”€ FULL AVATAR DIALOG โ”€โ”€โ”€ -->
     <q-dialog v-model="showFullAvatar" transition-show="scale" transition-hide="scale">
       <q-card class="full-avatar-dialog">
         <q-btn
@@ -1918,6 +2107,7 @@ import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 interface AvatarOption {
   label: string;
   value: string;
+  swatch?: string;
 }
 
 interface ProfileStatCardItem {
@@ -1930,6 +2120,7 @@ interface ProfileStatCardItem {
 interface CartoonAvatarConfig {
   body: string;
   face: string;
+  eyeColor: string;
   hair: string;
   hairColor: string;
   shirt: string;
@@ -1937,22 +2128,29 @@ interface CartoonAvatarConfig {
   pants: string;
   pantsColor: string;
   shoes: string;
+  accessoryColor: string;
 }
 
 const FULL_AVATAR_STORAGE_KEY = 'lll-profile-avatar-full';
 const CARTOON_AVATAR_STORAGE_KEY = 'lll-cartoon-avatar-config';
 const DEFAULT_CARTOON_AVATAR: CartoonAvatarConfig = {
-  body: 'ขาวอมชมพู',
-  face: 'ตาเปล่งประกาย',
-  hair: 'ฮิเมะคัต',
+  body: 'เธเธฒเธงเธญเธกเธเธกเธเธน',
+  face: 'เธ•เธฒเน€เธเธฅเนเธเธเธฃเธฐเธเธฒเธข',
+  eyeColor: 'amber',
+  hair: 'เธฎเธดเน€เธกเธฐเธเธฑเธ•',
   hairColor: 'Midnight Navy',
-  shirt: 'เซเลอร์',
+  shirt: 'เน€เธเน€เธฅเธญเธฃเน',
   shirtColor: 'Midnight Navy',
-  pants: 'กระโปรงพลีต',
+  pants: 'เธเธฃเธฐเนเธเธฃเธเธเธฅเธตเธ•',
   pantsColor: 'Midnight Navy',
-  shoes: 'โลฟเฟอร์',
+  shoes: 'เนเธฅเธเน€เธเธญเธฃเน',
+  accessoryColor: 'violet',
 };
 const storedCartoonAvatar = getStoredCartoonAvatar();
+const DEFAULT_AVATAR_EXTRAS = {
+  eyeColor: 'amber',
+  accessoryColor: 'violet',
+} satisfies Pick<CartoonAvatarConfig, 'eyeColor' | 'accessoryColor'>;
 
 type ChatMessageSender = 'learner' | 'system';
 type ChatMessageStatus = 'sent' | 'read';
@@ -2061,31 +2259,38 @@ const form = reactive<UserProfileUpdate>({
 });
 
 const cartoonAvatar = reactive({
-  body: 'ผิวใส',
-  face: 'โกรธคลั่ง โมโหสุดขีด',
-  hair: 'ช่วงนี้ยุ่ง',
-  hairColor: 'ดำทมิฬ',
-  shirt: 'ยืดผ่อนคุด',
-  shirtColor: 'ดำทมิฬ',
-  pants: 'ขาสั้น',
-  pantsColor: 'ดำทมิฬ',
-  shoes: 'ผ้าใบ',
-});
+  body: 'เธเธดเธงเนเธช',
+  face: 'เนเธเธฃเธเธเธฅเธฑเนเธ เนเธกเนเธซเธชเธธเธ”เธเธตเธ”',
+  hair: 'เธเนเธงเธเธเธตเนเธขเธธเนเธ',
+  hairColor: 'เธ”เธณเธ—เธกเธดเธฌ',
+  shirt: 'เธขเธทเธ”เธเนเธญเธเธเธธเธ”',
+  shirtColor: 'เธ”เธณเธ—เธกเธดเธฌ',
+  pants: 'เธเธฒเธชเธฑเนเธ',
+  pantsColor: 'เธ”เธณเธ—เธกเธดเธฌ',
+  shoes: 'เธเนเธฒเนเธ',
+}) as CartoonAvatarConfig;
+
+Object.assign(cartoonAvatar, DEFAULT_AVATAR_EXTRAS);
+
+const activeAvatarTab = ref('skin');
 
 const animeBodyOptions: AvatarOption[] = [
-  { label: 'ขาวอมชมพู', value: 'ขาวอมชมพู' },
-  { label: 'เบจน้ำผึ้ง', value: 'เบจน้ำผึ้ง' },
-  { label: 'โทนอุ่นคาราเมล', value: 'โทนอุ่นคาราเมล' },
+  { label: 'เธเธฒเธงเธญเธกเธเธกเธเธน', value: 'เธเธฒเธงเธญเธกเธเธกเธเธน' },
+  { label: 'เน€เธเธเธเนเธณเธเธถเนเธ', value: 'เน€เธเธเธเนเธณเธเธถเนเธ' },
+  {
+    label: 'เนเธ—เธเธญเธธเนเธเธเธฒเธฃเธฒเน€เธกเธฅ',
+    value: 'เนเธ—เธเธญเธธเนเธเธเธฒเธฃเธฒเน€เธกเธฅ',
+  },
 ];
 const animeFaceOptions: AvatarOption[] = [
-  { label: 'ตาเปล่งประกาย', value: 'ตาเปล่งประกาย' },
-  { label: 'ยิ้มอ่อนโยน', value: 'ยิ้มอ่อนโยน' },
-  { label: 'ซึนเดเระ', value: 'ซึนเดเระ' },
+  { label: 'เธ•เธฒเน€เธเธฅเนเธเธเธฃเธฐเธเธฒเธข', value: 'เธ•เธฒเน€เธเธฅเนเธเธเธฃเธฐเธเธฒเธข' },
+  { label: 'เธขเธดเนเธกเธญเนเธญเธเนเธขเธ', value: 'เธขเธดเนเธกเธญเนเธญเธเนเธขเธ' },
+  { label: 'เธเธถเธเน€เธ”เน€เธฃเธฐ', value: 'เธเธถเธเน€เธ”เน€เธฃเธฐ' },
 ];
 const animeHairOptions: AvatarOption[] = [
-  { label: 'ฮิเมะคัต', value: 'ฮิเมะคัต' },
-  { label: 'วูล์ฟคัต', value: 'วูล์ฟคัต' },
-  { label: 'ดังโงะทวินบัน', value: 'ดังโงะทวินบัน' },
+  { label: 'เธฎเธดเน€เธกเธฐเธเธฑเธ•', value: 'เธฎเธดเน€เธกเธฐเธเธฑเธ•' },
+  { label: 'เธงเธนเธฅเนเธเธเธฑเธ•', value: 'เธงเธนเธฅเนเธเธเธฑเธ•' },
+  { label: 'เธ”เธฑเธเนเธเธฐเธ—เธงเธดเธเธเธฑเธ', value: 'เธ”เธฑเธเนเธเธฐเธ—เธงเธดเธเธเธฑเธ' },
 ];
 const animeColorOptions: AvatarOption[] = [
   { label: 'Midnight Navy', value: 'Midnight Navy' },
@@ -2094,40 +2299,191 @@ const animeColorOptions: AvatarOption[] = [
   { label: 'Sakura Rose', value: 'Sakura Rose' },
 ];
 const animeShirtOptions: AvatarOption[] = [
-  { label: 'เซเลอร์', value: 'เซเลอร์' },
-  { label: 'คาร์ดิแกน', value: 'คาร์ดิแกน' },
-  { label: 'ฮู้ดดี้', value: 'ฮู้ดดี้' },
+  { label: 'เน€เธเน€เธฅเธญเธฃเน', value: 'เน€เธเน€เธฅเธญเธฃเน' },
+  { label: 'เธเธฒเธฃเนเธ”เธดเนเธเธ', value: 'เธเธฒเธฃเนเธ”เธดเนเธเธ' },
+  { label: 'เธฎเธนเนเธ”เธ”เธตเน', value: 'เธฎเธนเนเธ”เธ”เธตเน' },
 ];
 const animePantsOptions: AvatarOption[] = [
-  { label: 'กระโปรงพลีต', value: 'กระโปรงพลีต' },
-  { label: 'สแลคเรียบ', value: 'สแลคเรียบ' },
-  { label: 'ชอร์ตแคชชวล', value: 'ชอร์ตแคชชวล' },
+  { label: 'เธเธฃเธฐเนเธเธฃเธเธเธฅเธตเธ•', value: 'เธเธฃเธฐเนเธเธฃเธเธเธฅเธตเธ•' },
+  { label: 'เธชเนเธฅเธเน€เธฃเธตเธขเธ', value: 'เธชเนเธฅเธเน€เธฃเธตเธขเธ' },
+  { label: 'เธเธญเธฃเนเธ•เนเธเธเธเธงเธฅ', value: 'เธเธญเธฃเนเธ•เนเธเธเธเธงเธฅ' },
 ];
 const animeShoesOptions: AvatarOption[] = [
-  { label: 'โลฟเฟอร์', value: 'โลฟเฟอร์' },
-  { label: 'สนีกเกอร์', value: 'สนีกเกอร์' },
-  { label: 'บูตสั้น', value: 'บูตสั้น' },
+  { label: 'เนเธฅเธเน€เธเธญเธฃเน', value: 'เนเธฅเธเน€เธเธญเธฃเน' },
+  { label: 'เธชเธเธตเธเน€เธเธญเธฃเน', value: 'เธชเธเธตเธเน€เธเธญเธฃเน' },
+  { label: 'เธเธนเธ•เธชเธฑเนเธ', value: 'เธเธนเธ•เธชเธฑเนเธ' },
 ];
 
-Object.assign(cartoonAvatar, DEFAULT_CARTOON_AVATAR, storedCartoonAvatar);
+const skinToneOptions: AvatarOption[] = [
+  { label: 'Warm Sun', value: animeBodyOptions[0]?.value ?? '', swatch: '#df8e6e' },
+  {
+    label: 'Honey Glow',
+    value: animeBodyOptions[1]?.value ?? '',
+    swatch: '#c7865b',
+  },
+  { label: 'Soft Cocoa', value: animeBodyOptions[2]?.value ?? '', swatch: '#a86f4f' },
+  { label: 'Peach Bloom', value: 'peach', swatch: '#e1936f' },
+  { label: 'Golden Tan', value: 'golden', swatch: '#b97442' },
+  { label: 'Rose Porcelain', value: 'porcelain', swatch: '#f2c2b1' },
+];
+
+const eyeColorOptions: AvatarOption[] = [
+  { label: 'Charcoal', value: 'charcoal', swatch: '#3f3f46' },
+  { label: 'Amber', value: 'amber', swatch: '#f59e0b' },
+  { label: 'Ocean', value: 'ocean', swatch: '#1d88d9' },
+  { label: 'Teal', value: 'teal', swatch: '#1197a0' },
+  { label: 'Leaf', value: 'leaf', swatch: '#65a30d' },
+  { label: 'Berry', value: 'berry', swatch: '#d946ef' },
+  { label: 'Cherry', value: 'cherry', swatch: '#ff3b3b' },
+  { label: 'Lavender', value: 'lavender', swatch: '#8b5cf6' },
+  { label: 'Sunbeam', value: 'sunbeam', swatch: '#f7b500' },
+];
+
+const eyeOptions: AvatarOption[] = [
+  { label: 'Bright', value: animeFaceOptions[0]?.value ?? '' },
+  { label: 'Calm', value: animeFaceOptions[1]?.value ?? '' },
+  { label: 'Focused', value: animeFaceOptions[2]?.value ?? '' },
+  { label: 'Joyful', value: 'joyful' },
+  { label: 'Sleepy', value: 'sleepy' },
+  { label: 'Wink', value: 'wink' },
+];
+
+const hairStyleOptions: AvatarOption[] = [
+  { label: 'Cloud Bob', value: animeHairOptions[0]?.value ?? '' },
+  { label: 'Side Sweep', value: animeHairOptions[1]?.value ?? '' },
+  { label: 'Soft Wave', value: animeHairOptions[2]?.value ?? '' },
+  { label: 'Puff Cut', value: 'puff' },
+  { label: 'Rounded Bob', value: 'rounded' },
+  { label: 'Curly Pop', value: 'curly' },
+];
+
+const hairColorOptions: AvatarOption[] = [
+  {
+    label: 'Ink Blue',
+    value: animeColorOptions[0]?.value ?? '',
+    swatch: '#2d355f',
+  },
+  {
+    label: 'Chestnut',
+    value: animeColorOptions[1]?.value ?? '',
+    swatch: '#6f4a3c',
+  },
+  {
+    label: 'Honey Gold',
+    value: animeColorOptions[2]?.value ?? '',
+    swatch: '#bd9246',
+  },
+  {
+    label: 'Coral Rose',
+    value: animeColorOptions[3]?.value ?? '',
+    swatch: '#c3618c',
+  },
+  { label: 'Graphite', value: 'graphite', swatch: '#44474f' },
+  { label: 'Sand', value: 'sand', swatch: '#d3b17c' },
+  { label: 'Mint', value: 'mint', swatch: '#34d399' },
+  { label: 'Plum', value: 'plum', swatch: '#7c3aed' },
+];
+
+const topStyleOptions: AvatarOption[] = [
+  { label: 'Classic Tee', value: animeShirtOptions[0]?.value ?? '' },
+  { label: 'Apron Vest', value: animeShirtOptions[1]?.value ?? '' },
+  { label: 'Cape Hoodie', value: animeShirtOptions[2]?.value ?? '' },
+  { label: 'Collar Pop', value: 'collar' },
+  { label: 'Cozy Knit', value: 'knit' },
+];
+
+const topColorOptions: AvatarOption[] = [
+  { label: 'Violet', value: 'violet', swatch: '#a777bc' },
+  { label: 'Ocean', value: 'ocean-top', swatch: '#4e8fd2' },
+  { label: 'Leaf', value: 'leaf-top', swatch: '#78b860' },
+  { label: 'Sunset', value: 'sunset', swatch: '#f2a55f' },
+  { label: 'Cherry', value: 'cherry-top', swatch: '#e2627f' },
+  { label: 'Slate', value: 'slate', swatch: '#5f6f8d' },
+  { label: 'Rose', value: 'rose-top', swatch: '#de7ca4' },
+  { label: 'Gold', value: 'gold-top', swatch: '#e0b64d' },
+];
+
+const bodyStyleOptions: AvatarOption[] = [
+  { label: 'Soft Shape', value: animePantsOptions[0]?.value ?? '' },
+  { label: 'Square Shape', value: animePantsOptions[1]?.value ?? '' },
+  { label: 'Hero Shape', value: animePantsOptions[2]?.value ?? '' },
+  { label: 'Tall Frame', value: 'tall' },
+  { label: 'Relaxed Fit', value: 'relaxed' },
+  { label: 'Wide Frame', value: 'wide' },
+];
+
+const backdropOptions: AvatarOption[] = [
+  {
+    label: 'Sky Studio',
+    value: animeColorOptions[0]?.value ?? '',
+    swatch: '#d8e4f6',
+  },
+  {
+    label: 'Sunrise Room',
+    value: animeColorOptions[1]?.value ?? '',
+    swatch: '#f5ddd0',
+  },
+  {
+    label: 'Mint Stage',
+    value: animeColorOptions[2]?.value ?? '',
+    swatch: '#d9edd8',
+  },
+  {
+    label: 'Lilac Loft',
+    value: animeColorOptions[3]?.value ?? '',
+    swatch: '#efe0f1',
+  },
+  { label: 'Peach Glow', value: 'peach-bg', swatch: '#fce6d9' },
+  { label: 'Soft Gray', value: 'studio-bg', swatch: '#e9ecf1' },
+];
+
+const accessoryColorOptions: AvatarOption[] = [
+  { label: 'Violet', value: 'violet', swatch: '#8b63d2' },
+  { label: 'Blue', value: 'blue', swatch: '#1d88d9' },
+  { label: 'Leaf', value: 'leaf', swatch: '#65a30d' },
+  { label: 'Orange', value: 'orange', swatch: '#fb8c00' },
+  { label: 'Pink', value: 'pink', swatch: '#ff4d6d' },
+  { label: 'Smoke', value: 'smoke', swatch: '#52525b' },
+  { label: 'Cream', value: 'cream', swatch: '#e8d2bf' },
+];
+
+const accessoryOptions: AvatarOption[] = [
+  { label: 'Clean', value: animeShoesOptions[0]?.value ?? '' },
+  { label: 'Glasses', value: animeShoesOptions[1]?.value ?? '' },
+  { label: 'Beanie', value: animeShoesOptions[2]?.value ?? '' },
+  { label: 'Round Glasses', value: 'round-glasses' },
+  { label: 'Sunglasses', value: 'sunglasses' },
+  { label: 'Earrings', value: 'earrings' },
+];
+
+Object.assign(cartoonAvatar, DEFAULT_CARTOON_AVATAR, DEFAULT_AVATAR_EXTRAS, storedCartoonAvatar);
 
 const cognitiveSkills = computed<SkillMetric[]>(() => [
   {
     id: 'critical-thinking',
     shortLabel: 'Critical Thinking',
-    label: t('profile.skills.cognitive.critical'),
+    label:
+      locale.value === 'th'
+        ? '1.1 เธเธฒเธฃเธเธดเธ”เธงเธดเน€เธเธฃเธฒเธฐเธซเนเธญเธขเนเธฒเธเน€เธเนเธเธฃเธฐเธเธ'
+        : '1.1 Critical Thinking',
     score: 4.4,
   },
   {
     id: 'creative-thinking',
     shortLabel: 'Creative Thinking',
-    label: t('profile.skills.cognitive.creative'),
+    label:
+      locale.value === 'th'
+        ? '1.2 เธเธฒเธฃเธเธดเธ”เน€เธเธดเธเธชเธฃเนเธฒเธเธชเธฃเธฃเธเน'
+        : '1.2 Creative Thinking',
     score: 4.1,
   },
   {
     id: 'learning-to-learn',
     shortLabel: 'Learning to Learn',
-    label: t('profile.skills.cognitive.learning'),
+    label:
+      locale.value === 'th'
+        ? '1.3 เธเธฒเธฃเน€เธฃเธตเธขเธเธฃเธนเนเธ”เนเธงเธขเธ•เธเน€เธญเธ'
+        : '1.3 Learning to Learn / Self-Regulation',
     score: 3.8,
   },
 ]);
@@ -2136,19 +2492,23 @@ const socialSkills = computed<SkillMetric[]>(() => [
   {
     id: 'collaboration',
     shortLabel: 'Collaboration',
-    label: t('profile.skills.social.collaboration'),
+    label:
+      locale.value === 'th' ? '2.1 เธเธฒเธฃเธ—เธณเธเธฒเธเธฃเนเธงเธกเธเธฑเธ' : '2.1 Collaboration',
     score: 4.2,
   },
   {
     id: 'empathy',
     shortLabel: 'Empathy',
-    label: t('profile.skills.social.empathy'),
+    label: locale.value === 'th' ? '2.2 เธเธงเธฒเธกเน€เธเนเธฒเนเธเธเธนเนเธญเธทเนเธ' : '2.2 Empathy',
     score: 3.7,
   },
   {
     id: 'responsibility',
     shortLabel: 'Responsibility',
-    label: t('profile.skills.social.responsibility'),
+    label:
+      locale.value === 'th'
+        ? '2.3 เธเธงเธฒเธกเธฃเธฑเธเธเธดเธ”เธเธญเธเนเธฅเธฐเธเธงเธฒเธกเน€เธเธทเนเธญเธกเธฑเนเธเนเธเธ•เธเน€เธญเธ'
+        : '2.3 Responsibility / Self-efficacy',
     score: 4.0,
   },
 ]);
@@ -2157,44 +2517,60 @@ const practicalSkills = computed<SkillMetric[]>(() => [
   {
     id: 'digital-literacy',
     shortLabel: 'Digital Literacy',
-    label: t('profile.skills.practical.digital'),
+    label:
+      locale.value === 'th'
+        ? '3.1 เธเธฒเธฃเธฃเธนเนเน€เธ—เนเธฒเธ—เธฑเธเธ”เธดเธเธดเธ—เธฑเธฅ'
+        : '3.1 Digital Literacy',
     score: 4.5,
   },
   {
     id: 'life-skills',
     shortLabel: 'Life Skills',
-    label: t('profile.skills.practical.life'),
+    label: locale.value === 'th' ? '3.2 เธ—เธฑเธเธฉเธฐเธเธตเธงเธดเธ•' : '3.2 Life Skills',
     score: 3.6,
   },
   {
     id: 'financial-literacy',
     shortLabel: 'Financial Literacy',
-    label: t('profile.skills.practical.financial'),
+    label:
+      locale.value === 'th'
+        ? '3.3 เธเธงเธฒเธกเธฃเธนเนเธ—เธฒเธเธเธฒเธฃเน€เธเธดเธ'
+        : '3.3 Financial Literacy',
     score: 3.2,
   },
   {
     id: 'physical-health-literacy',
     shortLabel: 'Physical & Health',
-    label: t('profile.skills.practical.physical'),
+    label:
+      locale.value === 'th' ? '3.4 สุขภาวะและการดูแลร่างกาย' : '3.4 Physical & Health Literacy',
     score: 3.5,
   },
 ]);
 
 const skillCategories = computed<SkillCategory[]>(() => [
   {
-    title: t('profile.skills.cognitive.title'),
+    title:
+      locale.value === 'th'
+        ? 'เธ”เนเธฒเธเธเธฒเธฃเธเธดเธ”เนเธฅเธฐเธเธฒเธฃเน€เธฃเธตเธขเธเธฃเธนเน'
+        : 'Cognitive & Metacognitive Skills',
     shortTitle: 'Cognitive',
     accent: '#f5a623',
     items: cognitiveSkills.value,
   },
   {
-    title: t('profile.skills.social.title'),
+    title:
+      locale.value === 'th'
+        ? 'เธ”เนเธฒเธเธชเธฑเธเธเธกเนเธฅเธฐเธญเธฒเธฃเธกเธ“เน'
+        : 'Social & Emotional Skills',
     shortTitle: 'Social',
     accent: '#3aa6b9',
     items: socialSkills.value,
   },
   {
-    title: t('profile.skills.practical.title'),
+    title:
+      locale.value === 'th'
+        ? 'เธ”เนเธฒเธเธ—เธฑเธเธฉเธฐเนเธเนเธเธฃเธดเธ'
+        : 'Practical and physical skills',
     shortTitle: 'Practical',
     accent: '#49b37d',
     items: practicalSkills.value,
@@ -2386,16 +2762,44 @@ const heroRoleLabel = computed(() => {
   return t('profile.hero.learner');
 });
 
-const selectedHairLabel = computed<string>(() => cartoonAvatar.hair);
-const selectedFaceLabel = computed<string>(() => cartoonAvatar.face);
-const selectedOutfitLabel = computed<string>(
-  () => `${cartoonAvatar.shirt} / ${cartoonAvatar.pants}`,
+const selectedSkinLabel = computed<string>(() =>
+  getAvatarOptionLabel(skinToneOptions, cartoonAvatar.body),
 );
-const animeAvatarPreviewUrl = computed<string>(() =>
-  createAnimeAvatarDataUrl(cartoonAvatar, 'stage'),
+const selectedEyeColorLabel = computed<string>(() =>
+  getAvatarOptionLabel(eyeColorOptions, cartoonAvatar.eyeColor),
 );
-const animeAvatarPortraitUrl = computed<string>(() =>
-  createAnimeAvatarDataUrl(cartoonAvatar, 'portrait'),
+const selectedEyesLabel = computed<string>(() =>
+  getAvatarOptionLabel(eyeOptions, cartoonAvatar.face),
+);
+const selectedHairLabel = computed<string>(() =>
+  getAvatarOptionLabel(hairStyleOptions, cartoonAvatar.hair),
+);
+const selectedHairColorLabel = computed<string>(() =>
+  getAvatarOptionLabel(hairColorOptions, cartoonAvatar.hairColor),
+);
+const selectedTopLabel = computed<string>(() =>
+  getAvatarOptionLabel(topStyleOptions, cartoonAvatar.shirt),
+);
+const selectedTopColorLabel = computed<string>(() =>
+  getAvatarOptionLabel(topColorOptions, cartoonAvatar.shirtColor),
+);
+const selectedBodyLabel = computed<string>(() =>
+  getAvatarOptionLabel(bodyStyleOptions, cartoonAvatar.pants),
+);
+const selectedBackdropLabel = computed<string>(() =>
+  getAvatarOptionLabel(backdropOptions, cartoonAvatar.pantsColor),
+);
+const selectedAccessoryColorLabel = computed<string>(() =>
+  getAvatarOptionLabel(accessoryColorOptions, cartoonAvatar.accessoryColor),
+);
+const selectedAccessoryLabel = computed<string>(() =>
+  getAvatarOptionLabel(accessoryOptions, cartoonAvatar.shoes),
+);
+const avatarPreviewUrl = computed<string>(() =>
+  createPlayfulAvatarDataUrl(cartoonAvatar, 'stage', true),
+);
+const avatarPortraitUrl = computed<string>(() =>
+  createPlayfulAvatarDataUrl(cartoonAvatar, 'portrait'),
 );
 
 watch(activeMenu, () => {
@@ -2478,6 +2882,7 @@ function getStoredCartoonAvatar(): Partial<CartoonAvatarConfig> {
 
     if (typeof parsed.body === 'string') result.body = parsed.body;
     if (typeof parsed.face === 'string') result.face = parsed.face;
+    if (typeof parsed.eyeColor === 'string') result.eyeColor = parsed.eyeColor;
     if (typeof parsed.hair === 'string') result.hair = parsed.hair;
     if (typeof parsed.hairColor === 'string') result.hairColor = parsed.hairColor;
     if (typeof parsed.shirt === 'string') result.shirt = parsed.shirt;
@@ -2485,6 +2890,7 @@ function getStoredCartoonAvatar(): Partial<CartoonAvatarConfig> {
     if (typeof parsed.pants === 'string') result.pants = parsed.pants;
     if (typeof parsed.pantsColor === 'string') result.pantsColor = parsed.pantsColor;
     if (typeof parsed.shoes === 'string') result.shoes = parsed.shoes;
+    if (typeof parsed.accessoryColor === 'string') result.accessoryColor = parsed.accessoryColor;
 
     return result;
   } catch (error) {
@@ -2552,26 +2958,77 @@ function writeStoredChatMessages(messages: ChatMessage[]): void {
   window.localStorage.setItem(CHAT_MESSAGES_STORAGE_KEY, JSON.stringify(storedMessages));
 }
 
+function getAvatarOptionLabel(options: AvatarOption[], value: string): string {
+  return options.find((option) => option.value === value)?.label ?? value;
+}
+
+function getEyeGlyphStyle(value: string): string {
+  if (value === animeFaceOptions[1]?.value) return 'calm';
+  if (value === animeFaceOptions[2]?.value) return 'focused';
+  return 'bright';
+}
+
+function getHairGlyphStyle(value: string): string {
+  if (value === animeHairOptions[1]?.value) return 'sweep';
+  if (value === animeHairOptions[2]?.value) return 'wave';
+  return 'cloud';
+}
+
+function getTopGlyphStyle(value: string): string {
+  if (value === animeShirtOptions[1]?.value) return 'apron';
+  if (value === animeShirtOptions[2]?.value) return 'cape';
+  return 'classic';
+}
+
+function getBodyGlyphStyle(value: string): string {
+  if (value === animePantsOptions[1]?.value) return 'square';
+  if (value === animePantsOptions[2]?.value) return 'hero';
+  return 'soft';
+}
+
+function getAccessoryGlyphStyle(value: string): string {
+  if (value === 'round-glasses') return 'round-glasses';
+  if (value === 'sunglasses') return 'sunglasses';
+  if (value === 'earrings') return 'earrings';
+  if (value === animeShoesOptions[1]?.value) return 'glasses';
+  if (value === animeShoesOptions[2]?.value) return 'beanie';
+  return 'clean';
+}
+
+function createAvatarOptionPreview(overrides: Partial<CartoonAvatarConfig>): string {
+  return createPlayfulAvatarDataUrl(
+    {
+      ...cartoonAvatar,
+      ...overrides,
+    },
+    'portrait',
+    false,
+  );
+}
+
 function pickRandomAvatarOption(options: AvatarOption[]): string {
   return options[Math.floor(Math.random() * options.length)]?.value ?? '';
 }
 
 function randomizeCartoonAvatar(): void {
-  cartoonAvatar.body = pickRandomAvatarOption(animeBodyOptions);
-  cartoonAvatar.face = pickRandomAvatarOption(animeFaceOptions);
-  cartoonAvatar.hair = pickRandomAvatarOption(animeHairOptions);
-  cartoonAvatar.hairColor = pickRandomAvatarOption(animeColorOptions);
-  cartoonAvatar.shirt = pickRandomAvatarOption(animeShirtOptions);
-  cartoonAvatar.shirtColor = pickRandomAvatarOption(animeColorOptions);
-  cartoonAvatar.pants = pickRandomAvatarOption(animePantsOptions);
-  cartoonAvatar.pantsColor = pickRandomAvatarOption(animeColorOptions);
-  cartoonAvatar.shoes = pickRandomAvatarOption(animeShoesOptions);
+  cartoonAvatar.body = pickRandomAvatarOption(skinToneOptions);
+  cartoonAvatar.face = pickRandomAvatarOption(eyeOptions);
+  cartoonAvatar.eyeColor = pickRandomAvatarOption(eyeColorOptions);
+  cartoonAvatar.hair = pickRandomAvatarOption(hairStyleOptions);
+  cartoonAvatar.hairColor = pickRandomAvatarOption(hairColorOptions);
+  cartoonAvatar.shirt = pickRandomAvatarOption(topStyleOptions);
+  cartoonAvatar.shirtColor = pickRandomAvatarOption(topColorOptions);
+  cartoonAvatar.pants = pickRandomAvatarOption(bodyStyleOptions);
+  cartoonAvatar.pantsColor = pickRandomAvatarOption(backdropOptions);
+  cartoonAvatar.shoes = pickRandomAvatarOption(accessoryOptions);
+  cartoonAvatar.accessoryColor = pickRandomAvatarOption(accessoryColorOptions);
 }
 
 function saveCartoonAvatar(): void {
   const snapshot: CartoonAvatarConfig = {
     body: cartoonAvatar.body,
     face: cartoonAvatar.face,
+    eyeColor: cartoonAvatar.eyeColor,
     hair: cartoonAvatar.hair,
     hairColor: cartoonAvatar.hairColor,
     shirt: cartoonAvatar.shirt,
@@ -2579,11 +3036,12 @@ function saveCartoonAvatar(): void {
     pants: cartoonAvatar.pants,
     pantsColor: cartoonAvatar.pantsColor,
     shoes: cartoonAvatar.shoes,
+    accessoryColor: cartoonAvatar.accessoryColor,
   };
 
   persistCartoonAvatar(snapshot);
-  authStore.setAvatar(animeAvatarPortraitUrl.value);
-  fullAvatarUrl.value = animeAvatarPreviewUrl.value;
+  authStore.setAvatar(avatarPortraitUrl.value);
+  fullAvatarUrl.value = avatarPreviewUrl.value;
 
   $q.notify({
     type: 'positive',
@@ -2642,286 +3100,460 @@ function confirmSavePersonalInfo(): void {
   );
 }
 
-function createAnimeAvatarDataUrl(config: CartoonAvatarConfig, mode: 'stage' | 'portrait'): string {
-  const svg = createAnimeAvatarSvg(config, mode);
+function createPlayfulAvatarDataUrl(
+  config: CartoonAvatarConfig,
+  mode: 'stage' | 'portrait',
+  animate = false,
+): string {
+  const svg = createPlayfulAvatarSvg(config, mode, animate);
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
-function createAnimeAvatarSvg(config: CartoonAvatarConfig, mode: 'stage' | 'portrait'): string {
+function createPlayfulAvatarSvg(
+  config: CartoonAvatarConfig,
+  mode: 'stage' | 'portrait',
+  animate = false,
+): string {
   const skinMap: Record<string, string> = {
-    ขาวอมชมพู: '#f7d9cf',
-    เบจน้ำผึ้ง: '#e8bf98',
-    โทนอุ่นคาราเมล: '#d59d77',
+    [animeBodyOptions[0]?.value ?? '']: '#df8e6e',
+    [animeBodyOptions[1]?.value ?? '']: '#c7865b',
+    [animeBodyOptions[2]?.value ?? '']: '#a86f4f',
+    peach: '#e1936f',
+    golden: '#b97442',
+    porcelain: '#f2c2b1',
   };
   const colorMap: Record<string, string> = {
-    'Midnight Navy': '#2d355f',
-    'Chestnut Brown': '#6f4a3c',
-    'Golden Honey': '#bd9246',
-    'Sakura Rose': '#c3618c',
+    [animeColorOptions[0]?.value ?? '']: '#5f6f8d',
+    [animeColorOptions[1]?.value ?? '']: '#d88962',
+    [animeColorOptions[2]?.value ?? '']: '#88b173',
+    [animeColorOptions[3]?.value ?? '']: '#a777bc',
+    graphite: '#44474f',
+    sand: '#d3b17c',
+    mint: '#34d399',
+    plum: '#7c3aed',
+    violet: '#a777bc',
+    'ocean-top': '#4e8fd2',
+    'leaf-top': '#78b860',
+    sunset: '#f2a55f',
+    'cherry-top': '#e2627f',
+    slate: '#5f6f8d',
+    'rose-top': '#de7ca4',
+    'gold-top': '#e0b64d',
+    blue: '#1d88d9',
+    leaf: '#65a30d',
+    orange: '#fb8c00',
+    pink: '#ff4d6d',
+    smoke: '#52525b',
+    cream: '#e8d2bf',
   };
-  const eyeMap: Record<string, string> = {
-    'Midnight Navy': '#36457a',
-    'Chestnut Brown': '#6d4738',
-    'Golden Honey': '#a6772a',
-    'Sakura Rose': '#92527a',
+  const eyeColorMap: Record<string, string> = {
+    charcoal: '#3f3f46',
+    amber: '#f59e0b',
+    ocean: '#1d88d9',
+    teal: '#1197a0',
+    leaf: '#65a30d',
+    berry: '#d946ef',
+    cherry: '#ff3b3b',
+    lavender: '#8b5cf6',
+    sunbeam: '#f7b500',
+  };
+  const backgroundMap: Record<string, { top: string; bottom: string; panel: string }> = {
+    [animeColorOptions[0]?.value ?? '']: { top: '#eff5fb', bottom: '#d7e8f8', panel: '#e5f0fa' },
+    [animeColorOptions[1]?.value ?? '']: { top: '#fff4eb', bottom: '#f6dfd0', panel: '#fbeadc' },
+    [animeColorOptions[2]?.value ?? '']: { top: '#f1fbf1', bottom: '#d7edd8', panel: '#e5f6e6' },
+    [animeColorOptions[3]?.value ?? '']: { top: '#faf3ff', bottom: '#eadcf6', panel: '#f1e6fa' },
+    'peach-bg': { top: '#fff4ed', bottom: '#fce6d9', panel: '#fff0e6' },
+    'studio-bg': { top: '#f6f7fa', bottom: '#e8ecf2', panel: '#eef1f6' },
   };
 
-  const skin = skinMap[config.body] ?? '#f7d9cf';
-  const hair = colorMap[config.hairColor] ?? '#2d355f';
-  const topColor = colorMap[config.shirtColor] ?? '#2d355f';
-  const bottomColor = colorMap[config.pantsColor] ?? '#2d355f';
-  const eyeColor = eyeMap[config.hairColor] ?? '#36457a';
-  const accent = colorMap[config.shirtColor] ?? '#c3618c';
-  const background = mode === 'portrait' ? '#fbf5ff' : '#fff7fb';
-  const horizon = mode === 'portrait' ? '#eedff8' : '#f8d9e7';
-  const halo = withOpacity(accent, mode === 'portrait' ? 0.22 : 0.28);
-  const sparkle = withOpacity('#ffffff', 0.85);
-  const portraitScale = mode === 'portrait' ? 1.16 : 1;
-  const headY = mode === 'portrait' ? 208 : 186;
-  const bodyTop = mode === 'portrait' ? 312 : 300;
-  const stageFooter = mode === 'portrait' ? 0 : 1;
-
-  const hairBack = getAnimeHairBack(config.hair, hair);
-  const hairFront = getAnimeHairFront(config.hair, hair);
-  const face = getAnimeFace(config.face, eyeColor);
-  const outfitTop = getAnimeTop(config.shirt, topColor);
-  const outfitBottom = mode === 'portrait' ? '' : getAnimeBottom(config.pants, bottomColor);
-  const shoes = mode === 'portrait' ? '' : getAnimeShoes(config.shoes, bottomColor);
+  const skin = skinMap[config.body] ?? '#df8e6e';
+  const hair = colorMap[config.hairColor] ?? '#5f6f8d';
+  const topColor = colorMap[config.shirtColor] ?? '#a777bc';
+  const accessoryColor = colorMap[config.accessoryColor] ?? '#8b63d2';
+  const eyeColor = eyeColorMap[config.eyeColor] ?? '#f59e0b';
+  const scene = backgroundMap[config.pantsColor] ??
+    backgroundMap[animeColorOptions[0]?.value ?? ''] ?? {
+      top: '#eff5fb',
+      bottom: '#d7e8f8',
+      panel: '#e5f0fa',
+    };
+  const outline = '#414141';
+  const blush = withOpacity('#f08ba2', 0.35);
+  const portraitScale = mode === 'portrait' ? 1.08 : 1;
+  const bodyVariant = getBodyVariant(config.pants);
+  const shirtVariant = getTopVariant(config.shirt);
+  const hairShape = getPlayfulHair(config.hair);
+  const face = getPlayfulFace(config.face, eyeColor, outline, blush, skin, animate);
+  const accessory = getAccessory(config.shoes, outline, accessoryColor);
+  const bodyTopY = mode === 'portrait' ? 316 : 328;
+  const bodyBottomY = mode === 'portrait' ? 528 : 546;
+  const armTopY = bodyTopY + 22;
+  const armMidY = mode === 'portrait' ? 448 : 462;
+  const armEndY = mode === 'portrait' ? 522 : 538;
+  const idleMotion = animate
+    ? `
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      values="0 0; 0 0; 0 0"
+      dur="4.8s"
+      repeatCount="indefinite"
+    />`
+    : '';
 
   return `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 560" role="img" aria-label="Anime avatar">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 560" role="img" aria-label="Playful avatar">
   <defs>
-    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="${background}" />
-      <stop offset="100%" stop-color="${withOpacity(accent, 0.14)}" />
-    </linearGradient>
-    <linearGradient id="dress-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="${topColor}" />
-      <stop offset="100%" stop-color="${withOpacity(topColor, 0.82)}" />
+    <linearGradient id="avatar-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="${scene.top}" />
+      <stop offset="100%" stop-color="${scene.bottom}" />
     </linearGradient>
   </defs>
-  <rect width="560" height="560" rx="42" fill="url(#bg-grad)" />
-  <circle cx="280" cy="${mode === 'portrait' ? 205 : 168}" r="${mode === 'portrait' ? 128 : 116}" fill="${halo}" />
-  <circle cx="434" cy="118" r="28" fill="${withOpacity('#ffffff', 0.78)}" />
-  <path d="M0 414 C120 356 208 396 280 372 C350 350 436 372 560 320 V560 H0 Z" fill="${horizon}" />
-  ${createSakuraPetal(94, 132, -18, '#ffd9ea')}
-  ${createSakuraPetal(452, 162, 14, '#ffc7df')}
-  ${createSakuraPetal(124, 404, 22, '#ffd6e7')}
-  ${createSakuraPetal(466, 384, -16, '#ffd3e4')}
-  <g transform="translate(280 284) scale(${portraitScale}) translate(-280 -284)">
-    ${hairBack}
-    <ellipse cx="280" cy="${headY}" rx="86" ry="96" fill="${skin}" />
-    <ellipse cx="220" cy="${headY + 2}" rx="10" ry="18" fill="${skin}" />
-    <ellipse cx="340" cy="${headY + 2}" rx="10" ry="18" fill="${skin}" />
-    ${hairFront}
+  <rect width="560" height="560" rx="42" fill="url(#avatar-bg)" />
+  <rect x="${mode === 'portrait' ? 58 : 44}" y="${mode === 'portrait' ? 62 : 42}" width="${mode === 'portrait' ? 444 : 472}" height="${mode === 'portrait' ? 444 : 476}" rx="28" fill="${scene.panel}" />
+  <circle cx="280" cy="${mode === 'portrait' ? 180 : 148}" r="${mode === 'portrait' ? 104 : 92}" fill="${withOpacity('#ffffff', 0.5)}" />
+  <g transform="translate(280 288) scale(${portraitScale}) translate(-280 -288)">
+    ${idleMotion}
+    <path d="${hairShape.back}" fill="${hair}" />
+    <path d="M194 ${armTopY} C170 ${armTopY + 36} 156 ${armMidY - 20} 164 ${armEndY}" stroke="${withOpacity(outline, 0.18)}" stroke-width="50" stroke-linecap="round" fill="none" />
+    <path d="M366 ${armTopY} C390 ${armTopY + 36} 404 ${armMidY - 20} 396 ${armEndY}" stroke="${withOpacity(outline, 0.18)}" stroke-width="50" stroke-linecap="round" fill="none" />
+    <path d="M194 ${armTopY} C170 ${armTopY + 36} 156 ${armMidY - 20} 164 ${armEndY}" stroke="${topColor}" stroke-width="40" stroke-linecap="round" fill="none" />
+    <path d="M366 ${armTopY} C390 ${armTopY + 36} 404 ${armMidY - 20} 396 ${armEndY}" stroke="${topColor}" stroke-width="40" stroke-linecap="round" fill="none" />
+    <circle cx="165" cy="${armEndY + 10}" r="12" fill="${skin}" />
+    <circle cx="395" cy="${armEndY + 10}" r="12" fill="${skin}" />
+    <path d="M168 364 C188 322 216 298 280 298 C344 298 372 322 392 364 L${bodyVariant.shoulderRight} ${bodyBottomY} H${bodyVariant.shoulderLeft} Z" fill="${topColor}" />
+    ${shirtVariant}
+    <rect x="248" y="${bodyTopY - 20}" width="64" height="42" rx="18" fill="${skin}" />
+    <rect x="162" y="132" width="236" height="226" rx="58" fill="${skin}" />
+    <rect x="118" y="216" width="42" height="38" rx="19" fill="${skin}" />
+    <rect x="400" y="216" width="42" height="38" rx="19" fill="${skin}" />
+    <path d="${hairShape.front}" fill="${hair}" />
     ${face}
-    <rect x="255" y="${bodyTop - 18}" width="50" height="30" rx="18" fill="${skin}" />
-    <path d="M194 ${bodyTop + 8} C214 ${bodyTop - 6} 245 ${bodyTop - 18} 280 ${bodyTop - 18} C315 ${bodyTop - 18} 346 ${bodyTop - 6} 366 ${bodyTop + 8} L380 ${bodyTop + 118} C342 ${bodyTop + 148} 316 ${bodyTop + 160} 280 ${bodyTop + 160} C244 ${bodyTop + 160} 218 ${bodyTop + 148} 180 ${bodyTop + 118} Z" fill="url(#dress-grad)" />
-    ${outfitTop}
-    <path d="M196 ${bodyTop + 18} C168 ${bodyTop + 44} 160 ${bodyTop + 92} 168 ${bodyTop + 138} L194 ${bodyTop + 132} C192 ${bodyTop + 94} 198 ${bodyTop + 56} 218 ${bodyTop + 28} Z" fill="${topColor}" />
-    <path d="M364 ${bodyTop + 18} C392 ${bodyTop + 44} 400 ${bodyTop + 92} 392 ${bodyTop + 138} L366 ${bodyTop + 132} C368 ${bodyTop + 94} 362 ${bodyTop + 56} 342 ${bodyTop + 28} Z" fill="${topColor}" />
-    <circle cx="176" cy="${bodyTop + 142}" r="18" fill="${skin}" />
-    <circle cx="384" cy="${bodyTop + 142}" r="18" fill="${skin}" />
-    ${outfitBottom}
-    ${shoes}
+    <path d="M278 233 C286 244 292 250 296 262 C298 272 288 282 278 282 C266 282 258 272 260 262 C264 249 272 243 278 233 Z" fill="#a85d39" />
+    ${accessory}
   </g>
-  <circle cx="112" cy="92" r="5" fill="${sparkle}" />
-  <circle cx="132" cy="114" r="3" fill="${sparkle}" />
-  <circle cx="450" cy="92" r="5" fill="${sparkle}" />
-  <circle cx="430" cy="112" r="3" fill="${sparkle}" />
-  ${
-    stageFooter
-      ? `<g opacity="0.86">
-    <rect x="42" y="458" width="476" height="62" rx="24" fill="${withOpacity('#ffffff', 0.78)}" />
-    <text x="280" y="497" text-anchor="middle" font-size="22" font-family="Arial, sans-serif" fill="#54334a">Tokyo Pop Character Studio</text>
-  </g>`
-      : ''
-  }
 </svg>`.trim();
 }
 
-function getAnimeHairBack(hairStyle: string, hairColor: string): string {
-  if (hairStyle === 'วูล์ฟคัต') {
+function getPlayfulFace(
+  faceStyle: string,
+  eyeColor: string,
+  outline: string,
+  blush: string,
+  skin: string,
+  animate: boolean,
+): string {
+  const blink = animate ? createBlinkOverlay(skin) : '';
+
+  if (faceStyle === 'joyful') {
     return `
-      <path d="M176 182 C180 92 230 48 280 48 C330 48 380 92 384 182 L414 260 L368 244 L344 292 L318 246 L280 310 L242 246 L216 292 L192 244 L146 260 Z" fill="${hairColor}" />
+      <ellipse cx="228" cy="218" rx="42" ry="50" fill="#ffffff" />
+      <ellipse cx="332" cy="218" rx="42" ry="50" fill="#ffffff" />
+      <circle cx="228" cy="220" r="30" fill="${outline}" />
+      <circle cx="332" cy="220" r="30" fill="${outline}" />
+      <circle cx="228" cy="228" r="15" fill="${eyeColor}" />
+      <circle cx="332" cy="228" r="15" fill="${eyeColor}" />
+      <path d="M214 206 L222 216 L214 224 L226 220 L236 230 L232 216 L244 208 L230 208 L226 194 L222 208 Z" fill="#ffffff" />
+      <path d="M318 206 L326 216 L318 224 L330 220 L340 230 L336 216 L348 208 L334 208 L330 194 L326 208 Z" fill="#ffffff" />
+      <path d="M236 314 C252 294 286 294 306 314 C312 322 312 340 300 348 C288 356 272 350 262 338 L254 332 C246 326 238 322 236 314 Z" fill="#af2f42" />
+      <path d="M258 320 C266 312 278 310 292 314 C282 322 272 328 262 336 Z" fill="#ffb2b2" />
+      <path d="M244 188 Q262 176 282 188" stroke="#94553c" stroke-width="5" stroke-linecap="round" fill="none" />
+      <path d="M292 188 Q312 176 330 188" stroke="#94553c" stroke-width="5" stroke-linecap="round" fill="none" />
+      <ellipse cx="206" cy="286" rx="18" ry="10" fill="${blush}" />
+      <ellipse cx="354" cy="286" rx="18" ry="10" fill="${blush}" />
+      ${blink}
     `;
   }
 
-  if (hairStyle === 'ดังโงะทวินบัน') {
+  if (faceStyle === 'sleepy') {
     return `
-      <circle cx="206" cy="118" r="36" fill="${hairColor}" />
-      <circle cx="354" cy="118" r="36" fill="${hairColor}" />
-      <path d="M178 184 C182 96 232 54 280 54 C328 54 378 96 382 184 L368 246 C344 230 316 224 280 224 C244 224 216 230 192 246 Z" fill="${hairColor}" />
+      <ellipse cx="230" cy="218" rx="34" ry="24" fill="#ffffff" />
+      <ellipse cx="330" cy="218" rx="34" ry="24" fill="#ffffff" />
+      <path d="M198 214 Q230 202 262 214" stroke="${outline}" stroke-width="8" stroke-linecap="round" fill="none" />
+      <path d="M298 214 Q330 202 362 214" stroke="${outline}" stroke-width="8" stroke-linecap="round" fill="none" />
+      <circle cx="230" cy="222" r="11" fill="${eyeColor}" />
+      <circle cx="330" cy="222" r="11" fill="${eyeColor}" />
+      <circle cx="226" cy="218" r="4" fill="#ffffff" />
+      <circle cx="326" cy="218" r="4" fill="#ffffff" />
+      <path d="M210 192 Q230 186 248 192" stroke="#94553c" stroke-width="4" stroke-linecap="round" fill="none" />
+      <path d="M312 192 Q330 186 350 192" stroke="#94553c" stroke-width="4" stroke-linecap="round" fill="none" />
+      <path d="M248 312 Q280 320 312 312" stroke="#a55531" stroke-width="10" stroke-linecap="round" fill="none" />
+      <ellipse cx="212" cy="286" rx="18" ry="10" fill="${blush}" />
+      <ellipse cx="348" cy="286" rx="18" ry="10" fill="${blush}" />
+      ${blink}
+    `;
+  }
+
+  if (faceStyle === 'wink') {
+    return `
+      <path d="M194 220 Q228 206 258 220" stroke="${outline}" stroke-width="10" stroke-linecap="round" fill="none" />
+      <ellipse cx="330" cy="218" rx="34" ry="42" fill="#ffffff" />
+      <circle cx="330" cy="224" r="18" fill="${eyeColor}" />
+      <circle cx="330" cy="224" r="10" fill="${outline}" />
+      <circle cx="338" cy="214" r="6" fill="#ffffff" />
+      <path d="M210 190 Q230 180 250 190" stroke="#94553c" stroke-width="5" stroke-linecap="round" fill="none" />
+      <path d="M308 190 Q330 176 350 190" stroke="#94553c" stroke-width="5" stroke-linecap="round" fill="none" />
+      <path d="M236 304 C256 326 290 326 320 300" stroke="#a55531" stroke-width="10" stroke-linecap="round" fill="none" />
+      <ellipse cx="212" cy="286" rx="18" ry="10" fill="${blush}" />
+      <ellipse cx="348" cy="286" rx="18" ry="10" fill="${blush}" />
+      ${blink}
+    `;
+  }
+
+  if (faceStyle === animeFaceOptions[1]?.value) {
+    return `
+      <ellipse cx="230" cy="216" rx="30" ry="40" fill="#ffffff" />
+      <ellipse cx="330" cy="216" rx="30" ry="40" fill="#ffffff" />
+      <ellipse cx="220" cy="228" rx="14" ry="18" fill="${eyeColor}" />
+      <ellipse cx="320" cy="228" rx="14" ry="18" fill="${eyeColor}" />
+      <ellipse cx="220" cy="228" rx="9" ry="12" fill="${outline}" />
+      <ellipse cx="320" cy="228" rx="9" ry="12" fill="${outline}" />
+      <circle cx="214" cy="214" r="6" fill="#ffffff" />
+      <circle cx="314" cy="214" r="6" fill="#ffffff" />
+      <path d="M220 300 C244 324 288 330 322 304" stroke="#a55531" stroke-width="10" stroke-linecap="round" fill="none" />
+      <ellipse cx="212" cy="286" rx="20" ry="12" fill="${blush}" />
+      <ellipse cx="348" cy="286" rx="20" ry="12" fill="${blush}" />
+      ${blink}
+    `;
+  }
+
+  if (faceStyle === animeFaceOptions[2]?.value) {
+    return `
+      <ellipse cx="230" cy="216" rx="30" ry="40" fill="#ffffff" />
+      <ellipse cx="330" cy="216" rx="30" ry="40" fill="#ffffff" />
+      <path d="M200 208 Q222 194 244 208" stroke="${outline}" stroke-width="8" stroke-linecap="round" fill="none" />
+      <path d="M300 208 Q322 194 344 208" stroke="${outline}" stroke-width="8" stroke-linecap="round" fill="none" />
+      <ellipse cx="220" cy="228" rx="13" ry="16" fill="${eyeColor}" />
+      <ellipse cx="320" cy="228" rx="13" ry="16" fill="${eyeColor}" />
+      <ellipse cx="220" cy="228" rx="8" ry="10" fill="${outline}" />
+      <ellipse cx="320" cy="228" rx="8" ry="10" fill="${outline}" />
+      <path d="M236 312 C260 296 298 294 322 310" stroke="#a55531" stroke-width="10" stroke-linecap="round" fill="none" />
+      <ellipse cx="212" cy="286" rx="20" ry="12" fill="${blush}" />
+      <ellipse cx="348" cy="286" rx="20" ry="12" fill="${blush}" />
+      ${blink}
     `;
   }
 
   return `
-    <path d="M166 186 C170 92 228 48 280 48 C332 48 390 92 394 186 L384 252 L350 222 L344 306 L314 222 L246 222 L216 306 L210 222 L176 252 Z" fill="${hairColor}" />
+    <ellipse cx="230" cy="216" rx="32" ry="42" fill="#ffffff" />
+    <ellipse cx="330" cy="216" rx="32" ry="42" fill="#ffffff" />
+    <circle cx="220" cy="226" r="16" fill="${eyeColor}" />
+    <circle cx="320" cy="226" r="16" fill="${eyeColor}" />
+    <path d="M214 198 C232 196 242 206 242 224 V242 C242 258 232 266 218 266 C204 266 194 258 194 242 V222 C194 208 200 200 214 198 Z" fill="${outline}" />
+    <path d="M318 198 C336 196 346 206 346 224 V242 C346 258 336 266 322 266 C308 266 298 258 298 242 V222 C298 208 304 200 318 198 Z" fill="${outline}" />
+    <circle cx="214" cy="212" r="8" fill="#ffffff" />
+    <circle cx="318" cy="212" r="8" fill="#ffffff" />
+    <path d="M214 302 C236 326 286 334 330 300" stroke="#a55531" stroke-width="10" stroke-linecap="round" fill="none" />
+    <ellipse cx="212" cy="286" rx="20" ry="12" fill="${blush}" />
+    <ellipse cx="348" cy="286" rx="20" ry="12" fill="${blush}" />
+    ${blink}
   `;
 }
 
-function getAnimeHairFront(hairStyle: string, hairColor: string): string {
-  if (hairStyle === 'วูล์ฟคัต') {
+function createBlinkOverlay(skin: string): string {
+  return `
+    <g>
+      <rect x="190" y="172" width="76" height="0" rx="30" fill="${skin}">
+        <animate attributeName="height" values="0;0;46;0;0" keyTimes="0;0.44;0.48;0.52;1" dur="4.8s" repeatCount="indefinite" />
+      </rect>
+      <rect x="294" y="172" width="76" height="0" rx="30" fill="${skin}">
+        <animate attributeName="height" values="0;0;46;0;0" keyTimes="0;0.44;0.48;0.52;1" dur="4.8s" repeatCount="indefinite" />
+      </rect>
+    </g>
+  `;
+}
+function getPlayfulHair(hairStyle: string): { back: string; front: string } {
+  if (hairStyle === 'puff') {
+    return {
+      back: 'M154 170 C170 90 228 58 280 58 C332 58 390 90 406 170 V250 L372 242 L360 294 L324 250 L280 302 L236 250 L200 294 L188 242 L154 250 Z',
+      front:
+        'M164 170 C188 98 236 70 280 70 C324 70 372 98 396 170 C376 162 356 162 338 170 C324 176 310 182 292 182 H268 C248 182 234 176 220 170 C202 162 184 162 164 170 Z',
+    };
+  }
+
+  if (hairStyle === 'rounded') {
+    return {
+      back: 'M160 164 C176 94 230 62 280 62 C330 62 384 94 400 164 V252 H160 Z',
+      front:
+        'M168 168 C194 106 238 82 280 82 C322 82 366 106 392 168 C370 156 348 154 328 162 C310 170 294 176 280 176 C266 176 250 170 232 162 C212 154 190 156 168 168 Z',
+    };
+  }
+
+  if (hairStyle === 'curly') {
+    return {
+      back: 'M158 170 C170 96 228 60 280 60 C332 60 390 96 402 170 V252 L370 246 L364 284 L334 252 L280 300 L226 252 L196 284 L190 246 L158 252 Z',
+      front:
+        'M168 176 C182 146 206 126 224 118 C238 132 250 144 266 152 C282 140 296 126 314 114 C334 120 360 144 392 176 C360 166 334 168 316 182 C300 194 288 200 280 200 C270 200 258 194 242 182 C222 168 198 166 168 176 Z',
+    };
+  }
+
+  if (hairStyle === animeHairOptions[1]?.value) {
+    return {
+      back: 'M156 174 C164 94 224 58 280 58 C336 58 390 94 402 170 V246 L368 236 L354 282 L330 240 L280 280 L230 240 L206 282 L192 236 L158 246 Z',
+      front:
+        'M166 180 C190 110 236 82 280 82 C324 82 362 110 388 178 C364 170 342 172 322 188 C308 200 292 206 280 206 C268 206 254 200 240 188 C220 172 196 170 166 180 Z',
+    };
+  }
+
+  if (hairStyle === animeHairOptions[2]?.value) {
+    return {
+      back: 'M160 164 C178 92 228 60 280 60 C332 60 382 92 400 164 V248 L368 244 L360 292 L332 248 L280 300 L228 248 L200 292 L192 244 L160 248 Z',
+      front:
+        'M166 166 C194 98 238 74 280 74 C322 74 356 94 388 162 C352 138 324 138 298 156 C284 166 270 170 252 168 C226 166 198 162 166 166 Z',
+    };
+  }
+
+  return {
+    back: 'M166 166 C182 94 230 62 280 62 C330 62 378 94 394 166 V246 L366 240 L356 288 L324 246 L280 292 L236 246 L204 288 L194 240 L166 246 Z',
+    front:
+      'M170 170 C198 102 240 80 280 80 C320 80 356 102 390 168 C364 152 344 152 324 166 C308 178 294 184 280 184 C266 184 252 178 236 166 C218 152 198 152 170 170 Z',
+  };
+}
+
+function getTopVariant(shirtStyle: string): string {
+  if (shirtStyle === 'collar') {
     return `
-      <path d="M198 128 C214 82 246 62 280 62 C314 62 346 82 362 128 C336 114 318 116 302 134 C290 150 274 152 260 138 C244 122 224 118 198 128 Z" fill="${hairColor}" />
-      <path d="M204 152 C224 168 236 196 236 232 L198 250 C196 214 196 184 204 152 Z" fill="${hairColor}" />
-      <path d="M356 152 C364 184 364 214 362 250 L324 232 C324 196 336 168 356 152 Z" fill="${hairColor}" />
+      <path d="M222 346 L254 314 H306 L338 346 L318 370 L294 346 L280 366 L266 346 L242 370 Z" fill="#ffffff" />
+      <path d="M258 344 L280 374 L302 344" fill="${withOpacity('#ffffff', 0.22)}" />
     `;
   }
 
-  if (hairStyle === 'ดังโงะทวินบัน') {
+  if (shirtStyle === 'knit') {
     return `
-      <path d="M196 128 C214 82 246 62 280 62 C314 62 346 82 364 128 C344 118 326 120 310 138 C296 154 264 154 250 138 C234 120 216 118 196 128 Z" fill="${hairColor}" />
-      <rect x="192" y="178" width="28" height="120" rx="14" fill="${hairColor}" />
-      <rect x="340" y="178" width="28" height="120" rx="14" fill="${hairColor}" />
+      <rect x="226" y="338" width="108" height="36" rx="18" fill="${withOpacity('#ffffff', 0.24)}" />
+      <path d="M238 392 Q280 420 322 392" stroke="${withOpacity('#ffffff', 0.22)}" stroke-width="14" stroke-linecap="round" fill="none" />
+      <path d="M236 430 Q280 448 324 430" stroke="${withOpacity('#ffffff', 0.18)}" stroke-width="10" stroke-linecap="round" fill="none" />
+    `;
+  }
+
+  if (shirtStyle === animeShirtOptions[1]?.value) {
+    return `
+      <path d="M198 356 C218 324 244 308 280 308 C316 308 342 324 362 356" stroke="#ffffff" stroke-width="22" stroke-linecap="round" fill="none" />
+      <rect x="244" y="350" width="72" height="116" rx="16" fill="${withOpacity('#ffffff', 0.22)}" />
+      <rect x="266" y="350" width="16" height="116" rx="8" fill="${withOpacity('#ffffff', 0.34)}" />
+      <rect x="298" y="350" width="16" height="116" rx="8" fill="${withOpacity('#ffffff', 0.34)}" />
+    `;
+  }
+
+  if (shirtStyle === animeShirtOptions[2]?.value) {
+    return `
+      <path d="M202 358 C222 320 250 304 280 304 C310 304 338 320 358 358 L330 374 C316 350 300 340 280 340 C260 340 244 350 230 374 Z" fill="${withOpacity('#ffffff', 0.26)}" />
+      <path d="M212 378 C236 402 258 414 280 414 C302 414 324 402 348 378" stroke="${withOpacity('#ffffff', 0.24)}" stroke-width="16" stroke-linecap="round" fill="none" />
     `;
   }
 
   return `
-    <path d="M194 126 C214 80 246 60 280 60 C314 60 346 80 366 126 C346 120 328 126 312 146 C300 162 260 162 248 146 C232 126 214 120 194 126 Z" fill="${hairColor}" />
-    <rect x="186" y="174" width="34" height="132" rx="16" fill="${hairColor}" />
-    <rect x="340" y="174" width="34" height="132" rx="16" fill="${hairColor}" />
+    <rect x="236" y="342" width="88" height="28" rx="14" fill="#ffffff" />
+    <path d="M256 370 L280 392 L304 370" fill="${withOpacity('#ffffff', 0.28)}" />
   `;
 }
 
-function getAnimeFace(faceStyle: string, eyeColor: string): string {
-  if (faceStyle === 'ซึนเดเระ') {
+function getBodyVariant(bodyStyle: string): { shoulderLeft: number; shoulderRight: number } {
+  if (bodyStyle === 'tall') {
+    return { shoulderLeft: 194, shoulderRight: 366 };
+  }
+
+  if (bodyStyle === 'relaxed') {
+    return { shoulderLeft: 176, shoulderRight: 384 };
+  }
+
+  if (bodyStyle === 'wide') {
+    return { shoulderLeft: 164, shoulderRight: 396 };
+  }
+
+  if (bodyStyle === animePantsOptions[1]?.value) {
+    return { shoulderLeft: 188, shoulderRight: 372 };
+  }
+
+  if (bodyStyle === animePantsOptions[2]?.value) {
+    return { shoulderLeft: 172, shoulderRight: 388 };
+  }
+
+  return { shoulderLeft: 180, shoulderRight: 380 };
+}
+
+function getAccessory(accessoryStyle: string, outline: string, accessoryColor: string): string {
+  if (accessoryStyle === 'round-glasses') {
     return `
-      <path d="M232 192 L256 184" stroke="#4a2943" stroke-width="6" stroke-linecap="round" />
-      <path d="M328 184 L352 192" stroke="#4a2943" stroke-width="6" stroke-linecap="round" />
-      <ellipse cx="242" cy="220" rx="22" ry="16" fill="${eyeColor}" />
-      <ellipse cx="318" cy="220" rx="22" ry="16" fill="${eyeColor}" />
-      <rect x="220" y="206" width="44" height="10" rx="5" fill="#ffffff" opacity="0.68" />
-      <rect x="296" y="206" width="44" height="10" rx="5" fill="#ffffff" opacity="0.68" />
-      <circle cx="246" cy="222" r="7" fill="#ffffff" opacity="0.92" />
-      <circle cx="314" cy="222" r="7" fill="#ffffff" opacity="0.92" />
-      <ellipse cx="228" cy="254" rx="20" ry="10" fill="#f4a1b7" opacity="0.5" />
-      <ellipse cx="332" cy="254" rx="20" ry="10" fill="#f4a1b7" opacity="0.5" />
-      <path d="M272 268 Q280 276 288 268" stroke="#b85974" stroke-width="4" stroke-linecap="round" fill="none" />
+      <circle cx="214" cy="214" r="30" fill="none" stroke="${accessoryColor}" stroke-width="8" />
+      <circle cx="346" cy="214" r="30" fill="none" stroke="${accessoryColor}" stroke-width="8" />
+      <path d="M244 214 H316" stroke="${accessoryColor}" stroke-width="8" stroke-linecap="round" />
     `;
   }
 
-  if (faceStyle === 'ยิ้มอ่อนโยน') {
+  if (accessoryStyle === 'sunglasses') {
     return `
-      <ellipse cx="244" cy="220" rx="24" ry="20" fill="${eyeColor}" />
-      <ellipse cx="316" cy="220" rx="24" ry="20" fill="${eyeColor}" />
-      <circle cx="250" cy="214" r="8" fill="#ffffff" opacity="0.96" />
-      <circle cx="310" cy="214" r="8" fill="#ffffff" opacity="0.96" />
-      <circle cx="256" cy="224" r="4" fill="#ffffff" opacity="0.9" />
-      <circle cx="304" cy="224" r="4" fill="#ffffff" opacity="0.9" />
-      <ellipse cx="228" cy="252" rx="18" ry="9" fill="#f6b7c8" opacity="0.54" />
-      <ellipse cx="332" cy="252" rx="18" ry="9" fill="#f6b7c8" opacity="0.54" />
-      <path d="M258 270 Q280 288 302 270" stroke="#b85974" stroke-width="4" stroke-linecap="round" fill="none" />
+      <rect x="178" y="188" width="72" height="52" rx="24" fill="${withOpacity('#111827', 0.82)}" stroke="${accessoryColor}" stroke-width="8" />
+      <rect x="310" y="188" width="72" height="52" rx="24" fill="${withOpacity('#111827', 0.82)}" stroke="${accessoryColor}" stroke-width="8" />
+      <path d="M250 214 H310" stroke="${accessoryColor}" stroke-width="8" stroke-linecap="round" />
     `;
   }
 
+  if (accessoryStyle === 'earrings') {
+    return `
+      <circle cx="132" cy="236" r="10" fill="${accessoryColor}" />
+      <circle cx="428" cy="236" r="10" fill="${accessoryColor}" />
+    `;
+  }
+
+  if (accessoryStyle === animeShoesOptions[1]?.value) {
+    return `
+      <rect x="178" y="188" width="72" height="56" rx="28" fill="none" stroke="${accessoryColor}" stroke-width="8" />
+      <rect x="310" y="188" width="72" height="56" rx="28" fill="none" stroke="${accessoryColor}" stroke-width="8" />
+      <path d="M250 214 H310" stroke="${accessoryColor}" stroke-width="8" stroke-linecap="round" />
+    `;
+  }
+
+  if (accessoryStyle === animeShoesOptions[2]?.value) {
+    return `
+      <path d="M208 116 C226 88 252 74 280 74 C308 74 334 88 352 116 L344 146 H216 Z" fill="${accessoryColor}" />
+      <rect x="214" y="138" width="132" height="20" rx="10" fill="#f3d8a2" />
+    `;
+  }
+
+  return '';
+}
+
+function createAnimeAvatarDataUrl(config: CartoonAvatarConfig, mode: 'stage' | 'portrait'): string {
+  return createPlayfulAvatarDataUrl(config, mode);
+}
+
+function createAnimeAvatarSvg(config: CartoonAvatarConfig, mode: 'stage' | 'portrait'): string {
+  return createPlayfulAvatarSvg(config, mode);
+}
+
+function getAnimeHairBack(_hairStyle: string, hairColor: string): string {
+  return `<path d="M166 166 C182 94 230 62 280 62 C330 62 378 94 394 166 V246 L366 240 L356 288 L324 246 L280 292 L236 246 L204 288 L194 240 L166 246 Z" fill="${hairColor}" />`;
+}
+
+function getAnimeHairFront(_hairStyle: string, hairColor: string): string {
+  return `<path d="M170 170 C198 102 240 80 280 80 C320 80 356 102 390 168 C364 152 344 152 324 166 C308 178 294 184 280 184 C266 184 252 178 236 166 C218 152 198 152 170 170 Z" fill="${hairColor}" />`;
+}
+
+function getAnimeFace(_faceStyle: string, eyeColor: string): string {
   return `
     <ellipse cx="244" cy="218" rx="24" ry="22" fill="${eyeColor}" />
     <ellipse cx="316" cy="218" rx="24" ry="22" fill="${eyeColor}" />
     <circle cx="249" cy="210" r="9" fill="#ffffff" opacity="0.98" />
     <circle cx="311" cy="210" r="9" fill="#ffffff" opacity="0.98" />
-    <circle cx="256" cy="226" r="5" fill="#ffffff" opacity="0.92" />
-    <circle cx="304" cy="226" r="5" fill="#ffffff" opacity="0.92" />
-    <path d="M228 188 Q244 180 258 190" stroke="#5d3552" stroke-width="4" stroke-linecap="round" fill="none" />
-    <path d="M302 190 Q316 180 332 188" stroke="#5d3552" stroke-width="4" stroke-linecap="round" fill="none" />
-    <ellipse cx="226" cy="252" rx="18" ry="9" fill="#f8c0cf" opacity="0.54" />
-    <ellipse cx="334" cy="252" rx="18" ry="9" fill="#f8c0cf" opacity="0.54" />
-    <path d="M260 272 Q280 286 300 272" stroke="#b85974" stroke-width="4" stroke-linecap="round" fill="none" />
   `;
 }
 
-function getAnimeTop(shirtStyle: string, topColor: string): string {
-  if (shirtStyle === 'คาร์ดิแกน') {
-    return `
-      <path d="M214 332 L252 298 L280 338 L308 298 L346 332 L336 430 C320 438 302 442 280 442 C258 442 240 438 224 430 Z" fill="#fff7ef" />
-      <path d="M214 332 L248 300 L256 438 C244 436 234 434 224 430 Z" fill="${withOpacity(topColor, 0.88)}" />
-      <path d="M346 332 L312 300 L304 438 C316 436 326 434 336 430 Z" fill="${withOpacity(topColor, 0.88)}" />
-      <path d="M266 338 L280 354 L294 338" stroke="#c3618c" stroke-width="8" stroke-linecap="round" fill="none" />
-    `;
-  }
-
-  if (shirtStyle === 'ฮู้ดดี้') {
-    return `
-      <path d="M226 310 C238 286 256 274 280 274 C304 274 322 286 334 310 L320 330 C306 318 294 314 280 314 C266 314 254 318 240 330 Z" fill="${withOpacity(topColor, 0.8)}" />
-      <circle cx="264" cy="360" r="4" fill="#ffffff" />
-      <circle cx="296" cy="360" r="4" fill="#ffffff" />
-      <path d="M264 364 L260 392" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
-      <path d="M296 364 L300 392" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
-      <path d="M244 412 Q280 430 316 412" stroke="${withOpacity('#ffffff', 0.42)}" stroke-width="8" stroke-linecap="round" fill="none" />
-    `;
-  }
-
-  return `
-    <path d="M212 324 L248 292 H312 L348 324 L334 366 C314 352 298 346 280 346 C262 346 246 352 226 366 Z" fill="#ffffff" />
-    <path d="M240 298 H320 L350 330 L320 344 Q302 330 280 330 Q258 330 240 344 L210 330 Z" fill="${topColor}" />
-    <path d="M260 348 L280 372 L300 348 Z" fill="#f2b7cf" />
-  `;
+function getAnimeTop(_shirtStyle: string, topColor: string): string {
+  return `<path d="M240 298 H320 L350 330 L320 344 Q302 330 280 330 Q258 330 240 344 L210 330 Z" fill="${topColor}" />`;
 }
 
-function getAnimeBottom(bottomStyle: string, bottomColor: string): string {
-  if (bottomStyle === 'สแลคเรียบ') {
-    return `
-      <path d="M236 456 L272 456 L260 520 H228 Z" fill="${bottomColor}" />
-      <path d="M288 456 L324 456 L332 520 H300 Z" fill="${bottomColor}" />
-    `;
-  }
-
-  if (bottomStyle === 'ชอร์ตแคชชวล') {
-    return `
-      <path d="M224 430 C246 446 260 452 280 452 C300 452 314 446 336 430 L330 468 C312 480 298 486 280 486 C262 486 248 480 230 468 Z" fill="${bottomColor}" />
-      <rect x="236" y="468" width="28" height="54" rx="14" fill="#f3c6a6" />
-      <rect x="296" y="468" width="28" height="54" rx="14" fill="#f3c6a6" />
-    `;
-  }
-
-  return `
-    <path d="M224 428 C250 446 264 454 280 454 C296 454 310 446 336 428 L344 462 C326 476 310 484 280 484 C250 484 234 476 216 462 Z" fill="${bottomColor}" />
-    <path d="M228 438 L240 486" stroke="${withOpacity('#ffffff', 0.26)}" stroke-width="4" />
-    <path d="M248 450 L256 486" stroke="${withOpacity('#ffffff', 0.26)}" stroke-width="4" />
-    <path d="M312 450 L304 486" stroke="${withOpacity('#ffffff', 0.26)}" stroke-width="4" />
-    <path d="M332 438 L320 486" stroke="${withOpacity('#ffffff', 0.26)}" stroke-width="4" />
-    <rect x="238" y="484" width="26" height="40" rx="13" fill="#f3c6a6" />
-    <rect x="296" y="484" width="26" height="40" rx="13" fill="#f3c6a6" />
-  `;
+function getAnimeBottom(_bottomStyle: string, bottomColor: string): string {
+  return `<path d="M224 428 C250 446 264 454 280 454 C296 454 310 446 336 428 L344 462 C326 476 310 484 280 484 C250 484 234 476 216 462 Z" fill="${bottomColor}" />`;
 }
 
-function getAnimeShoes(shoesStyle: string, shoeColor: string): string {
-  if (shoesStyle === 'สนีกเกอร์') {
-    return `
-      <path d="M226 520 H282 C282 536 268 544 244 544 C232 544 224 538 226 520 Z" fill="#ffffff" />
-      <path d="M278 520 H334 C336 538 328 544 316 544 C292 544 278 536 278 520 Z" fill="#ffffff" />
-      <path d="M230 528 H280" stroke="${shoeColor}" stroke-width="4" stroke-linecap="round" />
-      <path d="M282 528 H330" stroke="${shoeColor}" stroke-width="4" stroke-linecap="round" />
-    `;
-  }
-
-  if (shoesStyle === 'บูตสั้น') {
-    return `
-      <path d="M230 506 H276 V544 H220 Q220 520 230 506 Z" fill="${shoeColor}" />
-      <path d="M286 506 H330 Q340 520 340 544 H284 Z" fill="${shoeColor}" />
-    `;
-  }
-
-  return `
-    <path d="M224 522 H280 Q274 542 246 542 Q222 542 224 522 Z" fill="${shoeColor}" />
-    <path d="M280 522 H336 Q338 542 314 542 Q286 542 280 522 Z" fill="${shoeColor}" />
-    <circle cx="242" cy="524" r="4" fill="#d8be83" />
-    <circle cx="318" cy="524" r="4" fill="#d8be83" />
-  `;
+function getAnimeShoes(_shoesStyle: string, shoeColor: string): string {
+  return `<rect x="236" y="520" width="36" height="12" rx="6" fill="${shoeColor}" /><rect x="288" y="520" width="36" height="12" rx="6" fill="${shoeColor}" />`;
 }
 
 function createSakuraPetal(x: number, y: number, rotation: number, fill: string): string {
-  return `
-    <g transform="translate(${x} ${y}) rotate(${rotation})">
-      <ellipse cx="-8" cy="0" rx="10" ry="6" fill="${fill}" />
-      <ellipse cx="8" cy="0" rx="10" ry="6" fill="${fill}" />
-      <ellipse cx="0" cy="-8" rx="6" ry="10" fill="${fill}" />
-      <ellipse cx="0" cy="8" rx="6" ry="10" fill="${fill}" />
-      <circle cx="0" cy="0" r="4" fill="#ffeef6" />
-    </g>
-  `;
+  return `<path d="M${x} ${y} C${x + 8} ${y - 12}, ${x + 22} ${y - 10}, ${x + 18} ${y + 4} C${x + 14} ${y + 18}, ${x - 2} ${y + 16}, ${x} ${y}" fill="${fill}" transform="rotate(${rotation} ${x} ${y})" />`;
 }
-
 function withOpacity(hexColor: string, opacity: number): string {
   const hex = hexColor.replace('#', '');
   const normalized =
@@ -2936,6 +3568,23 @@ function withOpacity(hexColor: string, opacity: number): string {
   const blue = Number.parseInt(normalized.slice(4, 6), 16);
   return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
 }
+
+void [
+  getEyeGlyphStyle,
+  getHairGlyphStyle,
+  getTopGlyphStyle,
+  getBodyGlyphStyle,
+  getAccessoryGlyphStyle,
+  createAnimeAvatarDataUrl,
+  createAnimeAvatarSvg,
+  getAnimeHairBack,
+  getAnimeHairFront,
+  getAnimeFace,
+  getAnimeTop,
+  getAnimeBottom,
+  getAnimeShoes,
+  createSakuraPetal,
+];
 
 function refreshBenefits(): void {
   if (isRefreshingBenefits.value) {
@@ -3019,25 +3668,25 @@ const instructorCoursePreview = computed<Course[]>(() => instructorCourses.value
 
 const instructorOverviewCards = computed(() => [
   {
-    label: 'รายวิชาทั้งหมด',
+    label: 'เธฃเธฒเธขเธงเธดเธเธฒเธ—เธฑเนเธเธซเธกเธ”',
     value: instructorCourses.value.length,
     icon: 'menu_book',
     color: '#F5A623',
   },
   {
-    label: 'รายวิชาที่เปิดสอน',
+    label: 'เธฃเธฒเธขเธงเธดเธเธฒเธ—เธตเนเน€เธเธดเธ”เธชเธญเธ',
     value: activeInstructorCoursesCount.value,
     icon: 'campaign',
     color: '#31B7C8',
   },
   {
-    label: 'ผู้เรียนรวม',
+    label: 'เธเธนเนเน€เธฃเธตเธขเธเธฃเธงเธก',
     value: totalInstructorLearners.value,
     icon: 'groups',
     color: '#49B37D',
   },
   {
-    label: 'พร้อมออก Certificate',
+    label: 'เธเธฃเนเธญเธกเธญเธญเธ Certificate',
     value: certificateReadyLearners.value,
     icon: 'workspace_premium',
     color: '#5B7CFA',
@@ -3087,25 +3736,25 @@ const profileStats = computed<ProfileStatCardItem[]>(() => {
   if (isTeachingRole.value) {
     return [
       {
-        label: 'รายวิชาทั้งหมด',
+        label: 'เธฃเธฒเธขเธงเธดเธเธฒเธ—เธฑเนเธเธซเธกเธ”',
         value: instructorCourses.value.length,
         icon: 'app_registration',
         tone: buildProfileStatTone('#F5A623'),
       },
       {
-        label: 'กำลังเปิดสอน',
+        label: 'เธเธณเธฅเธฑเธเน€เธเธดเธ”เธชเธญเธ',
         value: activeInstructorCoursesCount.value,
         icon: 'auto_stories',
         tone: buildProfileStatTone('#31B7C8'),
       },
       {
-        label: 'ผู้เรียนรวม',
+        label: 'เธเธนเนเน€เธฃเธตเธขเธเธฃเธงเธก',
         value: totalInstructorLearners.value,
         icon: 'groups',
         tone: buildProfileStatTone('#49B37D'),
       },
       {
-        label: 'รอออก Certificate',
+        label: 'เธฃเธญเธญเธญเธ Certificate',
         value: pendingCertificateCount.value,
         icon: 'workspace_premium',
         tone: buildProfileStatTone('#5B7CFA'),
@@ -3245,7 +3894,7 @@ function getHydratedBookmarkCourse(bookmark: CourseBookmark) {
 function getCoursePriceLabel(
   course: Pick<Course, 'isFree' | 'price'> | { isFree?: boolean; price?: number },
 ): string {
-  return course.isFree ? t('free') : `฿${(course.price ?? 0).toLocaleString()}`;
+  return course.isFree ? t('free') : `เธฟ${(course.price ?? 0).toLocaleString()}`;
 }
 
 function getSavedCourseRegisteredAtLabel(courseId: string): string {
@@ -3391,7 +4040,7 @@ function formatThaiBuddhistDate(isoDate: string): string {
     const day = date.toLocaleDateString('th-TH', { day: 'numeric' });
     const month = date.toLocaleDateString('th-TH', { month: 'long' });
     const year = date.getFullYear() + 543;
-    return `${day} ${month} พ.ศ. ${year}`;
+    return `${day} ${month} เธ.เธจ. ${year}`;
   }
   return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
 }
@@ -3410,7 +4059,7 @@ function formatThaiDateTime(date: Date): string {
     hour12: false,
   });
 
-  return isTh ? `${dateLabel} เวลา ${timeLabel} น.` : `${dateLabel} ${timeLabel}`;
+  return isTh ? `${dateLabel} เน€เธงเธฅเธฒ ${timeLabel} เธ.` : `${dateLabel} ${timeLabel}`;
 }
 
 function formatChatMessageTime(date: Date): string {
@@ -3427,7 +4076,7 @@ function getChatStatusLabel(status: ChatMessageStatus): string {
 }
 
 function getPaymentStatusLabel(status: string): string {
-  if (status === 'ชำระเงินสำเร็จ') {
+  if (status === 'เธเธณเธฃเธฐเน€เธเธดเธเธชเธณเน€เธฃเนเธ') {
     return t('profile.payments.statusPaid');
   }
 
@@ -3452,7 +4101,7 @@ function goToCourse(courseId: string, courseCode?: string, moodleCourseId?: numb
     const courseDetail = getCourseDetailById(courseId);
     $q.notify({
       type: 'info',
-      message: 'กำลังพาเข้าสู่ Moodle',
+      message: 'เธเธณเธฅเธฑเธเธเธฒเน€เธเนเธฒเธชเธนเน Moodle',
       position: 'top',
       timeout: 1800,
     });
@@ -3762,7 +4411,7 @@ function saveCroppedAvatar(): void {
 </script>
 
 <style lang="scss" scoped>
-// ── Hero ─────────────────────────────────────────────────────
+// โ”€โ”€ Hero โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .profile-hero {
   position: relative;
   background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #234e70 100%);
@@ -3923,7 +4572,7 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Content ──────────────────────────────────────────────────
+// โ”€โ”€ Content โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .profile-page {
   min-height: calc(100vh - 68px);
   display: flex;
@@ -4188,7 +4837,7 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Sidebar Menu ─────────────────────────────────────────────
+// โ”€โ”€ Sidebar Menu โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .profile-menu-card {
   border-radius: 14px !important;
   overflow: hidden;
@@ -4196,7 +4845,7 @@ function saveCroppedAvatar(): void {
   top: 140px;
   min-height: 490px;
   background: #ffffff;
-  border: 1px solid rgba(17, 24, 39, 0.12) !important; // ปรับความเข้มขอบให้ตรงกับที่อื่น
+  border: 1px solid rgba(17, 24, 39, 0.12) !important; // เธเธฃเธฑเธเธเธงเธฒเธกเน€เธเนเธกเธเธญเธเนเธซเนเธ•เธฃเธเธเธฑเธเธ—เธตเนเธญเธทเนเธ
   box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06) !important;
 }
 
@@ -4269,7 +4918,7 @@ function saveCroppedAvatar(): void {
   margin-right: 10px;
 }
 
-// ── Search Input ─────────────────────────────────────────────
+// โ”€โ”€ Search Input โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .student-course-panel {
   max-width: 1004px;
 }
@@ -4285,7 +4934,7 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Course List Header ───────────────────────────────────────
+// โ”€โ”€ Course List Header โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .course-list-header {
   display: flex;
   align-items: center;
@@ -4317,7 +4966,7 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Empty State ──────────────────────────────────────────────
+// โ”€โ”€ Empty State โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .empty-state-card {
   border-radius: 20px !important;
   background:
@@ -4336,7 +4985,7 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Unregister Dialog ────────────────────────────────────────
+// โ”€โ”€ Unregister Dialog โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .modern-card {
   border-radius: 18px !important;
   overflow: hidden;
@@ -4380,7 +5029,7 @@ function saveCroppedAvatar(): void {
   justify-content: center;
 }
 
-// ── Student Card Dialog ─────────────────────────────────────
+// โ”€โ”€ Student Card Dialog โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .student-card-dialog {
   width: 860px;
   max-width: 95vw;
@@ -4524,7 +5173,7 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Full Avatar Dialog ──────────────────────────────────────
+// โ”€โ”€ Full Avatar Dialog โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .full-avatar-dialog {
   position: relative;
   display: flex;
@@ -4555,7 +5204,7 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Instructor Chat ─────────────────────────────────────────
+// โ”€โ”€ Instructor Chat โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .chat-layout {
   align-items: stretch;
 }
@@ -4757,7 +5406,7 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Benefits ────────────────────────────────────────────────
+// โ”€โ”€ Benefits โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .benefits-section-header {
   gap: 16px;
 }
@@ -4805,7 +5454,7 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Responsive ───────────────────────────────────────────────
+// โ”€โ”€ Responsive โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 @media (max-width: 767px) {
   .profile-hero__content {
     padding: 36px 16px 32px;
@@ -4903,7 +5552,7 @@ function saveCroppedAvatar(): void {
   }
 }
 
-// ── Crop Dialog ──────────────────────────────────────────────
+// โ”€โ”€ Crop Dialog โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .crop-dialog {
   width: 400px;
   max-width: 95vw;
@@ -5384,13 +6033,14 @@ function saveCroppedAvatar(): void {
   min-height: 640px;
   padding: 24px;
   border-radius: 24px;
-  border: 1px solid rgba(110, 84, 122, 0.12);
+  border: 1px solid rgba(58, 86, 122, 0.12);
   background:
-    radial-gradient(circle at top right, rgba(242, 183, 207, 0.32), transparent 28%),
-    linear-gradient(180deg, #fffdfd 0%, #fff5fa 100%);
+    radial-gradient(circle at top right, rgba(123, 174, 224, 0.22), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(255, 208, 129, 0.2), transparent 34%),
+    linear-gradient(180deg, #fffdf8 0%, #f5fbff 100%);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 22px 44px rgba(126, 91, 121, 0.08);
+  box-shadow: 0 22px 44px rgba(58, 86, 122, 0.08);
 }
 
 .avatar-preview__header {
@@ -5402,7 +6052,7 @@ function saveCroppedAvatar(): void {
 
 .avatar-preview__eyebrow {
   margin: 0;
-  color: #c3618c;
+  color: #3d80c4;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -5411,7 +6061,7 @@ function saveCroppedAvatar(): void {
 
 .avatar-preview__title {
   margin: 8px 0 0;
-  color: #2d355f;
+  color: #28435f;
   font-size: 1.5rem;
   line-height: 1.15;
 }
@@ -5420,9 +6070,9 @@ function saveCroppedAvatar(): void {
   flex-shrink: 0;
   padding: 8px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(195, 97, 140, 0.2);
+  border: 1px solid rgba(61, 128, 196, 0.2);
   background: rgba(255, 255, 255, 0.74);
-  color: #7c4266;
+  color: #41688f;
   font-size: 0.8rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -5434,8 +6084,8 @@ function saveCroppedAvatar(): void {
   margin-top: 18px;
   padding: 18px;
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 244, 250, 0.9)), #fff;
-  border: 1px solid rgba(110, 84, 122, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(239, 248, 255, 0.92)), #fff;
+  border: 1px solid rgba(58, 86, 122, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5446,7 +6096,7 @@ function saveCroppedAvatar(): void {
   width: min(100%, 460px);
   aspect-ratio: 1;
   object-fit: contain;
-  filter: drop-shadow(0 24px 36px rgba(86, 55, 89, 0.16));
+  filter: drop-shadow(0 24px 36px rgba(58, 86, 122, 0.16));
 }
 
 .avatar-preview__footer {
@@ -5460,16 +6110,17 @@ function saveCroppedAvatar(): void {
   padding: 10px 14px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(110, 84, 122, 0.1);
-  color: #5f4a62;
+  border: 1px solid rgba(58, 86, 122, 0.1);
+  color: #45607a;
   font-size: 0.84rem;
   font-weight: 700;
 }
 
 .avatar-editor {
   background:
-    radial-gradient(circle at top right, rgba(245, 166, 35, 0.08), transparent 30%),
-    linear-gradient(180deg, #ffffff 0%, #fffdf9 100%);
+    radial-gradient(circle at top right, rgba(123, 174, 224, 0.12), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(255, 210, 126, 0.12), transparent 28%),
+    linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
   padding: 28px;
   border-radius: 24px;
   border: 1px solid rgba(17, 24, 39, 0.06);
@@ -5480,115 +6131,329 @@ function saveCroppedAvatar(): void {
   margin: 0 0 12px;
 }
 
+.avatar-editor__tabs {
+  border-radius: 20px;
+  border: 1px solid rgba(58, 86, 122, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+}
+
+.avatar-editor__tab-bar {
+  border-bottom: 1px solid rgba(58, 86, 122, 0.12);
+  padding: 6px 8px 0;
+}
+
+.avatar-editor__tab-bar :deep(.q-tab) {
+  min-height: 68px;
+  padding: 0 10px;
+  color: #a0a8b3;
+}
+
+.avatar-editor__tab-bar :deep(.q-tab__icon) {
+  font-size: 1.7rem;
+}
+
+.avatar-editor__tab-bar :deep(.q-tab--active) {
+  color: #2ea7ff;
+}
+
+.avatar-editor__panels {
+  min-height: 280px;
+  max-height: 640px;
+}
+
+.avatar-editor__panel {
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  max-height: 640px;
+  overflow-y: auto;
+}
+
 .avatar-editor__hint {
   margin-top: 18px;
   padding: 14px 16px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(243, 198, 216, 0.18), rgba(255, 244, 250, 0.92));
-  color: #74546d;
+  background: linear-gradient(135deg, rgba(123, 174, 224, 0.18), rgba(255, 248, 226, 0.92));
+  color: #536d87;
   font-size: 0.92rem;
   line-height: 1.5;
 }
 
-.editor-grid {
+.avatar-editor__sections {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px 12px;
+  gap: 14px;
 }
 
-.avatar-select {
-  :deep(.q-field__control) {
-    min-height: 48px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
-    transition:
-      background 0.2s ease,
-      box-shadow 0.2s ease,
-      transform 0.2s ease;
-  }
-
-  :deep(.q-field__control::before) {
-    border: 1px solid rgba(110, 84, 122, 0.16);
-  }
-
-  :deep(.q-field__control::after) {
-    border: 2px solid rgba($primary, 0.62);
-  }
-
-  :deep(.q-field__label) {
-    color: #7a6572;
-    font-size: 0.82rem;
-    font-weight: 700;
-  }
-
-  :deep(.q-field__native),
-  :deep(.q-field__input) {
-    color: #2d355f;
-    font-size: 0.92rem;
-    font-weight: 700;
-  }
-
-  :deep(.q-field__append) {
-    color: #c3618c;
-  }
-
-  &:hover :deep(.q-field__control) {
-    background: #ffffff;
-    box-shadow:
-      0 0 0 3px rgba(245, 166, 35, 0.1),
-      0 8px 18px rgba(126, 91, 121, 0.08);
-    transform: translateY(-1px);
-  }
-
-  &.q-field--focused :deep(.q-field__control) {
-    background: #ffffff;
-    box-shadow:
-      0 0 0 4px rgba(245, 166, 35, 0.14),
-      0 10px 22px rgba(126, 91, 121, 0.1);
-  }
+.avatar-control-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(58, 86, 122, 0.1);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 10px 24px rgba(35, 63, 96, 0.05);
 }
 
-.full {
-  grid-column: span 2;
+.avatar-control-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
-:global(.avatar-select-menu) {
-  margin-top: 8px;
-  padding: 8px;
-  border-radius: 16px;
-  border: 1px solid rgba(110, 84, 122, 0.12);
-  background:
-    radial-gradient(circle at top right, rgba(245, 166, 35, 0.1), transparent 34%),
-    linear-gradient(180deg, #ffffff 0%, #fffdf9 100%);
-  box-shadow:
-    0 18px 38px rgba(17, 24, 39, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+.avatar-control-card__header h4 {
+  margin: 0;
+  color: #28435f;
+  font-size: 0.95rem;
+  font-weight: 800;
 }
 
-:global(.avatar-select-menu .q-item) {
-  min-height: 40px;
-  margin: 2px 0;
-  border-radius: 12px;
-  color: #3c3440;
-  font-size: 0.9rem;
+.avatar-control-card__header span {
+  color: #6a7f93;
+  font-size: 0.82rem;
   font-weight: 700;
+}
+
+.avatar-swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.avatar-swatch {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  border: 2px solid rgba(58, 86, 122, 0.12);
+  background: #fff;
+  cursor: pointer;
   transition:
-    background 0.18s ease,
-    color 0.18s ease,
-    transform 0.18s ease;
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
 }
 
-:global(.avatar-select-menu .q-item:hover) {
-  background: rgba(245, 166, 35, 0.12);
-  color: #2d355f;
-  transform: translateX(2px);
+.avatar-swatch::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 12px;
+  background: var(--avatar-swatch-color);
 }
 
-:global(.avatar-select-menu .q-item.q-item--active),
-:global(.avatar-select-menu .q-item.q-manual-focusable--focused) {
-  background: linear-gradient(135deg, rgba(245, 166, 35, 0.22), rgba(243, 198, 216, 0.22));
-  color: #2d355f;
+.avatar-swatch:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(58, 86, 122, 0.12);
+}
+
+.avatar-swatch--active {
+  border-color: #5ab7ff;
+  box-shadow: 0 0 0 4px rgba(90, 183, 255, 0.18);
+}
+
+.avatar-swatch--large {
+  aspect-ratio: 1.25;
+}
+
+.avatar-tile-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.avatar-tile-grid--triple {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.avatar-tile-grid--quad {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.avatar-tile {
+  min-height: 92px;
+  padding: 10px 8px;
+  border: 2px solid rgba(58, 86, 122, 0.1);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfe 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.avatar-tile strong {
+  color: #45607a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.avatar-tile__preview {
+  width: 86px;
+  height: 86px;
+  object-fit: contain;
+  border-radius: 14px;
+}
+
+.avatar-tile__preview--face {
+  width: 72px;
+  height: 72px;
+}
+
+.avatar-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(58, 86, 122, 0.1);
+}
+
+.avatar-tile--active {
+  border-color: #5ab7ff;
+  background: linear-gradient(180deg, #ffffff 0%, #edf7ff 100%);
+  box-shadow: 0 0 0 4px rgba(90, 183, 255, 0.16);
+}
+
+.avatar-eye-glyph,
+.avatar-hair-glyph,
+.avatar-top-glyph,
+.avatar-body-glyph,
+.avatar-accessory-glyph {
+  position: relative;
+  display: block;
+}
+
+.avatar-eye-glyph {
+  width: 48px;
+  height: 28px;
+}
+
+.avatar-eye-glyph::before,
+.avatar-eye-glyph::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  width: 16px;
+  height: 20px;
+  border-radius: 50%;
+  background: #414141;
+}
+
+.avatar-eye-glyph::before {
+  left: 6px;
+}
+
+.avatar-eye-glyph::after {
+  right: 6px;
+}
+
+.avatar-eye-glyph[data-style='calm']::before,
+.avatar-eye-glyph[data-style='calm']::after {
+  border-radius: 14px 14px 18px 18px;
+}
+
+.avatar-eye-glyph[data-style='focused']::before,
+.avatar-eye-glyph[data-style='focused']::after {
+  transform: rotate(-10deg);
+}
+
+.avatar-hair-glyph {
+  width: 54px;
+  height: 34px;
+  border-radius: 18px 18px 12px 12px;
+  background: #6f4a3c;
+}
+
+.avatar-hair-glyph[data-style='sweep'] {
+  clip-path: polygon(10% 45%, 24% 10%, 44% 18%, 58% 0%, 76% 18%, 92% 46%, 82% 100%, 18% 100%);
+}
+
+.avatar-hair-glyph[data-style='wave'] {
+  border-radius: 20px;
+}
+
+.avatar-top-glyph,
+.avatar-body-glyph {
+  width: 46px;
+  height: 34px;
+  background: #a777bc;
+}
+
+.avatar-top-glyph[data-style='apron'] {
+  border-radius: 14px 14px 10px 10px;
+}
+
+.avatar-top-glyph[data-style='cape'] {
+  clip-path: polygon(14% 24%, 36% 0%, 64% 0%, 86% 24%, 100% 100%, 0% 100%);
+}
+
+.avatar-top-glyph:not([data-style='apron']):not([data-style='cape']) {
+  border-radius: 10px 10px 14px 14px;
+}
+
+.avatar-body-glyph[data-style='square'] {
+  border-radius: 10px;
+}
+
+.avatar-body-glyph[data-style='hero'] {
+  clip-path: polygon(18% 0%, 82% 0%, 100% 100%, 0% 100%);
+}
+
+.avatar-body-glyph:not([data-style='square']):not([data-style='hero']) {
+  border-radius: 18px 18px 10px 10px;
+}
+
+.avatar-accessory-glyph {
+  width: 54px;
+  height: 26px;
+}
+
+.avatar-accessory-glyph::before,
+.avatar-accessory-glyph::after {
+  content: '';
+  position: absolute;
+}
+
+.avatar-accessory-glyph[data-style='clean']::before {
+  inset: 8px 16px;
+  border-radius: 999px;
+  border: 3px dashed rgba(83, 102, 125, 0.45);
+}
+
+.avatar-accessory-glyph[data-style='glasses']::before,
+.avatar-accessory-glyph[data-style='glasses']::after {
+  top: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 4px solid #53667d;
+}
+
+.avatar-accessory-glyph[data-style='glasses']::before {
+  left: 6px;
+}
+
+.avatar-accessory-glyph[data-style='glasses']::after {
+  right: 6px;
+}
+
+.avatar-accessory-glyph[data-style='beanie']::before {
+  inset: 0;
+  border-radius: 18px 18px 8px 8px;
+  background: #6f4a3c;
+}
+
+.avatar-accessory-glyph[data-style='beanie']::after {
+  left: 8px;
+  right: 8px;
+  top: 12px;
+  height: 6px;
+  border-radius: 999px;
+  background: #f2d39f;
 }
 
 @media (max-width: 1024px) {
@@ -5619,9 +6484,18 @@ function saveCroppedAvatar(): void {
   .avatar-preview {
     min-height: 0;
   }
+
+  .avatar-swatch-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .avatar-tile-grid--triple,
+  .avatar-tile-grid--quad {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-// ── Payment Card ─────────────────────────────────────────────
+// โ”€โ”€ Payment Card โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
 .payment-card {
   position: relative;
   border-radius: 14px !important;
