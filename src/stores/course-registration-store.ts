@@ -167,6 +167,13 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
         }
       }
 
+      const alreadyAdded = this.registrations.some(
+        (r) => r.courseId === course.id && r.userId === userId,
+      );
+      if (alreadyAdded) {
+        return;
+      }
+
       const nextRegistrations: CourseRegistration[] = [
         ...this.registrations,
         {
