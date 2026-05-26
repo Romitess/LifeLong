@@ -212,7 +212,7 @@
                     unelevated
                     color="primary"
                     icon="menu_book"
-                    label="เธ”เธนเธฃเธฒเธขเธงเธดเธเธฒเธ—เธตเนเธฃเธฑเธเธเธดเธ”เธเธญเธ"
+                    label="ดูรายวิชาที่รับผิดชอบ"
                     no-caps
                     @click="goToInstructorCourses"
                   />
@@ -238,10 +238,8 @@
                   <q-card flat bordered class="instructor-work-card">
                     <div class="instructor-work-card__head">
                       <div>
-                        <h2>เธเธฒเธเธ—เธตเนเธ•เนเธญเธเธ—เธณเธ•เนเธญ</h2>
-                        <span
-                          >เธฃเธฒเธขเธเธฒเธฃเธ—เธตเนเธเธงเธฃเธเธฑเธ”เธเธฒเธฃเธเธฒเธเธฃเธฒเธขเธงเธดเธเธฒเธ—เธตเนเธเธธเธ“เธฃเธฑเธเธเธดเธ”เธเธญเธ</span
-                        >
+                        <h2>งานที่ต้องทำต่อ</h2>
+                        <span>รายการที่ควรจัดการจากรายวิชาที่คุณรับผิดชอบ</span>
                       </div>
                       <q-icon name="task_alt" size="30px" color="primary" />
                     </div>
@@ -254,14 +252,10 @@
                       >
                         <q-icon name="fact_check" />
                         <div>
-                          <strong
-                            >เธ•เธฃเธงเธเธชเธญเธเธฃเธฒเธขเธเธทเนเธญเธเธนเนเน€เธฃเธตเธขเธ</strong
-                          >
+                          <strong>ตรวจสอบรายชื่อผู้เรียน</strong>
                           <span
-                            >{{
-                              totalInstructorLearners.toLocaleString('th-TH')
-                            }}
-                            เธเธเนเธเธฃเธฐเธเธ mockup</span
+                            >{{ totalInstructorLearners.toLocaleString('th-TH') }} คนในระบบ
+                            mockup</span
                           >
                         </div>
                       </button>
@@ -272,12 +266,12 @@
                       >
                         <q-icon name="grading" />
                         <div>
-                          <strong>เธเธฑเธเธ—เธถเธเธเธฅเธเธฒเธฃเน€เธฃเธตเธขเธ</strong>
+                          <strong>บันทึกผลการเรียน</strong>
                           <span
                             >{{
                               pendingResultCourses.toLocaleString('th-TH')
                             }}
-                            เธฃเธฒเธขเธงเธดเธเธฒเธขเธฑเธเธ•เนเธญเธเธ•เธฃเธงเธเธเธฅ</span
+                            รายวิชายังต้องตรวจผล</span
                           >
                         </div>
                       </button>
@@ -288,12 +282,12 @@
                       >
                         <q-icon name="workspace_premium" />
                         <div>
-                          <strong>เธชเธฃเนเธฒเธ Certificate</strong>
+                          <strong>สร้าง Certificate</strong>
                           <span
                             >{{
                               certificateReadyLearners.toLocaleString('th-TH')
                             }}
-                            เธเธเธเนเธฒเธเน€เธเธ“เธ‘เนเธเธฃเนเธญเธกเธญเธญเธเน€เธญเธเธชเธฒเธฃ</span
+                            คนผ่านเกณฑ์พร้อมออกเอกสาร</span
                           >
                         </div>
                       </button>
@@ -303,11 +297,8 @@
                   <q-card flat bordered class="instructor-work-card">
                     <div class="instructor-work-card__head">
                       <div>
-                        <h2>เธชเธ–เธฒเธเธฐ Certificate</h2>
-                        <span
-                          >เธเธฃเธฐเน€เธกเธดเธเธเธฒเธเธเธฐเนเธเธ mockup
-                          เธชเธณเธซเธฃเธฑเธเน€เธ•เธฃเธตเธขเธก flow เธเนเธญเธเธ•เนเธญ backend</span
-                        >
+                        <h2>สถานะ Certificate</h2>
+                        <span>ประเมินจากคะแนน mockup สำหรับเตรียม flow เชื่อมต่อ backend</span>
                       </div>
                       <q-icon name="workspace_premium" size="30px" color="amber-8" />
                     </div>
@@ -315,15 +306,15 @@
                     <div class="certificate-status-row">
                       <div>
                         <strong>{{ certificateReadyLearners.toLocaleString('th-TH') }}</strong>
-                        <span>เธเธฃเนเธญเธกเธชเธฃเนเธฒเธ</span>
+                        <span>พร้อมสร้าง</span>
                       </div>
                       <div>
                         <strong>{{ generatedCertificateCount.toLocaleString('th-TH') }}</strong>
-                        <span>เธชเธฃเนเธฒเธเนเธฅเนเธง</span>
+                        <span>สร้างแล้ว</span>
                       </div>
                       <div>
                         <strong>{{ pendingCertificateCount.toLocaleString('th-TH') }}</strong>
-                        <span>เธขเธฑเธเนเธกเนเนเธ”เนเธชเธฃเนเธฒเธ</span>
+                        <span>ยังไม่ได้สร้าง</span>
                       </div>
                     </div>
                   </q-card>
@@ -332,19 +323,14 @@
                 <q-card flat bordered class="instructor-course-work-card">
                   <div class="instructor-course-work-card__head">
                     <div>
-                      <h2>เธฃเธฒเธขเธงเธดเธเธฒเธ—เธตเนเธฃเธฑเธเธเธดเธ”เธเธญเธ</h2>
-                      <span
-                        >{{
-                          instructorCourses.length.toLocaleString('th-TH')
-                        }}
-                        เธฃเธฒเธขเธงเธดเธเธฒ</span
-                      >
+                      <h2>รายวิชาที่รับผิดชอบ</h2>
+                      <span>{{ instructorCourses.length.toLocaleString('th-TH') }} รายวิชา</span>
                     </div>
                     <q-btn
                       flat
                       color="primary"
                       icon-right="arrow_forward"
-                      label="เธ”เธนเธ—เธฑเนเธเธซเธกเธ”"
+                      label="ดูทั้งหมด"
                       no-caps
                       @click="goToInstructorCourses"
                     />
@@ -364,7 +350,7 @@
                           {{ course.enrolledCount.toLocaleString('th-TH') }}/{{
                             course.maxSeats.toLocaleString('th-TH')
                           }}
-                          เธเธนเนเน€เธฃเธตเธขเธ
+                          ผู้เรียน
                         </div>
                       </div>
                       <div class="instructor-course-item__actions">
@@ -373,7 +359,7 @@
                           outline
                           color="primary"
                           icon="edit"
-                          label="เธเธฑเธ”เธเธฒเธฃ"
+                          label="จัดการ"
                           no-caps
                           @click="goToInstructorCourseWorkspace(course.id)"
                         />
@@ -392,13 +378,10 @@
 
                   <div v-else class="instructor-empty-state">
                     <q-icon name="school" size="44px" color="primary" />
-                    <strong
-                      >เธขเธฑเธเนเธกเนเธกเธตเธฃเธฒเธขเธงเธดเธเธฒเธ—เธตเนเธฃเธฑเธเธเธดเธ”เธเธญเธ</strong
-                    >
-                    <span
-                      >เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธเธ”เนเธงเธขเธเธฑเธเธเธตเธเธนเนเธชเธญเธเธ—เธตเนเธกเธตเธฃเธฒเธขเธงเธดเธเธฒ
-                      เธซเธฃเธทเธญเนเธซเนเธเธนเนเธ”เธนเนเธฅเธฃเธฐเธเธเธชเธฃเนเธฒเธเธฃเธฒเธขเธงเธดเธเธฒเนเธซเน</span
-                    >
+                    <strong>ยังไม่มีรายวิชาที่รับผิดชอบ</strong>
+                    <span>
+                      เข้าสู่ระบบด้วยบัญชีผู้สอนที่มีรายวิชา หรือให้ผู้ดูแลระบบสร้างรายวิชาให้
+                    </span>
                   </div>
                 </q-card>
               </div>
@@ -1202,8 +1185,7 @@
                         </div>
                       </div>
                       <div class="skill-radar-card__meta-copy">
-                        เธชเธฃเธธเธเธเธฐเนเธเธเธเธฒเธเธ—เธฑเธเธฉเธฐเธขเนเธญเธข
-                        {{ allSkillMetrics.length }} เธ”เนเธฒเธ
+                        Skill summary across {{ allSkillMetrics.length }} areas
                       </div>
                     </div>
 
@@ -1301,9 +1283,7 @@
                       </div>
 
                       <div class="skill-radar-legend">
-                        <div class="skill-radar-legend__title">
-                          เธฃเธฒเธขเธเธฒเธฃเธ—เธฑเธเธฉเธฐเนเธเธเธฃเธฒเธ
-                        </div>
+                        <div class="skill-radar-legend__title">Skill list</div>
                         <div class="skill-radar-legend__items">
                           <div
                             v-for="axis in radarAxisItems"
@@ -1319,7 +1299,7 @@
                             <div class="skill-radar-legend__copy">
                               <strong>{{ axis.shortLabel }}</strong>
                               <span
-                                >{{ axis.categoryShortTitle }} โ€ข
+                                >{{ axis.categoryShortTitle }} -
                                 {{ formatSkillScore(axis.score) }}/5</span
                               >
                             </div>
@@ -1477,11 +1457,7 @@
                         <BaseButton
                           color="primary"
                           icon="download"
-                          :label="
-                            locale === 'th'
-                              ? 'เธ”เธฒเธงเธเนเนเธซเธฅเธ”เนเธเน€เธชเธฃเนเธ'
-                              : 'Download Receipt'
-                          "
+                          :label="locale === 'th' ? 'ดาวน์โหลดใบเสร็จ' : 'Download Receipt'"
                           no-caps
                           hover-lift
                           class="payment-card__action"
@@ -2137,16 +2113,16 @@ interface CartoonAvatarConfig {
 const FULL_AVATAR_STORAGE_KEY = 'lll-profile-avatar-full';
 const CARTOON_AVATAR_STORAGE_KEY = 'lll-cartoon-avatar-config';
 const DEFAULT_CARTOON_AVATAR: CartoonAvatarConfig = {
-  body: 'เธเธฒเธงเธญเธกเธเธกเธเธน',
-  face: 'เธ•เธฒเน€เธเธฅเนเธเธเธฃเธฐเธเธฒเธข',
+  body: 'warm-sun',
+  face: 'bright',
   eyeColor: 'amber',
-  hair: 'เธฎเธดเน€เธกเธฐเธเธฑเธ•',
+  hair: 'soft-bob',
   hairColor: 'Midnight Navy',
-  shirt: 'เน€เธเน€เธฅเธญเธฃเน',
+  shirt: 'classic-tee',
   shirtColor: 'Midnight Navy',
-  pants: 'เธเธฃเธฐเนเธเธฃเธเธเธฅเธตเธ•',
+  pants: 'soft-pants',
   pantsColor: 'Midnight Navy',
-  shoes: 'เนเธฅเธเน€เธเธญเธฃเน',
+  shoes: 'clean',
   accessoryColor: 'violet',
 };
 const storedCartoonAvatar = getStoredCartoonAvatar();
@@ -2252,15 +2228,15 @@ const form = reactive<UserProfileUpdate>({
 });
 
 const cartoonAvatar = reactive({
-  body: 'เธเธดเธงเนเธช',
-  face: 'เนเธเธฃเธเธเธฅเธฑเนเธ เนเธกเนเธซเธชเธธเธ”เธเธตเธ”',
-  hair: 'เธเนเธงเธเธเธตเนเธขเธธเนเธ',
-  hairColor: 'เธ”เธณเธ—เธกเธดเธฌ',
-  shirt: 'เธขเธทเธ”เธเนเธญเธเธเธธเธ”',
-  shirtColor: 'เธ”เธณเธ—เธกเธดเธฌ',
-  pants: 'เธเธฒเธชเธฑเนเธ',
-  pantsColor: 'เธ”เธณเธ—เธกเธดเธฌ',
-  shoes: 'เธเนเธฒเนเธ',
+  body: 'warm-sun',
+  face: 'bright',
+  hair: 'soft-bob',
+  hairColor: 'Midnight Navy',
+  shirt: 'classic-tee',
+  shirtColor: 'Midnight Navy',
+  pants: 'soft-pants',
+  pantsColor: 'Midnight Navy',
+  shoes: 'clean',
 }) as CartoonAvatarConfig;
 
 Object.assign(cartoonAvatar, DEFAULT_AVATAR_EXTRAS);
@@ -2268,22 +2244,19 @@ Object.assign(cartoonAvatar, DEFAULT_AVATAR_EXTRAS);
 const activeAvatarTab = ref('skin');
 
 const animeBodyOptions: AvatarOption[] = [
-  { label: 'เธเธฒเธงเธญเธกเธเธกเธเธน', value: 'เธเธฒเธงเธญเธกเธเธกเธเธน' },
-  { label: 'เน€เธเธเธเนเธณเธเธถเนเธ', value: 'เน€เธเธเธเนเธณเธเธถเนเธ' },
-  {
-    label: 'เนเธ—เธเธญเธธเนเธเธเธฒเธฃเธฒเน€เธกเธฅ',
-    value: 'เนเธ—เธเธญเธธเนเธเธเธฒเธฃเธฒเน€เธกเธฅ',
-  },
+  { label: 'Warm Sun', value: 'warm-sun' },
+  { label: 'Honey Glow', value: 'honey-glow' },
+  { label: 'Soft Cocoa', value: 'soft-cocoa' },
 ];
 const animeFaceOptions: AvatarOption[] = [
-  { label: 'เธ•เธฒเน€เธเธฅเนเธเธเธฃเธฐเธเธฒเธข', value: 'เธ•เธฒเน€เธเธฅเนเธเธเธฃเธฐเธเธฒเธข' },
-  { label: 'เธขเธดเนเธกเธญเนเธญเธเนเธขเธ', value: 'เธขเธดเนเธกเธญเนเธญเธเนเธขเธ' },
-  { label: 'เธเธถเธเน€เธ”เน€เธฃเธฐ', value: 'เธเธถเธเน€เธ”เน€เธฃเธฐ' },
+  { label: 'Bright', value: 'bright' },
+  { label: 'Soft Smile', value: 'soft-smile' },
+  { label: 'Focused', value: 'focused' },
 ];
 const animeHairOptions: AvatarOption[] = [
-  { label: 'เธฎเธดเน€เธกเธฐเธเธฑเธ•', value: 'เธฎเธดเน€เธกเธฐเธเธฑเธ•' },
-  { label: 'เธงเธนเธฅเนเธเธเธฑเธ•', value: 'เธงเธนเธฅเนเธเธเธฑเธ•' },
-  { label: 'เธ”เธฑเธเนเธเธฐเธ—เธงเธดเธเธเธฑเธ', value: 'เธ”เธฑเธเนเธเธฐเธ—เธงเธดเธเธเธฑเธ' },
+  { label: 'Soft Bob', value: 'soft-bob' },
+  { label: 'Side Sweep', value: 'side-sweep' },
+  { label: 'Gentle Wave', value: 'gentle-wave' },
 ];
 const animeColorOptions: AvatarOption[] = [
   { label: 'Midnight Navy', value: 'Midnight Navy' },
@@ -2292,19 +2265,19 @@ const animeColorOptions: AvatarOption[] = [
   { label: 'Sakura Rose', value: 'Sakura Rose' },
 ];
 const animeShirtOptions: AvatarOption[] = [
-  { label: 'เน€เธเน€เธฅเธญเธฃเน', value: 'เน€เธเน€เธฅเธญเธฃเน' },
-  { label: 'เธเธฒเธฃเนเธ”เธดเนเธเธ', value: 'เธเธฒเธฃเนเธ”เธดเนเธเธ' },
-  { label: 'เธฎเธนเนเธ”เธ”เธตเน', value: 'เธฎเธนเนเธ”เธ”เธตเน' },
+  { label: 'Classic Tee', value: 'classic-tee' },
+  { label: 'Cardigan', value: 'cardigan' },
+  { label: 'Hoodie', value: 'hoodie' },
 ];
 const animePantsOptions: AvatarOption[] = [
-  { label: 'เธเธฃเธฐเนเธเธฃเธเธเธฅเธตเธ•', value: 'เธเธฃเธฐเนเธเธฃเธเธเธฅเธตเธ•' },
-  { label: 'เธชเนเธฅเธเน€เธฃเธตเธขเธ', value: 'เธชเนเธฅเธเน€เธฃเธตเธขเธ' },
-  { label: 'เธเธญเธฃเนเธ•เนเธเธเธเธงเธฅ', value: 'เธเธญเธฃเนเธ•เนเธเธเธเธงเธฅ' },
+  { label: 'Soft Pants', value: 'soft-pants' },
+  { label: 'Slim', value: 'slim' },
+  { label: 'Comfort', value: 'comfort' },
 ];
 const animeShoesOptions: AvatarOption[] = [
-  { label: 'เนเธฅเธเน€เธเธญเธฃเน', value: 'เนเธฅเธเน€เธเธญเธฃเน' },
-  { label: 'เธชเธเธตเธเน€เธเธญเธฃเน', value: 'เธชเธเธตเธเน€เธเธญเธฃเน' },
-  { label: 'เธเธนเธ•เธชเธฑเนเธ', value: 'เธเธนเธ•เธชเธฑเนเธ' },
+  { label: 'Clean', value: 'clean' },
+  { label: 'Sneakers', value: 'sneakers' },
+  { label: 'Boots', value: 'boots' },
 ];
 
 const skinToneOptions: AvatarOption[] = [
@@ -2455,28 +2428,20 @@ const cognitiveSkills = computed<SkillMetric[]>(() => [
   {
     id: 'critical-thinking',
     shortLabel: 'Critical Thinking',
-    label:
-      locale.value === 'th'
-        ? '1.1 เธเธฒเธฃเธเธดเธ”เธงเธดเน€เธเธฃเธฒเธฐเธซเนเธญเธขเนเธฒเธเน€เธเนเธเธฃเธฐเธเธ'
-        : '1.1 Critical Thinking',
+    label: locale.value === 'th' ? '1.1 Critical Thinking' : '1.1 Critical Thinking',
     score: 4.4,
   },
   {
     id: 'creative-thinking',
     shortLabel: 'Creative Thinking',
-    label:
-      locale.value === 'th'
-        ? '1.2 เธเธฒเธฃเธเธดเธ”เน€เธเธดเธเธชเธฃเนเธฒเธเธชเธฃเธฃเธเน'
-        : '1.2 Creative Thinking',
+    label: locale.value === 'th' ? '1.2 Creative Thinking' : '1.2 Creative Thinking',
     score: 4.1,
   },
   {
     id: 'learning-to-learn',
     shortLabel: 'Learning to Learn',
     label:
-      locale.value === 'th'
-        ? '1.3 เธเธฒเธฃเน€เธฃเธตเธขเธเธฃเธนเนเธ”เนเธงเธขเธ•เธเน€เธญเธ'
-        : '1.3 Learning to Learn / Self-Regulation',
+      locale.value === 'th' ? '1.3 Learning to Learn' : '1.3 Learning to Learn / Self-Regulation',
     score: 3.8,
   },
 ]);
@@ -2485,23 +2450,19 @@ const socialSkills = computed<SkillMetric[]>(() => [
   {
     id: 'collaboration',
     shortLabel: 'Collaboration',
-    label:
-      locale.value === 'th' ? '2.1 เธเธฒเธฃเธ—เธณเธเธฒเธเธฃเนเธงเธกเธเธฑเธ' : '2.1 Collaboration',
+    label: locale.value === 'th' ? '2.1 Collaboration' : '2.1 Collaboration',
     score: 4.2,
   },
   {
     id: 'empathy',
     shortLabel: 'Empathy',
-    label: locale.value === 'th' ? '2.2 เธเธงเธฒเธกเน€เธเนเธฒเนเธเธเธนเนเธญเธทเนเธ' : '2.2 Empathy',
+    label: locale.value === 'th' ? '2.2 Empathy' : '2.2 Empathy',
     score: 3.7,
   },
   {
     id: 'responsibility',
     shortLabel: 'Responsibility',
-    label:
-      locale.value === 'th'
-        ? '2.3 เธเธงเธฒเธกเธฃเธฑเธเธเธดเธ”เธเธญเธเนเธฅเธฐเธเธงเธฒเธกเน€เธเธทเนเธญเธกเธฑเนเธเนเธเธ•เธเน€เธญเธ'
-        : '2.3 Responsibility / Self-efficacy',
+    label: locale.value === 'th' ? '2.3 Responsibility' : '2.3 Responsibility / Self-efficacy',
     score: 4.0,
   },
 ]);
@@ -2510,25 +2471,19 @@ const practicalSkills = computed<SkillMetric[]>(() => [
   {
     id: 'digital-literacy',
     shortLabel: 'Digital Literacy',
-    label:
-      locale.value === 'th'
-        ? '3.1 เธเธฒเธฃเธฃเธนเนเน€เธ—เนเธฒเธ—เธฑเธเธ”เธดเธเธดเธ—เธฑเธฅ'
-        : '3.1 Digital Literacy',
+    label: locale.value === 'th' ? '3.1 Digital Literacy' : '3.1 Digital Literacy',
     score: 4.5,
   },
   {
     id: 'life-skills',
     shortLabel: 'Life Skills',
-    label: locale.value === 'th' ? '3.2 เธ—เธฑเธเธฉเธฐเธเธตเธงเธดเธ•' : '3.2 Life Skills',
+    label: locale.value === 'th' ? '3.2 Life Skills' : '3.2 Life Skills',
     score: 3.6,
   },
   {
     id: 'financial-literacy',
     shortLabel: 'Financial Literacy',
-    label:
-      locale.value === 'th'
-        ? '3.3 เธเธงเธฒเธกเธฃเธนเนเธ—เธฒเธเธเธฒเธฃเน€เธเธดเธ'
-        : '3.3 Financial Literacy',
+    label: locale.value === 'th' ? '3.3 Financial Literacy' : '3.3 Financial Literacy',
     score: 3.2,
   },
   {
@@ -2544,26 +2499,21 @@ const skillCategories = computed<SkillCategory[]>(() => [
   {
     title:
       locale.value === 'th'
-        ? 'เธ”เนเธฒเธเธเธฒเธฃเธเธดเธ”เนเธฅเธฐเธเธฒเธฃเน€เธฃเธตเธขเธเธฃเธนเน'
+        ? 'Cognitive & Metacognitive Skills'
         : 'Cognitive & Metacognitive Skills',
     shortTitle: 'Cognitive',
     accent: '#f5a623',
     items: cognitiveSkills.value,
   },
   {
-    title:
-      locale.value === 'th'
-        ? 'เธ”เนเธฒเธเธชเธฑเธเธเธกเนเธฅเธฐเธญเธฒเธฃเธกเธ“เน'
-        : 'Social & Emotional Skills',
+    title: locale.value === 'th' ? 'Social & Emotional Skills' : 'Social & Emotional Skills',
     shortTitle: 'Social',
     accent: '#3aa6b9',
     items: socialSkills.value,
   },
   {
     title:
-      locale.value === 'th'
-        ? 'เธ”เนเธฒเธเธ—เธฑเธเธฉเธฐเนเธเนเธเธฃเธดเธ'
-        : 'Practical and physical skills',
+      locale.value === 'th' ? 'Practical and physical skills' : 'Practical and physical skills',
     shortTitle: 'Practical',
     accent: '#49b37d',
     items: practicalSkills.value,
@@ -2672,7 +2622,7 @@ function formatSkillScore(score: number): string {
   return score.toFixed(1);
 }
 
-// Crop dialog state
+// Keep the border visible against the light card background.
 const showCropDialog = ref(false);
 const cropImageSrc = ref<string | null>(null);
 const cropZoom = ref(1);
@@ -3610,25 +3560,25 @@ const instructorCoursePreview = computed<Course[]>(() => instructorCourses.value
 
 const instructorOverviewCards = computed(() => [
   {
-    label: 'เธฃเธฒเธขเธงเธดเธเธฒเธ—เธฑเนเธเธซเธกเธ”',
+    label: 'รายวิชาทั้งหมด',
     value: instructorCourses.value.length,
     icon: 'menu_book',
     color: '#F5A623',
   },
   {
-    label: 'เธฃเธฒเธขเธงเธดเธเธฒเธ—เธตเนเน€เธเธดเธ”เธชเธญเธ',
+    label: 'รายวิชาที่เปิดสอน',
     value: activeInstructorCoursesCount.value,
     icon: 'campaign',
     color: '#31B7C8',
   },
   {
-    label: 'เธเธนเนเน€เธฃเธตเธขเธเธฃเธงเธก',
+    label: 'ผู้เรียนรวม',
     value: totalInstructorLearners.value,
     icon: 'groups',
     color: '#49B37D',
   },
   {
-    label: 'เธเธฃเนเธญเธกเธญเธญเธ Certificate',
+    label: 'พร้อมออก Certificate',
     value: certificateReadyLearners.value,
     icon: 'workspace_premium',
     color: '#5B7CFA',
@@ -3678,25 +3628,25 @@ const profileStats = computed<ProfileStatCardItem[]>(() => {
   if (isTeachingRole.value) {
     return [
       {
-        label: 'เธฃเธฒเธขเธงเธดเธเธฒเธ—เธฑเนเธเธซเธกเธ”',
+        label: 'รายวิชาทั้งหมด',
         value: instructorCourses.value.length,
         icon: 'app_registration',
         tone: buildProfileStatTone('#F5A623'),
       },
       {
-        label: 'เธเธณเธฅเธฑเธเน€เธเธดเธ”เธชเธญเธ',
+        label: 'กำลังเปิดสอน',
         value: activeInstructorCoursesCount.value,
         icon: 'auto_stories',
         tone: buildProfileStatTone('#31B7C8'),
       },
       {
-        label: 'เธเธนเนเน€เธฃเธตเธขเธเธฃเธงเธก',
+        label: 'ผู้เรียนรวม',
         value: totalInstructorLearners.value,
         icon: 'groups',
         tone: buildProfileStatTone('#49B37D'),
       },
       {
-        label: 'เธฃเธญเธญเธญเธ Certificate',
+        label: 'รอออก Certificate',
         value: pendingCertificateCount.value,
         icon: 'workspace_premium',
         tone: buildProfileStatTone('#5B7CFA'),
@@ -3963,7 +3913,7 @@ function getHydratedBookmarkCourse(bookmark: CourseBookmark) {
 function getCoursePriceLabel(
   course: Pick<Course, 'isFree' | 'price'> | { isFree?: boolean; price?: number },
 ): string {
-  return course.isFree ? t('free') : `เธฟ${(course.price ?? 0).toLocaleString()}`;
+  return course.isFree ? t('free') : `THB ${(course.price ?? 0).toLocaleString()}`;
 }
 
 function getSavedCourseRegisteredAtLabel(courseId: string): string {
@@ -4109,7 +4059,7 @@ function formatThaiBuddhistDate(isoDate: string): string {
     const day = date.toLocaleDateString('th-TH', { day: 'numeric' });
     const month = date.toLocaleDateString('th-TH', { month: 'long' });
     const year = date.getFullYear() + 543;
-    return `${day} ${month} เธ.เธจ. ${year}`;
+    return `${day} ${month} B.E. ${year}`;
   }
   return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
 }
@@ -4128,7 +4078,7 @@ function formatThaiDateTime(date: Date): string {
     hour12: false,
   });
 
-  return isTh ? `${dateLabel} เน€เธงเธฅเธฒ ${timeLabel} เธ.` : `${dateLabel} ${timeLabel}`;
+  return isTh ? `${dateLabel} at ${timeLabel}` : `${dateLabel} ${timeLabel}`;
 }
 
 function formatChatMessageTime(date: Date): string {
@@ -4145,7 +4095,7 @@ function getChatStatusLabel(status: ChatMessageStatus): string {
 }
 
 function getPaymentStatusLabel(status: string): string {
-  if (status === 'เธเธณเธฃเธฐเน€เธเธดเธเธชเธณเน€เธฃเนเธ') {
+  if (status === 'ชำระเงินสำเร็จ') {
     return t('profile.payments.statusPaid');
   }
 
@@ -4170,7 +4120,7 @@ function goToCourse(courseId: string, courseCode?: string, moodleCourseId?: numb
     const courseDetail = getCourseDetailById(courseId);
     $q.notify({
       type: 'info',
-      message: 'เธเธณเธฅเธฑเธเธเธฒเน€เธเนเธฒเธชเธนเน Moodle',
+      message: 'Opening Moodle',
       position: 'top',
       timeout: 1800,
     });
@@ -4932,7 +4882,7 @@ function saveCroppedAvatar(): void {
   top: 140px;
   min-height: 490px;
   background: #ffffff;
-  border: 1px solid rgba(17, 24, 39, 0.12) !important; // เธเธฃเธฑเธเธเธงเธฒเธกเน€เธเนเธกเธเธญเธเนเธซเนเธ•เธฃเธเธเธฑเธเธ—เธตเนเธญเธทเนเธ
+  border: 1px solid rgba(17, 24, 39, 0.12) !important; // Keep the border visible against the light card background.
   box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06) !important;
 }
 
