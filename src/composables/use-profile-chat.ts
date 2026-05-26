@@ -1,0 +1,327 @@
+import { ref, computed, nextTick, watch, onUnmounted, type Ref, type ComputedRef } from 'vue';
+import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
+import { io, type Socket } from 'socket.io-client';
+import { api } from 'src/boot/axios';
+import { useAuthStore } from 'src/stores/auth-store';
+import type { CourseRegistration } from 'src/stores/course-registration-store';
+import type { RegisteredCourseEntry } from 'src/composables/use-my-registered-courses';
+
+export type ChatMessageSender = 'learner' | 'system' | 'instructor';
+export type ChatMessageStatus = 'sent' | 'read';
+
+export interface ChatMessage {
+  id: string;
+  courseId: string;
+  sender: ChatMessageSender;
+  body: string;
+  sentAt: Date;
+  status: ChatMessageStatus;
+}
+
+interface ApiChatMessage {
+  id: number;
+  typeSender: string | null;
+  message: string | null;
+  chatTime: string | null;
+  status: string | null;
+}
+
+export function useProfileChat(
+  myRegistrations: Ref<CourseRegistration[]> | ComputedRef<CourseRegistration[]>,
+  myRegisteredCourseEntries: Ref<RegisteredCourseEntry[]> | ComputedRef<RegisteredCourseEntry[]>,
+  activeMenu: Ref<string>,
+) {
+  const { t, locale } = useI18n();
+  const $q = useQuasar();
+  const authStore = useAuthStore();
+
+  const selectedChatCourseId = ref<string | null>(null);
+  const chatDraft = ref('');
+  const chatMessages = ref<ChatMessage[]>([]);
+  const chatMessagesRef = ref<HTMLElement | null>(null);
+  let socket: Socket | null = null;
+
+  const selectedChatEntry = computed<RegisteredCourseEntry | null>(() => {
+    if (myRegisteredCourseEntries.value.length === 0) {
+      return null;
+    }
+
+    return (
+      myRegisteredCourseEntries.value.find(
+        (entry) => entry.course.id === selectedChatCourseId.value,
+      ) ??
+      myRegisteredCourseEntries.value[0] ??
+      null
+    );
+  });
+
+  const chatThreadMessages = computed<ChatMessage[]>(() => {
+    if (!selectedChatEntry.value) {
+      return [];
+    }
+
+    return chatMessages.value.filter(
+      (message) => message.courseId === selectedChatEntry.value?.course.id,
+    );
+  });
+
+  const canSendChatMessage = computed<boolean>(
+    () => Boolean(selectedChatEntry.value) && chatDraft.value.trim().length > 0,
+  );
+
+  async function fetchChatMessages(): Promise<void> {
+    const enrollId = selectedChatEntry.value?.registration?.enrollId;
+    if (!enrollId) {
+      chatMessages.value = [];
+      return;
+    }
+
+    try {
+      const { data } = await api.get<ApiChatMessage[]>(`/api/lltchat/enroll/${enrollId}`);
+      chatMessages.value = data.map((chat: ApiChatMessage) => ({
+        id: String(chat.id),
+        courseId: selectedChatEntry.value?.course.id || '',
+        sender:
+          chat.typeSender === 'T' ? 'instructor' : chat.typeSender === 'U' ? 'learner' : 'system',
+        body: chat.message || '',
+        sentAt: chat.chatTime ? new Date(chat.chatTime) : new Date(),
+        status: chat.status === 'R' ? 'read' : 'sent',
+      }));
+    } catch (error) {
+      console.error('Failed to fetch chat messages', error);
+    }
+  }
+
+  function connectChatSocket() {
+    if (socket) return;
+    const baseUrl =
+      (import.meta.env.VITE_API_URL as string) ||
+      (import.meta.env.VITE_BACKEND_URL as string) ||
+      '';
+    const origin = baseUrl.startsWith('http') ? new URL(baseUrl).origin : window.location.origin;
+
+    socket = io(`${origin}/chat`);
+
+    socket.on('connect', () => {
+      const enrollId = selectedChatEntry.value?.registration?.enrollId;
+      if (enrollId) {
+        socket?.emit('joinRoom', { enrollId });
+      }
+    });
+
+    socket.on(
+      'newMessage',
+      (msg: {
+        enrollId: number;
+        id: number;
+        sender: ChatMessageSender;
+        body: string;
+        sentAt: string;
+        status: ChatMessageStatus;
+      }) => {
+        const enrollId = selectedChatEntry.value?.registration?.enrollId;
+        if (enrollId && msg.enrollId === enrollId) {
+          const exists = chatMessages.value.some((m) => String(m.id) === String(msg.id));
+          if (!exists) {
+            chatMessages.value.push({
+              id: String(msg.id),
+              courseId: selectedChatEntry.value?.course.id || '',
+              sender: msg.sender,
+              body: msg.body,
+              sentAt: new Date(msg.sentAt),
+              status: msg.status === 'read' ? 'read' : 'sent',
+            });
+            void nextTick(scrollChatToLatestMessage);
+          }
+        }
+      },
+    );
+
+    socket.on(
+      'messagesRead',
+      (data: { enrollId: number; senderType: 'learner' | 'instructor' }) => {
+        const enrollId = selectedChatEntry.value?.registration?.enrollId;
+        if (enrollId && data.enrollId === enrollId) {
+          chatMessages.value.forEach((m) => {
+            if (m.sender === data.senderType) {
+              m.status = 'read';
+            }
+          });
+        }
+      },
+    );
+  }
+
+  function disconnectChatSocket() {
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
+  }
+
+  function joinChatRoom(enrollId: number) {
+    if (socket) {
+      socket.emit('joinRoom', { enrollId });
+    }
+  }
+
+  function scrollChatToLatestMessage(): void {
+    const messagePanel = chatMessagesRef.value;
+    if (!messagePanel) {
+      return;
+    }
+    messagePanel.scrollTop = messagePanel.scrollHeight;
+  }
+
+  async function sendChatMessage(): Promise<void> {
+    if (!canSendChatMessage.value || !selectedChatEntry.value) {
+      return;
+    }
+
+    const enrollId = selectedChatEntry.value.registration.enrollId;
+    if (!enrollId) {
+      $q.notify({
+        type: 'negative',
+        message: 'ไม่พบรหัสการลงทะเบียนเรียน กรุณาลองใหม่อีกครั้ง',
+        position: 'top',
+      });
+      return;
+    }
+
+    const draftText = chatDraft.value.trim();
+    chatDraft.value = '';
+
+    try {
+      await api.post('/api/lltchat', {
+        enrollId,
+        sender: authStore.user?.id ? Number(authStore.user.id) : null,
+        userId: authStore.user?.username || null,
+        message: draftText,
+        chatTime: new Date().toISOString(),
+        typeSender: 'U',
+        status: 'S',
+        createUser: authStore.user?.username || 'system',
+        updateUser: authStore.user?.username || 'system',
+        updateProgram: 'student_chat',
+      });
+
+      await fetchChatMessages();
+      await nextTick();
+      scrollChatToLatestMessage();
+    } catch (error) {
+      console.error('Failed to send chat message', error);
+      $q.notify({
+        type: 'negative',
+        message: 'ส่งข้อความล้มเหลว กรุณาลองใหม่อีกครั้ง',
+        position: 'top',
+      });
+    }
+  }
+
+  function selectChatCourse(courseId: string): void {
+    selectedChatCourseId.value = courseId;
+  }
+
+  function formatChatMessageTime(date: Date): string {
+    return date.toLocaleTimeString(locale.value === 'th' ? 'th-TH' : 'en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
+
+  function getChatStatusLabel(status: ChatMessageStatus): string {
+    void status;
+    return t('profile.chat.statusSent');
+  }
+
+  function getChatStatusIcon(status: ChatMessageStatus): string {
+    void status;
+    return 'done';
+  }
+
+  function isLatestLearnerMessage(message: ChatMessage): boolean {
+    const latestLearnerMessage = [...chatThreadMessages.value]
+      .reverse()
+      .find((chatMessage) => chatMessage.sender === 'learner');
+
+    return latestLearnerMessage?.id === message.id;
+  }
+
+  // Watch for active menu changes to connect/disconnect socket
+  watch(
+    () => activeMenu.value,
+    async (menuValue) => {
+      if (menuValue !== 'chat') {
+        disconnectChatSocket();
+        return;
+      }
+
+      connectChatSocket();
+      void fetchChatMessages();
+      await nextTick();
+      scrollChatToLatestMessage();
+    },
+    { immediate: true },
+  );
+
+  // Watch for selected course changes in chat tab
+  watch(selectedChatCourseId, async () => {
+    if (activeMenu.value !== 'chat') {
+      return;
+    }
+
+    void fetchChatMessages();
+    const enrollId = selectedChatEntry.value?.registration?.enrollId;
+    if (enrollId) {
+      joinChatRoom(enrollId);
+    }
+    await nextTick();
+    scrollChatToLatestMessage();
+  });
+
+  // Watch myRegistrations to default selectedChatCourseId
+  watch(
+    myRegistrations,
+    (registrations) => {
+      if (registrations.length === 0) {
+        selectedChatCourseId.value = null;
+        return;
+      }
+
+      const hasSelectedCourse = registrations.some(
+        (registration) => registration.courseId === selectedChatCourseId.value,
+      );
+      if (!hasSelectedCourse) {
+        selectedChatCourseId.value = registrations[0]?.courseId ?? null;
+      }
+    },
+    { immediate: true },
+  );
+
+  onUnmounted(() => {
+    disconnectChatSocket();
+  });
+
+  return {
+    selectedChatCourseId,
+    chatDraft,
+    chatMessages,
+    chatMessagesRef,
+    selectedChatEntry,
+    chatThreadMessages,
+    canSendChatMessage,
+    fetchChatMessages,
+    connectChatSocket,
+    disconnectChatSocket,
+    joinChatRoom,
+    scrollChatToLatestMessage,
+    sendChatMessage,
+    selectChatCourse,
+    formatChatMessageTime,
+    getChatStatusLabel,
+    getChatStatusIcon,
+    isLatestLearnerMessage,
+  };
+}
