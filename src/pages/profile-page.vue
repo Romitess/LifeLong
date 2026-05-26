@@ -521,6 +521,21 @@
                           )
                         "
                       />
+                      <q-btn
+                        v-if="
+                          entry.registration.paymentStatus === 'paid' &&
+                          !entry.course.isFree &&
+                          getPaymentForCourse(entry.registration.courseId)
+                        "
+                        flat
+                        color="primary"
+                        :label="locale === 'th' ? 'ดาวน์โหลดใบเสร็จ' : 'Receipt'"
+                        icon="receipt_long"
+                        no-caps
+                        size="md"
+                        class="course-action-btn"
+                        @click="downloadReceiptByCourseId(entry.registration.courseId)"
+                      />
                     </template>
                   </ProfileCourseCard>
                 </div>
@@ -1350,138 +1365,6 @@
                 </section>
               </div>
 
-              <!-- Payment & Receipts Tab -->
-              <div v-else-if="activeMenu === 'payments'">
-                <div class="row items-center justify-between q-mb-lg">
-                  <div>
-                    <div class="text-h5 text-weight-bolder text-primary">
-                      {{ $t('profile.payments.title') }}
-                    </div>
-                    <div class="text-caption text-grey-6 q-mt-xs">
-                      {{ $t('profile.payments.subtitle') }}
-                    </div>
-                  </div>
-                  <q-input
-                    v-model="paymentSearch"
-                    dense
-                    outlined
-                    rounded
-                    :placeholder="$t('profile.payments.searchPlaceholder')"
-                    class="profile-search-input"
-                  >
-                    <template v-slot:prepend>
-                      <q-icon name="search" color="grey-5" />
-                    </template>
-                  </q-input>
-                </div>
-
-                <div v-if="payments.length > 0" class="course-list-header q-mb-sm">
-                  <div class="text-caption text-weight-bold text-grey-7">
-                    {{ $t('profile.payments.listTitle') }}
-                  </div>
-                  <q-badge rounded color="primary" :label="payments.length" />
-                </div>
-
-                <!-- Payment List -->
-                <div v-if="payments.length > 0" class="column q-gutter-md">
-                  <q-card
-                    v-for="payment in payments"
-                    :key="payment.id"
-                    flat
-                    bordered
-                    class="payment-card"
-                  >
-                    <div class="payment-card__stripe" />
-
-                    <q-card-section class="row items-start q-gutter-md no-wrap q-pl-lg">
-                      <div class="payment-card__status-icon">
-                        <q-icon name="receipt_long" color="white" size="24px" />
-                      </div>
-
-                      <div class="col">
-                        <div class="row items-start justify-between no-wrap q-gutter-md">
-                          <div class="col">
-                            <div
-                              class="payment-card__title text-subtitle1 text-weight-bolder text-dark"
-                            >
-                              {{ payment.courseCode }} :
-                              {{
-                                getTranslatedCourseTitleByInfo(
-                                  payment.courseCode,
-                                  payment.courseTitle,
-                                )
-                              }}
-                            </div>
-                            <div class="row items-center q-gutter-x-sm q-mt-xs">
-                              <q-badge color="positive" class="badge-pill">
-                                {{ getPaymentStatusLabel(payment.status) }}
-                              </q-badge>
-                            </div>
-                          </div>
-                          <div class="payment-card__amount text-h6 text-weight-bolder text-primary">
-                            {{ payment.amount.toLocaleString(locale === 'th' ? 'th-TH' : 'en-US') }}
-                            {{ $t('thb') }}
-                          </div>
-                        </div>
-
-                        <div class="row items-center q-gutter-md q-mt-xs text-caption text-grey-7">
-                          <div class="row items-center q-gutter-xs">
-                            <q-icon name="event" size="14px" />
-                            <span
-                              >{{ $t('profile.payments.date') }}
-                              {{ formatDate(payment.paymentDate) }}</span
-                            >
-                          </div>
-                          <div class="row items-center q-gutter-xs">
-                            <q-icon name="payments" size="14px" />
-                            <span>{{ $t('profile.payments.method') }} {{ payment.method }}</span>
-                          </div>
-                          <div class="row items-center q-gutter-xs">
-                            <q-icon name="tag" size="14px" />
-                            <span>{{ $t('profile.payments.refId') }} {{ payment.id }}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </q-card-section>
-
-                    <q-card-section class="q-pt-none q-pl-lg">
-                      <q-separator />
-                      <div class="row items-center justify-between q-gutter-sm q-mt-sm q-pb-xs">
-                        <div class="row items-center q-gutter-xs text-caption text-grey-6">
-                          <q-icon name="receipt" size="14px" color="grey-5" />
-                          <span
-                            >{{ $t('profile.payments.receiptLabel') }}:
-                            {{ payment.receiptId }}</span
-                          >
-                        </div>
-                        <BaseButton
-                          color="primary"
-                          icon="download"
-                          :label="locale === 'th' ? 'ดาวน์โหลดใบเสร็จ' : 'Download Receipt'"
-                          no-caps
-                          hover-lift
-                          class="payment-card__action"
-                          @click="downloadReceipt(payment)"
-                        />
-                      </div>
-                    </q-card-section>
-                  </q-card>
-                </div>
-
-                <!-- Empty State -->
-                <q-card v-else flat class="text-center empty-state-card q-pa-xl">
-                  <div class="empty-state-card__icon-wrap q-mx-auto q-mb-lg">
-                    <q-icon name="payments" size="48px" color="primary" />
-                  </div>
-                  <div class="text-h6 text-weight-bolder text-dark">
-                    {{ $t('profile.payments.empty') }}
-                  </div>
-                  <div class="text-body2 text-grey-6 q-mt-sm">
-                    {{ $t('profile.payments.emptySub') }}
-                  </div>
-                </q-card>
-              </div>
-
               <!-- Benefits Tab -->
               <div v-else-if="activeMenu === 'benefits'">
                 <div class="row items-center justify-between q-mb-lg benefits-section-header">
@@ -2125,7 +2008,6 @@ const activeMenu = ref('my-courses');
 const profileContentRef = ref<HTMLElement | null>(null);
 const courseSearch = ref('');
 const savedCourseSearch = ref('');
-const paymentSearch = ref('');
 const showUnregisterDialog = ref(false);
 const showSaveConfirmDialog = ref(false);
 const courseToUnregister = ref<CourseRegistration | null>(null);
@@ -2250,18 +2132,10 @@ const menuItems = computed<MenuItem[]>(() => [
   { label: t('profile.menu.myCourses'), value: 'my-courses', icon: 'menu_book' },
   { label: t('profile.menu.savedCourses'), value: 'saved-courses', icon: 'bookmark' },
   { label: t('profile.menu.personalInfo'), value: 'personal-info', icon: 'person' },
-  { label: t('profile.menu.payments'), value: 'payments', icon: 'receipt_long' },
   { label: t('profile.menu.benefits'), value: 'benefits', icon: 'card_giftcard' },
   { label: t('profile.menu.chat'), value: 'chat', icon: 'chat' },
 ]);
 
-const payments = computed<CoursePaymentRecord[]>(() => {
-  if (!paymentSearch.value) return coursePaymentStore.myPayments;
-  const s = paymentSearch.value.toLowerCase();
-  return coursePaymentStore.myPayments.filter(
-    (p) => p.courseCode.toLowerCase().includes(s) || p.courseTitle.toLowerCase().includes(s),
-  );
-});
 const selectedPayment = ref<CoursePaymentRecord | null>(null);
 const showReceiptDialog = ref(false);
 const receiptDialogRef = ref<InstanceType<typeof ReceiptCard> | null>(null);
@@ -2315,6 +2189,17 @@ async function downloadReceipt(payment: CoursePaymentRecord) {
   await nextTick();
   if (receiptDialogRef.value) {
     receiptDialogRef.value.downloadReceiptPdf();
+  }
+}
+
+function getPaymentForCourse(courseId: string): CoursePaymentRecord | undefined {
+  return coursePaymentStore.myPayments.find((p) => p.courseId === courseId);
+}
+
+async function downloadReceiptByCourseId(courseId: string) {
+  const payment = getPaymentForCourse(courseId);
+  if (payment) {
+    await downloadReceipt(payment);
   }
 }
 
@@ -2919,13 +2804,6 @@ function withOpacity(hexColor: string, opacity: number): string {
 
 function getCourseDetailById(courseId: string): CourseDetail | null {
   return courseStore.getCourseDetailById(courseId) ?? null;
-}
-
-function getPaymentStatusLabel(status: string): string {
-  if (status === 'ชำระเงินสำเร็จ') {
-    return t('profile.payments.statusPaid');
-  }
-  return status;
 }
 </script>
 

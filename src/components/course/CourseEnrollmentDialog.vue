@@ -239,29 +239,11 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-
-  <!-- 5. Receipt Dialog -->
-  <ReceiptCard
-    v-model="showReceiptDialog"
-    :receipt-id="receiptId"
-    :issued-at="receiptIssuedAt"
-    :customer-name="userInfo.name"
-    :customer-tax-id="userInfo.taxId"
-    :customer-address="userInfo.billingAddress"
-    :show-customer="Boolean(enrollingCourse && !enrollingCourse.isFree)"
-    :course-title="translatedEnrollingCourseTitle"
-    :course-code="enrollingCourse?.code ?? ''"
-    :amount="enrollingCourse?.isFree ? 0 : (enrollingCourse?.price ?? 0)"
-    logo-size="80px"
-    logo-spacing-class="q-mr-lg"
-    @hide="onReceiptDialogHide"
-  />
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue';
 import BaseButton from 'components/base/BaseButton.vue';
-import ReceiptCard from 'components/receipt/receipt-card.vue';
 import type { CourseDetail } from 'src/types/course-detail';
 import { useCoursePaymentStore } from 'src/stores/course-payment-store';
 import { useCourseRegistrationStore } from 'src/stores/course-registration-store';
@@ -295,16 +277,12 @@ const showPaidInfoDialog = ref(false);
 const showQrDialog = ref(false);
 const showFreeConfirmDialog = ref(false);
 const showSuccessDialog = ref(false);
-const showReceiptDialog = ref(false);
 const pendingQrOpen = ref(false);
 
 const paidInfoFormRef = ref<FormValidator | null>(null);
 const qrUrl = ref('');
 const enrollingCourse = ref<CourseDetail | null>(null);
 const enrollingCourseId = computed<string>(() => enrollingCourse.value?.id ?? '');
-const receiptId = ref('');
-const receiptIssuedAt = ref<Date | null>(null);
-const showSuccessAfterReceipt = ref(false);
 
 const userInfo = reactive({
   name: '',
@@ -366,13 +344,10 @@ function openEnrollment(course: CourseDetail): void {
 }
 
 function resetEnrollmentDialogs(): void {
-  showSuccessAfterReceipt.value = false;
   showPaidInfoDialog.value = false;
   showQrDialog.value = false;
   showFreeConfirmDialog.value = false;
   showSuccessDialog.value = false;
-  showReceiptDialog.value = false;
-  receiptIssuedAt.value = null;
   pendingQrOpen.value = false;
 }
 
@@ -446,7 +421,9 @@ function onPaymentDone(): void {
   }
 
   const issuedAt = new Date();
-  const nextReceiptId = createReceiptId();
+  const nextReceiptId = `R${Math.floor(Math.random() * 1000000)
+    .toString()
+    .padStart(6, '0')}`;
 
   void courseRegistrationStore.registerCourse(enrollingCourse.value, 'student', 'paid');
   coursePaymentStore.recordPaidCourse(enrollingCourse.value, {
@@ -459,28 +436,6 @@ function onPaymentDone(): void {
   emit('enrolled', enrollingCourse.value.id);
 
   showQrDialog.value = false;
-  generateReceipt(nextReceiptId, issuedAt);
-}
-
-function createReceiptId(): string {
-  return `R${Math.floor(Math.random() * 1000000)
-    .toString()
-    .padStart(6, '0')}`;
-}
-
-function generateReceipt(nextReceiptId: string, issuedAt: Date): void {
-  receiptId.value = nextReceiptId;
-  receiptIssuedAt.value = issuedAt;
-  showSuccessAfterReceipt.value = true;
-  showReceiptDialog.value = true;
-}
-
-function onReceiptDialogHide(): void {
-  if (!showSuccessAfterReceipt.value || !enrollingCourse.value) {
-    return;
-  }
-
-  showSuccessAfterReceipt.value = false;
   showSuccessDialog.value = true;
 }
 

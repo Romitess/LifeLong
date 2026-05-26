@@ -253,11 +253,13 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
             writeStoredRegistrations(nextRegistrations);
           }
         } else if (!data.enrolled && existingIndex !== -1) {
-          const nextRegistrations = this.registrations.filter(
-            (r) => !(r.courseId === courseId && r.userId === userId),
-          );
-          this.registrations = nextRegistrations;
-          writeStoredRegistrations(nextRegistrations);
+          // Do not delete local registration if backend is not enrolled yet.
+          // The course might be in a 'pending' or 'paid' (awaiting admin confirmation) state.
+          // const nextRegistrations = this.registrations.filter(
+          //   (r) => !(r.courseId === courseId && r.userId === userId),
+          // );
+          // this.registrations = nextRegistrations;
+          // writeStoredRegistrations(nextRegistrations);
         }
       } catch {
         // Silently fail — localStorage state is kept as fallback
