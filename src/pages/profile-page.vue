@@ -1931,6 +1931,7 @@
       "
       :course-code="selectedPayment?.courseCode || ''"
       :amount="selectedPayment?.amount ?? 0"
+      :is-copy="false"
     />
   </q-page>
 </template>

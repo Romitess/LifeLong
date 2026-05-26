@@ -99,8 +99,10 @@ function drawHeader(doc, receipt) {
   );
   writeText(doc, 'เลขที่ประจําตัวผู้เสียภาษีอากร (Tax ID) 0994000249357', 105.05, 97.54, 11.24);
 
-  writeText(doc, 'สําเนาใบเสร็จรับเงิน', 461.34, 56.47, 13.12, { bold: true });
-  writeText(doc, 'RECEIPT COPY', 467.94, 72.21, 13.12, { bold: true });
+  const thaiTitle = receipt.isCopy ? 'สําเนาใบเสร็จรับเงิน' : 'ใบเสร็จรับเงิน';
+  const enTitle = receipt.isCopy ? 'RECEIPT COPY' : 'RECEIPT';
+  writeText(doc, thaiTitle, 461.34, 56.47, 13.12, { bold: true });
+  writeText(doc, enTitle, 467.94, 72.21, 13.12, { bold: true });
   writeText(doc, `วันที่ (Date) ${legacyAm(receipt.longDate)}`, 386.69, 121.02, 12.18);
 }
 
@@ -212,9 +214,12 @@ export function createReceiptPdf(receipt, assets) {
   });
 
   addReceiptFonts(doc, assets);
+  const pdfSubject = receipt.isCopy
+    ? 'Burapha University receipt copy'
+    : 'Burapha University receipt';
   doc.setProperties({
     title: `Receipt ${receipt.receiptNo}`,
-    subject: 'Burapha University receipt copy',
+    subject: pdfSubject,
     creator: 'Burapha University Lifelong Learning',
   });
 

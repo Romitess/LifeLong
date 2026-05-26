@@ -329,6 +329,7 @@
       :course-title="courseTitle"
       :course-code="courseCode"
       :amount="amount"
+      :is-copy="true"
     />
   </q-page>
 </template>

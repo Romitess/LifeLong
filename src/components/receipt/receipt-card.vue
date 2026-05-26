@@ -20,8 +20,12 @@
           </div>
           <div class="pdf-text org-tax">เลขที่ประจําตัวผูเสียภาษีอากร (Tax ID) 0994000249357</div>
 
-          <div class="pdf-text pdf-bold copy-title-th">สําเนาใบเสร็จรับเงิน</div>
-          <div class="pdf-text pdf-bold copy-title-en">RECEIPT COPY</div>
+          <div class="pdf-text pdf-bold copy-title-th">
+            {{ isCopy ? 'สําเนาใบเสร็จรับเงิน' : 'ใบเสร็จรับเงิน' }}
+          </div>
+          <div class="pdf-text pdf-bold copy-title-en">
+            {{ isCopy ? 'RECEIPT COPY' : 'RECEIPT' }}
+          </div>
           <div class="pdf-text receipt-date">วันที่ (Date) {{ receiptView.longDate }}</div>
 
           <div class="pdf-text customer-receipt-label">เลขที่ใบเสร็จรับเงิน (Receipt No.)</div>
@@ -142,6 +146,7 @@ interface ReceiptView {
   shortDate: string;
   collectorName: string;
   showQr: boolean;
+  isCopy: boolean;
 }
 
 interface ReceiptPdfAssets {
@@ -168,6 +173,7 @@ interface Props {
   logoSize?: string;
   logoSpacingClass?: string;
   collectorName?: string;
+  isCopy?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -185,6 +191,7 @@ const props = withDefaults(defineProps<Props>(), {
   logoSize: '56.211pt',
   logoSpacingClass: '',
   collectorName: RECEIPT_COLLECTOR_NAME,
+  isCopy: true,
 });
 
 const emit = defineEmits<{
@@ -236,6 +243,7 @@ const receiptView = computed<ReceiptView>(() => {
     shortDate: formatThaiShortDate(transactionDate),
     collectorName: legacyAm(source.collectorName || props.collectorName || RECEIPT_COLLECTOR_NAME),
     showQr: props.showQr,
+    isCopy: props.isCopy,
   };
 });
 
