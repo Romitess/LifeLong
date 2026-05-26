@@ -118,6 +118,7 @@
   />
 
   <LoginCheckInDialog
+    v-if="ENABLE_LOGIN_CHECK_IN_DIALOG"
     v-model="showCheckInDialog"
     :days="checkInDays"
     :streak-days="checkInStreakDays"
@@ -156,6 +157,7 @@ const { locale, t } = useI18n({ useScope: 'global' });
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const ENABLE_LOGIN_CHECK_IN_DIALOG = false;
 
 const TEST_ACCOUNTS = [
   { username: 'admin_test', password: 'P@ssword123!' },
@@ -324,10 +326,14 @@ async function onLogin(): Promise<void> {
     }
 
     if (authStore.user.role === 'student') {
-      pendingPostLoginPath.value = targetPath;
-      checkInSnapshot.value = recordLoginCheckIn(authStore.user);
-      showCheckInDialog.value = true;
-      return;
+      const snapshot = recordLoginCheckIn(authStore.user);
+
+      if (ENABLE_LOGIN_CHECK_IN_DIALOG) {
+        pendingPostLoginPath.value = targetPath;
+        checkInSnapshot.value = snapshot;
+        showCheckInDialog.value = true;
+        return;
+      }
     }
 
     void router.push(targetPath);
