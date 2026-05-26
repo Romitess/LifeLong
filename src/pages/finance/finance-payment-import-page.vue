@@ -742,10 +742,12 @@ import { useQuasar, type QTableProps } from 'quasar';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from 'stores/auth-store';
 
 const $q = useQuasar();
 const { t } = useI18n();
 const router = useRouter();
+const authStore = useAuthStore();
 
 type ImportedPaymentRow = {
   id: string;
@@ -764,7 +766,9 @@ type ImportedPaymentRow = {
   dbAmount?: number;
 };
 
-const defaultDivision = 'สำนักคอมพิวเตอร์ (82994)';
+const defaultDivision = computed(
+  () => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุ',
+);
 
 const selectedFiles = ref<File[]>([]);
 const tempPickedFiles = ref<File[]>([]);

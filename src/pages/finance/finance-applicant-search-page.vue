@@ -15,12 +15,7 @@
           {{ $t('finance.applicantSearch.resultsTitle') }}
         </div>
         <div class="text-center q-pb-md text-caption text-grey-7">
-          {{
-            $t('finance.applicantSearch.resultsSubtitle', {
-              faculty: $t('common.faculties.computerCenter'),
-              code: '82994',
-            })
-          }}
+          {{ userFacName }}
         </div>
 
         <div class="row justify-end items-center q-px-md q-pb-md">
@@ -248,8 +243,11 @@ import { api } from 'src/boot/axios';
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { QTableProps } from 'quasar';
+import { useAuthStore } from 'stores/auth-store';
 
 const { t } = useI18n();
+const authStore = useAuthStore();
+const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุ');
 
 interface ApplicantSearchResult {
   id: number;

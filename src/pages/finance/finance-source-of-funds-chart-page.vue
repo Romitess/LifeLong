@@ -21,17 +21,12 @@
               <label class="sof-label">
                 {{ $t('finance.sourceOfFunds.faculty') }} <span class="text-negative">*</span>
               </label>
-              <q-select
-                v-model="form.division"
-                :options="divisionOptions"
+              <q-input
+                :model-value="userFacName"
                 outlined
                 dense
-                emit-value
-                map-options
-                :placeholder="$t('finance.sourceOfFunds.selectFaculty')"
-                class="admin-editor-field"
-                :rules="[(v) => !!v || $t('finance.sourceOfFunds.validation.faculty')]"
-                lazy-rules
+                readonly
+                class="admin-editor-field bg-grey-2"
               />
             </div>
 
@@ -319,9 +314,16 @@ import { useQuasar, type QTableProps, type QInput } from 'quasar';
 import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from 'boot/axios';
+import { useAuthStore } from 'stores/auth-store';
 
 const $q = useQuasar();
 const { t } = useI18n();
+
+const authStore = useAuthStore();
+const currentUser = computed(() => authStore.user);
+const userFacName = computed(
+  () => currentUser.value?.facName || currentUser.value?.faculty || 'ไม่ระบุ',
+);
 
 const codeInputRef = ref<InstanceType<typeof QInput> | null>(null);
 const nameInputRef = ref<InstanceType<typeof QInput> | null>(null);
@@ -349,17 +351,36 @@ type FundChartRow = {
   referencedInCourse: boolean;
 };
 
-// -- Faculty mapping (facId <-> display name) --
-const facMap: { facId: number; label: string }[] = [
-  { facId: 1, label: 'สำนักคอมพิวเตอร์' },
-  { facId: 2, label: 'คณะวิทยาศาสตร์' },
-  { facId: 3, label: 'สำนักงานอธิการบดี' },
-];
+interface FacultyApiRow {
+  id: number;
+  name: string | null;
+}
 
-const divisionOptions = facMap.map((f) => ({ label: f.label, value: f.facId }));
+const faculties = ref<FacultyApiRow[]>([]);
+
+async function fetchFaculties() {
+  try {
+    const { data } = await api.get<FacultyApiRow[]>('/api/lltfaculty');
+    faculties.value = data;
+  } catch (err) {
+    console.error('Error fetching faculties:', err);
+  }
+}
+
+const userFacId = computed(() => {
+  if (userFacName.value && userFacName.value !== 'ไม่ระบุ') {
+    const match = faculties.value.find((f) => f.name === userFacName.value);
+    if (match) return match.id;
+  }
+  const directId = (currentUser.value as { facId?: number | null })?.facId;
+  if (directId != null && directId >= 1) return directId;
+  return 1;
+});
 
 function facIdToLabel(facId: number | null): string {
-  return facMap.find((f) => f.facId === facId)?.label ?? 'ไม่ระบุ';
+  if (facId === null) return 'ไม่ระบุ';
+  const match = faculties.value.find((f) => f.id === facId);
+  return match?.name ?? 'ไม่ระบุ';
 }
 
 const statusOptions = [
@@ -367,10 +388,10 @@ const statusOptions = [
   { label: 'ปิด', value: false },
 ];
 
-const facultyFilterMenuOptions: { label: string; value: number | null }[] = [
+const facultyFilterMenuOptions = computed(() => [
   { label: 'ทุกคณะ', value: null },
-  ...divisionOptions.map((o) => ({ label: o.label, value: o.value })),
-];
+  ...faculties.value.map((f) => ({ label: f.name || 'ไม่ระบุ', value: f.id })),
+]);
 
 const rows = ref<FundChartRow[]>([]);
 
@@ -400,6 +421,7 @@ async function fetchRows() {
 }
 
 onMounted(() => {
+  void fetchFaculties();
   void fetchRows();
 });
 
@@ -417,14 +439,14 @@ const listFilter = ref<{
 const editingId = ref<string | null>(null);
 
 const form = ref({
-  division: 1,
+  division: userFacId.value,
   code: '',
   name: '',
   active: true,
 });
 
 const pagination = ref({
-  sortBy: 'code',
+  sortBy: '',
   descending: false,
   page: 1,
   rowsPerPage: 10,
@@ -449,13 +471,17 @@ const filteredRows = computed(() => {
   if (q) {
     list = list.filter(
       (r) =>
-        r.division.toLowerCase().includes(q) ||
+        facIdToLabel(r.facId).toLowerCase().includes(q) ||
         r.code.includes(q) ||
         r.name.toLowerCase().includes(q),
     );
   }
 
-  return list;
+  return [...list].sort((a, b) => {
+    const idA = a.backendId ?? 0;
+    const idB = b.backendId ?? 0;
+    return idB - idA;
+  });
 });
 
 function resetTableFilters() {
@@ -496,7 +522,7 @@ const columns = computed<QTableProps['columns']>(() => [
   {
     name: 'division',
     label: t('finance.sourceOfFunds.faculty'),
-    field: 'division',
+    field: (row: FundChartRow) => facIdToLabel(row.facId),
     align: 'left',
     sortable: true,
   },
@@ -535,7 +561,7 @@ const columns = computed<QTableProps['columns']>(() => [
 function resetForm() {
   editingId.value = null;
   form.value = {
-    division: 1,
+    division: userFacId.value,
     code: '',
     name: '',
     active: true,
@@ -574,7 +600,7 @@ async function onSave() {
           return;
         }
         await api.patch(`/api/lltcostplan/${row.backendId}`, {
-          facId: form.value.division,
+          facId: userFacId.value,
           costplanCode: form.value.code,
           costplanName: form.value.name,
           costplanStatus: form.value.active ? 'Y' : 'N',
@@ -583,7 +609,7 @@ async function onSave() {
       }
     } else {
       await api.post('/api/lltcostplan', {
-        facId: form.value.division,
+        facId: userFacId.value,
         costplanCode: form.value.code,
         costplanName: form.value.name,
         costplanStatus: form.value.active ? 'Y' : 'N',
@@ -605,7 +631,7 @@ function onEdit(row: FundChartRow) {
   }
   editingId.value = row.id;
   form.value = {
-    division: row.facId ?? 1,
+    division: userFacId.value,
     code: row.code,
     name: row.name,
     active: row.active,

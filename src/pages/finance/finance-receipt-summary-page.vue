@@ -17,7 +17,7 @@
                 {{ $t('finance.receiptSummary.departmentLabel') }}
               </div>
               <div class="col-12 col-sm-8">
-                <q-input v-model="filters.department" borderless dense readonly />
+                <q-input :model-value="userFacName" borderless dense readonly />
               </div>
             </div>
 
@@ -344,8 +344,11 @@ import jsPDF from 'jspdf';
 import { autoTable, type CellHookData } from 'jspdf-autotable';
 import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
 import * as XLSX from 'xlsx';
+import { useAuthStore } from 'stores/auth-store';
 
 const { t } = useI18n();
+const authStore = useAuthStore();
+const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุ');
 
 const search = ref('');
 
@@ -357,7 +360,6 @@ const pagination = ref({
 });
 
 const filters = ref({
-  department: 'สำนักคอมพิวเตอร์ (82994)',
   receiptDateStart: '',
   receiptDateEnd: '',
   effectiveDateStart: '',
