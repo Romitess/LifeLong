@@ -265,20 +265,19 @@
                             <div class="text-body2 text-grey-8">
                               <div
                                 v-if="chapter.subchapters && chapter.subchapters.length > 0"
-                                class="q-gutter-y-sm"
+                                class="subchapter-container"
                               >
                                 <div
-                                  v-for="sub in chapter.subchapters"
+                                  v-for="(sub, subIdx) in chapter.subchapters"
                                   :key="sub.id"
-                                  class="flex items-start no-wrap q-py-xs"
+                                  class="subchapter-item flex items-start no-wrap"
                                 >
-                                  <q-icon
-                                    name="subdirectory_arrow_right"
-                                    color="primary"
-                                    size="18px"
-                                    class="q-mr-sm q-mt-xs"
-                                  />
-                                  <div class="text-body2 text-grey-9">{{ sub.subject }}</div>
+                                  <div class="subchapter-item__index">
+                                    {{ subIdx + 1 }}
+                                  </div>
+                                  <div class="subchapter-item__text text-body2 text-grey-9">
+                                    {{ sub.subject }}
+                                  </div>
                                 </div>
                               </div>
                               <div v-else class="text-grey-5 text-italic q-py-xs">
@@ -1396,6 +1395,67 @@ watch(
 .syllabus-content {
   background: #fafbfc;
   border-radius: 0 0 8px 8px;
+}
+
+/* เพิ่มส่วนนี้เข้าไปครับ */
+.subchapter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subchapter-item {
+  background: #ffffff;
+  border: 1px solid rgba(17, 24, 39, 0.06);
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    border-color: rgba($primary, 0.2);
+    box-shadow: 0 2px 10px rgba(17, 24, 39, 0.04);
+    transform: translateX(4px);
+  }
+
+  // แถบสีด้านซ้ายเวลา Hover
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: $primary;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+
+  &__index {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    background: rgba($primary, 0.1);
+    color: $primary;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-right: 12px;
+    margin-top: -1px; // ปรับให้อยู่กึ่งกลางกับบรรทัดแรกของ text พอดี
+  }
+
+  &__text {
+    line-height: 1.5;
+    flex: 1;
+  }
 }
 
 // ── Schedule Table ───────────────────────────────────────────
