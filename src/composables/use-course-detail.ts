@@ -20,6 +20,11 @@ interface BackendCourseDetailResponse {
   contractUrl?: string | null;
   typeClasses?: CourseTypeClass[] | null;
   privilege?: string | null;
+  instructorInfo?: {
+    nameTh?: string | null;
+    nameEn?: string | null;
+    email?: string | null;
+  } | null;
 }
 
 interface UseCourseDetailReturn {
@@ -118,6 +123,20 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
               contractUrl: data.contractUrl ?? null,
               typeClasses: data.typeClasses ?? null,
               privilege: data.privilege ?? null,
+              ...(data.instructorInfo
+                ? {
+                    instructor: {
+                      ...detail.instructor,
+                      ...(data.instructorInfo.email ? { email: data.instructorInfo.email } : {}),
+                      ...(data.instructorInfo.nameTh ? { name: data.instructorInfo.nameTh } : {}),
+                      ...(data.instructorInfo.nameEn
+                        ? { nameEn: data.instructorInfo.nameEn }
+                        : data.instructorInfo.nameTh
+                          ? { nameEn: data.instructorInfo.nameTh }
+                          : {}),
+                    },
+                  }
+                : {}),
             };
             return;
           }
