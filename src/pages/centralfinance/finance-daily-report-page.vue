@@ -11,9 +11,11 @@
       <CentralFinanceSurfaceCard>
         <div class="row q-col-gutter-md q-mb-md">
           <div class="col-12 col-md-8 offset-md-2">
+            <!-- วันที่ใบเสร็จรับเงิน -->
             <div class="row items-center q-mb-sm">
               <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
-                วันที่ใบเสร็จรับเงิน <span class="text-negative">*</span>
+                {{ $t('centralFinance.dailyReport.filters.receiptDate') }}
+                <span class="text-negative">*</span>
               </div>
               <div class="col-12 col-sm-8">
                 <q-input
@@ -40,9 +42,11 @@
               </div>
             </div>
 
+            <!-- ถึงวันที่ -->
             <div class="row items-center q-mb-sm">
               <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
-                ถึงวันที่ <span class="text-negative">*</span>
+                {{ $t('centralFinance.dailyReport.filters.toDate') }}
+                <span class="text-negative">*</span>
               </div>
               <div class="col-12 col-sm-8">
                 <q-input
@@ -69,12 +73,17 @@
               </div>
             </div>
 
+            <!-- ส่วนงาน -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">ส่วนงาน</div>
+              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+                {{ $t('centralFinance.dailyReport.filters.department') }}
+              </div>
               <div class="col-12 col-sm-8">
                 <q-select
                   v-model="filters.department"
                   :options="departmentOptions"
+                  emit-value
+                  map-options
                   outlined
                   dense
                   class="bg-white"
@@ -82,9 +91,10 @@
               </div>
             </div>
 
+            <!-- ชื่อโครงการ/อบรม/หลักสูตร -->
             <div class="row items-center q-mb-sm">
               <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
-                ชื่อโครงการ/อบรม/หลักสูตร
+                {{ $t('centralFinance.dailyReport.filters.courseName') }}
               </div>
               <div class="col-12 col-sm-8">
                 <q-input
@@ -92,7 +102,7 @@
                   outlined
                   dense
                   class="bg-white"
-                  placeholder="ค้นหาชื่อโครงการ/อบรม/หลักสูตร"
+                  :placeholder="$t('centralFinance.dailyReport.filters.coursePlaceholder')"
                 />
               </div>
             </div>
@@ -103,7 +113,7 @@
                 <q-btn
                   color="warning"
                   text-color="black"
-                  label="ค้นหา"
+                  :label="$t('centralFinance.dailyReport.filters.searchBtn')"
                   unelevated
                   class="q-px-xl"
                   @click="onSearch"
@@ -111,7 +121,7 @@
                 <q-btn
                   outline
                   color="grey-7"
-                  label="ล้างค่า"
+                  :label="$t('centralFinance.dailyReport.filters.clearBtn')"
                   class="q-px-lg bg-white"
                   @click="clearFilters"
                 />
@@ -127,7 +137,7 @@
             outline
             color="negative"
             icon="picture_as_pdf"
-            label="ส่งออกเป็น Pdf"
+            :label="$t('centralFinance.dailyReport.table.pdfBtn')"
             class="q-mr-sm"
             @click="exportToPdf"
           />
@@ -135,26 +145,37 @@
             outline
             color="positive"
             icon="table_chart"
-            label="ส่งออกเป็น Excel"
+            :label="$t('centralFinance.dailyReport.table.excelBtn')"
             @click="exportToExcel"
           />
         </template>
 
         <div class="text-center q-pt-lg q-pb-sm">
           <div class="text-weight-bold text-subtitle1">
-            รายงานสรุปการรับเงินประจำวัน LifeLong Learning มหาวิทยาลัยบูรพา
+            {{ $t('centralFinance.dailyReport.table.reportTitle') }}
           </div>
           <div class="text-weight-bold text-subtitle2">
-            ส่วนงาน {{ activeFilters.department || '-' }}
+            {{ $t('centralFinance.dailyReport.table.departmentLabel') }}:
+            {{ getDepartmentLabel(activeFilters.department) }}
           </div>
           <div class="text-weight-medium text-caption text-grey-8">
-            วันที่ใบเสร็จรับเงิน {{ activeFilters.receiptDateStart || '-' }} ถึงวันที่
-            {{ activeFilters.receiptDateEnd || '-' }}
+            {{
+              $t('centralFinance.dailyReport.table.dateLabel', {
+                start: activeFilters.receiptDateStart || '-',
+                end: activeFilters.receiptDateEnd || '-',
+              })
+            }}
           </div>
         </div>
 
         <div class="row justify-end items-center q-px-md q-pb-md">
-          <q-input v-model="search" dense outlined placeholder="ค้นหา:" class="report-search">
+          <q-input
+            v-model="search"
+            dense
+            outlined
+            :placeholder="$t('centralFinance.dailyReport.table.searchLabel')"
+            class="report-search"
+          >
             <template v-slot:prepend>
               <q-icon name="search" />
             </template>
@@ -182,7 +203,9 @@
           <template v-slot:bottom="scope">
             <div class="row full-width justify-between items-center q-py-sm">
               <div class="row items-center q-gutter-sm">
-                <span class="text-subtitle2 text-grey-8">แสดง</span>
+                <span class="text-subtitle2 text-grey-8">
+                  {{ $t('centralFinance.dailyReport.table.showLabel') }}
+                </span>
                 <q-select
                   v-model="pagination.rowsPerPage"
                   :options="[10, 25, 50, 100]"
@@ -192,7 +215,9 @@
                   style="width: 80px"
                   class="bg-white report-rows-select"
                 />
-                <span class="text-subtitle2 text-grey-8">รายการ</span>
+                <span class="text-subtitle2 text-grey-8">
+                  {{ $t('centralFinance.dailyReport.table.entriesLabel') }}
+                </span>
               </div>
               <div class="row items-center q-gutter-sm">
                 <span class="text-caption text-grey-8 q-mr-sm">
@@ -252,7 +277,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useQuasar } from 'quasar'; // 1. Import useQuasar เข้ามา
+import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
@@ -263,11 +289,11 @@ import { autoTable } from 'jspdf-autotable';
 import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
 import * as XLSX from 'xlsx';
 
-const $q = useQuasar(); // 2. เรียกใช้งาน useQuasar
+const $q = useQuasar();
+const { t } = useI18n();
 const financeStore = useCentralFinanceStore();
 const search = ref('');
 
-// ตัวแปรควบคุมการแสดงผลของตาราง (เริ่มต้นเป็น false เพื่อไม่ให้แสดงตาราง)
 const hasSearched = ref(false);
 
 const pagination = ref({
@@ -293,34 +319,28 @@ const activeFilters = ref({
   courseName: '',
 });
 
-// รายการส่วนงานทั้งหมด
-const departmentOptions = [
-  'สำนักคอมพิวเตอร์',
-  'คณะวิทยาการสารสนเทศ',
-  'คณะวิทยาศาสตร์',
-  'คณะพยาบาลศาสตร์',
-  'คณะบริหารธุรกิจ',
-  'คณะวิศวกรรมศาสตร์',
-];
+// รายการส่วนงานทั้งหมดแบบแปลภาษาได้
+const departmentOptions = computed(() => [
+  { label: t('centralFinance.dailyReport.departments.computerCenter'), value: 'สำนักคอมพิวเตอร์' },
+  { label: t('centralFinance.dailyReport.departments.informatics'), value: 'คณะวิทยาการสารสนเทศ' },
+  { label: t('centralFinance.dailyReport.departments.science'), value: 'คณะวิทยาศาสตร์' },
+  { label: t('centralFinance.dailyReport.departments.nursing'), value: 'คณะพยาบาลศาสตร์' },
+  { label: t('centralFinance.dailyReport.departments.business'), value: 'คณะบริหารธุรกิจ' },
+  { label: t('centralFinance.dailyReport.departments.engineering'), value: 'คณะวิศวกรรมศาสตร์' },
+]);
 
-// ฟังก์ชันสำหรับฟิลเตอร์และการแปลงข้อมูล (คงเดิม)
-// function thaiDateToGregorianStr(dateStr: string): string | null {
-//   if (!dateStr || dateStr.length !== 10) return null;
-//   const parts = dateStr.split('/');
-//   if (parts.length !== 3) return null;
-//   const day = parts[0];
-//   const month = parts[1];
-//   const yearBE = parseInt(parts[2] || '0');
-//   if (isNaN(yearBE)) return null;
-//   const yearCE = yearBE - 543;
-//   return `${yearCE}-${month}-${day}`;
-// }
+// ดึงฉลากส่วนงานที่เลือกตามภาษาปัจจุบัน
+function getDepartmentLabel(val: string): string {
+  if (!val) return '-';
+  const option = departmentOptions.value.find((opt) => opt.value === val);
+  return option ? option.label : val;
+}
 
 function getCourseNameForTx(tx: Transaction): string {
   if (tx.faculty === 'สำนักคอมพิวเตอร์')
     return 'C67052002: การพัฒนาเว็บแอปพลิเคชัน สำนักคอมพิวเตอร์';
   else if (tx.faculty === 'คณะวิทยาการสารสนเทศ')
-    return 'C66061004: การถ่ายภาพโฆษณา คณะศิลปกรรมศาสตร์';
+    return 'C66061004: Digital Product Design คณะวิทยาการสารสนเทศ';
   else if (tx.faculty === 'คณะวิทยาศาสตร์')
     return 'C65091001: วิทยาศาสตร์ข้อมูลเบื้องต้น คณะวิทยาศาสตร์';
   else if (tx.faculty === 'คณะพยาบาลศาสตร์')
@@ -333,10 +353,9 @@ function getCourseNameForTx(tx: Transaction): string {
 }
 
 function getFundName(fundCode: string): string {
-  // ... (ฟังก์ชันเดิม) ...
   const source = financeStore.fundSources.find((s) => s.fundCode === fundCode);
   if (source) return `${fundCode}: ${source.nameTh}`;
-  if (fundCode.startsWith('BG')) return `${fundCode}: เงินงบประมาณแผ่นดิน`;
+  if (fundCode.startsWith('BG')) return `${fundCode}: เงินงบประมาณแดิน`;
   else if (fundCode.startsWith('RV')) return `${fundCode}: เงินรายได้มหาวิทยาลัย`;
   else if (fundCode.startsWith('DN')) return `${fundCode}: เงินบริจาคเพื่อการศึกษา`;
   else if (fundCode.startsWith('OT')) return `${fundCode}: เงินกองทุนพัฒนาวิชาการ`;
@@ -360,18 +379,6 @@ const filteredTransactions = computed(() => {
       }
     }
 
-    // 3. กรองตามช่วงวันที่เริ่มต้นและสิ้นสุด
-    // 🚧 คอมเมนต์โค้ดส่วนเช็ควันที่ไว้ชั่วคราว เพื่อให้ข้อมูล Mock up แสดงผลขึ้นมาได้เสมอ 🚧
-    /*
-    const startStr = thaiDateToGregorianStr(activeFilters.value.receiptDateStart);
-    const endStr = thaiDateToGregorianStr(activeFilters.value.receiptDateEnd);
-    const txDate = tx.timestamp ? tx.timestamp.split(' ')[0] : null; 
-
-    if (startStr && txDate && txDate < startStr) return false;
-    if (endStr && txDate && txDate > endStr) return false;
-    */
-
-    // ถ้าผ่านเงื่อนไขด้านบนมาได้ ให้แสดงข้อมูลทั้งหมด
     return true;
   });
 });
@@ -387,10 +394,16 @@ const tableRows = computed(() => {
 });
 
 const columns = computed<QTableColumn[]>(() => [
-  { name: 'no', label: 'ลำดับ', field: 'no', align: 'center', sortable: true },
+  {
+    name: 'no',
+    label: t('centralFinance.dailyReport.table.no'),
+    field: 'no',
+    align: 'center',
+    sortable: true,
+  },
   {
     name: 'courseName',
-    label: 'ชื่อโครงการ/อบรม/หลักสูตร',
+    label: t('centralFinance.dailyReport.table.courseName'),
     field: 'courseName',
     align: 'left',
     sortable: true,
@@ -398,26 +411,30 @@ const columns = computed<QTableColumn[]>(() => [
   },
   {
     name: 'fundCode',
-    label: 'รหัสแหล่งเงิน/ชื่อผังบัญชี',
+    label: t('centralFinance.dailyReport.table.fundCode'),
     field: 'fundCode',
     align: 'left',
     sortable: true,
     style: 'white-space: pre-wrap; word-break: break-word;',
   },
-  { name: 'amount', label: 'จำนวนเงิน', field: 'amount', align: 'right', sortable: true },
+  {
+    name: 'amount',
+    label: t('centralFinance.dailyReport.table.amount'),
+    field: 'amount',
+    align: 'right',
+    sortable: true,
+  },
 ]);
 
-// 3. ปรับปรุงฟังก์ชัน onSearch เพื่อเช็ควันที่
 function onSearch(): void {
-  // เช็คว่ามีค่าในวันที่เริ่มต้นและถึงวันที่หรือไม่
   if (!filters.value.receiptDateStart || !filters.value.receiptDateEnd) {
     $q.notify({
-      type: 'warning', // ใช้สีเหลืองเพื่อเตือน
-      message: 'กรุณาระบุวันที่เริ่มต้นและสิ้นสุดให้ครบถ้วน',
+      type: 'warning',
+      message: t('centralFinance.dailyReport.filters.dateRequired'),
       position: 'top',
       icon: 'warning',
     });
-    return; // หยุดการทำงาน ไม่เซ็ต activeFilters และไม่เปิดตาราง
+    return;
   }
 
   activeFilters.value = {
@@ -427,11 +444,9 @@ function onSearch(): void {
     courseName: filters.value.courseName,
   };
 
-  // เปิดการแสดงผลตารางหลังจากกดยืนยันการค้นหา
   hasSearched.value = true;
 }
 
-// ฟังก์ชันล้างค่าฟิลเตอร์
 function clearFilters(): void {
   filters.value.receiptDateStart = '';
   filters.value.receiptDateEnd = '';
@@ -445,7 +460,6 @@ function clearFilters(): void {
     courseName: '',
   };
 
-  // ปิดการแสดงผลตารางเมื่อมีการล้างค่าฟิลเตอร์
   hasSearched.value = false;
 }
 
@@ -457,7 +471,6 @@ function formatCurrency(val: number): string {
   }).format(val);
 }
 
-// ฟังก์ชันส่งออกเป็น PDF พร้อมตราสารประยุกต์ใช้ฟอนต์สากลวิชาการไทย Sarabun
 async function exportToPdf(): Promise<void> {
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -465,7 +478,6 @@ async function exportToPdf(): Promise<void> {
     format: 'a4',
   });
 
-  // โหลดฟอนต์ภาษาไทยสารบัญ
   const response = await fetch(SarabunFontUrl);
   const blob = await response.blob();
   const base64Font = await new Promise<string>((resolve) => {
@@ -482,9 +494,12 @@ async function exportToPdf(): Promise<void> {
   doc.setFont('Sarabun');
 
   doc.setFontSize(13);
-  const title1 = 'รายงานสรุปการรับเงินประจำวัน LifeLong Learning มหาวิทยาลัยบูรพา';
-  const title2 = `ส่วนงาน: ${activeFilters.value.department}`;
-  const title3 = `วันที่ใบเสร็จรับเงิน ${activeFilters.value.receiptDateStart} ถึงวันที่ ${activeFilters.value.receiptDateEnd}`;
+  const title1 = t('centralFinance.dailyReport.table.reportTitle');
+  const title2 = `${t('centralFinance.dailyReport.table.departmentLabel')}: ${getDepartmentLabel(activeFilters.value.department)}`;
+  const title3 = t('centralFinance.dailyReport.table.dateLabel', {
+    start: activeFilters.value.receiptDateStart,
+    end: activeFilters.value.receiptDateEnd,
+  });
 
   doc.text(title1, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
   doc.text(title2, doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
@@ -501,7 +516,14 @@ async function exportToPdf(): Promise<void> {
     startY: 80,
     rowPageBreak: 'avoid',
     showHead: 'everyPage',
-    head: [['ลำดับ', 'ชื่อโครงการ/อบรม/หลักสูตร', 'รหัสแหล่งเงิน/ชื่อผังบัญชี', 'จำนวนเงิน']],
+    head: [
+      [
+        t('centralFinance.dailyReport.table.no'),
+        t('centralFinance.dailyReport.table.courseName'),
+        t('centralFinance.dailyReport.table.fundCode'),
+        t('centralFinance.dailyReport.table.amount'),
+      ],
+    ],
     body: rows,
     styles: {
       font: 'Sarabun',
@@ -535,9 +557,13 @@ async function exportToPdf(): Promise<void> {
   doc.save('daily-report.pdf');
 }
 
-// ฟังก์ชันส่งออกเป็น Excel
 function exportToExcel(): void {
-  const header = ['ลำดับ', 'ชื่อโครงการ/อบรม/หลักสูตร', 'รหัสแหล่งเงิน/ชื่อผังบัญชี', 'จำนวนเงิน'];
+  const header = [
+    t('centralFinance.dailyReport.table.no'),
+    t('centralFinance.dailyReport.table.courseName'),
+    t('centralFinance.dailyReport.table.fundCode'),
+    t('centralFinance.dailyReport.table.amount'),
+  ];
 
   const rows = tableRows.value.map((row) => [
     row.no,
@@ -546,9 +572,12 @@ function exportToExcel(): void {
     row.amount,
   ]);
 
-  const title1 = 'รายงานสรุปการรับเงินประจำวัน LifeLong Learning มหาวิทยาลัยบูรพา';
-  const title2 = `ส่วนงาน ${activeFilters.value.department}`;
-  const title3 = `วันที่ใบเสร็จรับเงิน ${activeFilters.value.receiptDateStart} ถึงวันที่ ${activeFilters.value.receiptDateEnd}`;
+  const title1 = t('centralFinance.dailyReport.table.reportTitle');
+  const title2 = `${t('centralFinance.dailyReport.table.departmentLabel')} ${getDepartmentLabel(activeFilters.value.department)}`;
+  const title3 = t('centralFinance.dailyReport.table.dateLabel', {
+    start: activeFilters.value.receiptDateStart,
+    end: activeFilters.value.receiptDateEnd,
+  });
 
   const wsData = [[title1], [title2], [title3], [], header, ...rows];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -562,7 +591,7 @@ function exportToExcel(): void {
   ws['!cols'] = [{ wch: 8 }, { wch: 60 }, { wch: 45 }, { wch: 15 }];
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'รายงาน');
+  XLSX.utils.book_append_sheet(wb, ws, 'Report');
   XLSX.writeFile(wb, 'daily-report.xlsx');
 }
 </script>
