@@ -469,19 +469,49 @@
 
             <!-- ผลลัพธ์การเรียนรู้ -->
             <div class="course-form__field course-form__field--full">
-              <div class="course-form__label">
-                ผลลัพธ์การเรียนรู้ (LO) <span class="course-form__optional">(ไม่บังคับ)</span>
+              <div class="course-form__label-row">
+                <span class="course-form__label">
+                  ผลลัพธ์การเรียนรู้ (LO) <span class="course-form__optional">(ไม่บังคับ)</span>
+                </span>
+                <q-btn
+                  v-if="!props.readonly"
+                  flat
+                  dense
+                  no-caps
+                  color="primary"
+                  icon="add"
+                  label="เพิ่ม LO"
+                  class="course-form__add-btn"
+                  @click="form.loItems.push('')"
+                />
               </div>
-              <q-input
-                v-model="form.lo"
-                outlined
-                dense
-                type="textarea"
-                rows="3"
-                placeholder="กรอกจาก มคอ./TQF/CBS เช่น ผู้เรียนสามารถอธิบาย... / ผู้เรียนสามารถประยุกต์..."
-                class="course-form__input"
-                :readonly="props.readonly"
-              />
+              <div
+                v-if="form.loItems.length === 0 && !props.readonly"
+                class="course-form__summary-empty"
+              >
+                กดเพิ่ม LO เพื่อระบุผลลัพธ์การเรียนรู้ที่คาดหวัง
+              </div>
+              <div v-for="(_, idx) in form.loItems" :key="idx" class="course-form__summary-row">
+                <span class="course-form__summary-seq">{{ idx + 1 }}.</span>
+                <q-input
+                  v-model="form.loItems[idx]"
+                  outlined
+                  dense
+                  placeholder="ผู้เรียนสามารถ..."
+                  class="course-form__input course-form__summary-input"
+                  :readonly="props.readonly"
+                />
+                <q-btn
+                  v-if="!props.readonly"
+                  flat
+                  round
+                  dense
+                  icon="delete"
+                  color="negative"
+                  size="sm"
+                  @click="form.loItems.splice(idx, 1)"
+                />
+              </div>
             </div>
 
             <!-- สิทธิประโยชน์ผู้สำเร็จหลักสูตร -->
@@ -1183,7 +1213,7 @@ const form = reactive({
   classTypeId: undefined as number | undefined,
   classFee: 0,
   classFeeRemark: '',
-  lo: '',
+  loItems: [] as string[],
   keyword: '',
   privilege: '',
   remarkChapter: '',
@@ -1282,7 +1312,10 @@ watch(
     form.classTypeId = data.classTypeId ?? undefined;
     form.classFee = data.classFee ?? 0;
     form.classFeeRemark = data.classFeeRemark ?? '';
-    form.lo = data.lo ?? '';
+    form.loItems = (data.lo ?? '')
+      .split('\n')
+      .map((s: string) => s.replace(/^\d+\.\s*/, '').trim())
+      .filter(Boolean);
     form.keyword = data.keyword ?? '';
     form.privilege = data.privilege ?? '';
     form.remarkChapter = data.remarkChapter ?? '';
@@ -1602,7 +1635,7 @@ async function submit() {
     classTypeId: form.classTypeId,
     classFee: form.classFee,
     classFeeRemark: form.classFeeRemark,
-    lo: form.lo.trim() || undefined,
+    lo: form.loItems.filter((s) => s.trim()).join('\n') || undefined,
     keyword: form.keyword.trim() || undefined,
     privilege: form.privilege.trim() || undefined,
     remarkChapter: form.remarkChapter || undefined,
