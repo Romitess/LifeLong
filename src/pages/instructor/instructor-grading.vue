@@ -176,11 +176,11 @@
           </table>
         </div>
 
-        <div v-if="totalPages > 1" class="grading-surface__pagination">
+        <div v-if="totalPages > 1" ref="paginationRef" class="grading-surface__pagination">
           <BasePagination
             :model-value="currentPage"
             :max="totalPages"
-            @update:model-value="currentPage = $event"
+            @update:model-value="handlePageChange"
           />
         </div>
       </BaseSurfaceCard>
@@ -281,7 +281,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -324,6 +324,7 @@ const syncing = ref(false);
 const moodleOpening = ref(false);
 const panelOpen = ref(false);
 const panelRow = ref<Submission | null>(null);
+const paginationRef = ref<HTMLElement | null>(null);
 
 const rowsPerPage = 10;
 const tableRowHeight = 68;
@@ -419,6 +420,24 @@ const tableViewportHeight = `${rowsPerPage * tableRowHeight + tableHeaderHeight}
 watch(search, () => {
   currentPage.value = 1;
 });
+
+async function preservePaginationPosition(update: () => Promise<void> | void): Promise<void> {
+  const anchorTop =
+    typeof window !== 'undefined' ? paginationRef.value?.getBoundingClientRect().top : undefined;
+  await update();
+  await nextTick();
+  if (typeof window === 'undefined' || anchorTop === undefined || !paginationRef.value) return;
+  const nextTop = paginationRef.value.getBoundingClientRect().top;
+  if (Math.abs(nextTop - anchorTop) < 1) return;
+  window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
+}
+
+async function handlePageChange(page: number) {
+  if (page === currentPage.value) return;
+  await preservePaginationPosition(() => {
+    currentPage.value = page;
+  });
+}
 
 function moodleGraderUrl(cmid: number | null, moodleUserId: number | null): string | null {
   if (!cmid || !moodleUserId) return null;
@@ -711,18 +730,25 @@ async function onSyncScores() {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  max-width: 300px;
 }
 
 .grading-table__name {
   color: #101828;
   font-size: 0.92rem;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .grading-table__id {
   color: #667085;
   font-size: 0.76rem;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .grading-table__score-cell {
