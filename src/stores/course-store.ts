@@ -34,6 +34,8 @@ interface BackendCourse {
   hours?: number | null;
   startDate?: string | null;
   endDate?: string | null;
+  regStartDate?: string | null;
+  regEndDate?: string | null;
   categoryId?: number | null;
   objective?: string | null;
   status?: string | null;
@@ -130,8 +132,9 @@ function mapBackendCourse(course: BackendCourse): Course | null {
   }
 
   const isActive = course.status === 'Y';
-  const startDate = course.startDate ?? '2026-06-01';
-  const endDate = course.endDate ?? '2026-09-30';
+  const today = new Date().toISOString().substring(0, 10);
+  const startDate = course.regStartDate ?? course.startDate ?? today;
+  const endDate = course.regEndDate ?? course.endDate ?? '2099-12-31';
   const activeStatus = 'เปิดรับสมัคร';
   const inactiveStatus = 'เปิดรับสมัคร';
 

@@ -950,8 +950,11 @@
               class="course-form__field course-form__field--full"
             >
               <div class="course-form__label">
-                ราคาต่อประเภทผู้เรียน
-                <span class="course-form__optional">(ไม่บังคับ)</span>
+                ราคาต่อประเภทผู้เรียน <span class="course-form__required">*</span>
+              </div>
+              <div v-if="form.classFee === 0" class="text-caption text-positive q-mb-sm">
+                <q-icon name="info" size="14px" /> รายวิชานี้ไม่มีค่าธรรมเนียม ราคาทุกประเภทจะเป็น 0
+                อัตโนมัติ
               </div>
               <div class="course-form__stutype-fee-list">
                 <div
@@ -967,17 +970,18 @@
                       dense
                       type="number"
                       min="0"
-                      placeholder="ราคา"
+                      placeholder="ราคา (ถ้าฟรีใส่ 0)"
+                      :rules="[feeRule]"
                       class="course-form__input course-form__input--compact"
-                      :readonly="props.readonly"
+                      :readonly="props.readonly || form.classFee === 0"
                       @keypress="onNumberKeypress"
                     />
                     <span class="course-form__fee-unit">บาท</span>
                   </div>
                 </div>
               </div>
-              <div class="text-caption text-grey-6 q-mt-xs">
-                เว้นว่างไว้หากประเภทนั้นไม่มีการกำหนดราคาเฉพาะ
+              <div v-if="form.classFee !== 0" class="text-caption text-grey-6 q-mt-xs">
+                กรุณากรอกราคาสำหรับทุกประเภท (ถ้าประเภทนั้นเรียนฟรีให้ใส่ 0)
               </div>
             </div>
           </div>
@@ -1269,7 +1273,8 @@ const form = reactive({
   contactUrl: '',
   image: undefined as File | undefined,
   newFiles: [] as File[],
-  stutypeFeeAmounts: {},
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  stutypeFeeAmounts: {} as { [id: number]: number | null },
 });
 
 // Convert YYYY-MM-DD → DD/MM/YYYY for form display
@@ -1397,6 +1402,20 @@ watch(
   { immediate: true },
 );
 
+watch(
+  () => form.classFee,
+  (fee) => {
+    if (fee === 0) {
+      for (const id of Object.keys(form.stutypeFeeAmounts)) {
+        form.stutypeFeeAmounts[Number(id)] = 0;
+      }
+      for (const st of formOptions.value.studentTypes) {
+        form.stutypeFeeAmounts[st.id] = 0;
+      }
+    }
+  },
+);
+
 function addInstructor(inst: InstructorOption | null) {
   if (!inst) return;
   const key = inst.email || inst.username;
@@ -1468,6 +1487,7 @@ async function revealAndFocusFirstError(): Promise<void> {
   await nextTick();
   const scrollTarget =
     firstErrorField?.closest<HTMLElement>('.course-form__field') ??
+    firstErrorField?.closest<HTMLElement>('.course-form__stutype-fee-row') ??
     (firstErrorField as HTMLElement | null);
   scrollTarget?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   const input = firstErrorField?.querySelector('input, textarea, [tabindex]') as HTMLElement | null;

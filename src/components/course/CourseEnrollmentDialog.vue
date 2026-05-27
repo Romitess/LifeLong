@@ -1,4 +1,86 @@
 <template>
+  <!-- 0. Price Preview Dialog -->
+  <q-dialog
+    v-model="showPricePreviewDialog"
+    transition-show="scale"
+    transition-hide="scale"
+    persistent
+  >
+    <q-card class="modern-card price-preview-card">
+      <q-card-section class="modern-header q-pa-lg">
+        <div class="text-h6 text-white text-weight-bold">
+          {{ t('enrollment.pricePreviewTitle') }}
+        </div>
+        <div class="text-caption text-white opacity-80">{{ t('enrollment.pricePreviewSub') }}</div>
+      </q-card-section>
+
+      <q-card-section class="q-pa-lg">
+        <div v-if="isLoadingPrice" class="text-center q-py-lg">
+          <q-spinner-dots color="primary" size="40px" />
+        </div>
+
+        <template v-else-if="enrollingCourse">
+          <div class="q-mb-md q-pa-sm bg-grey-1 rounded-borders">
+            <div class="text-weight-bold text-dark">{{ translatedEnrollingCourseTitle }}</div>
+            <div class="text-caption text-grey-6">{{ enrollingCourse.code }}</div>
+          </div>
+
+          <div class="price-preview-row q-mb-sm">
+            <span class="text-grey-7">{{ t('enrollment.pricePreviewType') }}</span>
+            <span class="text-weight-medium text-dark">
+              {{
+                privilegeInfo?.stutypeName
+                  ? privilegeInfo.stutypeName
+                  : t('enrollment.pricePreviewNoType')
+              }}
+            </span>
+          </div>
+
+          <div class="price-preview-row q-mb-md">
+            <span class="text-grey-7">{{ t('enrollment.pricePreviewYourFee') }}</span>
+            <span class="text-h6 text-primary text-weight-bolder">{{ priceLabel }}</span>
+          </div>
+
+          <div
+            v-if="privilegeInfo?.isPrivileged"
+            class="price-preview-note q-pa-sm rounded-borders q-mb-md"
+          >
+            <q-icon name="local_offer" color="positive" size="16px" class="q-mr-xs" />
+            <span class="text-caption text-positive">
+              {{ t('enrollment.pricePreviewPrivilegeNote', { type: privilegeInfo.stutypeName }) }}
+            </span>
+          </div>
+          <div
+            v-else-if="privilegeInfo"
+            class="price-preview-note price-preview-note--normal q-pa-sm rounded-borders q-mb-md"
+          >
+            <q-icon name="info" color="grey-6" size="16px" class="q-mr-xs" />
+            <span class="text-caption text-grey-7">{{
+              t('enrollment.pricePreviewNormalNote')
+            }}</span>
+          </div>
+        </template>
+      </q-card-section>
+
+      <q-card-actions class="q-px-lg q-pb-lg" align="center">
+        <BaseButton
+          outline
+          :label="t('enrollment.cancel')"
+          color="grey-7"
+          no-caps
+          @click="showPricePreviewDialog = false"
+        />
+        <BaseButton
+          :label="t('enrollment.pricePreviewConfirm')"
+          color="primary"
+          no-caps
+          :disable="isLoadingPrice"
+          @click="confirmPricePreview"
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
   <!-- 1. Paid Info Dialog -->
   <q-dialog
     v-model="showPaidInfoDialog"
@@ -14,7 +96,14 @@
         </div>
       </q-card-section>
 
-      <q-card-section class="q-pa-lg">
+      <q-card-section class="q-px-lg q-pt-lg q-pb-sm">
+        <div class="paid-info-fee-banner">
+          <div class="text-caption text-grey-6">{{ t('enrollment.fee') }}</div>
+          <div class="text-h5 text-primary text-weight-bolder">{{ priceLabel }}</div>
+        </div>
+      </q-card-section>
+
+      <q-card-section class="q-px-lg q-pt-sm q-pb-md">
         <q-form ref="paidInfoFormRef" @submit.prevent="submitPaidInfo" class="q-gutter-y-md">
           <q-input
             v-model="userInfo.taxId"
@@ -99,28 +188,22 @@
             </template>
           </q-input>
 
-          <div class="row justify-between items-center q-mt-lg">
-            <div class="column">
-              <div class="text-caption text-grey-6">{{ t('enrollment.fee') }}</div>
-              <div class="text-h6 text-primary text-weight-bolder">{{ priceLabel }}</div>
-            </div>
-            <div class="paid-info-dialog-card__actions">
-              <BaseButton
-                outline
-                :label="t('enrollment.cancel')"
-                color="grey-7"
-                no-caps
-                class="paid-info-dialog-card__button"
-                @click="cancelPaidInfo"
-              />
-              <BaseButton
-                type="submit"
-                :label="t('enrollment.next')"
-                color="primary"
-                no-caps
-                class="paid-info-dialog-card__button"
-              />
-            </div>
+          <div class="paid-info-dialog-card__actions q-mt-lg">
+            <BaseButton
+              outline
+              :label="t('enrollment.cancel')"
+              color="grey-7"
+              no-caps
+              class="paid-info-dialog-card__button"
+              @click="cancelPaidInfo"
+            />
+            <BaseButton
+              type="submit"
+              :label="t('enrollment.next')"
+              color="primary"
+              no-caps
+              class="paid-info-dialog-card__button"
+            />
           </div>
         </q-form>
       </q-card-section>
@@ -247,7 +330,9 @@ import BaseButton from 'components/base/BaseButton.vue';
 import type { CourseDetail } from 'src/types/course-detail';
 import { useCoursePaymentStore } from 'src/stores/course-payment-store';
 import { useCourseRegistrationStore } from 'src/stores/course-registration-store';
+import { useAuthStore } from 'src/stores/auth-store';
 import { useI18n } from 'vue-i18n';
+import { api } from 'src/boot/axios';
 
 interface Props {
   course?: CourseDetail | null;
@@ -271,7 +356,16 @@ const emit = defineEmits<{
 
 const courseRegistrationStore = useCourseRegistrationStore();
 const coursePaymentStore = useCoursePaymentStore();
+const authStore = useAuthStore();
 const { t, locale } = useI18n();
+
+const showPricePreviewDialog = ref(false);
+const isLoadingPrice = ref(false);
+const privilegeInfo = ref<{
+  effectivePrice: number;
+  stutypeName: string | null;
+  isPrivileged: boolean;
+} | null>(null);
 
 const showPaidInfoDialog = ref(false);
 const showQrDialog = ref(false);
@@ -292,11 +386,13 @@ const userInfo = reactive({
   billingAddress: '',
 });
 
+const effectivePrice = computed<number>(
+  () => privilegeInfo.value?.effectivePrice ?? enrollingCourse.value?.price ?? 0,
+);
+
 const priceLabel = computed<string>(() => {
-  if (!enrollingCourse.value || enrollingCourse.value.isFree) {
-    return `0 ${t('thb')}`;
-  }
-  return `${enrollingCourse.value.price.toLocaleString(locale.value === 'th' ? 'th-TH' : 'en-US')} ${t('thb')}`;
+  if (effectivePrice.value === 0) return `0 ${t('thb')}`;
+  return `${effectivePrice.value.toLocaleString(locale.value === 'th' ? 'th-TH' : 'en-US')} ${t('thb')}`;
 });
 
 const translatedEnrollingCourseTitle = computed<string>(() => {
@@ -313,17 +409,54 @@ const translatedEnrollingCourseTitle = computed<string>(() => {
 
 /**
  * Open the enrollment flow for a given course.
- * This is the single entry point called by the parent component.
+ * Shows price-preview dialog first, then proceeds to paid/free flow.
  */
-function openEnrollment(course: CourseDetail): void {
+async function openEnrollment(course: CourseDetail): Promise<void> {
   resetEnrollmentDialogs();
   enrollingCourse.value = course;
+  privilegeInfo.value = null;
 
-  if (course.isFree) {
+  const username = authStore.user?.username;
+  if (username && course.code) {
+    isLoadingPrice.value = true;
+    showPricePreviewDialog.value = true;
+    try {
+      const { data } = await api.get<{
+        effectivePrice: number;
+        stutypeName: string | null;
+        isPrivileged: boolean;
+      }>('/api/moodle/enroll/my-fee', {
+        params: { username, courseCode: course.code },
+      });
+      privilegeInfo.value = data;
+    } catch {
+      privilegeInfo.value = {
+        effectivePrice: course.price,
+        stutypeName: null,
+        isPrivileged: false,
+      };
+    } finally {
+      isLoadingPrice.value = false;
+    }
+  } else {
+    proceedEnrollment();
+  }
+}
+
+function confirmPricePreview(): void {
+  showPricePreviewDialog.value = false;
+  proceedEnrollment();
+}
+
+function proceedEnrollment(): void {
+  if (!enrollingCourse.value) return;
+  const isFreeNow = effectivePrice.value === 0;
+
+  if (isFreeNow) {
     showFreeConfirmDialog.value = true;
   } else {
     const existingRegistration = courseRegistrationStore.myRegistrations.find(
-      (r) => r.courseId === course.id && r.paymentStatus === 'pending',
+      (r) => r.courseId === enrollingCourse.value!.id && r.paymentStatus === 'pending',
     );
 
     if (existingRegistration && existingRegistration.registrantInfo) {
@@ -344,6 +477,7 @@ function openEnrollment(course: CourseDetail): void {
 }
 
 function resetEnrollmentDialogs(): void {
+  showPricePreviewDialog.value = false;
   showPaidInfoDialog.value = false;
   showQrDialog.value = false;
   showFreeConfirmDialog.value = false;
@@ -397,7 +531,7 @@ async function submitPaidInfo(): Promise<void> {
   });
 
   const paymentData = encodeURIComponent(
-    `PROMPTPAY:${enrollingCourse.value.code}:THB:${enrollingCourse.value.price}`,
+    `PROMPTPAY:${enrollingCourse.value.code}:THB:${effectivePrice.value}`,
   );
   qrUrl.value =
     `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${paymentData}` +
@@ -446,7 +580,7 @@ watch(
       return;
     }
 
-    openEnrollment(props.course);
+    void openEnrollment(props.course);
   },
 );
 
@@ -462,6 +596,14 @@ defineExpose({
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
+.paid-info-fee-banner {
+  background: rgba($primary, 0.07);
+  border: 1px solid rgba($primary, 0.18);
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-align: center;
+}
+
 .paid-info-dialog-card {
   width: 450px;
   max-width: 90vw;
@@ -470,6 +612,8 @@ defineExpose({
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+    max-width: 320px;
+    margin-inline: auto;
   }
 
   &__button {
@@ -548,5 +692,29 @@ defineExpose({
 
 .opacity-80 {
   opacity: 0.8;
+}
+
+.price-preview-card {
+  width: 420px;
+  max-width: 92vw;
+}
+
+.price-preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.price-preview-note {
+  background: rgba($positive, 0.08);
+  border: 1px solid rgba($positive, 0.2);
+  display: flex;
+  align-items: center;
+
+  &--normal {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
 }
 </style>

@@ -895,12 +895,20 @@ function getTranslatedRoom(sch: CourseSchedule): string {
 }
 
 function getTranslatedRegStart(course: Course): string {
-  if (locale.value === 'th') return course.registrationStart;
+  if (locale.value === 'th') {
+    return course.registrationStartDate
+      ? formatRegistrationDateByLocale(course.registrationStartDate)
+      : course.registrationStart;
+  }
   return course.registrationStartEn || formatRegistrationDateByLocale(course.registrationStartDate);
 }
 
 function getTranslatedRegEnd(course: Course): string {
-  if (locale.value === 'th') return course.registrationEnd;
+  if (locale.value === 'th') {
+    return course.registrationEndDate
+      ? formatRegistrationDateByLocale(course.registrationEndDate)
+      : course.registrationEnd;
+  }
   return course.registrationEndEn || formatRegistrationDateByLocale(course.registrationEndDate);
 }
 
@@ -1016,12 +1024,13 @@ const registrationWindowStatus = computed<RegistrationWindowStatus>(() => {
   const today = new Date();
   const registrationStart = parseLocalDate(course.value.registrationStartDate);
   const registrationEnd = getEndOfLocalDate(course.value.registrationEndDate);
+  const hasValidDates = !isNaN(registrationStart.getTime()) && !isNaN(registrationEnd.getTime());
 
-  if (today < registrationStart) {
+  if (hasValidDates && today < registrationStart) {
     return 'upcoming';
   }
 
-  if (today > registrationEnd) {
+  if (hasValidDates && today > registrationEnd) {
     return 'closed';
   }
 
@@ -1094,13 +1103,18 @@ const progressColor = computed<string>(() =>
   enrollmentAction.value.disabled ? 'grey-7' : 'primary',
 );
 
-function parseLocalDate(dateText: string): Date {
-  const [year, month, day] = dateText.split('-').map(Number);
-  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+function parseLocalDate(dateText: string | null | undefined): Date {
+  if (!dateText) return new Date(NaN);
+  const parts = dateText.split('-').map(Number);
+  if (parts.length < 3 || parts.some(isNaN)) return new Date(NaN);
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  return new Date(parts[0] as number, (parts[1] as number) - 1, parts[2] as number);
 }
 
-function formatRegistrationDateByLocale(dateText: string): string {
+function formatRegistrationDateByLocale(dateText: string | null | undefined): string {
+  if (!dateText) return '—';
   const date = parseLocalDate(dateText);
+  if (isNaN(date.getTime())) return '—';
   return date.toLocaleDateString(locale.value === 'th' ? 'th-TH' : 'en-GB', {
     day: 'numeric',
     month: 'short',
@@ -1108,9 +1122,9 @@ function formatRegistrationDateByLocale(dateText: string): string {
   });
 }
 
-function getEndOfLocalDate(dateText: string): Date {
+function getEndOfLocalDate(dateText: string | null | undefined): Date {
   const date = parseLocalDate(dateText);
-  date.setHours(23, 59, 59, 999);
+  if (!isNaN(date.getTime())) date.setHours(23, 59, 59, 999);
   return date;
 }
 

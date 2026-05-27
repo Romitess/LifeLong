@@ -78,13 +78,17 @@ function getTranslatedTitle(course: Course): string {
   return course.titleEn || course.title;
 }
 
-function parseLocalDate(dateText: string): Date {
-  const [year, month, day] = dateText.split('-').map(Number);
-  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+function parseLocalDate(dateText: string | null | undefined): Date {
+  if (!dateText) return new Date(NaN);
+  const parts = dateText.split('-').map(Number);
+  if (parts.length < 3 || parts.some(isNaN)) return new Date(NaN);
+  return new Date(parts[0] as number, (parts[1] as number) - 1, parts[2]);
 }
 
-function formatRegistrationDateByLocale(dateText: string): string {
+function formatRegistrationDateByLocale(dateText: string | null | undefined): string {
+  if (!dateText) return '—';
   const date = parseLocalDate(dateText);
+  if (isNaN(date.getTime())) return '—';
   return date.toLocaleDateString(locale.value === 'th' ? 'th-TH' : 'en-GB', {
     day: 'numeric',
     month: 'short',

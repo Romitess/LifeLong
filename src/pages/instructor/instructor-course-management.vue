@@ -1979,8 +1979,8 @@ watch(
     courseSettings.maxSeats = course.maxSeats;
     courseSettings.coverImageUrl = course.imageUrl;
     courseSettings.deliveryMode = course.deliveryModes[0] ?? 'Online';
-    courseSettings.registrationStartDate = course.registrationStartDate;
-    courseSettings.registrationEndDate = course.registrationEndDate;
+    courseSettings.registrationStartDate = course.registrationStartDate ?? '';
+    courseSettings.registrationEndDate = course.registrationEndDate ?? '';
     if (learnerPricing[0])
       learnerPricing[0].amount = course.isFree ? 0 : Math.max(0, Math.round(course.price * 0.5));
     if (learnerPricing[1])
@@ -2133,7 +2133,8 @@ function previewCourse(): void {
   void router.push(`/course/${selectedCourse.value.id}`);
 }
 
-function formatCourseDateLabel(dateText: string, fallback: string): string {
+function formatCourseDateLabel(dateText: string | null | undefined, fallback: string): string {
+  if (!dateText) return fallback;
   const [year, month, day] = dateText.split('-').map(Number);
   if (!year || !month || !day) {
     return fallback;

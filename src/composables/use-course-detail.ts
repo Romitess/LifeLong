@@ -75,7 +75,6 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
     error.value = null;
 
     try {
-      await new Promise<void>((resolve) => setTimeout(resolve, 500));
       await courseStore.fetchBackendCourses();
 
       const currentId = readCourseId(courseId);
@@ -85,6 +84,9 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
         error.value = 'ไม่พบข้อมูลรายละเอียดคอร์สนี้';
         return;
       }
+
+      // Set fresh base data immediately so dates/enrollment state are up-to-date
+      course.value = detail;
 
       // Fetch dynamic details (targets, evaluation) directly from NestJS API
       const rawId = currentId.replace('db-', '');
@@ -138,14 +140,11 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
                   }
                 : {}),
             };
-            return;
           }
         } catch (apiError) {
           console.warn('Failed to fetch individual course detail from backend:', apiError);
         }
       }
-
-      course.value = detail;
     } catch {
       error.value = 'ไม่สามารถโหลดข้อมูลรายละเอียดคอร์สได้ กรุณาลองใหม่อีกครั้ง';
     } finally {
