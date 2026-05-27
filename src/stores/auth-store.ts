@@ -44,7 +44,6 @@ export interface AuthActionResult {
 }
 
 interface StoredAuthAccount extends User {
-  password: string;
   createdAt: string;
   source: 'mock' | 'registered';
 }
@@ -62,6 +61,34 @@ const USER_PROFILE_STORAGE_KEY = 'lll-user-profile';
 const AUTH_ACCOUNTS_STORAGE_KEY = 'lll-auth-accounts';
 const CURRENT_USER_EMAIL_STORAGE_KEY = 'userEmail';
 const LOGIN_STATE_STORAGE_KEY = 'isLoggedIn';
+const TOKEN_SESSION_KEY = 'lll-token';
+
+function readSessionToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.sessionStorage.getItem(TOKEN_SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(TOKEN_SESSION_KEY, token);
+  } catch {
+    // ignore
+  }
+}
+
+function removeSessionToken(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(TOKEN_SESSION_KEY);
+  } catch {
+    // ignore
+  }
+}
 export type UserProfileUpdate = Pick<
   User,
   'firstNameTh' | 'lastNameTh' | 'firstNameEn' | 'lastNameEn' | 'phone'
@@ -70,12 +97,7 @@ export type UserProfileUpdate = Pick<
 type StoredUserProfile = UserProfileUpdate;
 
 // removed: AUTH_DEMO_ACCOUNTS — no longer used; kept export to avoid breaking imports temporarily
-export const AUTH_DEMO_ACCOUNTS: AuthDemoAccount[] = [].map((account: StoredAuthAccount) => ({
-  identifier: account.username ?? account.email,
-  email: account.email,
-  password: account.password,
-  role: account.role,
-}));
+export const AUTH_DEMO_ACCOUNTS: AuthDemoAccount[] = [];
 
 function readLocalStorage(key: string): string | null {
   if (typeof window === 'undefined') {
@@ -158,7 +180,6 @@ function isStoredAuthAccount(value: unknown): value is StoredAuthAccount {
     typeof account.department === 'string' &&
     isUserRole(account.role) &&
     typeof account.avatar === 'string' &&
-    typeof account.password === 'string' &&
     typeof account.createdAt === 'string' &&
     (account.source === 'mock' || account.source === 'registered')
   );
@@ -178,10 +199,12 @@ function readStoredAuthAccounts(): StoredAuthAccount[] {
       return [];
     }
 
-    return parsedValue.filter(isStoredAuthAccount).map((account) => ({
-      ...account,
-      email: normalizeEmail(account.email),
-    }));
+    return parsedValue.filter(isStoredAuthAccount).map(({ ...account }) => {
+      // Strip legacy password field if present from old localStorage data
+      const cleaned = account as Record<string, unknown>;
+      delete cleaned['password'];
+      return { ...cleaned, email: normalizeEmail(account.email) } as StoredAuthAccount;
+    });
   } catch (error) {
     console.warn('Failed to parse stored auth accounts', error);
     removeLocalStorage(AUTH_ACCOUNTS_STORAGE_KEY);
@@ -310,6 +333,7 @@ export const useAuthStore = defineStore('auth', {
     return {
       isLoggedIn: Boolean(isLoggedIn && currentAccount),
       user: currentAccount ? createUserFromAccount(currentAccount) : (null as User | null),
+      token: readSessionToken(),
     };
   },
 
@@ -351,24 +375,25 @@ export const useAuthStore = defineStore('auth', {
           department: apiUser.role,
           role: ((): User['role'] => {
             const r = apiUser.role.toLowerCase();
-            console.log('[AuthStore] Raw role from API:', apiUser.role, 'Normalized to:', r);
             if (r === 'admin') return 'admin';
             if (r === 'instructor' || r === 'teach') return 'teach';
             if (r === 'finance') return 'finance';
             if (r === 'central_finance' || r === 'central-finance' || r === 'central finance')
               return 'central_finance';
             if (r === 'lifelong2') return 'lifelong2';
-            console.warn('[AuthStore] Role not recognized, defaulting to student');
             return 'student';
           })(),
           username: apiUser.username,
           avatar: createDefaultAvatar(apiUser.email),
-          password: password,
           createdAt: new Date().toISOString(),
           source: 'registered',
         };
 
-        // persist so session survives refresh
+        const receivedToken = (response.data.token as string) ?? null;
+        this.token = receivedToken;
+        if (receivedToken) writeSessionToken(receivedToken);
+
+        // persist so session survives refresh (no password stored)
         const others = readStoredAuthAccounts().filter((a) => a.email !== account.email);
         writeStoredAuthAccounts([...others, account]);
         this.setAuthenticatedUser(account);
@@ -414,7 +439,6 @@ export const useAuthStore = defineStore('auth', {
           role: 'external',
           username: apiUser.username,
           avatar: createDefaultAvatar(email),
-          password,
           createdAt,
           source: 'registered',
         };
@@ -435,6 +459,8 @@ export const useAuthStore = defineStore('auth', {
       writeLocalStorage(LOGIN_STATE_STORAGE_KEY, 'false');
       this.isLoggedIn = false;
       this.user = null;
+      this.token = null;
+      removeSessionToken();
     },
 
     setAvatar(avatar: string): void {

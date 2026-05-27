@@ -1,5 +1,6 @@
 import { defineBoot } from '#q-app/wrappers';
 import axios, { type AxiosInstance } from 'axios';
+import { useAuthStore } from 'src/stores/auth-store';
 
 declare module 'vue' {
   interface ComponentCustomProperties {
@@ -8,12 +9,6 @@ declare module 'vue' {
   }
 }
 
-// Be careful when using SSR for cross-request state pollution
-// due to creating a Singleton instance here;
-// If any client changes this (global) instance, it might be a
-// good idea to move this instance creation inside of the
-// "export default () => {}" function below (which runs individually
-// for each client)
 const api = axios.create({
   baseURL:
     (import.meta.env.VITE_API_URL as string) ||
@@ -21,16 +16,32 @@ const api = axios.create({
     '/api',
 });
 
-export default defineBoot(({ app }) => {
-  // for use inside Vue files (Options API) through this.$axios and this.$api
-
+export default defineBoot(({ app, router: vueRouter }) => {
   app.config.globalProperties.$axios = axios;
-  // ^ ^ ^ this will allow you to use this.$axios (for Vue Options API form)
-  //       so you won't necessarily have to import axios in each vue file
-
   app.config.globalProperties.$api = api;
-  // ^ ^ ^ this will allow you to use this.$api (for Vue Options API form)
-  //       so you can easily perform requests against your app's API
+
+  // Attach JWT token from Pinia on every request
+  api.interceptors.request.use((config) => {
+    const authStore = useAuthStore();
+    if (authStore.token) {
+      config.headers['Authorization'] = `Bearer ${authStore.token}`;
+    }
+    return config;
+  });
+
+  // On 401, clear session and redirect to login
+  api.interceptors.response.use(
+    (response) => response,
+    (error: unknown) => {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 401) {
+        const authStore = useAuthStore();
+        authStore.logout();
+        void vueRouter.push('/auth/login');
+      }
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+    },
+  );
 });
 
 export { api };
