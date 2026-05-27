@@ -143,6 +143,17 @@
         >
           <template #header-actions>
             <div class="payment-table-toolbar q-mb-lg">
+              <q-btn
+                unelevated
+                outline
+                color="primary"
+                icon="preview"
+                label="Load Mock Data"
+                no-caps
+                class="payment-delete-btn"
+                @click="loadMockData"
+              />
+
               <q-input
                 v-model="tableSearch"
                 outlined
@@ -706,6 +717,15 @@
               <div class="text-negative text-weight-bold q-mb-md">
                 {{ $t('finance.paymentImport.finalVerifyHint') }}
               </div>
+
+              <div
+                class="row items-center q-gutter-xs q-mb-md text-weight-bold"
+                :class="allRowsVerified ? 'text-positive' : 'text-amber-9'"
+              >
+                <q-icon :name="allRowsVerified ? 'check_circle' : 'warning'" size="18px" />
+                <span>ยืนยันข้อมูลแล้ว {{ verifiedCount }} / {{ importedRows.length }} รายการ</span>
+              </div>
+
               <q-btn
                 unelevated
                 color="amber-8"
@@ -713,6 +733,7 @@
                 no-caps
                 class="q-px-xl q-py-md text-weight-bolder shadow-3"
                 style="font-size: 1.1rem; border-radius: 12px"
+                :disable="!allRowsVerified"
                 @click="finalizeImport"
               />
             </div>
@@ -883,56 +904,7 @@ const comparisonRows = computed(() => {
   }));
 });
 
-const importedRows = ref<ImportedPaymentRow[]>([
-  {
-    id: 'PAY-001',
-    learnerRef: '6700017',
-    applicationRef: '6751300100003',
-    payerName: 'น.ส. สุกัญญา ประมงค์กิจ',
-    paymentDate: '10-04-2567',
-    paymentTime: '14:13:19',
-    amount: 1200,
-    importedAt: '13/06/2568 14:14:40',
-    importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
-    status: 'verified',
-    dbLearnerRef: '6700017',
-    dbAppRef: '6751300100003',
-    dbLearnerName: 'น.ส. สุกัญญา ประมงค์กิจ',
-    dbAmount: 1200,
-  },
-  {
-    id: 'PAY-002',
-    learnerRef: '6600005',
-    applicationRef: '6751300100002',
-    payerName: 'น.ส. วันนิสา ข่ายเพชร',
-    paymentDate: '10-04-2567',
-    paymentTime: '14:20:19',
-    amount: 900,
-    importedAt: '13/06/2568 14:14:40',
-    importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
-    status: 'pending',
-    dbLearnerRef: '6600005',
-    dbAppRef: '6751300100002',
-    dbLearnerName: 'น.ส. วันนิสา ข่ายเพชร',
-    dbAmount: 900,
-  },
-  {
-    id: 'PAY-003',
-    learnerRef: '6600005',
-    applicationRef: '6751300100002',
-    payerName: 'NATTAPORN YASOWONG',
-    paymentDate: '10-04-2567',
-    paymentTime: '14:20:38',
-    amount: 900,
-    importedAt: '13/06/2568 14:14:40',
-    importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
-    status: 'pending',
-    dbLearnerRef: '6600005',
-    dbAppRef: '6751300100002',
-    dbLearnerName: 'น.ส. วันนิสา ข่ายเพชร',
-    dbAmount: 900,
-  },
-]);
+const importedRows = ref<ImportedPaymentRow[]>([]);
 
 type TableRowProps = {
   row: ImportedPaymentRow;
@@ -986,7 +958,10 @@ const saveEditedRow = () => {
 };
 
 const confirmRow = (props: TableRowProps) => {
-  props.row.status = 'verified';
+  const target = importedRows.value.find((r) => r.id === props.row.id);
+  if (target) {
+    target.status = 'verified';
+  }
   props.expand = false;
   $q.notify({
     type: 'positive',
@@ -1082,6 +1057,16 @@ const formatFileSize = (bytes: number) => {
 };
 
 const totalAmount = computed(() => importedRows.value.reduce((sum, row) => sum + row.amount, 0));
+
+const verifiedCount = computed(
+  () => importedRows.value.filter((row) => row.status === 'verified').length,
+);
+
+const allRowsVerified = computed(
+  () =>
+    importedRows.value.length > 0 && importedRows.value.every((row) => row.status === 'verified'),
+);
+
 const filteredRows = computed(() => {
   let list = importedRows.value;
 
@@ -1141,10 +1126,80 @@ function saveImportedFile() {
     return;
   }
 
-  const names = selectedFiles.value.map((f) => f.name).join(', ');
-  $q.notify({
-    type: 'positive',
-    message: t('finance.paymentImport.notifications.fileSaved', { name: names }),
+  let processedCount = 0;
+  const newRows: ImportedPaymentRow[] = [];
+
+  // Process each CSV file
+  selectedFiles.value.forEach((file) => {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const csv = e.target?.result as string;
+      const lines = csv.trim().split('\n');
+
+      // Skip header row (line 0)
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i]?.trim();
+        if (!line) continue;
+
+        // Simple CSV parsing (handles basic cases without quotes)
+        const columns = line.split(',').map((col) => col.trim());
+
+        if (columns.length >= 6) {
+          const id = `PAY-${String(importedRows.value.length + newRows.length + 1).padStart(3, '0')}`;
+          const now = new Date();
+          const importedAt =
+            now.toLocaleDateString('th-TH', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            }) +
+            ' ' +
+            now.toLocaleTimeString('th-TH');
+
+          const importedByName = authStore.user
+            ? `${authStore.user.firstNameTh} ${authStore.user.lastNameTh}`.trim() ||
+              `${authStore.user.firstNameEn} ${authStore.user.lastNameEn}`.trim()
+            : 'System';
+
+          const newRow: ImportedPaymentRow = {
+            id,
+            learnerRef: columns[0] ?? '',
+            applicationRef: columns[1] ?? '',
+            payerName: columns[2] ?? '',
+            paymentDate: columns[3] ?? '',
+            paymentTime: columns[4] ?? '',
+            amount: parseFloat(columns[5] ?? '0') || 0,
+            importedAt,
+            importedBy: importedByName,
+            status: 'pending',
+            dbLearnerRef: columns[0] ?? '',
+            dbAppRef: columns[1] ?? '',
+            dbLearnerName: columns[2] ?? '',
+            dbAmount: parseFloat(columns[5] ?? '0') || 0,
+          };
+
+          newRows.push(newRow);
+        }
+      }
+
+      processedCount++;
+
+      // When all files processed, add rows to table
+      if (processedCount === selectedFiles.value.length) {
+        importedRows.value = [...newRows, ...importedRows.value];
+        selectedFiles.value = [];
+
+        $q.notify({
+          type: 'positive',
+          message: t('finance.paymentImport.notifications.fileSaved', {
+            name: newRows.length + ' records imported',
+          }),
+        });
+      }
+    };
+
+    reader.readAsText(file);
   });
 }
 
@@ -1179,6 +1234,62 @@ function confirmClearAll() {
     selectedFiles.value = [];
     $q.notify({ type: 'positive', message: t('finance.paymentImport.notifications.cleared') });
   });
+}
+
+function loadMockData() {
+  const mockData: ImportedPaymentRow[] = [
+    {
+      id: 'PAY-001',
+      learnerRef: '6700017',
+      applicationRef: '6751300100003',
+      payerName: 'น.ส. สุกัญญา ประมงค์กิจ',
+      paymentDate: '10-04-2567',
+      paymentTime: '14:13:19',
+      amount: 1200,
+      importedAt: '13/06/2568 14:14:40',
+      importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
+      status: 'pending',
+      dbLearnerRef: '6700017',
+      dbAppRef: '6751300100003',
+      dbLearnerName: 'น.ส. สุกัญญา ประมงค์กิจ',
+      dbAmount: 1200,
+    },
+    {
+      id: 'PAY-002',
+      learnerRef: '6600005',
+      applicationRef: '6751300100002',
+      payerName: 'น.ส. วันนิสา ข่ายเพชร',
+      paymentDate: '10-04-2567',
+      paymentTime: '14:20:19',
+      amount: 900,
+      importedAt: '13/06/2568 14:14:40',
+      importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
+      status: 'pending',
+      dbLearnerRef: '6600005',
+      dbAppRef: '6751300100002',
+      dbLearnerName: 'น.ส. วันนิสา ข่ายเพชร',
+      dbAmount: 900,
+    },
+    {
+      id: 'PAY-003',
+      learnerRef: '6600005',
+      applicationRef: '6751300100002',
+      payerName: 'NATTAPORN YASOWONG',
+      paymentDate: '10-04-2567',
+      paymentTime: '14:20:38',
+      amount: 900,
+      importedAt: '13/06/2568 14:14:40',
+      importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
+      status: 'pending',
+      dbLearnerRef: '6600005',
+      dbAppRef: '6751300100002',
+      dbLearnerName: 'น.ส. วันนิสา ข่ายเพชร',
+      dbAmount: 900,
+    },
+  ];
+
+  importedRows.value = mockData;
+  selectedFiles.value = [];
 }
 </script>
 
