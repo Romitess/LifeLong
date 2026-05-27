@@ -1951,6 +1951,7 @@ import BaseButton from 'components/base/BaseButton.vue';
 import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
 import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
+import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import {
   useMyRegisteredCourses,
   type RegisteredCourseEntry,
