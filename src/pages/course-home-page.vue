@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
@@ -136,6 +136,7 @@ import {
   useMyRegisteredCourses,
   type RegisteredCourseEntry,
 } from 'src/composables/use-my-registered-courses';
+import { useCourseRegistrationStore } from 'src/stores/course-registration-store';
 
 const router = useRouter();
 const $q = useQuasar();
@@ -143,6 +144,14 @@ const { locale } = useI18n({ useScope: 'global' });
 const { myRegisteredCourseEntries } = useMyRegisteredCourses();
 const { t } = useI18n({ useScope: 'global' });
 const authStore = useAuthStore();
+const courseRegistrationStore = useCourseRegistrationStore();
+
+onMounted(() => {
+  const username = authStore.user?.username;
+  if (username) {
+    void courseRegistrationStore.fetchMyEnrollments(username);
+  }
+});
 
 const leftDrawerOpen = ref(false);
 const searchQuery = ref('');

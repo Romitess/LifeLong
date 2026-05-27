@@ -452,18 +452,20 @@ const filteredCourses = computed(() => {
     // 3. Type
     const typeMatch = !filter.value.type || c.status === filter.value.type;
 
-    // 4. Price
+    // 4. Price (treat null price as 0/free)
+    const effectivePrice = c.price ?? 0;
     const priceMatch =
-      !filter.value.price || (filter.value.price === 'free' ? c.price === 0 : c.price > 0);
+      !filter.value.price ||
+      (filter.value.price === 'free' ? effectivePrice === 0 : effectivePrice > 0);
 
     // 5. Delivery Mode (Checking if selected mode is in deliveryModes array)
     const modeMatch =
       !filter.value.deliveryMode ||
       (c.deliveryModes && c.deliveryModes.includes(filter.value.deliveryMode as DeliveryMode));
 
-    // 6. Availability (Registration Status)
+    // 6. Availability (Registration Status) — null maxSeats means unlimited
     const isWithinPeriod = c.registrationStartDate <= today && today <= c.registrationEndDate;
-    const hasSeats = c.enrolledCount < c.maxSeats;
+    const hasSeats = c.maxSeats == null || c.enrolledCount < c.maxSeats;
     const canRegister = isWithinPeriod && hasSeats;
 
     const availabilityMatch =

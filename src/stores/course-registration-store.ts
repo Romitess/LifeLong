@@ -266,6 +266,54 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
       }
     },
 
+    async fetchMyEnrollments(username: string): Promise<void> {
+      const userId = getAuthenticatedUserId();
+      if (!userId || !username) return;
+
+      try {
+        const { data } = await api.get<
+          {
+            enrollId: number;
+            courseId: string;
+            courseCode: string;
+            courseTitle: string;
+            courseTitleEn: string | null;
+            imageUrl: string | null;
+            moodleCourseId: number | null;
+            enrolledAt: string | null;
+            paymentStatus: 'free' | 'paid' | 'pending';
+          }[]
+        >('/api/moodle/enroll/my-courses', { params: { username } });
+
+        const fromBackend: CourseRegistration[] = data.map((item) => ({
+          id: `${userId}-${item.courseId}`,
+          courseId: item.courseId,
+          courseCode: item.courseCode,
+          courseTitle: item.courseTitle,
+          courseImageUrl: item.imageUrl ?? '',
+          courseCover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
+          eligibility: 'student' as const,
+          paymentStatus: item.paymentStatus,
+          registeredAt: item.enrolledAt ?? new Date().toISOString(),
+          userId,
+          enrollId: item.enrollId,
+        }));
+
+        // Merge: backend is authoritative; keep local-only registrations (e.g. pending payment)
+        const backendIds = new Set(fromBackend.map((r) => r.courseId));
+        const localOnly = this.registrations.filter(
+          (r) => r.userId === userId && !backendIds.has(r.courseId),
+        );
+        const otherUsers = this.registrations.filter((r) => r.userId !== userId);
+
+        const merged = [...otherUsers, ...fromBackend, ...localOnly];
+        this.registrations = merged;
+        writeStoredRegistrations(merged);
+      } catch {
+        // Silently fall back to localStorage
+      }
+    },
+
     unregisterCourse(courseId: string): void {
       const userId = getAuthenticatedUserId();
 
