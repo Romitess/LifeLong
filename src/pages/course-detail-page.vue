@@ -133,7 +133,9 @@
                     <q-icon name="description" size="24px" color="primary" />
                     <h2 class="detail-card__title">{{ $t('courseDescription') }}</h2>
                   </div>
-                  <p class="detail-card__text q-mt-md">{{ getTranslatedDescription(course) }}</p>
+                  <p class="detail-card__text q-mt-md q-pa-md">
+                    {{ getTranslatedDescription(course) }}
+                  </p>
                 </q-card-section>
               </q-card>
 
@@ -161,8 +163,7 @@
 
                   <!-- Placeholder when no objectives yet -->
                   <div v-else class="q-mt-md q-pa-md objectives-pending">
-                    <q-icon name="schedule" size="20px" class="q-mr-sm" color="grey-5" />
-                    <span class="text-body2 text-grey-6">
+                    <span class="text-body2">
                       {{
                         locale === 'th'
                           ? 'วัตถุประสงค์จะประกาศให้ทราบในภายหลัง'
@@ -444,13 +445,13 @@
                   <div class="q-mt-md">
                     <div
                       v-if="course?.privilege && course.privilege.trim()"
-                      class="text-body2 text-grey-9"
+                      class="text-body2 text-grey-9 q-pa-md"
                     >
                       {{ course.privilege }}
                     </div>
                     <!-- Placeholder when no privilege yet -->
                     <div v-else class="q-pa-md objectives-pending">
-                      <span class="text-body2 text-grey-6">
+                      <span class="text-body2">
                         {{
                           locale === 'th'
                             ? 'สิทธิประโยชน์จะประกาศให้ทราบในภายหลัง'

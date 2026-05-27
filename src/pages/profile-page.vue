@@ -1459,7 +1459,7 @@
                       <q-badge rounded color="primary" :label="myRegisteredCourseEntries.length" />
                     </div>
 
-                    <div class="column q-gutter-sm chat-course-list">
+                    <div class="chat-course-list">
                       <q-card
                         v-for="entry in myRegisteredCourseEntries"
                         :key="entry.registration.id"
@@ -1472,7 +1472,10 @@
                         @click="selectChatCourse(entry.course.id)"
                       >
                         <div class="chat-course-card__stripe" />
-                        <q-card-section class="row items-start no-wrap q-gutter-md q-pa-md">
+                        <q-card-section
+                          class="row items-start q-gutter-md q-pa-md"
+                          style="min-width: 0; overflow: hidden"
+                        >
                           <div class="chat-course-card__thumb">
                             <CourseCoverImage
                               :course="entry.course"
@@ -1483,7 +1486,7 @@
                             />
                           </div>
 
-                          <div class="col">
+                          <div class="col" style="min-width: 0; overflow: hidden">
                             <div class="text-caption text-grey-6">{{ entry.course.code }}</div>
                             <div class="chat-course-card__title text-weight-bolder text-dark">
                               {{ getTranslatedCourseTitle(entry.course) }}
@@ -3609,9 +3612,16 @@ function getCourseDetailById(courseId: string): CourseDetail | null {
 }
 
 .chat-course-list {
+  display: block !important;
   max-height: 520px;
+  height: 520px;
+  overflow-x: hidden;
   overflow-y: auto;
   padding-right: 4px;
+
+  > * + * {
+    margin-top: 8px;
+  }
 }
 
 .chat-course-card {
@@ -3889,8 +3899,11 @@ function getCourseDetailById(courseId: string): CourseDetail | null {
   }
 
   .chat-course-list {
-    max-height: none;
-    overflow: visible;
+    display: block !important;
+    max-height: 360px;
+    height: 360px;
+    overflow-x: hidden;
+    overflow-y: auto;
     padding-right: 0;
   }
 
