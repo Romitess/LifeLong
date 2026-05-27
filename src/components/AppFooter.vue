@@ -84,8 +84,13 @@
         <div class="col-12 col-md-5 text-right flex column items-end">
           <div class="logo-container q-mb-sm">
             <img
-              src="../assets/brand/bul-shark-logo.png"
-              alt="BUL Logo"
+              src="../assets/brand/buu-lll-logo.png"
+              alt="BUU LLL Logo"
+              class="footer-logo footer-logo--wordmark"
+            />
+            <img
+              src="../assets/image.png"
+              alt="BUL Shark Logo"
               class="footer-logo footer-logo--shark"
             />
           </div>
@@ -123,15 +128,25 @@ const { t } = useI18n();
 }
 
 .footer-logo {
-  max-width: 180px;
   height: auto;
+  object-fit: contain;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4)); // Glow to separate logo from grey bg
 
-  &--shark {
+  &--wordmark {
     max-width: 150px;
-    max-height: 150px;
-    object-fit: contain;
   }
+
+  &--shark {
+    max-width: 86px;
+    max-height: 86px;
+  }
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
 }
 
 .footer-title {

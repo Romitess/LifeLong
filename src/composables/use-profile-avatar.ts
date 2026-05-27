@@ -28,21 +28,21 @@ export const CARTOON_AVATAR_STORAGE_KEY = 'lll-cartoon-avatar-config';
 
 export const DEFAULT_CARTOON_AVATAR: CartoonAvatarConfig = {
   body: 'warm-sun',
-  face: 'bright',
-  eyeColor: 'amber',
-  hair: 'soft-bob',
-  hairColor: 'Midnight Navy',
+  face: 'focused',
+  eyeColor: 'charcoal',
+  hair: 'rounded',
+  hairColor: 'graphite',
   shirt: 'classic-tee',
-  shirtColor: 'Midnight Navy',
-  pants: 'soft-pants',
-  pantsColor: 'Midnight Navy',
+  shirtColor: 'violet',
+  pants: 'slim',
+  pantsColor: 'studio-bg',
   shoes: 'clean',
-  accessoryColor: 'violet',
+  accessoryColor: 'orange',
 };
 
 export const DEFAULT_AVATAR_EXTRAS = {
-  eyeColor: 'amber',
-  accessoryColor: 'violet',
+  eyeColor: 'charcoal',
+  accessoryColor: 'orange',
 } satisfies Pick<CartoonAvatarConfig, 'eyeColor' | 'accessoryColor'>;
 
 export function useProfileAvatar() {
@@ -431,10 +431,6 @@ export function useProfileAvatar() {
     const face = getPlayfulFace(config.face, eyeColor, outline, blush, skin, animate);
     const accessory = getAccessory(config.shoes, outline, accessoryColor);
     const bodyTopY = mode === 'portrait' ? 316 : 328;
-    const bodyBottomY = mode === 'portrait' ? 528 : 546;
-    const armTopY = bodyTopY + 22;
-    const armMidY = mode === 'portrait' ? 448 : 462;
-    const armEndY = mode === 'portrait' ? 522 : 538;
     const idleMotion = animate
       ? `
       <animateTransform
@@ -460,18 +456,18 @@ export function useProfileAvatar() {
     <g transform="translate(280 288) scale(${portraitScale}) translate(-280 -288)">
       ${idleMotion}
       <path d="${hairShape.back}" fill="${hair}" />
-      <path d="M194 ${armTopY} C170 ${armTopY + 36} 156 ${armMidY - 20} 164 ${armEndY}" stroke="${withOpacity(outline, 0.18)}" stroke-width="50" stroke-linecap="round" fill="none" />
-      <path d="M366 ${armTopY} C390 ${armTopY + 36} 404 ${armMidY - 20} 396 ${armEndY}" stroke="${withOpacity(outline, 0.18)}" stroke-width="50" stroke-linecap="round" fill="none" />
-      <path d="M194 ${armTopY} C170 ${armTopY + 36} 156 ${armMidY - 20} 164 ${armEndY}" stroke="${topColor}" stroke-width="40" stroke-linecap="round" fill="none" />
-      <path d="M366 ${armTopY} C390 ${armTopY + 36} 404 ${armMidY - 20} 396 ${armEndY}" stroke="${topColor}" stroke-width="40" stroke-linecap="round" fill="none" />
-      <circle cx="165" cy="${armEndY + 10}" r="12" fill="${skin}" />
-      <circle cx="395" cy="${armEndY + 10}" r="12" fill="${skin}" />
-      <path d="M168 364 C188 322 216 298 280 298 C344 298 372 322 392 364 L${bodyVariant.shoulderRight} ${bodyBottomY} H${bodyVariant.shoulderLeft} Z" fill="${topColor}" />
+      <path d="${bodyVariant.leftArmShadow}" fill="${withOpacity(outline, 0.12)}" />
+      <path d="${bodyVariant.rightArmShadow}" fill="${withOpacity(outline, 0.12)}" />
+      <path d="${bodyVariant.leftArm}" fill="${topColor}" />
+      <path d="${bodyVariant.rightArm}" fill="${topColor}" />
+      <path d="${bodyVariant.leftHand}" fill="${skin}" />
+      <path d="${bodyVariant.rightHand}" fill="${skin}" />
+      <path d="${bodyVariant.torso}" fill="${topColor}" />
       ${shirtVariant}
       <rect x="248" y="${bodyTopY - 20}" width="64" height="42" rx="18" fill="${skin}" />
-      <rect x="162" y="132" width="236" height="226" rx="58" fill="${skin}" />
-      <rect x="118" y="216" width="42" height="38" rx="19" fill="${skin}" />
-      <rect x="400" y="216" width="42" height="38" rx="19" fill="${skin}" />
+      <rect x="164" y="132" width="232" height="212" rx="46" fill="${skin}" />
+      <circle cx="146" cy="236" r="24" fill="${skin}" />
+      <circle cx="414" cy="236" r="24" fill="${skin}" />
       <path d="${hairShape.front}" fill="${hair}" />
       ${face}
       <path d="M278 233 C286 244 292 250 296 262 C298 272 288 282 278 282 C266 282 258 272 260 262 C264 249 272 243 278 233 Z" fill="#a85d39" />
@@ -694,28 +690,56 @@ export function useProfileAvatar() {
     `;
   }
 
-  function getBodyVariant(bodyStyle: string): { shoulderLeft: number; shoulderRight: number } {
+  function getBodyVariant(bodyStyle: string): {
+    torso: string;
+    leftArm: string;
+    rightArm: string;
+    leftArmShadow: string;
+    rightArmShadow: string;
+    leftHand: string;
+    rightHand: string;
+  } {
+    let shoulderLeft = 184;
+    let shoulderRight = 376;
+    let hemLeft = 118;
+    let hemRight = 442;
+
     if (bodyStyle === 'tall') {
-      return { shoulderLeft: 194, shoulderRight: 366 };
+      shoulderLeft = 194;
+      shoulderRight = 366;
+      hemLeft = 126;
+      hemRight = 434;
+    } else if (bodyStyle === 'relaxed') {
+      shoulderLeft = 176;
+      shoulderRight = 384;
+      hemLeft = 112;
+      hemRight = 448;
+    } else if (bodyStyle === 'wide') {
+      shoulderLeft = 166;
+      shoulderRight = 394;
+      hemLeft = 104;
+      hemRight = 456;
+    } else if (bodyStyle === animePantsOptions[1]?.value) {
+      shoulderLeft = 190;
+      shoulderRight = 370;
+      hemLeft = 128;
+      hemRight = 432;
+    } else if (bodyStyle === animePantsOptions[2]?.value) {
+      shoulderLeft = 174;
+      shoulderRight = 386;
+      hemLeft = 108;
+      hemRight = 452;
     }
 
-    if (bodyStyle === 'relaxed') {
-      return { shoulderLeft: 176, shoulderRight: 384 };
-    }
-
-    if (bodyStyle === 'wide') {
-      return { shoulderLeft: 164, shoulderRight: 396 };
-    }
-
-    if (bodyStyle === animePantsOptions[1]?.value) {
-      return { shoulderLeft: 188, shoulderRight: 372 };
-    }
-
-    if (bodyStyle === animePantsOptions[2]?.value) {
-      return { shoulderLeft: 172, shoulderRight: 388 };
-    }
-
-    return { shoulderLeft: 180, shoulderRight: 380 };
+    return {
+      torso: `M${shoulderLeft} 360 Q${shoulderLeft + 8} 314 216 314 H344 Q${shoulderRight - 8} 314 ${shoulderRight} 360 L${hemRight} 546 H${hemLeft} Z`,
+      leftArm: `M${shoulderLeft + 4} 372 L124 532 L152 540 L224 404 L224 360 Z`,
+      rightArm: `M${shoulderRight - 4} 372 L436 532 L408 540 L336 404 L336 360 Z`,
+      leftArmShadow: `M${shoulderLeft + 12} 380 L134 528 L150 532 L226 396 L226 368 Z`,
+      rightArmShadow: `M${shoulderRight - 12} 380 L426 528 L410 532 L334 396 L334 368 Z`,
+      leftHand: 'M120 532 L154 542 L146 570 L112 560 Z',
+      rightHand: 'M440 532 L406 542 L414 570 L448 560 Z',
+    };
   }
 
   function getAccessory(accessoryStyle: string, outline: string, accessoryColor: string): string {

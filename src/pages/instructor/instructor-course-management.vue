@@ -717,7 +717,7 @@
                       icon="person_add"
                       label="เพิ่มเจ้าหน้าที่"
                       no-caps
-                      @click="addFacultyStaff"
+                      @click="openFacultyStaffDialog"
                     />
                   </div>
                   <div class="staff-list q-mt-md">
@@ -725,7 +725,7 @@
                       <q-avatar color="primary" text-color="white" icon="badge" />
                       <div>
                         <strong>{{ staff.name }}</strong>
-                        <span>{{ staff.email }} ยท {{ staff.permission }}</span>
+                        <span>{{ staff.email }} - {{ staff.permission }}</span>
                       </div>
                       <q-btn
                         flat
@@ -1178,6 +1178,57 @@
       </section>
     </div>
 
+    <q-dialog v-model="facultyStaffDialogOpen" persistent>
+      <q-card class="staff-dialog">
+        <q-card-section class="row items-center q-pb-sm">
+          <div>
+            <div class="text-h6 text-weight-bold">เพิ่มเจ้าหน้าที่คณะ</div>
+            <div class="text-body2 text-grey-7 q-mt-xs">
+              เพิ่มผู้ช่วยจัดการข้อมูลรายวิชาในคอร์สนี้
+            </div>
+          </div>
+          <q-space />
+          <q-btn flat round dense icon="close" v-close-popup />
+        </q-card-section>
+
+        <q-card-section class="staff-dialog__form">
+          <q-input
+            v-model="facultyStaffForm.name"
+            outlined
+            label="ชื่อเจ้าหน้าที่"
+            placeholder="เช่น นางสาวสมใจ ใจดี"
+          />
+          <q-input
+            v-model="facultyStaffForm.email"
+            outlined
+            type="email"
+            label="อีเมล"
+            placeholder="name@buu.ac.th"
+          />
+          <q-select
+            v-model="facultyStaffForm.permission"
+            outlined
+            emit-value
+            map-options
+            label="สิทธิ์การใช้งาน"
+            :options="facultyStaffPermissionOptions"
+          />
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pa-md q-pt-none">
+          <q-btn flat color="grey-7" label="ยกเลิก" no-caps v-close-popup />
+          <q-btn
+            unelevated
+            color="primary"
+            icon="person_add"
+            label="เพิ่มเจ้าหน้าที่"
+            no-caps
+            @click="addFacultyStaff"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <q-dialog v-model="deleteCourseDialogOpen" persistent>
       <q-card class="delete-course-dialog">
         <q-card-section class="row items-start no-wrap q-gutter-md">
@@ -1368,6 +1419,12 @@ interface FacultyStaffMember {
   permission: string;
 }
 
+interface FacultyStaffForm {
+  name: string;
+  email: string;
+  permission: string;
+}
+
 interface CourseSettingsForm {
   published: boolean;
   registrationOpen: boolean;
@@ -1469,13 +1526,25 @@ const courseSettings = reactive<CourseSettingsForm>({
   registrationStartDate: '',
   registrationEndDate: '',
 });
-const facultyStaff = ref<FacultyStaffMember[]>([
+const defaultFacultyStaff: FacultyStaffMember[] = [
   {
     name: 'เจ้าหน้าที่คณะตัวอย่าง',
     email: 'faculty.staff@buu.ac.th',
     permission: 'แก้ไขข้อมูลและตรวจสอบรายชื่อ',
   },
-]);
+];
+const facultyStaffByCourseId = ref<Record<string, FacultyStaffMember[]>>({});
+const facultyStaffDialogOpen = ref(false);
+const facultyStaffPermissionOptions = [
+  { label: 'แก้ไขข้อมูลรายวิชา', value: 'แก้ไขข้อมูลรายวิชา' },
+  { label: 'แก้ไขข้อมูลและตรวจสอบรายชื่อ', value: 'แก้ไขข้อมูลและตรวจสอบรายชื่อ' },
+  { label: 'ตรวจสอบรายชื่ออย่างเดียว', value: 'ตรวจสอบรายชื่ออย่างเดียว' },
+];
+const facultyStaffForm = reactive<FacultyStaffForm>({
+  name: '',
+  email: '',
+  permission: facultyStaffPermissionOptions[0]?.value ?? 'แก้ไขข้อมูลรายวิชา',
+});
 const courseStatusFilter = computed<'all' | 'active'>(() =>
   route.query.status === 'active' ? 'active' : 'all',
 );
@@ -1489,12 +1558,34 @@ const courseTableTitle = computed(() =>
 const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
 );
+const facultyStaff = computed<FacultyStaffMember[]>({
+  get() {
+    const courseId = selectedCourseId.value;
+    if (!courseId) return [];
+    return facultyStaffByCourseId.value[courseId] ?? [];
+  },
+  set(value) {
+    const courseId = selectedCourseId.value;
+    if (!courseId) return;
+    facultyStaffByCourseId.value = {
+      ...facultyStaffByCourseId.value,
+      [courseId]: value,
+    };
+  },
+});
 
 watch(
   selectedCourse,
   (course) => {
     const email = authStore.user?.email;
-    if (!course || !email) return;
+    if (!course) return;
+    if (!facultyStaffByCourseId.value[course.id]) {
+      facultyStaffByCourseId.value = {
+        ...facultyStaffByCourseId.value,
+        [course.id]: defaultFacultyStaff.map((staff) => ({ ...staff })),
+      };
+    }
+    if (!email) return;
     void instructorBackend.fetchLearners(email, course.id);
     void instructorBackend.fetchGrades(email, course.id);
   },
@@ -1923,16 +2014,53 @@ function resetCoverImage(): void {
   courseSettings.coverImageUrl = selectedCourse.value?.imageUrl ?? '';
 }
 
+function resetFacultyStaffForm(): void {
+  facultyStaffForm.name = '';
+  facultyStaffForm.email = '';
+  facultyStaffForm.permission = facultyStaffPermissionOptions[0]?.value ?? 'แก้ไขข้อมูลรายวิชา';
+}
+
+function openFacultyStaffDialog(): void {
+  resetFacultyStaffForm();
+  facultyStaffDialogOpen.value = true;
+}
+
 function addFacultyStaff(): void {
-  const nextIndex = facultyStaff.value.length + 1;
+  const name = facultyStaffForm.name.trim();
+  const email = facultyStaffForm.email.trim().toLowerCase();
+  const permission = facultyStaffForm.permission.trim();
+
+  if (!selectedCourseId.value) {
+    $q.notify({ type: 'warning', message: 'ยังไม่พบรายวิชาที่เลือกอยู่ในขณะนี้' });
+    return;
+  }
+
+  if (!name) {
+    $q.notify({ type: 'warning', message: 'กรุณากรอกชื่อเจ้าหน้าที่' });
+    return;
+  }
+
+  if (!/.+@.+\..+/.test(email)) {
+    $q.notify({ type: 'warning', message: 'กรุณากรอกอีเมลให้ถูกต้อง' });
+    return;
+  }
+
+  if (facultyStaff.value.some((staff) => staff.email.toLowerCase() === email)) {
+    $q.notify({ type: 'warning', message: 'อีเมลนี้ถูกเพิ่มเป็นเจ้าหน้าที่แล้ว' });
+    return;
+  }
+
   facultyStaff.value = [
     ...facultyStaff.value,
     {
-      name: `เจ้าหน้าที่คณะ ${nextIndex}`,
-      email: `faculty.staff${nextIndex}@buu.ac.th`,
-      permission: 'แก้ไขข้อมูลรายวิชา',
+      name,
+      email,
+      permission,
     },
   ];
+  facultyStaffDialogOpen.value = false;
+  resetFacultyStaffForm();
+  $q.notify({ type: 'positive', message: 'เพิ่มเจ้าหน้าที่เรียบร้อยแล้ว' });
 }
 
 function removeFacultyStaff(email: string): void {
@@ -3781,6 +3909,16 @@ function openQuickDialog(title: string): void {
 
 .price-input {
   width: 140px;
+}
+
+.staff-dialog {
+  width: min(560px, calc(100vw - 32px));
+  border-radius: 18px;
+}
+
+.staff-dialog__form {
+  display: grid;
+  gap: 14px;
 }
 
 .create-course-dialog {

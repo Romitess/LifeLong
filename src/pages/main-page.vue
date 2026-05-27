@@ -75,13 +75,17 @@
                 <div class="hero-learner__copy">
                   <div class="hero-learner__eyebrow">Learner Spotlight</div>
                   <h2>{{ slide.learner.name }}</h2>
+                  <p class="hero-learner__summary">
+                    สถานะการเรียนโดดเด่นในรายวิชา
+                    <strong>{{ slide.learner.courseTitle }}</strong>
+                  </p>
                   <p>
                     สถานะการเข้าเรียนเด่นในรายวิชา
                     <strong>{{ slide.learner.courseTitle }}</strong>
                   </p>
                   <div class="hero-learner__badges">
                     <q-badge rounded color="positive" text-color="white">
-                      {{ slide.learner.statusLabel }}
+                      ผู้เรียนที่ใช้งาน
                     </q-badge>
                     <q-badge rounded color="primary" text-color="white">
                       {{ slide.learner.attendanceRate }}% Attendance
@@ -90,13 +94,29 @@
                 </div>
 
                 <div class="hero-learner__card">
+                  <div class="hero-learner__avatar-stage">
+                    <div class="hero-learner__rank-badge">LEVEL {{ slide.learner.level }}</div>
+                    <div class="hero-learner__avatar-orbit">
+                      <q-avatar
+                        size="132px"
+                        class="hero-learner__avatar hero-learner__avatar--featured"
+                      >
+                        <img :src="slide.learner.avatarUrl" :alt="slide.learner.name" />
+                      </q-avatar>
+                    </div>
+                  </div>
                   <div class="hero-learner__card-top">
-                    <q-avatar size="72px" class="hero-learner__avatar">
-                      <img :src="slide.learner.avatarUrl" :alt="slide.learner.name" />
-                    </q-avatar>
-
                     <div class="hero-learner__identity">
+                      <div class="hero-learner__meta hero-learner__meta--clean">
+                        {{ slide.learner.faculty }} • {{ slide.learner.courseCode }}
+                      </div>
                       <div class="hero-learner__name">{{ slide.learner.name }}</div>
+                      <div class="hero-learner__status-note hero-learner__status-note--clean">
+                        กำลังศึกษา {{ slide.learner.courseTitle }}
+                      </div>
+                      <div class="hero-learner__meta hero-learner__meta--clean-text">
+                        {{ slide.learner.faculty }} - {{ slide.learner.courseCode }}
+                      </div>
                       <div class="hero-learner__meta">
                         {{ slide.learner.faculty }} • {{ slide.learner.courseCode }}
                       </div>
@@ -107,6 +127,7 @@
                       class="hero-learner__course-image"
                       :src="slide.learner.courseImageUrl"
                       :alt="slide.learner.courseTitle"
+                      @error="handleHeroCourseImageError"
                     />
                   </div>
 
@@ -114,6 +135,9 @@
                     <div class="hero-learner__metric">
                       <q-icon name="local_fire_department" size="18px" color="deep-orange-6" />
                       <div>
+                        <div class="hero-learner__metric-value hero-learner__metric-value--clean">
+                          {{ slide.learner.streakDays }} วัน
+                        </div>
                         <div class="hero-learner__metric-value">
                           {{ slide.learner.streakDays }} วัน
                         </div>
@@ -134,6 +158,13 @@
                   </div>
 
                   <div class="hero-learner__progress">
+                    <div class="hero-learner__progress-head hero-learner__progress-head--clean">
+                      <span>ความคืบหน้าการเรียน</span>
+                      <strong>
+                        {{ slide.learner.completedLessons }}/{{ slide.learner.totalLessons }}
+                        บทเรียน
+                      </strong>
+                    </div>
                     <div class="hero-learner__progress-head">
                       <span>ความคืบหน้าการเรียน</span>
                       <strong>
@@ -377,6 +408,8 @@ import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import { useQuasar } from 'quasar';
+import learnerHeroBackgroundUrl from 'src/assets/backgroundhero.png';
+import fallbackCourseImageUrl from 'src/assets/homepicture1.png';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -466,13 +499,9 @@ const categoryMap: Record<string, string> = {
   ศิลปวัฒนธรรมและศาสนา: 'artCult',
   เกษตรและสิ่งแวดล้อม: 'agriEnv',
 };
-const heroPublicBaseUrl = (
-  import.meta.env.VITE_BACKEND_PUBLIC_URL ||
-  import.meta.env.VITE_API_URL ||
-  'http://localhost:3000'
-)
-  .replace(/\/api\/?$/, '')
-  .replace(/\/+$/, '');
+function getPreferredCourseImageUrl(imageUrl?: string | null): string {
+  return imageUrl?.trim() ? imageUrl : fallbackCourseImageUrl;
+}
 
 function createHeroAvatar(seed: string): string {
   return `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(seed)}`;
@@ -587,9 +616,10 @@ const learnerHeroSlides = computed<LearnerHeroSlide[]>(() => {
     courses.value[0] ?? {
       title: 'เส้นทางการเรียนรู้ดิจิทัล',
       code: 'BUU-LLL-001',
-      imageUrl: `${heroPublicBaseUrl}/uploads/system/homepicture1.png`,
+      imageUrl: fallbackCourseImageUrl,
     };
 
+  const courseImageUrl = getPreferredCourseImageUrl(primaryCourse?.imageUrl);
   const fullName = `${user.firstNameTh} ${user.lastNameTh}`.trim() || user.firstNameTh;
 
   return [
@@ -599,9 +629,8 @@ const learnerHeroSlides = computed<LearnerHeroSlide[]>(() => {
       faculty: user.faculty,
       courseTitle: primaryCourse?.title ?? 'เส้นทางการเรียนรู้ดิจิทัล',
       courseCode: primaryCourse?.code ?? 'BUU-LLL-001',
-      courseImageUrl:
-        primaryCourse?.imageUrl ?? `${heroPublicBaseUrl}/uploads/system/homepicture1.png`,
-      imageUrl: primaryCourse?.imageUrl ?? `${heroPublicBaseUrl}/uploads/system/homepicture1.png`,
+      courseImageUrl,
+      imageUrl: learnerHeroBackgroundUrl,
       backgroundPosition: 'center 56%',
       avatarUrl: user.avatar || createHeroAvatar(user.email),
       attendanceRate: 92,
@@ -652,7 +681,9 @@ const homeHeroSlides = computed<HomeHeroSlide[]>(() => {
 
   return mergedSlides;
 });
-const heroSlideDurationMs = computed(() => systemImageStore.heroConfig.slideDurationMs);
+const heroSlideDurationMs = computed(() =>
+  Math.max(systemImageStore.heroConfig.slideDurationMs, 10000),
+);
 const currentHeroSlide = computed<HeroSlideTemplate | null>(() => {
   const activeSlide =
     homeHeroSlides.value.find((slide) => slide.id === heroSlide.value) ?? homeHeroSlides.value[0];
@@ -916,6 +947,17 @@ function getHeroSlideStyle(slide: HomeHeroSlide): CSSProperties {
   };
 }
 
+function handleHeroCourseImageError(event: Event): void {
+  const target = event.target;
+  if (!(target instanceof HTMLImageElement)) {
+    return;
+  }
+
+  if (target.src !== fallbackCourseImageUrl) {
+    target.src = fallbackCourseImageUrl;
+  }
+}
+
 function formatHeroXp(value: number): string {
   return value.toLocaleString('en-US');
 }
@@ -1092,6 +1134,11 @@ onBeforeUnmount(() => {
   max-width: 560px;
   color: #ffffff;
   align-self: center;
+  padding: 20px 24px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(8, 15, 31, 0.62), rgba(8, 15, 31, 0.26));
+  backdrop-filter: blur(6px);
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.16);
 }
 
 .hero-learner__eyebrow {
@@ -1107,17 +1154,29 @@ onBeforeUnmount(() => {
 }
 
 .hero-learner__copy h2 {
-  margin: 18px 0 10px;
+  margin: 16px 0 12px;
   font-size: clamp(2.4rem, 4vw, 4.2rem);
-  line-height: 0.98;
-  font-weight: 800;
+  line-height: 1.02;
+  font-weight: 900;
+  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
 }
 
-.hero-learner__copy p {
+.hero-learner__copy > p {
+  display: none;
+}
+
+.hero-learner__summary {
+  display: block !important;
   margin: 0;
   color: rgba(255, 255, 255, 0.88);
-  font-size: clamp(1rem, 1.4vw, 1.24rem);
-  line-height: 1.6;
+  font-size: clamp(1rem, 1.35vw, 1.18rem);
+  line-height: 1.75;
+  max-width: 38ch;
+}
+
+.hero-learner__summary strong {
+  color: #fff7da;
+  font-weight: 900;
 }
 
 .hero-learner__badges {
@@ -1129,24 +1188,109 @@ onBeforeUnmount(() => {
 
 .hero-learner__card {
   align-self: center;
-  padding: 22px;
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 22px 50px rgba(15, 23, 42, 0.18);
-  backdrop-filter: blur(12px);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(245, 166, 35, 0.28), transparent 34%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88));
+  box-shadow:
+    0 28px 60px rgba(15, 23, 42, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(16px);
+}
+
+.hero-learner__card::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px solid rgba(245, 166, 35, 0.24);
+  border-radius: 22px;
+  pointer-events: none;
+}
+
+.hero-learner__avatar-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 166px;
+  margin-bottom: 10px;
+}
+
+.hero-learner__avatar-stage::before,
+.hero-learner__avatar-stage::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.hero-learner__avatar-stage::before {
+  width: 210px;
+  height: 210px;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 45%, transparent 46%),
+    conic-gradient(from 150deg, #f5a623, #22c55e, #2f5f98, #f5a623);
+  opacity: 0.9;
+  filter: drop-shadow(0 20px 35px rgba(15, 23, 42, 0.16));
+}
+
+.hero-learner__avatar-stage::after {
+  bottom: 18px;
+  width: 160px;
+  height: 26px;
+  background: rgba(15, 23, 42, 0.14);
+  filter: blur(10px);
+}
+
+.hero-learner__avatar-orbit {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 164px;
+  height: 164px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+.hero-learner__rank-badge {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 2;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f5a623, #facc15);
+  color: #10213f;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow: 0 10px 22px rgba(245, 166, 35, 0.26);
 }
 
 .hero-learner__card-top {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) 92px;
+  grid-template-columns: minmax(0, 1fr) 92px;
   gap: 16px;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-learner__avatar {
   outline: 4px solid rgba(255, 255, 255, 0.72);
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+}
+
+.hero-learner__avatar--featured {
+  outline: 6px solid rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 20px 40px rgba(15, 23, 42, 0.18),
+    0 0 0 10px rgba(245, 166, 35, 0.12);
 }
 
 .hero-learner__identity {
@@ -1167,8 +1311,39 @@ onBeforeUnmount(() => {
   line-height: 1.45;
 }
 
+.hero-learner__meta--clean {
+  display: none;
+}
+
+.hero-learner__meta--clean-text {
+  color: #2f5f98;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hero-learner__card-top
+  > .hero-learner__identity
+  > .hero-learner__meta:not(.hero-learner__meta--clean-text):not(.hero-learner__meta--clean) {
+  display: none;
+}
+
 .hero-learner__status-note {
   margin-top: 6px;
+  font-size: 0.84rem;
+  color: #526173;
+}
+
+.hero-learner__status-note--clean {
+  margin-top: 4px;
+  color: #526173;
+}
+
+.hero-learner__card-top
+  > .hero-learner__identity
+  > .hero-learner__status-note:not(.hero-learner__status-note--clean) {
+  display: none;
 }
 
 .hero-learner__course-image {
@@ -1184,6 +1359,8 @@ onBeforeUnmount(() => {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 18px;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-learner__metric {
@@ -1202,6 +1379,15 @@ onBeforeUnmount(() => {
   line-height: 1.1;
 }
 
+.hero-learner__metric-value--clean {
+  display: block;
+}
+
+.hero-learner__metric:first-child
+  .hero-learner__metric-value:not(.hero-learner__metric-value--clean) {
+  display: none;
+}
+
 .hero-learner__metric-label {
   margin-top: 4px;
   color: #748092;
@@ -1216,6 +1402,8 @@ onBeforeUnmount(() => {
   padding: 16px;
   border-radius: 18px;
   background: #f8fafc;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-learner__progress-head {
@@ -1234,12 +1422,18 @@ onBeforeUnmount(() => {
   font-weight: 800;
 }
 
+.hero-learner__progress > .hero-learner__progress-head:not(.hero-learner__progress-head--clean) {
+  display: none;
+}
+
 .hero-learner__peers {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
   margin-top: 18px;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-learner__peers-label {
@@ -1623,8 +1817,39 @@ onBeforeUnmount(() => {
     border-radius: 20px;
   }
 
+  .hero-learner__avatar-stage {
+    min-height: 128px;
+    margin-bottom: 8px;
+  }
+
+  .hero-learner__avatar-stage::before {
+    width: 154px;
+    height: 154px;
+  }
+
+  .hero-learner__avatar-stage::after {
+    bottom: 10px;
+    width: 120px;
+  }
+
+  .hero-learner__avatar-orbit {
+    width: 120px;
+    height: 120px;
+  }
+
+  .hero-learner__avatar--featured {
+    width: 96px !important;
+    height: 96px !important;
+  }
+
+  .hero-learner__rank-badge {
+    top: 2px;
+    right: 4px;
+    font-size: 0.64rem;
+  }
+
   .hero-learner__card-top {
-    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .hero-learner__course-image {

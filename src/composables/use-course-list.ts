@@ -3,6 +3,7 @@ import { useCourseStore, mapDeliveryModes } from 'src/stores/course-store';
 import { useCategoryStore } from 'src/stores/category-store';
 import type { Course } from 'src/types/course';
 import { api } from 'src/boot/axios';
+import fallbackCourseImageUrl from 'src/assets/homepicture1.png';
 
 interface UseCourseListReturn {
   courses: ComputedRef<Course[]>;
@@ -56,7 +57,7 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     code: raw.code ?? '',
     title: raw.titleTh ?? '',
     ...(raw.titleEn ? { titleEn: raw.titleEn } : {}),
-    imageUrl: raw.imageUrl ?? '',
+    imageUrl: raw.imageUrl?.trim() ? raw.imageUrl : fallbackCourseImageUrl,
     cover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
     registrationStart: regStart,
     registrationEnd: regEnd,
