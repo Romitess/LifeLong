@@ -1,409 +1,605 @@
 <template>
   <q-page class="finance-page finance-daily-report-page">
     <CentralFinancePageHero
-      :eyebrow="$t('centralFinance.dailyReport.hero.eyebrow')"
-      eyebrow-icon="account_balance_wallet"
+      eyebrow="Financial Operations"
+      eyebrow-icon="receipt_long"
       :title="$t('centralFinance.dailyReport.hero.title')"
       :description="$t('centralFinance.dailyReport.hero.desc')"
-    >
-      <template #actions>
-        <div class="row items-center q-gutter-sm">
-          <CentralFinanceActionButton
-            color="primary"
-            icon="file_download"
-            :label="$t('centralFinance.export.title')"
-            no-caps
-            @click="showExportDialog = true"
-          />
-        </div>
-      </template>
-    </CentralFinancePageHero>
+    />
 
     <section class="finance-shell finance-content">
-      <!-- Summary Metrics Row -->
-      <div class="row q-col-gutter-lg q-mb-xl">
-        <!-- Net Total Main Card -->
-        <div class="col-12 col-lg-7">
-          <CentralFinanceSurfaceCard :accent="true" card-class="net-total-card">
-            <div class="row items-center no-wrap">
-              <div class="net-total-card__icon q-mr-lg">
-                <q-icon name="payments" size="42px" color="primary" />
+      <CentralFinanceSurfaceCard>
+        <div class="row q-col-gutter-md q-mb-md">
+          <div class="col-12 col-md-8 offset-md-2">
+            <div class="row items-center q-mb-sm">
+              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+                วันที่ใบเสร็จรับเงิน <span class="text-negative">*</span>
               </div>
-              <div class="column">
-                <span class="text-overline text-grey-7">{{
-                  $t('centralFinance.dailyReport.summary.totalNet')
-                }}</span>
-                <div class="row items-baseline">
-                  <h2 class="text-h3 text-weight-bolder text-primary q-my-none">
-                    {{ formatCurrency(netTotal) }}
-                  </h2>
-                  <span class="text-subtitle1 text-grey-6 q-ml-sm">THB</span>
-                </div>
-                <div class="row items-center q-mt-sm">
-                  <q-icon name="info" size="16px" color="grey-6" class="q-mr-xs" />
-                  <span class="text-caption text-grey-6">
-                    {{ $t('centralFinance.dailyReport.summary.deducted') }} ({{
-                      formatCurrency(voidTotal)
-                    }})
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CentralFinanceSurfaceCard>
-        </div>
-
-        <!-- Void Summary Card -->
-        <div class="col-12 col-lg-5">
-          <CentralFinanceSurfaceCard card-class="void-summary-card h-full">
-            <div class="column justify-between h-full">
-              <div class="row justify-between items-center q-mb-md">
-                <span class="text-subtitle2 text-weight-bold text-grey-8">
-                  {{ $t('centralFinance.dailyReport.summary.voidCount') }}
-                </span>
-                <q-badge color="negative" class="q-px-sm">{{ voidCount }} รายการ</q-badge>
-              </div>
-              <q-separator class="q-my-sm" />
-              <div class="row justify-between items-center q-mt-md">
-                <span class="text-caption text-grey-7">{{
-                  $t('centralFinance.dailyReport.summary.totalGross')
-                }}</span>
-                <span class="text-subtitle1 text-weight-bold text-grey-9">{{
-                  formatCurrency(grossTotal)
-                }}</span>
+              <div class="col-12 col-sm-8">
+                <q-input
+                  v-model="filters.receiptDateStart"
+                  outlined
+                  dense
+                  placeholder="วว/ดด/ปปปป"
+                  mask="##/##/####"
+                  class="bg-white"
+                >
+                  <template v-slot:append>
+                    <q-icon name="event" class="cursor-pointer" color="grey-7">
+                      <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                        <q-date
+                          v-model="filters.receiptDateStart"
+                          mask="DD/MM/YYYY"
+                          color="warning"
+                          text-color="black"
+                        />
+                      </q-popup-proxy>
+                    </q-icon>
+                  </template>
+                </q-input>
               </div>
             </div>
-          </CentralFinanceSurfaceCard>
-        </div>
-      </div>
 
-      <!-- Channel Breakdown -->
-      <div class="q-mb-xl">
-        <h3 class="text-h6 text-weight-bold q-mb-lg row items-center">
-          <q-icon name="bar_chart" color="primary" class="q-mr-sm" />
-          {{ $t('centralFinance.dailyReport.channels.title') }}
-        </h3>
-        <div class="row q-col-gutter-lg">
-          <div v-for="channel in channelBreakdown" :key="channel.key" class="col-12 col-md-4">
-            <CentralFinanceSurfaceCard card-class="channel-card">
-              <div class="column">
-                <div class="row items-center q-mb-md">
-                  <div class="channel-icon" :class="`channel-icon--${channel.key}`">
-                    <q-icon :name="channel.icon" size="24px" />
-                  </div>
-                  <span class="text-subtitle2 text-weight-bold q-ml-sm">{{
-                    $t(`centralFinance.dailyReport.channels.${channel.key}`)
-                  }}</span>
-                </div>
-                <div class="row justify-between items-end">
-                  <div class="column">
-                    <span class="text-caption text-grey-6">ยอดรวม</span>
-                    <span class="text-h5 text-weight-bolder">{{
-                      formatCurrency(channel.amount)
-                    }}</span>
-                  </div>
-                  <div class="text-right">
-                    <div class="text-caption text-grey-6">{{ channel.count }} รายการ</div>
-                    <div class="text-weight-bold text-primary">{{ channel.percent }}%</div>
-                  </div>
-                </div>
-                <q-linear-progress
-                  :value="channel.percent / 100"
-                  :color="channel.color"
-                  rounded
-                  size="6px"
-                  class="q-mt-md bg-grey-2"
+            <div class="row items-center q-mb-sm">
+              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+                ถึงวันที่ <span class="text-negative">*</span>
+              </div>
+              <div class="col-12 col-sm-8">
+                <q-input
+                  v-model="filters.receiptDateEnd"
+                  outlined
+                  dense
+                  placeholder="วว/ดด/ปปปป"
+                  mask="##/##/####"
+                  class="bg-white"
+                >
+                  <template v-slot:append>
+                    <q-icon name="event" class="cursor-pointer" color="grey-7">
+                      <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                        <q-date
+                          v-model="filters.receiptDateEnd"
+                          mask="DD/MM/YYYY"
+                          color="warning"
+                          text-color="black"
+                        />
+                      </q-popup-proxy>
+                    </q-icon>
+                  </template>
+                </q-input>
+              </div>
+            </div>
+
+            <div class="row items-center q-mb-sm">
+              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">ส่วนงาน</div>
+              <div class="col-12 col-sm-8">
+                <q-select
+                  v-model="filters.department"
+                  :options="departmentOptions"
+                  outlined
+                  dense
+                  class="bg-white"
                 />
               </div>
-            </CentralFinanceSurfaceCard>
+            </div>
+
+            <div class="row items-center q-mb-sm">
+              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+                ชื่อโครงการ/อบรม/หลักสูตร
+              </div>
+              <div class="col-12 col-sm-8">
+                <q-input
+                  v-model="filters.courseName"
+                  outlined
+                  dense
+                  class="bg-white"
+                  placeholder="ค้นหาชื่อโครงการ/อบรม/หลักสูตร"
+                />
+              </div>
+            </div>
+
+            <div class="row items-center">
+              <div class="col-12 col-sm-4 text-right q-pr-md"></div>
+              <div class="col-12 col-sm-8 q-gutter-sm">
+                <q-btn
+                  color="warning"
+                  text-color="black"
+                  label="ค้นหา"
+                  unelevated
+                  class="q-px-xl"
+                  @click="onSearch"
+                />
+                <q-btn
+                  outline
+                  color="grey-7"
+                  label="ล้างค่า"
+                  class="q-px-lg bg-white"
+                  @click="clearFilters"
+                />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </CentralFinanceSurfaceCard>
 
-      <!-- Detail Table Section Header -->
-      <div class="q-mb-md q-mt-lg">
-        <h2 class="text-h6 text-weight-bold text-navy q-my-none">
-          {{ $t('centralFinance.dailyReport.table.title') }}
-        </h2>
-      </div>
+      <CentralFinanceSurfaceCard v-if="hasSearched" class="q-mt-md" card-class="q-pa-none">
+        <template #header-actions>
+          <q-btn
+            outline
+            color="negative"
+            icon="picture_as_pdf"
+            label="ส่งออกเป็น Pdf"
+            class="q-mr-sm"
+            @click="exportToPdf"
+          />
+          <q-btn
+            outline
+            color="positive"
+            icon="table_chart"
+            label="ส่งออกเป็น Excel"
+            @click="exportToExcel"
+          />
+        </template>
 
-      <!-- Detail Table -->
-      <CentralFinanceSurfaceCard :accent="false" body-padding="none">
+        <div class="text-center q-pt-lg q-pb-sm">
+          <div class="text-weight-bold text-subtitle1">
+            รายงานสรุปการรับเงินประจำวัน LifeLong Learning มหาวิทยาลัยบูรพา
+          </div>
+          <div class="text-weight-bold text-subtitle2">
+            ส่วนงาน {{ activeFilters.department || '-' }}
+          </div>
+          <div class="text-weight-medium text-caption text-grey-8">
+            วันที่ใบเสร็จรับเงิน {{ activeFilters.receiptDateStart || '-' }} ถึงวันที่
+            {{ activeFilters.receiptDateEnd || '-' }}
+          </div>
+        </div>
+
+        <div class="row justify-end items-center q-px-md q-pb-md">
+          <q-input v-model="search" dense outlined placeholder="ค้นหา:" class="report-search">
+            <template v-slot:prepend>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+        </div>
+
         <q-table
-          flat
-          :rows="todayTransactions"
+          :rows="tableRows"
           :columns="columns"
           row-key="id"
+          flat
+          dense
+          :filter="search"
           class="report-table"
+          v-model:pagination="pagination"
+          :rows-per-page-options="[10, 25, 50, 100]"
+          :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
         >
-          <template #body-cell-channel="props">
-            <q-td :props="props">
-              <div class="row items-center no-wrap">
-                <q-icon
-                  :name="getChannelIcon(props.row.paymentChannel)"
-                  size="18px"
-                  :color="getChannelColor(props.row.paymentChannel)"
-                  class="q-mr-sm"
+          <template v-slot:body-cell-amount="props">
+            <q-td :props="props" class="text-right">
+              {{ formatCurrency(props.value) }}
+            </q-td>
+          </template>
+
+          <template v-slot:bottom="scope">
+            <div class="row full-width justify-between items-center q-py-sm">
+              <div class="row items-center q-gutter-sm">
+                <span class="text-subtitle2 text-grey-8">แสดง</span>
+                <q-select
+                  v-model="pagination.rowsPerPage"
+                  :options="[10, 25, 50, 100]"
+                  outlined
+                  dense
+                  options-dense
+                  style="width: 80px"
+                  class="bg-white report-rows-select"
                 />
-                {{ $t(`centralFinance.dailyReport.channels.${props.row.paymentChannel}`) }}
+                <span class="text-subtitle2 text-grey-8">รายการ</span>
               </div>
-            </q-td>
-          </template>
-
-          <template #body-cell-amount="props">
-            <q-td :props="props">
-              <div>
-                {{ formatCurrency(props.row.amount) }}
+              <div class="row items-center q-gutter-sm">
+                <span class="text-caption text-grey-8 q-mr-sm">
+                  {{
+                    tableRows.length > 0
+                      ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
+                      : 0
+                  }}-{{
+                    Math.min(scope.pagination.page * scope.pagination.rowsPerPage, tableRows.length)
+                  }}
+                  of {{ tableRows.length }}
+                </span>
+                <q-btn
+                  icon="first_page"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isFirstPage"
+                  @click="scope.firstPage"
+                />
+                <q-btn
+                  icon="chevron_left"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isFirstPage"
+                  @click="scope.prevPage"
+                />
+                <q-btn
+                  icon="chevron_right"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isLastPage"
+                  @click="scope.nextPage"
+                />
+                <q-btn
+                  icon="last_page"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isLastPage"
+                  @click="scope.lastPage"
+                />
               </div>
-            </q-td>
-          </template>
-
-          <template #body-cell-status="props">
-            <q-td :props="props" class="text-center">
-              <q-badge v-if="props.row.status === 'void'" color="negative" outline class="q-px-sm">
-                VOIDED
-              </q-badge>
-              <q-icon v-else name="check_circle" color="positive" size="18px" />
-            </q-td>
+            </div>
           </template>
         </q-table>
       </CentralFinanceSurfaceCard>
     </section>
-    <!-- ── Export Dialog ────────────────────────────────────── -->
-    <CentralFinanceExportDialog
-      v-model="showExportDialog"
-      :filtered-count="todayTransactions.length"
-      :total-count="financeStore.transactions.length"
-      @export="onExport"
-    />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar'; // 1. Import useQuasar เข้ามา
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
-import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
-import CentralFinanceExportDialog from 'components/centralfinance/CentralFinanceExportDialog.vue';
-import type { ExportPayload } from 'components/centralfinance/CentralFinanceExportDialog.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
-
-import type { QTableColumn } from 'quasar';
 import type { Transaction } from 'src/stores/central-finance-store';
-const { t } = useI18n();
+import type { QTableColumn } from 'quasar';
+import jsPDF from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
+import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
+import * as XLSX from 'xlsx';
+
+const $q = useQuasar(); // 2. เรียกใช้งาน useQuasar
 const financeStore = useCentralFinanceStore();
-const showExportDialog = ref(false);
+const search = ref('');
 
-const todayTransactions = computed<Transaction[]>(() => {
-  // Mock filter for today (2026-05-15)
-  return financeStore.transactions.filter((tx: Transaction) => tx.timestamp.includes('2026-05-15'));
+// ตัวแปรควบคุมการแสดงผลของตาราง (เริ่มต้นเป็น false เพื่อไม่ให้แสดงตาราง)
+const hasSearched = ref(false);
+
+const pagination = ref({
+  sortBy: 'no',
+  descending: false,
+  page: 1,
+  rowsPerPage: 25,
 });
 
-const grossTotal = computed<number>(() => {
-  return todayTransactions.value.reduce((sum: number, tx: Transaction) => sum + tx.amount, 0);
+// ตัวกรองข้อมูล
+const filters = ref({
+  receiptDateStart: '27/05/2569',
+  receiptDateEnd: '30/05/2569',
+  department: 'สำนักคอมพิวเตอร์',
+  courseName: '',
 });
 
-const voidTotal = computed<number>(() => {
-  return todayTransactions.value
-    .filter((tx: Transaction) => tx.status === 'void')
-    .reduce((sum: number, tx: Transaction) => sum + tx.amount, 0);
+// เก็บสถานะฟิลเตอร์หลังจากกดค้นหาเพื่อให้แสดงใน Title ของตารางได้อย่างถูกต้อง
+const activeFilters = ref({
+  receiptDateStart: '27/05/2569',
+  receiptDateEnd: '30/05/2569',
+  department: 'สำนักคอมพิวเตอร์',
+  courseName: '',
 });
 
-const netTotal = computed<number>(() => grossTotal.value - voidTotal.value);
-const voidCount = computed<number>(
-  () => todayTransactions.value.filter((tx: Transaction) => tx.status === 'void').length,
-);
+// รายการส่วนงานทั้งหมด
+const departmentOptions = [
+  'สำนักคอมพิวเตอร์',
+  'คณะวิทยาการสารสนเทศ',
+  'คณะวิทยาศาสตร์',
+  'คณะพยาบาลศาสตร์',
+  'คณะบริหารธุรกิจ',
+  'คณะวิศวกรรมศาสตร์',
+];
 
-interface ChannelSummary {
-  key: 'transfer' | 'cash' | 'qrcode';
-  icon: string;
-  color: string;
-  amount: number;
-  count: number;
-  percent: number;
+// ฟังก์ชันสำหรับฟิลเตอร์และการแปลงข้อมูล (คงเดิม)
+// function thaiDateToGregorianStr(dateStr: string): string | null {
+//   if (!dateStr || dateStr.length !== 10) return null;
+//   const parts = dateStr.split('/');
+//   if (parts.length !== 3) return null;
+//   const day = parts[0];
+//   const month = parts[1];
+//   const yearBE = parseInt(parts[2] || '0');
+//   if (isNaN(yearBE)) return null;
+//   const yearCE = yearBE - 543;
+//   return `${yearCE}-${month}-${day}`;
+// }
+
+function getCourseNameForTx(tx: Transaction): string {
+  if (tx.faculty === 'สำนักคอมพิวเตอร์')
+    return 'C67052002: การพัฒนาเว็บแอปพลิเคชัน สำนักคอมพิวเตอร์';
+  else if (tx.faculty === 'คณะวิทยาการสารสนเทศ')
+    return 'C66061004: การถ่ายภาพโฆษณา คณะศิลปกรรมศาสตร์';
+  else if (tx.faculty === 'คณะวิทยาศาสตร์')
+    return 'C65091001: วิทยาศาสตร์ข้อมูลเบื้องต้น คณะวิทยาศาสตร์';
+  else if (tx.faculty === 'คณะพยาบาลศาสตร์')
+    return 'C65082001: การดูแลผู้สูงอายุเบื้องต้น คณะพยาบาลศาสตร์';
+  else if (tx.faculty === 'คณะบริหารธุรกิจ')
+    return 'C66021005: การตลาดดิจิทัลยุคใหม่ คณะบริหารธุรกิจ';
+  else if (tx.faculty === 'คณะวิศวกรรมศาสตร์')
+    return 'C66031002: ปัญญาประดิษฐ์ในอุตสาหกรรม คณะวิศวกรรมศาสตร์';
+  return 'C66099999: หลักสูตรระยะสั้นเพื่อการเรียนรู้ตลอดชีวิต';
 }
 
-const channelBreakdown = computed<ChannelSummary[]>(() => {
-  const activeTx = todayTransactions.value.filter((tx: Transaction) => tx.status !== 'void');
-  const totalActive = activeTx.reduce((sum: number, tx: Transaction) => sum + tx.amount, 0) || 1;
+function getFundName(fundCode: string): string {
+  // ... (ฟังก์ชันเดิม) ...
+  const source = financeStore.fundSources.find((s) => s.fundCode === fundCode);
+  if (source) return `${fundCode}: ${source.nameTh}`;
+  if (fundCode.startsWith('BG')) return `${fundCode}: เงินงบประมาณแผ่นดิน`;
+  else if (fundCode.startsWith('RV')) return `${fundCode}: เงินรายได้มหาวิทยาลัย`;
+  else if (fundCode.startsWith('DN')) return `${fundCode}: เงินบริจาคเพื่อการศึกษา`;
+  else if (fundCode.startsWith('OT')) return `${fundCode}: เงินกองทุนพัฒนาวิชาการ`;
+  return fundCode;
+}
 
-  const channels: { key: 'transfer' | 'cash' | 'qrcode'; icon: string; color: string }[] = [
-    { key: 'transfer', icon: 'account_balance', color: 'primary' },
-    { key: 'cash', icon: 'payments', color: 'secondary' },
-    { key: 'qrcode', icon: 'qr_code_2', color: 'accent' },
-  ];
+const filteredTransactions = computed(() => {
+  return financeStore.transactions.filter((tx) => {
+    // 1. กรองตามส่วนงาน
+    if (activeFilters.value.department) {
+      if (tx.faculty !== activeFilters.value.department) {
+        return false;
+      }
+    }
 
-  return channels.map((c) => {
-    const channelTx = activeTx.filter((tx: Transaction) => tx.paymentChannel === c.key);
-    const amount = channelTx.reduce((sum: number, tx: Transaction) => sum + tx.amount, 0);
-    return {
-      ...c,
-      amount,
-      count: channelTx.length,
-      percent: Math.round((amount / totalActive) * 100),
-    };
+    // 2. กรองตามชื่อหลักสูตร/อบรม
+    if (activeFilters.value.courseName) {
+      const course = getCourseNameForTx(tx);
+      if (!course.toLowerCase().includes(activeFilters.value.courseName.toLowerCase())) {
+        return false;
+      }
+    }
+
+    // 3. กรองตามช่วงวันที่เริ่มต้นและสิ้นสุด
+    // 🚧 คอมเมนต์โค้ดส่วนเช็ควันที่ไว้ชั่วคราว เพื่อให้ข้อมูล Mock up แสดงผลขึ้นมาได้เสมอ 🚧
+    /*
+    const startStr = thaiDateToGregorianStr(activeFilters.value.receiptDateStart);
+    const endStr = thaiDateToGregorianStr(activeFilters.value.receiptDateEnd);
+    const txDate = tx.timestamp ? tx.timestamp.split(' ')[0] : null; 
+
+    if (startStr && txDate && txDate < startStr) return false;
+    if (endStr && txDate && txDate > endStr) return false;
+    */
+
+    // ถ้าผ่านเงื่อนไขด้านบนมาได้ ให้แสดงข้อมูลทั้งหมด
+    return true;
   });
 });
 
+const tableRows = computed(() => {
+  return filteredTransactions.value.map((tx, index) => ({
+    id: tx.id,
+    no: index + 1,
+    courseName: getCourseNameForTx(tx),
+    fundCode: getFundName(tx.fundCode),
+    amount: tx.amount,
+  }));
+});
+
 const columns = computed<QTableColumn[]>(() => [
+  { name: 'no', label: 'ลำดับ', field: 'no', align: 'center', sortable: true },
   {
-    name: 'timestamp',
-    label: t('centralFinance.dailyReport.table.timestamp') || 'เวลา',
-    field: 'timestamp',
+    name: 'courseName',
+    label: 'ชื่อโครงการ/อบรม/หลักสูตร',
+    field: 'courseName',
     align: 'left',
     sortable: true,
+    style: 'white-space: pre-wrap; word-break: break-word;',
   },
   {
-    name: 'receiptNumber',
-    label: t('centralFinance.dailyReport.table.receiptNumber') || 'เลขที่ใบเสร็จ',
-    field: 'receiptNumber',
+    name: 'fundCode',
+    label: 'รหัสแหล่งเงิน/ชื่อผังบัญชี',
+    field: 'fundCode',
     align: 'left',
     sortable: true,
+    style: 'white-space: pre-wrap; word-break: break-word;',
   },
-  {
-    name: 'payerName',
-    label: t('centralFinance.dailyReport.table.payer') || 'ผู้ชำระเงิน',
-    field: 'payerName',
-    align: 'left',
-    sortable: true,
-  },
-  {
-    name: 'channel',
-    label: t('centralFinance.dailyReport.table.channel') || 'ช่องทาง',
-    field: 'paymentChannel',
-    align: 'left',
-  },
-  {
-    name: 'amount',
-    label: t('centralFinance.dailyReport.table.amount') || 'จำนวนเงิน',
-    field: 'amount',
-    align: 'right',
-    sortable: true,
-  },
-  {
-    name: 'status',
-    label: t('centralFinance.dailyReport.table.status') || 'สถานะ',
-    field: 'status',
-    align: 'center',
-  },
+  { name: 'amount', label: 'จำนวนเงิน', field: 'amount', align: 'right', sortable: true },
 ]);
 
+// 3. ปรับปรุงฟังก์ชัน onSearch เพื่อเช็ควันที่
+function onSearch(): void {
+  // เช็คว่ามีค่าในวันที่เริ่มต้นและถึงวันที่หรือไม่
+  if (!filters.value.receiptDateStart || !filters.value.receiptDateEnd) {
+    $q.notify({
+      type: 'warning', // ใช้สีเหลืองเพื่อเตือน
+      message: 'กรุณาระบุวันที่เริ่มต้นและสิ้นสุดให้ครบถ้วน',
+      position: 'top',
+      icon: 'warning',
+    });
+    return; // หยุดการทำงาน ไม่เซ็ต activeFilters และไม่เปิดตาราง
+  }
+
+  activeFilters.value = {
+    receiptDateStart: filters.value.receiptDateStart,
+    receiptDateEnd: filters.value.receiptDateEnd,
+    department: filters.value.department,
+    courseName: filters.value.courseName,
+  };
+
+  // เปิดการแสดงผลตารางหลังจากกดยืนยันการค้นหา
+  hasSearched.value = true;
+}
+
+// ฟังก์ชันล้างค่าฟิลเตอร์
+function clearFilters(): void {
+  filters.value.receiptDateStart = '';
+  filters.value.receiptDateEnd = '';
+  filters.value.department = 'สำนักคอมพิวเตอร์';
+  filters.value.courseName = '';
+
+  activeFilters.value = {
+    receiptDateStart: '',
+    receiptDateEnd: '',
+    department: '',
+    courseName: '',
+  };
+
+  // ปิดการแสดงผลตารางเมื่อมีการล้างค่าฟิลเตอร์
+  hasSearched.value = false;
+}
+
 function formatCurrency(val: number): string {
-  return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(val);
+  if (val === undefined || val === null) return '-';
+  return new Intl.NumberFormat('th-TH', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(val);
 }
 
-function getChannelIcon(channel: string): string {
-  switch (channel) {
-    case 'transfer':
-      return 'account_balance';
-    case 'cash':
-      return 'payments';
-    case 'qrcode':
-      return 'qr_code_2';
-    default:
-      return 'help';
-  }
+// ฟังก์ชันส่งออกเป็น PDF พร้อมตราสารประยุกต์ใช้ฟอนต์สากลวิชาการไทย Sarabun
+async function exportToPdf(): Promise<void> {
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'pt',
+    format: 'a4',
+  });
+
+  // โหลดฟอนต์ภาษาไทยสารบัญ
+  const response = await fetch(SarabunFontUrl);
+  const blob = await response.blob();
+  const base64Font = await new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      resolve(dataUrl.split(',')[1] || '');
+    };
+    reader.readAsDataURL(blob);
+  });
+
+  doc.addFileToVFS('THSarabunPSK.ttf', base64Font);
+  doc.addFont('THSarabunPSK.ttf', 'Sarabun', 'normal');
+  doc.setFont('Sarabun');
+
+  doc.setFontSize(13);
+  const title1 = 'รายงานสรุปการรับเงินประจำวัน LifeLong Learning มหาวิทยาลัยบูรพา';
+  const title2 = `ส่วนงาน: ${activeFilters.value.department}`;
+  const title3 = `วันที่ใบเสร็จรับเงิน ${activeFilters.value.receiptDateStart} ถึงวันที่ ${activeFilters.value.receiptDateEnd}`;
+
+  doc.text(title1, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
+  doc.text(title2, doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
+  doc.text(title3, doc.internal.pageSize.getWidth() / 2, 65, { align: 'center' });
+
+  const rows = tableRows.value.map((row) => [
+    row.no,
+    row.courseName,
+    row.fundCode,
+    formatCurrency(row.amount),
+  ]);
+
+  autoTable(doc, {
+    startY: 80,
+    rowPageBreak: 'avoid',
+    showHead: 'everyPage',
+    head: [['ลำดับ', 'ชื่อโครงการ/อบรม/หลักสูตร', 'รหัสแหล่งเงิน/ชื่อผังบัญชี', 'จำนวนเงิน']],
+    body: rows,
+    styles: {
+      font: 'Sarabun',
+      fontSize: 9,
+      cellPadding: 5,
+      valign: 'middle',
+      lineColor: [180, 180, 180],
+      lineWidth: 0.5,
+      overflow: 'linebreak',
+    },
+    headStyles: {
+      font: 'Sarabun',
+      fillColor: [226, 232, 240],
+      textColor: [51, 65, 85],
+      fontStyle: 'normal',
+      fontSize: 9,
+      halign: 'center',
+      valign: 'middle',
+    },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 40 },
+      1: { cellWidth: 350 },
+      2: { cellWidth: 250 },
+      3: { halign: 'right', cellWidth: 100 },
+    },
+    alternateRowStyles: { fillColor: [255, 255, 255] },
+    margin: { top: 20, left: 20, right: 20 },
+    tableWidth: 'auto',
+  });
+
+  doc.save('daily-report.pdf');
 }
 
-function getChannelColor(channel: string): string {
-  switch (channel) {
-    case 'transfer':
-      return 'primary';
-    case 'cash':
-      return 'secondary';
-    case 'qrcode':
-      return 'accent';
-    default:
-      return 'grey';
-  }
-}
+// ฟังก์ชันส่งออกเป็น Excel
+function exportToExcel(): void {
+  const header = ['ลำดับ', 'ชื่อโครงการ/อบรม/หลักสูตร', 'รหัสแหล่งเงิน/ชื่อผังบัญชี', 'จำนวนเงิน'];
 
-function onExport(payload: ExportPayload): void {
-  // In production: call a composable/service to generate the file
-  // For now we log the payload and show success notification (handled by dialog)
-  console.info('[DailyReport] Export requested:', payload);
+  const rows = tableRows.value.map((row) => [
+    row.no,
+    row.courseName.replace(/\n/g, ' '),
+    row.fundCode.replace(/\n/g, ' '),
+    row.amount,
+  ]);
+
+  const title1 = 'รายงานสรุปการรับเงินประจำวัน LifeLong Learning มหาวิทยาลัยบูรพา';
+  const title2 = `ส่วนงาน ${activeFilters.value.department}`;
+  const title3 = `วันที่ใบเสร็จรับเงิน ${activeFilters.value.receiptDateStart} ถึงวันที่ ${activeFilters.value.receiptDateEnd}`;
+
+  const wsData = [[title1], [title2], [title3], [], header, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
+    { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } },
+  ];
+
+  ws['!cols'] = [{ wch: 8 }, { wch: 60 }, { wch: 45 }, { wch: 15 }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'รายงาน');
+  XLSX.writeFile(wb, 'daily-report.xlsx');
 }
 </script>
 
 <style lang="scss" scoped>
-.finance-daily-report-page {
-  .report-date-btn {
-    border-radius: 12px;
-    font-weight: 700;
+.report-search {
+  width: 250px;
+}
+
+.report-table {
+  background: transparent;
+
+  :deep(.q-table__card) {
+    box-shadow: none;
   }
-
-  .net-total-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
-
-    &__icon {
-      width: 84px;
-      height: 84px;
-      border-radius: 24px;
-      background: rgba(var(--q-primary), 0.08);
-      display: grid;
-      place-items: center;
-    }
+  :deep(thead tr) {
+    background: #e2e8f0;
   }
-
-  .channel-card {
-    transition: transform 0.2s ease;
-    &:hover {
-      transform: translateY(-4px);
-    }
+  :deep(th) {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    text-align: center !important;
+    vertical-align: middle;
+    line-height: 1.3;
+    padding: 8px 6px;
   }
-
-  .channel-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-
-    &--transfer {
-      background: rgba($primary, 0.1);
-      color: $primary;
-    }
-    &--cash {
-      background: rgba($secondary, 0.1);
-      color: $secondary;
-    }
-    &--qrcode {
-      background: rgba($accent, 0.1);
-      color: $accent;
-    }
-  }
-
-  .report-table {
-    background: transparent;
-
-    :deep(.q-table__card) {
-      box-shadow: none;
-    }
-
-    :deep(thead tr th) {
-      font-weight: 800;
-      color: var(--finance-navy);
-      background: #f8fafc;
-      font-size: 0.88rem;
-      padding: 16px;
-    }
-
-    :deep(tbody tr td) {
-      padding: 16px;
-      font-size: 0.94rem;
-    }
-
-    :deep(tbody tr:hover) {
-      background: rgba(16, 35, 63, 0.02);
-    }
-  }
-
-  .text-navy {
-    color: var(--finance-navy);
+  :deep(tbody td) {
+    vertical-align: middle;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    white-space: pre-wrap;
   }
 }
 
-.h-full {
-  height: 100%;
+:deep(.q-field__label) {
+  font-weight: 400 !important;
 }
 </style>
