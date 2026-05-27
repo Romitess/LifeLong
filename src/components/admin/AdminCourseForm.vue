@@ -1395,11 +1395,28 @@ watch(
         .filter((t) => t.subtargetId != null && t.other)
         .map((t) => [t.subtargetId as number, t.other as string]),
     );
-    form.stutypeFeeAmounts = Object.fromEntries(
+    const loadedFees = Object.fromEntries(
       (data.stutypeFees ?? []).map((f) => [f.stutypeId, f.amount]),
+    );
+    form.stutypeFeeAmounts = Object.fromEntries(
+      formOptions.value.studentTypes.map((st) => [
+        st.id,
+        loadedFees[st.id] ?? (data.classFee === 0 ? 0 : null),
+      ]),
     );
   },
   { immediate: true },
+);
+
+watch(
+  () => formOptions.value.studentTypes,
+  (types) => {
+    for (const st of types) {
+      if (form.stutypeFeeAmounts[st.id] == null) {
+        form.stutypeFeeAmounts[st.id] = form.classFee === 0 ? 0 : null;
+      }
+    }
+  },
 );
 
 watch(
@@ -1724,9 +1741,10 @@ async function submit() {
       ? selectedInstructors.value.map((i) => ({ username: i.username, email: i.email }))
       : undefined,
     chapters: chapters.value.length > 0 ? chapters.value : undefined,
-    stutypeFees: formOptions.value.studentTypes
-      .filter((st) => form.stutypeFeeAmounts[st.id] != null)
-      .map((st) => ({ stutypeId: st.id, amount: form.stutypeFeeAmounts[st.id] as number })),
+    stutypeFees: formOptions.value.studentTypes.map((st) => ({
+      stutypeId: st.id,
+      amount: form.stutypeFeeAmounts[st.id] ?? 0,
+    })),
   };
 
   if (props.submitOverride) {
