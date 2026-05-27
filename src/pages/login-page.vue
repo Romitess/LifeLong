@@ -86,8 +86,18 @@
 
     <div class="auth-demo">
       <div class="auth-demo__title">Test Accounts</div>
-      <div v-for="acc in TEST_ACCOUNTS" :key="acc.username">
-        {{ acc.username }} / {{ acc.password }}
+      <div v-for="acc in TEST_ACCOUNTS" :key="acc.username" class="auth-demo__row">
+        <span class="auth-demo__text">{{ acc.username }} / {{ acc.password }}</span>
+        <q-btn
+          flat
+          dense
+          no-caps
+          size="sm"
+          color="primary"
+          label="use"
+          class="auth-demo__btn"
+          @click="loadTestAccount(acc)"
+        />
       </div>
     </div>
 
@@ -279,6 +289,11 @@ function handleCheckInContinue(): void {
   const nextPath = pendingPostLoginPath.value || '/main';
   pendingPostLoginPath.value = '';
   void router.push(nextPath);
+}
+
+function loadTestAccount(account: { username: string; password: string }): void {
+  loginForm.username = account.username;
+  loginForm.password = account.password;
 }
 
 async function onLogin(): Promise<void> {

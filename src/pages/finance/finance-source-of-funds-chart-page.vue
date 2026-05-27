@@ -214,7 +214,7 @@
           :rows="filteredRows"
           :columns="columns"
           row-key="id"
-          :rows-per-page-options="[10]"
+          :rows-per-page-options="[10, 25, 50, 100]"
           class="sof-table"
         >
           <template #body-cell-index="props">
@@ -277,6 +277,70 @@
             <div class="full-width column flex-center q-pa-xl text-grey-7">
               <q-icon name="inventory_2" size="48px" class="q-mb-md" />
               <span>{{ $t('finance.sourceOfFunds.noData') }}</span>
+            </div>
+          </template>
+
+          <template #bottom="scope">
+            <div class="row full-width justify-between items-center q-py-sm">
+              <div class="row items-center q-gutter-sm">
+                <span class="text-subtitle2 text-grey-8">{{
+                  $t('finance.receiptSummary.showEntries')
+                }}</span>
+                <q-select
+                  v-model="pagination.rowsPerPage"
+                  :options="[10, 25, 50, 100]"
+                  outlined
+                  dense
+                  options-dense
+                  style="width: 80px"
+                  class="bg-white sof-rows-select"
+                />
+                <span class="text-subtitle2 text-grey-8">{{
+                  $t('finance.receiptSummary.entries')
+                }}</span>
+              </div>
+              <div class="row items-center q-gutter-sm">
+                <span class="text-caption text-grey-8 q-mr-sm">
+                  {{ pageStart(scope.pagination) }}-{{ pageEnd(scope.pagination) }} of
+                  {{ filteredRows.length }}
+                </span>
+                <q-btn
+                  icon="first_page"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isFirstPage"
+                  @click="scope.firstPage"
+                />
+                <q-btn
+                  icon="chevron_left"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isFirstPage"
+                  @click="scope.prevPage"
+                />
+                <q-btn
+                  icon="chevron_right"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isLastPage"
+                  @click="scope.nextPage"
+                />
+                <q-btn
+                  icon="last_page"
+                  color="grey-8"
+                  round
+                  dense
+                  flat
+                  :disable="scope.isLastPage"
+                  @click="scope.lastPage"
+                />
+              </div>
             </div>
           </template>
         </q-table>
@@ -488,6 +552,17 @@ function resetTableFilters() {
   listFilter.value = { faculty: null, status: null };
   tableSearch.value = '';
   pagination.value.page = 1;
+}
+
+function pageStart(tablePagination: { page: number; rowsPerPage: number }): number {
+  if (filteredRows.value.length === 0) {
+    return 0;
+  }
+  return (tablePagination.page - 1) * tablePagination.rowsPerPage + 1;
+}
+
+function pageEnd(tablePagination: { page: number; rowsPerPage: number }): number {
+  return Math.min(tablePagination.page * tablePagination.rowsPerPage, filteredRows.value.length);
 }
 
 watch(
@@ -867,6 +942,12 @@ async function confirmDelete() {
   border-top: 1px solid rgba(251, 191, 36, 0.35);
 }
 
+.sof-rows-select {
+  :deep(.q-field__control) {
+    min-height: 40px;
+  }
+}
+
 .sof-search {
   min-width: 220px;
 }
@@ -895,22 +976,5 @@ async function confirmDelete() {
   :deep(.q-table__bottom) {
     border-top: 1px solid var(--admin-line, #e2e8f0);
   }
-}
-
-.sof-status-badge {
-  font-weight: 700;
-  padding: 6px 12px;
-  text-transform: none;
-}
-
-.sof-footnote {
-  display: flex;
-  align-items: flex-start;
-  padding: 16px 20px 20px;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: #b45309;
-  background: linear-gradient(90deg, rgba(254, 243, 199, 0.65), transparent);
-  border-top: 1px solid rgba(251, 191, 36, 0.35);
 }
 </style>
