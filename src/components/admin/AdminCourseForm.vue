@@ -943,6 +943,43 @@
                 </template>
               </q-field>
             </div>
+
+            <!-- ราคาต่อประเภทผู้เรียน -->
+            <div
+              v-if="formOptions.studentTypes.length > 0"
+              class="course-form__field course-form__field--full"
+            >
+              <div class="course-form__label">
+                ราคาต่อประเภทผู้เรียน
+                <span class="course-form__optional">(ไม่บังคับ)</span>
+              </div>
+              <div class="course-form__stutype-fee-list">
+                <div
+                  v-for="st in formOptions.studentTypes"
+                  :key="st.id"
+                  class="course-form__stutype-fee-row"
+                >
+                  <span class="course-form__stutype-name">{{ st.label }}</span>
+                  <div class="course-form__fee-input-wrap">
+                    <q-input
+                      v-model.number="form.stutypeFeeAmounts[st.id]"
+                      outlined
+                      dense
+                      type="number"
+                      min="0"
+                      placeholder="ราคา"
+                      class="course-form__input course-form__input--compact"
+                      :readonly="props.readonly"
+                      @keypress="onNumberKeypress"
+                    />
+                    <span class="course-form__fee-unit">บาท</span>
+                  </div>
+                </div>
+              </div>
+              <div class="text-caption text-grey-6 q-mt-xs">
+                เว้นว่างไว้หากประเภทนั้นไม่มีการกำหนดราคาเฉพาะ
+              </div>
+            </div>
           </div>
         </AdminSurfaceCard>
 
@@ -1232,6 +1269,7 @@ const form = reactive({
   contactUrl: '',
   image: undefined as File | undefined,
   newFiles: [] as File[],
+  stutypeFeeAmounts: {},
 });
 
 // Convert YYYY-MM-DD → DD/MM/YYYY for form display
@@ -1351,6 +1389,9 @@ watch(
       data.targets
         .filter((t) => t.subtargetId != null && t.other)
         .map((t) => [t.subtargetId as number, t.other as string]),
+    );
+    form.stutypeFeeAmounts = Object.fromEntries(
+      (data.stutypeFees ?? []).map((f) => [f.stutypeId, f.amount]),
     );
   },
   { immediate: true },
@@ -1663,6 +1704,9 @@ async function submit() {
       ? selectedInstructors.value.map((i) => ({ username: i.username, email: i.email }))
       : undefined,
     chapters: chapters.value.length > 0 ? chapters.value : undefined,
+    stutypeFees: formOptions.value.studentTypes
+      .filter((st) => form.stutypeFeeAmounts[st.id] != null)
+      .map((st) => ({ stutypeId: st.id, amount: form.stutypeFeeAmounts[st.id] as number })),
   };
 
   if (props.submitOverride) {
@@ -1939,6 +1983,25 @@ async function submitAndPublish() {
 
 .course-form__input--wide {
   min-width: 360px;
+}
+
+.course-form__stutype-fee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.course-form__stutype-fee-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.course-form__stutype-name {
+  width: 120px;
+  font-size: 0.875rem;
+  color: #2d3748;
+  flex-shrink: 0;
 }
 
 .course-form__actions {

@@ -189,6 +189,8 @@ async function submitOverride(payload: CreateCoursePayload): Promise<{ courseId:
   if (payload.instructors?.length)
     form.append('instructorsJson', JSON.stringify(payload.instructors));
   if (payload.chapters?.length) form.append('chaptersJson', JSON.stringify(payload.chapters));
+  if (payload.stutypeFees?.length)
+    form.append('stutypeFeesJson', JSON.stringify(payload.stutypeFees));
   form.append('createUser', 'ADMIN');
 
   return updateCourse(courseId, form);

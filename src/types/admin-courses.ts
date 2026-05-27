@@ -31,6 +31,11 @@ export interface ChapterTypeFormOption {
   isOther: boolean;
 }
 
+export interface StudentTypeFormOption {
+  id: number;
+  label: string;
+}
+
 export interface AdminCourseFormOptions {
   faculties: CourseFormOption[];
   courseTypes: CourseFormOption[];
@@ -41,6 +46,7 @@ export interface AdminCourseFormOptions {
   subcategories: SubcategoryFormOption[];
   targets: TargetFormOption[];
   chapterTypes: ChapterTypeFormOption[];
+  studentTypes: StudentTypeFormOption[];
 }
 
 export interface CourseSubchapterPayload {
@@ -105,6 +111,7 @@ export interface CreateCoursePayload {
   createUser?: string | undefined;
   instructors?: { username?: string; email?: string }[] | undefined;
   chapters?: CourseChapterPayload[] | undefined;
+  stutypeFees?: { stutypeId: number; amount: number }[] | undefined;
 }
 
 export interface CourseFile {
@@ -197,4 +204,5 @@ export interface AdminCourseDetail {
   contactUrl: string | null;
   instructors: { username: string | null; email: string | null }[];
   chapters: CourseChapterPayload[];
+  stutypeFees: { stutypeId: number; stutypeName: string; amount: number | null }[];
 }
