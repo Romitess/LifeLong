@@ -9,7 +9,7 @@ type CourseIdSource = string | Ref<string>;
 interface BackendCourseDetailResponse {
   objective?: string | null;
   description?: string | null;
-  evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
+  evaluationText?: string | null;
   typestudyDetail?: { id: number; name: string | null } | null;
   targets?: CourseTarget[] | null;
   precondition?: string | null;
@@ -111,7 +111,7 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
                 ? { descriptionFull: data.description, descriptionFullEn: data.description }
                 : {}),
               targets: data.targets ?? [],
-              evaluation: data.evaluationDetail ?? null,
+              evaluationText: data.evaluationText ?? null,
               precondition: data.precondition ?? null,
               property: data.property ?? null,
               ...(data.typestudyDetail

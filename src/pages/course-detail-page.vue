@@ -349,7 +349,7 @@
                         style="white-space: pre-line; line-height: 1.6"
                       >
                         {{
-                          course.evaluation?.name ||
+                          course.evaluationText ||
                           (locale === 'th'
                             ? 'ไม่มีรายละเอียดเกณฑ์การวัดและการประเมินผล'
                             : 'No evaluation details provided')
@@ -1449,7 +1449,7 @@ watch(
     font-size: 0.75rem;
     font-weight: 700;
     margin-right: 12px;
-    margin-top: -1px; // ปรับให้อยู่กึ่งกลางกับบรรทัดแรกของ text พอดี
+    margin-top: -1px;
   }
 
   &__text {

@@ -41,7 +41,7 @@ interface BackendCourse {
   imageUrl?: string | null;
   moodleId?: number | null;
   instructorEmail?: string | null;
-  evaluationDetail?: { id: number; name: string | null; other: string | null } | null;
+  evaluationText?: string | null;
   typestudyDetail?: { id: number; name: string | null } | null;
   maxSeats?: number | null;
   enrolledCount?: number | null;
@@ -182,7 +182,7 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     maxSeats: course.maxSeats ?? 40,
     enrolledCount: course.enrolledCount ?? 0,
     totalHours: course.hours ?? 0,
-    evaluation: course.evaluationDetail ?? null,
+    evaluationText: course.evaluationText ?? null,
   };
 }
 

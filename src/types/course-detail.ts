@@ -77,7 +77,7 @@ export interface CourseDetail extends Course {
   previewVideoUrl?: string;
   previewPosterUrl?: string;
   targets?: CourseTarget[];
-  evaluation?: EvaluationDetail | null;
+  evaluationText?: string | null;
   precondition?: string | null;
   property?: string | null;
   contractName?: string | null;
