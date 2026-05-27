@@ -40,7 +40,7 @@ export function calculateCourseRevenue(course: Course): number {
 }
 
 export function calculateFillRate(course: Course): number {
-  if (course.maxSeats === 0) return 0;
+  if (!course.maxSeats) return 0;
   return course.enrolledCount / course.maxSeats;
 }
 

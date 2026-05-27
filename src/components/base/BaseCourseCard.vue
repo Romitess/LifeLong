@@ -155,7 +155,7 @@ function getModeLabel(mode: DeliveryMode): string {
 }
 
 const seatInfo = computed(() => {
-  const remaining = props.course.maxSeats - props.course.enrolledCount;
+  const remaining = (props.course.maxSeats ?? 0) - props.course.enrolledCount;
   if (remaining <= 0) {
     return { label: t('seatFull'), color: 'red-8' };
   }

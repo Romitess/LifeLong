@@ -34,7 +34,7 @@ export interface Course {
   category: string;
   categoryEn?: string;
   categoryId?: number | undefined;
-  maxSeats: number;
+  maxSeats: number | null;
   enrolledCount: number;
   totalHours?: number;
   evaluationText?: string | null;

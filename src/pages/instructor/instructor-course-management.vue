@@ -147,13 +147,15 @@
                   <div class="instructor-profile-course-card__progress-head">
                     <span>จำนวนผู้เรียน</span>
                     <q-badge color="primary" class="badge-pill">
-                      {{ course.enrolledCount }} / {{ course.maxSeats }}
+                      {{ course.enrolledCount }}{{ course.maxSeats ? ` / ${course.maxSeats}` : '' }}
                     </q-badge>
                   </div>
                   <q-linear-progress
                     rounded
                     size="8px"
-                    :value="course.maxSeats > 0 ? course.enrolledCount / course.maxSeats : 0"
+                    :value="
+                      (course.maxSeats ?? 0) > 0 ? course.enrolledCount / (course.maxSeats ?? 1) : 0
+                    "
                     color="primary"
                     track-color="grey-2"
                   />
@@ -493,8 +495,11 @@
                   class="course-summary__learner-link"
                   @click="openLearnerRoster(selectedCourse.id)"
                 >
-                  <q-icon name="groups" /> {{ selectedCourse.enrolledCount.toLocaleString() }} /
-                  {{ selectedCourse.maxSeats.toLocaleString() }} ผู้เรียน
+                  <q-icon name="groups" /> {{ selectedCourse.enrolledCount.toLocaleString()
+                  }}{{
+                    selectedCourse.maxSeats ? ` / ${selectedCourse.maxSeats.toLocaleString()}` : ''
+                  }}
+                  ผู้เรียน
                 </button>
               </div>
             </div>
@@ -886,8 +891,11 @@
                 <div>
                   <h3>ผู้เรียนและความก้าวหน้า</h3>
                   <p>
-                    ลงทะเบียนแล้ว {{ selectedCourse?.enrolledCount.toLocaleString() ?? 0 }} คน จาก
-                    {{ selectedCourse?.maxSeats.toLocaleString() ?? 0 }} ที่นั่ง
+                    ลงทะเบียนแล้ว {{ selectedCourse?.enrolledCount.toLocaleString() ?? 0 }} คน{{
+                      selectedCourse?.maxSeats
+                        ? ` จาก ${selectedCourse.maxSeats.toLocaleString()} ที่นั่ง`
+                        : ''
+                    }}
                   </p>
                 </div>
                 <q-btn
@@ -1428,7 +1436,7 @@ interface FacultyStaffForm {
 interface CourseSettingsForm {
   published: boolean;
   registrationOpen: boolean;
-  maxSeats: number;
+  maxSeats: number | null;
   coverImageUrl: string;
   termName: string;
   deliveryMode: DeliveryMode;
@@ -1967,7 +1975,7 @@ const qualityChecks = computed(() => [
     done: selectedStructure.value.reduce((sum, module) => sum + module.lessons.length, 0) >= 3,
   },
   { label: 'มีเกณฑ์ประเมินผล', done: true },
-  { label: 'กำหนดจำนวนที่นั่งแล้ว', done: courseSettings.maxSeats > 0 },
+  { label: 'กำหนดจำนวนที่นั่งแล้ว', done: (courseSettings.maxSeats ?? 0) > 0 },
 ]);
 
 watch(
@@ -2105,7 +2113,7 @@ function getUnpaidLearnerCount(course: Course): number {
 }
 
 function getRemainingSeats(course: Course): number {
-  return Math.max(0, course.maxSeats - course.enrolledCount);
+  return Math.max(0, (course.maxSeats ?? 0) - course.enrolledCount);
 }
 
 function setCoursePublished(courseId: string, isPublished: boolean): void {

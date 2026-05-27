@@ -347,8 +347,9 @@
                         <span>{{ course.code }}</span>
                         <strong>{{ course.titleEn || course.title }}</strong>
                         <div>
-                          {{ course.enrolledCount.toLocaleString('th-TH') }}/{{
-                            course.maxSeats.toLocaleString('th-TH')
+                          {{ course.enrolledCount.toLocaleString('th-TH')
+                          }}{{
+                            course.maxSeats ? `/${course.maxSeats.toLocaleString('th-TH')}` : ''
                           }}
                           ผู้เรียน
                         </div>

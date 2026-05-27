@@ -40,6 +40,15 @@ export interface InstructorLearner {
   enrollmentStatus: string | null;
 }
 
+export interface GradeItemBreakdown {
+  itemtype: string;
+  itemmodule: string | null;
+  itemname: string | null;
+  score: number | null;
+  maxScore: number | null;
+  cmid: number | null;
+}
+
 export interface InstructorGrade {
   learnerUserId: number;
   moodleUserId: number | null;
@@ -52,6 +61,9 @@ export interface InstructorGrade {
   grade: string | null;
   status: 'passed' | 'failed' | 'pending';
   updatedAt: string | null;
+  lmsFinalscore: number | null;
+  lmsSyncedAt: string | null;
+  gradeItems: GradeItemBreakdown[];
 }
 
 export interface InstructorConversationMessage {
@@ -180,6 +192,25 @@ export function useInstructorBackend() {
       ...gradesByCourseId.value,
       [getCourseKey(courseId)]: data,
     };
+  }
+
+  async function syncScores(
+    email: string | undefined,
+    courseId: string | number,
+  ): Promise<{ synced: number; skipped: number; errors: number } | null> {
+    if (!email?.trim()) return null;
+    const backendCourseId = getBackendCourseId(courseId);
+    if (!backendCourseId) return null;
+
+    try {
+      const { data } = await api.post<{ synced: number; skipped: number; errors: number }>(
+        `/api/instructor/courses/${backendCourseId}/sync-scores?email=${encodeURIComponent(email.trim())}`,
+      );
+      return data;
+    } catch (error) {
+      console.warn('Failed to sync scores', error);
+      return null;
+    }
   }
 
   async function fetchConversations(email?: string): Promise<void> {
@@ -312,6 +343,7 @@ export function useInstructorBackend() {
     fetchSummary,
     fetchLearners,
     fetchGrades,
+    syncScores,
     fetchConversations,
     sendMessage,
     markAsRead,

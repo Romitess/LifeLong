@@ -79,7 +79,7 @@
                   <span>ลงทะเบียน</span>
                   <strong>{{ formatCourseDateRange(course) }}</strong>
                 </td>
-                <td class="text-center">{{ course.maxSeats.toLocaleString() }}</td>
+                <td class="text-center">{{ course.maxSeats?.toLocaleString() ?? '-' }}</td>
                 <td class="text-center">{{ course.enrolledCount.toLocaleString() }}</td>
                 <td class="text-center text-positive">
                   {{ getCoursePassedCount(course).toLocaleString() }}
@@ -137,7 +137,7 @@
             </div>
             <div class="student-course-row__metric">
               <span>รับ</span>
-              <strong>{{ course.maxSeats.toLocaleString() }}</strong>
+              <strong>{{ course.maxSeats?.toLocaleString() ?? 'ไม่จำกัด' }}</strong>
             </div>
             <q-btn
               unelevated
@@ -160,7 +160,7 @@
           </div>
           <div>
             <span>จำนวนที่นั่ง</span>
-            <strong>{{ selectedCourse.maxSeats.toLocaleString() }}</strong>
+            <strong>{{ selectedCourse.maxSeats?.toLocaleString() ?? 'ไม่จำกัด' }}</strong>
           </div>
           <div>
             <span>ความคืบหน้าเฉลี่ย</span>
@@ -183,7 +183,7 @@
               </div>
               <div>
                 <span>จำนวนรับ</span>
-                <strong>{{ selectedCourse.maxSeats.toLocaleString() }} คน</strong>
+                <strong>{{ selectedCourse.maxSeats?.toLocaleString() ?? 'ไม่จำกัด' }} คน</strong>
               </div>
               <div>
                 <span>จำนวนผู้ลงทะเบียน</span>

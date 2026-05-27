@@ -80,7 +80,7 @@
                     >
                   </div>
                 </td>
-                <td class="text-center">{{ course.maxSeats.toLocaleString('th-TH') }}</td>
+                <td class="text-center">{{ course.maxSeats?.toLocaleString('th-TH') ?? '-' }}</td>
                 <td class="text-center">{{ course.enrolledCount.toLocaleString('th-TH') }}</td>
                 <td class="text-center text-positive">
                   {{ getPassedLearners(course).length.toLocaleString('th-TH') }}
@@ -119,7 +119,7 @@
           <div class="summary-label">ค่าธรรมเนียม</div>
           <div>{{ selectedCourse.isFree ? 'ฟรี' : formatCurrency(selectedCourse.price) }}</div>
           <div class="summary-label">จำนวนรับ</div>
-          <div>{{ selectedCourse.maxSeats.toLocaleString('th-TH') }} คน</div>
+          <div>{{ selectedCourse.maxSeats?.toLocaleString('th-TH') ?? 'ไม่จำกัด' }} คน</div>
           <div class="summary-label">จำนวนผู้ลงทะเบียน</div>
           <div>{{ selectedCourse.enrolledCount.toLocaleString('th-TH') }} คน</div>
           <div></div>

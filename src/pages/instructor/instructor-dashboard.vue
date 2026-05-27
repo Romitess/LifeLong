@@ -83,7 +83,8 @@
                   <div class="row items-center q-gutter-x-lg q-mt-sm text-grey-7 text-caption">
                     <div class="row items-center">
                       <q-icon name="group" class="q-mr-xs" />
-                      {{ course.enrolledCount }} / {{ course.maxSeats }} นิสิต
+                      {{ course.enrolledCount
+                      }}{{ course.maxSeats ? ` / ${course.maxSeats}` : '' }} นิสิต
                     </div>
                     <div class="row items-center">
                       <q-icon name="star" class="q-mr-xs text-amber" />
@@ -110,7 +111,9 @@
                       label="ตรวจงาน / ให้เกรด"
                       size="sm"
                       class="q-px-md"
-                      @click="showDevelopmentDialog('ตรวจงาน / ให้เกรด')"
+                      @click="
+                        router.push({ path: '/instructor/grading', query: { courseId: course.id } })
+                      "
                     />
                     <q-btn
                       flat

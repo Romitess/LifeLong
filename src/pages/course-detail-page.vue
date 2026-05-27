@@ -94,7 +94,8 @@
                 <div>
                   <div class="quick-info-item__label">{{ $t('enrolled') }}</div>
                   <div class="quick-info-item__value">
-                    {{ course.enrolledCount }}/{{ course.maxSeats }} {{ $t('seats') }}
+                    {{ course.enrolledCount }}{{ course.maxSeats ? `/${course.maxSeats}` : '' }}
+                    {{ $t('seats') }}
                   </div>
                 </div>
               </div>
@@ -516,7 +517,8 @@
                   </div>
                   <div class="enroll-card__seats q-mt-xs">
                     <q-icon name="people" size="16px" class="q-mr-xs" />
-                    {{ $t('enrolled') }} {{ course.enrolledCount }}/{{ course.maxSeats }}
+                    {{ $t('enrolled') }} {{ course.enrolledCount
+                    }}{{ course.maxSeats ? `/${course.maxSeats}` : '' }}
                   </div>
                   <q-linear-progress
                     :value="enrollmentRatio"
@@ -1014,7 +1016,7 @@ const isCourseFull = computed<boolean>(() => {
     return false;
   }
 
-  return course.value.enrolledCount >= course.value.maxSeats;
+  return course.value.maxSeats != null && course.value.enrolledCount >= course.value.maxSeats;
 });
 
 const registrationWindowStatus = computed<RegistrationWindowStatus>(() => {
@@ -1093,7 +1095,7 @@ const enrollmentAction = computed<EnrollmentAction>(() => {
 });
 
 const enrollmentRatio = computed<number>(() => {
-  if (!course.value || course.value.maxSeats <= 0) {
+  if (!course.value || !course.value.maxSeats) {
     return 0;
   }
 
