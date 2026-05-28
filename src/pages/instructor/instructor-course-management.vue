@@ -990,7 +990,7 @@
                     label="ตรวจงาน"
                     no-caps
                     class="full-width"
-                    @click="router.push('/instructor/grading')"
+                    @click="router.push('/instructor/students')"
                   />
                 </div>
               </div>

@@ -535,14 +535,11 @@ export const useCourseStore = defineStore('course', {
     },
     /** Add a new course to the list */
     addCourse(course: Course) {
-      this.init();
       this.courses.unshift(ensureCourseInstructorOwner(course));
       writeStoredCourses(this.courses);
     },
     /** Update an existing course and its detail record when available. */
     updateCourse(id: string, changes: Partial<Course>) {
-      this.init();
-
       this.courses = this.courses.map((course) =>
         course.id === id
           ? {
@@ -566,8 +563,6 @@ export const useCourseStore = defineStore('course', {
       writeStoredCourseDetails(this.courseDetails);
     },
     getInstructorCourses(owner: CourseInstructorOwner): Course[] {
-      this.init();
-
       if (!owner) {
         return [];
       }
@@ -585,19 +580,21 @@ export const useCourseStore = defineStore('course', {
     },
     /** Remove a course by its ID */
     deleteCourse(id: string) {
-      this.init();
       this.courses = this.courses.filter((course) => course.id !== id);
       delete this.courseDetails[id];
       writeStoredCourses(this.courses);
       writeStoredCourseDetails(this.courseDetails);
     },
     getCourseById(id: string): Course | undefined {
-      this.init();
       return this.courses.find((c) => c.id === id);
     },
-    /** Return a course detail by its ID or undefined */
+    /** Return a course detail by its ID or undefined.
+     *  NOTE: This must NOT mutate store state synchronously because it is
+     *  called from computed properties and template render functions (e.g.
+     *  via getCourseStructure → buildLearnersForCourse). Synchronous state
+     *  mutations here cause Vue's "Maximum recursive updates exceeded" error.
+     */
     getCourseDetailById(id: string): CourseDetail | undefined {
-      this.init();
       const detail = this.courseDetails[id];
       if (detail) {
         const latestCourse = this.courses.find((candidate) => candidate.id === id);
@@ -605,10 +602,7 @@ export const useCourseStore = defineStore('course', {
           return detail;
         }
 
-        const mergedDetail = mergeCourseIntoDetail(detail, latestCourse);
-        this.courseDetails[id] = mergedDetail;
-        writeStoredCourseDetails(this.courseDetails);
-        return mergedDetail;
+        return mergeCourseIntoDetail(detail, latestCourse);
       }
 
       const course = this.courses.find((candidate) => candidate.id === id);
@@ -616,10 +610,7 @@ export const useCourseStore = defineStore('course', {
         return undefined;
       }
 
-      const fallbackDetail = createFallbackCourseDetail(course);
-      this.courseDetails[id] = fallbackDetail;
-      writeStoredCourseDetails(this.courseDetails);
-      return fallbackDetail;
+      return createFallbackCourseDetail(course);
     },
   },
 });

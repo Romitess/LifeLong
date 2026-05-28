@@ -64,6 +64,8 @@ export interface InstructorGrade {
   lmsFinalscore: number | null;
   lmsSyncedAt: string | null;
   gradeItems: GradeItemBreakdown[];
+  importedGradeId: number | null;
+  importedGradeName: string | null;
 }
 
 export interface InstructorConversationMessage {
@@ -214,6 +216,35 @@ export function useInstructorBackend() {
       ...gradesByCourseId.value,
       [getCourseKey(courseId)]: data,
     };
+  }
+
+  async function importGrades(
+    email: string | undefined,
+    courseId: string | number,
+    items: Array<{ userCode: string; gradeText: string; gradeItemId: number }>,
+  ): Promise<{
+    saved: number;
+    failed: number;
+    errors: Array<{ userCode: string; reason: string }>;
+  } | null> {
+    if (!email?.trim()) return null;
+    const backendCourseId = getBackendCourseId(courseId);
+    if (!backendCourseId) return null;
+
+    try {
+      const { data } = await api.post<{
+        saved: number;
+        failed: number;
+        errors: Array<{ userCode: string; reason: string }>;
+      }>(
+        `/api/instructor/courses/${backendCourseId}/import-grades?email=${encodeURIComponent(email.trim())}`,
+        { items },
+      );
+      return data;
+    } catch (error) {
+      console.warn('Failed to import grades', error);
+      return null;
+    }
   }
 
   async function syncScores(
@@ -409,6 +440,7 @@ export function useInstructorBackend() {
     fetchLearners,
     fetchGrades,
     fetchPriorityTasks,
+    importGrades,
     syncScores,
     fetchConversations,
     fetchCourseAnnouncements,

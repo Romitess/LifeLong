@@ -107,7 +107,6 @@ export const useCategoryStore = defineStore('category', {
     },
     categoriesWithUsage(): CategoryWithUsage[] {
       const courseStore = useCourseStore();
-      courseStore.init();
 
       return this.sortedCategories.map((category) => {
         const matchedCourses = courseStore.courses.filter(
@@ -175,7 +174,6 @@ export const useCategoryStore = defineStore('category', {
     },
     countCourses(name: string): number {
       const courseStore = useCourseStore();
-      courseStore.init();
       return courseStore.courses.filter((course) => course.category === name).length;
     },
     create(payload: CategoryFormPayload): Category {
@@ -249,7 +247,6 @@ export const useCategoryStore = defineStore('category', {
     },
     syncCoursesAfterRename(previousName: string, nextName: string): void {
       const courseStore = useCourseStore();
-      courseStore.init();
 
       const affectedCourses = courseStore.courses.filter(
         (course) => course.category === previousName,

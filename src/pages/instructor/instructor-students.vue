@@ -237,48 +237,32 @@
                   v-model="resultImportText"
                   type="textarea"
                   outlined
-                  autogrow
                   placeholder="วางข้อมูลรูปแบบ: รหัสผู้เรียน เกรด เช่น C6901355 A"
                   class="learning-result-import-input"
                 />
 
-                <div v-if="resultImportText.trim()" class="learning-result-import-preview">
-                  <div class="learning-result-import-preview__summary">
-                    <span class="text-positive"
-                      >ใช้ได้ {{ validImportPreviewRows.length }} แถว</span
-                    >
-                    <span class="text-negative"
-                      >ต้องตรวจ {{ invalidImportPreviewRows.length }} แถว</span
-                    >
-                  </div>
-                  <div class="learning-result-import-preview__rows">
-                    <div
-                      v-for="row in resultImportPreviewRows.slice(0, 6)"
-                      :key="`${row.lineNumber}-${row.studentId}-${row.grade}`"
-                      class="learning-result-import-preview__row"
-                      :class="{ 'learning-result-import-preview__row--invalid': !row.valid }"
-                    >
-                      <span>บรรทัด {{ row.lineNumber }}</span>
-                      <strong>{{ row.studentId || '-' }}</strong>
-                      <em>{{ row.grade || '-' }}</em>
-                      <small>{{ row.message }}</small>
-                    </div>
-                  </div>
-                </div>
+                <q-btn
+                  outline
+                  color="primary"
+                  icon="preview"
+                  label="ดูตัวอย่าง"
+                  no-caps
+                  :disable="!resultImportText.trim()"
+                  class="learning-result-import-tool-btn"
+                  @click="buildDetailPreview"
+                />
               </div>
               <div class="learning-result-import-help">
                 <strong>ตัวอย่าง</strong>
-                <p>
-                  การจัดเรียงข้อมูลที่ Import เกรด ให้ระหว่างรหัสผู้เรียนและเกรด คั่นด้วย Tab หรือ
-                  Space
-                </p>
+                <p>พิมพ์หรือวางข้อมูล รหัสผู้เรียน และ เกรด คั่นด้วย Tab หรือ Space</p>
                 <p>C6600001 A</p>
                 <p>C6600002 B</p>
                 <p>C6600003 B+</p>
                 <ol>
-                  <li>คัดลอกข้อมูลจาก text area import</li>
-                  <li>คลิกที่ปุ่ม Import เพื่อบันทึกข้อมูล</li>
-                  <li>คลิกที่ไอคอนดึงผลการเรียนเพื่อบันทึกผลการเรียน</li>
+                  <li>วางข้อมูลในช่อง import หรืออัปโหลด CSV/TXT</li>
+                  <li>กดปุ่ม <strong>ดูตัวอย่าง</strong> เพื่อตรวจสอบข้อมูล</li>
+                  <li>เลือกหรือแก้ไข <strong>ผลการเรียน</strong> ในตารางตัวอย่าง</li>
+                  <li>กดปุ่ม <strong>import</strong> เพื่อบันทึกลงระบบ</li>
                 </ol>
               </div>
               <q-btn
@@ -291,27 +275,121 @@
               />
             </div>
 
-            <div class="learning-result-links">
-              <button type="button" @click="exportCourseLearningResultsCsv(selectedCourse)">
-                ดาวน์โหลดรายชื่อผู้เรียน
-              </button>
-              <button type="button" @click="exportCourseLearningResultsCsv(selectedCourse)">
-                ดาวน์โหลดแบบฟอร์มใบส่งเกรด สำหรับเจ้าประชุมกรรมการประจำ
-              </button>
+            <div v-if="detailPreviewRows.length > 0" class="learning-result-detail-preview">
+              <div class="learning-result-detail-preview__header">
+                <span class="text-positive">
+                  พร้อม Import
+                  {{ detailPreviewRows.filter((r) => r.matched && r.gradeItemId).length }} รายการ
+                </span>
+                <span
+                  v-if="detailPreviewRows.filter((r) => !r.matched).length > 0"
+                  class="text-negative"
+                >
+                  ไม่พบในระบบ {{ detailPreviewRows.filter((r) => !r.matched).length }} รายการ
+                </span>
+                <q-btn
+                  flat
+                  dense
+                  no-caps
+                  icon="close"
+                  label="ยกเลิก"
+                  color="grey-7"
+                  style="margin-left: auto; font-size: 0.76rem; font-weight: 800; padding: 4px 10px"
+                  @click="detailPreviewRows = []"
+                />
+              </div>
+              <div class="learning-result-table-scroll">
+                <table class="learning-result-entry-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 52px">ลำดับ</th>
+                      <th style="width: 120px">รหัสผู้เรียน</th>
+                      <th>ชื่อ-สกุล</th>
+                      <th style="width: 110px">คะแนน LMS</th>
+                      <th style="width: 100px">ค่าเดิม</th>
+                      <th style="width: 200px">ผลการเรียน</th>
+                      <th style="width: 80px">สถานะ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(row, index) in detailPreviewRows"
+                      :key="row.studentId + index"
+                      :class="{ 'detail-row--unmatched': !row.matched }"
+                    >
+                      <td class="text-center">{{ index + 1 }}</td>
+                      <td class="text-center">{{ row.studentId }}</td>
+                      <td>{{ row.learnerName ?? '-' }}</td>
+                      <td class="text-center">
+                        {{ row.lmsFinalscore !== null ? row.lmsFinalscore.toFixed(2) : '—' }}
+                      </td>
+                      <td class="text-center">
+                        <span v-if="row.currentGradeName" class="detail-grade-badge">
+                          {{ row.currentGradeName }}
+                        </span>
+                        <span v-else class="detail-grade-dash">—</span>
+                      </td>
+                      <td>
+                        <q-select
+                          v-if="row.matched"
+                          v-model="row.gradeItemId"
+                          :options="gradeItemOptions"
+                          option-value="id"
+                          option-label="name"
+                          emit-value
+                          map-options
+                          dense
+                          outlined
+                          placeholder="เลือกผลการเรียน"
+                          class="detail-grade-select"
+                        />
+                        <span v-else class="detail-unmatched-label">ไม่พบในระบบ</span>
+                      </td>
+                      <td class="text-center">
+                        <span
+                          v-if="row.matched && row.gradeItemId"
+                          class="detail-status detail-status--ready"
+                          >พร้อม</span
+                        >
+                        <span v-else-if="row.matched" class="detail-status detail-status--pending"
+                          >รอเกรด</span
+                        >
+                        <span v-else class="detail-status detail-status--error">ไม่พบ</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <div class="learning-result-lms-actions">
-              <span>ดึงคะแนนจากระบบ LMS</span>
-              <div>
-                <button type="button" @click="pullScoresFromLms">
-                  คลิกที่นี่ เพื่อดึงคะแนนจาก LMS
+            <div class="learning-result-table-actions">
+              <div class="learning-result-links">
+                <button type="button" @click="exportLearnerListCsv(selectedCourse)">
+                  ดาวน์โหลดรายชื่อผู้เรียน
                 </button>
-                <button type="button" @click="saveLearningResults">
-                  คลิกที่นี่ เพื่อแก้ไขผลการเรียน
+                <button type="button" @click="printGradeForm(selectedCourse)">
+                  ดาวน์โหลดแบบฟอร์มใบส่งเกรด สำหรับเจ้าประชุมกรรมการประจำ
                 </button>
-                <button type="button" @click="saveLearningResults">
-                  คลิกที่นี่ เพื่อบันทึกผลการเรียน
-                </button>
+              </div>
+              <div class="learning-result-sync-actions">
+                <q-btn
+                  outline
+                  color="primary"
+                  icon="cloud_download"
+                  label="ดึงคะแนนจาก LMS"
+                  no-caps
+                  :loading="syncingScores"
+                  @click="pullScoresFromLms"
+                />
+                <q-btn
+                  outline
+                  color="primary"
+                  icon="refresh"
+                  label="ดึงผลการเรียน"
+                  no-caps
+                  :loading="syncingResults"
+                  @click="saveLearningResults"
+                />
               </div>
             </div>
 
@@ -322,35 +400,10 @@
                     <th>ลำดับ</th>
                     <th>รหัสผู้เรียน</th>
                     <th>ชื่อ-สกุล</th>
-                    <th>
-                      <q-btn
-                        dense
-                        flat
-                        round
-                        color="primary"
-                        icon="file_download"
-                        class="learning-result-lms-icon"
-                        @click="pullScoresFromLms"
-                      >
-                        <q-tooltip>ดึงคะแนนจาก LMS</q-tooltip>
-                      </q-btn>
-                      <div>คะแนนจาก LMS</div>
-                    </th>
-                    <th>
-                      <q-btn
-                        dense
-                        flat
-                        round
-                        color="primary"
-                        icon="edit"
-                        class="learning-result-lms-icon"
-                        @click="saveLearningResults"
-                      >
-                        <q-tooltip>แก้ไขผลการเรียน</q-tooltip>
-                      </q-btn>
-                      <div>ผลการเรียน</div>
-                    </th>
-                    <th>วันที่อัปเดตข้อมูล</th>
+                    <th>คะแนนจาก LMS</th>
+                    <th>ผลการเรียน</th>
+                    <th>วันที่อัปเดต</th>
+                    <th>รายละเอียด</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -359,11 +412,21 @@
                     <td class="text-center">{{ learner.studentId }}</td>
                     <td>{{ learner.name }}</td>
                     <td class="text-center">{{ getLearnerLmsScore(learner) }}</td>
-                    <td class="text-center">{{ learner.resultStatus }}</td>
+                    <td class="text-center">{{ learner.importedGradeName ?? '' }}</td>
                     <td class="text-center">{{ getLearnerLmsUpdatedAt(learner) }}</td>
+                    <td class="text-center">
+                      <button
+                        type="button"
+                        class="learning-result-breakdown-btn"
+                        @click="openGradePanel(learner)"
+                      >
+                        <q-icon name="assignment" size="13px" />
+                        ดูรายละเอียด
+                      </button>
+                    </td>
                   </tr>
                   <tr v-if="learners.length === 0">
-                    <td colspan="6" class="learning-result-empty-cell">
+                    <td colspan="7" class="learning-result-empty-cell">
                       {{ emptyLearnerStateMessage }}
                     </td>
                   </tr>
@@ -550,7 +613,9 @@
               <q-td :props="props">
                 <q-select
                   v-model="props.row.resultStatus"
-                  :options="learningResultStatusOptions"
+                  :options="gradeItemOptions"
+                  option-value="name"
+                  option-label="name"
                   dense
                   outlined
                   emit-value
@@ -657,6 +722,82 @@
         </q-card-section>
       </q-card>
     </q-dialog>
+    <!-- ─── GRADE BREAKDOWN PANEL ─── -->
+    <Teleport to="body">
+      <div v-if="panelOpen" class="student-grade-panel-overlay" @click="closeGradePanel" />
+      <transition name="student-panel-slide">
+        <div v-if="panelOpen" class="student-grade-panel">
+          <div class="student-grade-panel__header">
+            <div>
+              <p class="student-grade-panel__eyebrow">Grade Breakdown</p>
+              <h3 class="student-grade-panel__title">{{ panelRow?.name }}</h3>
+              <span class="student-grade-panel__sub">{{ panelRow?.studentId }}</span>
+            </div>
+            <button class="student-grade-panel__close" aria-label="ปิด" @click="closeGradePanel">
+              <q-icon name="close" size="20px" />
+            </button>
+          </div>
+
+          <div class="student-grade-panel__total">
+            <span class="student-grade-panel__total-label">คะแนนรวม</span>
+            <span class="student-grade-panel__total-value">
+              {{ panelRow?.lmsFinalscore ?? '—' }}
+              <span v-if="panelRow?.lmsFinalscore !== null"> / 100</span>
+            </span>
+            <span v-if="panelRow?.importedGradeName" class="student-grade-panel__grade-badge">
+              {{ panelRow.importedGradeName }}
+            </span>
+          </div>
+
+          <div class="student-grade-panel__body">
+            <div v-if="!panelRow?.gradeItems.length" class="student-grade-panel__empty">
+              ยังไม่มีข้อมูลคะแนนรายงาน
+            </div>
+            <div
+              v-for="item in panelRow?.gradeItems"
+              :key="`${item.itemmodule}:${item.itemname}`"
+              class="student-grade-panel__item"
+            >
+              <div class="student-grade-panel__item-left">
+                <span
+                  class="student-grade-panel__module-badge"
+                  :class="`student-grade-panel__module-badge--${item.itemmodule ?? 'mod'}`"
+                >
+                  {{
+                    item.itemmodule === 'assign'
+                      ? 'งาน'
+                      : item.itemmodule === 'quiz'
+                        ? 'แบบทดสอบ'
+                        : (item.itemmodule ?? 'งาน')
+                  }}
+                </span>
+                <span class="student-grade-panel__item-name">{{ item.itemname ?? '—' }}</span>
+              </div>
+              <div class="student-grade-panel__item-right">
+                <span v-if="item.score !== null" class="student-grade-panel__score">
+                  {{ item.score }}
+                  <span class="student-grade-panel__score-max">/ {{ item.maxScore ?? 100 }}</span>
+                </span>
+                <span v-else class="student-grade-panel__no-score">—</span>
+                <a
+                  v-if="
+                    item.itemmodule === 'assign' &&
+                    moodleGraderUrl(item.cmid, panelRow?.moodleUserId ?? null)
+                  "
+                  :href="moodleGraderUrl(item.cmid, panelRow?.moodleUserId ?? null)!"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="student-grade-panel__grade-link"
+                >
+                  <q-icon name="rate_review" size="13px" />
+                  ตรวจงาน
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </Teleport>
   </q-page>
 </template>
 
@@ -668,7 +809,10 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { getCourseStructure } from 'src/data/course-structure';
 import { useInstructorBackend } from 'src/composables/use-instructor-backend';
+import type { GradeItemBreakdown } from 'src/composables/use-instructor-backend';
+import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
+import buuLogoUrl from 'src/assets/buu-logo-receipt.png';
 
 interface LearnerRow {
   id: string;
@@ -691,19 +835,17 @@ interface LearnerRow {
   finalScore: number;
   resultStatus: string;
   resultNote: string;
+  importedGradeName: string | null;
+  lmsFinalscore: number | null;
+  lmsSyncedAt: string | null;
+  moodleUserId: number | null;
+  gradeItems: GradeItemBreakdown[];
 }
 
 interface ImportedLearningResult {
   grade: string;
   score: number;
   status: string;
-}
-
-interface ImportPreviewRow extends ImportedLearningResult {
-  lineNumber: number;
-  studentId: string;
-  valid: boolean;
-  message: string;
 }
 
 const $q = useQuasar();
@@ -725,21 +867,29 @@ const resultImportText = ref('');
 const gradeImportFileInput = ref<HTMLInputElement | null>(null);
 const importedLearningResults = ref<Record<string, ImportedLearningResult>>({});
 const pendingLearningResults = ref<Record<string, ImportedLearningResult>>({});
+const gradeItemOptions = ref<Array<{ id: number; name: string }>>([]);
+const savingGrades = ref(false);
+const syncingScores = ref(false);
+const syncingResults = ref(false);
+const panelOpen = ref(false);
+const panelRow = ref<LearnerRow | null>(null);
+
+const MOODLE_BASE_URL =
+  (import.meta.env.VITE_MOODLE_URL as string | undefined) ?? 'http://localhost:8080';
+
+interface DetailPreviewRow {
+  studentId: string;
+  gradeText: string;
+  gradeItemId: number | null;
+  currentGradeName: string | null;
+  learnerName: string | null;
+  lmsFinalscore: number | null;
+  matched: boolean;
+}
+
+const detailPreviewRows = ref<DetailPreviewRow[]>([]);
 
 const statusOptions = ['ทั้งหมด', 'เรียนต่อเนื่อง', 'ปกติ', 'ควรติดตาม', 'เสี่ยงหลุด'];
-const learningResultStatusOptions = ['รอบันทึก', 'ผ่าน', 'ไม่ผ่าน', 'ต้องแก้ไข'];
-const gradeScoreMap: Record<string, number> = {
-  A: 95,
-  'B+': 85,
-  B: 80,
-  'C+': 75,
-  C: 70,
-  'D+': 65,
-  D: 60,
-  F: 0,
-  P: 100,
-};
-const passingGrades = new Set(['A', 'B+', 'B', 'C+', 'P']);
 
 watch(
   () => route.query.tab,
@@ -767,10 +917,51 @@ const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
 );
 
-onMounted(() => {
+function buildDetailPreview(): void {
+  if (!resultImportText.value.trim() || !selectedCourse.value) {
+    detailPreviewRows.value = [];
+    return;
+  }
+  const course = selectedCourse.value;
+  const courseKey = String(course.id).startsWith('db-') ? course.id : `db-${course.id}`;
+  const grades = instructorBackend.gradesByCourseId.value[courseKey] ?? [];
+  const lines = resultImportText.value
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  detailPreviewRows.value = lines.map((line) => {
+    const parts = line.split(/[,\t ]+/).filter(Boolean);
+    const studentId = parts[0] ?? '';
+    const gradeText = parts.slice(1).join(' ').trim();
+    const learner = learners.value.find((l) => l.studentId === studentId);
+    const gradeData = grades.find((g) => g.studentId === studentId);
+    const matchedItem = gradeItemOptions.value.find(
+      (opt) => opt.name.toLowerCase() === gradeText.toLowerCase(),
+    );
+    return {
+      studentId,
+      gradeText,
+      gradeItemId: matchedItem?.id ?? null,
+      currentGradeName: gradeData?.importedGradeName ?? null,
+      learnerName: learner?.name ?? null,
+      lmsFinalscore: gradeData?.lmsFinalscore != null ? Number(gradeData.lmsFinalscore) : null,
+      matched: !!learner,
+    };
+  });
+}
+
+onMounted(async () => {
   const email = authStore.user?.email;
   if (email) {
     void courseStore.fetchInstructorCourses(email);
+  }
+  try {
+    const { data } = await api.get<Array<{ id: number; name: string }>>(
+      '/api/instructor/grade-items',
+    );
+    gradeItemOptions.value = data;
+  } catch {
+    // grade items not critical
   }
 });
 
@@ -810,17 +1001,19 @@ function formatPaymentStatus(value: string | null | undefined, isFree: boolean):
   return value || '-';
 }
 
-function getResultStatus(status: 'passed' | 'failed' | 'pending' | undefined): string {
-  if (status === 'passed') return 'ผ่าน';
-  if (status === 'failed') return 'ไม่ผ่าน';
-  return '';
+function getResultStatusFromGrade(importedGradeName: string | null | undefined): string {
+  if (!importedGradeName) return 'ไม่ผ่าน';
+  const name = importedGradeName.trim().toLowerCase();
+  if (name === 'f' || name === 'ไม่ผ่าน') return 'ไม่ผ่าน';
+  return 'ผ่าน';
 }
 
 function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
   if (!course) return [];
 
-  const backendLearners = instructorBackend.learnersByCourseId.value[course.id] ?? [];
-  const backendGrades = instructorBackend.gradesByCourseId.value[course.id] ?? [];
+  const courseKey = String(course.id).startsWith('db-') ? course.id : `db-${course.id}`;
+  const backendLearners = instructorBackend.learnersByCourseId.value[courseKey] ?? [];
+  const backendGrades = instructorBackend.gradesByCourseId.value[courseKey] ?? [];
   const totalLessons =
     getCourseStructure(course.id).reduce((sum, module) => sum + module.lessons.length, 0) || 0;
 
@@ -831,7 +1024,8 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
     );
     const importedResult = importedLearningResults.value[learner.studentId];
     const score = importedResult?.score ?? grade?.score ?? 0;
-    const resultStatus = importedResult?.status ?? getResultStatus(grade?.status);
+    const importedGradeName = grade?.importedGradeName ?? null;
+    const resultStatus = getResultStatusFromGrade(importedGradeName);
     const progress = grade?.status === 'passed' ? 100 : 0;
     const status = getLearnerStatus(progress);
 
@@ -858,6 +1052,11 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
       finalScore: score,
       resultStatus,
       resultNote: importedResult ? `นำเข้าเกรด ${importedResult.grade}` : (grade?.grade ?? ''),
+      importedGradeName,
+      lmsFinalscore: grade?.lmsFinalscore != null ? Number(grade.lmsFinalscore) : null,
+      lmsSyncedAt: grade?.lmsSyncedAt ? formatBackendDate(grade.lmsSyncedAt) : null,
+      moodleUserId: grade?.moodleUserId ?? null,
+      gradeItems: grade?.gradeItems ?? [],
     };
   });
 }
@@ -895,70 +1094,6 @@ const emptyLearnerStateMessage = computed(() => {
 
   return 'รายวิชานี้ยังไม่มีผู้ลงทะเบียนในฐานข้อมูล';
 });
-
-const resultImportPreviewRows = computed<ImportPreviewRow[]>(() => {
-  const learnerIds = new Set(learners.value.map((learner) => learner.studentId));
-
-  return resultImportText.value
-    .split(/\r?\n/)
-    .map((rawLine, index) => ({ rawLine: rawLine.trim(), lineNumber: index + 1 }))
-    .filter((line) => line.rawLine.length > 0)
-    .map(({ rawLine, lineNumber }) => {
-      const [studentId = '', gradeValue = ''] = rawLine.split(/[,\t ]+/).filter(Boolean);
-      const grade = gradeValue.toUpperCase();
-      const score = gradeScoreMap[grade] ?? Number.NaN;
-      const importedResult = {
-        grade,
-        score: Number.isFinite(score) ? score : 0,
-        status: passingGrades.has(grade) ? 'ผ่าน' : 'ไม่ผ่าน',
-      };
-
-      if (!studentId || !grade) {
-        return {
-          ...importedResult,
-          lineNumber,
-          studentId,
-          valid: false,
-          message: 'ข้อมูลไม่ครบ',
-        };
-      }
-
-      if (!learnerIds.has(studentId)) {
-        return {
-          ...importedResult,
-          lineNumber,
-          studentId,
-          valid: false,
-          message: 'ไม่พบรหัสผู้เรียนในรายวิชานี้',
-        };
-      }
-
-      if (!Number.isFinite(score)) {
-        return {
-          ...importedResult,
-          lineNumber,
-          studentId,
-          valid: false,
-          message: 'รูปแบบเกรดไม่ถูกต้อง',
-        };
-      }
-
-      return {
-        ...importedResult,
-        lineNumber,
-        studentId,
-        valid: true,
-        message: 'พร้อมนำเข้า',
-      };
-    });
-});
-
-const validImportPreviewRows = computed(() =>
-  resultImportPreviewRows.value.filter((row) => row.valid),
-);
-const invalidImportPreviewRows = computed(() =>
-  resultImportPreviewRows.value.filter((row) => !row.valid),
-);
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('th-TH', {
@@ -1052,47 +1187,86 @@ function openLearnerDetail(_event: Event | null, learner: LearnerRow): void {
   learnerDetailDialogOpen.value = true;
 }
 
-function saveLearningResults(): void {
-  if (Object.keys(pendingLearningResults.value).length > 0) {
-    importedLearningResults.value = {
-      ...importedLearningResults.value,
-      ...pendingLearningResults.value,
-    };
-    pendingLearningResults.value = {};
-  }
-
-  $q.notify({
-    type: 'positive',
-    icon: 'save',
-    message: `บันทึกผลการเรียน ${filteredLearners.value.length.toLocaleString('th-TH')} รายการแล้ว`,
-  });
+function openGradePanel(learner: LearnerRow): void {
+  panelRow.value = learner;
+  panelOpen.value = true;
 }
 
-function importLearningResults(): void {
-  if (validImportPreviewRows.value.length === 0) {
+function closeGradePanel(): void {
+  panelOpen.value = false;
+}
+
+function moodleGraderUrl(cmid: number | null, moodleUserId: number | null): string | null {
+  if (!cmid || !moodleUserId) return null;
+  return `${MOODLE_BASE_URL}/mod/assign/view.php?id=${cmid}&action=grader&userid=${moodleUserId}`;
+}
+
+async function saveLearningResults(): Promise<void> {
+  const course = selectedCourse.value;
+  const email = authStore.user?.email;
+  if (!course || !email) return;
+  syncingResults.value = true;
+  try {
+    await instructorBackend.fetchGrades(email, course.id);
+    $q.notify({
+      type: 'positive',
+      icon: 'refresh',
+      message: 'อัปเดตผลการเรียนแล้ว',
+    });
+  } finally {
+    syncingResults.value = false;
+  }
+}
+
+async function importLearningResults(): Promise<void> {
+  const readyRows = detailPreviewRows.value.filter(
+    (row) => row.matched && row.gradeItemId !== null,
+  );
+
+  if (readyRows.length === 0) {
     $q.notify({
       type: 'warning',
       icon: 'error',
-      message: 'ยังไม่มีข้อมูลที่นำเข้าได้ กรุณาตรวจสอบรหัสผู้เรียนและเกรด',
+      message: 'ยังไม่มีข้อมูลที่นำเข้าได้ กรุณาตรวจสอบรหัสผู้เรียนและเลือกผลการเรียน',
     });
     return;
   }
 
-  const nextResults = { ...pendingLearningResults.value };
-  validImportPreviewRows.value.forEach((row) => {
-    nextResults[row.studentId] = {
-      grade: row.grade,
-      score: row.score,
-      status: row.status,
-    };
-  });
-  pendingLearningResults.value = nextResults;
+  const course = selectedCourse.value;
+  const email = authStore.user?.email;
+  if (!course || !email) return;
 
-  $q.notify({
-    type: 'positive',
-    icon: 'upload_file',
-    message: `ตรวจข้อมูลแล้ว ${validImportPreviewRows.value.length.toLocaleString('th-TH')} รายการ รอกดบันทึกผลการเรียน`,
-  });
+  const items = readyRows.map((row) => ({
+    userCode: row.studentId,
+    gradeText: row.gradeText,
+    gradeItemId: row.gradeItemId as number,
+  }));
+
+  savingGrades.value = true;
+  try {
+    const result = await instructorBackend.importGrades(email, course.id, items);
+    if (result) {
+      resultImportText.value = '';
+      detailPreviewRows.value = [];
+      if (result.saved > 0) {
+        $q.notify({
+          type: 'positive',
+          icon: 'upload_file',
+          message: `บันทึกผลการเรียน ${result.saved.toLocaleString('th-TH')} รายการแล้ว`,
+        });
+      }
+      if (result.failed > 0) {
+        $q.notify({
+          type: 'warning',
+          message: `ไม่สำเร็จ ${result.failed} รายการ: ${result.errors.map((e) => e.userCode).join(', ')}`,
+          timeout: 6000,
+        });
+      }
+      await instructorBackend.fetchGrades(email, course.id);
+    }
+  } finally {
+    savingGrades.value = false;
+  }
 }
 
 function triggerGradeImportFile(): void {
@@ -1126,27 +1300,29 @@ function downloadGradeImportTemplate(): void {
   URL.revokeObjectURL(url);
 }
 
-function pullScoresFromLms(): void {
-  const nextResults = { ...pendingLearningResults.value };
-  learners.value.forEach((learner) => {
-    const score = (Number(learner.studentId.replace(/\D/g, '').slice(-2)) * 7) % 101;
-    const grade = score >= 80 ? 'A' : score >= 60 ? 'B' : 'F';
-    nextResults[learner.studentId] = {
-      grade,
-      score,
-      status: passingGrades.has(grade) ? 'ผ่าน' : 'ไม่ผ่าน',
-    };
-  });
-  pendingLearningResults.value = nextResults;
+async function pullScoresFromLms(): Promise<void> {
+  const course = selectedCourse.value;
+  const email = authStore.user?.email;
+  if (!course || !email) return;
 
-  $q.notify({
-    type: 'info',
-    icon: 'cloud_download',
-    message: 'ดึงคะแนนจากระบบ LMS แล้ว รอกดบันทึกผลการเรียน',
-  });
+  syncingScores.value = true;
+  try {
+    const result = await instructorBackend.syncScores(email, course.id);
+    if (result) {
+      $q.notify({
+        type: 'info',
+        icon: 'cloud_download',
+        message: `ดึงคะแนนจาก LMS แล้ว ${result.synced} รายการ`,
+      });
+      await instructorBackend.fetchGrades(email, course.id);
+    }
+  } finally {
+    syncingScores.value = false;
+  }
 }
 
 function getLearnerLmsScore(learner: LearnerRow): string {
+  if (learner.lmsFinalscore !== null) return Number(learner.lmsFinalscore).toFixed(2);
   const pendingResult = pendingLearningResults.value[learner.studentId];
   const savedResult = importedLearningResults.value[learner.studentId];
   const score = pendingResult?.score ?? savedResult?.score;
@@ -1154,37 +1330,149 @@ function getLearnerLmsScore(learner: LearnerRow): string {
 }
 
 function getLearnerLmsUpdatedAt(learner: LearnerRow): string {
-  const numericPart = Number(learner.studentId.replace(/\D/g, '').slice(-2)) || 0;
-  return `${String(19 + (numericPart % 5)).padStart(2, '0')}/05/2568`;
+  return learner.lmsSyncedAt ?? '';
 }
 
-function exportCourseLearningResultsCsv(course: Course): void {
-  const rows = getCourseResultLearners(course).map((learner, index) => [
-    index + 1,
-    course.code,
-    learner.studentId,
-    learner.name,
-    learner.finalScore,
-    learner.resultStatus,
-    learner.resultNote,
-  ]);
+function exportLearnerListCsv(course: Course | undefined): void {
+  if (!course) return;
+  const learnerList = getCourseResultLearners(course);
   const headers = [
     'ลำดับ',
-    'รหัสรายวิชา',
     'รหัสผู้เรียน',
     'ชื่อ-นามสกุล',
-    'คะแนน',
-    'ผลการเรียน',
-    'หมายเหตุ',
+    'อีเมล',
+    'สถานะการชำระเงิน',
+    'วันที่ลงทะเบียน',
   ];
+  const rows = learnerList.map((learner, index) => [
+    index + 1,
+    learner.studentId,
+    learner.name,
+    learner.email,
+    learner.paymentStatus,
+    learner.enrolledAt,
+  ]);
   const csvRows = [headers, ...rows].map((row) => row.map(escapeCsvCell).join(',')).join('\r\n');
   const blob = new Blob([`\uFEFF${csvRows}`], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${sanitizeFileName(`${getLearningResultDownloadCode(course)}-${course.code}`)}.csv`;
+  link.download = `${sanitizeFileName(`รายชื่อผู้เรียน-${course.code}`)}.csv`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+async function printGradeForm(course: Course | undefined): Promise<void> {
+  if (!course) return;
+  const email = authStore.user?.email ?? '';
+  let instructorName = '';
+  try {
+    const { data } = await api.get<{
+      prefix: string | null;
+      firstNameTh: string | null;
+      lastNameTh: string | null;
+    }>(`/api/instructor/profile?email=${encodeURIComponent(email)}`);
+    instructorName =
+      `${data.prefix ?? ''}${data.firstNameTh ?? ''} ${data.lastNameTh ?? ''}`.trim();
+  } catch {
+    instructorName = authStore.user?.email ?? '';
+  }
+  const learnerList = getCourseResultLearners(course);
+  const printDate = new Date().toLocaleString('th-TH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const tableRows = learnerList
+    .map(
+      (learner, index) => `
+    <tr>
+      <td>${index + 1}</td>
+      <td>${learner.studentId}</td>
+      <td>${learner.name}</td>
+      <td>${learner.lmsFinalscore !== null ? Number(learner.lmsFinalscore).toFixed(2) : ''}</td>
+      <td>${learner.importedGradeName ?? ''}</td>
+    </tr>`,
+    )
+    .join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<title>ใบส่งเกรด ${course.code}</title>
+<style>
+  body { font-family: 'Sarabun', sans-serif; font-size: 14px; margin: 40px; color: #000; }
+  .header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .header img { width: 64px; height: 64px; object-fit: contain; }
+  .header-title h1 { font-size: 18px; font-weight: bold; margin: 0; }
+  .header-title p { margin: 0; font-size: 13px; }
+  .meta { margin-bottom: 16px; line-height: 2; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  th, td { border: 1px solid #000; padding: 6px 10px; text-align: left; }
+  th { background: #f0f0f0; text-align: center; }
+  td:first-child, td:nth-child(4), td:nth-child(5) { text-align: center; }
+  .footer { margin-top: 60px; display: flex; justify-content: space-between; }
+  .sig { text-align: center; }
+  .sig-line { border-top: 1px solid #000; width: 200px; margin: 0 auto 4px; }
+  .print-date { margin-top: 8px; font-size: 12px; text-align: right; }
+  @media print { body { margin: 20px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <img src="${window.location.origin}${buuLogoUrl}" alt="BUU Logo"/>
+  <div class="header-title">
+    <h1>มหาวิทยาลัยบูรพา</h1>
+    <p>ใบส่งเกรด ระบบคลังหน่วยกิต</p>
+  </div>
+</div>
+<div class="meta">
+  <div><strong>รายวิชา</strong> ${course.code} : ${course.title}</div>
+  <div><strong>ผู้สอน</strong> อาจารย์ ${instructorName || '-'}</div>
+  <div><strong>การเรียนการสอน</strong> ${course.registrationStart ?? ''} - ${course.registrationEnd ?? ''}</div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>ลำดับ</th>
+      <th>รหัสผู้เรียน</th>
+      <th>ชื่อ-สกุล</th>
+      <th>คะแนน</th>
+      <th>ผลการเรียน</th>
+    </tr>
+  </thead>
+  <tbody>${tableRows}</tbody>
+</table>
+<div class="footer">
+  <div class="sig">
+    <div class="sig-line"></div>
+    <div>(${instructorName || '................................'})</div>
+    <div>__/__/__</div>
+  </div>
+  <div class="sig">
+    <div class="sig-line"></div>
+    <div>คณบดี</div>
+    <div>__/__/__</div>
+  </div>
+</div>
+<div class="print-date">วันที่พิมพ์ : ${printDate} Page 1/1</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  win.print();
+}
+
+function exportCourseLearningResultsCsv(course: Course): void {
+  exportLearnerListCsv(course);
 }
 
 function sanitizeFileName(value: string): string {
@@ -1778,7 +2066,8 @@ function exportLearnersPdf(): void {
 }
 
 .learning-result-import-input :deep(textarea) {
-  min-height: 180px;
+  min-height: 200px;
+  max-height: 480px;
   resize: vertical;
 }
 
@@ -1884,6 +2173,326 @@ function exportLearnersPdf(): void {
       text-decoration: underline;
     }
   }
+}
+
+.learning-result-breakdown-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid #dce4ee;
+  border-radius: 6px;
+  color: #475569;
+  background: #fff;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background: #fffaf1;
+    color: $primary;
+    border-color: $primary;
+  }
+}
+
+// ── Grade Breakdown Panel ──────────────────────────────────────
+.student-grade-panel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2999;
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.student-grade-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  width: min(440px, 100vw);
+  height: 100dvh;
+  overflow-y: auto;
+  background: #fff;
+  box-shadow: -8px 0 32px rgba(15, 23, 42, 0.12);
+}
+
+.student-panel-slide-enter-active,
+.student-panel-slide-leave-active {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.student-panel-slide-enter-from,
+.student-panel-slide-leave-to {
+  transform: translateX(100%);
+}
+
+.student-grade-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+.student-grade-panel__eyebrow {
+  margin: 0 0 4px;
+  color: $primary;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.student-grade-panel__title {
+  margin: 0 0 2px;
+  color: #09213f;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.student-grade-panel__sub {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.student-grade-panel__close {
+  flex-shrink: 0;
+  padding: 4px;
+  border: 0;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+
+  &:hover {
+    color: #09213f;
+  }
+}
+
+.student-grade-panel__total {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.06);
+  background: #f8fafc;
+}
+
+.student-grade-panel__total-label {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.student-grade-panel__total-value {
+  color: #09213f;
+  font-size: 1.3rem;
+  font-weight: 900;
+
+  span {
+    color: #94a3b8;
+    font-size: 0.85rem;
+  }
+}
+
+.student-grade-panel__grade-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: $primary;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.student-grade-panel__body {
+  display: grid;
+  gap: 0;
+  padding: 8px 0;
+  flex: 1;
+}
+
+.student-grade-panel__empty {
+  padding: 32px 20px;
+  color: #94a3b8;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.student-grade-panel__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(17, 24, 39, 0.05);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.student-grade-panel__item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.student-grade-panel__module-badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 900;
+
+  &--assign {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  &--quiz {
+    background: #f3e8ff;
+    color: #7e22ce;
+  }
+}
+
+.student-grade-panel__item-name {
+  overflow: hidden;
+  color: #1e293b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-grade-panel__item-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.student-grade-panel__score {
+  color: #09213f;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.student-grade-panel__score-max {
+  color: #94a3b8;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.student-grade-panel__no-score {
+  color: #cbd5e1;
+  font-size: 0.84rem;
+}
+
+.student-grade-panel__grade-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #09213f;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: $primary;
+  }
+}
+
+.learning-result-detail-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.learning-result-detail-preview__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.detail-grade-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #d97706;
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.detail-grade-dash {
+  color: #94a3b8;
+}
+
+.detail-grade-select {
+  min-width: 140px;
+}
+
+.detail-unmatched-label {
+  color: #dc2626;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.detail-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.detail-status--ready {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.detail-status--pending {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.detail-status--error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.detail-row--unmatched {
+  opacity: 0.65;
+}
+
+.learning-result-table-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.learning-result-sync-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .learning-result-lms-actions {

@@ -112,7 +112,10 @@
                       size="sm"
                       class="q-px-md"
                       @click="
-                        router.push({ path: '/instructor/grading', query: { courseId: course.id } })
+                        router.push({
+                          path: '/instructor/students',
+                          query: { courseId: course.id, tab: 'results' },
+                        })
                       "
                     />
                     <q-btn
