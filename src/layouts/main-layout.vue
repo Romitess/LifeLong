@@ -738,6 +738,12 @@ const navItems = computed<NavItem[]>(() => {
         icon: 'receipt_long',
         to: '/finance/receipt-summary',
       },
+      {
+        name: 'finance-daily-report',
+        label: t('finance.menu.dailyReport'),
+        icon: 'account_balance_wallet',
+        to: '/finance/daily-report',
+      },
     ];
   }
 

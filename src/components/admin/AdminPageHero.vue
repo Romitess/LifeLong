@@ -93,13 +93,14 @@ const hasAside = computed(() => Boolean(slots.aside));
   font-size: clamp(1.8rem, 2.6vw, 2.8rem);
   line-height: 1.05;
   letter-spacing: -0.03em;
+  font-weight: 900;
 }
 
 .admin-page-hero p {
   max-width: 720px;
   margin: 0;
   color: rgba(255, 255, 255, 0.82);
-  font-size: 1rem;
+  font-size: 1.1rem;
   line-height: 1.65;
 }
 

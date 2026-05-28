@@ -232,6 +232,7 @@ export default {
       paymentImport: 'นำเข้าชำระเงิน',
       applicantSearch: 'ค้นหาข้อมูลผู้สมัคร',
       receiptSummary: 'รายงานสรุปการรับเงิน',
+      dailyReport: 'รายงานการรับเงินประจำวัน',
     },
     dashboard: {
       console: 'Finance & Billing Console',

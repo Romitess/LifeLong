@@ -100,7 +100,7 @@ const hasAside = computed(() => Boolean(slots.aside));
   max-width: 720px;
   margin: 0;
   color: rgba(255, 255, 255, 0.82);
-  font-size: 1rem;
+  font-size: 1.1rem;
   line-height: 1.65;
 }
 

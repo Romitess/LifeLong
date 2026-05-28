@@ -45,8 +45,8 @@
               {{ $t('finance.dashboard.title') }}
             </h1>
             <p
-              class="text-h6 text-white q-mt-md text-weight-regular"
-              style="opacity: 0.85; max-width: 540px; line-height: 1.5"
+              class="finance-hero-subtitle text-white q-mt-md text-weight-regular"
+              style="opacity: 0.85; max-width: 540px"
             >
               {{ $t('finance.dashboard.subtitle') }}
             </p>
@@ -772,6 +772,11 @@ const recentActivities = computed(() => {
     transform: scale(0.95);
     opacity: 1;
   }
+}
+
+.finance-hero-subtitle {
+  font-size: 1.1rem;
+  line-height: 1.6;
 }
 
 /* Buttons */

@@ -87,6 +87,7 @@
                   outlined
                   dense
                   class="bg-white"
+                  :disable="!isCentralFinanceRole"
                 />
               </div>
             </div>
@@ -276,12 +277,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watchEffect } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
+import { useAuthStore } from 'stores/auth-store';
 import type { Transaction } from 'src/stores/central-finance-store';
 import type { QTableColumn } from 'quasar';
 import jsPDF from 'jspdf';
@@ -291,9 +293,14 @@ import * as XLSX from 'xlsx';
 
 const $q = useQuasar();
 const { t } = useI18n();
+const authStore = useAuthStore();
 const financeStore = useCentralFinanceStore();
 const search = ref('');
 
+const isCentralFinanceRole = computed(() => authStore.user?.role === 'central_finance');
+const currentUserDepartment = computed(
+  () => authStore.user?.facName ?? authStore.user?.faculty ?? '',
+);
 const hasSearched = ref(false);
 
 const pagination = ref({
@@ -307,15 +314,21 @@ const pagination = ref({
 const filters = ref({
   receiptDateStart: '27/05/2569',
   receiptDateEnd: '30/05/2569',
-  department: 'สำนักคอมพิวเตอร์',
+  department: isCentralFinanceRole.value ? 'สำนักคอมพิวเตอร์' : currentUserDepartment.value,
   courseName: '',
+});
+
+watchEffect(() => {
+  if (!isCentralFinanceRole.value && currentUserDepartment.value) {
+    filters.value.department = currentUserDepartment.value;
+  }
 });
 
 // เก็บสถานะฟิลเตอร์หลังจากกดค้นหาเพื่อให้แสดงใน Title ของตารางได้อย่างถูกต้อง
 const activeFilters = ref({
   receiptDateStart: '27/05/2569',
   receiptDateEnd: '30/05/2569',
-  department: 'สำนักคอมพิวเตอร์',
+  department: filters.value.department,
   courseName: '',
 });
 
@@ -450,13 +463,15 @@ function onSearch(): void {
 function clearFilters(): void {
   filters.value.receiptDateStart = '';
   filters.value.receiptDateEnd = '';
-  filters.value.department = 'สำนักคอมพิวเตอร์';
+  filters.value.department = isCentralFinanceRole.value
+    ? 'สำนักคอมพิวเตอร์'
+    : currentUserDepartment.value;
   filters.value.courseName = '';
 
   activeFilters.value = {
     receiptDateStart: '',
     receiptDateEnd: '',
-    department: '',
+    department: filters.value.department,
     courseName: '',
   };
 

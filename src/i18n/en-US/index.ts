@@ -231,6 +231,7 @@ export default {
       paymentImport: 'Payment Import',
       applicantSearch: 'Applicant Search',
       receiptSummary: 'Receipt Summary',
+      dailyReport: 'Daily Report',
     },
     dashboard: {
       console: 'Finance & Billing Console',
