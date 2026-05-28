@@ -776,113 +776,82 @@
             <q-tab-panel name="content">
               <div class="panel-heading q-mb-md">
                 <div>
-                  <h3>โครงสร้างบทเรียน</h3>
-                  <p>จัดลำดับบทเรียน เพิ่มสื่อ วิดีโอ เอกสาร แบบทดสอบ และกำหนดการเผยแพร่</p>
+                  <h3>กิจกรรมใน Moodle</h3>
+                  <p>กิจกรรมและสื่อการเรียนรู้จากระบบ Moodle LMS</p>
                 </div>
                 <q-btn
                   unelevated
-                  color="primary"
-                  icon="add"
-                  label="เพิ่มบทเรียน"
+                  color="positive"
+                  icon="school"
+                  label="จัดการใน Moodle"
                   no-caps
-                  @click="openQuickDialog('เพิ่มบทเรียน')"
+                  :disable="!selectedCourse?.moodleId"
+                  :loading="moodleOpenLoading === selectedCourse?.id"
+                  @click="selectedCourse && openInMoodle(selectedCourse)"
                 />
               </div>
 
-              <div class="module-list">
-                <div
-                  v-for="(module, index) in selectedStructure"
-                  :key="`${module.title}-${index}`"
-                  class="module-row"
-                >
-                  <div class="module-row__header">
-                    <q-avatar
-                      rounded
-                      :color="module.color || 'primary'"
-                      text-color="white"
-                      :icon="module.icon || 'folder'"
-                    />
-                    <div>
-                      <h4>{{ module.title }}</h4>
-                      <span>{{ module.lessons.length }} รายการ</span>
-                    </div>
-                    <q-space />
-                    <q-btn flat round dense icon="drag_indicator" color="grey-6">
-                      <q-tooltip>ลากเพื่อจัดลำดับ</q-tooltip>
-                    </q-btn>
-                    <q-btn
-                      flat
-                      round
-                      dense
-                      icon="edit"
-                      color="primary"
-                      @click="openQuickDialog(`แก้ไข ${module.title}`)"
-                    />
-                  </div>
-                  <div class="lesson-list">
-                    <div v-for="lesson in module.lessons" :key="lesson.title" class="lesson-row">
-                      <q-icon
-                        :name="lessonIcon(lesson.type)"
-                        :color="lessonColor(lesson.type)"
-                        size="20px"
-                      />
-                      <span>{{ lesson.title }}</span>
-                      <q-space />
-                      <q-badge outline color="grey-7" :label="lesson.duration" />
-                      <q-btn
-                        flat
-                        round
-                        dense
-                        icon="more_vert"
-                        color="grey-6"
-                        @click="openQuickDialog(`จัดการ ${lesson.title}`)"
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div v-if="isMoodleLoading" class="flex flex-center q-py-xl">
+                <q-spinner color="primary" size="48px" />
               </div>
 
-              <!-- Moodle Activities -->
-              <div class="q-mt-lg">
-                <div class="panel-heading q-mb-md">
-                  <div>
-                    <h4>กิจกรรม Moodle</h4>
-                    <p>กิจกรรมที่เชื่อมต่อกับระบบ Moodle</p>
-                  </div>
-                </div>
-
-                <div v-if="isMoodleLoading" class="flex flex-center q-py-lg">
-                  <q-spinner color="primary" size="40px" />
-                </div>
-
-                <template v-else-if="moodleContents.length > 0">
-                  <div class="lesson-list">
-                    <div v-for="mod in moodleContents" :key="mod.name" class="lesson-row">
-                      <q-icon
-                        :name="mod.modname === 'quiz' ? 'quiz' : 'assignment'"
-                        :color="mod.modname === 'quiz' ? 'orange-7' : 'teal-7'"
-                        size="20px"
-                      />
-                      <a
-                        v-if="mod.url"
-                        :href="mod.url"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="moodle-activity-link"
-                        >{{ mod.name }}</a
-                      >
-                      <span v-else>{{ mod.name }}</span>
-                      <q-space />
-                      <q-badge
-                        outline
-                        :color="mod.modname === 'quiz' ? 'orange-7' : 'teal-7'"
-                        :label="mod.modname === 'quiz' ? 'แบบทดสอบ' : 'งาน'"
-                      />
+              <template v-else-if="selectedCourse?.moodleId">
+                <template v-if="moodleSections.length > 0">
+                  <div
+                    v-for="section in moodleSections"
+                    :key="section.id"
+                    class="module-row q-mb-md"
+                  >
+                    <div class="module-row__header">
+                      <q-avatar rounded color="primary" text-color="white" icon="folder" />
+                      <div>
+                        <h4>{{ section.name }}</h4>
+                        <span>{{ section.modules.length }} รายการ</span>
+                      </div>
+                    </div>
+                    <div class="lesson-list">
+                      <div v-for="mod in section.modules" :key="mod.id" class="lesson-row">
+                        <q-icon
+                          :name="moodleModIcon(mod.modname)"
+                          :color="moodleModColor(mod.modname)"
+                          size="20px"
+                        />
+                        <a
+                          v-if="mod.url"
+                          :href="mod.url"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="moodle-activity-link"
+                          >{{ mod.name }}</a
+                        >
+                        <span v-else>{{ mod.name }}</span>
+                        <q-space />
+                        <q-badge
+                          outline
+                          :color="moodleModColor(mod.modname)"
+                          :label="moodleModLabel(mod.modname)"
+                        />
+                      </div>
                     </div>
                   </div>
                 </template>
+                <div v-else class="empty-tab-state text-center q-pa-xl">
+                  <q-icon name="school" size="56px" color="grey-4" />
+                  <div class="text-h6 text-grey-6 q-mt-md">ยังไม่มีกิจกรรมใน Moodle</div>
+                  <div class="text-body2 text-grey-5 q-mt-sm">
+                    เพิ่มกิจกรรมในระบบ Moodle เพื่อให้ปรากฏที่นี่
+                  </div>
+                </div>
+              </template>
 
-                <div v-else class="text-grey-6 text-center q-py-md">ไม่มีกิจกรรม</div>
+              <div v-else class="empty-tab-state text-center q-pa-xl">
+                <q-icon name="link_off" size="56px" color="grey-4" />
+                <div class="text-h6 text-grey-6 q-mt-md">
+                  รายวิชานี้ยังไม่ได้เชื่อมต่อกับ Moodle
+                </div>
+                <div class="text-body2 text-grey-5 q-mt-sm">
+                  ติดต่อผู้ดูแลระบบเพื่อเชื่อมรายวิชากับ Moodle
+                </div>
               </div>
             </q-tab-panel>
 
@@ -1377,7 +1346,7 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
-import { getCourseStructure, type Lesson } from 'src/data/course-structure';
+import { getCourseStructure } from 'src/data/course-structure';
 import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import type { Course, DeliveryMode } from 'src/types/course';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
@@ -1445,9 +1414,16 @@ interface CourseSettingsForm {
 }
 
 interface MoodleModule {
+  id: number;
   modname: string;
   name: string;
   url?: string;
+}
+
+interface MoodleSection {
+  id: number;
+  name: string;
+  modules: MoodleModule[];
 }
 
 const $q = useQuasar();
@@ -1601,17 +1577,19 @@ watch(
 );
 const selectedStructure = computed(() => getCourseStructure(selectedCourseId.value));
 
-const moodleContents = ref<MoodleModule[]>([]);
+const moodleSections = ref<MoodleSection[]>([]);
 const isMoodleLoading = ref(false);
 
-async function fetchMoodleContents(shortname: string): Promise<void> {
+async function fetchMoodleContents(moodleId: number | null | undefined): Promise<void> {
+  if (!moodleId) {
+    moodleSections.value = [];
+    return;
+  }
   isMoodleLoading.value = true;
-  moodleContents.value = [];
+  moodleSections.value = [];
   try {
-    const { data } = await api.get<MoodleModule[]>(
-      `/api/moodle/activities?shortname=${encodeURIComponent(shortname)}`,
-    );
-    moodleContents.value = data;
+    const { data } = await api.get<MoodleSection[]>(`/api/moodle/moodle-contents/${moodleId}`);
+    moodleSections.value = data.filter((s) => s.modules && s.modules.length > 0);
   } catch {
     // silent fail — Moodle unavailable
   } finally {
@@ -1777,21 +1755,26 @@ function formatPaymentStatus(value: string | null | undefined, isFree: boolean):
 }
 
 function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
-  if (!course) {
-    return [];
-  }
+  if (!course) return [];
 
   const backendLearners = instructorBackend.learnersByCourseId.value[course.id] ?? [];
   const backendGrades = instructorBackend.gradesByCourseId.value[course.id] ?? [];
-  const totalLessons =
-    getCourseStructure(course.id).reduce((sum, module) => sum + module.lessons.length, 0) || 0;
 
   return backendLearners.map((learner) => {
     const grade = backendGrades.find(
       (candidate) =>
         candidate.learnerUserId === learner.userId || candidate.studentId === learner.studentId,
     );
-    const progress = grade?.status === 'passed' ? 100 : 0;
+
+    const gradeItems = grade?.gradeItems ?? [];
+    const totalLessons = gradeItems.length;
+    const completedLessons = gradeItems.filter((item) => item.score !== null).length;
+    const progress =
+      totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : grade?.status === 'passed'
+          ? 100
+          : 0;
     const status = getLearnerStatus(progress);
 
     return {
@@ -1812,7 +1795,7 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
       ...status,
       enrolledAt: formatBackendDate(learner.enrolledAt),
       paymentStatus: formatPaymentStatus(learner.paymentStatus, course.isFree),
-      completedLessons: progress === 100 ? totalLessons : 0,
+      completedLessons,
       totalLessons,
     };
   });
@@ -1995,7 +1978,7 @@ watch(
       learnerPricing[1].amount = course.isFree ? 0 : Math.max(0, Math.round(course.price * 0.75));
     if (learnerPricing[2]) learnerPricing[2].amount = course.price;
     activeWorkspaceTab.value = 'overview';
-    void fetchMoodleContents(course.code);
+    void fetchMoodleContents(course.moodleId);
   },
   { immediate: true },
 );
@@ -2083,16 +2066,39 @@ function getCourseHealth(courseId: string) {
   };
 }
 
-function lessonIcon(type: Lesson['type']): string {
-  if (type === 'video') return 'play_circle';
-  if (type === 'quiz') return 'quiz';
-  return 'article';
+function moodleModIcon(modname: string): string {
+  if (modname === 'quiz') return 'quiz';
+  if (modname === 'assign') return 'assignment';
+  if (modname === 'resource') return 'description';
+  if (modname === 'url') return 'link';
+  if (modname === 'page') return 'article';
+  if (modname === 'folder') return 'folder';
+  if (modname === 'lesson') return 'menu_book';
+  if (modname === 'forum') return 'forum';
+  if (modname === 'scorm') return 'play_lesson';
+  return 'extension';
 }
 
-function lessonColor(type: Lesson['type']): string {
-  if (type === 'video') return 'primary';
-  if (type === 'quiz') return 'warning';
-  return 'blue-grey-6';
+function moodleModColor(modname: string): string {
+  if (modname === 'quiz') return 'orange-7';
+  if (modname === 'assign') return 'teal-7';
+  if (modname === 'lesson') return 'purple-7';
+  if (modname === 'scorm') return 'blue-7';
+  if (modname === 'forum') return 'blue-grey-6';
+  return 'grey-7';
+}
+
+function moodleModLabel(modname: string): string {
+  if (modname === 'quiz') return 'แบบทดสอบ';
+  if (modname === 'assign') return 'งาน';
+  if (modname === 'resource') return 'ไฟล์';
+  if (modname === 'url') return 'ลิงก์';
+  if (modname === 'page') return 'หน้าเนื้อหา';
+  if (modname === 'folder') return 'โฟลเดอร์';
+  if (modname === 'lesson') return 'บทเรียน';
+  if (modname === 'forum') return 'กระดานสนทนา';
+  if (modname === 'scorm') return 'SCORM';
+  return modname;
 }
 
 function formatCurrency(value: number): string {
