@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import axios from 'axios';
 import { api } from 'src/boot/axios';
 
 export interface User {
@@ -350,7 +351,13 @@ export const useAuthStore = defineStore('auth', {
       persistUserProfile(getProfileFields(this.user));
     },
 
-    async login(username: string, password: string): Promise<boolean> {
+    async login(
+      username: string,
+      password: string,
+    ): Promise<{
+      success: boolean;
+      errorType?: 'rate-limit' | 'invalid-credentials' | 'other';
+    }> {
       try {
         const response = await api.post('/api/auth/login', {
           username,
@@ -397,10 +404,18 @@ export const useAuthStore = defineStore('auth', {
         const others = readStoredAuthAccounts().filter((a) => a.email !== account.email);
         writeStoredAuthAccounts([...others, account]);
         this.setAuthenticatedUser(account);
-        return true;
+        return { success: true };
       } catch (error) {
         console.error('Login error:', error);
-        return false;
+        if (axios.isAxiosError(error)) {
+          if (error.response?.status === 429) {
+            return { success: false, errorType: 'rate-limit' };
+          }
+          if (error.response?.status === 401) {
+            return { success: false, errorType: 'invalid-credentials' };
+          }
+        }
+        return { success: false, errorType: 'other' };
       }
     },
 

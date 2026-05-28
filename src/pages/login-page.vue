@@ -324,12 +324,18 @@ async function onLogin(): Promise<void> {
 
   try {
     await wait(600);
-    const success = await authStore.login(loginForm.username, loginForm.password);
+    const result = await authStore.login(loginForm.username, loginForm.password);
 
-    if (!success) {
+    if (!result.success) {
+      let message = t('auth.login.invalid');
+      if (result.errorType === 'rate-limit') {
+        message = t('auth.login.tooManyRequests');
+      } else if (result.errorType === 'other') {
+        message = t('auth.login.failed');
+      }
       $q.notify({
         type: 'negative',
-        message: t('auth.login.invalid'),
+        message,
         position: 'top',
       });
       return;

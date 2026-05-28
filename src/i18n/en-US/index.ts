@@ -137,6 +137,7 @@ export default {
       success: 'Logged in successfully',
       fillRequired: 'Please enter email and password',
       invalid: 'Invalid email or password',
+      tooManyRequests: 'Too many incorrect login attempts. Please try again later.',
       failed: 'Login failed',
     },
     register: {
