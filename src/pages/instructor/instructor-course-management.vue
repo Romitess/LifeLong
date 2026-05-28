@@ -965,11 +965,7 @@
               </div>
 
               <div v-if="assignments.length > 0" class="assignment-grid">
-                <div
-                  v-for="assignment in assignments"
-                  :key="assignment.title"
-                  class="assignment-card"
-                >
+                <div v-for="(assignment, idx) in assignments" :key="idx" class="assignment-card">
                   <div class="assignment-card__top">
                     <q-icon :name="assignment.icon" :color="assignment.color" size="28px" />
                     <q-badge rounded :color="assignment.statusColor" :label="assignment.status" />
@@ -1272,10 +1268,12 @@
             <strong>{{ selectedLearner.score }}</strong>
           </div>
           <div class="learner-detail-stat">
-            <span>บทเรียนที่จบ</span>
-            <strong
-              >{{ selectedLearner.completedLessons }}/{{ selectedLearner.totalLessons }}</strong
-            >
+            <span>งานที่เสร็จ</span>
+            <strong>{{
+              selectedLearner.totalLessons > 0
+                ? `${selectedLearner.completedLessons}/${selectedLearner.totalLessons}`
+                : '-'
+            }}</strong>
           </div>
           <div class="learner-detail-stat">
             <span>เข้าเรียนล่าสุด</span>
@@ -1766,15 +1764,17 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
         candidate.learnerUserId === learner.userId || candidate.studentId === learner.studentId,
     );
 
-    const gradeItems = grade?.gradeItems ?? [];
-    const totalLessons = gradeItems.length;
+    const GRADEABLE = ['assign', 'quiz'];
+    const gradeItems = (grade?.gradeItems ?? []).filter(
+      (item) => item.itemmodule !== null && GRADEABLE.includes(item.itemmodule),
+    );
     const completedLessons = gradeItems.filter((item) => item.score !== null).length;
-    const progress =
-      totalLessons > 0
-        ? Math.round((completedLessons / totalLessons) * 100)
-        : grade?.status === 'passed'
-          ? 100
-          : 0;
+    const courseTotalActivities = moodleSections.value.reduce(
+      (sum, s) => sum + s.modules.filter((m) => GRADEABLE.includes(m.modname)).length,
+      0,
+    );
+    const totalLessons = gradeItems.length > 0 ? gradeItems.length : courseTotalActivities;
+    const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
     const status = getLearnerStatus(progress);
 
     return {
@@ -1789,7 +1789,7 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
       progress,
       lastActive: grade?.updatedAt ? formatBackendDate(grade.updatedAt) : '-',
       score:
-        grade?.score === null || grade?.score === undefined
+        completedLessons === 0 || grade?.score === null || grade?.score === undefined
           ? 'ยังไม่มีคะแนน'
           : `${grade.score}/${grade.maxScore ?? 100}`,
       ...status,
@@ -1800,66 +1800,18 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
     };
   });
 }
-const MOCK_ASSIGNMENTS = [
-  {
-    title: 'Pre-test',
-    detail: 'แบบทดสอบก่อนเรียน 15 คะแนน',
-    submitted: 42,
-    pending: 0,
-    status: 'เปิดอยู่',
-    statusColor: 'positive',
-    icon: 'quiz',
-    color: 'primary',
-  },
-  {
-    title: 'ใบงานวิเคราะห์กรณีศึกษา',
-    detail: 'ส่งไฟล์ PDF พร้อมคำอธิบาย',
-    submitted: 31,
-    pending: 9,
-    status: 'รอตรวจ',
-    statusColor: 'warning',
-    icon: 'assignment',
-    color: 'orange',
-  },
-  {
-    title: 'Final Project',
-    detail: 'ชิ้นงานปลายรายวิชา 40 คะแนน',
-    submitted: 18,
-    pending: 18,
-    status: 'กำลังรับงาน',
-    statusColor: 'primary',
-    icon: 'workspace_premium',
-    color: 'purple',
-  },
-];
 
-const MOCK_ANNOUNCEMENTS = [
-  {
-    title: 'กำหนดส่งงานครั้งที่ 1',
-    body: 'ขอให้ผู้เรียนส่งใบงานก่อนวันศุกร์ เวลา 23:59 น.',
-    date: 'ประกาศเมื่อ 30 เม.ย. 2569',
-    pinned: true,
-  },
-  {
-    title: 'เปิดห้องถามตอบประจำสัปดาห์',
-    body: 'ผู้เรียนสามารถฝากคำถามไว้ในกระดานสนทนาได้ตลอดสัปดาห์',
-    date: 'ประกาศเมื่อ 28 เม.ย. 2569',
-    pinned: false,
-  },
-  {
-    title: 'อัปเดตเอกสารประกอบบทเรียน',
-    body: 'เพิ่มไฟล์สรุปบทเรียนและ checklist สำหรับทบทวนก่อนสอบ',
-    date: 'ประกาศเมื่อ 26 เม.ย. 2569',
-    pinned: false,
-  },
-];
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim();
+}
 
-const MOCK_REPORTS = [
-  { label: 'อัตราเรียนจบ', value: '74%', progress: 0.74, color: 'positive' },
-  { label: 'คะแนนเฉลี่ย', value: '82/100', progress: 0.82, color: 'primary' },
-  { label: 'การมีส่วนร่วม', value: '68%', progress: 0.68, color: 'warning' },
-  { label: 'ความพึงพอใจ', value: '4.7/5', progress: 0.94, color: 'purple' },
-];
+function formatUnixDate(ts: number): string {
+  const d = new Date(ts * 1000);
+  return `ประกาศเมื่อ ${d.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+}
 
 const isKnownCourse = computed(() => Boolean(selectedCourse.value));
 
@@ -1883,20 +1835,94 @@ const learnerColumns: QTableColumn<LearnerRow>[] = [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
-const assignments = computed(() => (isKnownCourse.value ? MOCK_ASSIGNMENTS : []));
+const assignments = computed(() => {
+  if (!isKnownCourse.value) return [];
+  const GRADEABLE = ['assign', 'quiz'];
+  const grades = instructorBackend.gradesByCourseId.value[selectedCourse.value!.id] ?? [];
+  const result: {
+    title: string;
+    detail: string;
+    submitted: number;
+    pending: number;
+    status: string;
+    statusColor: string;
+    icon: string;
+    color: string;
+  }[] = [];
+  for (const section of moodleSections.value) {
+    for (const mod of section.modules) {
+      if (!GRADEABLE.includes(mod.modname)) continue;
+      const submitted = grades.filter((g) =>
+        g.gradeItems.some((gi) => gi.cmid !== null && gi.cmid === mod.id && gi.score !== null),
+      ).length;
+      result.push({
+        title: mod.name,
+        detail: section.name,
+        submitted,
+        pending: 0,
+        status: mod.modname === 'quiz' ? 'แบบทดสอบ' : 'งานส่ง',
+        statusColor: mod.modname === 'quiz' ? 'primary' : 'orange',
+        icon: mod.modname === 'quiz' ? 'quiz' : 'assignment',
+        color: mod.modname === 'quiz' ? 'primary' : 'orange',
+      });
+    }
+  }
+  return result;
+});
 
-const announcements = computed(() => (isKnownCourse.value ? MOCK_ANNOUNCEMENTS : []));
+const announcements = computed(() => {
+  if (!isKnownCourse.value) return [];
+  return instructorBackend.courseAnnouncements.value.map((a) => ({
+    title: a.subject,
+    body: stripHtml(a.body),
+    date: formatUnixDate(a.createdAt),
+    pinned: a.pinned,
+  }));
+});
 
-const reports = computed(() =>
-  isKnownCourse.value
-    ? MOCK_REPORTS
-    : [
-        { label: 'อัตราเรียนจบ', value: '0%', progress: 0, color: 'positive' },
-        { label: 'คะแนนเฉลี่ย', value: '0/100', progress: 0, color: 'primary' },
-        { label: 'การมีส่วนร่วม', value: '0%', progress: 0, color: 'warning' },
-        { label: 'ความพึงพอใจ', value: '-/5', progress: 0, color: 'purple' },
-      ],
-);
+const reports = computed(() => {
+  if (!isKnownCourse.value) {
+    return [
+      { label: 'อัตราเรียนจบ', value: '0%', progress: 0, color: 'positive' },
+      { label: 'คะแนนเฉลี่ย', value: '0/100', progress: 0, color: 'primary' },
+      { label: 'การมีส่วนร่วม', value: '0%', progress: 0, color: 'warning' },
+    ];
+  }
+  const grades = instructorBackend.gradesByCourseId.value[selectedCourse.value!.id] ?? [];
+  const total = learners.value.length;
+  const passed = grades.filter((g) => g.status === 'passed').length;
+  const completionRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+
+  const scoredGrades = grades.filter((g) => g.score !== null && g.maxScore);
+  const avgScore =
+    scoredGrades.length > 0
+      ? Math.round(scoredGrades.reduce((s, g) => s + g.score!, 0) / scoredGrades.length)
+      : 0;
+  const maxScore = scoredGrades[0]?.maxScore ?? 100;
+  const hasActivity = learners.value.filter((l) => l.completedLessons > 0).length;
+  const participation = total > 0 ? Math.round((hasActivity / total) * 100) : 0;
+
+  return [
+    {
+      label: 'อัตราเรียนจบ',
+      value: `${completionRate}%`,
+      progress: completionRate / 100,
+      color: 'positive',
+    },
+    {
+      label: 'คะแนนเฉลี่ย',
+      value: scoredGrades.length > 0 ? `${avgScore}/${maxScore}` : '-',
+      progress: avgScore / maxScore,
+      color: 'primary',
+    },
+    {
+      label: 'การมีส่วนร่วม',
+      value: `${participation}%`,
+      progress: participation / 100,
+      color: 'warning',
+    },
+  ];
+});
 
 const selectedHealth = computed(() => getCourseHealth(selectedCourseId.value));
 
@@ -1979,6 +2005,7 @@ watch(
     if (learnerPricing[2]) learnerPricing[2].amount = course.price;
     activeWorkspaceTab.value = 'overview';
     void fetchMoodleContents(course.moodleId);
+    void instructorBackend.fetchCourseAnnouncements(course.moodleId);
   },
   { immediate: true },
 );

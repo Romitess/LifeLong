@@ -88,10 +88,20 @@ export interface InstructorConversation {
   messages: InstructorConversationMessage[];
 }
 
+export interface CourseAnnouncement {
+  id: number;
+  subject: string;
+  body: string;
+  createdAt: number;
+  author: string;
+  pinned: boolean;
+}
+
 const summary = ref<InstructorSummary | null>(null);
 const learnersByCourseId = ref<Record<string, InstructorLearner[]>>({});
 const gradesByCourseId = ref<Record<string, InstructorGrade[]>>({});
 const conversations = ref<InstructorConversation[]>([]);
+const courseAnnouncements = ref<CourseAnnouncement[]>([]);
 const loading = ref(false);
 
 let socket: Socket | null = null;
@@ -327,6 +337,21 @@ export function useInstructorBackend() {
     }
   }
 
+  async function fetchCourseAnnouncements(moodleId: number | null | undefined): Promise<void> {
+    if (!moodleId) {
+      courseAnnouncements.value = [];
+      return;
+    }
+    try {
+      const { data } = await api.get<CourseAnnouncement[]>(
+        `/api/moodle/moodle-announcements/${moodleId}`,
+      );
+      courseAnnouncements.value = Array.isArray(data) ? data : [];
+    } catch {
+      courseAnnouncements.value = [];
+    }
+  }
+
   function joinConversationRoom(enrollId: number): void {
     if (socket) {
       socket.emit('joinRoom', { enrollId });
@@ -339,12 +364,14 @@ export function useInstructorBackend() {
     learnersByCourseId,
     gradesByCourseId,
     conversations,
+    courseAnnouncements,
     loading,
     fetchSummary,
     fetchLearners,
     fetchGrades,
     syncScores,
     fetchConversations,
+    fetchCourseAnnouncements,
     sendMessage,
     markAsRead,
     connectSocket,

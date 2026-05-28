@@ -418,6 +418,7 @@ import { useCourseStore } from 'src/stores/course-store';
 import { useCategoryStore } from 'src/stores/category-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCategoryList } from 'src/composables/use-category-list';
+import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import AppFooter from 'components/AppFooter.vue';
@@ -593,6 +594,7 @@ function getNotificationItemsForRole(role: string | undefined) {
   ];
 }
 
+const instructorBackend = useInstructorBackend();
 const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
 const isAdminRole = computed(() => isAdminNotificationRole(authStore.user?.role));
 const isFinanceRole = computed(() => authStore.user?.role === 'finance');
@@ -927,12 +929,39 @@ let pageSwitchLoadingTimer: ReturnType<typeof setTimeout> | null = null;
 const PAGE_SWITCH_LOADING_MS = 450;
 const pageSwitchLoadingPaths = new Set(['/main', '/profile']);
 
-const notificationPreviewItems = computed(() =>
-  getNotificationItemsForRole(authStore.user?.role).slice(0, 3),
+const announcementNotifications = computed(() =>
+  isTeachingRole.value
+    ? instructorBackend.courseAnnouncements.value.map((a) => ({
+        id: a.id,
+        title: a.subject,
+        message: a.body
+          .replace(/<[^>]*>/g, '')
+          .trim()
+          .slice(0, 80),
+        time: new Date(a.createdAt * 1000).toLocaleDateString('th-TH', {
+          day: 'numeric',
+          month: 'short',
+        }),
+        icon: 'campaign',
+        iconBg: 'rgba(245, 166, 35, 0.15)',
+        iconColor: '#f5a623',
+        action: '/instructor/courses',
+        read: false,
+      }))
+    : [],
 );
-const notificationUnreadCount = computed(
-  () => getNotificationItemsForRole(authStore.user?.role).filter((item) => !item.read).length,
-);
+
+const notificationPreviewItems = computed(() => {
+  const base = getNotificationItemsForRole(authStore.user?.role);
+  const all = [...announcementNotifications.value, ...base];
+  return all.slice(0, 3);
+});
+const notificationUnreadCount = computed(() => {
+  const base = getNotificationItemsForRole(authStore.user?.role).filter(
+    (item) => !item.read,
+  ).length;
+  return base + announcementNotifications.value.length;
+});
 const notificationPreviewSubtitle = computed(() =>
   isAdminRole.value
     ? 'รายการสำคัญสำหรับผู้ดูแลระบบ'
