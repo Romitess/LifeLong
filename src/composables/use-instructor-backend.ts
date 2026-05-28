@@ -110,6 +110,11 @@ export interface InstructorPriorityTask {
   color: string;
 }
 
+export interface UpdateOpenclassPayload {
+  registrationStartDate?: string;
+  registrationEndDate?: string;
+}
+
 const summary = ref<InstructorSummary | null>(null);
 const learnersByCourseId = ref<Record<string, InstructorLearner[]>>({});
 const gradesByCourseId = ref<Record<string, InstructorGrade[]>>({});
@@ -117,6 +122,7 @@ const priorityTasksByCourseId = ref<Record<string, InstructorPriorityTask[]>>({}
 const conversations = ref<InstructorConversation[]>([]);
 const courseAnnouncements = ref<CourseAnnouncement[]>([]);
 const loading = ref(false);
+const isSavingOpenclass = ref(false);
 
 let socket: Socket | null = null;
 
@@ -406,6 +412,28 @@ export function useInstructorBackend() {
     }
   }
 
+  async function updateOpenclass(
+    courseId: string | number,
+    data: UpdateOpenclassPayload,
+  ): Promise<{ updated: boolean } | null> {
+    const backendCourseId = getBackendCourseId(courseId);
+    if (!backendCourseId) return null;
+
+    isSavingOpenclass.value = true;
+    try {
+      const { data: result } = await api.patch<{ updated: boolean }>(
+        `/api/instructor/courses/${backendCourseId}/openclass`,
+        data,
+      );
+      return result;
+    } catch (error) {
+      console.warn('Failed to update openclass', error);
+      return null;
+    } finally {
+      isSavingOpenclass.value = false;
+    }
+  }
+
   async function fetchCourseAnnouncements(moodleId: number | null | undefined): Promise<void> {
     if (!moodleId) {
       courseAnnouncements.value = [];
@@ -436,6 +464,8 @@ export function useInstructorBackend() {
     conversations,
     courseAnnouncements,
     loading,
+    isSavingOpenclass,
+    updateOpenclass,
     fetchSummary,
     fetchLearners,
     fetchGrades,

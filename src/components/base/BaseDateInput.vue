@@ -12,15 +12,25 @@
   >
     <template #append>
       <q-icon name="event" class="cursor-pointer">
-        <q-popup-proxy ref="proxyRef" cover transition-show="scale" transition-hide="scale">
+        <q-popup-proxy
+          ref="proxyRef"
+          cover
+          transition-show="scale"
+          transition-hide="scale"
+          @before-show="onPopupOpen"
+        >
           <q-date
-            :model-value="displayValue"
+            v-model="pendingDate"
             mask="DD/MM/YYYY"
             color="primary"
             :locale="dateLocale"
             :options="options"
-            @update:model-value="onPicked"
-          />
+          >
+            <div class="row items-center justify-end q-pa-sm">
+              <q-btn v-close-popup flat label="ยกเลิก" color="grey-7" no-caps />
+              <q-btn flat label="ยืนยัน" color="primary" no-caps @click="onConfirm" />
+            </div>
+          </q-date>
         </q-popup-proxy>
       </q-icon>
     </template>
@@ -57,16 +67,19 @@ const emit = defineEmits<{
 const dateLocale = useDateLocale();
 const inputRef = ref<QInput | null>(null);
 const proxyRef = ref<QPopupProxy | null>(null);
+const pendingDate = ref('');
 
 // Display always DD/MM/YYYY; model stored in valueFormat
 const displayValue = computed(() => {
   const v = props.modelValue;
   if (!v) return '';
-  if (props.valueFormat === 'YYYY-MM-DD' && v.length === 10 && v.includes('-')) {
-    const [y, m, d] = v.split('-');
+  // Normalize ISO/MySQL datetime strings (e.g. "2026-05-25T00:00:00.000Z" or "2026-05-25 00:00:00") to date-only
+  const normalized = v.length > 10 && v.includes('-') ? v.substring(0, 10) : v;
+  if (props.valueFormat === 'YYYY-MM-DD' && normalized.length === 10 && normalized.includes('-')) {
+    const [y, m, d] = normalized.split('-');
     return `${d}/${m}/${y}`;
   }
-  return v;
+  return normalized;
 });
 
 function toModelValue(ddmmyyyy: string): string {
@@ -83,12 +96,16 @@ const computedRules = computed(() => {
   return props.rules.map((rule) => (v: string) => rule(toModelValue(v)));
 });
 
+function onPopupOpen() {
+  pendingDate.value = displayValue.value;
+}
+
 function onInput(val: string | number | null) {
   emit('update:modelValue', toModelValue(String(val ?? '')));
 }
 
-function onPicked(val: string | null) {
-  if (val) emit('update:modelValue', toModelValue(val));
+function onConfirm() {
+  if (pendingDate.value) emit('update:modelValue', toModelValue(pendingDate.value));
   proxyRef.value?.hide();
 }
 

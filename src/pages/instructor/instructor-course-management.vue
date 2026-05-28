@@ -682,6 +682,17 @@
                       class="course-settings-field"
                     />
                   </div>
+                  <div class="q-mt-md">
+                    <q-btn
+                      unelevated
+                      color="primary"
+                      icon="save"
+                      label="บันทึกวันที่"
+                      no-caps
+                      :loading="savingDates"
+                      @click="saveRegistrationDates"
+                    />
+                  </div>
                 </div>
 
                 <div class="panel-block">
@@ -1461,6 +1472,7 @@ const courseTablePage = ref(1);
 const deleteCourseDialogOpen = ref(false);
 const pendingDeleteCourse = ref<Course | null>(null);
 const saveCourseDialogOpen = ref(false);
+const savingDates = computed(() => instructorBackend.isSavingOpenclass.value);
 const pendingCourseSaveId = ref('');
 const pendingCourseChanges = ref<Partial<Course>>({});
 const pendingCourseChangeLabels = ref<string[]>([]);
@@ -2275,6 +2287,36 @@ const hasCourseChanges = computed(() => {
   return getCourseChangeLabels(course, buildCourseUpdatePayload(course)).length > 0;
 });
 
+async function saveRegistrationDates(): Promise<void> {
+  const course = selectedCourse.value;
+  if (!course) return;
+
+  const result = await instructorBackend.updateOpenclass(course.id, {
+    registrationStartDate: courseSettings.registrationStartDate,
+    registrationEndDate: courseSettings.registrationEndDate,
+  });
+
+  if (result?.updated) {
+    courseStore.updateCourse(course.id, {
+      registrationStartDate: courseSettings.registrationStartDate,
+      registrationEndDate: courseSettings.registrationEndDate,
+    });
+    $q.notify({
+      type: 'positive',
+      icon: 'check_circle',
+      message: 'บันทึกวันที่เรียบร้อยแล้ว',
+      position: 'top',
+    });
+  } else {
+    $q.notify({
+      type: 'negative',
+      icon: 'error',
+      message: 'บันทึกวันที่ไม่สำเร็จ กรุณาลองใหม่',
+      position: 'top',
+    });
+  }
+}
+
 function confirmSaveCourseChanges(): void {
   const course = selectedCourse.value;
   if (!course) return;
@@ -2299,16 +2341,33 @@ function confirmSaveCourseChanges(): void {
   saveCourseDialogOpen.value = true;
 }
 
-function saveCourseChanges(courseId: string, changes: Partial<Course>): void {
+async function saveCourseChanges(courseId: string, changes: Partial<Course>): Promise<void> {
   courseStore.updateCourse(courseId, changes);
   learnerPricingBaseline.value = getLearnerPricingSnapshot();
+
+  if (changes.registrationStartDate !== undefined || changes.registrationEndDate !== undefined) {
+    const result = await instructorBackend.updateOpenclass(courseId, {
+      registrationStartDate: changes.registrationStartDate,
+      registrationEndDate: changes.registrationEndDate,
+    });
+    if (!result?.updated) {
+      $q.notify({
+        type: 'negative',
+        icon: 'error',
+        message: 'บันทึกวันที่ไม่สำเร็จ กรุณาลองใหม่',
+        position: 'top',
+      });
+      return;
+    }
+  }
+
   notifySaved();
 }
 
-function confirmPendingCourseSave(): void {
+async function confirmPendingCourseSave(): Promise<void> {
   if (!pendingCourseSaveId.value) return;
 
-  saveCourseChanges(pendingCourseSaveId.value, pendingCourseChanges.value);
+  await saveCourseChanges(pendingCourseSaveId.value, pendingCourseChanges.value);
   saveCourseDialogOpen.value = false;
   clearPendingCourseSave();
 }

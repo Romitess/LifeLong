@@ -59,6 +59,8 @@ interface BackendInstructorCourse {
   status?: string | null;
   startDate?: string | null;
   endDate?: string | null;
+  regStartDate?: string | null;
+  regEndDate?: string | null;
   moodleId?: number | null;
   maxSeats?: number | null;
   enrolledCount?: number | null;
@@ -452,6 +454,8 @@ export const useCourseStore = defineStore('course', {
               titleEn: course.titleEn ?? null,
               startDate: course.startDate ?? null,
               endDate: course.endDate ?? null,
+              regStartDate: course.regStartDate ?? null,
+              regEndDate: course.regEndDate ?? null,
               status: course.status ?? null,
               imageUrl: course.imageUrl ?? null,
               moodleId: course.moodleId ?? null,
