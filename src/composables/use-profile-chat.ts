@@ -101,7 +101,9 @@ export function useProfileChat(
       '';
     const origin = baseUrl.startsWith('http') ? new URL(baseUrl).origin : window.location.origin;
 
-    socket = io(`${origin}/chat`);
+    socket = io(`${origin}/chat`, {
+      transports: ['websocket'],
+    });
 
     socket.on('connect', () => {
       const enrollId = selectedChatEntry.value?.registration?.enrollId;
@@ -193,7 +195,7 @@ export function useProfileChat(
     chatDraft.value = '';
 
     try {
-      await api.post('/api/lltchat', {
+      const response = await api.post('/api/lltchat', {
         enrollId,
         sender: authStore.user?.id ? Number(authStore.user.id) : null,
         userId: authStore.user?.username || null,
@@ -206,7 +208,22 @@ export function useProfileChat(
         updateProgram: 'student_chat',
       });
 
-      await fetchChatMessages();
+      const savedChat = response.data;
+      if (savedChat && savedChat.id) {
+        const exists = chatMessages.value.some((m) => String(m.id) === String(savedChat.id));
+        if (!exists) {
+          chatMessages.value.push({
+            id: String(savedChat.id),
+            courseId: selectedChatEntry.value?.course.id || '',
+            sender: 'learner',
+            body: savedChat.message || '',
+            sentAt: savedChat.chatTime ? new Date(savedChat.chatTime) : new Date(),
+            status: savedChat.status === 'R' ? 'read' : 'sent',
+          });
+        }
+      } else {
+        await fetchChatMessages();
+      }
       await nextTick();
       scrollChatToLatestMessage();
     } catch (error) {

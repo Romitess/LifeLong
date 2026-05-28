@@ -320,10 +320,34 @@ export function useInstructorBackend() {
     body: string,
   ): Promise<void> {
     if (!email?.trim() || !body.trim()) return;
-    await api.post(
+    const response = await api.post<{
+      sent: boolean;
+      message?: { id: number; message: string; chatTime: string };
+    }>(
       `/api/instructor/conversations/${courseId}/${learnerUserId}/messages?email=${encodeURIComponent(email.trim())}`,
       { body: body.trim() },
     );
+
+    if (response.data.sent && response.data.message) {
+      const msg = response.data.message;
+      const conv = conversations.value.find(
+        (c) => c.courseId === courseId && c.learnerUserId === learnerUserId,
+      );
+      if (conv) {
+        const exists = conv.messages.some((m) => String(m.id) === String(msg.id));
+        if (!exists) {
+          conv.messages.push({
+            id: String(msg.id),
+            sender: 'instructor',
+            body: msg.message || '',
+            sentAt: msg.chatTime || new Date().toISOString(),
+            status: 'sent',
+          });
+          conv.latestMessagePreview = msg.message || '';
+          conv.messageCount = conv.messages.length;
+        }
+      }
+    }
   }
 
   async function markAsRead(
@@ -350,7 +374,9 @@ export function useInstructorBackend() {
       '';
     const origin = baseUrl.startsWith('http') ? new URL(baseUrl).origin : window.location.origin;
 
-    socket = io(`${origin}/chat`);
+    socket = io(`${origin}/chat`, {
+      transports: ['websocket'],
+    });
 
     socket.on('connect', () => {
       // Join rooms for all current conversations
