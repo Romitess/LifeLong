@@ -97,9 +97,21 @@ export interface CourseAnnouncement {
   pinned: boolean;
 }
 
+export interface InstructorPriorityTask {
+  id: string;
+  title: string;
+  detail: string;
+  count: number;
+  severity: 'info' | 'warning' | 'danger';
+  actionTab: 'learners' | 'grading' | 'announcements';
+  icon: string;
+  color: string;
+}
+
 const summary = ref<InstructorSummary | null>(null);
 const learnersByCourseId = ref<Record<string, InstructorLearner[]>>({});
 const gradesByCourseId = ref<Record<string, InstructorGrade[]>>({});
+const priorityTasksByCourseId = ref<Record<string, InstructorPriorityTask[]>>({});
 const conversations = ref<InstructorConversation[]>([]);
 const courseAnnouncements = ref<CourseAnnouncement[]>([]);
 const loading = ref(false);
@@ -221,6 +233,32 @@ export function useInstructorBackend() {
       console.warn('Failed to sync scores', error);
       return null;
     }
+  }
+
+  async function fetchPriorityTasks(
+    email: string | undefined,
+    courseId: string | number,
+  ): Promise<void> {
+    if (!email?.trim()) return;
+    const backendCourseId = getBackendCourseId(courseId);
+    if (!backendCourseId) return;
+
+    let data: InstructorPriorityTask[] = [];
+    try {
+      const response = await api.get<
+        InstructorPriorityTask[] | WrappedListResponse<InstructorPriorityTask>
+      >(
+        `/api/instructor/courses/${backendCourseId}/priority-tasks?email=${encodeURIComponent(email.trim())}`,
+      );
+      data = extractArrayPayload(response.data);
+    } catch (error) {
+      console.warn('Failed to fetch instructor priority tasks', error);
+    }
+
+    priorityTasksByCourseId.value = {
+      ...priorityTasksByCourseId.value,
+      [getCourseKey(courseId)]: data,
+    };
   }
 
   async function fetchConversations(email?: string): Promise<void> {
@@ -363,12 +401,14 @@ export function useInstructorBackend() {
     hasSummary,
     learnersByCourseId,
     gradesByCourseId,
+    priorityTasksByCourseId,
     conversations,
     courseAnnouncements,
     loading,
     fetchSummary,
     fetchLearners,
     fetchGrades,
+    fetchPriorityTasks,
     syncScores,
     fetchConversations,
     fetchCourseAnnouncements,

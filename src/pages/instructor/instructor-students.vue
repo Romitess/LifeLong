@@ -3,12 +3,12 @@
     <div class="section-container instructor-students">
       <section class="students-hero">
         <div>
-          <div class="students-hero__eyebrow">Student Roster</div>
-          <h1>รายชื่อนิสิต</h1>
+          <div class="students-hero__eyebrow">Student Report Card</div>
+          <h1>บันทึกผลการเรียน</h1>
           <p v-if="selectedCourse">
-            {{ selectedCourse.code }} ยท {{ selectedCourse.titleEn || selectedCourse.title }}
+            {{ selectedCourse.code }} {{ selectedCourse.titleEn || selectedCourse.title }}
           </p>
-          <p v-else>เลือกคอร์สเพื่อดูรายชื่อนิสิตและรายละเอียดรายบุคคล</p>
+          <p v-else>เลือกคอร์สเพื่อบันทึกผลการเรียน</p>
         </div>
         <q-btn
           v-if="selectedCourse"

@@ -532,6 +532,7 @@
                 icon="save"
                 label="บันทึกการเปลี่ยนแปลง"
                 no-caps
+                :disable="!hasCourseChanges"
                 @click="confirmSaveCourseChanges"
               />
               <q-btn
@@ -753,7 +754,14 @@
                     <q-btn flat round dense icon="more_horiz" color="grey-7" />
                   </div>
                   <div class="task-list">
-                    <div v-for="task in priorityTasks" :key="task.title" class="task-row">
+                    <div v-if="priorityTasks.length === 0" class="task-row task-row--empty">
+                      <q-icon name="check_circle" color="positive" size="22px" />
+                      <div>
+                        <strong>ไม่มีงานเร่งด่วน</strong>
+                        <span>ข้อมูลจาก backend ยังไม่พบรายการที่ต้องจัดการตอนนี้</span>
+                      </div>
+                    </div>
+                    <div v-for="task in priorityTasks" :key="task.id" class="task-row">
                       <q-icon :name="task.icon" :color="task.color" size="22px" />
                       <div>
                         <strong>{{ task.title }}</strong>
@@ -765,7 +773,7 @@
                         color="primary"
                         label="จัดการ"
                         no-caps
-                        @click="openQuickDialog(task.title)"
+                        @click="openPriorityTask(task)"
                       />
                     </div>
                   </div>
@@ -1345,7 +1353,10 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { getCourseStructure } from 'src/data/course-structure';
-import { useInstructorBackend } from 'src/composables/use-instructor-backend';
+import {
+  useInstructorBackend,
+  type InstructorPriorityTask,
+} from 'src/composables/use-instructor-backend';
 import type { Course, DeliveryMode } from 'src/types/course';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
@@ -1387,6 +1398,8 @@ interface LearnerPriceRule {
   enabled: boolean;
   amount: number;
 }
+
+type LearnerPriceSnapshot = Pick<LearnerPriceRule, 'type' | 'enabled' | 'amount'>;
 
 interface FacultyStaffMember {
   name: string;
@@ -1489,6 +1502,7 @@ const learnerPricing = reactive<LearnerPriceRule[]>([
     amount: 1000,
   },
 ]);
+const learnerPricingBaseline = ref<LearnerPriceSnapshot[]>([]);
 
 const instructorCourses = computed<Course[]>(() =>
   courseStore.getInstructorCourses(authStore.user),
@@ -1570,6 +1584,7 @@ watch(
     if (!email) return;
     void instructorBackend.fetchLearners(email, course.id);
     void instructorBackend.fetchGrades(email, course.id);
+    void instructorBackend.fetchPriorityTasks(email, course.id);
   },
   { immediate: true },
 );
@@ -1956,26 +1971,12 @@ const readinessChecklist = computed(() => {
   ];
 });
 
-const priorityTasks = computed(() => [
-  {
-    title: 'ตรวจงานที่ค้าง',
-    detail: `${assignments.value.reduce((sum, item) => sum + item.pending, 0)} รายการรอการตรวจ`,
-    icon: 'assignment_late',
-    color: 'warning',
-  },
-  {
-    title: 'ติดตามผู้เรียนเสี่ยงหลุด',
-    detail: 'มีผู้เรียน 1 คนไม่เข้าเรียนเกิน 7 วัน',
-    icon: 'person_alert',
-    color: 'negative',
-  },
-  {
-    title: 'อัปเดตประกาศรายวิชา',
-    detail: 'ประกาศล่าสุดเกิน 2 วันแล้ว',
-    icon: 'campaign',
-    color: 'primary',
-  },
-]);
+const priorityTasks = computed<InstructorPriorityTask[]>(() => {
+  const course = selectedCourse.value;
+  if (!course) return [];
+
+  return instructorBackend.priorityTasksByCourseId.value[course.id] ?? [];
+});
 
 const qualityChecks = computed(() => [
   { label: 'รูปปกแสดงผลถูกต้อง', done: Boolean(selectedCourse.value?.imageUrl) },
@@ -2003,6 +2004,10 @@ watch(
     if (learnerPricing[1])
       learnerPricing[1].amount = course.isFree ? 0 : Math.max(0, Math.round(course.price * 0.75));
     if (learnerPricing[2]) learnerPricing[2].amount = course.price;
+    learnerPricing.forEach((price) => {
+      price.enabled = true;
+    });
+    learnerPricingBaseline.value = getLearnerPricingSnapshot();
     activeWorkspaceTab.value = 'overview';
     void fetchMoodleContents(course.moodleId);
     void instructorBackend.fetchCourseAnnouncements(course.moodleId);
@@ -2030,6 +2035,10 @@ function useSampleCover(): void {
 
 function resetCoverImage(): void {
   courseSettings.coverImageUrl = selectedCourse.value?.imageUrl ?? '';
+}
+
+function openPriorityTask(task: InstructorPriorityTask): void {
+  activeWorkspaceTab.value = task.actionTab;
 }
 
 function resetFacultyStaffForm(): void {
@@ -2224,6 +2233,24 @@ function buildCourseUpdatePayload(course: Course): Partial<Course> {
   };
 }
 
+function getLearnerPricingSnapshot(): LearnerPriceSnapshot[] {
+  return learnerPricing.map((price) => ({
+    type: price.type,
+    enabled: price.enabled,
+    amount: Number(price.amount) || 0,
+  }));
+}
+
+function hasLearnerPricingChanges(): boolean {
+  const current = getLearnerPricingSnapshot();
+  const baseline = learnerPricingBaseline.value;
+
+  return current.some((price) => {
+    const original = baseline.find((item) => item.type === price.type);
+    return !original || original.enabled !== price.enabled || original.amount !== price.amount;
+  });
+}
+
 function getCourseChangeLabels(course: Course, changes: Partial<Course>): string[] {
   const labels: string[] = [];
 
@@ -2236,9 +2263,17 @@ function getCourseChangeLabels(course: Course, changes: Partial<Course>): string
   if (changes.maxSeats !== course.maxSeats) labels.push('จำนวนที่นั่ง');
   if (changes.price !== course.price || changes.isFree !== course.isFree)
     labels.push('ราคา/ค่าใช้จ่าย');
+  if (hasLearnerPricingChanges()) labels.push('การคิดเงินผู้เรียนแต่ละประเภท');
 
   return labels;
 }
+
+const hasCourseChanges = computed(() => {
+  const course = selectedCourse.value;
+  if (!course) return false;
+
+  return getCourseChangeLabels(course, buildCourseUpdatePayload(course)).length > 0;
+});
 
 function confirmSaveCourseChanges(): void {
   const course = selectedCourse.value;
@@ -2266,6 +2301,7 @@ function confirmSaveCourseChanges(): void {
 
 function saveCourseChanges(courseId: string, changes: Partial<Course>): void {
   courseStore.updateCourse(courseId, changes);
+  learnerPricingBaseline.value = getLearnerPricingSnapshot();
   notifySaved();
 }
 
