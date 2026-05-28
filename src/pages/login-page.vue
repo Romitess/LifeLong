@@ -274,14 +274,28 @@ function getPostLoginPath(): string {
     teach: '/instructor/dashboard',
     finance: '/finance/dashboard',
     central_finance: '/central-finance/dashboard',
+    student: '/main',
   } as const;
+
+  // ดำเนินการเก็บ redirect parameter จาก query หรือ localStorage
+  if (typeof route.query.redirect === 'string' && route.query.redirect.trim()) {
+    return route.query.redirect;
+  }
+
+  // ลองดึง redirect จาก sessionStorage (ถ้าเซ็ตไว้ก่อนหน้า)
+  const storedRedirect =
+    typeof window !== 'undefined' ? sessionStorage.getItem('loginRedirect') : null;
+  if (storedRedirect) {
+    sessionStorage.removeItem('loginRedirect');
+    return storedRedirect;
+  }
 
   const role = authStore.user?.role;
   if (role && role in rolePathMap) {
     return rolePathMap[role as keyof typeof rolePathMap];
   }
 
-  return typeof route.query.redirect === 'string' ? route.query.redirect : '/main';
+  return '/main';
 }
 
 function handleCheckInContinue(): void {
