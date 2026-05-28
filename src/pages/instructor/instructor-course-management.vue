@@ -1367,6 +1367,7 @@ import { getCourseStructure } from 'src/data/course-structure';
 import {
   useInstructorBackend,
   type InstructorPriorityTask,
+  type UpdateOpenclassPayload,
 } from 'src/composables/use-instructor-backend';
 import type { Course, DeliveryMode } from 'src/types/course';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
@@ -2346,10 +2347,12 @@ async function saveCourseChanges(courseId: string, changes: Partial<Course>): Pr
   learnerPricingBaseline.value = getLearnerPricingSnapshot();
 
   if (changes.registrationStartDate !== undefined || changes.registrationEndDate !== undefined) {
-    const result = await instructorBackend.updateOpenclass(courseId, {
-      registrationStartDate: changes.registrationStartDate,
-      registrationEndDate: changes.registrationEndDate,
-    });
+    const openclasspayload: UpdateOpenclassPayload = {};
+    if (changes.registrationStartDate !== undefined)
+      openclasspayload.registrationStartDate = changes.registrationStartDate;
+    if (changes.registrationEndDate !== undefined)
+      openclasspayload.registrationEndDate = changes.registrationEndDate;
+    const result = await instructorBackend.updateOpenclass(courseId, openclasspayload);
     if (!result?.updated) {
       $q.notify({
         type: 'negative',
