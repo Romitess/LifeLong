@@ -1962,6 +1962,7 @@ import {
 } from 'src/composables/use-my-registered-courses';
 import type { Course } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
+import { api } from 'src/boot/axios';
 import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
 import { useAuthStore, type User, type UserProfileUpdate } from 'src/stores/auth-store';
@@ -2025,7 +2026,13 @@ const showStudentCardDialog = ref(false);
 const pendingFullAvatarSrc = ref<string | null>(null);
 const isRefreshingBenefits = ref(false);
 const isSavingProfile = ref(false);
-const benefitsCheckedAt = ref(new Date('2026-04-29T10:52:45+07:00'));
+const benefitsCheckedAt = ref<Date>(new Date());
+const benefitsData = ref<{
+  hasPrivilege: boolean;
+  stutypeId: number | null;
+  stutypeName: string | null;
+  userCitizen: string | null;
+} | null>(null);
 const savedEnrollmentDialogCourse = ref<CourseDetail | null>(null);
 const savedEnrollmentDialogOpenKey = ref(0);
 
@@ -2173,9 +2180,15 @@ const studentFullNameEn = computed<string>(() =>
 const learnerRegisteredDate = computed<string>(() =>
   formatThaiBuddhistDate('2026-04-27T00:00:00+07:00'),
 );
-const activeBenefitLabel = computed<string>(() => t('profile.benefits.activeStudent'));
+const activeBenefitLabel = computed<string>(
+  () => benefitsData.value?.stutypeName ?? t('profile.benefits.activeStudent'),
+);
 const benefitsCheckedAtLabel = computed<string>(() => formatThaiDateTime(benefitsCheckedAt.value));
-const maskedCitizenId = computed<string>(() => '121990096xxxx');
+const maskedCitizenId = computed<string>(() => {
+  const cid = benefitsData.value?.userCitizen;
+  if (!cid) return '-';
+  return cid.length >= 10 ? cid.slice(0, cid.length - 4) + 'xxxx' : cid;
+});
 
 const heroRoleLabel = computed(() => {
   if (authStore.user?.role === 'admin') return t('profile.roles.admin');
@@ -2297,22 +2310,37 @@ function confirmSavePersonalInfo(): void {
   );
 }
 
-function refreshBenefits(): void {
-  if (isRefreshingBenefits.value) {
-    return;
+async function fetchBenefits(): Promise<void> {
+  const email = authStore.user?.email;
+  if (!email) return;
+  try {
+    const { data } = await api.get<{
+      hasPrivilege: boolean;
+      stutypeId: number | null;
+      stutypeName: string | null;
+      userCitizen: string | null;
+      checkedAt: string;
+    }>(`/api/moodle/profile/benefits?email=${encodeURIComponent(email)}`);
+    benefitsData.value = data;
+    benefitsCheckedAt.value = new Date(data.checkedAt);
+  } catch {
+    // non-critical
   }
+}
 
+async function refreshBenefits(): Promise<void> {
+  if (isRefreshingBenefits.value) return;
   isRefreshingBenefits.value = true;
-
-  window.setTimeout(() => {
-    benefitsCheckedAt.value = new Date();
-    isRefreshingBenefits.value = false;
+  try {
+    await fetchBenefits();
     $q.notify({
       type: 'positive',
       message: t('profile.notifications.benefitsRefreshed'),
       position: 'top',
     });
-  }, 500);
+  } finally {
+    isRefreshingBenefits.value = false;
+  }
 }
 
 const filteredRegistrations = computed<RegisteredCourseEntry[]>(() => {
@@ -2500,6 +2528,7 @@ onMounted(() => {
       }
     });
   }
+  void fetchBenefits();
 });
 
 watch(
