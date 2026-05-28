@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="instructor-students-page">
     <div class="section-container instructor-students">
       <section class="students-hero">
@@ -104,9 +104,9 @@
                   <button
                     type="button"
                     class="learning-result-download-link"
-                    @click.stop="exportCourseLearningResultsCsv(course)"
+                    @click.stop="printCbs003(course)"
                   >
-                    {{ getLearningResultDownloadCode(course) }}
+                    {{ getLearningResultDownloadCode() }}
                   </button>
                 </td>
               </tr>
@@ -199,7 +199,7 @@
               </p>
             </div>
 
-            <div class="learning-result-import-grid">
+            <div v-if="!approvalStatus" class="learning-result-import-grid">
               <label class="learning-result-import-label" for="learning-result-import"
                 >import</label
               >
@@ -275,7 +275,10 @@
               />
             </div>
 
-            <div v-if="detailPreviewRows.length > 0" class="learning-result-detail-preview">
+            <div
+              v-if="!approvalStatus && detailPreviewRows.length > 0"
+              class="learning-result-detail-preview"
+            >
               <div class="learning-result-detail-preview__header">
                 <span class="text-positive">
                   พร้อม Import
@@ -362,6 +365,20 @@
               </div>
             </div>
 
+            <!-- Approval status banner -->
+            <div v-if="approvalStatus" class="learning-result-approved-banner">
+              <q-icon name="lock" color="positive" size="20px" />
+              <div>
+                <div class="text-weight-bold">
+                  รายวิชานี้ได้บันทึกการอนุมัติเกรดแล้ว ไม่สามารถแก้ไขผลการเรียนได้
+                </div>
+                <div class="learning-result-approved-meta">
+                  ผู้อนุมัติเกรด: {{ approvalStatus.approvedBy }} &nbsp;&nbsp; วันที่อนุมัติเกรด:
+                  {{ formatBackendDateTime(approvalStatus.approvedAt) }}
+                </div>
+              </div>
+            </div>
+
             <div class="learning-result-table-actions">
               <div class="learning-result-links">
                 <button type="button" @click="exportLearnerListCsv(selectedCourse)">
@@ -369,6 +386,9 @@
                 </button>
                 <button type="button" @click="printGradeForm(selectedCourse)">
                   ดาวน์โหลดแบบฟอร์มใบส่งเกรด สำหรับเจ้าประชุมกรรมการประจำ
+                </button>
+                <button type="button" @click="printCbs003(selectedCourse)">
+                  ดาวน์โหลด BUU-CBS 003 รายงานสรุปผลการจัดรายวิชา
                 </button>
               </div>
               <div class="learning-result-sync-actions">
@@ -389,6 +409,16 @@
                   no-caps
                   :loading="syncingResults"
                   @click="saveLearningResults"
+                />
+                <q-btn
+                  v-if="!approvalStatus"
+                  unelevated
+                  color="positive"
+                  icon="how_to_reg"
+                  label="บันทึกอนุมัติผลการเรียน"
+                  no-caps
+                  :loading="approvingGrades"
+                  @click="openApproveDialog"
                 />
               </div>
             </div>
@@ -798,6 +828,57 @@
         </div>
       </transition>
     </Teleport>
+
+    <!-- Approve Grades Dialog -->
+    <q-dialog v-model="approveDialogOpen" transition-show="scale" transition-hide="scale">
+      <q-card style="min-width: 420px; border-radius: 12px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-subtitle1 text-weight-bold">บันทึกอนุมัติผลการเรียน</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+        <q-card-section class="q-gutter-y-sm">
+          <div>
+            <div class="text-caption text-grey-7 q-mb-xs">อนุมัติการเรียน</div>
+            <q-option-group
+              v-model="approveForm.mode"
+              :options="[
+                { label: 'อนุมัติ', value: 'specify' },
+                { label: 'ไม่อนุมัติ', value: 'none' },
+              ]"
+              color="primary"
+              inline
+              dense
+            />
+          </div>
+          <q-input
+            v-model="approveForm.detail"
+            type="textarea"
+            outlined
+            dense
+            rows="3"
+            label="รายละเอียดการประชุมอนุมัติผลการเรียน"
+            :disable="approveForm.mode === 'none'"
+          />
+          <BaseDateInput
+            v-model="approveForm.date"
+            value-format="YYYY-MM-DD"
+            label="วันที่อนุมัติ"
+          />
+        </q-card-section>
+        <q-card-actions align="right" class="q-px-md q-pb-md">
+          <q-btn flat label="ยกเลิก" no-caps color="grey-7" v-close-popup />
+          <q-btn
+            unelevated
+            color="primary"
+            label="บันทึก"
+            no-caps
+            :loading="approvingGrades"
+            @click="confirmApproveGrades"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -813,6 +894,7 @@ import type { GradeItemBreakdown } from 'src/composables/use-instructor-backend'
 import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
 import buuLogoUrl from 'src/assets/buu-logo-receipt.png';
+import BaseDateInput from 'src/components/base/BaseDateInput.vue';
 
 interface LearnerRow {
   id: string;
@@ -871,6 +953,14 @@ const gradeItemOptions = ref<Array<{ id: number; name: string }>>([]);
 const savingGrades = ref(false);
 const syncingScores = ref(false);
 const syncingResults = ref(false);
+const approvingGrades = ref(false);
+const approveDialogOpen = ref(false);
+const approveForm = ref({
+  mode: 'specify',
+  detail: '',
+  date: new Date().toISOString().slice(0, 10),
+});
+const approvalStatus = ref<{ approvedBy: string; approvedAt: string } | null>(null);
 const panelOpen = ref(false);
 const panelRow = ref<LearnerRow | null>(null);
 
@@ -967,11 +1057,29 @@ onMounted(async () => {
 
 watch(
   selectedCourse,
-  (course) => {
+  async (course) => {
     const email = authStore.user?.email;
+    approvalStatus.value = null;
     if (!course || !email) return;
     void instructorBackend.fetchLearners(email, course.id, course.moodleId ?? null);
     void instructorBackend.fetchGrades(email, course.id);
+    const numericId = String(course.id).replace(/^db-/, '');
+    try {
+      const { data } = await api.get<{
+        approved: boolean;
+        approvedBy: string | null;
+        approvedAt: string | null;
+        detail: string | null;
+      }>(`/api/instructor/courses/${numericId}/approval-status?email=${encodeURIComponent(email)}`);
+      if (data.approved) {
+        approvalStatus.value = {
+          approvedBy: data.approvedBy ?? '',
+          approvedAt: data.approvedAt ?? '',
+        };
+      }
+    } catch {
+      // non-critical
+    }
   },
   { immediate: true },
 );
@@ -991,6 +1099,20 @@ function formatBackendDate(value: string | null | undefined): string {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+  }).format(date);
+}
+
+function formatBackendDateTime(value: string | null | undefined): string {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   }).format(date);
 }
 
@@ -1121,8 +1243,8 @@ function getCourseFailedCount(course: Course): number {
     .length;
 }
 
-function getLearningResultDownloadCode(course: Course): string {
-  return `CBS${String(course.id).padStart(3, '0')}`;
+function getLearningResultDownloadCode(): string {
+  return 'CBS 003';
 }
 
 const learnerColumns: QTableColumn<LearnerRow>[] = [
@@ -1321,6 +1443,53 @@ async function pullScoresFromLms(): Promise<void> {
   }
 }
 
+function openApproveDialog(): void {
+  approveForm.value = {
+    mode: 'specify',
+    detail: '',
+    date: new Date().toISOString().slice(0, 10),
+  };
+  approveDialogOpen.value = true;
+}
+
+async function confirmApproveGrades(): Promise<void> {
+  const course = selectedCourse.value;
+  const email = authStore.user?.email;
+  if (!course || !email) return;
+
+  const detail = approveForm.value.mode === 'none' ? 'ไม่อนุมัติ' : approveForm.value.detail.trim();
+
+  approvingGrades.value = true;
+  try {
+    const numericId = String(course.id).replace(/^db-/, '');
+    const { data } = await api.patch<{
+      approved: number;
+      skipped: number;
+      approvedBy: string;
+      approvedAt: string;
+    }>(`/api/instructor/courses/${numericId}/approve-grades?email=${encodeURIComponent(email)}`, {
+      approveDetail: detail,
+      approveDate: approveForm.value.date,
+    });
+    approvalStatus.value = { approvedBy: data.approvedBy, approvedAt: data.approvedAt };
+    approveDialogOpen.value = false;
+    $q.notify({
+      type: 'positive',
+      icon: 'how_to_reg',
+      message: `อนุมัติผลการเรียนแล้ว ${data.approved} ราย`,
+    });
+    await instructorBackend.fetchGrades(email, course.id);
+  } catch (err) {
+    const msg =
+      (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+      'เกิดข้อผิดพลาดในการอนุมัติ';
+    console.error('approveGrades error:', err);
+    $q.notify({ type: 'negative', icon: 'error', message: msg });
+  } finally {
+    approvingGrades.value = false;
+  }
+}
+
 function getLearnerLmsScore(learner: LearnerRow): string {
   if (learner.lmsFinalscore !== null) return Number(learner.lmsFinalscore).toFixed(2);
   const pendingResult = pendingLearningResults.value[learner.studentId];
@@ -1365,6 +1534,7 @@ function exportLearnerListCsv(course: Course | undefined): void {
 async function printGradeForm(course: Course | undefined): Promise<void> {
   if (!course) return;
   const email = authStore.user?.email ?? '';
+  let instructorPrefix = '';
   let instructorName = '';
   try {
     const { data } = await api.get<{
@@ -1372,8 +1542,8 @@ async function printGradeForm(course: Course | undefined): Promise<void> {
       firstNameTh: string | null;
       lastNameTh: string | null;
     }>(`/api/instructor/profile?email=${encodeURIComponent(email)}`);
-    instructorName =
-      `${data.prefix ?? ''}${data.firstNameTh ?? ''} ${data.lastNameTh ?? ''}`.trim();
+    instructorPrefix = data.prefix ?? '';
+    instructorName = `${data.firstNameTh ?? ''} ${data.lastNameTh ?? ''}`.trim();
   } catch {
     instructorName = authStore.user?.email ?? '';
   }
@@ -1432,7 +1602,7 @@ async function printGradeForm(course: Course | undefined): Promise<void> {
 </div>
 <div class="meta">
   <div><strong>รายวิชา</strong> ${course.code} : ${course.title}</div>
-  <div><strong>ผู้สอน</strong> อาจารย์ ${instructorName || '-'}</div>
+  <div><strong>ผู้สอน</strong> ${[instructorPrefix, instructorName].filter(Boolean).join(' ') || '-'}</div>
   <div><strong>การเรียนการสอน</strong> ${course.registrationStart ?? ''} - ${course.registrationEnd ?? ''}</div>
 </div>
 <table>
@@ -1450,7 +1620,7 @@ async function printGradeForm(course: Course | undefined): Promise<void> {
 <div class="footer">
   <div class="sig">
     <div class="sig-line"></div>
-    <div>(${instructorName || '................................'})</div>
+    <div>(${[instructorPrefix, instructorName].filter(Boolean).join(' ') || '................................'})</div>
     <div>__/__/__</div>
   </div>
   <div class="sig">
@@ -1471,8 +1641,161 @@ async function printGradeForm(course: Course | undefined): Promise<void> {
   win.print();
 }
 
-function exportCourseLearningResultsCsv(course: Course): void {
-  exportLearnerListCsv(course);
+async function printCbs003(course: Course | undefined): Promise<void> {
+  if (!course) return;
+  const email = authStore.user?.email ?? '';
+  let instructorName = '';
+  let instructorPrefix = '';
+  try {
+    const { data } = await api.get<{
+      prefix: string | null;
+      firstNameTh: string | null;
+      lastNameTh: string | null;
+    }>(`/api/instructor/profile?email=${encodeURIComponent(email)}`);
+    instructorPrefix = data.prefix ?? '';
+    instructorName = `${data.firstNameTh ?? ''} ${data.lastNameTh ?? ''}`.trim();
+  } catch {
+    instructorName = email;
+  }
+
+  // Ensure data is loaded before printing
+  const courseKey = String(course.id).startsWith('db-') ? course.id : `db-${course.id}`;
+  if (!instructorBackend.learnersByCourseId.value[courseKey]) {
+    await instructorBackend.fetchLearners(email, course.id, course.moodleId ?? null);
+    await instructorBackend.fetchGrades(email, course.id);
+  }
+
+  const learnerList = getCourseResultLearners(course);
+  const passed = learnerList.filter((l) => l.resultStatus === 'ผ่าน').length;
+  const failed = learnerList.filter((l) => l.resultStatus === 'ไม่ผ่าน').length;
+  const noGrade = learnerList.filter((l) => !l.importedGradeName).length;
+  const printDate = new Date().toLocaleString('th-TH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const learnerRows = learnerList
+    .map(
+      (learner, index) => `
+    <tr>
+      <td>${index + 1}</td>
+      <td>${learner.studentId}</td>
+      <td>${learner.name}</td>
+      <td>${learner.lmsFinalscore !== null ? Number(learner.lmsFinalscore).toFixed(2) : ''}</td>
+      <td>${learner.importedGradeName ?? ''}</td>
+    </tr>`,
+    )
+    .join('');
+
+  const instructorFullName = [instructorPrefix, instructorName].filter(Boolean).join(' ');
+  const totalEnrolled = learnerList.length;
+  const maxSeats = course.enrolledCount ?? totalEnrolled;
+
+  const html = `<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<title>BUU-CBS 003 ${course.code}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Sarabun', sans-serif; font-size: 14px; margin: 0; padding: 0; color: #000; line-height: 1.8; }
+  .wrap { width: 160mm; margin: 0 auto; padding: 15mm 0; }
+  .header-box { border: 1px solid #000; padding: 4px 12px; float: right; font-size: 13px; font-weight: bold; }
+  .title-block { text-align: center; margin: 16px 0 24px; clear: both; }
+  .title-block p { margin: 2px 0; font-size: 15px; font-weight: bold; }
+  .sub { margin-left: 24px; margin-bottom: 2px; }
+  .sub2 { margin-left: 48px; margin-bottom: 2px; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 12px; font-size: 13px; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid #000; padding: 5px 8px; text-align: left; }
+  th { background: #f5f5f5; text-align: center; font-weight: bold; }
+  td.center { text-align: center; }
+  .no-data td { text-align: center; color: #666; }
+  .print-date { margin-top: 24px; font-size: 11px; text-align: right; color: #666; }
+  @media print {
+    @page { margin: 15mm 25mm; size: A4; }
+    .wrap { width: 100%; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="header-box">BUU-CBS 003</div>
+<div style="clear:both"></div>
+<div class="title-block">
+  <p>แบบฟอร์ม</p>
+  <p>รายงานสรุปผลการจัดรายวิชา/ ชุดวิชา เพื่อสะสมในระบบคลังหน่วยกิต</p>
+  <p>มหาวิทยาลัยบูรพา</p>
+</div>
+
+<p><strong>1. ข้อมูลทั่วไป</strong></p>
+<div class="sub">1.1 ชื่อรายวิชา/ ชุดวิชา:&nbsp;&nbsp; ภาษาไทย ${course.title ?? ''}</div>
+<div class="sub2">ภาษาอังกฤษ ${course.titleEn ?? '-'}</div>
+<div class="sub">1.2 จำนวน ${course.totalHours ?? '-'} หน่วยกิต</div>
+<div class="sub">1.3 ชื่อหลักสูตรที่ส่งสะสมหน่วยกิต
+  <table>
+    <thead><tr><th>ลำดับ</th><th>ชื่อรายวิชา</th><th>หลักสูตร</th><th>หน่วยกิต</th><th>จำนวนหน่วยกิตที่สะสม</th></tr></thead>
+    <tbody><tr class="no-data"><td colspan="5">ไม่พบข้อมูล</td></tr></tbody>
+  </table>
+</div>
+<div class="sub">1.4 ชื่อส่วนงานที่รับผิดชอบ ${course.faculty ?? '-'}</div>
+<div class="sub">1.5 ชื่อส่วนงานหรือสถานประกอบการที่ร่วมจัดการเรียนการสอน (ถ้ามี และสามารถจัดร่วม มากกว่า 1 ส่วนงานได้)
+  <div class="sub">1.5.1 ชื่อส่วนงานที่ร่วมจัดการเรียนการสอน -</div>
+  <div class="sub">1.5.2 ชื่อสถานประกอบการที่ร่วมจัดการเรียนการสอน -</div>
+</div>
+<div class="sub">1.6 อาจารย์ผู้รับผิดชอบรายวิชา/ ชุดวิชา (ชื่อ-สกุล)
+  <table>
+    <thead><tr><th>ลำดับ</th><th>ชื่อ -สกุล</th><th>อีเมล</th><th>เบอร์โทรศัพท์</th></tr></thead>
+    <tbody><tr><td class="center">1</td><td>${instructorFullName || '-'}</td><td>${email}</td><td></td></tr></tbody>
+  </table>
+</div>
+<div class="sub">1.7 อาจารย์ผู้สอนรายวิชา/ ชุดวิชา (ชื่อ-สกุล)
+  <table>
+    <thead><tr><th>ลำดับ</th><th>ชื่อ -สกุล</th><th>อีเมล</th><th>เบอร์โทรศัพท์</th></tr></thead>
+    <tbody><tr><td class="center">1</td><td>${instructorFullName || '-'}</td><td>${email}</td><td></td></tr></tbody>
+  </table>
+</div>
+<div class="sub">1.8 ระยะเวลาในการดำเนินการ ตั้งแต่วันที่ ${course.registrationStart ?? '-'} ถึงวันที่ ${course.registrationEnd ?? '-'}</div>
+
+<br/>
+<table>
+  <thead>
+    <tr>
+      <th>ลำดับ</th><th>รหัสผู้เรียน</th><th>ชื่อ-สกุล</th><th>คะแนน</th><th>ผลการเรียน</th>
+    </tr>
+  </thead>
+  <tbody>${learnerRows || `<tr class="no-data"><td colspan="5">ไม่มีข้อมูล</td></tr>`}</tbody>
+</table>
+
+<table style="margin-top:8px">
+  <thead>
+    <tr><th>รับ</th><th>ลง</th><th>ผ่าน</th><th>ไม่ผ่าน</th><th>ดำเนินการ</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="center">${maxSeats}</td>
+      <td class="center">${totalEnrolled}</td>
+      <td class="center">${passed}</td>
+      <td class="center">${failed}</td>
+      <td class="center">${noGrade}</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="print-date">วันที่พิมพ์ : ${printDate}</div>
+</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  win.print();
 }
 
 function sanitizeFileName(value: string): string {
@@ -2479,6 +2802,25 @@ function exportLearnersPdf(): void {
 
 .detail-row--unmatched {
   opacity: 0.65;
+}
+
+.learning-result-approved-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #166534;
+}
+
+.learning-result-approved-meta {
+  margin-left: 8px;
+  font-size: 13px;
+  color: #4b7a62;
 }
 
 .learning-result-table-actions {
