@@ -16,6 +16,7 @@ interface FetchReportOptions {
   endDate?: string | null;
   facultyId?: number | null;
   typeCourseId?: number | null;
+  search?: string | null;
 }
 
 function createEmptyPagination(): AdminRegistrationStatisticsReportPagination {
@@ -93,6 +94,7 @@ export function useAdminRegistrationStatisticsReport() {
             endDate: options.endDate || undefined,
             facultyId: options.facultyId ?? undefined,
             typeCourseId: options.typeCourseId ?? undefined,
+            search: options.search || undefined,
           },
         },
       );

@@ -1,7 +1,7 @@
 <template>
   <q-page class="admin-page finance-faculty-education-report-page">
     <AdminPageHero
-      eyebrow="Faculty Education Report"
+      :eyebrow="$t('finance.educationReport.eyebrow')"
       eyebrow-icon="school"
       :title="$t('finance.educationReport.title')"
       :description="$t('finance.educationReport.description')"

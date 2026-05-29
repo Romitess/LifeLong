@@ -14,19 +14,27 @@
     </div>
 
     <AdminSurfaceCard
-      eyebrow="Registration Statistics"
-      title="สถิติการลงทะเบียน"
-      subtitle="ติดตามจำนวนผู้เรียนและค่าลงทะเบียน แยกตามคณะหรือส่วนงานจากข้อมูลจริงในระบบ"
+      :eyebrow="t('finance.registrationStatistics.eyebrow')"
+      :title="t('finance.registrationStatistics.cardTitle')"
+      :subtitle="t('finance.registrationStatistics.cardSubtitle')"
       body-padding="none"
     >
       <template #header-actions>
-        <AdminActionButton
-          variant="primary"
-          icon="download"
-          label="ส่งออก"
-          class="registration-statistics-report__export-btn"
-          @click="exportDialogOpen = true"
-        />
+        <div class="row items-center q-gutter-x-sm">
+          <AdminSearchInput
+            v-model="searchQuery"
+            :placeholder="t('finance.registrationStatistics.searchPlaceholder')"
+            class="registration-statistics-report__search"
+            @update:model-value="handleSearch"
+          />
+          <AdminActionButton
+            variant="primary"
+            icon="download"
+            :label="t('finance.registrationStatistics.exportBtn')"
+            class="registration-statistics-report__export-btn"
+            @click="exportDialogOpen = true"
+          />
+        </div>
       </template>
 
       <AdminRegistrationExportDialog
@@ -54,12 +62,16 @@
           </colgroup>
           <thead>
             <tr>
-              <th class="registration-statistics-report-table__index">ลำดับ</th>
-              <th>ชื่อรายวิชา</th>
-              <th>ผู้รับผิดชอบรายวิชา</th>
-              <th>วันที่เปิด-ปิดการเรียนการสอน</th>
-              <th class="text-right">จำนวนผู้เรียน</th>
-              <th class="text-right">ค่าลงทะเบียนรวม</th>
+              <th class="registration-statistics-report-table__index">
+                {{ t('finance.registrationStatistics.table.index') }}
+              </th>
+              <th>{{ t('finance.registrationStatistics.table.courseName') }}</th>
+              <th>{{ t('finance.registrationStatistics.table.courseOwner') }}</th>
+              <th>{{ t('finance.registrationStatistics.table.dates') }}</th>
+              <th class="text-right">
+                {{ t('finance.registrationStatistics.table.learnersCount') }}
+              </th>
+              <th class="text-right">{{ t('finance.registrationStatistics.table.totalFee') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -127,13 +139,8 @@
                   <td colspan="6">
                     <div class="registration-statistics-report__group-header">
                       <div class="registration-statistics-report__group-heading">
-                        <span>คณะ/ส่วนงาน</span>
+                        <span>{{ t('finance.registrationStatistics.table.faculty') }}</span>
                         <strong>{{ group.facultyName }}</strong>
-                      </div>
-                      <div class="registration-statistics-report__group-metrics">
-                        <span>{{ formatCount(group.totalCourses) }} วิชา</span>
-                        <span>{{ formatCount(group.totalLearners) }} คน</span>
-                        <span>{{ formatCurrency(group.totalRegistrationFees) }}</span>
                       </div>
                     </div>
                   </td>
@@ -162,7 +169,9 @@
                     <div class="registration-statistics-report__owner-cell">
                       <span class="registration-statistics-report__owner-chip">
                         <q-icon name="badge" size="15px" />
-                        {{ item.responsibleName || 'ไม่ระบุผู้รับผิดชอบ' }}
+                        {{
+                          item.responsibleName || t('finance.registrationStatistics.table.noOwner')
+                        }}
                       </span>
                     </div>
                   </td>
@@ -175,7 +184,7 @@
                   <td class="text-right">
                     <div class="registration-statistics-report__metric-cell">
                       <strong>{{ formatCount(item.learnerCount) }}</strong>
-                      <span>คน</span>
+                      <span>{{ t('finance.registrationStatistics.table.learnersSuffix') }}</span>
                     </div>
                   </td>
                   <td class="text-right">
@@ -194,18 +203,18 @@
 
                 <tr class="registration-statistics-report-table__group-total-row">
                   <td colspan="4" class="registration-statistics-report-table__group-total-label">
-                    ยอดรวมคณะจากข้อมูลที่กรอง
+                    {{ t('finance.registrationStatistics.table.groupTotalPrefix') }}
                   </td>
                   <td class="text-right">
                     <div class="registration-statistics-report__metric-cell">
                       <strong>{{ formatCount(group.totalLearners) }}</strong>
-                      <span>คน</span>
+                      <span>{{ t('finance.registrationStatistics.table.learnersSuffix') }}</span>
                     </div>
                   </td>
                   <td class="text-right">
                     <div class="registration-statistics-report__metric-cell">
                       <strong>{{ formatCurrency(group.totalRegistrationFees) }}</strong>
-                      <span>ค่าลงทะเบียนรวม</span>
+                      <span>{{ t('finance.registrationStatistics.table.totalFee') }}</span>
                     </div>
                   </td>
                 </tr>
@@ -214,7 +223,7 @@
 
             <tr v-else>
               <td colspan="6" class="registration-statistics-report-table__empty">
-                ไม่พบข้อมูลสถิติการลงทะเบียนตามตัวกรองที่เลือก
+                {{ t('finance.registrationStatistics.table.noData') }}
               </td>
             </tr>
           </tbody>
@@ -243,11 +252,13 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import AdminRegistrationExportDialog from 'components/admin/AdminRegistrationExportDialog.vue';
+import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminRegistrationStatisticsReport } from 'src/composables/use-admin-registration-statistics-report';
 import type { AdminRegistrationStatisticsReportResponse } from 'src/types/admin-registration-statistics-report';
 import { formatCount, formatCurrency } from 'src/utils/course-format';
+import { useI18n } from 'vue-i18n';
 
 interface DateRangeValue {
   start: string | null;
@@ -264,6 +275,7 @@ const rowsPerPage = 10;
 const currentPage = ref(1);
 const paginationRef = ref<HTMLElement | null>(null);
 const exportDialogOpen = ref(false);
+const searchQuery = ref('');
 const dateRange = ref<DateRangeValue>({
   start: null,
   end: null,
@@ -273,6 +285,8 @@ const selectedTypeCourseId = ref<number | null>(null);
 
 const { groups, filterOptions, summary, pagination, generatedAt, isLoading, error, fetchData } =
   useAdminRegistrationStatisticsReport();
+
+const { t } = useI18n();
 
 const stats = computed<
   {
@@ -284,23 +298,23 @@ const stats = computed<
   }[]
 >(() => [
   {
-    label: 'รายวิชาที่พบ',
+    label: t('finance.registrationStatistics.stats.coursesFound'),
     value: formatCount(summary.value.totalCourses),
-    description: 'จำนวนรายวิชาที่ตรงกับตัวกรองปัจจุบัน',
+    description: t('finance.registrationStatistics.stats.coursesFoundDesc'),
     icon: 'menu_book',
     tone: 'primary',
   },
   {
-    label: 'ผู้เรียนรวม',
+    label: t('finance.registrationStatistics.stats.totalLearners'),
     value: formatCount(summary.value.totalLearners),
-    description: 'จำนวนผู้เรียนสะสมจากรายวิชาที่แสดงผล',
+    description: t('finance.registrationStatistics.stats.totalLearnersDesc'),
     icon: 'groups',
     tone: 'indigo',
   },
   {
-    label: 'ค่าลงทะเบียนรวม',
+    label: t('finance.registrationStatistics.stats.totalFees'),
     value: formatCurrency(summary.value.totalRegistrationFees),
-    description: 'ผลรวมค่าลงทะเบียนจริงจากผู้เรียนทั้งหมด',
+    description: t('finance.registrationStatistics.stats.totalFeesDesc'),
     icon: 'payments',
     tone: 'positive',
   },
@@ -374,8 +388,8 @@ function getUnitPriceLabel(
         : 0;
 
   return fallbackUnitPrice === 0
-    ? 'ราคาตั้งไว้: ฟรี'
-    : `ราคาตั้งไว้: ${formatCurrency(fallbackUnitPrice)}`;
+    ? t('finance.registrationStatistics.table.priceSetFree')
+    : `${t('finance.registrationStatistics.table.priceSetPrefix')} ${formatCurrency(fallbackUnitPrice)}`;
 }
 
 function applyMockFilters(page = 1): void {
@@ -385,6 +399,7 @@ function applyMockFilters(page = 1): void {
 
   const normalizedStartDate = normalizeDateForApi(dateRange.value.start);
   const normalizedEndDate = normalizeDateForApi(dateRange.value.end);
+  const searchLower = searchQuery.value.trim().toLowerCase();
 
   const filteredGroups = props.mockData.groups
     .map((group) => {
@@ -398,7 +413,13 @@ function applyMockFilters(page = 1): void {
           (!normalizedStartDate || !item.startDate || item.startDate >= normalizedStartDate) &&
           (!normalizedEndDate || !item.endDate || item.endDate <= normalizedEndDate);
 
-        return matchesFaculty && matchesDateRange;
+        const matchesSearch =
+          !searchLower ||
+          item.courseName?.toLowerCase().includes(searchLower) ||
+          item.courseCode?.toLowerCase().includes(searchLower) ||
+          item.responsibleName?.toLowerCase().includes(searchLower);
+
+        return matchesFaculty && matchesDateRange && matchesSearch;
       });
 
       const normalizedItems = filteredItems.map((item, index) => ({
@@ -457,6 +478,7 @@ function loadReport(page = 1): Promise<void> {
     endDate: normalizeDateForApi(dateRange.value.end),
     facultyId: selectedFacultyId.value,
     typeCourseId: selectedTypeCourseId.value,
+    search: searchQuery.value || null,
   });
 }
 
@@ -477,6 +499,11 @@ async function preservePaginationPosition(update: () => Promise<void> | void): P
   }
 
   window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
+}
+
+async function handleSearch(): Promise<void> {
+  currentPage.value = 1;
+  await loadReport(1);
 }
 
 async function handlePageChange(page: number): Promise<void> {
@@ -514,15 +541,17 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
     return `${formatDate(startDate)} - ${formatDate(endDate)}`;
   }
 
-  return startDate ? `เริ่ม ${formatDate(startDate)}` : `สิ้นสุด ${formatDate(endDate)}`;
+  return startDate
+    ? `${t('finance.registrationStatistics.table.startPrefix')} ${formatDate(startDate)}`
+    : `${t('finance.registrationStatistics.table.endPrefix')} ${formatDate(endDate)}`;
 }
 
 function getDateHint(startDate: string | null): string {
   if (!startDate) {
-    return 'ไม่ระบุวันเปิดเรียน';
+    return t('finance.registrationStatistics.table.noStartDate');
   }
 
-  return `เปิดเรียน ${formatDate(startDate)}`;
+  return `${t('finance.registrationStatistics.table.startHint')} ${formatDate(startDate)}`;
 }
 
 onMounted(() => {
@@ -596,6 +625,10 @@ onMounted(() => {
   font-size: 0.88rem;
   font-weight: 700;
   box-shadow: 0 8px 18px rgba(0, 121, 107, 0.16);
+}
+
+.registration-statistics-report__search {
+  min-width: 260px;
 }
 
 .registration-statistics-report__action-spacer {
@@ -718,26 +751,6 @@ onMounted(() => {
     font-size: 1rem;
     font-weight: 900;
     line-height: 1.35;
-  }
-}
-
-.registration-statistics-report__group-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
-
-  span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 34px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    color: #0f766e;
-    background: rgba(20, 184, 166, 0.1);
-    font-size: 0.76rem;
-    font-weight: 800;
   }
 }
 
