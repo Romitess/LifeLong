@@ -137,6 +137,7 @@ import {
   type RegisteredCourseEntry,
 } from 'src/composables/use-my-registered-courses';
 import { useCourseRegistrationStore } from 'src/stores/course-registration-store';
+import { useEnrollmentProgressStore } from 'src/stores/enrollment-progress-store';
 
 const router = useRouter();
 const $q = useQuasar();
@@ -145,11 +146,16 @@ const { myRegisteredCourseEntries } = useMyRegisteredCourses();
 const { t } = useI18n({ useScope: 'global' });
 const authStore = useAuthStore();
 const courseRegistrationStore = useCourseRegistrationStore();
+const enrollmentProgressStore = useEnrollmentProgressStore();
 
-onMounted(() => {
+onMounted(async () => {
   const username = authStore.user?.username;
   if (username) {
-    void courseRegistrationStore.fetchMyEnrollments(username);
+    await courseRegistrationStore.fetchMyEnrollments(username);
+    const enrollIds = courseRegistrationStore.myRegistrations
+      .map((r) => r.enrollId)
+      .filter((id): id is number => id != null);
+    void enrollmentProgressStore.fetchAllCompletions(enrollIds);
   }
 });
 

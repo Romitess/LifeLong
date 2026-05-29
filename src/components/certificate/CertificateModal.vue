@@ -57,13 +57,24 @@
           class="q-px-xl text-weight-bold"
           @click="printCertificate"
         />
+        <q-btn
+          unelevated
+          color="positive"
+          icon="download"
+          label="ดาวน์โหลด PDF"
+          class="q-px-xl text-weight-bold"
+          :loading="downloading"
+          @click="downloadCertificate"
+        />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import type { Course } from 'src/types/course';
 
 type CertificateCourse = Pick<Course, 'title' | 'faculty'>;
@@ -91,8 +102,28 @@ const formattedShortDate = computed(() => {
   return `${day}/${month}/${year}`;
 });
 
+const downloading = ref(false);
+
 function printCertificate(): void {
   window.print();
+}
+
+async function downloadCertificate(): Promise<void> {
+  const el = document.getElementById('certificate-print-area');
+  if (!el) return;
+  downloading.value = true;
+  try {
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    pdf.addImage(imgData, 'PNG', 0, 0, pageW, pageH);
+    const filename = `certificate-${(props.course?.title ?? 'course').replace(/\s+/g, '_')}.pdf`;
+    pdf.save(filename);
+  } finally {
+    downloading.value = false;
+  }
 }
 </script>
 

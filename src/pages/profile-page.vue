@@ -1966,6 +1966,7 @@ import { api } from 'src/boot/axios';
 import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
 import { useAuthStore, type User, type UserProfileUpdate } from 'src/stores/auth-store';
+import { useEnrollmentProgressStore } from 'src/stores/enrollment-progress-store';
 import { useCourseStore } from 'src/stores/course-store';
 
 import { useProfileAvatar } from 'src/composables/use-profile-avatar';
@@ -1999,6 +2000,7 @@ const courseRegistrationStore = useCourseRegistrationStore();
 const coursePaymentStore = useCoursePaymentStore();
 const courseBookmarkStore = useCourseBookmarkStore();
 const authStore = useAuthStore();
+const enrollmentProgressStore = useEnrollmentProgressStore();
 const courseStore = useCourseStore();
 courseStore.init();
 const {
@@ -2519,14 +2521,14 @@ watch(
   { immediate: true },
 );
 
-onMounted(() => {
-  // Sync registrations to make sure we have their enrollIds
-  if (myRegistrations.value && myRegistrations.value.length > 0) {
-    myRegistrations.value.forEach((reg) => {
-      if (reg.courseCode && reg.courseId) {
-        void courseRegistrationStore.syncEnrollmentFromApi(reg.courseCode, reg.courseId);
-      }
-    });
+onMounted(async () => {
+  const username = authStore.user?.username;
+  if (username) {
+    await courseRegistrationStore.fetchMyEnrollments(username);
+    const enrollIds = courseRegistrationStore.myRegistrations
+      .map((r) => r.enrollId)
+      .filter((id): id is number => id != null);
+    void enrollmentProgressStore.fetchAllCompletions(enrollIds);
   }
   void fetchBenefits();
 });

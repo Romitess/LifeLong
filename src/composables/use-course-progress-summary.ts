@@ -1,5 +1,4 @@
-import { getCourseStructure, getFlatLessons } from 'src/data/course-structure';
-import { useCourseProgressStore } from 'src/stores/course-progress-store';
+import { useEnrollmentProgressStore } from 'src/stores/enrollment-progress-store';
 import { useI18n } from 'vue-i18n';
 
 export interface CourseProgressSummary {
@@ -13,15 +12,15 @@ export interface CourseProgressSummary {
 }
 
 export function useCourseProgressSummary() {
-  const progressStore = useCourseProgressStore();
+  const enrollmentProgressStore = useEnrollmentProgressStore();
   const { t } = useI18n({ useScope: 'global' });
 
-  const getCourseProgressSummary = (courseId: string): CourseProgressSummary => {
-    const structure = getCourseStructure(courseId);
-    const totalLessons = getFlatLessons(structure).length;
-    const completedLessons = progressStore.getCompletedLessonCount(courseId);
-    const progressPercent = progressStore.getCourseProgress(courseId, totalLessons);
-    const isCompleted = totalLessons > 0 && progressPercent >= 100;
+  const getCourseProgressSummary = (enrollId: number | null | undefined): CourseProgressSummary => {
+    const completion = enrollId != null ? enrollmentProgressStore.getCompletion(enrollId) : null;
+    const totalLessons = completion?.total ?? 0;
+    const completedLessons = completion?.done ?? 0;
+    const progressPercent = completion?.percent ?? 0;
+    const isCompleted = completion?.completed ?? false;
 
     return {
       completedLessons,
