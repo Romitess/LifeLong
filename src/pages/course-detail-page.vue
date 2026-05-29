@@ -83,7 +83,7 @@
                 <div>
                   <div class="quick-info-item__label">{{ $t('totalHours') }}</div>
                   <div class="quick-info-item__value">
-                    {{ course.totalHours }} {{ $t('hours') }}
+                    {{ course.totalHours || '—' }}{{ course.totalHours ? ' ' + $t('hours') : '' }}
                   </div>
                 </div>
               </div>

@@ -300,8 +300,8 @@ function createFallbackCourseDetail(course: Course): CourseDetail {
       ...(ownedCourse.instructorEmail ? { email: ownedCourse.instructorEmail } : {}),
       name: 'ผู้สอน',
       nameEn: 'Instructor',
-      title: 'อาจารย์',
-      titleEn: 'Instructor',
+      title: '',
+      titleEn: '',
       avatarUrl: 'https://i.pravatar.cc/200?img=12',
       department: course.faculty,
       departmentEn: course.facultyEn ?? course.faculty,
@@ -310,9 +310,8 @@ function createFallbackCourseDetail(course: Course): CourseDetail {
     syllabus: [],
     certificateType: course.status,
     certificateTypeEn: course.status,
-    contactEmail: 'gem@buu.ac.th',
-    contactPhone: '038-102-222',
-    previewVideoUrl: 'https://www.youtube.com/watch?v=AGYgXbt-cq0',
+    contactEmail: '',
+    contactPhone: '',
     previewPosterUrl: course.imageUrl,
   };
 }

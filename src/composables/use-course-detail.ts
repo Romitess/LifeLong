@@ -20,10 +20,15 @@ interface BackendCourseDetailResponse {
   contractUrl?: string | null;
   typeClasses?: CourseTypeClass[] | null;
   privilege?: string | null;
+  vdo?: string | null;
+  creditBank?: number | null;
+  syllabus?: { seq: number; subject: string | null; hour: number | null }[];
   instructorInfo?: {
     nameTh?: string | null;
     nameEn?: string | null;
     email?: string | null;
+    titleTh?: string | null;
+    titleEn?: string | null;
   } | null;
 }
 
@@ -115,7 +120,9 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
               targets: data.targets ?? [],
               evaluationText: data.evaluationText ?? null,
               precondition: data.precondition ?? null,
+              ...(data.precondition ? { prerequisites: data.precondition } : {}),
               property: data.property ?? null,
+              ...(data.property ? { targetAudience: data.property } : {}),
               ...(data.typestudyDetail
                 ? { deliveryModes: mapDeliveryModes(data.typestudyDetail.name) }
                 : {}),
@@ -125,10 +132,23 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
               contractUrl: data.contractUrl ?? null,
               typeClasses: data.typeClasses ?? null,
               privilege: data.privilege ?? null,
+              ...(data.vdo ? { previewVideoUrl: data.vdo } : {}),
+              ...(data.creditBank != null ? { creditHours: Number(data.creditBank) } : {}),
+              ...(data.syllabus?.length
+                ? {
+                    syllabus: data.syllabus.map((ch) => ({
+                      week: ch.seq,
+                      topic: ch.subject ?? '',
+                      description: ch.hour ? `${Number(ch.hour)} ชั่วโมง` : '',
+                    })),
+                  }
+                : {}),
               ...(data.instructorInfo
                 ? {
                     instructor: {
                       ...detail.instructor,
+                      title: '',
+                      titleEn: '',
                       ...(data.instructorInfo.email ? { email: data.instructorInfo.email } : {}),
                       ...(data.instructorInfo.nameTh ? { name: data.instructorInfo.nameTh } : {}),
                       ...(data.instructorInfo.nameEn
