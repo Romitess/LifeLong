@@ -104,6 +104,7 @@ export interface CreateCoursePayload {
   contactTel: string;
   contactEmail: string;
   contactUrl?: string | undefined;
+  vdo?: string | undefined;
   image?: File | undefined;
   removeImage?: boolean | undefined;
   files?: File[] | undefined;
@@ -202,6 +203,7 @@ export interface AdminCourseDetail {
   contactTel: string | null;
   contactEmail: string | null;
   contactUrl: string | null;
+  vdo: string | null;
   instructors: { username: string | null; email: string | null }[];
   chapters: CourseChapterPayload[];
   stutypeFees: { stutypeId: number; stutypeName: string; amount: number | null }[];

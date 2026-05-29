@@ -1061,6 +1061,19 @@
                 class="course-form__input"
               />
             </div>
+            <div class="course-form__field-group">
+              <label class="course-form__label">ลิงก์วิดีโอตัวอย่าง</label>
+              <q-input
+                v-model="form.vdo"
+                outlined
+                dense
+                maxlength="255"
+                placeholder="https://www.youtube.com/watch?v=..."
+                hide-bottom-space
+                :readonly="props.readonly"
+                class="course-form__input"
+              />
+            </div>
           </div>
         </AdminSurfaceCard>
       </section>
@@ -1271,6 +1284,7 @@ const form = reactive({
   contactTel: '',
   contactEmail: '',
   contactUrl: '',
+  vdo: '',
   image: undefined as File | undefined,
   newFiles: [] as File[],
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
@@ -1375,6 +1389,7 @@ watch(
     form.contactTel = data.contactTel ?? '';
     form.contactEmail = data.contactEmail ?? '';
     form.contactUrl = data.contactUrl ?? '';
+    form.vdo = data.vdo ?? '';
     selectedInstructors.value = data.instructors
       .filter((i) => i.email)
       .map((i) => ({ username: '', email: i.email ?? '', fullName: i.email ?? '' }));
@@ -1732,6 +1747,7 @@ async function submit() {
     contactTel: form.contactTel,
     contactEmail: form.contactEmail,
     contactUrl: form.contactUrl || undefined,
+    vdo: form.vdo || undefined,
     image: form.image,
     removeImage: existingImageCleared.value || undefined,
     files: form.newFiles.length ? form.newFiles : undefined,
