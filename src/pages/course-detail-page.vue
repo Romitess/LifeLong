@@ -794,6 +794,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { api } from 'src/boot/axios';
 import { useRoute, useRouter } from 'vue-router';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue';
@@ -803,6 +804,7 @@ import BaseSpinner from 'components/base/BaseSpinner.vue';
 import { useCourseDetail } from 'src/composables/use-course-detail';
 import { useCourseChapers } from 'src/composables/use-course-chapters';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useCourseStore } from 'src/stores/course-store';
 import { useCourseRegistrationStore } from 'src/stores/course-registration-store';
 import { useCourseBookmarkStore } from 'src/stores/course-bookmark-store';
 import type { Course, DeliveryMode } from 'src/types/course';
@@ -822,6 +824,7 @@ const { locale, t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const courseStore = useCourseStore();
 const courseRegistrationStore = useCourseRegistrationStore();
 const courseBookmarkStore = useCourseBookmarkStore();
 const { getMoodleCourseUrl } = useMoodleSso();
@@ -1216,15 +1219,28 @@ function onToggleBookmark(): void {
   courseBookmarkStore.toggleBookmark(course.value);
 }
 
+function recordCourseClick(id: string): void {
+  const numericId = Number(id.replace('db-', ''));
+  if (!numericId || Number.isNaN(numericId)) return;
+  void api
+    .post<{ clickCount: number }>(`/api/moodle/courses/${numericId}/click`, {})
+    .then(({ data }) => {
+      courseStore.updateCourse(id, { views: data.clickCount });
+      if (course.value) course.value.views = data.clickCount;
+    })
+    .catch(() => undefined);
+}
+
 watch(
   courseId,
-  () => {
+  (id) => {
     void fetchCourseDetail();
-    const rawId = courseId.value ? courseId.value.replace('db-', '') : '';
+    const rawId = id ? id.replace('db-', '') : '';
     const moodleId = Number(rawId);
     if (moodleId && !Number.isNaN(moodleId)) {
       void fetchChapters(moodleId);
     }
+    if (id) recordCourseClick(id);
   },
   { immediate: true },
 );
