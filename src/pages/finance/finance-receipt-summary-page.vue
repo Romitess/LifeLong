@@ -5,7 +5,14 @@
       eyebrow-icon="receipt_long"
       :title="$t('finance.receiptSummary.title')"
       :description="$t('finance.receiptSummary.description')"
-    />
+    >
+      <template #aside>
+        <div class="faculty-scope-card">
+          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
+          <div class="faculty-scope-card__faculty">{{ userFacName || 'ไม่ระบุคณะ' }}</div>
+        </div>
+      </template>
+    </AdminPageHero>
 
     <section class="admin-shell admin-content">
       <AdminSurfaceCard>
@@ -825,5 +832,30 @@ function exportToExcel() {
 
 :deep(.admin-surface-card:not(.admin-surface-card--glass):hover) {
   transform: none !important;
+}
+
+.faculty-scope-card {
+  min-width: 260px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  display: grid;
+  gap: 6px;
+}
+
+.faculty-scope-card__label {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.faculty-scope-card__faculty {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 900;
 }
 </style>

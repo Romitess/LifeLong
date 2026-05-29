@@ -5,7 +5,14 @@
       eyebrow-icon="receipt_long"
       :title="$t('finance.receipts.title')"
       :description="$t('finance.receipts.description')"
-    />
+    >
+      <template #aside>
+        <div class="faculty-scope-card">
+          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
+          <div class="faculty-scope-card__faculty">{{ currentUserFaculty || 'ไม่ระบุคณะ' }}</div>
+        </div>
+      </template>
+    </AdminPageHero>
 
     <section class="admin-shell admin-content">
       <AdminSurfaceCard :title="$t('finance.receipts.allReceipts')" card-class="q-pa-none">
@@ -64,8 +71,14 @@ import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import { ref, computed } from 'vue';
 import type { QTableProps } from 'quasar';
 import { useI18n } from 'vue-i18n';
+import { useAuthStore } from 'stores/auth-store';
 
 const { t } = useI18n();
+const authStore = useAuthStore();
+
+const currentUserFaculty = computed(
+  () => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุคณะ',
+);
 
 const search = ref('');
 
@@ -175,5 +188,30 @@ const mockReceipts = [
     color: #475569;
     font-size: 0.9rem;
   }
+}
+
+.faculty-scope-card {
+  min-width: 260px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  display: grid;
+  gap: 6px;
+}
+
+.faculty-scope-card__label {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.faculty-scope-card__faculty {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 900;
 }
 </style>

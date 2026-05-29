@@ -18,54 +18,6 @@
       </q-card-section>
 
       <q-card-section class="registration-export-dialog__body">
-        <div class="registration-export-dialog__section-label">ตัวกรองข้อมูล</div>
-
-        <div class="registration-export-dialog__filters">
-          <BaseDateRangeFilter
-            v-model="localDateRange"
-            label="วันที่เปิดเรียน"
-            from-hint="ตั้งแต่"
-            to-hint="ถึง"
-            class="registration-export-dialog__date-filter"
-          />
-
-          <div class="registration-export-dialog__field">
-            <div class="registration-export-dialog__field-label">คณะ/ส่วนงาน</div>
-            <q-select
-              v-model="localFacultyId"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              :options="facultyOptions"
-              option-label="label"
-              option-value="id"
-              placeholder="ทั้งหมด"
-              hint=" "
-              class="registration-export-dialog__select"
-            />
-          </div>
-
-          <div class="registration-export-dialog__field">
-            <div class="registration-export-dialog__field-label">ประเภทรายวิชา</div>
-            <q-select
-              v-model="localTypeCourseId"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              :options="courseTypeOptions"
-              option-label="label"
-              option-value="id"
-              placeholder="ทั้งหมด"
-              hint=" "
-              class="registration-export-dialog__select"
-            />
-          </div>
-        </div>
-
         <div
           class="registration-export-dialog__section-label registration-export-dialog__section-label--top"
         >
@@ -123,7 +75,6 @@ import { computed, ref, watch } from 'vue';
 import ExcelJS from 'exceljs';
 import { api } from 'src/boot/axios';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
-import BaseDateRangeFilter from 'components/base/BaseDateRangeFilter.vue';
 import type { DateRangeValue } from 'components/base/BaseDateRangeFilter.vue';
 import type { AdminRegistrationStatisticsReportFilterOption } from 'src/types/admin-registration-statistics-report';
 

@@ -233,6 +233,7 @@ export default {
       sourceOfFunds: 'ผังแหล่งเงิน',
       paymentImport: 'นำเข้าชำระเงิน',
       applicantSearch: 'ค้นหาข้อมูลผู้สมัคร',
+      educationReport: 'รายงานการจัดศึกษาของคณะ',
       receiptSummary: 'รายงานสรุปการรับเงิน',
       dailyReport: 'รายงานการรับเงินประจำวัน',
     },
@@ -431,6 +432,12 @@ export default {
         pending: 'ยังไม่ชำระเงิน',
       },
       noData: 'ไม่พบข้อมูลผู้สมัครที่ตรงตามเงื่อนไข',
+    },
+    educationReport: {
+      title: 'รายงานการจัดศึกษาของคณะ',
+      description: 'สรุปข้อมูลการจัดการเรียนการสอนและจำนวนผู้เรียนของคณะที่ฝ่ายการเงินดูแล',
+      scopeLabel: 'คณะที่แสดงผล',
+      unknownFaculty: 'ไม่ระบุคณะ',
     },
     receiptSummary: {
       title: 'รายงานสรุปการรับเงินค่าลงทะเบียน LifeLong Learning มหาวิทยาลัยบูรพา',

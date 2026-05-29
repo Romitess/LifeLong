@@ -10,7 +10,6 @@
         <div class="faculty-scope-card">
           <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
           <div class="faculty-scope-card__faculty">{{ currentUserFaculty || 'ไม่ระบุคณะ' }}</div>
-          <div class="faculty-scope-card__helper">เฉพาะข้อมูลของคณะที่เข้าสู่ระบบ</div>
         </div>
       </template>
     </CentralFinancePageHero>

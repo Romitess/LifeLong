@@ -231,6 +231,7 @@ export default {
       sourceOfFunds: 'Source of Funds',
       paymentImport: 'Payment Import',
       applicantSearch: 'Applicant Search',
+      educationReport: 'Faculty Education Report',
       receiptSummary: 'Receipt Summary',
       dailyReport: 'Daily Report',
     },
@@ -428,6 +429,13 @@ export default {
         pending: 'Pending',
       },
       noData: 'No applicant data found matching the conditions',
+    },
+    educationReport: {
+      title: 'Faculty Education Report',
+      description:
+        'Summary of teaching activities and learner counts for the faculty managed by finance staff.',
+      scopeLabel: 'Displayed Faculty',
+      unknownFaculty: 'Faculty not specified',
     },
     receiptSummary: {
       title: 'Registration Revenue Summary Report, Lifelong Learning, Burapha University',

@@ -735,6 +735,12 @@ const navItems = computed<NavItem[]>(() => {
         to: '/finance/applicant-search',
       },
       {
+        name: 'finance-faculty-education-report',
+        label: t('finance.menu.educationReport'),
+        icon: 'school',
+        to: '/finance/faculty-education-report',
+      },
+      {
         name: 'finance-receipt-summary',
         label: t('finance.menu.receiptSummary'),
         icon: 'receipt_long',

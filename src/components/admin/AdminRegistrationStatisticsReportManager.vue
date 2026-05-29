@@ -28,73 +28,6 @@
           @click="exportDialogOpen = true"
         />
       </template>
-      <div class="registration-statistics-report__filters">
-        <BaseDateRangeFilter
-          v-model="dateRange"
-          label="วันที่เปิดเรียน"
-          from-hint="ตั้งแต่"
-          to-hint="ถึง"
-          class="registration-statistics-report__date-filter"
-        />
-
-        <div class="registration-statistics-report__field">
-          <div class="registration-statistics-report__field-label">คณะ/ส่วนงาน</div>
-          <q-select
-            v-model="selectedFacultyId"
-            outlined
-            dense
-            clearable
-            emit-value
-            map-options
-            :options="facultyOptions"
-            option-label="label"
-            option-value="id"
-            placeholder="เลือกคณะ/ส่วนงาน"
-            hint=" "
-            class="registration-statistics-report__select"
-          />
-        </div>
-
-        <div class="registration-statistics-report__field">
-          <div class="registration-statistics-report__field-label">ประเภท</div>
-          <q-select
-            v-model="selectedTypeCourseId"
-            outlined
-            dense
-            clearable
-            emit-value
-            map-options
-            :options="courseTypeOptions"
-            option-label="label"
-            option-value="id"
-            placeholder="เลือกประเภท"
-            hint=" "
-            class="registration-statistics-report__select"
-          />
-        </div>
-
-        <div
-          class="registration-statistics-report__field registration-statistics-report__field--actions"
-        >
-          <div class="registration-statistics-report__filter-actions">
-            <AdminActionButton
-              variant="primary"
-              icon="filter_alt"
-              label="แสดงผล"
-              :loading="isLoading"
-              class="registration-statistics-report__filter-btn"
-              @click="applyFilters"
-            />
-            <AdminActionButton
-              variant="secondary"
-              icon="restart_alt"
-              label="ล้างตัวกรอง"
-              class="registration-statistics-report__filter-btn"
-              @click="resetFilters"
-            />
-          </div>
-        </div>
-      </div>
 
       <AdminRegistrationExportDialog
         v-model="exportDialogOpen"
@@ -307,20 +240,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import AdminActionButton from 'components/admin/AdminActionButton.vue';
 import AdminRegistrationExportDialog from 'components/admin/AdminRegistrationExportDialog.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import BaseDateRangeFilter from 'components/base/BaseDateRangeFilter.vue';
-import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminRegistrationStatisticsReport } from 'src/composables/use-admin-registration-statistics-report';
+import type { AdminRegistrationStatisticsReportResponse } from 'src/types/admin-registration-statistics-report';
 import { formatCount, formatCurrency } from 'src/utils/course-format';
 
 interface DateRangeValue {
   start: string | null;
   end: string | null;
 }
+
+const props = defineProps<{
+  initialFacultyId?: number | null;
+  showFacultyFilter?: boolean;
+  mockData?: AdminRegistrationStatisticsReportResponse;
+}>();
 
 const rowsPerPage = 10;
 const currentPage = ref(1);
@@ -333,7 +271,7 @@ const dateRange = ref<DateRangeValue>({
 const selectedFacultyId = ref<number | null>(null);
 const selectedTypeCourseId = ref<number | null>(null);
 
-const { groups, filterOptions, summary, pagination, isLoading, error, fetchData } =
+const { groups, filterOptions, summary, pagination, generatedAt, isLoading, error, fetchData } =
   useAdminRegistrationStatisticsReport();
 
 const stats = computed<
@@ -370,6 +308,32 @@ const stats = computed<
 
 const facultyOptions = computed(() => filterOptions.value.faculties);
 const courseTypeOptions = computed(() => filterOptions.value.courseTypes);
+
+watch(
+  () => props.initialFacultyId,
+  (facultyId) => {
+    selectedFacultyId.value = facultyId ?? null;
+  },
+  { immediate: true },
+);
+
+watch(
+  () => props.mockData,
+  (data) => {
+    if (!data) {
+      return;
+    }
+
+    groups.value = data.groups;
+    filterOptions.value = data.filterOptions;
+    summary.value = data.summary;
+    pagination.value = data.pagination;
+    generatedAt.value = data.generatedAt;
+    isLoading.value = false;
+    error.value = null;
+  },
+  { immediate: true },
+);
 
 function normalizeDateForApi(value: string | null): string | null {
   if (!value) {
@@ -414,7 +378,78 @@ function getUnitPriceLabel(
     : `ราคาตั้งไว้: ${formatCurrency(fallbackUnitPrice)}`;
 }
 
+function applyMockFilters(page = 1): void {
+  if (!props.mockData) {
+    return;
+  }
+
+  const normalizedStartDate = normalizeDateForApi(dateRange.value.start);
+  const normalizedEndDate = normalizeDateForApi(dateRange.value.end);
+
+  const filteredGroups = props.mockData.groups
+    .map((group) => {
+      const filteredItems = group.items.filter((item) => {
+        const matchesFaculty =
+          selectedFacultyId.value === null ||
+          selectedFacultyId.value === undefined ||
+          group.facultyId === selectedFacultyId.value;
+
+        const matchesDateRange =
+          (!normalizedStartDate || !item.startDate || item.startDate >= normalizedStartDate) &&
+          (!normalizedEndDate || !item.endDate || item.endDate <= normalizedEndDate);
+
+        return matchesFaculty && matchesDateRange;
+      });
+
+      const normalizedItems = filteredItems.map((item, index) => ({
+        ...item,
+        rowNumber: index + 1,
+      }));
+
+      const totalLearners = normalizedItems.reduce((total, item) => total + item.learnerCount, 0);
+      const totalRegistrationFees = normalizedItems.reduce(
+        (total, item) => total + item.registrationFee,
+        0,
+      );
+
+      return {
+        ...group,
+        totalCourses: normalizedItems.length,
+        totalLearners,
+        totalRegistrationFees,
+        items: normalizedItems,
+      };
+    })
+    .filter((group) => group.items.length > 0);
+
+  const paginatedGroups = filteredGroups.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
+  groups.value = paginatedGroups;
+  summary.value = {
+    totalCourses: filteredGroups.reduce((total, group) => total + group.totalCourses, 0),
+    totalLearners: filteredGroups.reduce((total, group) => total + group.totalLearners, 0),
+    totalRegistrationFees: filteredGroups.reduce(
+      (total, group) => total + group.totalRegistrationFees,
+      0,
+    ),
+  };
+  pagination.value = {
+    page,
+    pageSize: rowsPerPage,
+    total: filteredGroups.length,
+    totalPages: Math.max(1, Math.ceil(filteredGroups.length / rowsPerPage)),
+  };
+  generatedAt.value = props.mockData.generatedAt;
+  isLoading.value = false;
+  error.value = null;
+}
+
 function loadReport(page = 1): Promise<void> {
+  if (props.mockData) {
+    applyMockFilters(page);
+    return Promise.resolve();
+  }
+
   return fetchData({
     page,
     pageSize: rowsPerPage,
@@ -423,19 +458,6 @@ function loadReport(page = 1): Promise<void> {
     facultyId: selectedFacultyId.value,
     typeCourseId: selectedTypeCourseId.value,
   });
-}
-
-function applyFilters(): void {
-  currentPage.value = 1;
-  void loadReport(1);
-}
-
-function resetFilters(): void {
-  dateRange.value = { start: null, end: null };
-  selectedFacultyId.value = null;
-  selectedTypeCourseId.value = null;
-  currentPage.value = 1;
-  void loadReport(1);
 }
 
 async function preservePaginationPosition(update: () => Promise<void> | void): Promise<void> {
@@ -504,6 +526,10 @@ function getDateHint(startDate: string | null): string {
 }
 
 onMounted(() => {
+  if (props.mockData) {
+    return;
+  }
+
   void loadReport();
 });
 </script>
@@ -511,16 +537,6 @@ onMounted(() => {
 <style lang="scss" scoped>
 .registration-statistics-report__stats {
   margin-bottom: 18px;
-}
-
-.registration-statistics-report__filters {
-  display: grid;
-  grid-template-columns: minmax(260px, 1.2fr) minmax(220px, 1fr) minmax(220px, 1fr) auto;
-  gap: 14px;
-  align-items: end;
-  padding: 22px 24px 18px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  background: linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(255, 255, 255, 0.96));
 }
 
 .registration-statistics-report__date-filter,
@@ -601,7 +617,7 @@ onMounted(() => {
 
 .registration-statistics-report__table-wrap {
   overflow-x: auto;
-  min-height: 760px;
+  min-height: 0;
 }
 
 .registration-statistics-report-table {
@@ -614,6 +630,10 @@ onMounted(() => {
     padding: 16px 18px;
     border-bottom: 1px solid rgba(15, 23, 42, 0.08);
     vertical-align: middle;
+  }
+
+  thead th {
+    border-bottom: none;
   }
 
   thead th {
@@ -666,7 +686,8 @@ onMounted(() => {
 .registration-statistics-report-table__group-row td {
   padding: 0;
   background: #ffffff !important;
-  border-bottom: 0;
+  border-bottom: none;
+  border-top: none;
 }
 
 .registration-statistics-report__group-header {
@@ -675,7 +696,7 @@ onMounted(() => {
   gap: 16px;
   align-items: center;
   padding: 18px 22px 14px;
-  margin-top: 6px;
+  margin-top: 0;
   border-top: 1px solid rgba(245, 166, 35, 0.18);
   background: linear-gradient(90deg, rgba(245, 166, 35, 0.1), rgba(255, 255, 255, 0.98));
 }
@@ -731,7 +752,7 @@ onMounted(() => {
 }
 
 .registration-statistics-report-table__empty {
-  height: 760px;
+  min-height: 220px;
   padding: 38px 18px !important;
   color: #64748b;
   text-align: center;
@@ -771,7 +792,6 @@ onMounted(() => {
 
   strong {
     display: -webkit-box;
-    min-height: calc(1.42em * 2);
     color: var(--admin-navy);
     font-size: 0.95rem;
     font-weight: 850;
@@ -804,7 +824,6 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  max-width: 100%;
   padding: 8px 12px;
   border-radius: 999px;
   color: #0f766e;
@@ -812,9 +831,24 @@ onMounted(() => {
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.4;
+  max-width: 100%;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.registration-statistics-report__owner-chip :deep(.q-icon) {
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+thead th {
+  border-bottom: none;
+}
+
+/* Remove top border for group header row so it sticks to thead */
+tbody tr.registration-statistics-report-table__group-row td {
+  border-top: none !important;
 }
 
 .registration-statistics-report__date-cell,
@@ -825,7 +859,6 @@ onMounted(() => {
 
   strong {
     display: -webkit-box;
-    min-height: calc(1.42em * 2);
     color: var(--admin-navy);
     font-size: 0.95rem;
     font-weight: 850;
@@ -863,9 +896,17 @@ onMounted(() => {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .registration-statistics-report__filters--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .registration-statistics-report__filter-actions {
     justify-content: flex-start;
   }
+}
+
+.registration-statistics-report__filters--compact {
+  grid-template-columns: minmax(260px, 1.2fr) minmax(220px, 1fr) auto;
 }
 
 @media (max-width: 900px) {
