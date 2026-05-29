@@ -38,7 +38,7 @@ export default defineBoot(({ app, router: vueRouter }) => {
       if (status === 401) {
         const authStore = useAuthStore();
         authStore.logout();
-        void vueRouter.push('/auth/login');
+        void vueRouter.push('/login');
       }
       if (status === 403) {
         Notify.create({
