@@ -36,6 +36,7 @@ export interface Course {
   categoryId?: number | undefined;
   maxSeats: number | null;
   enrolledCount: number;
+  openclassId?: number | null;
   totalHours?: number;
   evaluationText?: string | null;
 }

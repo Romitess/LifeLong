@@ -28,6 +28,9 @@ interface ApiLltcourse {
   regStartDate: string | null;
   regEndDate: string | null;
   enrolledCount: number;
+  clickCount?: number | null;
+  openclassId?: number | null;
+  facultyName?: string | null;
   categoryId?: number | null;
   typestudyDetail?: { id: number; name: string | null } | null;
 }
@@ -65,11 +68,12 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     registrationEndDate: regEnd,
     price: amount,
     isFree: amount === 0,
-    views: 0,
+    views: raw.clickCount ?? 0,
+    openclassId: raw.openclassId ?? null,
     status: 'เปิดรับสมัคร',
     deliveryModes: mapDeliveryModes(raw.typestudyDetail?.name),
     isActive: raw.status === 'Y' || raw.status === null,
-    faculty: '',
+    faculty: raw.facultyName ?? 'Lifelong Learning',
     category: categoryName,
     categoryEn: categoryName,
     categoryId: raw.categoryId ?? undefined,

@@ -48,6 +48,9 @@ interface BackendCourse {
   maxSeats?: number | null;
   enrolledCount?: number | null;
   amount?: number | null;
+  clickCount?: number | null;
+  openclassId?: number | null;
+  facultyName?: string | null;
 }
 
 interface BackendInstructorCourse {
@@ -175,12 +178,13 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     registrationEndDate: endDate,
     price: course.amount ?? 0,
     isFree: !course.amount,
-    views: 0,
+    views: course.clickCount ?? 0,
+    openclassId: course.openclassId ?? null,
     status: isActive ? activeStatus : inactiveStatus,
     deliveryModes: mapDeliveryModes(course.typestudyDetail?.name),
     isActive,
-    faculty: 'Lifelong Learning',
-    facultyEn: 'Lifelong Learning',
+    faculty: course.facultyName ?? 'Lifelong Learning',
+    facultyEn: course.facultyName ?? 'Lifelong Learning',
     category: categoryName,
     categoryEn: categoryName,
     categoryId: course.categoryId ?? undefined,
