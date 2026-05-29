@@ -487,7 +487,7 @@ watch(
     overflow: hidden;
     overflow-wrap: anywhere;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    line-clamp: 2;
     min-height: calc(1.42em * 2);
     text-wrap: pretty;
   }
@@ -538,7 +538,7 @@ watch(
     line-height: 1.42;
     overflow: hidden;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    line-clamp: 2;
     min-height: calc(1.42em * 2);
   }
 

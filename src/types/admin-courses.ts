@@ -3,6 +3,13 @@ export interface CourseFormOption {
   label: string;
 }
 
+export interface CostplanFormOption {
+  id: number;
+  code: string;
+  label: string;
+  isUsed?: boolean;
+}
+
 export interface SubcategoryFormOption {
   id: number;
   label: string;
@@ -47,6 +54,7 @@ export interface AdminCourseFormOptions {
   targets: TargetFormOption[];
   chapterTypes: ChapterTypeFormOption[];
   studentTypes: StudentTypeFormOption[];
+  costplans: CostplanFormOption[];
 }
 
 export interface CourseSubchapterPayload {
@@ -87,6 +95,7 @@ export interface CreateCoursePayload {
   classTypeId?: number | undefined;
   classFee?: number | undefined;
   classFeeRemark?: string | undefined;
+  costplanId?: number | undefined;
   lo?: string | undefined;
   keyword?: string | undefined;
   privilege?: string | undefined;
@@ -182,6 +191,7 @@ export interface AdminCourseDetail {
   classTypeId: number | null;
   classFee: number | null;
   classFeeRemark: string | null;
+  costplanId: number | null;
   lo: string | null;
   keyword: string | null;
   privilege: string | null;

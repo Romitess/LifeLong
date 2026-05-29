@@ -25,6 +25,7 @@ function emptyOptions(): AdminCourseFormOptions {
     targets: [],
     chapterTypes: [],
     studentTypes: [],
+    costplans: [],
   };
 }
 
@@ -77,6 +78,7 @@ export function useAdminCourseForm() {
       if (payload.classTypeId != null) form.append('classTypeId', String(payload.classTypeId));
       if (payload.classFee != null) form.append('classFee', String(payload.classFee));
       if (payload.classFeeRemark) form.append('classFeeRemark', payload.classFeeRemark);
+      if (payload.costplanId != null) form.append('costplanId', String(payload.costplanId));
       if (payload.lo) form.append('lo', payload.lo);
       if (payload.keyword) form.append('keyword', payload.keyword);
       if (payload.privilege) form.append('privilege', payload.privilege);

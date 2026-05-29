@@ -165,6 +165,7 @@ async function submitOverride(payload: CreateCoursePayload): Promise<{ courseId:
   if (payload.classTypeId != null) form.append('classTypeId', String(payload.classTypeId));
   if (payload.classFee != null) form.append('classFee', String(payload.classFee));
   if (payload.classFeeRemark) form.append('classFeeRemark', payload.classFeeRemark);
+  if (payload.costplanId != null) form.append('costplanId', String(payload.costplanId));
   if (payload.lo) form.append('lo', payload.lo);
   if (payload.keyword) form.append('keyword', payload.keyword);
   if (payload.privilege) form.append('privilege', payload.privilege);
@@ -182,6 +183,7 @@ async function submitOverride(payload: CreateCoursePayload): Promise<{ courseId:
   form.append('contactTel', payload.contactTel);
   form.append('contactEmail', payload.contactEmail);
   if (payload.contactUrl) form.append('contactUrl', payload.contactUrl);
+  if (payload.vdo) form.append('vdo', payload.vdo);
   if (payload.image) form.append('image', payload.image);
   if (payload.removeImage) form.append('removeImage', 'true');
   for (const f of payload.files ?? []) form.append('files', f);

@@ -944,6 +944,42 @@
               </q-field>
             </div>
 
+            <!-- ผังแหล่งเงิน (Costplan) -->
+            <div class="course-form__field course-form__field--full">
+              <div class="course-form__label">
+                ผังแหล่งเงิน <span class="course-form__optional">(ไม่บังคับ)</span>
+              </div>
+              <div class="text-caption text-grey-6 q-mb-sm">
+                <q-icon name="info" size="14px" /> กรุณาระบุเฉพาะรายวิชาที่มีค่าธรรมเนียมเท่านั้น
+              </div>
+              <q-select
+                v-model="form.costplanId"
+                :options="filteredCostplans"
+                option-value="id"
+                :option-label="(opt) => `${opt.code} - ${opt.label}`"
+                emit-value
+                map-options
+                outlined
+                dense
+                clearable
+                use-input
+                fill-input
+                hide-selected
+                input-debounce="0"
+                @filter="filterCostplans"
+                placeholder="เลือกรหัสผังแหล่งเงิน"
+                class="course-form__input"
+                :readonly="props.readonly"
+                :disable="isLoadingOptions"
+              >
+                <template v-slot:no-option>
+                  <q-item>
+                    <q-item-section class="text-grey"> ไม่พบข้อมูล </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
+            </div>
+
             <!-- ราคาต่อประเภทผู้เรียน -->
             <div
               v-if="formOptions.studentTypes.length > 0"
@@ -1190,6 +1226,7 @@ import type {
   CourseChapterPayload,
   CourseTargetPayload,
   CreateCoursePayload,
+  CostplanFormOption,
 } from 'src/types/admin-courses';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
 import AdminSurfaceCard from './AdminSurfaceCard.vue';
@@ -1229,10 +1266,12 @@ const moodleSyncLabel = computed(() => {
 });
 
 const authStore = useAuthStore();
-const { formOptions, isSaving, error, fetchFormOptions, createCourse } = useAdminCourseForm();
+const { formOptions, isLoadingOptions, isSaving, error, fetchFormOptions, createCourse } =
+  useAdminCourseForm();
 const qFormRef = ref<InstanceType<typeof QForm> | null>(null);
 const activeTab = ref<'info' | 'chapters'>('info');
 const chapters = ref<CourseChapterPayload[]>([]);
+const filteredCostplans = ref<CostplanFormOption[]>([]);
 const sectionNavItems: AdminSectionNavItem[] = [
   { value: 'info', label: 'ข้อมูลรายวิชา', icon: 'description' },
   { value: 'chapters', label: 'โครงสร้างบทเรียน', icon: 'menu_book' },
@@ -1267,6 +1306,7 @@ const form = reactive({
   classTypeId: undefined as number | undefined,
   classFee: 0,
   classFeeRemark: '',
+  costplanId: undefined as number | undefined,
   loItems: [] as string[],
   keyword: '',
   privilege: '',
@@ -1369,6 +1409,7 @@ watch(
     form.classTypeId = data.classTypeId ?? undefined;
     form.classFee = data.classFee ?? 0;
     form.classFeeRemark = data.classFeeRemark ?? '';
+    form.costplanId = data.costplanId ?? undefined;
     form.loItems = (data.lo ?? '')
       .split('\n')
       .map((s: string) => s.replace(/^\d+\.\s*/, '').trim())
@@ -1448,6 +1489,16 @@ watch(
   },
 );
 
+watch(
+  () => formOptions.value?.costplans,
+  (costplans) => {
+    filteredCostplans.value = (costplans || []).filter(
+      (v) => !v.isUsed || v.id === form.costplanId,
+    );
+  },
+  { immediate: true },
+);
+
 function addInstructor(inst: InstructorOption | null) {
   if (!inst) return;
   const key = inst.email || inst.username;
@@ -1483,6 +1534,26 @@ async function filterInstructors(val: string, update: (fn: () => void) => void, 
   } finally {
     instructorSearching.value = false;
   }
+}
+
+function filterCostplans(val: string, update: (fn: () => void) => void) {
+  const options = (formOptions.value?.costplans || []).filter(
+    (v) => !v.isUsed || v.id === form.costplanId,
+  );
+  if (val === '') {
+    update(() => {
+      filteredCostplans.value = options;
+    });
+    return;
+  }
+  update(() => {
+    const needle = val.toLowerCase();
+    filteredCostplans.value = options.filter(
+      (v) =>
+        (v.code && v.code.toLowerCase().includes(needle)) ||
+        (v.label && v.label.toLowerCase().includes(needle)),
+    );
+  });
 }
 
 const fileError = ref<string | null>(null);
@@ -1728,6 +1799,7 @@ async function submit() {
     classTypeId: form.classTypeId,
     classFee: form.classFee,
     classFeeRemark: form.classFeeRemark,
+    costplanId: form.costplanId,
     lo: form.loItems.filter((s) => s.trim()).join('\n') || undefined,
     keyword: form.keyword.trim() || undefined,
     privilege: form.privilege.trim() || undefined,
