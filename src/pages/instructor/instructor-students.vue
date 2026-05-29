@@ -10,7 +10,7 @@
           </p>
           <p v-else>เลือกคอร์สเพื่อบันทึกผลการเรียน</p>
         </div>
-        <q-btn
+        <BaseButton
           v-if="selectedCourse"
           outline
           color="primary"
@@ -139,7 +139,7 @@
               <span>รับ</span>
               <strong>{{ course.maxSeats?.toLocaleString() ?? 'ไม่จำกัด' }}</strong>
             </div>
-            <q-btn
+            <BaseButton
               unelevated
               color="primary"
               icon="fact_check"
@@ -205,31 +205,65 @@
               >
               <div class="learning-result-import-workspace">
                 <div class="learning-result-import-toolbar">
-                  <q-btn
-                    outline
-                    color="primary"
-                    icon="download"
-                    label="ดาวน์โหลด Template"
-                    no-caps
-                    class="learning-result-import-tool-btn"
-                    @click="downloadGradeImportTemplate"
-                  />
-                  <q-btn
-                    outline
-                    color="primary"
-                    icon="upload_file"
-                    label="อัปโหลด CSV/TXT"
-                    no-caps
-                    class="learning-result-import-tool-btn"
-                    @click="triggerGradeImportFile"
-                  />
-                  <input
-                    ref="gradeImportFileInput"
-                    type="file"
-                    accept=".csv,.txt,text/csv,text/plain"
-                    class="hidden"
-                    @change="onGradeImportFileSelected"
-                  />
+                  <div class="learning-result-import-toolbar__row">
+                    <BaseButton
+                      outline
+                      color="primary"
+                      icon="download"
+                      label="ดาวน์โหลด Template"
+                      no-caps
+                      class="learning-result-import-tool-btn"
+                      @click="downloadGradeImportTemplate"
+                    />
+                    <BaseButton
+                      outline
+                      color="primary"
+                      icon="upload_file"
+                      label="อัปโหลด CSV/TXT"
+                      no-caps
+                      class="learning-result-import-tool-btn"
+                      @click="triggerGradeImportFile"
+                    />
+                    <input
+                      ref="gradeImportFileInput"
+                      type="file"
+                      accept=".csv,.txt,text/csv,text/plain"
+                      class="hidden"
+                      @change="onGradeImportFileSelected"
+                    />
+                  </div>
+                  <div class="learning-result-import-toolbar__row">
+                    <BaseButton
+                      outline
+                      color="primary"
+                      icon="groups"
+                      label="ดึงรายชื่อทั้งหมด"
+                      no-caps
+                      :disable="learners.length === 0"
+                      class="learning-result-import-tool-btn"
+                      @click="fillAllStudents"
+                    />
+                    <BaseButton
+                      outline
+                      color="primary"
+                      icon="pending_actions"
+                      label="ดึงรายชื่อที่ยังไม่มีผลการเรียน"
+                      no-caps
+                      :disable="learners.length === 0"
+                      class="learning-result-import-tool-btn"
+                      @click="fillStudentsWithoutGrade"
+                    />
+                    <BaseButton
+                      flat
+                      color="grey-7"
+                      icon="close"
+                      label="ล้าง"
+                      no-caps
+                      :disable="!resultImportText"
+                      class="learning-result-import-tool-btn"
+                      @click="resultImportText = ''"
+                    />
+                  </div>
                 </div>
 
                 <q-input
@@ -241,14 +275,14 @@
                   class="learning-result-import-input"
                 />
 
-                <q-btn
+                <BaseButton
                   outline
                   color="primary"
                   icon="preview"
                   label="ดูตัวอย่าง"
                   no-caps
                   :disable="!resultImportText.trim()"
-                  class="learning-result-import-tool-btn"
+                  class="learning-result-import-action-btn"
                   @click="buildDetailPreview"
                 />
               </div>
@@ -265,14 +299,6 @@
                   <li>กดปุ่ม <strong>import</strong> เพื่อบันทึกลงระบบ</li>
                 </ol>
               </div>
-              <q-btn
-                unelevated
-                color="primary"
-                label="import"
-                no-caps
-                class="learning-result-import-btn"
-                @click="importLearningResults"
-              />
             </div>
 
             <div
@@ -290,17 +316,128 @@
                 >
                   ไม่พบในระบบ {{ detailPreviewRows.filter((r) => !r.matched).length }} รายการ
                 </span>
-                <q-btn
+                <BaseButton
                   flat
-                  dense
                   no-caps
                   icon="close"
                   label="ยกเลิก"
                   color="grey-7"
-                  style="margin-left: auto; font-size: 0.76rem; font-weight: 800; padding: 4px 10px"
+                  style="margin-left: auto"
                   @click="detailPreviewRows = []"
                 />
               </div>
+              <div class="preview-bulk-bar">
+                <div class="preview-bulk-bar__section">
+                  <span class="preview-bulk-bar__label">ให้เกรดทั้งหมด</span>
+                  <q-select
+                    v-model="bulkGradeId"
+                    :options="gradeItemOptions"
+                    option-value="id"
+                    option-label="name"
+                    emit-value
+                    map-options
+                    dense
+                    outlined
+                    placeholder="เลือกเกรด"
+                    class="preview-bulk-bar__select"
+                  />
+                  <BaseButton
+                    unelevated
+                    color="primary"
+                    label="ใส่ทั้งหมด"
+                    no-caps
+                    :disable="!bulkGradeId"
+                    class="preview-bulk-bar__btn"
+                    @click="applyBulkGrade"
+                  />
+                </div>
+
+                <div class="preview-bulk-bar__divider">หรือกำหนดเกณฑ์คะแนน</div>
+
+                <div class="preview-bulk-bar__section preview-bulk-bar__section--rules">
+                  <span class="preview-bulk-bar__hint"
+                    >เกณฑ์ถูกตรวจจากบนลงล่าง เจอที่ตรงก่อนชนะ</span
+                  >
+                  <div v-for="(rule, i) in scoreRules" :key="i" class="preview-bulk-bar__rule">
+                    <span class="preview-bulk-bar__label">คะแนน</span>
+                    <q-select
+                      v-model="rule.operator"
+                      :options="operatorOptions"
+                      option-value="value"
+                      option-label="label"
+                      emit-value
+                      map-options
+                      dense
+                      outlined
+                      class="preview-bulk-bar__operator"
+                    />
+                    <q-input
+                      v-model.number="rule.minScore"
+                      type="number"
+                      dense
+                      outlined
+                      min="0"
+                      max="100"
+                      class="preview-bulk-bar__score-input"
+                    />
+                    <span class="preview-bulk-bar__label">→</span>
+                    <q-select
+                      v-model="rule.gradeItemId"
+                      :options="gradeItemOptions"
+                      option-value="id"
+                      option-label="name"
+                      emit-value
+                      map-options
+                      dense
+                      outlined
+                      placeholder="เกรด"
+                      class="preview-bulk-bar__select"
+                    />
+                    <q-btn
+                      flat
+                      round
+                      dense
+                      icon="close"
+                      color="grey-5"
+                      @click="scoreRules.splice(i, 1)"
+                    />
+                  </div>
+                  <div class="preview-bulk-bar__rule-actions">
+                    <BaseButton
+                      flat
+                      color="primary"
+                      icon="add"
+                      label="เพิ่มเกณฑ์"
+                      no-caps
+                      class="preview-bulk-bar__btn"
+                      @click="
+                        scoreRules.push({ minScore: null, operator: '>=', gradeItemId: null })
+                      "
+                    />
+                    <BaseButton
+                      unelevated
+                      color="primary"
+                      icon="calculate"
+                      label="คำนวณอัตโนมัติ"
+                      no-caps
+                      :disable="!scoreRules.some((r) => r.minScore !== null && r.gradeItemId)"
+                      class="preview-bulk-bar__btn"
+                      @click="applyScoreRules"
+                    />
+                    <BaseButton
+                      flat
+                      color="grey-7"
+                      icon="clear_all"
+                      label="ล้างทั้งหมด"
+                      no-caps
+                      class="preview-bulk-bar__btn"
+                      style="margin-left: auto"
+                      @click="clearAllGrades"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div class="learning-result-table-scroll">
                 <table class="learning-result-entry-table">
                   <thead>
@@ -363,6 +500,16 @@
                   </tbody>
                 </table>
               </div>
+              <BaseButton
+                unelevated
+                color="primary"
+                icon="upload"
+                label="import"
+                no-caps
+                class="learning-result-import-action-btn"
+                :disable="!detailPreviewRows.some((r) => r.matched && r.gradeItemId)"
+                @click="importLearningResults"
+              />
             </div>
 
             <!-- Approval status banner -->
@@ -392,7 +539,7 @@
                 </button>
               </div>
               <div class="learning-result-sync-actions">
-                <q-btn
+                <BaseButton
                   outline
                   color="primary"
                   icon="cloud_download"
@@ -401,7 +548,7 @@
                   :loading="syncingScores"
                   @click="pullScoresFromLms"
                 />
-                <q-btn
+                <BaseButton
                   outline
                   color="primary"
                   icon="refresh"
@@ -410,7 +557,7 @@
                   :loading="syncingResults"
                   @click="saveLearningResults"
                 />
-                <q-btn
+                <BaseButton
                   v-if="!approvalStatus"
                   unelevated
                   color="positive"
@@ -468,12 +615,13 @@
 
         <template v-else>
           <q-tabs
-            v-model="activeStudentTab"
+            :model-value="activeStudentTab"
             dense
             align="left"
             active-color="primary"
             indicator-color="primary"
             class="student-roster-tabs"
+            @update:model-value="switchTab"
           >
             <q-tab name="roster" icon="groups" label="รายชื่อผู้เรียน" no-caps />
             <q-tab name="results" icon="fact_check" label="บันทึกผลการเรียน" no-caps />
@@ -512,7 +660,7 @@
             <q-space />
 
             <template v-if="activeStudentTab === 'roster'">
-              <q-btn
+              <BaseButton
                 outline
                 color="primary"
                 icon="table_view"
@@ -522,7 +670,7 @@
                 :disable="filteredLearners.length === 0"
                 @click="exportLearnersCsv"
               />
-              <q-btn
+              <BaseButton
                 unelevated
                 color="primary"
                 icon="picture_as_pdf"
@@ -533,7 +681,7 @@
                 @click="exportLearnersPdf"
               />
             </template>
-            <q-btn
+            <BaseButton
               v-else
               unelevated
               color="primary"
@@ -668,7 +816,7 @@
           >
             <q-icon name="search_off" size="3rem" class="q-mb-md" />
             <div class="text-body1">{{ emptyLearnerStateMessage }}</div>
-            <q-btn
+            <BaseButton
               v-if="searchQuery || statusFilter !== 'ทั้งหมด'"
               flat
               no-caps
@@ -867,8 +1015,8 @@
           />
         </q-card-section>
         <q-card-actions align="right" class="q-px-md q-pb-md">
-          <q-btn flat label="ยกเลิก" no-caps color="grey-7" v-close-popup />
-          <q-btn
+          <BaseButton flat label="ยกเลิก" no-caps color="grey-7" v-close-popup />
+          <BaseButton
             unelevated
             color="primary"
             label="บันทึก"
@@ -895,6 +1043,7 @@ import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
 import buuLogoUrl from 'src/assets/buu-logo-receipt.png';
 import BaseDateInput from 'src/components/base/BaseDateInput.vue';
+import BaseButton from 'src/components/base/BaseButton.vue';
 
 interface LearnerRow {
   id: string;
@@ -939,8 +1088,9 @@ const instructorBackend = useInstructorBackend();
 courseStore.init();
 
 const selectedCourseId = ref(typeof route.query.courseId === 'string' ? route.query.courseId : '');
-const initialStudentTab = route.query.tab === 'results' ? 'results' : 'roster';
-const activeStudentTab = ref<'roster' | 'results'>(initialStudentTab);
+const activeStudentTab = computed<'roster' | 'results'>(() =>
+  route.path.includes('/instructor/results') ? 'results' : 'roster',
+);
 const learnerDetailDialogOpen = ref(false);
 const selectedLearner = ref<LearnerRow | null>(null);
 const searchQuery = ref('');
@@ -977,16 +1127,27 @@ interface DetailPreviewRow {
   matched: boolean;
 }
 
+type ScoreOperator = '>=' | '>' | '<=' | '<' | '=';
+
+interface ScoreRule {
+  minScore: number | null;
+  operator: ScoreOperator;
+  gradeItemId: number | null;
+}
+
+const operatorOptions: { label: string; value: ScoreOperator }[] = [
+  { label: '≥', value: '>=' },
+  { label: '>', value: '>' },
+  { label: '≤', value: '<=' },
+  { label: '<', value: '<' },
+  { label: '=', value: '=' },
+];
+
 const detailPreviewRows = ref<DetailPreviewRow[]>([]);
+const bulkGradeId = ref<number | null>(null);
+const scoreRules = ref<ScoreRule[]>([{ minScore: null, operator: '>=', gradeItemId: null }]);
 
 const statusOptions = ['ทั้งหมด', 'เรียนต่อเนื่อง', 'ปกติ', 'ควรติดตาม', 'เสี่ยงหลุด'];
-
-watch(
-  () => route.query.tab,
-  (tab) => {
-    activeStudentTab.value = tab === 'results' ? 'results' : 'roster';
-  },
-);
 
 watch(
   () => route.query.courseId,
@@ -1006,6 +1167,44 @@ const instructorCourses = computed<Course[]>(() =>
 const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
 );
+
+function clearAllGrades(): void {
+  for (const row of detailPreviewRows.value) {
+    row.gradeItemId = null;
+  }
+}
+
+function applyBulkGrade(): void {
+  if (!bulkGradeId.value) return;
+  for (const row of detailPreviewRows.value) {
+    if (row.matched) row.gradeItemId = bulkGradeId.value;
+  }
+}
+
+function applyScoreRules(): void {
+  const valid = scoreRules.value.filter((r) => r.minScore !== null && r.gradeItemId !== null);
+  if (valid.length === 0) return;
+  for (const row of detailPreviewRows.value) {
+    if (!row.matched || row.lmsFinalscore === null) continue;
+    const score = row.lmsFinalscore;
+    const matched = valid.find((r) => {
+      const t = r.minScore!;
+      switch (r.operator) {
+        case '>=':
+          return score >= t;
+        case '>':
+          return score > t;
+        case '<=':
+          return score <= t;
+        case '<':
+          return score < t;
+        case '=':
+          return score === t;
+      }
+    });
+    if (matched) row.gradeItemId = matched.gradeItemId;
+  }
+}
 
 function buildDetailPreview(): void {
   if (!resultImportText.value.trim() || !selectedCourse.value) {
@@ -1279,14 +1478,19 @@ const learningResultColumns: QTableColumn<LearnerRow>[] = [
   { name: 'note', label: 'หมายเหตุ', field: 'resultNote', align: 'left' },
 ];
 
+function switchTab(tab: string): void {
+  const base = tab === 'results' ? '/instructor/results' : '/instructor/students';
+  void router.push({
+    path: base,
+    query: selectedCourseId.value ? { courseId: selectedCourseId.value } : {},
+  });
+}
+
 function selectCourse(courseId: string): void {
   selectedCourseId.value = courseId;
   selectedLearner.value = null;
-  void router.replace({
-    query: {
-      ...route.query,
-      courseId,
-    },
+  void router.push({
+    query: { courseId },
   });
 }
 
@@ -1420,6 +1624,17 @@ function downloadGradeImportTemplate(): void {
   link.download = `${sanitizeFileName(`${selectedCourse.value?.code ?? 'course'}-grade-template`)}.csv`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function fillAllStudents(): void {
+  resultImportText.value = learners.value.map((l) => l.studentId).join('\n');
+}
+
+function fillStudentsWithoutGrade(): void {
+  resultImportText.value = learners.value
+    .filter((l) => !l.importedGradeName)
+    .map((l) => l.studentId)
+    .join('\n');
 }
 
 async function pullScoresFromLms(): Promise<void> {
@@ -2377,15 +2592,23 @@ function exportLearnersPdf(): void {
 
 .learning-result-import-toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
 
 .learning-result-import-tool-btn {
-  min-height: 34px;
-  border-radius: 8px !important;
   font-size: 0.74rem;
-  font-weight: 900 !important;
+}
+
+.learning-result-import-action-btn {
+  width: 100%;
+  font-size: 0.74rem;
 }
 
 .learning-result-import-input :deep(textarea) {
@@ -2464,15 +2687,6 @@ function exportLearnersPdf(): void {
   ol {
     padding-left: 18px;
   }
-}
-
-.learning-result-import-btn {
-  grid-column: 2;
-  justify-self: start;
-  min-height: 34px;
-  border-radius: 4px !important;
-  font-size: 0.76rem;
-  font-weight: 800 !important;
 }
 
 .learning-result-links {
@@ -2636,6 +2850,7 @@ function exportLearnersPdf(): void {
 
 .student-grade-panel__body {
   display: grid;
+  align-content: start;
   gap: 0;
   padding: 8px 0;
   flex: 1;
@@ -2737,6 +2952,89 @@ function exportLearnersPdf(): void {
 
   &:hover {
     background: $primary;
+  }
+}
+
+.preview-bulk-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid rgba(17, 24, 39, 0.07);
+  margin-bottom: 12px;
+
+  &__section {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    &--rules {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  &__rule {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__rule-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  &__label {
+    flex-shrink: 0;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  &__select {
+    min-width: 130px;
+  }
+
+  &__operator {
+    width: 72px;
+  }
+
+  &__score-input {
+    width: 80px;
+  }
+
+  &__hint {
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  &__btn {
+    font-size: 0.74rem;
+  }
+
+  &__divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+
+    &::before,
+    &::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(17, 24, 39, 0.08);
+    }
   }
 }
 

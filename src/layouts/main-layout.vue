@@ -814,7 +814,7 @@ const navItems = computed<NavItem[]>(() => {
         name: 'learning-results',
         label: 'บันทึกผลการเรียน',
         icon: 'grading',
-        to: '/instructor/students?tab=results',
+        to: '/instructor/results',
       },
       {
         name: 'certificates',
@@ -1036,8 +1036,10 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'dashboard';
   } else if (path.includes('/instructor/courses')) {
     activeNav.value = route.query.status === 'active' ? 'active-courses-mgmt' : 'my-courses-mgmt';
+  } else if (path.includes('/instructor/results')) {
+    activeNav.value = 'learning-results';
   } else if (path.includes('/instructor/students')) {
-    activeNav.value = route.query.tab === 'results' ? 'learning-results' : 'students-mgmt';
+    activeNav.value = 'students-mgmt';
   } else if (path.includes('/instructor/chat')) {
     activeNav.value = 'learner-chat';
   } else if (path.includes('/instructor/certificates')) {
@@ -1163,6 +1165,7 @@ async function onNavClick(nav: NavItem) {
         '/instructor/dashboard',
         '/instructor/courses',
         '/instructor/students',
+        '/instructor/results',
         '/instructor/certificates',
         '/instructor/chat',
       ].includes(navPath)
