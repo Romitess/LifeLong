@@ -11,34 +11,52 @@
       </div>
 
       <div class="base-info-card__body">
-        <div v-if="value" class="base-info-card__value">
+        <!-- count-up path: bind el ref ให้ IntersectionObserver จับ -->
+        <div v-if="numericValue !== undefined" ref="countEl" class="base-info-card__value">
+          {{ countDisplay }}
+        </div>
+        <!-- static path: ใช้ value string เดิม -->
+        <div v-else-if="value" class="base-info-card__value">
           {{ value }}
         </div>
-        <div class="base-info-card__title">
-          {{ title }}
-        </div>
-        <div class="base-info-card__description">
-          {{ description }}
-        </div>
+
+        <div class="base-info-card__title">{{ title }}</div>
+        <div class="base-info-card__description">{{ description }}</div>
       </div>
     </slot>
   </q-card>
 </template>
 
 <script setup lang="ts">
+import { useCountUp } from 'src/composables/use-count-up';
+
 interface Props {
   variant?: 'stat' | 'feature';
   tone?: 'primary' | 'secondary' | 'positive' | 'accent' | 'amber' | 'indigo' | 'gold' | 'blue';
   icon: string;
   title: string;
   description: string;
+  /** static display string — ใช้เมื่อไม่มี numericValue */
   value?: string;
+  /** ถ้าใส่ → count-up animation จาก 0 → numericValue */
+  numericValue?: number;
+  valueSuffix?: string;
+  valueCommas?: boolean;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   variant: 'feature',
   tone: 'primary',
   value: '',
+  valueSuffix: '',
+  valueCommas: false,
+});
+
+const { el: countEl, displayValue: countDisplay } = useCountUp({
+  target: props.numericValue ?? 0,
+  suffix: props.valueSuffix,
+  useCommas: props.valueCommas,
+  duration: 1600,
 });
 </script>
 

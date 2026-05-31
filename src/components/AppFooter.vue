@@ -1,6 +1,6 @@
 <template>
   <footer class="app-footer text-white">
-    <GoldenUnderline position="top" />
+    <GoldenUnderline position="top" :z-index="0" />
     <div class="footer-container q-py-md q-px-xl">
       <div class="row items-center justify-between">
         <!-- Left Section: Related Links -->

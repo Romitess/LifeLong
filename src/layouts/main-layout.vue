@@ -391,7 +391,7 @@
       <AppFooter />
 
       <!-- Scroll to top button -->
-      <q-page-scroller position="bottom-right" :scroll-offset="200" :offset="[24, 24]">
+      <q-page-scroller position="bottom-right" :scroll-offset="200" :offset="[24, 72]">
         <q-btn round icon="keyboard_arrow_up" class="scroll-top-btn" size="md" />
       </q-page-scroller>
     </q-page-container>

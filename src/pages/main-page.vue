@@ -1,5 +1,5 @@
 <template>
-  <q-page class="home-page">
+  <q-page class="home-page ds-grain ds-grain--page">
     <!-- ─── HERO ─── -->
     <template v-if="!courseStore.selectedCategory">
       <section
@@ -205,59 +205,29 @@
       </section>
 
       <!-- ─── FLOATING STATS BAR ─── -->
-      <section
-        ref="statsSection"
-        class="stats-floating-section"
-        :class="{ 'stats-floating-section--animated': isStatsVisible }"
-      >
-        <div class="section-container stats-floating-section__inner">
-          <div class="row q-col-gutter-lg stats-grid">
-            <div
-              v-for="(item, index) in stats"
-              :key="item.label"
-              class="col-12 col-sm-6 col-lg-3"
-              :style="{
-                animation: isStatsVisible
-                  ? `statsBounceIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both`
-                  : 'none',
-                animationDelay: isStatsVisible ? `${index * 0.15}s` : '0s',
-              }"
-            >
-              <BaseInfoCard
-                class="home-info-card home-info-card--stat"
-                variant="stat"
-                :tone="item.tone"
-                :icon="item.icon"
-                :title="item.label"
-                :description="item.description"
-                :value="item.value ?? ''"
-              />
-            </div>
-          </div>
-        </div>
+      <section class="stats-floating-section">
+        <HomeInfoStrip
+          :items="stats"
+          variant="stat"
+          col-class="col-12 col-sm-6 col-lg-3"
+          card-class="home-info-card home-info-card--stat"
+        />
       </section>
     </template>
 
+    <!-- ─── MARQUEE ─── -->
+    <div class="section-container">
+      <HomeMarquee />
+    </div>
+
     <!-- ─── INFO CARDS ───────────────────────────────────────── -->
     <section v-if="!courseStore.selectedCategory" class="info-strip-section q-pt-lg q-pb-lg">
-      <div class="section-container">
-        <div class="row q-col-gutter-lg info-grid">
-          <div
-            v-for="(item, index) in infoCards"
-            :key="item.label"
-            class="col-12 col-md-4 entrance-animate"
-            :style="{ '--delay': `${(index + stats.length) * 0.1}s` }"
-          >
-            <BaseInfoCard
-              class="home-info-card home-info-card--info"
-              :tone="item.tone"
-              :icon="item.icon"
-              :title="item.label"
-              :description="item.description"
-            />
-          </div>
-        </div>
-      </div>
+      <HomeInfoStrip
+        :items="infoCards"
+        variant="feature"
+        col-class="col-12 col-md-4"
+        card-class="home-info-card home-info-card--info"
+      />
     </section>
 
     <!-- ─── ACTIVE COURSES ─── -->
@@ -279,8 +249,11 @@
 
           <!-- Default Header -->
           <div
-            class="course-section-panel__header row items-center justify-between q-mb-lg"
             v-if="!courseStore.selectedCategory"
+            v-motion
+            :initial="headingRevealVariant().initial"
+            :visible-once="headingRevealVariant().visibleOnce"
+            class="course-section-panel__header row items-center justify-between q-mb-lg"
           >
             <h2 class="section-title-underline section-title-with-icon">
               <span class="section-title-icon">
@@ -315,11 +288,14 @@
             />
           </div>
 
-          <div v-else class="row q-col-gutter-lg">
+          <div v-else v-auto-animate class="row q-col-gutter-lg">
             <div
               v-for="course in displayedActiveCourses"
               :key="course.id"
-              class="col-xs-12 col-sm-6 col-md-3"
+              v-motion
+              :initial="revealVariant(0).initial"
+              :visible-once="revealVariant(0).visibleOnce"
+              class="col-xs-12 col-sm-6 col-md-4 col-lg-3"
             >
               <BaseCourseCard :course="course" @click="onCourseClick" />
             </div>
@@ -351,7 +327,12 @@
     >
       <div class="section-container">
         <div class="course-section-panel">
-          <div class="course-section-panel__header row items-center justify-between q-mb-lg">
+          <div
+            v-motion
+            :initial="headingRevealVariant().initial"
+            :visible-once="headingRevealVariant().visibleOnce"
+            class="course-section-panel__header row items-center justify-between q-mb-lg"
+          >
             <h2 class="section-title-underline section-title-with-icon">
               <span class="section-title-icon section-title-icon--secondary">
                 <q-icon name="library_books" />
@@ -372,11 +353,14 @@
             <BaseSpinner />
           </div>
 
-          <div v-else class="row q-col-gutter-lg">
+          <div v-else v-auto-animate class="row q-col-gutter-lg">
             <div
               v-for="course in displayedAllCourses"
               :key="course.id"
-              class="col-xs-12 col-sm-6 col-md-3"
+              v-motion
+              :initial="revealVariant(0).initial"
+              :visible-once="revealVariant(0).visibleOnce"
+              class="col-xs-12 col-sm-6 col-md-4 col-lg-3"
             >
               <BaseCourseCard :course="course" @click="onCourseClick" />
             </div>
@@ -391,6 +375,9 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
+import { revealVariant, headingRevealVariant } from 'src/composables/use-scroll-reveal';
+import HomeInfoStrip, { type HomeInfoItem } from 'src/components/home/HomeInfoStrip.vue';
+import HomeMarquee from 'src/components/home/HomeMarquee.vue';
 import { useCourseStore } from 'src/stores/course-store';
 import { useCategoryStore } from 'src/stores/category-store';
 import {
@@ -404,7 +391,6 @@ import { useLearnerProgress } from 'src/composables/use-learner-progress';
 import { useAuthStore } from 'src/stores/auth-store';
 import type { Course } from 'src/types/course';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
-import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import { useQuasar } from 'quasar';
@@ -423,16 +409,6 @@ categoryStore.init();
 systemImageStore.init();
 
 const heroSlide = ref(systemImageStore.activeHeroSlides[0]?.id ?? '');
-const statsSection = ref<HTMLElement | null>(null);
-const isStatsVisible = ref(false);
-
-interface HomeInfoItem {
-  icon: string;
-  label: string;
-  description: string;
-  value?: string;
-  tone: 'gold' | 'blue' | 'positive' | 'accent';
-}
 
 interface LearnerHeroPeer {
   id: string;
@@ -534,9 +510,10 @@ const filteredActiveCourses = computed(() => {
 
 // Limit display to 2 rows based on screen size
 const maxHomeItems = computed(() => {
-  if ($q.screen.lt.sm) return 2; // xs: 1 column -> 2 items
-  if ($q.screen.lt.md) return 4; // sm: 2 columns -> 4 items
-  return 8; // md+: 4 columns -> 8 items
+  if ($q.screen.lt.sm) return 2; // xs: 1 col → 2 items
+  if ($q.screen.lt.md) return 4; // sm: 2 cols → 4 items
+  if ($q.screen.lt.lg) return 6; // md: 3 cols → 6 items (2 rows)
+  return 8; // lg+: 4 cols → 8 items (2 rows)
 });
 
 const displayedActiveCourses = computed(() => {
@@ -549,28 +526,33 @@ const displayedAllCourses = computed(() => {
 
 const stats = computed<HomeInfoItem[]>(() => [
   {
-    value: '500+',
+    numericValue: 500,
+    valueSuffix: '+',
     label: t('homePage.stats.onlineCourses'),
     description: t('homePage.stats.onlineCoursesSub'),
     icon: 'menu_book',
     tone: 'gold',
   },
   {
-    value: '50,000+',
+    numericValue: 50000,
+    valueSuffix: '+',
+    valueCommas: true,
     label: t('homePage.stats.learners'),
     description: t('homePage.stats.learnersSub'),
     icon: 'group',
     tone: 'blue',
   },
   {
-    value: '200+',
+    numericValue: 200,
+    valueSuffix: '+',
     label: t('homePage.stats.instructors'),
     description: t('homePage.stats.instructorsSub'),
     icon: 'school',
     tone: 'positive',
   },
   {
-    value: '100%',
+    numericValue: 100,
+    valueSuffix: '%',
     label: t('homePage.stats.certified'),
     description: t('homePage.stats.certifiedSub'),
     icon: 'verified_user',
@@ -1012,25 +994,6 @@ onMounted(() => {
   void fetchCourses();
   startHeroTyping();
   restartHeroSlideTimer();
-
-  // Intersection Observer for stats animation
-  setTimeout(() => {
-    if (statsSection.value) {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && !isStatsVisible.value) {
-              isStatsVisible.value = true;
-              console.log('[Stats Animation] Triggered!');
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.05, rootMargin: '0px 0px -50px 0px' },
-      );
-      observer.observe(statsSection.value);
-    }
-  }, 100);
 });
 
 onBeforeUnmount(() => {
@@ -1665,7 +1628,7 @@ onBeforeUnmount(() => {
 
 // ── Stats Bar ─────────────────────────────────────────────────
 .stats-floating-section {
-  padding: 0 0 18px;
+  padding: 20px 0 18px;
   background: transparent;
 }
 

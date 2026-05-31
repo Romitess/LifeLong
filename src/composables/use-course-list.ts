@@ -3,7 +3,6 @@ import { useCourseStore, mapDeliveryModes } from 'src/stores/course-store';
 import { useCategoryStore } from 'src/stores/category-store';
 import type { Course } from 'src/types/course';
 import { api } from 'src/boot/axios';
-import fallbackCourseImageUrl from 'src/assets/homepicture1.png';
 
 interface UseCourseListReturn {
   courses: ComputedRef<Course[]>;
@@ -42,13 +41,18 @@ function mapApiCourse(raw: ApiLltcourse): Course {
   const amount = raw.amount ?? 0;
 
   let categoryName = `Category ${raw.categoryId ?? 1}`;
+  let coverIcon = 'school';
+
   try {
     const categoryStore = useCategoryStore();
     if (categoryStore.isApiLoaded && raw.categoryId) {
-      const matched = categoryStore.apiCategories.find((c) => c.id === raw.categoryId);
-      if (matched) {
-        categoryName = matched.name;
-      }
+      const apiCat = categoryStore.apiCategories.find((c) => c.id === raw.categoryId);
+      if (apiCat) categoryName = apiCat.name;
+    }
+    // ดึง icon + color จาก category store เพื่อให้ generated cover ต่างกันตาม category
+    const cat = categoryStore.categories.find((c) => c.name === categoryName);
+    if (cat) {
+      coverIcon = cat.icon;
     }
   } catch {
     // Pinia not initialized yet
@@ -60,8 +64,9 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     code: raw.code ?? '',
     title: raw.titleTh ?? '',
     ...(raw.titleEn ? { titleEn: raw.titleEn } : {}),
-    imageUrl: raw.imageUrl?.trim() ? raw.imageUrl : fallbackCourseImageUrl,
-    cover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
+    // ถ้าไม่มีรูปให้เป็น '' → CourseCoverImage แสดง generated cover แทนรูป fallback เดิม
+    imageUrl: raw.imageUrl?.trim() ?? '',
+    cover: { icon: coverIcon, accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
     registrationStart: regStart,
     registrationEnd: regEnd,
     registrationStartDate: regStart,

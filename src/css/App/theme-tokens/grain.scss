@@ -1,0 +1,33 @@
+// ── Grain / Noise Overlay ─────────────────────────────────────
+// เพิ่ม texture บางๆ ให้หน้าดูแพงขึ้น — ไม่ต้องใช้ไฟล์ภาพ
+// ใช้: <div class="ds-grain"> — children จะอยู่ above grain layer
+
+// SVG turbulence noise (inline data URI)
+$_grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+
+.ds-grain {
+  position: relative;
+  isolation: isolate;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: $_grain;
+    background-size: 220px 220px;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    border-radius: inherit;
+  }
+
+  // Children ต้อง z-index > 1 จึงอยู่ above grain
+  > * { position: relative; z-index: 2; }
+}
+
+// Stronger — dark card / hero section
+.ds-grain--strong::after { opacity: 0.07; }
+
+// Light page bg
+.ds-grain--page::after   { opacity: 0.025; mix-blend-mode: multiply; }

@@ -981,6 +981,8 @@ function getYoutubeEmbedUrl(videoUrl: string, showControls: boolean): string {
 const courseId = computed<string>(getRouteCourseId);
 const { course, recommendedCourses, isLoading, error, fetchCourseDetail } =
   useCourseDetail(courseId);
+
+// ดึงข้อมูลรูปจาก router state เพื่อแสดง hero ทันทีก่อน API โหลด
 const { chapters: dbChapters, fetchChapters } = useCourseChapers();
 
 const enrollmentDialogCourse = ref<CourseDetail | null>(null);

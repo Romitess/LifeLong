@@ -1,0 +1,37 @@
+// ── Color Design Tokens ───────────────────────────────────────
+// ทุกหน้าควรใช้ var(--color-*) เหล่านี้ ไม่ hardcode hex กระจัด
+
+:root {
+  // Brand
+  --color-gold:        #f5a623;
+  --color-gold-light:  #fbbf4a;
+  --color-gold-dark:   #d88b0a;
+  --color-navy:        #1a237e;
+  --color-navy-light:  #283593;
+  --color-navy-dark:   #0d1452;
+  --color-orange:      #e65100;
+
+  // Surface
+  --color-page:        #f8f6f1;
+  --color-card:        #ffffff;
+  --color-overlay:     rgba(17, 24, 39, 0.04);
+
+  // Text
+  --color-text-1:      #111827;
+  --color-text-2:      #374151;
+  --color-text-3:      #6b7280;
+  --color-text-4:      #9ca3af;
+  --color-on-dark:     #ffffff;
+
+  // Border
+  --color-border-faint:   rgba(17, 24, 39, 0.06);
+  --color-border-subtle:  rgba(17, 24, 39, 0.10);
+  --color-border-default: rgba(17, 24, 39, 0.14);
+  --color-border-brand:   rgba(245, 166, 35, 0.40);
+
+  // Gradients (ใช้เป็น background หรือ background-clip:text)
+  --grad-brand:      linear-gradient(135deg, #f5a623 0%, #e65100 100%);
+  --grad-hero-text:  linear-gradient(135deg, #ffffff 0%, #ffd97d 55%, #f5a623 100%);
+  --grad-navy:       linear-gradient(135deg, #1a237e 0%, #4f7df5 100%);
+  --grad-page:       linear-gradient(160deg, #f8f6f1 0%, #f0ede4 100%);
+}

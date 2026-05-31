@@ -1,5 +1,11 @@
 <template>
-  <q-card class="course-card cursor-pointer" flat bordered @click="emit('click', course)">
+  <q-card
+    class="course-card cursor-pointer"
+    flat
+    bordered
+    :style="{ '--cat-color': categoryColor }"
+    @click="emit('click', course)"
+  >
     <CourseCoverImage :course="course" :ratio="16 / 9" class="course-card__cover" />
 
     <q-card-section class="course-card__body q-pa-md">
@@ -61,8 +67,10 @@ import {
   formatPrice as formatPriceShared,
   formatViews as formatViewsShared,
 } from 'src/utils/course-format';
+import { useCategoryStore } from 'src/stores/category-store';
 
 const { locale, t } = useI18n({ useScope: 'global' });
+const categoryStore = useCategoryStore();
 
 interface Props {
   course: Course;
@@ -72,6 +80,11 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   click: [course: Course];
 }>();
+
+const categoryColor = computed<string>(() => {
+  const cat = categoryStore.categories.find((c) => c.name === props.course.category);
+  return cat?.color ?? 'transparent';
+});
 
 function getTranslatedTitle(course: Course): string {
   if (locale.value === 'th') return course.title;
@@ -168,9 +181,13 @@ const seatInfo = computed(() => {
 
 <style lang="scss" scoped>
 .course-card {
-  border-radius: 12px !important; // ปรับให้เข้ากับปุ่ม
-  border: 1px solid rgba(17, 24, 39, 0.12) !important; // สีเทาอมน้ำเงินจางๆ ตามที่ขอ
+  --cat-color: #{$primary};
+
+  border-radius: 12px !important;
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
   background: #ffffff;
+  position: relative; // required for z-index
+
   transition:
     transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -180,10 +197,17 @@ const seatInfo = computed(() => {
   flex-direction: column;
   overflow: hidden;
 
-  &:hover {
-    transform: translateY(-4px) !important;
-    border-color: rgba($primary, 0.6) !important; // สีทองส้มโปร่งแสงตอน Hover
-    box-shadow: 0 16px 32px rgba(17, 24, 39, 0.12) !important; // เงาสีเทาอมน้ำเงินแบบคลาสสิก
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-6px) scale(1.04) !important;
+      border-color: rgba($primary, 0.5) !important;
+      box-shadow: var(--shadow-brand-md) !important;
+      z-index: 2;
+    }
+  }
+
+  &:active {
+    transform: translateY(-2px) scale(0.99) !important;
   }
 
   &__cover {
