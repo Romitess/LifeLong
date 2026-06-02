@@ -703,10 +703,9 @@
                     </div>
                   </div>
                   <div class="pricing-list q-mt-md">
-                    <div v-for="price in learnerPricing" :key="price.type" class="pricing-row">
+                    <div v-for="price in learnerPricing" :key="price.stutypeId" class="pricing-row">
                       <div>
                         <strong>{{ price.label }}</strong>
-                        <span>{{ price.description }}</span>
                       </div>
                       <q-toggle v-model="price.enabled" color="primary" />
                       <q-input
@@ -1404,14 +1403,13 @@ interface LearnerRow {
 }
 
 interface LearnerPriceRule {
-  type: 'student' | 'staff' | 'external';
+  stutypeId: number;
   label: string;
-  description: string;
   enabled: boolean;
   amount: number;
 }
 
-type LearnerPriceSnapshot = Pick<LearnerPriceRule, 'type' | 'enabled' | 'amount'>;
+type LearnerPriceSnapshot = Pick<LearnerPriceRule, 'stutypeId' | 'enabled' | 'amount'>;
 
 interface FacultyStaffMember {
   name: string;
@@ -1492,29 +1490,7 @@ const sampleCoverImages = [
   'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80',
 ];
 
-const learnerPricing = reactive<LearnerPriceRule[]>([
-  {
-    type: 'student',
-    label: 'นิสิต/นักศึกษา',
-    description: 'ผู้เรียนภายในมหาวิทยาลัย',
-    enabled: true,
-    amount: 0,
-  },
-  {
-    type: 'staff',
-    label: 'บุคลากร',
-    description: 'บุคลากรหรือศิษย์เก่าที่ได้รับสิทธิ์',
-    enabled: true,
-    amount: 500,
-  },
-  {
-    type: 'external',
-    label: 'บุคคลทั่วไป',
-    description: 'ผู้เรียนภายนอกมหาวิทยาลัย',
-    enabled: true,
-    amount: 1000,
-  },
-]);
+const learnerPricing = reactive<LearnerPriceRule[]>([]);
 const learnerPricingBaseline = ref<LearnerPriceSnapshot[]>([]);
 
 const instructorCourses = computed<Course[]>(() =>
@@ -2003,7 +1979,7 @@ const qualityChecks = computed(() => [
 
 watch(
   selectedCourse,
-  (course) => {
+  async (course) => {
     if (!course) return;
     courseSettings.published = course.isActive;
     courseSettings.registrationOpen = course.isActive;
@@ -2012,14 +1988,21 @@ watch(
     courseSettings.deliveryMode = course.deliveryModes[0] ?? 'Online';
     courseSettings.registrationStartDate = course.registrationStartDate ?? '';
     courseSettings.registrationEndDate = course.registrationEndDate ?? '';
-    if (learnerPricing[0])
-      learnerPricing[0].amount = course.isFree ? 0 : Math.max(0, Math.round(course.price * 0.5));
-    if (learnerPricing[1])
-      learnerPricing[1].amount = course.isFree ? 0 : Math.max(0, Math.round(course.price * 0.75));
-    if (learnerPricing[2]) learnerPricing[2].amount = course.price;
-    learnerPricing.forEach((price) => {
-      price.enabled = true;
-    });
+    // โหลด fees จาก backend (data-driven จาก LLTTYPESTUDENT + LLTOPENCLASSSTUTYPEFEE)
+    const numericId = parseInt(String(course.id).replace('db-', ''), 10);
+    if (!isNaN(numericId)) {
+      const fees = await instructorBackend.fetchCourseFees(numericId);
+      learnerPricing.splice(
+        0,
+        learnerPricing.length,
+        ...fees.map((f) => ({
+          stutypeId: f.stutypeId,
+          label: f.stutypeName ?? `ประเภท ${f.stutypeId}`,
+          enabled: true,
+          amount: f.amount,
+        })),
+      );
+    }
     learnerPricingBaseline.value = getLearnerPricingSnapshot();
     activeWorkspaceTab.value = 'overview';
     void fetchMoodleContents(course.moodleId);
@@ -2223,8 +2206,12 @@ function formatCompactDateRange(startDate: string, endDate: string): string {
 }
 
 function buildCourseUpdatePayload(course: Course): Partial<Course> {
-  const externalPrice = learnerPricing.find((price) => price.type === 'external');
-  const nextPrice = externalPrice?.enabled ? externalPrice.amount : course.price;
+  // ใช้ราคาของ "บุคคลทั่วไป" (STUTYPE_ID สูงสุด = ทั่วไป) เป็น base price
+  const generalPrice = learnerPricing.reduce<LearnerPriceRule | undefined>(
+    (prev, cur) => (!prev || cur.stutypeId > prev.stutypeId ? cur : prev),
+    undefined,
+  );
+  const nextPrice = generalPrice?.enabled ? generalPrice.amount : course.price;
 
   return {
     imageUrl: courseSettings.coverImageUrl || course.imageUrl,
@@ -2248,7 +2235,7 @@ function buildCourseUpdatePayload(course: Course): Partial<Course> {
 
 function getLearnerPricingSnapshot(): LearnerPriceSnapshot[] {
   return learnerPricing.map((price) => ({
-    type: price.type,
+    stutypeId: price.stutypeId,
     enabled: price.enabled,
     amount: Number(price.amount) || 0,
   }));
@@ -2259,7 +2246,7 @@ function hasLearnerPricingChanges(): boolean {
   const baseline = learnerPricingBaseline.value;
 
   return current.some((price) => {
-    const original = baseline.find((item) => item.type === price.type);
+    const original = baseline.find((item) => item.stutypeId === price.stutypeId);
     return !original || original.enabled !== price.enabled || original.amount !== price.amount;
   });
 }
@@ -2344,6 +2331,16 @@ function confirmSaveCourseChanges(): void {
 
 async function saveCourseChanges(courseId: string, changes: Partial<Course>): Promise<void> {
   courseStore.updateCourse(courseId, changes);
+
+  // บันทึก stutype fees ลง backend
+  const numericId = parseInt(String(courseId).replace('db-', ''), 10);
+  if (!isNaN(numericId) && learnerPricing.length > 0) {
+    await instructorBackend.saveCourseFees(
+      numericId,
+      learnerPricing.map((p) => ({ stutypeId: p.stutypeId, amount: Number(p.amount) || 0 })),
+    );
+  }
+
   learnerPricingBaseline.value = getLearnerPricingSnapshot();
 
   if (changes.registrationStartDate !== undefined || changes.registrationEndDate !== undefined) {

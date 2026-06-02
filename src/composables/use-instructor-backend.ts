@@ -460,6 +460,31 @@ export function useInstructorBackend() {
     }
   }
 
+  async function fetchCourseFees(
+    courseId: string | number,
+  ): Promise<{ stutypeId: number; stutypeName: string | null; amount: number }[]> {
+    try {
+      const { data } = await api.get<
+        { stutypeId: number; stutypeName: string | null; amount: number }[]
+      >(`/api/instructor/courses/${courseId}/fees`);
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async function saveCourseFees(
+    courseId: string | number,
+    fees: { stutypeId: number; amount: number }[],
+  ): Promise<boolean> {
+    try {
+      await api.put(`/api/instructor/courses/${courseId}/fees`, { fees });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function fetchCourseAnnouncements(moodleId: number | null | undefined): Promise<void> {
     if (!moodleId) {
       courseAnnouncements.value = [];
@@ -499,6 +524,8 @@ export function useInstructorBackend() {
     importGrades,
     syncScores,
     fetchConversations,
+    fetchCourseFees,
+    saveCourseFees,
     fetchCourseAnnouncements,
     sendMessage,
     markAsRead,
