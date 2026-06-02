@@ -37,11 +37,12 @@ export interface RegisterLearnerPayload {
   phone: string;
   email: string;
   password: string;
+  citizenId?: string;
 }
 
 export interface AuthActionResult {
   success: boolean;
-  reason?: 'duplicate-email' | 'invalid-input';
+  reason?: 'duplicate-email' | 'duplicate-citizen-id' | 'invalid-input';
 }
 
 interface StoredAuthAccount extends User {
@@ -428,7 +429,7 @@ export const useAuthStore = defineStore('auth', {
       }
 
       try {
-        const response = await api.post('/api/auth/register', {
+        const body: Record<string, string> = {
           firstNameTh: payload.firstNameTh.trim(),
           lastNameTh: payload.lastNameTh.trim(),
           firstNameEn: payload.firstNameEn.trim(),
@@ -436,7 +437,9 @@ export const useAuthStore = defineStore('auth', {
           phone: payload.phone.trim(),
           email,
           password,
-        });
+        };
+        if (payload.citizenId?.trim()) body.citizenId = payload.citizenId.trim();
+        const response = await api.post('/api/auth/register', body);
 
         const apiUser = response.data.user;
         const createdAt = new Date().toISOString();
@@ -461,8 +464,14 @@ export const useAuthStore = defineStore('auth', {
         writeStoredAuthAccounts([...readStoredAuthAccounts(), nextAccount]);
         return { success: true };
       } catch (error: unknown) {
-        const status = (error as { response?: { status?: number } })?.response?.status;
+        const status = (error as { response?: { status?: number; data?: { message?: string } } })
+          ?.response?.status;
+        const message =
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? '';
         if (status === 409) {
+          if (message.toLowerCase().includes('citizen')) {
+            return { success: false, reason: 'duplicate-citizen-id' };
+          }
           return { success: false, reason: 'duplicate-email' };
         }
         console.error('Registration error:', error);

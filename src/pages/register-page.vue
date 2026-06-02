@@ -82,6 +82,25 @@
               </template>
             </q-input>
           </div>
+          <div class="col-12">
+            <q-input
+              v-model="registerForm.citizenId"
+              outlined
+              dense
+              bg-color="white"
+              :label="$t('auth.register.citizenId')"
+              maxlength="13"
+              inputmode="numeric"
+              lazy-rules
+              hide-bottom-space
+              :hint="$t('auth.register.citizenIdHint')"
+              :rules="[citizenIdRequiredRule]"
+            >
+              <template #prepend>
+                <q-icon name="badge" />
+              </template>
+            </q-input>
+          </div>
         </div>
       </div>
 
@@ -210,6 +229,7 @@ interface RegisterForm {
   firstNameEn: string;
   lastNameEn: string;
   phone: string;
+  citizenId: string;
   email: string;
   password: string;
   confirmPassword: string;
@@ -231,6 +251,7 @@ const registerForm = reactive<RegisterForm>({
   firstNameEn: '',
   lastNameEn: '',
   phone: '',
+  citizenId: '',
   email: '',
   password: '',
   confirmPassword: '',
@@ -262,6 +283,11 @@ function emailRule(value: string): true | string {
 
 function passwordRule(value: string): true | string {
   return value.trim().length >= 6 || t('auth.register.passwordTooShort');
+}
+
+function citizenIdRequiredRule(value: string): true | string {
+  if (!value.trim()) return t('auth.register.citizenIdRequired');
+  return /^\d{13}$/.test(value.trim()) || t('auth.register.citizenIdInvalid');
 }
 
 function isRequiredFormComplete(): boolean {
@@ -350,19 +376,19 @@ async function onRegister(): Promise<void> {
       firstNameEn: registerForm.firstNameEn,
       lastNameEn: registerForm.lastNameEn,
       phone: registerForm.phone,
+      ...(registerForm.citizenId.trim() ? { citizenId: registerForm.citizenId.trim() } : {}),
       email: registerForm.email,
       password: registerForm.password,
     });
 
     if (!result.success) {
-      $q.notify({
-        type: 'negative',
-        message:
-          result.reason === 'duplicate-email'
-            ? t('auth.register.duplicate')
-            : t('auth.register.failed'),
-        position: 'top',
-      });
+      const msg =
+        result.reason === 'duplicate-email'
+          ? t('auth.register.duplicate')
+          : result.reason === 'duplicate-citizen-id'
+            ? t('auth.register.duplicateCitizenId')
+            : t('auth.register.failed');
+      $q.notify({ type: 'negative', message: msg, position: 'top' });
       return;
     }
 

@@ -1377,19 +1377,10 @@
                       {{ $t('profile.benefits.subtitle') }}
                     </div>
                   </div>
-
-                  <BaseButton
-                    color="primary"
-                    icon="refresh"
-                    :label="$t('profile.benefits.refresh')"
-                    no-caps
-                    hover-lift
-                    :loading="isRefreshingBenefits"
-                    @click="refreshBenefits"
-                  />
                 </div>
 
-                <q-card flat bordered class="benefits-check-card">
+                <!-- Status: has privilege -->
+                <q-card v-if="benefitsData?.hasPrivilege" flat bordered class="benefits-check-card">
                   <div class="benefits-check-card__stripe" />
                   <q-card-section class="q-pa-lg">
                     <div class="benefits-check-card__eyebrow">
@@ -1399,8 +1390,6 @@
                       {{ $t('profile.benefits.verified') }}
                     </div>
                     <div class="text-body1 text-grey-8 q-mt-md">
-                      {{ $t('profile.benefits.citizenId') }}
-                      <span class="text-weight-bold">{{ maskedCitizenId }}</span>
                       {{ $t('profile.benefits.accountFor') }}
                       <span class="text-weight-bold">{{
                         locale === 'th' ? studentFullNameTh : studentFullNameEn
@@ -1430,7 +1419,83 @@
                           >
                         </div>
                       </div>
+                      <div class="col-12 col-md-auto">
+                        <q-btn
+                          flat
+                          dense
+                          no-caps
+                          color="grey-6"
+                          icon="refresh"
+                          :label="$t('profile.benefits.refresh')"
+                          size="sm"
+                          :loading="isRefreshingBenefits"
+                          @click="refreshBenefits"
+                        />
+                      </div>
                     </div>
+                  </q-card-section>
+                </q-card>
+
+                <!-- Status: checked — no privilege (general public) -->
+                <q-card
+                  v-else-if="benefitsData && !benefitsData.hasPrivilege"
+                  flat
+                  bordered
+                  class="benefits-empty-card"
+                >
+                  <q-card-section class="text-center q-pa-xl">
+                    <q-icon name="person_outline" size="48px" color="grey-4" class="q-mb-md" />
+                    <div class="text-subtitle1 text-weight-bold text-grey-8">
+                      {{ $t('profile.benefits.noPrivilege') }}
+                    </div>
+                    <div class="text-caption text-grey-6 q-mt-sm">
+                      {{ $t('profile.benefits.noPrivilegeSub') }}
+                    </div>
+                    <div
+                      class="row items-center q-gutter-xs text-deep-orange-8 q-mt-md justify-center"
+                    >
+                      <q-icon name="schedule" size="14px" />
+                      <span class="text-caption text-weight-bold">
+                        {{ $t('profile.benefits.checkedAt') }} {{ benefitsCheckedAtLabel }}
+                      </span>
+                    </div>
+                    <q-btn
+                      flat
+                      dense
+                      no-caps
+                      color="grey-6"
+                      icon="refresh"
+                      :label="$t('profile.benefits.refresh')"
+                      size="sm"
+                      class="q-mt-sm"
+                      :loading="isRefreshingBenefits"
+                      @click="refreshBenefits"
+                    />
+                  </q-card-section>
+                </q-card>
+
+                <!-- No citizen ID stored → redirect to personal info -->
+                <q-card v-else flat bordered class="benefits-empty-card">
+                  <q-card-section class="text-center q-pa-xl">
+                    <q-icon name="badge" size="48px" color="grey-4" class="q-mb-md" />
+                    <div class="text-subtitle1 text-weight-bold text-grey-8">
+                      {{ $t('profile.benefits.noCitizenId') }}
+                    </div>
+                    <div
+                      class="text-caption text-grey-6 q-mt-sm"
+                      style="max-width: 320px; margin: 0 auto"
+                    >
+                      {{ $t('profile.benefits.noCitizenIdSub') }}
+                    </div>
+                    <BaseButton
+                      color="primary"
+                      :label="$t('profile.benefits.goToPersonalInfo')"
+                      icon="person"
+                      no-caps
+                      hover-lift
+                      class="q-mt-lg"
+                      @click="activeMenu = 'personal-info'"
+                    />
                   </q-card-section>
                 </q-card>
               </div>
@@ -2033,7 +2098,7 @@ const benefitsData = ref<{
   hasPrivilege: boolean;
   stutypeId: number | null;
   stutypeName: string | null;
-  userCitizen: string | null;
+  source: 'student' | 'alumni' | 'staff' | null;
 } | null>(null);
 const savedEnrollmentDialogCourse = ref<CourseDetail | null>(null);
 const savedEnrollmentDialogOpenKey = ref(0);
@@ -2186,11 +2251,6 @@ const activeBenefitLabel = computed<string>(
   () => benefitsData.value?.stutypeName ?? t('profile.benefits.activeStudent'),
 );
 const benefitsCheckedAtLabel = computed<string>(() => formatThaiDateTime(benefitsCheckedAt.value));
-const maskedCitizenId = computed<string>(() => {
-  const cid = benefitsData.value?.userCitizen;
-  if (!cid) return '-';
-  return cid.length >= 10 ? cid.slice(0, cid.length - 4) + 'xxxx' : cid;
-});
 
 const heroRoleLabel = computed(() => {
   if (authStore.user?.role === 'admin') return t('profile.roles.admin');
@@ -2313,20 +2373,34 @@ function confirmSavePersonalInfo(): void {
 }
 
 async function fetchBenefits(): Promise<void> {
-  const email = authStore.user?.email;
-  if (!email) return;
   try {
-    const { data } = await api.get<{
+    // 1. Load cached privilege from LLTPRIVILEGE
+    const { data: current } = await api.get<{
       hasPrivilege: boolean;
       stutypeId: number | null;
       stutypeName: string | null;
-      userCitizen: string | null;
+      source: 'student' | 'alumni' | 'staff' | null;
       checkedAt: string;
-    }>(`/api/moodle/profile/benefits?email=${encodeURIComponent(email)}`);
-    benefitsData.value = data;
-    benefitsCheckedAt.value = new Date(data.checkedAt);
+    }>('/api/privilege/me');
+
+    if (current.hasPrivilege) {
+      benefitsData.value = current;
+      benefitsCheckedAt.value = new Date(current.checkedAt);
+      return;
+    }
+
+    // 2. No cached privilege → auto-trigger check (staff via PSNTPERSON + stored citizenId)
+    const { data: checked } = await api.post<{
+      hasPrivilege: boolean;
+      stutypeId: number | null;
+      stutypeName: string | null;
+      source: 'student' | 'alumni' | 'staff' | null;
+      checkedAt: string;
+    }>('/api/privilege/check', {});
+    benefitsData.value = checked;
+    benefitsCheckedAt.value = new Date(checked.checkedAt);
   } catch {
-    // non-critical
+    // non-critical — leave benefitsData null (show form)
   }
 }
 
@@ -3894,6 +3968,17 @@ function getCourseDetailById(courseId: string): CourseDetail | null {
   &__footer {
     background: #fbfcfd;
   }
+}
+
+.benefits-form-card {
+  border-radius: 14px !important;
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+}
+
+.benefits-empty-card {
+  border-radius: 14px !important;
+  border: 1px dashed rgba(17, 24, 39, 0.15) !important;
+  background: #fafafa !important;
 }
 
 // โ”€โ”€ Responsive โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
