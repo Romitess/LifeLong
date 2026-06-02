@@ -183,15 +183,18 @@ const seatInfo = computed(() => {
 .course-card {
   --cat-color: #{$primary};
 
-  border-radius: 12px !important;
-  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(18, 33, 74, 0.08) !important;
   background: #ffffff;
   position: relative; // required for z-index
+  box-shadow:
+    0 2px 10px -4px rgba(18, 33, 74, 0.12),
+    0 1px 3px rgba(17, 24, 39, 0.05);
 
   transition:
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform 0.42s cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 0.42s ease,
+    border-color 0.42s ease;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -199,9 +202,11 @@ const seatInfo = computed(() => {
 
   @media (hover: hover) {
     &:hover {
-      transform: translateY(-6px) scale(1.04) !important;
-      border-color: rgba($primary, 0.5) !important;
-      box-shadow: var(--shadow-brand-md) !important;
+      transform: translateY(-7px) !important;
+      border-color: rgba($primary, 0.36) !important;
+      box-shadow:
+        0 18px 48px -16px rgba(18, 33, 74, 0.26),
+        0 4px 12px rgba(17, 24, 39, 0.07) !important;
       z-index: 2;
     }
   }
