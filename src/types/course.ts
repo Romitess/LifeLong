@@ -1,5 +1,10 @@
 export type DeliveryMode = 'Online' | 'Onsite' | 'Self-Paced Learning';
-export type CourseStatus = 'ประกาศนียบัตร' | 'สะสมหน่วยกิต' | 'เปิดรับสมัคร';
+export type CourseStatus =
+  | 'ประกาศนียบัตร'
+  | 'สะสมหน่วยกิต'
+  | 'เปิดรับสมัคร'
+  | 'ปิดรับสมัคร'
+  | 'เร็วๆนี้';
 
 export interface CourseCover {
   icon: string;
