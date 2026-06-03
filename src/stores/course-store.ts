@@ -140,8 +140,6 @@ function mapBackendCourse(course: BackendCourse): Course | null {
   const today = new Date().toISOString().substring(0, 10);
   const startDate = course.regStartDate ?? course.startDate ?? today;
   const endDate = course.regEndDate ?? course.endDate ?? '2099-12-31';
-  const activeStatus = 'เปิดรับสมัคร';
-  const inactiveStatus = 'เปิดรับสมัคร';
 
   let categoryName = `Category ${course.categoryId ?? 1}`;
   try {
@@ -154,6 +152,13 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     }
   } catch {
     // Pinia not initialized yet
+  }
+
+  let computedStatus: 'เปิดรับสมัคร' | 'ปิดรับสมัคร' | 'เร็วๆนี้' = 'เปิดรับสมัคร';
+  if (course.regStartDate && course.regStartDate > today) {
+    computedStatus = 'เร็วๆนี้';
+  } else if (course.regEndDate && course.regEndDate < today) {
+    computedStatus = 'ปิดรับสมัคร';
   }
 
   return {
@@ -180,7 +185,7 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     isFree: !course.amount,
     views: course.clickCount ?? 0,
     openclassId: course.openclassId ?? null,
-    status: isActive ? activeStatus : inactiveStatus,
+    status: computedStatus,
     deliveryModes: mapDeliveryModes(course.typestudyDetail?.name),
     isActive,
     faculty: course.facultyName ?? 'Lifelong Learning',
