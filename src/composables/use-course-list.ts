@@ -50,12 +50,19 @@ function mapApiCourse(raw: ApiLltcourse): Course {
       if (apiCat) categoryName = apiCat.name;
     }
     // ดึง icon + color จาก category store เพื่อให้ generated cover ต่างกันตาม category
-    const cat = categoryStore.categories.find((c) => c.name === categoryName);
+    const cat = categoryStore.activeCategories.find((c) => c.name === categoryName);
     if (cat) {
       coverIcon = cat.icon;
     }
   } catch {
     // Pinia not initialized yet
+  }
+
+  let computedStatus: 'เปิดรับสมัคร' | 'ปิดรับสมัคร' | 'เร็วๆนี้' = 'เปิดรับสมัคร';
+  if (raw.regStartDate && raw.regStartDate > today) {
+    computedStatus = 'เร็วๆนี้';
+  } else if (raw.regEndDate && raw.regEndDate < today) {
+    computedStatus = 'ปิดรับสมัคร';
   }
 
   return {
@@ -64,7 +71,6 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     code: raw.code ?? '',
     title: raw.titleTh ?? '',
     ...(raw.titleEn ? { titleEn: raw.titleEn } : {}),
-    // ถ้าไม่มีรูปให้เป็น '' → CourseCoverImage แสดง generated cover แทนรูป fallback เดิม
     imageUrl: raw.imageUrl?.trim() ?? '',
     cover: { icon: coverIcon, accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
     registrationStart: regStart,
@@ -75,7 +81,7 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     isFree: amount === 0,
     views: raw.clickCount ?? 0,
     openclassId: raw.openclassId ?? null,
-    status: 'เปิดรับสมัคร',
+    status: computedStatus,
     deliveryModes: mapDeliveryModes(raw.typestudyDetail?.name),
     isActive: raw.status === 'Y' || raw.status === null,
     faculty: raw.facultyName ?? 'Lifelong Learning',
@@ -93,8 +99,14 @@ export function useCourseList(): UseCourseListReturn {
   const error = ref<string | null>(null);
 
   const courses = computed<Course[]>(() => courseStore.courses);
-  // Backend already filters published courses — activeCourses = all returned courses
-  const activeCourses = computed<Course[]>(() => courses.value);
+  const activeCourses = computed<Course[]>(() => {
+    const today = new Date().toISOString().substring(0, 10);
+    return courses.value.filter((c) => {
+      const start = c.registrationStartDate;
+      const end = c.registrationEndDate;
+      return (!start || start <= today) && (!end || end >= today);
+    });
+  });
 
   const fetchCourses = async (): Promise<void> => {
     isLoading.value = true;

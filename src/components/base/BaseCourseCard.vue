@@ -82,7 +82,7 @@ const emit = defineEmits<{
 }>();
 
 const categoryColor = computed<string>(() => {
-  const cat = categoryStore.categories.find((c) => c.name === props.course.category);
+  const cat = categoryStore.activeCategories.find((c) => c.name === props.course.category);
   return cat?.color ?? 'transparent';
 });
 
@@ -145,6 +145,8 @@ function getStatusColor(status: CourseStatus): string {
     ประกาศนียบัตร: 'blue-grey-8',
     สะสมหน่วยกิต: 'amber-8',
     เปิดรับสมัคร: 'positive',
+    ปิดรับสมัคร: 'negative',
+    เร็วๆนี้: 'orange-8',
   };
   return colorMap[status] ?? 'grey';
 }

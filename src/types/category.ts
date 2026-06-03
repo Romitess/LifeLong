@@ -15,12 +15,9 @@ export interface Category {
 
 export type CategoryFormPayload = Omit<Category, 'id' | 'createdAt' | 'updatedAt' | 'displayOrder'>;
 
-export interface CategoryWithUsage extends Category {
-  courseCount: number;
-  activeCourseCount: number;
-}
-
 export interface ApiCategory {
   id: number;
   name: string;
+  icon: string | null;
+  color: string | null;
 }

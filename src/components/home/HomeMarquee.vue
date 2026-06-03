@@ -33,11 +33,7 @@ import { useCategoryStore } from 'src/stores/category-store';
 const router = useRouter();
 const categoryStore = useCategoryStore();
 
-const items = computed(() =>
-  categoryStore.categories
-    .filter((c) => c.isActive)
-    .sort((a, b) => a.displayOrder - b.displayOrder),
-);
+const items = computed(() => categoryStore.activeCategories);
 
 const allItem = {
   name: 'ทั้งหมด',
