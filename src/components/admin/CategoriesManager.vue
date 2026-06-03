@@ -137,9 +137,18 @@
                           ? 'category-cell__icon--category'
                           : 'category-cell__icon--subcategory',
                       ]"
+                      :style="
+                        row.kind === 'category' && row.category.color
+                          ? { background: `${row.category.color}1a`, color: row.category.color }
+                          : {}
+                      "
                     >
                       <q-icon
-                        :name="row.kind === 'category' ? 'category' : 'subdirectory_arrow_right'"
+                        :name="
+                          row.kind === 'category'
+                            ? row.category.icon || 'category'
+                            : 'subdirectory_arrow_right'
+                        "
                       />
                     </span>
                     <div class="category-cell__copy">
@@ -335,8 +344,27 @@
     >
       <q-card class="taxonomy-dialog">
         <q-card-section class="taxonomy-dialog__header">
-          <div class="taxonomy-dialog__icon-wrap">
-            <q-icon :name="dialogMode === 'category' ? 'category' : 'account_tree'" size="30px" />
+          <div
+            class="taxonomy-dialog__icon-wrap"
+            :style="
+              dialogMode === 'category' && form.color
+                ? { background: `${form.color}22`, color: form.color }
+                : selectedParentCategory?.color
+                  ? {
+                      background: `${selectedParentCategory.color}22`,
+                      color: selectedParentCategory.color,
+                    }
+                  : {}
+            "
+          >
+            <q-icon
+              :name="
+                dialogMode === 'category'
+                  ? form.icon || 'category'
+                  : selectedParentCategory?.icon || 'account_tree'
+              "
+              size="30px"
+            />
           </div>
           <div>
             <p>{{ dialogMode === 'category' ? 'Category' : 'Subcategory' }}</p>
@@ -360,10 +388,33 @@
               class="admin-editor-field"
               hide-bottom-space
             />
+
+            <template v-if="dialogMode === 'category'">
+              <!-- Icon picker -->
+              <div class="taxonomy-field-label q-mt-md q-mb-xs">Icon</div>
+              <div class="taxonomy-icon-grid">
+                <button
+                  v-for="ic in PRESET_ICONS"
+                  :key="ic"
+                  type="button"
+                  class="taxonomy-icon-cell"
+                  :class="{ 'taxonomy-icon-cell--active': form.icon === ic }"
+                  :style="form.icon === ic ? { color: form.color, borderColor: form.color } : {}"
+                  @click="form.icon = ic"
+                >
+                  <q-icon :name="ic" size="20px" />
+                </button>
+              </div>
+
+              <!-- Color picker -->
+              <ColorPickerInput v-model="form.color" label="สี" class="q-mt-md" />
+            </template>
+
             <q-toggle
               v-model="form.isActive"
               color="positive"
               :label="form.isActive ? 'เผยแพร่' : 'ซ่อน'"
+              class="q-mt-sm"
             />
           </q-card-section>
 
@@ -413,6 +464,7 @@ import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCourseTaxonomy } from 'src/composables/use-admin-course-taxonomy';
+import ColorPickerInput from 'src/components/common/ColorPickerInput.vue';
 import type { AdminCourseCategory, AdminCourseSubcategory } from 'src/types/admin-course-taxonomy';
 
 type StatTone = 'primary' | 'positive' | 'indigo';
@@ -437,6 +489,8 @@ interface CountableNode {
 interface TaxonomyFormState {
   name: string;
   isActive: boolean;
+  icon: string;
+  color: string;
 }
 
 type CategoryTableRow =
@@ -468,9 +522,34 @@ const editingNode = ref<AdminCourseCategory | AdminCourseSubcategory | null>(nul
 const selectedParentCategory = ref<AdminCourseCategory | null>(null);
 const pendingDelete = ref<DeleteTarget | null>(null);
 
+const PRESET_ICONS = [
+  'category',
+  'translate',
+  'computer',
+  'school',
+  'self_improvement',
+  'functions',
+  'health_and_safety',
+  'restaurant',
+  'engineering',
+  'public',
+  'business_center',
+  'eco',
+  'palette',
+  'gavel',
+  'agriculture',
+  'science',
+  'psychology',
+  'music_note',
+  'sports',
+  'build',
+] as const;
+
 const form = reactive<TaxonomyFormState>({
   name: '',
   isActive: true,
+  icon: 'category',
+  color: '#6B7280',
 });
 
 const {
@@ -675,11 +754,20 @@ async function loadCategories(): Promise<void> {
 function resetForm(): void {
   form.name = '';
   form.isActive = true;
+  form.icon = 'category';
+  form.color = '#6B7280';
 }
 
-function fillForm(name: string, activeFlag: string): void {
+function fillForm(
+  name: string,
+  activeFlag: string,
+  icon?: string | null,
+  color?: string | null,
+): void {
   form.name = name;
   form.isActive = activeFlag === 'Y';
+  form.icon = icon ?? 'category';
+  form.color = color ?? '#6B7280';
 }
 
 function openCreateCategoryDialog(): void {
@@ -694,7 +782,7 @@ function openEditCategoryDialog(category: AdminCourseCategory): void {
   dialogMode.value = 'category';
   editingNode.value = category;
   selectedParentCategory.value = null;
-  fillForm(category.name, category.activeFlag);
+  fillForm(category.name, category.activeFlag, category.icon, category.color);
   formDialogOpen.value = true;
 }
 
@@ -724,9 +812,19 @@ async function submitForm(): Promise<void> {
 
     if (dialogMode.value === 'category') {
       if (editingNode.value) {
-        await updateCategory(editingNode.value.id, { name: form.name.trim(), activeFlag });
+        await updateCategory(editingNode.value.id, {
+          name: form.name.trim(),
+          activeFlag,
+          icon: form.icon.trim() || undefined,
+          color: form.color.trim() || undefined,
+        });
       } else {
-        await createCategory({ name: form.name.trim(), activeFlag });
+        await createCategory({
+          name: form.name.trim(),
+          activeFlag,
+          icon: form.icon.trim() || undefined,
+          color: form.color.trim() || undefined,
+        });
       }
     } else {
       const parentCategoryId = selectedParentCategory.value?.id;
@@ -1267,6 +1365,43 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   .taxonomy-dialog__header,
   .taxonomy-dialog__actions {
     grid-template-columns: 1fr;
+  }
+}
+
+.taxonomy-field-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.taxonomy-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.taxonomy-icon-cell {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(17, 24, 39, 0.1);
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.18s ease;
+
+  &:hover {
+    border-color: rgba(17, 24, 39, 0.3);
+    background: #f1f5f9;
+  }
+
+  &--active {
+    background: rgba(245, 166, 35, 0.1);
+    border-width: 2px;
   }
 }
 </style>
