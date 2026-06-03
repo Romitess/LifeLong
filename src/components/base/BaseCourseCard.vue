@@ -124,12 +124,14 @@ function getTranslatedRegEnd(course: Course): string {
 }
 
 function getStatusKey(status: CourseStatus): string {
-  const map: Record<string, string> = {
+  const map: Record<CourseStatus, string> = {
     ประกาศนียบัตร: 'statusCert',
     สะสมหน่วยกิต: 'statusCredit',
     เปิดรับสมัคร: 'statusOpen',
+    ปิดรับสมัคร: 'statusClosed',
+    เร็วๆนี้: 'statusSoon',
   };
-  return map[status] || status;
+  return map[status] ?? status;
 }
 
 function formatPrice(price: number): string {
@@ -145,7 +147,7 @@ function getStatusColor(status: CourseStatus): string {
     ประกาศนียบัตร: 'blue-grey-8',
     สะสมหน่วยกิต: 'amber-8',
     เปิดรับสมัคร: 'positive',
-    ปิดรับสมัคร: 'negative',
+    ปิดรับสมัคร: 'red-7',
     เร็วๆนี้: 'orange-8',
   };
   return colorMap[status] ?? 'grey';

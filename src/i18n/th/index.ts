@@ -36,6 +36,8 @@ export default {
   statusCert: 'ประกาศนียบัตร',
   statusCredit: 'สะสมหน่วยกิต',
   statusOpen: 'เปิดรับสมัคร',
+  statusClosed: 'ปิดรับสมัคร',
+  statusSoon: 'เร็วๆนี้',
   loadingCourse: 'กำลังโหลดข้อมูลคอร์ส...',
   retry: 'ลองใหม่',
   deliveryModeOnline: 'ออนไลน์',

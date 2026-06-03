@@ -36,6 +36,8 @@ export default {
   statusCert: 'Certificate',
   statusCredit: 'Credit Bank',
   statusOpen: 'Open',
+  statusClosed: 'Closed',
+  statusSoon: 'Coming Soon',
   loadingCourse: 'Loading course details...',
   retry: 'Retry',
   deliveryModeOnline: 'Online',
