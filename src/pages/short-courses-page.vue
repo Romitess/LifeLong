@@ -666,10 +666,6 @@ onMounted(fetchCourses);
 }
 
 // ── Page & Panel (matching main-page) ──
-.short-courses-page {
-  background: #f8f6f1;
-}
-
 .course-section-panel {
   display: flex;
   flex-direction: column;

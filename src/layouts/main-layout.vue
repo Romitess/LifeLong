@@ -384,6 +384,15 @@
     </q-drawer>
 
     <q-page-container>
+      <!-- Global decorative background blobs -->
+      <div class="page-blobs" aria-hidden="true">
+        <span class="page-blob page-blob--gold-l" />
+        <span class="page-blob page-blob--navy-r" />
+        <span class="page-blob page-blob--gold-c" />
+        <span class="page-blob page-blob--navy-l2" />
+        <span class="page-blob page-blob--gold-r2" />
+      </div>
+
       <BaseSpinner v-if="isPageSwitchLoading" class="route-page-loading" />
       <router-view v-else />
 
@@ -1195,9 +1204,27 @@ async function onCategoryClick(category: string) {
 .top-toolbar {
   padding: 8px 24px;
   min-height: 72px;
-  background: rgb(247, 208, 70);
-  border-bottom: none;
+  background: rgba(247, 208, 70, 0.55);
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow: 0 2px 24px rgba(17, 24, 39, 0.06);
   gap: 0;
+}
+
+.hamburger-btn {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border-radius: 50% !important;
+  transition:
+    background 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease !important;
+
+  &:hover {
+    background: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(17, 24, 39, 0.1) !important;
+    transform: translateY(-1px);
+  }
 }
 
 .vertical-divider {
@@ -1263,7 +1290,7 @@ async function onCategoryClick(category: string) {
   width: 36px;
   height: 36px;
   min-height: 36px;
-  color: #5c3d00 !important;
+  color: #374151 !important;
   background: rgba(255, 255, 255, 0.72) !important;
   transition:
     transform 0.22s ease,
@@ -1418,8 +1445,8 @@ async function onCategoryClick(category: string) {
   width: min(326px, 100%);
   padding: 4px 10px 4px 14px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.58);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
 }
 
 .profile-action-menu {
@@ -2051,7 +2078,12 @@ async function onCategoryClick(category: string) {
   border-radius: 12px;
   color: #4b5563;
   font-weight: 600;
-  transition: all 0.24s ease;
+  transition: background-color 0.24s ease;
+
+  :deep(.q-focus-helper) {
+    border-radius: inherit;
+    background: $primary !important;
+  }
 
   &:hover {
     color: $primary;
@@ -2063,8 +2095,8 @@ async function onCategoryClick(category: string) {
   }
 
   &--active {
-    color: #3d2600 !important;
-    background: rgba(247, 208, 70, 0.16) !important;
+    color: $primary !important;
+    background: rgba($primary, 0.14) !important;
     font-weight: 700;
 
     .drawer-item-icon-section {
@@ -2104,6 +2136,11 @@ async function onCategoryClick(category: string) {
     color: #4b5563;
     font-weight: 600;
 
+    .q-focus-helper {
+      border-radius: inherit;
+      background: $primary !important;
+    }
+
     &:hover {
       color: $primary;
       background: rgba(247, 208, 70, 0.08);
@@ -2123,6 +2160,11 @@ async function onCategoryClick(category: string) {
   color: #6b7280;
   font-weight: 500;
   transition: all 0.2s ease;
+
+  :deep(.q-focus-helper) {
+    border-radius: inherit;
+    background: $primary !important;
+  }
 
   &:hover {
     color: $primary;
@@ -2145,5 +2187,69 @@ async function onCategoryClick(category: string) {
   font-size: 0.7rem;
   padding: 3px 6px;
   font-weight: 700;
+}
+
+// ── Global Page Background & Blobs ─────────────────────────────
+:deep(.q-page-container) {
+  position: relative;
+  background: #f6f7fb;
+}
+
+.page-blobs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.page-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: 0.55;
+  pointer-events: none;
+  will-change: transform;
+
+  &--gold-l {
+    width: 480px;
+    height: 480px;
+    background: rgba(251, 192, 45, 1);
+    top: 380px;
+    left: -160px;
+  }
+
+  &--navy-r {
+    width: 520px;
+    height: 520px;
+    background: rgba(174, 191, 232, 1);
+    top: 520px;
+    right: -180px;
+  }
+
+  &--gold-c {
+    width: 420px;
+    height: 420px;
+    background: rgba(252, 211, 77, 1);
+    top: 1100px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  &--navy-l2 {
+    width: 500px;
+    height: 500px;
+    background: rgba(174, 191, 232, 1);
+    top: 1650px;
+    left: -170px;
+  }
+
+  &--gold-r2 {
+    width: 460px;
+    height: 460px;
+    background: rgba(251, 192, 45, 1);
+    top: 2100px;
+    right: -160px;
+  }
 }
 </style>

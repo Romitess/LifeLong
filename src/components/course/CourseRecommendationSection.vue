@@ -1,26 +1,30 @@
 <template>
   <section class="recommended-courses">
     <div class="section-container">
-      <div class="recommended-courses__header">
-        <div>
-          <div class="recommended-courses__eyebrow">{{ $t('recommendedEyebrow') }}</div>
-          <h2 class="recommended-courses__title">{{ $t('recommendedTitle') }}</h2>
-        </div>
-        <q-btn
-          flat
-          no-caps
-          color="primary"
-          icon-right="chevron_right"
-          :label="$t('viewAll')"
-          to="/short-courses"
-        />
-      </div>
+      <q-card flat bordered class="recommended-card">
+        <q-card-section class="recommended-card__body">
+          <div class="recommended-courses__header">
+            <div class="recommended-courses__heading">
+              <div class="recommended-courses__eyebrow">{{ $t('recommendedEyebrow') }}</div>
+              <h2 class="recommended-courses__title">{{ $t('recommendedTitle') }}</h2>
+            </div>
+            <q-btn
+              flat
+              no-caps
+              color="primary"
+              icon-right="chevron_right"
+              :label="$t('viewAll')"
+              to="/short-courses"
+            />
+          </div>
 
-      <div class="row q-col-gutter-lg">
-        <div v-for="course in courses" :key="course.id" class="col-xs-12 col-sm-6 col-md-3">
-          <BaseCourseCard :course="course" @click="emit('courseClick', course)" />
-        </div>
-      </div>
+          <div class="row q-col-gutter-lg">
+            <div v-for="course in courses" :key="course.id" class="col-xs-12 col-sm-6 col-md-3">
+              <BaseCourseCard :course="course" @click="emit('courseClick', course)" />
+            </div>
+          </div>
+        </q-card-section>
+      </q-card>
     </div>
   </section>
 </template>
@@ -42,10 +46,20 @@ const emit = defineEmits<{
 
 <style lang="scss" scoped>
 .recommended-courses {
-  background: #f3f7f6;
-  padding: 56px 0 64px;
-  border-top: 1px solid rgba(35, 78, 112, 0.08);
+  background: transparent;
+  padding: 0 0 40px;
+}
 
+.recommended-card {
+  border-radius: 14px !important;
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+
+  &__body {
+    padding: 28px;
+  }
+}
+
+.recommended-courses {
   &__header {
     display: flex;
     align-items: flex-end;
@@ -75,6 +89,10 @@ const emit = defineEmits<{
   .recommended-courses__header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .recommended-card__body {
+    padding: 18px;
   }
 }
 </style>

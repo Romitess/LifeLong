@@ -1364,7 +1364,7 @@ watch(
 
 // ── Detail Content ───────────────────────────────────────────
 .detail-content {
-  background: #f8f6f1;
+  background: transparent;
 }
 
 // ── Detail Cards ─────────────────────────────────────────────

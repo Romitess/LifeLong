@@ -1,13 +1,5 @@
 <template>
   <q-page class="home-page ds-grain ds-grain--page">
-    <!-- Background blobs -->
-    <div class="page-blobs" aria-hidden="true">
-      <span class="page-blob page-blob--gold-l" />
-      <span class="page-blob page-blob--navy-r" />
-      <span class="page-blob page-blob--gold-c" />
-      <span class="page-blob page-blob--navy-l2" />
-      <span class="page-blob page-blob--gold-r2" />
-    </div>
     <!-- ─── HERO ─── -->
     <template v-if="!courseStore.selectedCategory">
       <section
@@ -1035,69 +1027,8 @@ onBeforeUnmount(() => {
 
 .home-page {
   position: relative;
-  overflow: hidden;
-  background: #f6f7fb;
 }
 
-// ── Background Blobs ──────────────────────────────────────────
-.page-blobs {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.page-blob {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(60px);
-  opacity: 0.55;
-  pointer-events: none;
-  will-change: transform; // promote to GPU layer so blur compositing stays off main thread
-
-  &--gold-l {
-    width: 480px;
-    height: 480px;
-    background: rgba(251, 192, 45, 1);
-    top: 380px;
-    left: -160px;
-  }
-
-  &--navy-r {
-    width: 520px;
-    height: 520px;
-    background: rgba(174, 191, 232, 1);
-    top: 520px;
-    right: -180px;
-  }
-
-  &--gold-c {
-    width: 420px;
-    height: 420px;
-    background: rgba(252, 211, 77, 1);
-    top: 1100px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  &--navy-l2 {
-    width: 500px;
-    height: 500px;
-    background: rgba(174, 191, 232, 1);
-    top: 1650px;
-    left: -170px;
-  }
-
-  &--gold-r2 {
-    width: 460px;
-    height: 460px;
-    background: rgba(251, 192, 45, 1);
-    top: 2100px;
-    right: -160px;
-  }
-}
-
-// Lift content sections above the z-index:0 blob layer (DOM order handles priority, no z-index needed)
 .stats-floating-section,
 .info-strip-section,
 .courses-section,

@@ -84,10 +84,10 @@ function saveLocale(value: SupportedLocale): void {
   gap: 6px;
   min-height: 38px;
   padding: 4px;
-  border: 1px solid rgba(17, 24, 39, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 999px;
-  background: #ffffff;
-  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 2px 8px rgba(17, 24, 39, 0.06);
   transition:
     border-color 0.22s ease,
     box-shadow 0.22s ease,
