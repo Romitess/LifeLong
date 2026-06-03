@@ -110,6 +110,10 @@ export default defineConfig((ctx) => {
           target: process.env.BACKEND_URL ?? 'http://localhost:3000',
           changeOrigin: true,
         },
+        '/uploads': {
+          target: process.env.BACKEND_URL ?? 'http://localhost:3000',
+          changeOrigin: true,
+        },
       },
     },
 
