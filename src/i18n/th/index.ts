@@ -1128,6 +1128,8 @@ export default {
           fund: 'เงินกองทุน (Fund)',
           other: 'อื่นๆ (Other)',
         },
+        fundCode: 'รหัสแหล่งเงิน *',
+        fundCodePlaceholder: 'เช่น BG-2569-001',
         fiscalYear: 'ปีงบประมาณ *',
         nameTh: 'ชื่อแหล่งเงิน (ภาษาไทย) *',
         nameThPlaceholder: 'เช่น เงินงบประมาณแผ่นดินเพื่อการวิจัย...',

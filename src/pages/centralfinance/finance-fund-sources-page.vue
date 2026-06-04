@@ -294,6 +294,7 @@
                     icon="play_arrow"
                     no-caps
                     class="full-width q-py-sm"
+                    @click="onStartReview"
                   />
                   <q-btn
                     v-if="selectedRequest.status === 'processing'"
@@ -303,14 +304,20 @@
                     icon="check_circle"
                     no-caps
                     class="full-width q-py-sm"
+                    @click="onOpenApprove"
                   />
                   <q-btn
+                    v-if="
+                      selectedRequest.status !== 'completed' &&
+                      selectedRequest.status !== 'rejected'
+                    "
                     outline
                     color="negative"
                     :label="$t('centralFinance.fundSources.detail.reject')"
                     icon="reply"
                     no-caps
                     class="full-width q-py-sm"
+                    @click="onOpenReject"
                   />
                 </div>
               </div>
@@ -404,6 +411,131 @@
       </q-card>
     </q-dialog>
 
+    <!-- ── Issue Fund Source Dialog ─────────────────────────── -->
+    <q-dialog v-model="showApprove" persistent>
+      <q-card style="width: 520px; max-width: 95vw; border-radius: 18px">
+        <q-card-section class="bg-positive text-white q-pa-md row items-center">
+          <q-icon name="check_circle" size="sm" class="q-mr-sm" />
+          <div class="text-subtitle1 text-weight-bold">ออกรหัสแหล่งเงิน</div>
+          <q-space />
+          <q-btn icon="close" flat round dense color="white" v-close-popup />
+        </q-card-section>
+
+        <q-card-section class="q-pa-lg">
+          <div class="issue-request-ref q-pa-sm q-mb-md rounded-borders bg-green-1">
+            <div class="text-caption text-grey-7">คำขอที่อ้างอิง</div>
+            <div class="text-subtitle2 text-weight-bold">{{ selectedRequest?.requestId }}</div>
+            <div class="text-caption text-grey-8">
+              {{ selectedRequest?.faculty }} — {{ selectedRequest?.project }}
+            </div>
+          </div>
+
+          <div class="column q-gutter-md">
+            <q-select
+              v-model="approveForm.fundType"
+              :options="fundTypeOptions"
+              emit-value
+              map-options
+              outlined
+              dense
+              :label="$t('centralFinance.addFundSource.form.fundType')"
+            />
+            <q-input
+              v-model="approveForm.fundCode"
+              outlined
+              dense
+              :label="$t('centralFinance.addFundSource.form.fundCode')"
+              :placeholder="$t('centralFinance.addFundSource.form.fundCodePlaceholder')"
+            />
+            <q-input
+              v-model="approveForm.nameTh"
+              outlined
+              dense
+              :label="$t('centralFinance.addFundSource.form.nameTh')"
+              :placeholder="$t('centralFinance.addFundSource.form.nameThPlaceholder')"
+            />
+            <q-input
+              v-model="approveForm.nameEn"
+              outlined
+              dense
+              :label="$t('centralFinance.addFundSource.form.nameEn')"
+              :placeholder="$t('centralFinance.addFundSource.form.nameEnPlaceholder')"
+            />
+            <q-select
+              v-model="approveForm.fiscalYear"
+              :options="fiscalYearOptions"
+              outlined
+              dense
+              :label="$t('centralFinance.addFundSource.form.fiscalYear')"
+            />
+            <q-input
+              v-model="approveForm.note"
+              type="textarea"
+              outlined
+              dense
+              rows="2"
+              label="หมายเหตุ (สำหรับแจ้งกลับคณะ)"
+              placeholder="ระบุหมายเหตุหรือรายละเอียดเพิ่มเติม..."
+            />
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-md q-gutter-sm">
+          <q-btn flat no-caps label="ยกเลิก" color="grey-7" v-close-popup />
+          <q-btn
+            unelevated
+            no-caps
+            color="positive"
+            icon="check_circle"
+            label="ยืนยันออกเลขแหล่งเงิน"
+            :disable="!approveForm.fundCode.trim() || !approveForm.nameTh.trim()"
+            @click="onConfirmApprove"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- ── Reject Confirm Dialog ──────────────────────────────── -->
+    <q-dialog v-model="showRejectConfirm" persistent>
+      <q-card style="width: 420px; max-width: 92vw; border-radius: 16px">
+        <q-card-section class="row items-center q-pa-md">
+          <q-avatar icon="reply" color="negative" text-color="white" />
+          <div class="text-h6 text-weight-bold q-ml-md">ตีกลับคำขอ</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none q-px-lg">
+          <p class="text-body2 text-grey-8">
+            คำขอ <strong>{{ selectedRequest?.requestId }}</strong> จะถูกส่งคืนไปยัง
+            <strong>{{ selectedRequest?.faculty }}</strong> เพื่อแก้ไข
+          </p>
+          <q-input
+            v-model="rejectNote"
+            type="textarea"
+            outlined
+            dense
+            rows="3"
+            label="เหตุผลในการตีกลับ *"
+            placeholder="ระบุเหตุผลที่ตีกลับเพื่อแก้ไข..."
+          />
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pa-md q-gutter-sm">
+          <q-btn flat no-caps label="ยกเลิก" color="grey-7" v-close-popup />
+          <q-btn
+            unelevated
+            no-caps
+            color="negative"
+            icon="reply"
+            label="ยืนยันตีกลับ"
+            :disable="!rejectNote.trim()"
+            @click="onConfirmReject"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <!-- ── History Dialog ────────────────────────────────────── -->
     <q-dialog v-model="showHistory">
       <q-card style="min-width: 700px; border-radius: 16px">
@@ -458,6 +590,7 @@ import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import type { FundSourceRequest } from 'src/stores/central-finance-store';
+import { useAuthStore } from 'src/stores/auth-store';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
@@ -466,6 +599,7 @@ const router = useRouter();
 const { t } = useI18n();
 const $q = useQuasar();
 const financeStore = useCentralFinanceStore();
+const authStore = useAuthStore();
 
 const showHistory = ref(false);
 const showDetail = ref(false);
@@ -669,17 +803,135 @@ function onEdit(row: FundSourceRequest) {
   showEdit.value = true;
 }
 
-function onSaveEdit() {
-  if (selectedRequest.value) {
-    // In a real app, this would be an API call
-    selectedRequest.value.status = editForm.status;
-    $q.notify({
-      type: 'positive',
-      message: t('centralFinance.fundSources.edit.success'),
-      position: 'top',
-    });
-    showEdit.value = false;
-  }
+// ── Approve (Issue Fund Source) ─────────────────────────────
+interface ApproveForm {
+  fundType: string;
+  fundCode: string;
+  nameTh: string;
+  nameEn: string;
+  fiscalYear: string;
+  note: string;
+}
+
+const showApprove = ref(false);
+const approveForm = reactive<ApproveForm>({
+  fundType: '',
+  fundCode: '',
+  nameTh: '',
+  nameEn: '',
+  fiscalYear: '',
+  note: '',
+});
+
+const currentThaiYear = new Date().getFullYear() + 543;
+const fiscalYearOptions = computed<string[]>(() =>
+  Array.from({ length: 5 }, (_, i) => String(currentThaiYear - i)),
+);
+
+const fundTypeOptions = computed(() => [
+  { label: t('centralFinance.addFundSource.form.fundTypes.budget'), value: 'BG' },
+  { label: t('centralFinance.addFundSource.form.fundTypes.revenue'), value: 'RV' },
+  { label: t('centralFinance.addFundSource.form.fundTypes.donation'), value: 'DN' },
+  { label: t('centralFinance.addFundSource.form.fundTypes.fund'), value: 'OT' },
+  { label: t('centralFinance.addFundSource.form.fundTypes.other'), value: 'XX' },
+]);
+
+// ── Reject ───────────────────────────────────────────────────
+const showRejectConfirm = ref(false);
+const rejectNote = ref('');
+
+function onStartReview(): void {
+  if (!selectedRequest.value) return;
+  financeStore.updateRequestStatus(selectedRequest.value.id, 'processing');
+  $q.notify({ type: 'info', message: 'รับเรื่องและเริ่มตรวจสอบเอกสารแล้ว', position: 'top' });
+}
+
+function onOpenApprove(): void {
+  approveForm.fundType = '';
+  approveForm.fundCode = '';
+  approveForm.nameTh = selectedRequest.value?.project ?? '';
+  approveForm.nameEn = '';
+  approveForm.fiscalYear = String(currentThaiYear);
+  approveForm.note = '';
+  showApprove.value = true;
+}
+
+function onConfirmApprove(): void {
+  if (!selectedRequest.value) return;
+
+  const approverName =
+    `${authStore.user?.firstNameTh ?? ''} ${authStore.user?.lastNameTh ?? ''}`.trim() ||
+    'เจ้าหน้าที่กองคลัง';
+
+  const nameEn = approveForm.nameEn.trim();
+  financeStore.addFundSource({
+    fundCode: approveForm.fundCode.trim(),
+    fundType: approveForm.fundType,
+    fiscalYear: approveForm.fiscalYear,
+    nameTh: approveForm.nameTh.trim(),
+    ...(nameEn ? { nameEn } : {}),
+  });
+
+  financeStore.updateRequestStatus(selectedRequest.value.id, 'completed');
+
+  financeStore.addNotificationLog({
+    fundCode: approveForm.fundCode.trim(),
+    sentTo: selectedRequest.value.faculty,
+    approvedBy: approverName,
+    note: approveForm.note.trim() || `ออกเลขแหล่งเงิน ${approveForm.fundCode} เรียบร้อยแล้ว`,
+  });
+
+  $q.notify({
+    type: 'positive',
+    message: `ออกเลขแหล่งเงิน ${approveForm.fundCode} และแจ้งกลับ ${selectedRequest.value.faculty} เรียบร้อยแล้ว`,
+    position: 'top',
+    timeout: 4000,
+  });
+
+  showApprove.value = false;
+  showDetail.value = false;
+}
+
+function onOpenReject(): void {
+  rejectNote.value = '';
+  showRejectConfirm.value = true;
+}
+
+function onConfirmReject(): void {
+  if (!selectedRequest.value) return;
+
+  const approverName =
+    `${authStore.user?.firstNameTh ?? ''} ${authStore.user?.lastNameTh ?? ''}`.trim() ||
+    'เจ้าหน้าที่กองคลัง';
+
+  financeStore.updateRequestStatus(selectedRequest.value.id, 'rejected');
+
+  financeStore.addNotificationLog({
+    fundCode: '-',
+    sentTo: selectedRequest.value.faculty,
+    approvedBy: approverName,
+    note: `ตีกลับคำขอ: ${rejectNote.value.trim()}`,
+  });
+
+  $q.notify({
+    type: 'negative',
+    message: `ตีกลับคำขอ ${selectedRequest.value.requestId} ไปยัง ${selectedRequest.value.faculty} แล้ว`,
+    position: 'top',
+  });
+
+  showRejectConfirm.value = false;
+  showDetail.value = false;
+}
+
+function onSaveEdit(): void {
+  if (!selectedRequest.value) return;
+  financeStore.updateRequestStatus(selectedRequest.value.id, editForm.status);
+  $q.notify({
+    type: 'positive',
+    message: t('centralFinance.fundSources.edit.success'),
+    position: 'top',
+  });
+  showEdit.value = false;
 }
 </script>
 

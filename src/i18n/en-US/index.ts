@@ -1111,6 +1111,8 @@ export default {
           fund: 'Fund',
           other: 'Other',
         },
+        fundCode: 'Fund Source Code *',
+        fundCodePlaceholder: 'e.g. BG-2569-001',
         fiscalYear: 'Fiscal Year *',
         nameTh: 'Fund Name (Thai) *',
         nameThPlaceholder: 'e.g. Government Budget for Research...',
