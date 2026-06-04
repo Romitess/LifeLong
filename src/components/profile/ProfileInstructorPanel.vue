@@ -1,8 +1,12 @@
 <template>
   <div class="instructor-home-panel">
     <div class="instructor-home-header">
-      <div>
-        <div class="text-h5 text-weight-bolder text-primary">Instructor Overview</div>
+      <div class="instructor-home-header__copy">
+        <div class="instructor-home-header__eyebrow">Teaching command center</div>
+        <div class="instructor-home-header__title-row">
+          <div class="text-h5 text-weight-bolder text-primary">Instructor Overview</div>
+          <span>Live overview</span>
+        </div>
         <div class="text-caption text-grey-6 q-mt-xs">
           Course summary, teaching tasks, and certificate progress
         </div>
@@ -13,6 +17,7 @@
         icon="menu_book"
         label="ดูรายวิชาที่รับผิดชอบ"
         no-caps
+        class="instructor-home-header__action"
         @click="goToInstructorCourses"
       />
     </div>
@@ -25,7 +30,12 @@
         bordered
         class="instructor-overview-card"
       >
-        <q-icon :name="item.icon" size="26px" :style="{ color: item.color }" />
+        <span
+          class="instructor-overview-card__icon"
+          :style="{ '--card-accent': item.color, '--card-icon-bg': item.iconBg }"
+        >
+          <q-icon :name="item.icon" size="26px" />
+        </span>
         <div>
           <strong>{{ item.value.toLocaleString('th-TH') }}</strong>
           <span>{{ item.label }}</span>
@@ -304,24 +314,28 @@ const instructorOverviewCards = computed(() => [
     value: instructorCourses.value.length,
     icon: 'menu_book',
     color: '#F5A623',
+    iconBg: '#F59E0B',
   },
   {
     label: 'รายวิชาที่เปิดสอน',
     value: activeInstructorCoursesCount.value,
     icon: 'campaign',
-    color: '#31B7C8',
+    color: '#4F7DF3',
+    iconBg: '#4F7DF3',
   },
   {
     label: 'ผู้เรียนรวม',
     value: totalInstructorLearners.value,
     icon: 'groups',
-    color: '#49B37D',
+    color: '#18B65A',
+    iconBg: '#18B65A',
   },
   {
     label: 'พร้อมออก Certificate',
     value: certificateReadyLearners.value,
     icon: 'workspace_premium',
-    color: '#5B7CFA',
+    color: '#D94A00',
+    iconBg: '#D94A00',
   },
 ]);
 
@@ -429,7 +443,7 @@ defineExpose({
 <style lang="scss" scoped>
 .instructor-home-panel {
   display: grid;
-  gap: 18px;
+  gap: 22px;
 }
 
 .instructor-home-header,
@@ -438,14 +452,74 @@ defineExpose({
 .instructor-report-card,
 .instructor-overview-card {
   border-radius: 16px !important;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.96);
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
 }
 
 .instructor-home-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  overflow: hidden;
+  padding: 22px 24px;
+  border: 1px solid rgba(245, 166, 35, 0.16);
+  box-shadow: 0 18px 42px rgba(16, 24, 40, 0.07);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(245, 166, 35, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.94));
+}
+
+.instructor-home-header::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  right: 10%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(49, 183, 200, 0.18), transparent 68%);
+  pointer-events: none;
+}
+
+.instructor-home-header__copy {
+  position: relative;
+  z-index: 1;
+}
+
+.instructor-home-header__eyebrow {
+  color: #9a6400;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.instructor-home-header__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+
+  span {
+    padding: 5px 10px;
+    border-radius: 999px;
+    color: #0f766e;
+    background: rgba(49, 183, 200, 0.12);
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+}
+
+.instructor-home-header__action {
+  position: relative;
+  z-index: 1;
+  border-radius: 12px;
+  box-shadow: 0 12px 24px rgba(245, 166, 35, 0.22);
 }
 
 .instructor-overview-grid {
@@ -455,29 +529,85 @@ defineExpose({
 }
 
 .instructor-overview-card {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 14px;
+  min-height: 96px;
+  padding: 18px 20px;
   border-color: rgba(17, 24, 39, 0.08) !important;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.055);
+}
 
-  strong,
-  span {
-    display: block;
-  }
+.instructor-overview-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--card-accent, #f5a623);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
 
-  strong {
-    color: #101828;
-    font-size: 1.45rem;
-    line-height: 1;
-  }
+.instructor-overview-card::after {
+  content: '';
+  position: absolute;
+  right: -36px;
+  bottom: -46px;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--card-accent, #f5a623) 20%, transparent),
+    transparent 68%
+  );
+  pointer-events: none;
+}
 
-  span {
-    margin-top: 4px;
-    color: #667085;
-    font-size: 0.82rem;
-    font-weight: 700;
-  }
+.instructor-overview-card__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
+  border-radius: 15px;
+  color: #ffffff;
+  background: var(--card-icon-bg, #f59e0b);
+  box-shadow: 0 12px 22px color-mix(in srgb, var(--card-icon-bg, #f59e0b) 24%, transparent);
+}
+
+.instructor-overview-card__icon :deep(.q-icon) {
+  display: grid;
+  place-items: center;
+  width: 1em;
+  height: 1em;
+  color: #ffffff !important;
+  line-height: 1;
+}
+
+.instructor-overview-card > div {
+  position: relative;
+  z-index: 1;
+}
+
+.instructor-overview-card strong,
+.instructor-overview-card span {
+  display: block;
+}
+
+.instructor-overview-card strong {
+  color: #101828;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.instructor-overview-card span {
+  margin-top: 5px;
+  color: #667085;
+  font-size: 0.84rem;
+  font-weight: 800;
 }
 
 .instructor-report-grid {
@@ -487,9 +617,24 @@ defineExpose({
 }
 
 .instructor-report-card {
+  position: relative;
+  overflow: hidden;
   min-width: 0;
-  padding: 18px;
+  padding: 22px;
   border-color: rgba(17, 24, 39, 0.08) !important;
+  box-shadow: 0 14px 34px rgba(16, 24, 40, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96)),
+    radial-gradient(circle at 100% 0%, rgba(49, 183, 200, 0.12), transparent 32%);
+}
+
+.instructor-report-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, #f5a623, #31b7c8, #49b37d);
+  opacity: 0.76;
 }
 
 .instructor-report-card--wide {
@@ -497,6 +642,8 @@ defineExpose({
 }
 
 .instructor-report-card__head {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -513,6 +660,16 @@ defineExpose({
   span {
     color: #667085;
     font-size: 0.85rem;
+  }
+
+  > .q-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: rgba(245, 166, 35, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(245, 166, 35, 0.14);
   }
 }
 
@@ -557,12 +714,30 @@ defineExpose({
 
 .instructor-work-card,
 .instructor-course-work-card {
+  position: relative;
+  overflow: hidden;
   padding: 18px;
   border-color: rgba(17, 24, 39, 0.08) !important;
+  box-shadow: 0 14px 34px rgba(16, 24, 40, 0.055);
+  background:
+    radial-gradient(circle at 96% 8%, rgba(245, 166, 35, 0.12), transparent 26%),
+    linear-gradient(180deg, #ffffff, #fbfdff);
+}
+
+.instructor-work-card::before,
+.instructor-course-work-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #f5a623, #31b7c8);
+  opacity: 0.72;
 }
 
 .instructor-work-card__head,
 .instructor-course-work-card__head {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -580,6 +755,15 @@ defineExpose({
     color: #667085;
     font-size: 0.85rem;
   }
+
+  > .q-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: rgba(245, 166, 35, 0.1);
+  }
 }
 
 .instructor-task-list {
@@ -588,6 +772,8 @@ defineExpose({
 }
 
 .instructor-task-item {
+  position: relative;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 38px 1fr;
   gap: 12px;
@@ -602,16 +788,24 @@ defineExpose({
   cursor: pointer;
   transition:
     border-color 0.2s ease,
+    box-shadow 0.2s ease,
     transform 0.2s ease;
 
   &:hover {
     border-color: rgba(245, 166, 35, 0.48);
+    box-shadow: 0 14px 28px rgba(245, 166, 35, 0.16);
     transform: translateY(-1px);
   }
 
   .q-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
     color: $primary;
     font-size: 22px;
+    background: rgba(245, 166, 35, 0.12);
   }
 
   strong,
@@ -632,6 +826,8 @@ defineExpose({
 }
 
 .certificate-status-row {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
@@ -639,7 +835,8 @@ defineExpose({
   div {
     padding: 14px 10px;
     border-radius: 12px;
-    background: #f8fafc;
+    background: linear-gradient(180deg, #f8fafc, #ffffff);
+    box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.04);
     text-align: center;
   }
 
@@ -666,6 +863,8 @@ defineExpose({
 }
 
 .instructor-course-item {
+  position: relative;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 88px 1fr auto;
   gap: 14px;
@@ -673,13 +872,44 @@ defineExpose({
   padding: 12px;
   border: 1px solid #e4e9f2;
   border-radius: 14px;
-  background: #fbfdff;
+  background: linear-gradient(90deg, rgba(245, 166, 35, 0.06), transparent 28%), #fbfdff;
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease;
 
   img {
     width: 88px;
     height: 62px;
     border-radius: 10px;
     object-fit: cover;
+  }
+}
+
+.instructor-course-item::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: #f5a623;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .instructor-overview-card:hover,
+  .instructor-report-card:hover,
+  .instructor-work-card:hover,
+  .instructor-course-work-card:hover,
+  .instructor-course-item:hover {
+    border-color: rgba(245, 166, 35, 0.92) !important;
+    outline: 1px solid rgba(245, 166, 35, 0.82);
+    outline-offset: -1px;
+    box-shadow:
+      0 28px 58px rgba(16, 24, 40, 0.26),
+      0 14px 30px rgba(245, 166, 35, 0.32),
+      0 4px 12px rgba(16, 24, 40, 0.12);
+    transform: translateY(-4px);
   }
 }
 

@@ -60,7 +60,7 @@
         </div>
 
         <!-- Stats Cards -->
-        <div class="col-12 col-lg-auto">
+        <div v-if="profileStats.length > 0" class="col-12 col-lg-auto">
           <div class="row q-gutter-md justify-center">
             <div
               v-for="stat in profileStats"
@@ -224,6 +224,30 @@ const {
   padding: 0;
   overflow: hidden;
 
+  &::before {
+    content: '';
+    position: absolute;
+    top: -45%;
+    bottom: -45%;
+    left: -38%;
+    width: 34%;
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.02) 18%,
+      rgba(255, 255, 255, 0.2) 46%,
+      rgba(255, 214, 102, 0.18) 52%,
+      rgba(255, 255, 255, 0.08) 62%,
+      transparent 100%
+    );
+    filter: blur(10px);
+    opacity: 0;
+    pointer-events: none;
+    transform: skewX(-18deg) translateX(0);
+    animation: profileHeroLightSweep 12s ease-in-out infinite;
+    z-index: 1;
+  }
+
   &__particles {
     position: absolute;
     inset: 0;
@@ -257,7 +281,7 @@ const {
 
   &__content {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     padding: 52px 24px 44px;
   }
 
@@ -472,6 +496,25 @@ const {
       border: 2px solid rgba(255, 255, 255, 0.5);
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
     }
+  }
+}
+
+@keyframes profileHeroLightSweep {
+  0%,
+  42% {
+    opacity: 0;
+    transform: skewX(-18deg) translateX(0);
+  }
+  50% {
+    opacity: 0.86;
+  }
+  66% {
+    opacity: 0.48;
+  }
+  78%,
+  100% {
+    opacity: 0;
+    transform: skewX(-18deg) translateX(520%);
   }
 }
 </style>

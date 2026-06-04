@@ -1,7 +1,10 @@
 <template>
   <q-page class="profile-page">
     <!-- PROFILE HERO  -->
-    <ProfileHeroSection :hero-role-label="heroRoleLabel" :profile-stats="profileStats" />
+    <ProfileHeroSection
+      :hero-role-label="heroRoleLabel"
+      :profile-stats="isTeachingRole ? [] : profileStats"
+    />
 
     <!-- CONTENT -->
     <section ref="profileContentRef" class="profile-content q-py-xl">
