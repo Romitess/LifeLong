@@ -32,6 +32,7 @@
                 <q-select
                   v-model="filters.faculty"
                   :options="facultyOptions"
+                  :loading="isFacultyLoading"
                   emit-value
                   map-options
                   outlined
@@ -369,9 +370,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { QTableProps } from 'quasar';
+import { useFacultyList } from 'src/composables/use-faculty-list';
+import type { ApiFaculty } from 'src/types/faculty';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
@@ -398,6 +401,9 @@ interface ReceiptSummaryItem {
 
 const { t } = useI18n();
 
+const { isLoading: isFacultyLoading, fetchFaculties } = useFacultyList();
+const faculties = ref<ApiFaculty[]>([]);
+
 const search = ref('');
 const showReceiptDialog = ref(false);
 const selectedReceipt = ref<ReceiptSummaryItem | null>(null);
@@ -420,21 +426,7 @@ const filters = ref({
 
 const facultyOptions = computed(() => [
   { label: t('centralFinance.receiptSummary.allFaculties'), value: '' },
-  {
-    label: t('centralFinance.dailyReport.departments.computerCenter'),
-    value: 'สำนักคอมพิวเตอร์',
-  },
-  {
-    label: t('centralFinance.dailyReport.departments.informatics'),
-    value: 'คณะวิทยาการสารสนเทศ',
-  },
-  { label: t('centralFinance.dailyReport.departments.science'), value: 'คณะวิทยาศาสตร์' },
-  { label: t('centralFinance.dailyReport.departments.nursing'), value: 'คณะพยาบาลศาสตร์' },
-  { label: t('centralFinance.dailyReport.departments.business'), value: 'คณะบริหารธุรกิจ' },
-  {
-    label: t('centralFinance.dailyReport.departments.engineering'),
-    value: 'คณะวิศวกรรมศาสตร์',
-  },
+  ...faculties.value.map((f) => ({ label: f.name ?? '', value: f.name ?? '' })),
 ]);
 
 const activeFacultyScopeLabel = computed<string>(() => {
@@ -766,6 +758,10 @@ function exportToExcel(): void {
   XLSX.utils.book_append_sheet(wb, ws, 'รายงาน');
   XLSX.writeFile(wb, 'central-finance-receipt-summary.xlsx');
 }
+
+onMounted(async () => {
+  faculties.value = await fetchFaculties();
+});
 
 // Mock data — multiple faculties
 function generateMockData(): ReceiptSummaryItem[] {
