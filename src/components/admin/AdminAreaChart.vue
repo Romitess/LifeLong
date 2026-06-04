@@ -300,9 +300,24 @@ function formatTooltipValue(value: number, serie: AreaChartSeries): string {
 </script>
 
 <style lang="scss" scoped>
+@keyframes areaChartReveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0% 0 0);
+    opacity: 1;
+  }
+}
+
 .admin-area-chart {
   position: relative;
   width: 100%;
+}
+
+.admin-area-chart__svg {
+  animation: areaChartReveal 0.9s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .admin-area-chart__legend {

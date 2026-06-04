@@ -24,7 +24,7 @@
         <div
           class="admin-bar-chart__fill"
           :style="{
-            width: `${item.percent}%`,
+            '--bar-w': `${item.percent}%`,
             background: `linear-gradient(90deg, ${item.color}, ${lightenColor(item.color)})`,
           }"
         />
@@ -94,6 +94,17 @@ function lightenColor(hex: string, amount = 0.4): string {
 </script>
 
 <style lang="scss" scoped>
+@keyframes barRowIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .admin-bar-chart {
   display: grid;
   gap: 16px;
@@ -106,6 +117,13 @@ function lightenColor(hex: string, amount = 0.4): string {
   gap: 8px;
   width: 100%;
   min-width: 0;
+  animation: barRowIn 0.45s ease-out both;
+
+  @for $i from 1 through 10 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{($i - 1) * 0.07}s;
+    }
+  }
 }
 
 .admin-bar-chart__row-head {
@@ -187,10 +205,20 @@ function lightenColor(hex: string, amount = 0.4): string {
   min-width: 0;
 }
 
+@keyframes barGrow {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--bar-w, 100%);
+  }
+}
+
 .admin-bar-chart__fill {
   height: 100%;
   border-radius: inherit;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  width: var(--bar-w, 100%);
+  animation: barGrow 0.9s cubic-bezier(0.4, 0, 0.2, 1) both;
   box-shadow: 0 4px 10px rgba(245, 166, 35, 0.18);
 }
 </style>

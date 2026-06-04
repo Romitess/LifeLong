@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 export interface DonutChartSegment {
   id: string;
@@ -86,15 +86,41 @@ const circumference = computed(() => 2 * Math.PI * radius.value);
 
 const total = computed(() => props.data.reduce((sum, segment) => sum + segment.value, 0));
 
+// ─── Draw animation ────────────────────────────────────────────
+const drawProgress = ref(0);
+let raf: number | null = null;
+
+onMounted(() => {
+  const DURATION = 1100;
+  const start = performance.now();
+  const tick = (now: number) => {
+    const p = Math.min((now - start) / DURATION, 1);
+    drawProgress.value = 1 - Math.pow(1 - p, 3); // ease-out-cubic
+    if (p < 1) {
+      raf = requestAnimationFrame(tick);
+    } else {
+      drawProgress.value = 1;
+      raf = null;
+    }
+  };
+  raf = requestAnimationFrame(tick);
+});
+
+onUnmounted(() => {
+  if (raf !== null) cancelAnimationFrame(raf);
+});
+
 const segments = computed(() => {
   const safeTotal = total.value || 1;
+  const p = drawProgress.value;
   let offset = 0;
   return props.data
     .filter((segment) => segment.value > 0)
     .map((segment) => {
-      const length = (segment.value / safeTotal) * circumference.value;
-      const result = { ...segment, length, offset };
-      offset += length;
+      const fullLength = (segment.value / safeTotal) * circumference.value;
+      const length = fullLength * p;
+      const result = { ...segment, length, offset: offset * p };
+      offset += fullLength;
       return result;
     });
 });
@@ -132,7 +158,7 @@ const segmentsWithPercent = computed(() => {
 }
 
 .admin-donut-chart__segment {
-  transition: stroke-dasharray 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: stroke-dasharray, stroke-dashoffset;
 }
 
 .admin-donut-chart__center {
