@@ -137,6 +137,10 @@
                 round
                 unelevated
                 class="nav-notification-btn"
+                :class="{
+                  'nav-notification-btn--has-unread': notificationUnreadCount > 0,
+                  'nav-notification-btn--attention': notificationAttentionActive,
+                }"
                 icon="notifications"
                 :aria-label="$t('notifications')"
               >
@@ -901,8 +905,11 @@ const sidebarMini = ref(false);
 const activeNav = ref('');
 const isPageSwitchLoading = ref(false);
 const logoutDialogOpen = ref(false);
+const notificationAttentionActive = ref(false);
 
 const wasOpenedByClick = ref(false);
+let notificationAttentionStartTimer: ReturnType<typeof setTimeout> | null = null;
+let notificationAttentionStopTimer: ReturnType<typeof setTimeout> | null = null;
 
 // Open persistent sidebar for admin; close for other roles
 watch(
@@ -984,6 +991,34 @@ const notificationPreviewSubtitle = computed(() =>
       ? 'รายการสำคัญสำหรับผู้สอน'
       : 'ข่าวสารและกิจกรรมการเรียนของคุณ',
 );
+
+function clearNotificationAttentionTimers(): void {
+  if (notificationAttentionStartTimer) {
+    clearTimeout(notificationAttentionStartTimer);
+    notificationAttentionStartTimer = null;
+  }
+
+  if (notificationAttentionStopTimer) {
+    clearTimeout(notificationAttentionStopTimer);
+    notificationAttentionStopTimer = null;
+  }
+}
+
+function scheduleNotificationAttention(): void {
+  clearNotificationAttentionTimers();
+
+  if (!authStore.isLoggedIn || notificationUnreadCount.value <= 0) {
+    notificationAttentionActive.value = false;
+    return;
+  }
+
+  notificationAttentionStartTimer = setTimeout(() => {
+    notificationAttentionActive.value = true;
+    notificationAttentionStopTimer = setTimeout(() => {
+      notificationAttentionActive.value = false;
+    }, 1800);
+  }, 120);
+}
 
 type AuthPath = '/login' | '/register';
 
@@ -1089,10 +1124,30 @@ watch(
   { immediate: true },
 );
 
+watch(
+  [() => authStore.isLoggedIn, notificationUnreadCount],
+  ([isLoggedIn, unreadCount], previousState) => {
+    const wasLoggedIn = previousState?.[0] ?? false;
+
+    if (!isLoggedIn || unreadCount <= 0) {
+      clearNotificationAttentionTimers();
+      notificationAttentionActive.value = false;
+      return;
+    }
+
+    if (!wasLoggedIn || !notificationAttentionActive.value) {
+      scheduleNotificationAttention();
+    }
+  },
+  { immediate: true },
+);
+
 onBeforeUnmount(() => {
   if (pageSwitchLoadingTimer) {
     clearTimeout(pageSwitchLoadingTimer);
   }
+
+  clearNotificationAttentionTimers();
 });
 
 function onLogout() {
@@ -1302,6 +1357,27 @@ async function onCategoryClick(category: string) {
     background: #ffffff !important;
     box-shadow: 0 6px 16px rgba(17, 24, 39, 0.1);
   }
+
+  &:hover :deep(.q-icon) {
+    animation: notificationBellShake 0.76s ease-in-out both;
+  }
+}
+
+.nav-notification-btn--has-unread {
+  background: linear-gradient(180deg, #fff7d8 0%, #f9e5a8 100%) !important;
+  box-shadow: 0 3px 10px rgba(245, 166, 35, 0.1);
+}
+
+.nav-notification-btn--attention {
+  background: linear-gradient(180deg, #ffd04f 0%, #ec9f05 100%) !important;
+  box-shadow:
+    0 0 0 4px rgba(245, 166, 35, 0.14),
+    0 10px 22px rgba(245, 166, 35, 0.24) !important;
+  animation: notificationButtonAttention 1.8s ease-in-out both;
+}
+
+.nav-notification-btn--attention :deep(.q-icon) {
+  animation: notificationBellShake 0.82s ease-in-out 0.52s both;
 }
 
 .nav-notification-badge {
@@ -1311,6 +1387,62 @@ async function onCategoryClick(category: string) {
   font-size: 0.62rem;
   font-weight: 800;
   line-height: 17px;
+}
+
+@keyframes notificationButtonAttention {
+  0% {
+    transform: translateY(0) scale(1);
+    filter: saturate(1) brightness(1);
+    box-shadow:
+      0 0 0 0 rgba(245, 166, 35, 0),
+      0 6px 14px rgba(245, 166, 35, 0.12);
+  }
+  22%,
+  46% {
+    transform: translateY(-1px) scale(1.03);
+    filter: saturate(1.08) brightness(1.03);
+    box-shadow:
+      0 0 0 4px rgba(245, 166, 35, 0.16),
+      0 10px 22px rgba(245, 166, 35, 0.26);
+  }
+  68% {
+    transform: translateY(0) scale(1.01);
+    filter: saturate(1.03) brightness(1.01);
+    box-shadow: 0 8px 20px rgba(245, 166, 35, 0.2);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    filter: saturate(1) brightness(1);
+    box-shadow: 0 5px 12px rgba(245, 166, 35, 0.14);
+  }
+}
+
+@keyframes notificationBellShake {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  12% {
+    transform: rotate(-16deg);
+  }
+  24% {
+    transform: rotate(14deg);
+  }
+  36% {
+    transform: rotate(-12deg);
+  }
+  48% {
+    transform: rotate(10deg);
+  }
+  60% {
+    transform: rotate(-7deg);
+  }
+  72% {
+    transform: rotate(5deg);
+  }
+  84% {
+    transform: rotate(-3deg);
+  }
 }
 
 .notification-preview-menu {

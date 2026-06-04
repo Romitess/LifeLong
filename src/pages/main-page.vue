@@ -73,127 +73,109 @@
               <div class="hero-slide__overlay hero-slide__overlay--learner" />
               <div class="hero-learner">
                 <div class="hero-learner__copy">
-                  <div class="hero-learner__eyebrow">Learner Spotlight</div>
+                  <div class="hero-learner__eyebrow">
+                    <q-icon name="explore" size="18px" />
+                    <span>Learner Spotlight</span>
+                  </div>
                   <h2>{{ slide.learner.name }}</h2>
-                  <p class="hero-learner__summary">
-                    สถานะการเรียนโดดเด่นในรายวิชา
-                    <strong>{{ slide.learner.courseTitle }}</strong>
-                  </p>
-                  <p>
-                    สถานะการเข้าเรียนเด่นในรายวิชา
-                    <strong>{{ slide.learner.courseTitle }}</strong>
-                  </p>
+                  <div class="hero-learner__title-accent" />
+                  <p class="hero-learner__summary">สถานะการเรียนโดดเด่นในรายวิชา</p>
+                  <div
+                    class="hero-learner__course-title"
+                    v-html="formatHeroCourseTitle(slide.learner.courseTitle)"
+                  ></div>
+                  <div class="hero-learner__course-line">
+                    LIFELONG LEARNING - {{ slide.learner.courseCode }}
+                  </div>
                   <div class="hero-learner__badges">
-                    <q-badge rounded color="positive" text-color="white">
-                      ผู้เรียนที่ใช้งาน
-                    </q-badge>
-                    <q-badge rounded color="primary" text-color="white">
-                      {{ slide.learner.attendanceRate }}% Attendance
-                    </q-badge>
+                    <div class="hero-learner__pill hero-learner__pill--status">
+                      <q-icon name="person" size="18px" />
+                      <span>{{ slide.learner.statusLabel }}</span>
+                    </div>
+                    <div class="hero-learner__pill hero-learner__pill--attendance">
+                      <q-icon name="star" size="18px" />
+                      <span>{{ slide.learner.attendanceRate }}% Attendance</span>
+                    </div>
+                  </div>
+                  <div class="hero-learner__route">
+                    <span
+                      class="hero-learner__route-marker hero-learner__route-marker--start"
+                    ></span>
+                    <span class="hero-learner__route-flag">
+                      <q-icon name="flag" size="16px" />
+                    </span>
                   </div>
                 </div>
-
                 <div class="hero-learner__card">
-                  <div class="hero-learner__avatar-stage">
-                    <div class="hero-learner__rank-badge">LEVEL {{ slide.learner.level }}</div>
-                    <div class="hero-learner__avatar-orbit">
-                      <q-avatar
-                        size="132px"
-                        class="hero-learner__avatar hero-learner__avatar--featured"
-                      >
-                        <img :src="slide.learner.avatarUrl" :alt="slide.learner.name" />
-                      </q-avatar>
-                    </div>
+                  <div class="hero-learner__level-badge">
+                    <q-icon name="terrain" size="22px" />
+                    <span>LEVEL {{ slide.learner.level }}</span>
                   </div>
                   <div class="hero-learner__card-top">
-                    <div class="hero-learner__identity">
-                      <div class="hero-learner__meta hero-learner__meta--clean">
-                        {{ slide.learner.faculty }} • {{ slide.learner.courseCode }}
+                    <div class="hero-learner__avatar-stage">
+                      <span class="hero-learner__compass hero-learner__compass--north">N</span>
+                      <span class="hero-learner__compass hero-learner__compass--west">W</span>
+                      <span class="hero-learner__compass hero-learner__compass--east">E</span>
+                      <div class="hero-learner__avatar-orbit">
+                        <q-avatar
+                          size="140px"
+                          class="hero-learner__avatar hero-learner__avatar--featured"
+                        >
+                          <img :src="slide.learner.avatarUrl" :alt="slide.learner.name" />
+                        </q-avatar>
                       </div>
-                      <div class="hero-learner__name">{{ slide.learner.name }}</div>
-                      <div class="hero-learner__status-note hero-learner__status-note--clean">
-                        กำลังศึกษา {{ slide.learner.courseTitle }}
-                      </div>
-                      <div class="hero-learner__meta hero-learner__meta--clean-text">
-                        {{ slide.learner.faculty }} - {{ slide.learner.courseCode }}
-                      </div>
-                      <div class="hero-learner__meta">
-                        {{ slide.learner.faculty }} • {{ slide.learner.courseCode }}
-                      </div>
-                      <div class="hero-learner__status-note">{{ slide.learner.statusNote }}</div>
+                      <span class="hero-learner__compass hero-learner__compass--south">
+                        <q-icon name="explore" size="20px" />
+                      </span>
                     </div>
-
-                    <img
-                      class="hero-learner__course-image"
-                      :src="slide.learner.courseImageUrl"
-                      :alt="slide.learner.courseTitle"
-                      @error="handleHeroCourseImageError"
-                    />
-                  </div>
-
-                  <div class="hero-learner__metrics">
-                    <div class="hero-learner__metric">
-                      <q-icon name="local_fire_department" size="18px" color="deep-orange-6" />
-                      <div>
-                        <div class="hero-learner__metric-value hero-learner__metric-value--clean">
-                          {{ slide.learner.streakDays }} วัน
+                    <div class="hero-learner__metrics">
+                      <div class="hero-learner__metric hero-learner__metric--streak">
+                        <div class="hero-learner__metric-icon-wrap">
+                          <q-icon name="local_fire_department" size="22px" />
                         </div>
                         <div class="hero-learner__metric-value">
                           {{ slide.learner.streakDays }} วัน
                         </div>
-                        <div class="hero-learner__metric-label">streak</div>
+                        <div class="hero-learner__metric-label">STREAK</div>
                       </div>
-                    </div>
-                    <div class="hero-learner__metric">
-                      <q-icon name="stars" size="18px" color="amber-8" />
-                      <div>
+                      <div class="hero-learner__metric hero-learner__metric--xp">
+                        <div class="hero-learner__metric-icon-wrap">
+                          <q-icon name="shield" size="22px" />
+                        </div>
                         <div class="hero-learner__metric-value">
                           {{ formatHeroXp(slide.learner.xp) }} XP
                         </div>
                         <div class="hero-learner__metric-label">
-                          level {{ slide.learner.level }}
+                          LEVEL {{ slide.learner.level }}
                         </div>
                       </div>
                     </div>
                   </div>
-
                   <div class="hero-learner__progress">
-                    <div class="hero-learner__progress-head hero-learner__progress-head--clean">
-                      <span>ความคืบหน้าการเรียน</span>
-                      <strong>
-                        {{ slide.learner.completedLessons }}/{{ slide.learner.totalLessons }}
-                        บทเรียน
-                      </strong>
-                    </div>
                     <div class="hero-learner__progress-head">
                       <span>ความคืบหน้าการเรียน</span>
-                      <strong>
-                        {{ slide.learner.completedLessons }}/{{ slide.learner.totalLessons }}
-                        บทเรียน
-                      </strong>
-                    </div>
-                    <q-linear-progress
-                      rounded
-                      size="10px"
-                      color="positive"
-                      track-color="grey-3"
-                      :value="slide.learner.completedLessons / slide.learner.totalLessons"
-                    />
-                  </div>
-
-                  <div class="hero-learner__peers">
-                    <div class="hero-learner__peers-label">กำลังเรียนร่วมกับ</div>
-                    <div class="hero-learner__peer-list">
-                      <div
-                        v-for="peer in slide.learner.peers"
-                        :key="peer.id"
-                        class="hero-learner__peer"
+                      <strong
+                        >{{ slide.learner.completedLessons }}/{{
+                          slide.learner.totalLessons
+                        }}
+                        บทเรียน</strong
                       >
-                        <q-avatar size="28px">
-                          <img :src="peer.avatarUrl" :alt="peer.name" />
-                        </q-avatar>
-                        <span>{{ peer.name }}</span>
-                      </div>
+                    </div>
+                    <div class="hero-learner__progress-track">
+                      <div
+                        class="hero-learner__progress-fill"
+                        :style="{
+                          width: `${Math.round((slide.learner.completedLessons / slide.learner.totalLessons) * 100)}%`,
+                        }"
+                      ></div>
+                      <span
+                        class="hero-learner__progress-pin"
+                        :style="{
+                          left: `${Math.round((slide.learner.completedLessons / slide.learner.totalLessons) * 100)}%`,
+                        }"
+                      >
+                        <q-icon name="flag" size="18px" />
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -394,7 +376,7 @@ import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import { useQuasar } from 'quasar';
-import learnerHeroBackgroundUrl from 'src/assets/backgroundhero.png';
+import learnerHeroBackgroundUrl from 'src/assets/bb.png';
 import fallbackCourseImageUrl from 'src/assets/homepicture1.png';
 
 const router = useRouter();
@@ -929,19 +911,14 @@ function getHeroSlideStyle(slide: HomeHeroSlide): CSSProperties {
   };
 }
 
-function handleHeroCourseImageError(event: Event): void {
-  const target = event.target;
-  if (!(target instanceof HTMLImageElement)) {
-    return;
-  }
-
-  if (target.src !== fallbackCourseImageUrl) {
-    target.src = fallbackCourseImageUrl;
-  }
-}
-
 function formatHeroXp(value: number): string {
   return value.toLocaleString('en-US');
+}
+
+function formatHeroCourseTitle(value: string): string {
+  const escaped = value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+  return escaped.replace(/python/gi, '<span class="hero-learner__course-highlight">$&</span>');
 }
 
 function getHeroLineStyle(line: HeroTextLine): CSSProperties {
@@ -1055,6 +1032,7 @@ onBeforeUnmount(() => {
 .hero-carousel {
   height: 100%;
   width: 100%;
+  overflow: hidden;
 }
 
 .hero-copy {
@@ -1081,9 +1059,9 @@ onBeforeUnmount(() => {
 .hero-slide__overlay--learner {
   background: linear-gradient(
     90deg,
-    rgba(15, 23, 42, 0.72) 0%,
-    rgba(15, 23, 42, 0.18) 44%,
-    rgba(15, 23, 42, 0.56) 100%
+    rgba(255, 250, 238, 0.88) 0%,
+    rgba(255, 248, 232, 0.52) 42%,
+    rgba(255, 249, 240, 0.72) 100%
   );
 }
 
@@ -1091,102 +1069,345 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
-  align-items: end;
-  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 500px);
+  align-items: center;
+  gap: clamp(18px, 2vw, 28px);
   height: 100%;
-  padding: clamp(28px, 4vw, 56px) clamp(28px, 4vw, 72px);
+  padding: clamp(22px, 3vw, 40px) clamp(20px, 4vw, 64px);
+  overflow: hidden;
 }
 
+.hero-learner::before,
+.hero-learner::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.hero-learner::before {
+  right: -12px;
+  top: -6px;
+  width: 220px;
+  height: 220px;
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      circle at center,
+      transparent 54%,
+      rgba(245, 166, 35, 0.14) 54.8%,
+      transparent 56%
+    ),
+    radial-gradient(
+      circle at center,
+      transparent 67%,
+      rgba(245, 166, 35, 0.1) 67.8%,
+      transparent 69%
+    ),
+    radial-gradient(
+      circle at center,
+      transparent 80%,
+      rgba(245, 166, 35, 0.08) 80.8%,
+      transparent 82%
+    );
+  opacity: 0.86;
+}
+
+.hero-learner::after {
+  left: 40%;
+  bottom: 20px;
+  width: 220px;
+  height: 120px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(245, 166, 35, 0.18) 0%, transparent 72%);
+  filter: blur(16px);
+  opacity: 0.8;
+}
 .hero-learner__copy {
-  max-width: 560px;
-  color: #ffffff;
+  position: relative;
   align-self: center;
-  padding: 20px 24px;
-  border-radius: 28px;
-  background: linear-gradient(135deg, rgba(8, 15, 31, 0.62), rgba(8, 15, 31, 0.26));
-  backdrop-filter: blur(6px);
-  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.16);
+  max-width: 560px;
+  margin-left: clamp(24px, 3vw, 56px);
+  color: #1f2937;
+  padding: 8px 0 32px clamp(34px, 2.6vw, 48px);
 }
-
+.hero-learner__copy::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: -12px;
+  width: 48px;
+  height: 48px;
+  background-image: radial-gradient(circle, rgba(245, 166, 35, 0.92) 0 2px, transparent 2.8px);
+  background-size: 16px 16px;
+  opacity: 0.9;
+}
+.hero-learner__copy::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 8%;
+  bottom: 0;
+  height: 132px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 248, 230, 0.88) 100%),
+    radial-gradient(circle at 18% 96%, rgba(245, 166, 35, 0.22), transparent 28%),
+    radial-gradient(circle at 72% 82%, rgba(245, 166, 35, 0.16), transparent 24%);
+  clip-path: polygon(
+    0 100%,
+    0 78%,
+    12% 62%,
+    22% 74%,
+    36% 44%,
+    49% 72%,
+    61% 38%,
+    74% 68%,
+    88% 32%,
+    100% 66%,
+    100% 100%
+  );
+  opacity: 0.92;
+  pointer-events: none;
+}
 .hero-learner__eyebrow {
   display: inline-flex;
   align-items: center;
-  padding: 8px 14px;
+  gap: 12px;
+  padding: 12px 26px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(245, 166, 35, 0.72);
+  box-shadow: 0 14px 30px rgba(245, 166, 35, 0.12);
+  color: #5c4300;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-
 .hero-learner__copy h2 {
-  margin: 16px 0 12px;
-  font-size: clamp(2.4rem, 4vw, 4.2rem);
-  line-height: 1.02;
+  margin: 20px 0 10px;
+  color: #1f2937;
+  font-size: clamp(2.8rem, 4.2vw, 4.35rem);
+  line-height: 0.98;
   font-weight: 900;
-  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+  text-shadow: 0 10px 24px rgba(255, 255, 255, 0.4);
 }
-
-.hero-learner__copy > p {
-  display: none;
+.hero-learner__title-accent {
+  width: 72px;
+  height: 8px;
+  margin-bottom: 24px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #f3b400 0 78%,
+    rgba(243, 180, 0, 0.7) 78% 88%,
+    transparent 88%
+  );
+  box-shadow: 0 10px 18px rgba(243, 180, 0, 0.18);
 }
-
 .hero-learner__summary {
-  display: block !important;
   margin: 0;
-  color: rgba(255, 255, 255, 0.88);
-  font-size: clamp(1rem, 1.35vw, 1.18rem);
-  line-height: 1.75;
-  max-width: 38ch;
+  max-width: 15ch;
+  color: #566273;
+  font-size: clamp(1rem, 1.16vw, 1.2rem);
+  line-height: 1.42;
+  font-weight: 500;
 }
 
-.hero-learner__summary strong {
-  color: #fff7da;
-  font-weight: 900;
+.hero-learner__course-title {
+  max-width: min(48vw, 720px);
+  margin-top: 10px;
+  color: #1f2937;
+  font-size: clamp(1.18rem, 1.55vw, 1.72rem);
+  line-height: 1.18;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
+.hero-learner__course-title :deep(.hero-learner__course-highlight) {
+  color: #f2a900;
+}
+.hero-learner__course-line {
+  margin-top: 14px;
+  color: #7a8593;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
 .hero-learner__badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   margin-top: 20px;
 }
-
-.hero-learner__card {
-  align-self: center;
+.hero-learner__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 166, 35, 0.26);
+  background: rgba(255, 255, 255, 0.88);
+  color: #4a5b00;
+  font-size: 0.88rem;
+  font-weight: 700;
+  box-shadow: 0 12px 28px rgba(245, 166, 35, 0.08);
+}
+.hero-learner__pill--status {
+  color: #5d7f1d;
+}
+.hero-learner__pill--attendance {
+  color: #f0a300;
+}
+.hero-learner__route {
   position: relative;
-  overflow: hidden;
-  padding: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 28px;
-  background:
-    radial-gradient(circle at 50% 8%, rgba(245, 166, 35, 0.28), transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.88));
-  box-shadow:
-    0 28px 60px rgba(15, 23, 42, 0.24),
-    inset 0 1px 0 rgba(255, 255, 255, 0.84);
-  backdrop-filter: blur(16px);
+  width: min(420px, 88%);
+  height: 64px;
+  margin-top: 22px;
+  border-bottom: 3px dashed #f4b400;
+  border-radius: 50% 50% 38% 42%;
+  opacity: 0.96;
 }
 
+.hero-learner__route::after {
+  content: '';
+  position: absolute;
+  inset: auto 20% -10px 18%;
+  height: 10px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(245, 166, 35, 0.42) 0 2px, transparent 2.6px);
+  background-size: 22px 10px;
+  opacity: 0.72;
+}
+.hero-learner__route-marker,
+.hero-learner__route-flag {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+}
+.hero-learner__route-marker--start {
+  left: 18px;
+  bottom: -12px;
+  width: 28px;
+  height: 28px;
+  background: #ffffff;
+  border: 4px solid #f4b400;
+  box-shadow: 0 10px 22px rgba(245, 166, 35, 0.18);
+}
+.hero-learner__route-flag {
+  right: 60px;
+  top: -12px;
+  width: 30px;
+  height: 30px;
+  color: #f4b400;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 10px 24px rgba(245, 166, 35, 0.16);
+  animation: heroLearnerFlagFloat 3.4s ease-in-out infinite;
+}
+.hero-learner__card {
+  position: relative;
+  justify-self: end;
+  align-self: center;
+  width: min(100%, 500px);
+  transform: translateY(-48px);
+  padding: 20px 18px 16px;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 92% 18%, rgba(245, 166, 35, 0.1), transparent 22%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0) 28%),
+    radial-gradient(circle at 18% 14%, rgba(245, 166, 35, 0.16), transparent 22%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(255, 251, 240, 0.96));
+  border: 1px solid rgba(245, 166, 35, 0.14);
+  box-shadow:
+    0 28px 54px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94);
+  overflow: hidden;
+}
 .hero-learner__card::before {
   content: '';
   position: absolute;
   inset: 12px;
-  border: 1px solid rgba(245, 166, 35, 0.24);
   border-radius: 22px;
+  border: 1px solid rgba(245, 166, 35, 0.18);
+  background: radial-gradient(
+    circle at 14px 14px,
+    rgba(245, 166, 35, 0.1) 0 1.4px,
+    transparent 2px
+  );
+  background-size: 18px 18px;
+  opacity: 0.55;
   pointer-events: none;
 }
+.hero-learner__card::after {
+  content: '';
+  position: absolute;
+  right: -42px;
+  bottom: -20px;
+  width: 130px;
+  height: 88px;
+  border-radius: 0 0 24px 24px;
+  background:
+    radial-gradient(circle at 16px 16px, rgba(245, 166, 35, 0.24) 0 2px, transparent 2.8px),
+    linear-gradient(180deg, rgba(255, 250, 235, 0.9), rgba(255, 244, 210, 0.9));
+  background-size:
+    20px 20px,
+    auto;
+  border: 1px solid rgba(245, 166, 35, 0.22);
+  box-shadow: 0 16px 30px rgba(245, 166, 35, 0.14);
+  clip-path: polygon(
+    12% 100%,
+    0 36%,
+    24% 56%,
+    32% 30%,
+    48% 46%,
+    58% 24%,
+    72% 44%,
+    84% 18%,
+    100% 38%,
+    100% 100%
+  );
+  opacity: 0.95;
+}
+.hero-learner__level-badge {
+  position: absolute;
+  top: 0;
+  right: 16px;
+  z-index: 4;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 76px;
+  padding: 9px 7px 10px;
+  background: linear-gradient(180deg, #ffc331 0%, #d89a00 100%);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
+  box-shadow: 0 18px 34px rgba(216, 154, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+}
 
+.hero-learner__level-badge span {
+  display: block;
+  white-space: nowrap;
+}
+.hero-learner__card-top {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(96px, 0.76fr);
+  gap: 12px;
+  align-items: center;
+}
 .hero-learner__avatar-stage {
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 166px;
-  margin-bottom: 10px;
+  min-height: 178px;
 }
-
 .hero-learner__avatar-stage::before,
 .hero-learner__avatar-stage::after {
   content: '';
@@ -1194,241 +1415,277 @@ onBeforeUnmount(() => {
   border-radius: 999px;
   pointer-events: none;
 }
-
 .hero-learner__avatar-stage::before {
-  width: 210px;
-  height: 210px;
-  background:
-    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 45%, transparent 46%),
-    conic-gradient(from 150deg, #f5a623, #22c55e, #2f5f98, #f5a623);
-  opacity: 0.9;
-  filter: drop-shadow(0 20px 35px rgba(15, 23, 42, 0.16));
-}
-
-.hero-learner__avatar-stage::after {
-  bottom: 18px;
-  width: 160px;
-  height: 26px;
-  background: rgba(15, 23, 42, 0.14);
-  filter: blur(10px);
-}
-
-.hero-learner__avatar-orbit {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  place-items: center;
   width: 164px;
   height: 164px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
-}
-
-.hero-learner__rank-badge {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  z-index: 2;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #f5a623, #facc15);
-  color: #10213f;
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  box-shadow: 0 10px 22px rgba(245, 166, 35, 0.26);
-}
-
-.hero-learner__card-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 92px;
-  gap: 16px;
-  align-items: center;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-learner__avatar {
-  outline: 4px solid rgba(255, 255, 255, 0.72);
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
-}
-
-.hero-learner__avatar--featured {
-  outline: 6px solid rgba(255, 255, 255, 0.92);
+  background:
+    radial-gradient(
+      circle,
+      transparent 0 59%,
+      rgba(255, 248, 221, 0.92) 59.5% 67%,
+      transparent 67.5%
+    ),
+    conic-gradient(
+      from 200deg,
+      rgba(245, 166, 35, 0.95),
+      rgba(255, 210, 92, 0.78),
+      rgba(245, 166, 35, 0.95)
+    );
   box-shadow:
-    0 20px 40px rgba(15, 23, 42, 0.18),
-    0 0 0 10px rgba(245, 166, 35, 0.12);
+    inset 0 0 0 16px rgba(255, 255, 255, 0.72),
+    0 18px 36px rgba(245, 166, 35, 0.14);
 }
-
-.hero-learner__identity {
-  min-width: 0;
+.hero-learner__avatar-stage::after {
+  width: 194px;
+  height: 194px;
+  border: 2px dashed rgba(245, 166, 35, 0.36);
+  animation: heroLearnerCompassSpin 24s linear infinite;
 }
-
-.hero-learner__name {
-  color: #10213f;
-  font-size: 1.2rem;
-  font-weight: 800;
-  line-height: 1.2;
+.hero-learner__avatar-orbit {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 126px;
+  height: 126px;
+  border-radius: 999px;
+  background: radial-gradient(circle, #fffdf4 0%, #ffeeb0 100%);
+  box-shadow:
+    inset 0 0 0 10px rgba(255, 255, 255, 0.92),
+    0 20px 40px rgba(245, 166, 35, 0.18);
 }
-
-.hero-learner__meta,
-.hero-learner__status-note {
-  color: #5f6b7a;
+.hero-learner__avatar {
+  outline: 5px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+}
+.hero-learner__avatar--featured {
+  outline: 7px solid rgba(255, 255, 255, 0.98);
+  width: 96px !important;
+  height: 96px !important;
+}
+.hero-learner__compass {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: #ffbe1b;
+  color: #ffffff;
   font-size: 0.82rem;
-  line-height: 1.45;
+  font-weight: 900;
+  box-shadow: 0 12px 24px rgba(245, 166, 35, 0.18);
+  animation: heroLearnerCompassPulse 4s ease-in-out infinite;
 }
-
-.hero-learner__meta--clean {
-  display: none;
+.hero-learner__compass--north {
+  top: 12px;
 }
-
-.hero-learner__meta--clean-text {
-  color: #2f5f98;
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.hero-learner__compass--west {
+  left: 6px;
 }
-
-.hero-learner__card-top
-  > .hero-learner__identity
-  > .hero-learner__meta:not(.hero-learner__meta--clean-text):not(.hero-learner__meta--clean) {
-  display: none;
+.hero-learner__compass--east {
+  right: 6px;
 }
-
-.hero-learner__status-note {
-  margin-top: 6px;
-  font-size: 0.84rem;
-  color: #526173;
+.hero-learner__compass--south {
+  bottom: 6px;
+  background: #ffffff;
+  color: #d29a00;
+  border: 3px solid #d29a00;
 }
-
-.hero-learner__status-note--clean {
-  margin-top: 4px;
-  color: #526173;
-}
-
-.hero-learner__card-top
-  > .hero-learner__identity
-  > .hero-learner__status-note:not(.hero-learner__status-note--clean) {
-  display: none;
-}
-
-.hero-learner__course-image {
-  width: 92px;
-  height: 92px;
-  border-radius: 20px;
-  object-fit: cover;
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
-}
-
 .hero-learner__metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 18px;
+}
+.hero-learner__metric {
+  position: relative;
+  min-height: 98px;
+  padding: 13px 10px 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 249, 235, 0.96));
+  border: 1px solid rgba(245, 166, 35, 0.2);
+  box-shadow: 0 16px 30px rgba(245, 166, 35, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.hero-learner__metric--streak::before,
+.hero-learner__metric--xp::before {
+  content: '';
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(245, 166, 35, 0.2);
+  box-shadow:
+    -18px 10px 0 -3px rgba(245, 166, 35, 0.16),
+    -8px 22px 0 -5px rgba(245, 166, 35, 0.12);
+}
+.hero-learner__metric::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 236, 176, 0.55));
+  clip-path: polygon(
+    0 100%,
+    0 72%,
+    12% 84%,
+    28% 52%,
+    46% 74%,
+    63% 44%,
+    82% 78%,
+    100% 62%,
+    100% 100%
+  );
+}
+.hero-learner__metric-icon-wrap {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 2px solid rgba(245, 166, 35, 0.28);
+  color: #f4aa00;
+  background: rgba(255, 255, 255, 0.92);
   position: relative;
   z-index: 1;
+  flex: 0 0 auto;
 }
-
-.hero-learner__metric {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  background: #f8fafc;
-}
-
 .hero-learner__metric-value {
-  color: #10213f;
-  font-size: 0.95rem;
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-.hero-learner__metric-value--clean {
+  position: relative;
+  z-index: 1;
   display: block;
+  max-width: 6.5ch;
+  color: #1f2937;
+  font-size: clamp(0.98rem, 1.08vw, 1.28rem);
+  font-weight: 900;
+  line-height: 1.08;
+  text-wrap: balance;
 }
-
-.hero-learner__metric:first-child
-  .hero-learner__metric-value:not(.hero-learner__metric-value--clean) {
-  display: none;
-}
-
 .hero-learner__metric-label {
-  margin-top: 4px;
-  color: #748092;
-  font-size: 0.74rem;
-  font-weight: 700;
-  line-height: 1;
+  position: relative;
+  z-index: 1;
+  color: #7c8490;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
   text-transform: uppercase;
 }
-
 .hero-learner__progress {
-  margin-top: 18px;
-  padding: 16px;
-  border-radius: 18px;
-  background: #f8fafc;
   position: relative;
-  z-index: 1;
+  margin-top: 12px;
+  padding: 14px 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(245, 166, 35, 0.16);
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
 }
-
 .hero-learner__progress-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
-  color: #5f6b7a;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.hero-learner__progress-head strong {
-  color: #10213f;
-  font-weight: 800;
-}
-
-.hero-learner__progress > .hero-learner__progress-head:not(.hero-learner__progress-head--clean) {
-  display: none;
-}
-
-.hero-learner__peers {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin-top: 18px;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-learner__peers-label {
-  color: #7a8698;
-  font-size: 0.74rem;
-  font-weight: 700;
-}
-
-.hero-learner__peer-list {
-  display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
+  margin-bottom: 12px;
+  color: #1f2937;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
-
-.hero-learner__peer {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px 6px 6px;
+.hero-learner__progress-head span {
+  color: #1f2937;
+  min-width: 0;
+}
+.hero-learner__progress-head strong {
+  color: #162033;
+  font-size: clamp(0.92rem, 1.08vw, 1.12rem);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.hero-learner__progress-track {
+  position: relative;
+  height: 18px;
   border-radius: 999px;
-  background: #eef2f7;
-  color: #405065;
-  font-size: 0.72rem;
-  font-weight: 700;
+  background: linear-gradient(180deg, #fff4dc, #fff9ef);
+  border: 1px solid rgba(245, 166, 35, 0.16);
+  overflow: visible;
 }
 
+.hero-learner__progress-track::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  width: 96px;
+  height: 8px;
+  transform: translateY(-50%);
+  background: radial-gradient(circle, rgba(212, 154, 0, 0.26) 0 2px, transparent 2.6px);
+  background-size: 16px 8px;
+  opacity: 0.7;
+}
+.hero-learner__progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ffbb00 0%, #f4a300 100%);
+  box-shadow: 0 10px 18px rgba(245, 166, 35, 0.22);
+}
+.hero-learner__progress-pin {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -56%);
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #2f3d4e;
+  color: #ffbe1b;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.16);
+}
+
+@keyframes heroLearnerCompassSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes heroLearnerCompassPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes heroLearnerFlagFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
 .hero-type-line {
   position: relative;
   display: inline-block;
@@ -1482,6 +1739,7 @@ onBeforeUnmount(() => {
 
 .hero-carousel :deep(.q-carousel__slide) {
   background-position: center 54%;
+  overflow: hidden;
 }
 
 .hero-carousel :deep(.hero-slide--catalog) {
@@ -1640,7 +1898,7 @@ onBeforeUnmount(() => {
 .stats-floating-section__inner {
   position: relative;
   z-index: 30;
-  margin-top: -52px;
+  margin-top: clamp(-52px, -4vw, -24px);
 }
 
 .stats-grid {
@@ -1760,93 +2018,287 @@ onBeforeUnmount(() => {
   padding-top: 4px;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1199px) {
   .hero-section {
-    aspect-ratio: 16 / 10;
+    height: auto;
+    aspect-ratio: 16 / 6.2;
   }
 
   .hero-learner {
-    grid-template-columns: 1fr;
-    align-items: end;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 420px);
     gap: 16px;
-    padding: 24px 18px;
+    padding: 22px 24px 28px;
   }
 
   .hero-learner__copy {
     max-width: 100%;
-  }
-
-  .hero-learner__copy h2 {
-    font-size: 2rem;
+    margin-left: clamp(12px, 2vw, 24px);
+    padding-bottom: 20px;
+    padding-left: 24px;
   }
 
   .hero-learner__card {
-    padding: 16px;
-    border-radius: 20px;
+    width: min(100%, 420px);
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-section {
+    min-height: 0;
+    height: auto;
   }
 
-  .hero-learner__avatar-stage {
-    min-height: 128px;
-    margin-bottom: 8px;
-  }
-
-  .hero-learner__avatar-stage::before {
-    width: 154px;
-    height: 154px;
-  }
-
-  .hero-learner__avatar-stage::after {
-    bottom: 10px;
-    width: 120px;
-  }
-
-  .hero-learner__avatar-orbit {
-    width: 120px;
-    height: 120px;
-  }
-
-  .hero-learner__avatar--featured {
-    width: 96px !important;
-    height: 96px !important;
-  }
-
-  .hero-learner__rank-badge {
-    top: 2px;
-    right: 4px;
-    font-size: 0.64rem;
-  }
-
-  .hero-learner__card-top {
+  .hero-learner {
     grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+    height: auto;
+    padding: 20px 16px 28px;
   }
 
-  .hero-learner__course-image {
-    display: none;
+  .hero-learner::before {
+    right: -40px;
+    top: 10px;
+    width: 160px;
+    height: 160px;
+    opacity: 0.45;
   }
 
-  .hero-learner__metrics {
-    grid-template-columns: 1fr;
+  .hero-learner::after {
+    left: 50%;
+    bottom: 12px;
+    width: 160px;
+    height: 72px;
+    transform: translateX(-50%);
   }
 
-  .hero-learner__peers {
-    display: grid;
-    justify-content: stretch;
-  }
-
-  .hero-learner__peer-list {
-    justify-content: flex-start;
-  }
-
-  .hero-copy {
+  .hero-learner__copy {
+    max-width: 100%;
+    margin-left: 0;
     padding: 0;
   }
 
-  .hero-copy__content {
-    left: 24px !important;
-    top: auto !important;
-    bottom: 84px;
-    width: calc(100% - 48px) !important;
-    max-width: 460px;
+  .hero-learner__copy::before,
+  .hero-learner__copy::after {
+    display: none;
+  }
+
+  .hero-learner__eyebrow {
+    gap: 8px;
+    padding: 10px 18px;
+    font-size: 0.76rem;
+  }
+
+  .hero-learner__copy h2 {
+    margin: 18px 0 10px;
+    font-size: clamp(2.35rem, 12vw, 3.5rem);
+    line-height: 1;
+  }
+
+  .hero-learner__title-accent {
+    width: 58px;
+    height: 6px;
+    margin-bottom: 18px;
+  }
+
+  .hero-learner__summary,
+  .hero-learner__course-title {
+    max-width: none;
+  }
+
+  .hero-learner__summary {
+    font-size: 1rem;
+  }
+
+  .hero-learner__course-title {
+    max-width: 100%;
+    font-size: clamp(1.05rem, 4.6vw, 1.5rem);
+  }
+
+  .hero-learner__course-line {
+    font-size: 0.78rem;
+  }
+
+  .hero-learner__badges {
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .hero-learner__pill {
+    min-height: 42px;
+    padding: 0 14px;
+    font-size: 0.8rem;
+  }
+
+  .hero-learner__route {
+    width: min(280px, 82%);
+    height: 42px;
+    margin-top: 14px;
+  }
+
+  .hero-learner__route::after {
+    display: none;
+  }
+
+  .hero-learner__route-marker--start {
+    width: 20px;
+    height: 20px;
+    bottom: -8px;
+    border-width: 3px;
+  }
+
+  .hero-learner__route-flag {
+    right: 36px;
+    top: -10px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .hero-learner__card {
+    justify-self: stretch;
+    width: 100%;
+    max-width: 100%;
+    transform: none;
+    padding: 20px 16px 16px;
+    border-radius: 22px;
+  }
+
+  .hero-learner__card::before {
+    inset: 10px;
+    border-radius: 18px;
+  }
+
+  .hero-learner__card::after {
+    display: none;
+  }
+
+  .hero-learner__level-badge {
+    right: 12px;
+    width: 72px;
+    padding: 9px 6px 10px;
+    font-size: 0.68rem;
+    gap: 5px;
+  }
+
+  .hero-learner__card-top {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .hero-learner__avatar-stage {
+    min-height: 168px;
+  }
+
+  .hero-learner__avatar-stage::before {
+    width: 142px;
+    height: 142px;
+    box-shadow: inset 0 0 0 10px rgba(255, 245, 211, 0.84);
+  }
+
+  .hero-learner__avatar-stage::after {
+    width: 168px;
+    height: 168px;
+  }
+
+  .hero-learner__avatar-orbit {
+    width: 118px;
+    height: 118px;
+    box-shadow:
+      inset 0 0 0 8px rgba(255, 255, 255, 0.92),
+      0 16px 28px rgba(245, 166, 35, 0.14);
+  }
+
+  .hero-learner__avatar--featured {
+    width: 92px !important;
+    height: 92px !important;
+    outline-width: 5px;
+  }
+
+  .hero-learner__compass {
+    width: 28px;
+    height: 28px;
+    font-size: 0.76rem;
+  }
+
+  .hero-learner__compass--north {
+    top: 8px;
+  }
+
+  .hero-learner__compass--west {
+    left: 10px;
+  }
+
+  .hero-learner__compass--east {
+    right: 10px;
+  }
+
+  .hero-learner__compass--south {
+    bottom: 10px;
+    border-width: 2px;
+  }
+
+  .hero-learner__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .hero-learner__metric {
+    min-height: 98px;
+    padding: 14px 10px 13px;
+    border-radius: 16px;
+    gap: 6px;
+  }
+
+  .hero-learner__metric::after {
+    height: 28px;
+  }
+
+  .hero-learner__metric-icon-wrap {
+    width: 40px;
+    height: 40px;
+  }
+
+  .hero-learner__metric-value {
+    max-width: 7ch;
+    font-size: 0.98rem;
+    line-height: 1.1;
+  }
+
+  .hero-learner__metric-label {
+    font-size: 0.72rem;
+    line-height: 1.1;
+  }
+
+  .hero-learner__progress {
+    margin-top: 12px;
+    padding: 14px 14px 16px;
+    border-radius: 18px;
+  }
+
+  .hero-learner__progress-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 12px;
+    font-size: 0.86rem;
+  }
+
+  .hero-learner__progress-head strong {
+    font-size: 1rem;
+    white-space: normal;
+  }
+
+  .hero-learner__progress-track {
+    height: 18px;
+  }
+
+  .hero-learner__progress-track::after {
+    width: 64px;
+  }
+
+  .hero-learner__progress-pin {
+    width: 24px;
+    height: 24px;
   }
 
   .hero-type-line {
@@ -1872,7 +2324,7 @@ onBeforeUnmount(() => {
   }
 
   .stats-floating-section__inner {
-    margin-top: 16px;
+    margin-top: 14px;
   }
 
   .course-section-panel {
