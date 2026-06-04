@@ -52,7 +52,7 @@
               <div class="row items-center q-gutter-sm q-mt-xs">
                 <q-badge rounded color="positive" label="Active" class="text-weight-bold" />
                 <span class="text-body2 text-white" style="opacity: 0.7">
-                  {{ $t('profile.hero.studentId') }} : {{ authStore.user?.studentId }}
+                  {{ idLabel }} : {{ authStore.user?.studentId }}
                 </span>
               </div>
             </div>
@@ -184,6 +184,7 @@ interface ProfileStatCardItem {
 defineProps<{
   heroRoleLabel: string;
   profileStats: ProfileStatCardItem[];
+  idLabel: string;
 }>();
 
 const authStore = useAuthStore();

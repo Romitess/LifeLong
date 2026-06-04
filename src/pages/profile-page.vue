@@ -4,6 +4,7 @@
     <ProfileHeroSection
       :hero-role-label="heroRoleLabel"
       :profile-stats="isTeachingRole ? [] : profileStats"
+      :id-label="profileHeroIdLabel"
     />
 
     <!-- CONTENT -->
@@ -339,6 +340,10 @@ const heroRoleLabel = computed(() => {
   if (authStore.user?.role === 'central_finance') return t('profile.roles.central_finance');
   return t('profile.hero.learner');
 });
+
+const profileHeroIdLabel = computed(() =>
+  isTeachingRole.value ? 'รหัสประจำตัวผู้สอน' : t('profile.hero.studentId'),
+);
 
 const receiptId = computed(() => selectedPayment.value?.receiptId || '');
 const receiptCustomerName = computed(() => {

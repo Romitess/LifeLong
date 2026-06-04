@@ -2,14 +2,12 @@
   <div class="instructor-home-panel">
     <div class="instructor-home-header">
       <div class="instructor-home-header__copy">
-        <div class="instructor-home-header__eyebrow">Teaching command center</div>
+        <div class="instructor-home-header__eyebrow">รายงานของการสอน</div>
         <div class="instructor-home-header__title-row">
           <div class="text-h5 text-weight-bolder text-primary">Instructor Overview</div>
           <span>Live overview</span>
         </div>
-        <div class="text-caption text-grey-6 q-mt-xs">
-          Course summary, teaching tasks, and certificate progress
-        </div>
+        <div class="text-caption text-grey-6 q-mt-xs"></div>
       </div>
       <q-btn
         unelevated
@@ -579,12 +577,15 @@ defineExpose({
 }
 
 .instructor-overview-card__icon :deep(.q-icon) {
-  display: grid;
-  place-items: center;
-  width: 1em;
-  height: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
   color: #ffffff !important;
   line-height: 1;
+  text-align: center;
+  transform: translateY(1px);
 }
 
 .instructor-overview-card > div {
