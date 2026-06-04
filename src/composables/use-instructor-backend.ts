@@ -99,6 +99,21 @@ export interface CourseAnnouncement {
   pinned: boolean;
 }
 
+export interface DbAnnouncement {
+  id: number;
+  courseId: number;
+  title: string;
+  content: string;
+  createUser: string | null;
+  createDate: string;
+}
+
+export interface CreateAnnouncementResponse extends DbAnnouncement {
+  emailsSent: number;
+  emailsFailed: number;
+  emailsSkipped: number;
+}
+
 export interface InstructorPriorityTask {
   id: string;
   title: string;
@@ -121,6 +136,7 @@ const gradesByCourseId = ref<Record<string, InstructorGrade[]>>({});
 const priorityTasksByCourseId = ref<Record<string, InstructorPriorityTask[]>>({});
 const conversations = ref<InstructorConversation[]>([]);
 const courseAnnouncements = ref<CourseAnnouncement[]>([]);
+const dbAnnouncementsByCourseId = ref<Record<number, DbAnnouncement[]>>({});
 const loading = ref(false);
 const isSavingOpenclass = ref(false);
 
@@ -383,6 +399,8 @@ export function useInstructorBackend() {
       conversations.value.forEach((conv) => {
         socket?.emit('joinRoom', { enrollId: conv.enrollId });
       });
+      // Join global instructor room for enrollment notifications
+      socket?.emit('joinInstructorRoom');
     });
 
     socket.on(
@@ -500,10 +518,66 @@ export function useInstructorBackend() {
     }
   }
 
+  async function fetchDbAnnouncements(courseId: number): Promise<void> {
+    try {
+      const { data } = await api.get<DbAnnouncement[]>(`/api/announcements?courseId=${courseId}`);
+      dbAnnouncementsByCourseId.value = {
+        ...dbAnnouncementsByCourseId.value,
+        [courseId]: Array.isArray(data) ? data : [],
+      };
+    } catch {
+      dbAnnouncementsByCourseId.value = {
+        ...dbAnnouncementsByCourseId.value,
+        [courseId]: [],
+      };
+    }
+  }
+
+  async function createAnnouncement(dto: {
+    courseId: number;
+    title: string;
+    content: string;
+  }): Promise<CreateAnnouncementResponse> {
+    const { data } = await api.post<CreateAnnouncementResponse>('/api/announcements', dto);
+    return data;
+  }
+
+  async function updateAnnouncement(
+    id: number,
+    dto: { title: string; content: string },
+  ): Promise<DbAnnouncement> {
+    const { data } = await api.patch<DbAnnouncement>(`/api/announcements/${id}`, dto);
+    return data;
+  }
+
+  async function deleteAnnouncement(id: number): Promise<void> {
+    await api.delete(`/api/announcements/${id}`);
+  }
+
   function joinConversationRoom(enrollId: number): void {
     if (socket) {
       socket.emit('joinRoom', { enrollId });
     }
+  }
+
+  function joinInstructorGlobalRoom(): void {
+    if (socket) {
+      socket.emit('joinInstructorRoom');
+    }
+  }
+
+  function subscribeToEnrollments(email: string): () => void {
+    const handler = () => {
+      void fetchSummary(email);
+    };
+
+    if (socket) {
+      socket.on('newEnrollment', handler);
+    }
+
+    return () => {
+      socket?.off('newEnrollment', handler);
+    };
   }
 
   return {
@@ -514,6 +588,7 @@ export function useInstructorBackend() {
     priorityTasksByCourseId,
     conversations,
     courseAnnouncements,
+    dbAnnouncementsByCourseId,
     loading,
     isSavingOpenclass,
     updateOpenclass,
@@ -527,10 +602,16 @@ export function useInstructorBackend() {
     fetchCourseFees,
     saveCourseFees,
     fetchCourseAnnouncements,
+    fetchDbAnnouncements,
+    createAnnouncement,
+    updateAnnouncement,
+    deleteAnnouncement,
     sendMessage,
     markAsRead,
     connectSocket,
     disconnectSocket,
     joinConversationRoom,
+    joinInstructorGlobalRoom,
+    subscribeToEnrollments,
   };
 }

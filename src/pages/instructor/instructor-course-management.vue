@@ -1025,14 +1025,14 @@
                   icon="campaign"
                   label="เขียนประกาศ"
                   no-caps
-                  @click="openQuickDialog('เขียนประกาศ')"
+                  @click="openAnnouncementDialog()"
                 />
               </div>
 
               <div v-if="announcements.length > 0" class="announcement-list">
                 <div
                   v-for="announcement in announcements"
-                  :key="announcement.title"
+                  :key="`${announcement.isDb ? 'db' : 'moodle'}-${announcement.id}`"
                   class="announcement-row"
                 >
                   <q-icon
@@ -1045,14 +1045,28 @@
                     <p>{{ announcement.body }}</p>
                     <span>{{ announcement.date }}</span>
                   </div>
-                  <q-btn
-                    flat
-                    dense
-                    round
-                    icon="edit"
-                    color="primary"
-                    @click="openQuickDialog(`แก้ไขประกาศ ${announcement.title}`)"
-                  />
+                  <template v-if="announcement.isDb">
+                    <q-btn
+                      flat
+                      dense
+                      round
+                      icon="edit"
+                      color="primary"
+                      @click="openEditAnnouncementDialog(announcement)"
+                    >
+                      <q-tooltip>แก้ไข</q-tooltip>
+                    </q-btn>
+                    <q-btn
+                      flat
+                      dense
+                      round
+                      icon="delete"
+                      color="negative"
+                      @click="confirmDeleteAnnouncement(announcement)"
+                    >
+                      <q-tooltip>ลบ</q-tooltip>
+                    </q-btn>
+                  </template>
                 </div>
               </div>
               <div v-else class="empty-tab-state text-center q-pa-xl">
@@ -1353,6 +1367,95 @@
       @confirm="confirmPendingCourseSave"
       @cancel="clearPendingCourseSave"
     />
+
+    <q-dialog v-model="deleteAnnouncementDialogOpen" persistent>
+      <q-card class="delete-course-dialog">
+        <q-card-section class="row items-start no-wrap q-gutter-md">
+          <q-avatar color="negative" text-color="white" icon="delete" />
+          <div>
+            <div class="text-h6 text-weight-bold">ลบประกาศ</div>
+            <div class="text-body2 text-grey-8 q-mt-xs">
+              ต้องการลบประกาศ "{{ pendingDeleteAnnouncement?.title }}" ใช่หรือไม่?
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat color="grey-7" label="ยกเลิก" no-caps v-close-popup />
+          <q-btn
+            unelevated
+            color="negative"
+            icon="delete"
+            label="ลบประกาศ"
+            no-caps
+            :loading="announcementSubmitting"
+            @click="executeDeleteAnnouncement"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="announcementDialogOpen" persistent>
+      <q-card class="announcement-dialog">
+        <q-card-section class="row items-center q-pb-sm">
+          <div>
+            <div class="text-h6 text-weight-bold">
+              {{ editingAnnouncementId !== null ? 'แก้ไขประกาศ' : 'เขียนประกาศ' }}
+            </div>
+            <div class="text-body2 text-grey-7 q-mt-xs">
+              {{
+                editingAnnouncementId !== null
+                  ? 'แก้ไขหัวข้อและเนื้อหาประกาศ'
+                  : 'ประกาศจะถูกส่งเมลแจ้งเตือนไปยังผู้เรียนที่ลงทะเบียนทั้งหมด'
+              }}
+            </div>
+          </div>
+          <q-space />
+          <q-btn flat round dense icon="close" v-close-popup :disable="announcementSubmitting" />
+        </q-card-section>
+
+        <q-card-section class="announcement-dialog__form q-pt-none">
+          <q-input
+            v-model="announcementForm.title"
+            outlined
+            label="หัวข้อประกาศ"
+            placeholder="เช่น แจ้งเลื่อนการสอบกลางภาค"
+            :maxlength="255"
+            counter
+            :disable="announcementSubmitting"
+          />
+          <q-input
+            v-model="announcementForm.content"
+            outlined
+            type="textarea"
+            label="เนื้อหาประกาศ"
+            placeholder="รายละเอียดประกาศ..."
+            rows="6"
+            class="q-mt-md"
+            :disable="announcementSubmitting"
+          />
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pa-md q-pt-none">
+          <q-btn
+            flat
+            color="grey-7"
+            label="ยกเลิก"
+            no-caps
+            v-close-popup
+            :disable="announcementSubmitting"
+          />
+          <q-btn
+            unelevated
+            color="primary"
+            :icon="editingAnnouncementId !== null ? 'save' : 'send'"
+            :label="editingAnnouncementId !== null ? 'บันทึก' : 'ส่งประกาศ'"
+            no-caps
+            :loading="announcementSubmitting"
+            @click="submitAnnouncement"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -1478,6 +1581,12 @@ const pendingCourseChangeLabels = ref<string[]>([]);
 const saveCourseDialogMessage = ref('');
 const learnerDetailDialogOpen = ref(false);
 const selectedLearner = ref<LearnerRow | null>(null);
+const announcementDialogOpen = ref(false);
+const announcementSubmitting = ref(false);
+const announcementForm = reactive({ title: '', content: '' });
+const editingAnnouncementId = ref<number | null>(null);
+const deleteAnnouncementDialogOpen = ref(false);
+const pendingDeleteAnnouncement = ref<{ id: number; title: string } | null>(null);
 const defaultDeliveryMode: DeliveryMode = 'Online';
 const requestedCourseId = typeof route.query.courseId === 'string' ? route.query.courseId : '';
 
@@ -1874,14 +1983,34 @@ const assignments = computed(() => {
   return result;
 });
 
+function formatDbDate(dateStr: string | Date): string {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '-';
+  return `ประกาศเมื่อ ${d.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+}
+
 const announcements = computed(() => {
   if (!isKnownCourse.value) return [];
-  return instructorBackend.courseAnnouncements.value.map((a) => ({
+  const numericId = parseInt(String(selectedCourseId.value).replace('db-', ''), 10);
+  const dbItems = (
+    !isNaN(numericId) ? (instructorBackend.dbAnnouncementsByCourseId.value[numericId] ?? []) : []
+  ).map((a) => ({
+    id: a.id,
+    title: a.title,
+    body: a.content,
+    date: formatDbDate(a.createDate),
+    pinned: false,
+    isDb: true as const,
+  }));
+  const moodleItems = instructorBackend.courseAnnouncements.value.map((a) => ({
+    id: a.id,
     title: a.subject,
     body: stripHtml(a.body),
     date: formatUnixDate(a.createdAt),
     pinned: a.pinned,
+    isDb: false as const,
   }));
+  return [...dbItems, ...moodleItems];
 });
 
 const reports = computed(() => {
@@ -2002,6 +2131,7 @@ watch(
           amount: f.amount,
         })),
       );
+      void instructorBackend.fetchDbAnnouncements(numericId);
     }
     learnerPricingBaseline.value = getLearnerPricingSnapshot();
     activeWorkspaceTab.value = 'overview';
@@ -2046,6 +2176,107 @@ function resetFacultyStaffForm(): void {
 function openFacultyStaffDialog(): void {
   resetFacultyStaffForm();
   facultyStaffDialogOpen.value = true;
+}
+
+function openAnnouncementDialog(): void {
+  editingAnnouncementId.value = null;
+  announcementForm.title = '';
+  announcementForm.content = '';
+  announcementDialogOpen.value = true;
+}
+
+function openEditAnnouncementDialog(announcement: {
+  id: number;
+  title: string;
+  body: string;
+}): void {
+  editingAnnouncementId.value = announcement.id;
+  announcementForm.title = announcement.title;
+  announcementForm.content = announcement.body;
+  announcementDialogOpen.value = true;
+}
+
+function confirmDeleteAnnouncement(announcement: { id: number; title: string }): void {
+  pendingDeleteAnnouncement.value = announcement;
+  deleteAnnouncementDialogOpen.value = true;
+}
+
+async function executeDeleteAnnouncement(): Promise<void> {
+  if (!pendingDeleteAnnouncement.value) return;
+  const numericId = parseInt(String(selectedCourseId.value).replace('db-', ''), 10);
+  announcementSubmitting.value = true;
+  try {
+    await instructorBackend.deleteAnnouncement(pendingDeleteAnnouncement.value.id);
+    deleteAnnouncementDialogOpen.value = false;
+    if (!isNaN(numericId)) await instructorBackend.fetchDbAnnouncements(numericId);
+    $q.notify({ type: 'positive', message: 'ลบประกาศเรียบร้อยแล้ว', position: 'top' });
+  } catch {
+    $q.notify({ type: 'negative', message: 'ไม่สามารถลบประกาศได้', position: 'top' });
+  } finally {
+    announcementSubmitting.value = false;
+    pendingDeleteAnnouncement.value = null;
+  }
+}
+
+async function submitAnnouncement(): Promise<void> {
+  if (!announcementForm.title.trim() || !announcementForm.content.trim()) {
+    $q.notify({ type: 'warning', message: 'กรุณากรอกหัวข้อและเนื้อหาประกาศ' });
+    return;
+  }
+  const numericId = parseInt(String(selectedCourseId.value).replace('db-', ''), 10);
+  if (isNaN(numericId)) {
+    $q.notify({ type: 'warning', message: 'ไม่พบรหัสรายวิชา' });
+    return;
+  }
+  announcementSubmitting.value = true;
+  try {
+    if (editingAnnouncementId.value !== null) {
+      await instructorBackend.updateAnnouncement(editingAnnouncementId.value, {
+        title: announcementForm.title.trim(),
+        content: announcementForm.content.trim(),
+      });
+      announcementDialogOpen.value = false;
+      await instructorBackend.fetchDbAnnouncements(numericId);
+      $q.notify({
+        type: 'positive',
+        icon: 'edit',
+        message: 'แก้ไขประกาศเรียบร้อยแล้ว',
+        position: 'top',
+        timeout: 3000,
+      });
+    } else {
+      const result = await instructorBackend.createAnnouncement({
+        courseId: numericId,
+        title: announcementForm.title.trim(),
+        content: announcementForm.content.trim(),
+      });
+      announcementDialogOpen.value = false;
+      await instructorBackend.fetchDbAnnouncements(numericId);
+      const total = result.emailsSent + result.emailsFailed + result.emailsSkipped;
+      const parts: string[] = [];
+      parts.push(`ส่งเมลแล้ว ${result.emailsSent}/${total} คน`);
+      if (result.emailsFailed > 0) parts.push(`ล้มเหลว ${result.emailsFailed} คน`);
+      if (result.emailsSkipped > 0) parts.push(`ไม่มีอีเมล ${result.emailsSkipped} คน`);
+      $q.notify({
+        type: 'positive',
+        icon: 'campaign',
+        message: `สร้างประกาศสำเร็จ — ${parts.join(', ')}`,
+        position: 'top',
+        timeout: 5000,
+      });
+    }
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message:
+        editingAnnouncementId.value !== null
+          ? 'ไม่สามารถแก้ไขประกาศได้'
+          : 'ไม่สามารถสร้างประกาศได้',
+      position: 'top',
+    });
+  } finally {
+    announcementSubmitting.value = false;
+  }
 }
 
 function addFacultyStaff(): void {
@@ -4056,6 +4287,16 @@ function openQuickDialog(title: string): void {
 .staff-dialog__form {
   display: grid;
   gap: 14px;
+}
+
+.announcement-dialog {
+  width: min(600px, calc(100vw - 32px));
+  border-radius: 18px;
+}
+
+.announcement-dialog__form {
+  display: grid;
+  gap: 0;
 }
 
 .create-course-dialog {

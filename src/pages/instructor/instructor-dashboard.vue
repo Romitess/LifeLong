@@ -134,7 +134,7 @@
               color="primary"
               label="ดูทั้งหมด"
               no-caps
-              @click="showDevelopmentDialog('ดูคอร์สทั้งหมด')"
+              @click="router.push('/instructor/courses')"
             />
           </div>
 
@@ -248,7 +248,7 @@
                 color="primary"
                 label="ดูกิจกรรมทั้งหมด"
                 no-caps
-                @click="showDevelopmentDialog('กิจกรรมทั้งหมด')"
+                @click="router.push('/instructor/students')"
               />
             </q-card-section>
           </q-card>
@@ -288,6 +288,7 @@ const instructorBackend = useInstructorBackend();
 const heroSlide = ref('overview');
 const showGreetingBanner = ref(false);
 const isGreetingBannerLeaving = ref(false);
+let unsubscribeEnrollments: (() => void) | null = null;
 const typedHeroText = ref({
   buu: '',
   lll: '',
@@ -311,6 +312,9 @@ onMounted(() => {
   if (email) {
     void courseStore.fetchInstructorCourses(email);
     void instructorBackend.fetchSummary(email);
+    instructorBackend.connectSocket(email);
+    instructorBackend.joinInstructorGlobalRoom();
+    unsubscribeEnrollments = instructorBackend.subscribeToEnrollments(email);
   }
 
   const showTimer = setTimeout(() => {
@@ -484,6 +488,8 @@ onBeforeUnmount(() => {
   clearHeroTypingTimers();
   greetingBannerTimers.forEach((timer) => clearTimeout(timer));
   greetingBannerTimers.length = 0;
+  unsubscribeEnrollments?.();
+  instructorBackend.disconnectSocket();
 });
 
 watch(
