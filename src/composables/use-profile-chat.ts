@@ -1,4 +1,13 @@
-import { ref, computed, nextTick, watch, onUnmounted, type Ref, type ComputedRef } from 'vue';
+import {
+  ref,
+  computed,
+  nextTick,
+  watch,
+  onMounted,
+  onUnmounted,
+  type Ref,
+  type ComputedRef,
+} from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { io, type Socket } from 'socket.io-client';
@@ -30,7 +39,6 @@ interface ApiChatMessage {
 export function useProfileChat(
   myRegistrations: Ref<CourseRegistration[]> | ComputedRef<CourseRegistration[]>,
   myRegisteredCourseEntries: Ref<RegisteredCourseEntry[]> | ComputedRef<RegisteredCourseEntry[]>,
-  activeMenu: Ref<string>,
 ) {
   const { t, locale } = useI18n();
   const $q = useQuasar();
@@ -266,29 +274,15 @@ export function useProfileChat(
     return latestLearnerMessage?.id === message.id;
   }
 
-  // Watch for active menu changes to connect/disconnect socket
-  watch(
-    () => activeMenu.value,
-    async (menuValue) => {
-      if (menuValue !== 'chat') {
-        disconnectChatSocket();
-        return;
-      }
-
-      connectChatSocket();
-      void fetchChatMessages();
-      await nextTick();
-      scrollChatToLatestMessage();
-    },
-    { immediate: true },
-  );
+  onMounted(async () => {
+    connectChatSocket();
+    void fetchChatMessages();
+    await nextTick();
+    scrollChatToLatestMessage();
+  });
 
   // Watch for selected course changes in chat tab
   watch(selectedChatCourseId, async () => {
-    if (activeMenu.value !== 'chat') {
-      return;
-    }
-
     void fetchChatMessages();
     const enrollId = selectedChatEntry.value?.registration?.enrollId;
     if (enrollId) {
