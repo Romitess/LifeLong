@@ -21,6 +21,111 @@
         {{ errorMessage }}
       </q-banner>
 
+      <!-- Sticky sentinel — 1px div สำหรับ IntersectionObserver detect "stuck" -->
+      <div ref="sentinelRef" class="admin-filter-sentinel" />
+
+      <!-- Sticky Filter Bar -->
+      <div class="admin-filter-bar" :class="{ 'admin-filter-bar--stuck': filterStuck }">
+        <!-- Row 1: Mode selector + presets -->
+        <div class="admin-filter-bar__row1">
+          <button
+            class="admin-filter-bar__item"
+            :class="{ 'admin-filter-bar__item--active': isMonthMode }"
+            @click="period = 'month'"
+          >
+            เดือน
+          </button>
+          <button
+            class="admin-filter-bar__item"
+            :class="{ 'admin-filter-bar__item--active': isQuarterMode }"
+            @click="period = 'q1'"
+          >
+            ไตรมาส
+          </button>
+          <button
+            class="admin-filter-bar__item"
+            :class="{ 'admin-filter-bar__item--active': isHalfMode }"
+            @click="period = 'year'"
+          >
+            ช่วงปี
+          </button>
+
+          <div class="admin-filter-bar__divider" />
+
+          <button
+            v-for="opt in specialOptions"
+            :key="opt.value"
+            class="admin-filter-bar__item"
+            :class="{ 'admin-filter-bar__item--active': period === opt.value }"
+            @click="period = opt.value"
+          >
+            {{ opt.label }}
+          </button>
+
+          <span class="admin-filter-bar__label">
+            <q-icon name="calendar_today" size="13px" class="q-mr-xs" />
+            {{ periodLabel }}
+          </span>
+        </div>
+
+        <!-- Row 2: Sub-picker — always visible; dimmed when no year-based mode active -->
+        <div
+          class="admin-filter-bar__row2"
+          :class="{ 'admin-filter-bar__row2--inactive': !isYearBased }"
+        >
+          <span class="admin-filter-bar__sub-label">ปี</span>
+
+          <button
+            v-for="y in availableYears"
+            :key="y"
+            class="admin-filter-bar__item admin-filter-bar__item--sm"
+            :class="{ 'admin-filter-bar__item--active': isYearBased && selectedYear === y }"
+            :disabled="!isYearBased"
+            @click="selectedYear = y"
+          >
+            {{ y + 543 }}
+          </button>
+
+          <template v-if="isYearBased">
+            <div class="admin-filter-bar__divider" />
+
+            <template v-if="isMonthMode">
+              <button
+                v-for="m in monthOptions"
+                :key="m.value"
+                class="admin-filter-bar__item admin-filter-bar__item--sm"
+                :class="{ 'admin-filter-bar__item--active': selectedMonth === m.value }"
+                @click="selectedMonth = m.value"
+              >
+                {{ m.label }}
+              </button>
+            </template>
+            <template v-else-if="isQuarterMode">
+              <button
+                v-for="opt in quarterOptions"
+                :key="opt.value"
+                class="admin-filter-bar__item admin-filter-bar__item--sm"
+                :class="{ 'admin-filter-bar__item--active': period === opt.value }"
+                @click="period = opt.value"
+              >
+                {{ opt.label }}
+              </button>
+            </template>
+            <template v-else>
+              <button
+                v-for="opt in halfOptions"
+                :key="opt.value"
+                class="admin-filter-bar__item admin-filter-bar__item--sm"
+                :class="{ 'admin-filter-bar__item--active': period === opt.value }"
+                @click="period = opt.value"
+              >
+                {{ opt.label }}
+              </button>
+            </template>
+          </template>
+        </div>
+      </div>
+
       <div class="row q-col-gutter-md admin-dashboard__pulse">
         <div v-for="item in systemPulse" :key="item.label" class="col-12 col-sm-6 col-md-3">
           <BaseInfoCard
@@ -36,7 +141,7 @@
 
       <div class="admin-dashboard__kpis">
         <BaseInfoCard
-          v-for="kpi in kpis"
+          v-for="kpi in animatedKpis"
           :key="kpi.id"
           variant="stat"
           tone="primary"
@@ -62,11 +167,22 @@
                 {{ kpi.delta >= 0 ? '+' : '' }}{{ kpi.delta.toFixed(1) }}%
               </span>
             </div>
-            <strong class="admin-kpi-card__value">{{ kpi.value }}</strong>
+            <strong class="admin-kpi-card__value">{{
+              kpi.id === 'revenue'
+                ? formatCompactCurrency(Math.round(kpi.value))
+                : kpi.id === 'paid-rate'
+                  ? Math.round(kpi.value * 10) / 10 + '%'
+                  : formatCount(Math.round(kpi.value))
+            }}</strong>
             <span class="admin-kpi-card__label">{{ kpi.label }}</span>
             <p class="admin-kpi-card__description">{{ kpi.description }}</p>
             <div class="admin-kpi-card__sparkline">
-              <svg viewBox="0 0 120 36" preserveAspectRatio="none">
+              <svg
+                :key="chartKey"
+                viewBox="0 0 120 36"
+                preserveAspectRatio="none"
+                class="admin-kpi-card__sparkline-svg"
+              >
                 <defs>
                   <linearGradient :id="`spark-${kpi.id}`" x1="0" x2="0" y1="0" y2="1">
                     <stop offset="0%" stop-color="currentColor" stop-opacity="0.4" />
@@ -97,7 +213,7 @@
         <AdminSurfaceCard
           :eyebrow="primaryChartContent.eyebrow"
           :title="primaryChartContent.title"
-          :subtitle="primaryChartContent.subtitle"
+          :subtitle="periodLabel"
           card-class="admin-dashboard__panel admin-dashboard__panel--chart"
         >
           <template #header-actions>
@@ -106,7 +222,6 @@
               no-caps
               dense
               unelevated
-              spread
               :options="chartMetricOptions"
               toggle-color="primary"
               text-color="grey-8"
@@ -115,6 +230,7 @@
           </template>
 
           <AdminAreaChart
+            :key="chartKey"
             :series="areaChartSeries"
             :x-labels="dashboardSeries.months"
             :height="280"
@@ -126,10 +242,11 @@
         <AdminSurfaceCard
           eyebrow="Enrollment Mix"
           title="สัดส่วนการลงทะเบียน"
-          subtitle="แบ่งตามรายการที่ชำระเงินและรายการที่ลงทะเบียนฟรีจากข้อมูลจริง"
+          :subtitle="periodLabel"
           card-class="admin-dashboard__panel admin-dashboard__panel--donut"
         >
           <AdminDonutChart
+            :key="chartKey"
             :data="deliveryBreakdown"
             center-label="ผู้ลงทะเบียน"
             :center-value="formatCount(totals.enrolledLearners)"
@@ -141,11 +258,12 @@
       <div class="admin-dashboard__mid-row">
         <AdminSurfaceCard
           eyebrow="Category Performance"
-          title="ผู้ลงทะเบียนตามหมวดหมู่ยอดนิยม"
-          subtitle="เรียงตามจำนวนผู้ลงทะเบียนจริงที่ผูกกับหมวดหมู่ในฐานข้อมูล"
+          title="ผู้ลงทะเบียนตามหมวดหมู่"
+          :subtitle="periodLabel"
           card-class="admin-dashboard__panel"
         >
           <AdminBarChart
+            :key="chartKey"
             :items="categoryBarItems"
             :format-value="(value) => `${formatCount(value)} คน`"
           />
@@ -153,16 +271,17 @@
 
         <AdminSurfaceCard
           eyebrow="Top Performing Courses"
-          title="คอร์สที่ทำรายได้สูงสุด"
-          subtitle="คอร์สที่สร้างรายได้และมีการชำระเงินจริงสูงสุด"
+          title="คอร์สยอดนิยม"
+          :subtitle="periodLabel"
           body-padding="none"
           card-class="admin-dashboard__panel"
         >
-          <ul class="admin-dashboard__leaderboard">
+          <ul :key="chartKey" class="admin-dashboard__leaderboard">
             <li
               v-for="(course, index) in topCourses"
-              :key="course.id"
+              :key="`${chartKey}-${course.id}`"
               class="admin-dashboard__leaderboard-item"
+              :style="{ animationDelay: `${index * 0.07}s` }"
             >
               <span class="admin-dashboard__leaderboard-rank">{{ index + 1 }}</span>
               <div class="admin-dashboard__leaderboard-copy">
@@ -201,9 +320,9 @@
 
       <div class="admin-dashboard__bottom-row">
         <AdminSurfaceCard
-          eyebrow="Live Stream"
+          eyebrow="Recent Activity"
           title="การลงทะเบียนล่าสุด"
-          subtitle="ดูผู้เรียนล่าสุดที่ลงทะเบียนจากฐานข้อมูลจริง"
+          :subtitle="periodLabel"
           body-padding="none"
           card-class="admin-dashboard__panel"
         >
@@ -247,12 +366,13 @@
         </AdminSurfaceCard>
 
         <AdminSurfaceCard
-          eyebrow="Faculty Distribution"
+          eyebrow="Faculty Breakdown"
           title="ผู้เรียนแบ่งตามคณะ"
-          subtitle="ภาพรวมผู้ลงทะเบียนสะสมตามคณะที่เจ้าของคอร์สสังกัด"
+          :subtitle="periodLabel"
           card-class="admin-dashboard__panel"
         >
           <AdminBarChart
+            :key="chartKey"
             :items="facultyBarItems"
             :format-value="(value) => `${formatCount(value)} คน`"
           />
@@ -265,7 +385,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
 import AdminBarChart, { type BarChartItem } from 'components/admin/AdminBarChart.vue';
 import AdminDonutChart from 'components/admin/AdminDonutChart.vue';
@@ -273,7 +393,10 @@ import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import { useAdminDashboardMetrics } from 'src/composables/use-admin-dashboard-metrics';
-import type { RecentRegistration } from 'src/composables/use-admin-dashboard-metrics';
+import type {
+  DashboardPeriod,
+  RecentRegistration,
+} from 'src/composables/use-admin-dashboard-metrics';
 import { formatCompactCurrency, formatCount, formatCurrency } from 'src/utils/course-format';
 
 type ChartMetric = 'pipeline' | 'learners' | 'revenue';
@@ -282,6 +405,11 @@ const {
   isLoading,
   errorMessage,
   generatedAt,
+  period,
+  selectedYear,
+  selectedMonth,
+  periodLabel,
+  availableYears,
   kpis,
   monthlySeries: dashboardSeries,
   categoryUsage,
@@ -292,12 +420,98 @@ const {
   totals,
 } = useAdminDashboardMetrics();
 
+// ─── Period presets ──────────────────────────────────────────
+type PeriodGroup = { label: string; value: DashboardPeriod; needsYear: boolean };
+
+const monthOptions = [
+  { label: 'ม.ค.', value: 1 },
+  { label: 'ก.พ.', value: 2 },
+  { label: 'มี.ค.', value: 3 },
+  { label: 'เม.ย.', value: 4 },
+  { label: 'พ.ค.', value: 5 },
+  { label: 'มิ.ย.', value: 6 },
+  { label: 'ก.ค.', value: 7 },
+  { label: 'ส.ค.', value: 8 },
+  { label: 'ก.ย.', value: 9 },
+  { label: 'ต.ค.', value: 10 },
+  { label: 'พ.ย.', value: 11 },
+  { label: 'ธ.ค.', value: 12 },
+];
+
+const quarterOptions: PeriodGroup[] = [
+  { label: 'ไตรมาส 1', value: 'q1', needsYear: true },
+  { label: 'ไตรมาส 2', value: 'q2', needsYear: true },
+  { label: 'ไตรมาส 3', value: 'q3', needsYear: true },
+  { label: 'ไตรมาส 4', value: 'q4', needsYear: true },
+];
+const halfOptions: PeriodGroup[] = [
+  { label: 'ครึ่งปีแรก', value: 'h1', needsYear: true },
+  { label: 'ครึ่งปีหลัง', value: 'h2', needsYear: true },
+  { label: 'ทั้งปี', value: 'year', needsYear: true },
+];
+const specialOptions: PeriodGroup[] = [
+  { label: '12 เดือนล่าสุด', value: 'rolling12', needsYear: false },
+  { label: 'ทั้งหมด', value: 'allTime', needsYear: false },
+];
+
+const isMonthMode = computed(() => period.value === 'month');
+const isQuarterMode = computed(() => ['q1', 'q2', 'q3', 'q4'].includes(period.value));
+const isHalfMode = computed(() => ['h1', 'h2', 'year'].includes(period.value));
+const isYearBased = computed(() => isMonthMode.value || isQuarterMode.value || isHalfMode.value);
+
+// ─── Sticky sentinel ──────────────────────────────────────────
+const sentinelRef = ref<HTMLElement | null>(null);
+const filterStuck = ref(false);
+let stickyObserver: IntersectionObserver | null = null;
+
+onMounted(() => {
+  if (!sentinelRef.value) return;
+  stickyObserver = new IntersectionObserver(
+    ([entry]) => {
+      filterStuck.value = !(entry?.isIntersecting ?? true);
+    },
+    { threshold: 0, rootMargin: '-73px 0px 0px 0px' },
+  );
+  stickyObserver.observe(sentinelRef.value);
+});
+onUnmounted(() => {
+  stickyObserver?.disconnect();
+});
+
+// ─── Chart key — re-triggers chart animations on data reload ──
+const chartKey = ref(0);
+
+watch(isLoading, (loading) => {
+  if (!loading) chartKey.value += 1;
+});
+
+const animatedKpis = computed(() =>
+  kpis.value.map((kpi) => {
+    let description = kpi.description;
+    if (kpi.id === 'enrollments') {
+      description = `ฟรี ${totals.value.freeEnrollments.toLocaleString('th-TH')} · ชำระเงิน ${totals.value.paidEnrollments.toLocaleString('th-TH')} รายการ`;
+    } else if (kpi.id === 'paid-rate') {
+      description = `${totals.value.paidEnrollments.toLocaleString('th-TH')} จาก ${totals.value.enrolledLearners.toLocaleString('th-TH')} รายการ`;
+    } else if (kpi.id === 'revenue') {
+      description = `ชำระเงินสำเร็จ ${totals.value.paidEnrollments.toLocaleString('th-TH')} รายการ`;
+    } else if (kpi.id === 'learners') {
+      description = `จาก ${totals.value.courses.toLocaleString('th-TH')} หลักสูตรในระบบ`;
+    }
+    return { ...kpi, description };
+  }),
+);
+
 const chartMetric = ref<ChartMetric>('pipeline');
 const chartMetricOptions: { label: string; value: ChartMetric }[] = [
   { label: 'ลงทะเบียน', value: 'pipeline' },
   { label: 'ผู้เรียน', value: 'learners' },
   { label: 'รายได้', value: 'revenue' },
 ];
+
+// เปลี่ยน metric toggle → re-trigger chart animation
+watch(chartMetric, () => {
+  chartKey.value += 1;
+});
 
 type PulseTone = 'gold' | 'secondary' | 'positive' | 'indigo';
 
@@ -312,86 +526,88 @@ const heroBadgeLabel = computed(() =>
 
 const systemPulse = computed<
   { icon: string; value: string; label: string; description: string; tone: PulseTone }[]
->(() => [
-  {
-    icon: 'menu_book',
-    value: formatCount(totals.value.courses),
-    label: 'รายวิชาทั้งหมด',
-    description: '',
-    tone: 'gold',
-  },
-  {
-    icon: 'workspace_premium',
-    value: formatCount(totals.value.certificateCourses),
-    label: 'หลักสูตรประกาศนียบัตร',
-    description: '',
-    tone: 'secondary',
-  },
-  {
-    icon: 'school',
-    value: formatCount(totals.value.creditCourses),
-    label: 'หลักสูตรสะสมหน่วยกิต',
-    description: '',
-    tone: 'positive',
-  },
-  {
-    icon: 'auto_stories',
-    value: formatCount(totals.value.publicGeneralCourses),
-    label: 'หลักสูตรทั่วไป',
-    description: '',
-    tone: 'indigo',
-  },
-  {
-    icon: 'co_present',
-    value: formatCount(totals.value.instructorCount),
-    label: 'ผู้สอน',
-    description: '',
-    tone: 'gold',
-  },
-  {
-    icon: 'groups',
-    value: formatCount(totals.value.distinctLearners),
-    label: 'ผู้เรียนทั้งหมด',
-    description: '',
-    tone: 'secondary',
-  },
-  {
-    icon: 'apartment',
-    value: formatCount(totals.value.facultyCount),
-    label: 'คณะ/ส่วนงาน',
-    description: '',
-    tone: 'positive',
-  },
-  {
-    icon: 'payments',
-    value: formatCompactCurrency(totals.value.totalRevenue),
-    label: 'รายได้',
-    description: '',
-    tone: 'indigo',
-  },
-]);
+>(() => {
+  const t = totals.value;
+  return [
+    {
+      icon: 'menu_book',
+      value: formatCount(t.courses),
+      label: 'รายวิชาทั้งหมด',
+      description: '',
+      tone: 'gold',
+    },
+    {
+      icon: 'workspace_premium',
+      value: formatCount(t.certificateCourses),
+      label: 'หลักสูตรประกาศนียบัตร',
+      description: '',
+      tone: 'secondary',
+    },
+    {
+      icon: 'school',
+      value: formatCount(t.creditCourses),
+      label: 'หลักสูตรสะสมหน่วยกิต',
+      description: '',
+      tone: 'positive',
+    },
+    {
+      icon: 'auto_stories',
+      value: formatCount(t.publicGeneralCourses),
+      label: 'หลักสูตรทั่วไป',
+      description: '',
+      tone: 'indigo',
+    },
+    {
+      icon: 'co_present',
+      value: formatCount(t.instructorCount),
+      label: 'ผู้สอน',
+      description: '',
+      tone: 'gold',
+    },
+    {
+      icon: 'groups',
+      value: formatCount(t.distinctLearners),
+      label: 'ผู้เรียนทั้งหมด',
+      description: '',
+      tone: 'secondary',
+    },
+    {
+      icon: 'apartment',
+      value: formatCount(t.facultyCount),
+      label: 'คณะ/ส่วนงาน',
+      description: '',
+      tone: 'positive',
+    },
+    {
+      icon: 'payments',
+      value: formatCompactCurrency(t.totalRevenue),
+      label: 'รายได้',
+      description: '',
+      tone: 'indigo',
+    },
+  ];
+});
 
 const primaryChartContent = computed(() => {
+  const pl = periodLabel.value;
   if (chartMetric.value === 'learners') {
     return {
       eyebrow: 'Learner Growth',
-      title: 'ผู้เรียนทั้งหมดรายเดือน',
-      subtitle: 'สรุปจำนวนผู้เรียนใหม่ที่เข้าสู่ระบบในแต่ละเดือน',
+      title: 'จำนวนผู้เรียน',
+      subtitle: pl,
     };
   }
-
   if (chartMetric.value === 'revenue') {
     return {
       eyebrow: 'Revenue Trend',
-      title: 'รายได้จากการลงทะเบียนรายเดือน',
-      subtitle: 'สรุปรายได้จากการลงทะเบียนที่เกิดขึ้นในแต่ละเดือน',
+      title: 'รายได้จากการลงทะเบียน',
+      subtitle: pl,
     };
   }
-
   return {
-    eyebrow: 'Enrollment Pipeline',
-    title: 'การลงทะเบียนและการชำระเงินรายเดือน',
-    subtitle: 'เปรียบเทียบการลงทะเบียนและรายการชำระเงินสำเร็จรายเดือน',
+    eyebrow: 'Enrollment Overview',
+    title: 'ภาพรวมการลงทะเบียน',
+    subtitle: pl,
   };
 });
 
@@ -549,6 +765,138 @@ function formatRelativeTime(iso: string | null): string {
 </script>
 
 <style lang="scss" scoped>
+// ─── Sticky Filter Bar ───────────────────────────────────────
+.admin-filter-sentinel {
+  height: 1px;
+}
+
+.admin-filter-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 9;
+  margin-bottom: 16px;
+  border-radius: var(--admin-radius-lg);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  transition: box-shadow 0.2s ease;
+  overflow: clip; // clip visual overflow (border-radius) without blocking child scroll containers
+
+  &--stuck {
+    box-shadow:
+      0 6px 28px rgba(17, 24, 39, 0.1),
+      0 1px 4px rgba(17, 24, 39, 0.05);
+  }
+}
+
+// ─── Rows shared layout ───────────────────────────────────────
+.admin-filter-bar__row1,
+.admin-filter-bar__row2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px; // same as admin-section-nav__list gap
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.admin-filter-bar__row1 {
+  padding: 8px 8px 4px;
+  min-height: 52px;
+}
+
+.admin-filter-bar__row2 {
+  padding: 4px 8px 8px;
+  border-top: 1px solid rgba(17, 24, 39, 0.06);
+  transition: opacity 0.18s ease;
+
+  &--inactive {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+}
+
+// ─── Item — matches admin-section-nav__item exactly ──────────
+.admin-filter-bar__item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--admin-muted);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba($primary, 0.04);
+    color: var(--admin-navy);
+  }
+
+  &--active {
+    background: rgba($primary, 0.08) !important;
+    box-shadow: inset 4px 0 0 $primary;
+    color: var(--admin-navy);
+  }
+
+  // compact size for row-2 year/month/quarter chips
+  &--sm {
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 0.78rem;
+  }
+}
+
+// ─── Divider between groups ───────────────────────────────────
+.admin-filter-bar__divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(17, 24, 39, 0.1);
+  flex-shrink: 0;
+  margin: 0 8px;
+}
+
+// ─── Sub-label (ปี) ───────────────────────────────────────────
+.admin-filter-bar__sub-label {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--admin-muted);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 0 6px;
+}
+
+// ─── Period label (right side of row 1) ──────────────────────
+.admin-filter-bar__label {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: var(--admin-muted);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0 6px;
+}
+
+@media (max-width: 900px) {
+  .admin-filter-bar__label {
+    display: none;
+  }
+}
+
 .admin-dashboard__hero-badge {
   padding: 10px 18px;
   font-size: 0.85rem;
@@ -667,10 +1015,23 @@ function formatRelativeTime(iso: string | null): string {
   color: var(--card-color);
 }
 
-.admin-kpi-card__sparkline svg {
+@keyframes sparkReveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0% 0 0);
+    opacity: 1;
+  }
+}
+
+.admin-kpi-card__sparkline-svg {
   width: 100%;
   height: 100%;
   display: block;
+  animation: sparkReveal 0.9s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: 0.2s;
 }
 
 .admin-kpi-card__delta-label {
@@ -702,14 +1063,21 @@ function formatRelativeTime(iso: string | null): string {
   border-radius: 10px;
   background: rgba(15, 23, 42, 0.04);
   padding: 4px;
-}
 
-.admin-chart-toggle :deep(.q-btn) {
-  border-radius: 8px !important;
-  font-size: 0.78rem;
-  font-weight: 800;
-  padding: 0 14px;
-  min-height: 32px;
+  :deep(.q-btn) {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border-radius: 8px !important;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 0 14px;
+    min-height: 32px;
+  }
+
+  :deep(.q-btn::before) {
+    box-shadow: none !important;
+  }
 }
 
 .admin-dashboard__leaderboard {
@@ -718,7 +1086,19 @@ function formatRelativeTime(iso: string | null): string {
   padding: 0;
 }
 
+@keyframes leaderboardIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .admin-dashboard__leaderboard-item {
+  animation: leaderboardIn 0.4s ease-out both;
   display: grid;
   grid-template-columns: 32px minmax(0, 1.4fr) minmax(140px, 1fr);
   gap: 16px;

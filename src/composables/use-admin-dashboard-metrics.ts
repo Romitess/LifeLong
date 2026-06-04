@@ -1,4 +1,4 @@
-import { computed, onMounted, ref, type ComputedRef, type Ref } from 'vue';
+import { computed, onMounted, ref, watch, type ComputedRef, type Ref } from 'vue';
 import { api } from 'src/boot/axios';
 
 const SITE_PALETTE = [
@@ -171,6 +171,9 @@ interface DashboardApiRecentEnrollmentItem {
 
 interface DashboardApiResponse {
   generatedAt: string;
+  period: string;
+  periodLabel: string;
+  availableYears: number[];
   totals: DashboardApiTotals;
   monthlySeries: DashboardApiMonthlySeries[];
   enrollmentBreakdown: DashboardApiBreakdownItem[];
@@ -180,10 +183,28 @@ interface DashboardApiResponse {
   recentEnrollments: DashboardApiRecentEnrollmentItem[];
 }
 
+export type DashboardPeriod =
+  | 'month'
+  | 'q1'
+  | 'q2'
+  | 'q3'
+  | 'q4'
+  | 'h1'
+  | 'h2'
+  | 'year'
+  | 'rolling12'
+  | 'yearly'
+  | 'allTime';
+
 export interface DashboardMetrics {
   isLoading: Ref<boolean>;
   errorMessage: Ref<string | null>;
   generatedAt: ComputedRef<string | null>;
+  period: Ref<DashboardPeriod>;
+  selectedYear: Ref<number>;
+  selectedMonth: Ref<number>;
+  periodLabel: ComputedRef<string>;
+  availableYears: ComputedRef<number[]>;
   kpis: ComputedRef<DashboardKpi[]>;
   monthlySeries: ComputedRef<MonthlyDashboardSeries>;
   categoryUsage: ComputedRef<CategoryUsage[]>;
@@ -230,6 +251,9 @@ function formatMonthLabel(monthKey: string): string {
 function createEmptyResponse(): DashboardApiResponse {
   return {
     generatedAt: new Date().toISOString(),
+    period: 'monthly',
+    periodLabel: '',
+    availableYears: [],
     totals: {
       totalCourses: 0,
       activeCourses: 0,
@@ -287,6 +311,9 @@ function getInitial(name: string): string {
 export function useAdminDashboardMetrics(): DashboardMetrics {
   const isLoading = ref(false);
   const errorMessage = ref<string | null>(null);
+  const period = ref<DashboardPeriod>('rolling12');
+  const selectedYear = ref<number>(new Date().getFullYear());
+  const selectedMonth = ref<number>(new Date().getMonth() + 1);
   const response = ref<DashboardApiResponse>(createEmptyResponse());
 
   async function refresh(): Promise<void> {
@@ -294,7 +321,13 @@ export function useAdminDashboardMetrics(): DashboardMetrics {
     errorMessage.value = null;
 
     try {
-      const { data } = await api.get<DashboardApiResponse>('/api/admin/dashboard');
+      const { data } = await api.get<DashboardApiResponse>('/api/admin/dashboard', {
+        params: {
+          period: period.value,
+          year: selectedYear.value,
+          ...(period.value === 'month' ? { month: selectedMonth.value } : {}),
+        },
+      });
       response.value = data;
     } catch (error) {
       console.error('Failed to load admin dashboard metrics', error);
@@ -304,11 +337,15 @@ export function useAdminDashboardMetrics(): DashboardMetrics {
     }
   }
 
+  watch([period, selectedYear, selectedMonth], () => void refresh());
+
   onMounted(() => {
     void refresh();
   });
 
   const generatedAt = computed(() => response.value.generatedAt ?? null);
+  const periodLabel = computed(() => response.value.periodLabel ?? '');
+  const availableYears = computed(() => response.value.availableYears ?? []);
 
   const totals = computed(() => ({
     courses: response.value.totals.totalCourses,
@@ -412,35 +449,38 @@ export function useAdminDashboardMetrics(): DashboardMetrics {
         ? 0
         : Math.round((totals.value.paidEnrollments / totals.value.enrolledLearners) * 10000) / 100;
 
+    const isYearly = period.value === 'yearly' || period.value === 'allTime';
+    const deltaLabel = isYearly ? 'เทียบปีล่าสุด' : 'เทียบช่วงก่อนหน้า';
+
     return [
       {
         id: 'revenue',
         label: 'รายได้จากการลงทะเบียน',
         value: totals.value.totalRevenue,
         delta: deltaFromSeries(series.revenue),
-        deltaLabel: 'เทียบเดือนล่าสุด',
-        description: 'รวมยอดจากผู้ลงทะเบียนที่มีรายการชำระเงิน',
+        deltaLabel,
+        description: `ชำระเงินสำเร็จ ${totals.value.paidEnrollments.toLocaleString('th-TH')} รายการ`,
         icon: 'payments',
         tone: 'gold',
         trend: series.revenue,
       },
       {
         id: 'enrollments',
-        label: 'ผู้ลงทะเบียนทั้งหมด',
+        label: 'ผู้ลงทะเบียน',
         value: totals.value.enrolledLearners,
         delta: deltaFromSeries(series.enrollments),
-        deltaLabel: 'เทียบเดือนล่าสุด',
-        description: `ชำระเงินแล้ว ${totals.value.paidEnrollments.toLocaleString('th-TH')} รายการ`,
+        deltaLabel,
+        description: `ฟรี ${totals.value.freeEnrollments.toLocaleString('th-TH')} · ชำระเงิน ${totals.value.paidEnrollments.toLocaleString('th-TH')} รายการ`,
         icon: 'groups',
         tone: 'navy',
         trend: series.enrollments,
       },
       {
         id: 'learners',
-        label: 'ผู้เรียนทั้งหมด',
+        label: 'ผู้เรียนไม่ซ้ำ',
         value: totals.value.distinctLearners,
         delta: deltaFromSeries(series.distinctLearners),
-        deltaLabel: 'เทียบเดือนล่าสุด',
+        deltaLabel,
         description: `จาก ${totals.value.courses.toLocaleString('th-TH')} หลักสูตรในระบบ`,
         icon: 'school',
         tone: 'teal',
@@ -448,11 +488,11 @@ export function useAdminDashboardMetrics(): DashboardMetrics {
       },
       {
         id: 'paid-rate',
-        label: 'อัตราการชำระเงินสำเร็จ',
+        label: 'อัตราการชำระเงิน',
         value: paidRate,
         delta: deltaFromSeries(series.paidEnrollments),
-        deltaLabel: 'อิงจำนวนผู้ชำระเงินรายเดือน',
-        description: `${totals.value.paymentRecords.toLocaleString('th-TH')} รายการใน LLTPAYMENT`,
+        deltaLabel,
+        description: `${totals.value.paidEnrollments.toLocaleString('th-TH')} จาก ${totals.value.enrolledLearners.toLocaleString('th-TH')} รายการ`,
         icon: 'receipt_long',
         tone: 'rose',
         trend: series.paidEnrollments,
@@ -464,6 +504,11 @@ export function useAdminDashboardMetrics(): DashboardMetrics {
     isLoading,
     errorMessage,
     generatedAt,
+    period,
+    selectedYear,
+    selectedMonth,
+    periodLabel,
+    availableYears,
     kpis,
     monthlySeries,
     categoryUsage,
