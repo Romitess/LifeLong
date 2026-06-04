@@ -1288,6 +1288,22 @@ export default {
       cancel: 'ยกเลิก',
       success: 'ส่งออกรายงานเป็นไฟล์ {format} สำเร็จแล้ว',
     },
+    receiptSummary: {
+      hero: {
+        title: 'รายงานสรุปการรับเงินค่าลงทะเบียน',
+        description:
+          'รายงานแสดงรายการรับเงินค่าลงทะเบียนหลักสูตรระยะสั้นรวมทุกส่วนงานในมหาวิทยาลัย',
+      },
+      scopeLabel: 'ข้อมูลที่แสดง',
+      allFaculties: 'ทุกคณะ/ส่วนงาน',
+      reportTitle: 'รายงานสรุปการรับเงินค่าลงทะเบียน LifeLong Learning มหาวิทยาลัยบูรพา',
+      filters: {
+        faculty: 'ส่วนงาน',
+      },
+      columns: {
+        faculty: 'ส่วนงาน',
+      },
+    },
     facultyRevenue: {
       hero: {
         title: 'รายงานแยกตามคณะ/ส่วนงาน',

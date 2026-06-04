@@ -794,6 +794,12 @@ const navItems = computed<NavItem[]>(() => {
         icon: 'account_balance_wallet',
         to: '/central-finance/daily-report',
       },
+      {
+        name: 'central-finance-receipt-summary',
+        label: 'รายงานสรุปการรับเงิน',
+        icon: 'receipt_long',
+        to: '/central-finance/receipt-summary',
+      },
     ];
   }
 
@@ -1094,6 +1100,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'central-finance-dashboard';
   } else if (path.includes('/central-finance/fund-sources')) {
     activeNav.value = 'central-finance-fund-sources';
+  } else if (path.includes('/central-finance/receipt-summary')) {
+    activeNav.value = 'central-finance-receipt-summary';
   } else if (path.includes('/finance/source-of-funds-chart')) {
     activeNav.value = 'finance-source-of-funds-chart';
   } else if (path.includes('/finance/payment-import')) {

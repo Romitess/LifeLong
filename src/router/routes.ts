@@ -190,6 +190,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/centralfinance/finance-faculty-revenue-report.vue'),
         meta: { role: 'central_finance' },
       },
+      {
+        path: 'central-finance/receipt-summary',
+        component: () => import('pages/centralfinance/finance-receipt-summary-page.vue'),
+        meta: { role: 'central_finance' },
+      },
       { path: 'lifelong2', redirect: '/lifelong2/dashboard', meta: { role: 'lifelong2' } },
       {
         path: 'lifelong2/dashboard',

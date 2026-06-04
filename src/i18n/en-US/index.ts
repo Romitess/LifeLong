@@ -1271,6 +1271,22 @@ export default {
       cancel: 'Cancel',
       success: 'Report exported as {format} successfully',
     },
+    receiptSummary: {
+      hero: {
+        title: 'Registration Fee Receipt Summary Report',
+        description: 'Summary of registration fee receipts for short courses across all faculties',
+      },
+      scopeLabel: 'Showing Data For',
+      allFaculties: 'All Faculties',
+      reportTitle:
+        'Registration Fee Receipt Summary Report — LifeLong Learning, Burapha University',
+      filters: {
+        faculty: 'Faculty',
+      },
+      columns: {
+        faculty: 'Faculty',
+      },
+    },
   },
   common: {
     faculties: {
