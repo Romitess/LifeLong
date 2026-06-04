@@ -964,9 +964,9 @@ export default {
       },
       metrics: {
         pending: 'คำขอรอดำเนินการ',
-        completedToday: 'ดำเนินการเสร็จวันนี้',
+        monthlyRevenue: 'ยอดรับเงินสะสมเดือนนี้',
         todayRevenue: 'ยอดรับเงินวันนี้',
-        totalFundSources: 'แหล่งเงินที่ออกแล้ว',
+        activeFaculties: 'จำนวนคณะที่มีคำขอ',
         trendUp: '+{value} จากเมื่อวาน',
         trendDown: '-{value} จากเมื่อวาน',
         trendNeutral: 'เดือนนี้ทั้งหมด',

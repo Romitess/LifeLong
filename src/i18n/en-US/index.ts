@@ -949,9 +949,9 @@ export default {
       },
       metrics: {
         pending: 'Pending Requests',
-        completedToday: 'Completed Today',
+        monthlyRevenue: 'Month-to-Date Revenue',
         todayRevenue: "Today's Revenue",
-        totalFundSources: 'Issued Fund Sources',
+        activeFaculties: 'Faculties with Requests',
         trendUp: '+{value} from yesterday',
         trendDown: '-{value} from yesterday',
         trendNeutral: 'Total this month',

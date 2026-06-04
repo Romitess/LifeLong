@@ -789,6 +789,12 @@ const navItems = computed<NavItem[]>(() => {
       //   to: '/central-finance/transactions',
       // },
       {
+        name: 'central-finance-faculty-revenue-report',
+        label: 'รายงานการจัดการศึกษาแยกตามคณะ/ส่วนงาน',
+        icon: 'school',
+        to: '/central-finance/faculty-revenue',
+      },
+      {
         name: 'central-finance-daily-report',
         label: 'รายงานการรับเงินประจำวัน',
         icon: 'account_balance_wallet',

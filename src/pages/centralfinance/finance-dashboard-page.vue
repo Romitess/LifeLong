@@ -6,12 +6,11 @@
       eyebrow-icon="account_balance"
       :title="$t('centralFinance.dashboard.hero.title')"
       :description="$t('centralFinance.dashboard.hero.desc')"
-    >
-    </CentralFinancePageHero>
+    />
 
     <!-- ── Content ───────────────────────────────────────────── -->
     <section class="finance-shell finance-content">
-      <!-- Metric Cards -->
+      <!-- ── Row 1: KPI Metric Cards ─────────────────────────── -->
       <div class="finance-stat-grid">
         <CentralFinanceMetricCard
           v-for="stat in metricCards"
@@ -31,13 +30,13 @@
         </CentralFinanceMetricCard>
       </div>
 
-      <!-- Main Grid: Revenue Chart + Fund Source Summary -->
+      <!-- ── Row 2: Revenue Chart + Request Pipeline ─────────── -->
       <div class="finance-main-grid">
         <!-- Revenue Chart -->
         <CentralFinanceSurfaceCard
           :eyebrow="$t('centralFinance.dashboard.revenueChart.eyebrow')"
           :title="$t('centralFinance.dashboard.revenueChart.title')"
-          card-class="finance-panel finance-panel--chart"
+          card-class="finance-panel"
         >
           <template #header-actions>
             <q-btn-toggle
@@ -59,32 +58,31 @@
           <div class="finance-chart-area">
             <div class="finance-chart-summary">
               <div class="finance-chart-summary__item">
-                <span class="finance-chart-summary__label">{{
-                  $t('centralFinance.dashboard.revenueChart.today')
-                }}</span>
-                <strong class="finance-chart-summary__value text-positive">{{
-                  todayRevenue
-                }}</strong>
+                <span class="finance-chart-summary__label">
+                  {{ $t('centralFinance.dashboard.revenueChart.today') }}
+                </span>
+                <strong class="finance-chart-summary__value text-positive">
+                  {{ todayRevenue }}
+                </strong>
               </div>
               <div class="finance-chart-summary__divider" />
               <div class="finance-chart-summary__item">
-                <span class="finance-chart-summary__label">{{
-                  $t('centralFinance.dashboard.revenueChart.yesterday')
-                }}</span>
+                <span class="finance-chart-summary__label">
+                  {{ $t('centralFinance.dashboard.revenueChart.yesterday') }}
+                </span>
                 <strong class="finance-chart-summary__value">{{ yesterdayRevenue }}</strong>
               </div>
               <div class="finance-chart-summary__divider" />
               <div class="finance-chart-summary__item">
-                <span class="finance-chart-summary__label">{{
-                  $t('centralFinance.dashboard.revenueChart.change')
-                }}</span>
-                <strong class="finance-chart-summary__value" :class="changeClass">{{
-                  revenueChange
-                }}</strong>
+                <span class="finance-chart-summary__label">
+                  {{ $t('centralFinance.dashboard.revenueChart.change') }}
+                </span>
+                <strong class="finance-chart-summary__value" :class="changeClass">
+                  {{ revenueChange }}
+                </strong>
               </div>
             </div>
 
-            <!-- Bar Chart (CSS-only) -->
             <div class="finance-bar-chart">
               <div v-for="(bar, i) in chartBars" :key="i" class="finance-bar-chart__col">
                 <div class="finance-bar-chart__bar-wrap">
@@ -102,77 +100,60 @@
           </div>
         </CentralFinanceSurfaceCard>
 
-        <!-- Fund Source Request Status -->
+        <!-- Request Pipeline -->
         <CentralFinanceSurfaceCard
-          :eyebrow="$t('centralFinance.dashboard.fundSourceStatus.eyebrow')"
+          eyebrow="Fund Requests"
           :title="$t('centralFinance.dashboard.fundSourceStatus.title')"
-          card-class="finance-panel finance-panel--status"
+          card-class="finance-panel"
         >
-          <div class="finance-status-list">
-            <div v-for="item in fundSourceStatus" :key="item.label" class="finance-status-item">
-              <div
-                class="finance-status-item__icon"
-                :style="{ background: item.bg, color: item.color }"
-              >
-                <q-icon :name="item.icon" size="20px" />
+          <!-- Completion Rate Header -->
+          <div class="pipeline-summary">
+            <div class="pipeline-summary__rate">
+              <span class="pipeline-summary__percent">{{ completionRate }}%</span>
+              <span class="pipeline-summary__label">อัตราการดำเนินการ</span>
+            </div>
+            <div class="pipeline-summary__total">
+              <span class="pipeline-summary__number">{{ totalRequests }}</span>
+              <span class="pipeline-summary__label">คำขอทั้งหมด</span>
+            </div>
+          </div>
+
+          <!-- Progress Bars per Status -->
+          <div class="pipeline-bars">
+            <div v-for="item in fundSourceStatus" :key="item.label" class="pipeline-bar-row">
+              <div class="pipeline-bar-row__meta">
+                <div class="pipeline-bar-row__dot" :style="{ background: item.color }" />
+                <span class="pipeline-bar-row__label">{{ item.label }}</span>
+                <strong class="pipeline-bar-row__count">{{ item.count }}</strong>
               </div>
-              <div class="finance-status-item__info">
-                <strong>{{ item.count }}</strong>
-                <span>{{ item.label }}</span>
+              <div class="pipeline-bar-row__track">
+                <div
+                  class="pipeline-bar-row__fill"
+                  :style="{
+                    width: totalRequests > 0 ? `${(item.count / totalRequests) * 100}%` : '0%',
+                    background: item.color,
+                  }"
+                />
               </div>
-              <q-badge rounded :color="item.badgeColor" :label="item.badge" />
             </div>
           </div>
 
           <q-separator class="q-my-md" />
-
-          <div class="finance-quick-links">
-            <p class="finance-quick-links__title">
-              {{ $t('centralFinance.dashboard.quickLinks.title') }}
-            </p>
-            <CentralFinanceActionButton
-              variant="secondary"
-              icon="add_circle_outline"
-              :label="$t('centralFinance.dashboard.quickLinks.addFundSource')"
-              icon-right="arrow_forward"
-              no-caps
-              class="full-width"
-              @click="onAddFundSource"
-            />
-            <CentralFinanceActionButton
-              variant="secondary"
-              icon="file_download"
-              :label="$t('centralFinance.dashboard.quickLinks.dailyReport')"
-              icon-right="arrow_forward"
-              no-caps
-              class="full-width"
-              @click="onGoToDailyReport"
-            />
-            <CentralFinanceActionButton
-              variant="secondary"
-              icon="pie_chart"
-              :label="$t('centralFinance.dashboard.quickLinks.facultyRevenue')"
-              icon-right="arrow_forward"
-              no-caps
-              class="full-width"
-              @click="onGoToFacultyRevenue"
-            />
-          </div>
         </CentralFinanceSurfaceCard>
       </div>
 
-      <!-- Bottom Grid: Activities + Shortcuts -->
+      <!-- ── Row 3: Activity Feed + Pending Requests ──────────── -->
       <div class="finance-bottom-grid">
-        <!-- Recent Activities -->
+        <!-- Activity Feed -->
         <CentralFinanceSurfaceCard
           :eyebrow="$t('centralFinance.dashboard.activities.eyebrow')"
           :title="$t('centralFinance.dashboard.activities.title')"
-          card-class="finance-panel finance-panel--activity"
+          card-class="finance-panel"
         >
           <q-timeline color="primary" layout="dense" class="finance-timeline">
             <q-timeline-entry
               v-for="activity in recentActivities"
-              :key="activity.title"
+              :key="activity.title + activity.time"
               :icon="activity.icon"
               :color="activity.color"
             >
@@ -183,33 +164,64 @@
           </q-timeline>
         </CentralFinanceSurfaceCard>
 
-        <!-- Quick Access Shortcuts -->
-        <div class="finance-shortcut-stack">
-          <CentralFinanceSurfaceCard
-            v-for="item in shortcuts"
-            :key="item.title"
-            :eyebrow="$t('centralFinance.dashboard.shortcuts.eyebrow')"
-            :title="item.title"
-            card-class="finance-shortcut-card"
-          >
-            <div class="finance-shortcut-card__body">
-              <div
-                class="finance-shortcut-card__icon"
-                :style="{ background: item.bg, color: item.color }"
-              >
-                <q-icon :name="item.icon" size="28px" />
+        <!-- Pending Requests -->
+        <CentralFinanceSurfaceCard
+          eyebrow="Action Required"
+          title="รายการรอดำเนินการ"
+          card-class="finance-panel"
+        >
+          <template #header-actions>
+            <q-badge
+              v-if="pendingRequests.length > 0"
+              rounded
+              color="warning"
+              :label="pendingRequests.length"
+              class="text-weight-bold"
+            />
+          </template>
+
+          <div v-if="pendingRequests.length === 0" class="pending-empty">
+            <q-icon name="check_circle_outline" size="42px" color="positive" />
+            <p>ไม่มีรายการรอดำเนินการ</p>
+          </div>
+
+          <div v-else class="pending-list">
+            <div
+              v-for="req in pendingRequests"
+              :key="req.id"
+              class="pending-item"
+              @click="router.push('/central-finance/fund-sources')"
+            >
+              <div class="pending-item__left">
+                <div
+                  class="pending-item__status-dot"
+                  :class="`pending-item__status-dot--${req.status}`"
+                />
+                <div class="pending-item__info">
+                  <div class="pending-item__id">{{ req.requestId }}</div>
+                  <div class="pending-item__faculty">{{ req.faculty }}</div>
+                  <div class="pending-item__project">{{ req.project }}</div>
+                </div>
               </div>
-              <p>{{ item.detail }}</p>
-              <CentralFinanceActionButton
-                variant="secondary"
-                :label="$t('centralFinance.dashboard.shortcuts.openPage')"
-                icon-right="arrow_forward"
-                no-caps
-                @click="onShortcutClick(item.to)"
+              <q-badge
+                :color="req.status === 'new' ? 'warning' : 'blue-7'"
+                :label="req.status === 'new' ? 'รอรับเรื่อง' : 'กำลังตรวจสอบ'"
+                class="pending-item__badge"
               />
             </div>
-          </CentralFinanceSurfaceCard>
-        </div>
+          </div>
+
+          <q-btn
+            v-if="pendingRequests.length > 0"
+            flat
+            no-caps
+            color="primary"
+            icon-right="arrow_forward"
+            label="จัดการคำขอทั้งหมด"
+            class="full-width q-mt-md pipeline-goto-btn"
+            @click="router.push('/central-finance/fund-sources')"
+          />
+        </CentralFinanceSurfaceCard>
       </div>
     </section>
   </q-page>
@@ -219,7 +231,6 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
 import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
@@ -268,28 +279,6 @@ interface ChartBarItem {
   isToday?: boolean;
 }
 
-interface ShortcutItem {
-  icon: string;
-  title: string;
-  detail: string;
-  bg: string;
-  color: string;
-  to: string;
-}
-
-async function onAddFundSource(): Promise<void> {
-  await router.push('/central-finance/fund-sources/add');
-}
-async function onGoToDailyReport(): Promise<void> {
-  await router.push('/central-finance/daily-report');
-}
-async function onGoToFacultyRevenue(): Promise<void> {
-  await router.push('/central-finance/faculty-revenue');
-}
-async function onShortcutClick(to: string): Promise<void> {
-  await router.push(to);
-}
-
 // ── Metric Cards ────────────────────────────────────────────
 const metricCards = computed<MetricCard[]>(() => [
   {
@@ -303,14 +292,14 @@ const metricCards = computed<MetricCard[]>(() => [
     trendText: t('centralFinance.dashboard.metrics.trendUp', { value: '3' }),
   },
   {
-    label: t('centralFinance.dashboard.metrics.completedToday'),
-    value: financeStore.requests.filter((r) => r.status === 'completed').length.toString(),
-    icon: 'task_alt',
+    label: t('centralFinance.dashboard.metrics.monthlyRevenue'),
+    value: '฿38,742,000',
+    icon: 'account_balance_wallet',
     color: '#047857',
     tint: 'rgba(4, 120, 87, 0.12)',
     trendIcon: 'trending_up',
     trendColor: 'positive',
-    trendText: t('centralFinance.dashboard.metrics.trendUp', { value: '12%' }),
+    trendText: t('centralFinance.dashboard.metrics.trendUp', { value: '8.2%' }),
   },
   {
     label: t('centralFinance.dashboard.metrics.todayRevenue'),
@@ -323,9 +312,9 @@ const metricCards = computed<MetricCard[]>(() => [
     trendText: t('centralFinance.dashboard.metrics.trendUp', { value: '8.4%' }),
   },
   {
-    label: t('centralFinance.dashboard.metrics.totalFundSources'),
-    value: financeStore.fundSources.length.toString(),
-    icon: 'account_tree',
+    label: t('centralFinance.dashboard.metrics.activeFaculties'),
+    value: new Set(financeStore.requests.map((r) => r.faculty)).size.toString(),
+    icon: 'domain',
     color: '#7c3aed',
     tint: 'rgba(124, 58, 237, 0.12)',
     trendIcon: 'trending_flat',
@@ -334,7 +323,7 @@ const metricCards = computed<MetricCard[]>(() => [
   },
 ]);
 
-// ── Revenue Chart Data ──────────────────────────────────────
+// ── Revenue Chart ───────────────────────────────────────────
 const todayRevenue = ref<string>('฿1,248,500');
 const yesterdayRevenue = ref<string>('฿1,152,300');
 const revenueChange = ref<string>('+8.4%');
@@ -360,7 +349,17 @@ const chartBars = computed<ChartBarItem[]>(() => {
   }));
 });
 
-// ── Fund Source Status ──────────────────────────────────────
+// ── Request Pipeline ────────────────────────────────────────
+const totalRequests = computed<number>(() => financeStore.requests.length);
+
+const completionRate = computed<number>(() => {
+  if (totalRequests.value === 0) return 0;
+  const done = financeStore.requests.filter(
+    (r) => r.status === 'completed' || r.status === 'rejected',
+  ).length;
+  return Math.round((done / totalRequests.value) * 100);
+});
+
 const fundSourceStatus = computed<FundSourceStatusItem[]>(() => [
   {
     label: t('centralFinance.dashboard.fundSourceStatus.pending'),
@@ -372,15 +371,6 @@ const fundSourceStatus = computed<FundSourceStatusItem[]>(() => [
     badgeColor: 'warning',
   },
   {
-    label: t('centralFinance.dashboard.fundSourceStatus.completed'),
-    count: financeStore.requests.filter((r) => r.status === 'completed').length,
-    icon: 'check_circle',
-    bg: 'rgba(4, 120, 87, 0.12)',
-    color: '#047857',
-    badge: t('centralFinance.dashboard.fundSourceStatus.badges.completed'),
-    badgeColor: 'positive',
-  },
-  {
     label: t('centralFinance.dashboard.fundSourceStatus.processing'),
     count: financeStore.requests.filter((r) => r.status === 'processing').length,
     icon: 'find_in_page',
@@ -388,6 +378,15 @@ const fundSourceStatus = computed<FundSourceStatusItem[]>(() => [
     color: '#1d4ed8',
     badge: t('centralFinance.dashboard.fundSourceStatus.badges.processing'),
     badgeColor: 'blue-7',
+  },
+  {
+    label: t('centralFinance.dashboard.fundSourceStatus.completed'),
+    count: financeStore.requests.filter((r) => r.status === 'completed').length,
+    icon: 'check_circle',
+    bg: 'rgba(4, 120, 87, 0.12)',
+    color: '#047857',
+    badge: t('centralFinance.dashboard.fundSourceStatus.badges.completed'),
+    badgeColor: 'positive',
   },
   {
     label: t('centralFinance.dashboard.fundSourceStatus.rejected'),
@@ -400,126 +399,61 @@ const fundSourceStatus = computed<FundSourceStatusItem[]>(() => [
   },
 ]);
 
+// ── Pending Requests ────────────────────────────────────────
+const pendingRequests = computed(() =>
+  financeStore.requests.filter((r) => r.status === 'new' || r.status === 'processing').slice(0, 5),
+);
+
 // ── Recent Activities ───────────────────────────────────────
-const recentActivities = computed<ActivityItem[]>(() => {
-  return financeStore.requests
+const recentActivities = computed<ActivityItem[]>(() =>
+  financeStore.requests
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5)
     .map((req) => {
-      let title = '';
-      let icon = 'info';
-      let color = 'primary';
-
-      switch (req.status) {
-        case 'new':
-          title = t('centralFinance.dashboard.activities.items.dynamic.new', {
+      const map: Record<string, { title: string; icon: string; color: string }> = {
+        new: {
+          title: t('centralFinance.dashboard.activities.items.dynamic.new', {
             faculty: req.faculty,
-          });
-          icon = 'add_circle';
-          color = 'teal';
-          break;
-        case 'processing':
-          title = t('centralFinance.dashboard.activities.items.dynamic.processing', {
+          }),
+          icon: 'add_circle',
+          color: 'teal',
+        },
+        processing: {
+          title: t('centralFinance.dashboard.activities.items.dynamic.processing', {
             id: req.requestId,
-          });
-          icon = 'hourglass_empty';
-          color = 'orange';
-          break;
-        case 'completed':
-          title = t('centralFinance.dashboard.activities.items.dynamic.completed', {
+          }),
+          icon: 'hourglass_empty',
+          color: 'orange',
+        },
+        completed: {
+          title: t('centralFinance.dashboard.activities.items.dynamic.completed', {
             faculty: req.faculty,
-          });
-          icon = 'check_circle';
-          color = 'positive';
-          break;
-        case 'rejected':
-          title = t('centralFinance.dashboard.activities.items.dynamic.rejected', {
+          }),
+          icon: 'check_circle',
+          color: 'positive',
+        },
+        rejected: {
+          title: t('centralFinance.dashboard.activities.items.dynamic.rejected', {
             id: req.requestId,
-          });
-          icon = 'error';
-          color = 'negative';
-          break;
-      }
-
-      return {
-        title,
-        time: req.date,
-        detail: req.project,
-        icon,
-        color,
+          }),
+          icon: 'error',
+          color: 'negative',
+        },
       };
-    });
-});
-
-// ── Quick Shortcuts ─────────────────────────────────────────
-const shortcuts = computed<ShortcutItem[]>(() => [
-  {
-    icon: 'add_circle_outline',
-    title: t('centralFinance.dashboard.quickLinks.addFundSource'),
-    detail: t('centralFinance.dashboard.shortcuts.addFundSourceDetail'),
-    bg: 'rgba(4, 120, 87, 0.1)',
-    color: '#047857',
-    to: '/central-finance/fund-sources',
-  },
-  {
-    icon: 'summarize',
-    title: t('centralFinance.dashboard.actions.exportReport'),
-    detail: t('centralFinance.dashboard.shortcuts.exportReportDetail'),
-    bg: 'rgba(29, 78, 216, 0.1)',
-    color: '#1d4ed8',
-    to: '/central-finance/reports',
-  },
-  {
-    icon: 'pie_chart',
-    title: t('centralFinance.dashboard.quickLinks.facultyRevenue'),
-    detail: t('centralFinance.dashboard.shortcuts.facultyRevenueDetail'),
-    bg: 'rgba(245, 166, 35, 0.1)',
-    color: '#F5A623',
-    to: '/central-finance/faculty-revenue',
-  },
-]);
+      const meta = map[req.status] ?? { title: req.requestId, icon: 'info', color: 'grey' };
+      return { ...meta, time: req.date, detail: req.project };
+    }),
+);
 </script>
 
 <style lang="scss" scoped>
-// ── Pulse Card (Hero Aside) ──────────────────────────────────
-.finance-pulse-card-shell {
-  padding-top: 18px;
-}
-
-.finance-pulse-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.finance-pulse-card {
-  min-height: 110px;
-  padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.12);
-  display: grid;
-  align-content: space-between;
-
-  strong {
-    font-size: 1.7rem;
-    line-height: 1;
-  }
-
-  span {
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 0.82rem;
-    font-weight: 700;
-  }
-}
-
-// ── Metric Cards Grid ────────────────────────────────────────
+// ── KPI Grid ─────────────────────────────────────────────────
 .finance-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .finance-metric-footer {
@@ -534,7 +468,7 @@ const shortcuts = computed<ShortcutItem[]>(() => [
 // ── Main Grid ────────────────────────────────────────────────
 .finance-main-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
   gap: 18px;
   margin-bottom: 18px;
 }
@@ -548,7 +482,6 @@ const shortcuts = computed<ShortcutItem[]>(() => [
 .finance-chart-summary {
   display: flex;
   align-items: center;
-  gap: 0;
   padding: 16px 20px;
   border-radius: 14px;
   background: #f8fafc;
@@ -564,7 +497,6 @@ const shortcuts = computed<ShortcutItem[]>(() => [
   &:first-child {
     padding-left: 0;
   }
-
   &:last-child {
     padding-right: 0;
   }
@@ -594,7 +526,6 @@ const shortcuts = computed<ShortcutItem[]>(() => [
   flex-shrink: 0;
 }
 
-// Bar Chart
 .finance-bar-chart {
   display: flex;
   align-items: flex-end;
@@ -602,14 +533,14 @@ const shortcuts = computed<ShortcutItem[]>(() => [
   height: 160px;
   padding: 0 4px 28px;
   position: relative;
-}
 
-.finance-bar-chart::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 28px 0;
-  border-bottom: 2px solid rgba(16, 35, 63, 0.08);
-  pointer-events: none;
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 28px 0;
+    border-bottom: 2px solid rgba(16, 35, 63, 0.08);
+    pointer-events: none;
+  }
 }
 
 .finance-bar-chart__col {
@@ -638,7 +569,6 @@ const shortcuts = computed<ShortcutItem[]>(() => [
   &:hover {
     background: rgba(29, 78, 216, 0.38);
   }
-
   &--today {
     background: linear-gradient(180deg, #1d4ed8, #3b82f6);
     box-shadow: 0 4px 16px rgba(29, 78, 216, 0.3);
@@ -658,64 +588,123 @@ const shortcuts = computed<ShortcutItem[]>(() => [
   overflow: hidden;
 }
 
-// ── Fund Source Status ───────────────────────────────────────
-.finance-status-list {
+// ── Request Pipeline ─────────────────────────────────────────
+.pipeline-summary {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f0f7ff, #f8fafc);
+  border: 1px solid rgba(29, 78, 216, 0.1);
+  margin-bottom: 20px;
+}
+
+.pipeline-summary__rate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  border-right: 1px solid rgba(16, 35, 63, 0.1);
+  padding-right: 24px;
+}
+
+.pipeline-summary__percent {
+  font-size: 2rem;
+  font-weight: 950;
+  color: #1d4ed8;
+  line-height: 1;
+}
+
+.pipeline-summary__total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.pipeline-summary__number {
+  font-size: 2rem;
+  font-weight: 950;
+  color: var(--finance-navy);
+  line-height: 1;
+}
+
+.pipeline-summary__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--finance-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.pipeline-bars {
   display: grid;
   gap: 14px;
 }
 
-.finance-status-item {
+.pipeline-bar-row {
   display: grid;
-  grid-template-columns: 44px 1fr auto;
-  gap: 12px;
-  align-items: center;
+  gap: 6px;
 }
 
-.finance-status-item__icon {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+.pipeline-bar-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pipeline-bar-row__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
   flex-shrink: 0;
 }
 
-.finance-status-item__info {
-  display: grid;
-  gap: 2px;
-
-  strong {
-    font-size: 1.3rem;
-    font-weight: 950;
-    color: var(--finance-navy);
-    line-height: 1;
-  }
-
-  span {
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--finance-muted);
-  }
+.pipeline-bar-row__label {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--finance-muted);
 }
 
-.finance-quick-links {
-  display: grid;
-  gap: 10px;
-}
-
-.finance-quick-links__title {
-  margin: 0 0 4px;
-  font-size: 0.75rem;
+.pipeline-bar-row__count {
+  font-size: 0.9rem;
   font-weight: 900;
-  color: #b7791f;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
+  color: var(--finance-navy);
+}
+
+.pipeline-bar-row__track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(16, 35, 63, 0.07);
+  overflow: hidden;
+}
+
+.pipeline-bar-row__fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-width: 4px;
+}
+
+.pipeline-goto-btn {
+  border-radius: 10px;
+  border: 1px dashed rgba(29, 78, 216, 0.2);
+
+  &:hover {
+    background: rgba(29, 78, 216, 0.04);
+    border-color: rgba(29, 78, 216, 0.4);
+  }
 }
 
 // ── Bottom Grid ──────────────────────────────────────────────
 .finance-bottom-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
   gap: 18px;
   margin-bottom: 20px;
 }
@@ -726,35 +715,103 @@ const shortcuts = computed<ShortcutItem[]>(() => [
   margin-top: 3px;
 }
 
-// ── Shortcut Stack ───────────────────────────────────────────
-.finance-shortcut-stack {
-  display: grid;
-  gap: 18px;
-  align-content: start;
-}
-
-.finance-shortcut-card {
-  height: auto;
-}
-
-.finance-shortcut-card__body {
-  display: grid;
-  gap: 12px;
+// ── Pending Requests ─────────────────────────────────────────
+.pending-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 0;
+  color: var(--finance-muted);
 
   p {
     margin: 0;
-    color: var(--finance-muted);
-    font-size: 0.88rem;
-    line-height: 1.6;
+    font-size: 0.9rem;
+    font-weight: 700;
   }
 }
 
-.finance-shortcut-card__icon {
-  display: inline-grid;
-  place-items: center;
-  width: 54px;
-  height: 54px;
-  border-radius: 18px;
+.pending-list {
+  display: grid;
+  gap: 10px;
+}
+
+.pending-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 35, 63, 0.08);
+  background: #fbfcfd;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+
+  &:hover {
+    background: #f0f7ff;
+    border-color: rgba(29, 78, 216, 0.2);
+    transform: translateX(2px);
+  }
+}
+
+.pending-item__left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pending-item__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+
+  &--new {
+    background: #b45309;
+  }
+  &--processing {
+    background: #1d4ed8;
+  }
+}
+
+.pending-item__info {
+  min-width: 0;
+}
+
+.pending-item__id {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--finance-muted);
+  letter-spacing: 0.04em;
+}
+
+.pending-item__faculty {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--finance-navy);
+  margin-top: 1px;
+}
+
+.pending-item__project {
+  font-size: 0.78rem;
+  color: var(--finance-muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.pending-item__badge {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
 }
 
 // ── Responsive ───────────────────────────────────────────────
@@ -767,10 +824,6 @@ const shortcuts = computed<ShortcutItem[]>(() => [
 }
 
 @media (max-width: 760px) {
-  .finance-pulse-grid {
-    grid-template-columns: 1fr;
-  }
-
   .finance-chart-summary {
     flex-direction: column;
     gap: 12px;
@@ -783,6 +836,10 @@ const shortcuts = computed<ShortcutItem[]>(() => [
     &__item {
       padding: 0;
     }
+  }
+
+  .pipeline-summary {
+    gap: 16px;
   }
 }
 </style>
