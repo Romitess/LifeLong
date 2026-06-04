@@ -1,23 +1,6 @@
 <template>
   <q-page class="bg-grey-1 course-page overflow-hidden">
-    <div v-if="isPreparingMoodle" class="moodle-loading-shell">
-      <q-spinner color="primary" size="48px" />
-      <div class="moodle-loading-shell__title">กำลังพาเข้าสู่ Moodle</div>
-      <div class="moodle-loading-shell__subtitle">
-        ระบบกำลังเตรียมสิทธิ์เข้าเรียน กรุณารอสักครู่
-      </div>
-    </div>
-
-    <div v-else-if="moodleUrl" class="moodle-standalone-shell">
-      <iframe
-        class="moodle-frame"
-        :src="moodleUrl"
-        title="Moodle course content"
-        allow="fullscreen; clipboard-write"
-      />
-    </div>
-
-    <q-layout v-else view="lHh Lpr lFf" container style="height: 100vh" class="learning-layout">
+    <q-layout view="lHh Lpr lFf" container style="height: 100vh" class="learning-layout">
       <!-- Sidebar Navigation (Drawer) -->
       <q-drawer v-model="leftDrawerOpen" bordered :width="300" :breakpoint="1024" class="bg-white">
         <SidebarNavigation />
@@ -37,7 +20,7 @@
           </div>
         </div>
 
-        <div class="content-area" :class="contentAreaClass" :style="contentAreaStyle">
+        <div class="content-area section-container content-standard">
           <!-- Course Content -->
           <div class="course-content-wrapper">
             <div class="row items-center justify-between q-mb-xl">
@@ -63,7 +46,12 @@
               />
             </div>
 
-            <q-list class="course-list-modern">
+            <!-- Loading state -->
+            <div v-if="moodleContentsLoading" class="row justify-center q-py-xl">
+              <q-spinner color="primary" size="40px" />
+            </div>
+
+            <q-list v-else class="course-list-modern">
               <q-expansion-item
                 v-for="(module, index) in courseModulesWithProgress"
                 :key="index"
@@ -146,7 +134,11 @@
                         >
                           {{ lesson.title }}
                         </q-item-label>
-                        <q-item-label caption class="row items-center q-mt-xs text-grey-6">
+                        <q-item-label
+                          v-if="lesson.duration"
+                          caption
+                          class="row items-center q-mt-xs text-grey-6"
+                        >
                           <q-icon name="history" size="14px" class="q-mr-xs" />
                           {{ lesson.duration }}
                         </q-item-label>
@@ -180,40 +172,33 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { RouterLink, useRouter, useRoute } from 'vue-router';
-import { useQuasar } from 'quasar';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import { getCourseStructure, type CourseModule, type Lesson } from 'src/data/course-structure';
-import { useUiStore } from 'src/stores/ui-store';
 import { useCourseStore } from 'src/stores/course-store';
-import { getStoredMoodleUrl } from 'src/utils/moodle-navigation';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
+import { useMoodleCourseContents } from 'src/composables/use-moodle-course-contents';
 
-// 2. Local Types
 interface CourseModuleState extends CourseModule {
   expanded: boolean;
 }
 
-// 4. Logic/State Init
 const router = useRouter();
 const route = useRoute();
-const $q = useQuasar();
 const progressStore = useCourseProgressStore();
 const courseStore = useCourseStore();
-const uiStore = useUiStore();
 const authStore = useAuthStore();
-const { getMoodleCourseUrl } = useMoodleSso();
+const { getMoodleActivityUrl } = useMoodleSso();
+const {
+  sections: moodleSections,
+  loading: moodleContentsLoading,
+  fetchSections,
+} = useMoodleCourseContents();
 
-// 5. Reactive State
 const leftDrawerOpen = ref(false);
 const courseModules = ref<CourseModuleState[]>([]);
-const freshMoodleUrl = ref('');
-const isPreparingMoodle = ref(false);
-const hasShownPreparingNotice = ref(false);
-const activeSsoRequestKey = ref('');
 
-// 6. Computed
 const courseId = computed<string>(() => {
   const id = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
   return id || '';
@@ -226,35 +211,6 @@ const currentCourse = computed(() => {
 
 const courseTitle = computed<string>(() => currentCourse.value?.title || 'Course Learning');
 
-const storedMoodleUrl = computed<string>(() =>
-  getStoredMoodleUrl(courseId.value, route.query.moodleKey, route.query.moodleUrl),
-);
-
-const shouldOpenMoodle = computed<boolean>(() => {
-  return route.query.openMoodle === '1' || Boolean(storedMoodleUrl.value);
-});
-
-const moodleUrl = computed<string>(() => {
-  if (freshMoodleUrl.value) return freshMoodleUrl.value;
-  if (isUserkeyLoginUrl(storedMoodleUrl.value)) return '';
-  return storedMoodleUrl.value;
-});
-
-const isFullscreen = computed<boolean>({
-  get: () => uiStore.isCourseFullscreen,
-  set: (val) => uiStore.setCourseFullscreen(val),
-});
-
-const contentAreaClass = computed(() => [
-  isFullscreen.value ? 'content-fullscreen' : 'section-container content-standard',
-  { 'content-area--moodle': Boolean(moodleUrl.value) },
-]);
-
-const contentAreaStyle = computed(() => ({
-  paddingTop: moodleUrl.value ? '0' : '64px',
-  paddingBottom: moodleUrl.value ? '0' : '64px',
-}));
-
 const courseModulesWithProgress = computed(() => {
   const cid = courseId.value;
   if (!cid) return [];
@@ -266,27 +222,17 @@ const courseModulesWithProgress = computed(() => {
     const lessonsWithProgress = module.lessons.map((lesson) => {
       const isCompleted = progressStore.isLessonCompleted(cid, lesson.title);
       if (isCompleted) completedCount++;
-      return {
-        ...lesson,
-        isCompleted,
-      };
+      return { ...lesson, isCompleted };
     });
 
     const progress = total === 0 ? 0 : Math.round((completedCount / total) * 100);
 
-    return {
-      ...module,
-      lessons: lessonsWithProgress,
-      progress,
-    };
+    return { ...module, lessons: lessonsWithProgress, progress };
   });
 });
 
-const allExpanded = computed<boolean>(() => {
-  return courseModules.value.every((m) => m.expanded);
-});
+const allExpanded = computed<boolean>(() => courseModules.value.every((m) => m.expanded));
 
-// 7. Methods
 const toggleAll = (): void => {
   const targetState = !allExpanded.value;
   courseModules.value.forEach((m) => {
@@ -295,11 +241,46 @@ const toggleAll = (): void => {
 };
 
 const navigateToLesson = async (lesson: Lesson): Promise<void> => {
-  const courseIdValue = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
+  const courseIdValue = courseId.value;
   if (!courseIdValue) return;
 
-  const lessonId = encodeURIComponent(lesson.title);
+  // Moodle assignment or quiz → in-app activity page
+  if (
+    lesson.moodleModuleId &&
+    (lesson.moodleModname === 'assign' || lesson.moodleModname === 'quiz')
+  ) {
+    const query: Record<string, string> = {
+      title: encodeURIComponent(lesson.title),
+      modname: lesson.moodleModname,
+    };
+    if (lesson.moodleUrl) query.moodleUrl = lesson.moodleUrl;
+    const moodleId = currentCourse.value?.moodleId;
+    if (moodleId) query.moodleCourseId = String(moodleId);
 
+    await router.push({
+      path: `/course/${courseIdValue}/assign/${lesson.moodleModuleId}`,
+      query,
+    });
+    return;
+  }
+
+  // Other Moodle activities → open in new tab via SSO
+  if (lesson.moodleUrl) {
+    const moodleId = currentCourse.value?.moodleId;
+    const username = authStore.user?.username || authStore.user?.email || '';
+
+    if (moodleId && username) {
+      const ssoUrl = await getMoodleActivityUrl(moodleId, username, lesson.moodleUrl);
+      if (ssoUrl) {
+        window.open(ssoUrl, '_blank');
+        return;
+      }
+    }
+    window.open(lesson.moodleUrl, '_blank');
+    return;
+  }
+
+  const lessonId = encodeURIComponent(lesson.title);
   if (lesson.type === 'video') {
     await router.push(`/course/${courseIdValue}/video/${lessonId}`);
   } else if (lesson.type === 'quiz') {
@@ -307,138 +288,31 @@ const navigateToLesson = async (lesson: Lesson): Promise<void> => {
   }
 };
 
-async function refreshMoodleSsoUrl(): Promise<void> {
-  if (!shouldOpenMoodle.value) return;
-  if (storedMoodleUrl.value && !isUserkeyLoginUrl(storedMoodleUrl.value)) return;
-
-  const id = courseId.value;
-  const username = authStore.user?.username || authStore.user?.email || '';
-  const moodleCourseId = getMoodleCourseIdForSso(id, storedMoodleUrl.value);
-
-  if (!moodleCourseId || !username) {
-    return;
-  }
-
-  const requestKey = `${moodleCourseId}:${username}:${getCourseCodeForSso() ?? ''}`;
-  if (activeSsoRequestKey.value === requestKey) return;
-
-  isPreparingMoodle.value = true;
-  activeSsoRequestKey.value = requestKey;
-  showPreparingNoticeOnce();
-
-  try {
-    const url = await getMoodleCourseUrl(moodleCourseId, username, getCourseCodeForSso());
-    if (url) {
-      freshMoodleUrl.value = url;
-      return;
-    }
-
-    $q.notify({
-      type: 'negative',
-      message: 'ไม่สามารถเชื่อมต่อ Moodle ได้ในขณะนี้',
-      position: 'top',
-      timeout: 3500,
-    });
-  } finally {
-    activeSsoRequestKey.value = '';
-    isPreparingMoodle.value = false;
-  }
-}
-
-function getMoodleCourseIdForSso(courseIdValue: string, existingUrl: string): string {
-  const queryMoodleCourseId = getQueryString(route.query.moodleCourseId);
-  if (queryMoodleCourseId) return queryMoodleCourseId;
-
-  const courseMoodleId = currentCourse.value?.moodleId;
-  if (courseMoodleId) return String(courseMoodleId);
-
-  const extractedMoodleId = extractMoodleCourseId(existingUrl);
-  if (extractedMoodleId) return extractedMoodleId;
-
-  const numericId = courseIdValue.replace(/^db-/, '');
-  return /^\d+$/.test(numericId) ? numericId : '';
-}
-
-function getCourseCodeForSso(): string | undefined {
-  return currentCourse.value?.code || getQueryString(route.query.courseCode) || undefined;
-}
-
 function getQueryString(value: unknown): string {
   if (Array.isArray(value)) return String(value[0] ?? '');
   return typeof value === 'string' ? value : '';
 }
 
-function showPreparingNoticeOnce(): void {
-  if (hasShownPreparingNotice.value) return;
-  hasShownPreparingNotice.value = true;
-  $q.notify({
-    type: 'info',
-    message: 'กำลังเตรียมหน้าเรียนใน Moodle',
-    caption: 'หาก Moodle ตอบช้า ระบบจะแสดงหน้านี้ไว้ระหว่างรอ',
-    position: 'top',
-    timeout: 2500,
-  });
-}
-
-function isUserkeyLoginUrl(url: string): boolean {
-  return url.includes('/auth/userkey/login.php');
-}
-
-function extractMoodleCourseId(url: string): string {
-  if (!url) return '';
-
-  try {
-    const parsedUrl = new URL(url);
-    const candidates = [parsedUrl.searchParams.get('wantsurl'), url].filter(
-      (value): value is string => Boolean(value),
-    );
-
-    for (const candidate of candidates) {
-      const courseUrl = new URL(candidate, parsedUrl.origin);
-      const id = courseUrl.searchParams.get('id');
-      if (courseUrl.pathname.includes('/course/view.php') && id && /^\d+$/.test(id)) {
-        return id;
-      }
-    }
-  } catch {
-    const match = url.match(/\/course\/view\.php\?[^#]*\bid=(\d+)/);
-    return match?.[1] ?? '';
-  }
-
-  return '';
-}
-
-// 8. Watchers
 watch(
-  courseId,
-  (newId) => {
-    if (newId) {
-      freshMoodleUrl.value = '';
-      isPreparingMoodle.value = false;
-      hasShownPreparingNotice.value = false;
-      activeSsoRequestKey.value = '';
-      courseModules.value = getCourseStructure(newId).map((m) => ({
-        ...m,
-        expanded: false,
-      }));
-      void refreshMoodleSsoUrl();
+  [courseId, () => currentCourse.value?.moodleId] as const,
+  async ([newId, newMoodleId], oldVal) => {
+    if (!newId) return;
+
+    const oldId = oldVal?.[0];
+    if (newId !== oldId) {
+      courseModules.value = getCourseStructure(newId).map((m) => ({ ...m, expanded: false }));
+    }
+
+    const moodleId = newMoodleId || Number(getQueryString(route.query.moodleCourseId)) || null;
+
+    if (!moodleId) return;
+
+    await fetchSections(moodleId);
+    if (moodleSections.value.length > 0) {
+      courseModules.value = moodleSections.value.map((m) => ({ ...m, expanded: false }));
     }
   },
   { immediate: true },
-);
-
-watch(
-  () => [
-    authStore.user?.username,
-    authStore.user?.email,
-    currentCourse.value?.moodleId,
-    route.query.openMoodle,
-    route.query.moodleCourseId,
-  ],
-  () => {
-    freshMoodleUrl.value = '';
-    void refreshMoodleSsoUrl();
-  },
 );
 </script>
 
@@ -447,31 +321,6 @@ watch(
   height: calc(100vh - 64px);
   overflow: hidden;
   background-color: #f8f6f1;
-  // display: flex;
-  // flex-direction: column;
-}
-
-.moodle-loading-shell {
-  height: calc(100vh - 64px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: #f8f6f1;
-  color: #1f2933;
-  text-align: center;
-  padding: 24px;
-}
-
-.moodle-loading-shell__title {
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-
-.moodle-loading-shell__subtitle {
-  color: #667085;
-  font-size: 0.95rem;
 }
 
 // Breadcrumb Bar
@@ -530,163 +379,13 @@ watch(
   padding-right: 24px;
 }
 
-// View Mode
 .content-area {
-  transition: padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  height: 100%;
+  padding-top: 64px;
+  padding-bottom: 64px;
 }
 
-.content-area--moodle {
-  max-width: 100% !important;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-.moodle-standalone-shell {
-  width: 100%;
-  height: calc(100vh - 64px);
-  min-height: 520px;
-  background: #fff;
-  overflow: hidden;
-}
-
-.moodle-frame {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #fff;
-}
-
-.content-fullscreen {
-  padding-left: 32px;
-  padding-right: 32px;
-  max-width: 100% !important;
-  margin: 0 !important;
-}
-
-.menu-toggle-btn {
-  color: #5c3d00;
-  transition:
-    color 0.2s ease,
-    background 0.2s ease;
-
-  &:hover {
-    color: #3d2600;
-    background: rgba(255, 255, 255, 0.4) !important;
-  }
-}
-
-.view-toggle-group {
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.45);
-  border-radius: 12px;
-  padding: 4px;
-}
-
-.view-btn-active {
-  background: rgba(255, 255, 255, 0.25) !important;
-  color: white !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  border-radius: 8px !important;
-}
-
-.view-btn-inactive {
-  color: rgba(255, 255, 255, 0.65) !important;
-  border-radius: 8px !important;
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: white !important;
-    background: rgba(255, 255, 255, 0.12) !important;
-  }
-}
-
-// Breadcrumbs
-.modern-breadcrumbs {
-  font-size: 0.95rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-
-  .breadcrumb-link {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 6px 12px;
-    border-radius: 10px;
-    text-decoration: none;
-    color: inherit;
-
-    &:hover {
-      color: var(--q-primary) !important;
-      background: rgba(var(--q-primary), 0.08);
-    }
-  }
-
-  .q-breadcrumbs__el-icon {
-    margin-right: 8px;
-    font-size: 1.2rem;
-  }
-}
-
-// Content Layout
-.title-accent {
-  width: 8px;
-  height: 40px;
-  border-radius: 4px;
-}
-
-// Modern Header
-.course-header-modern {
-  background: linear-gradient(135deg, #1a237e 0%, #303f9f 100%);
-  border-radius: 32px;
-  padding: 60px;
-  box-shadow: 0 20px 50px rgba(26, 35, 126, 0.2);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-    border-radius: 50%;
-  }
-}
-
-.header-visual {
-  .avatar-glow {
-    position: relative;
-    &::after {
-      content: '';
-      position: absolute;
-      top: -10px;
-      left: -10px;
-      right: -10px;
-      bottom: -10px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      z-index: 0;
-      animation: pulse 3s infinite;
-    }
-  }
-  .q-avatar {
-    z-index: 1;
-    border: 6px solid rgba(255, 255, 255, 0.2);
-  }
-}
-
-.header-title {
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.progress-circle {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 5px;
-  border-radius: 50%;
+.content-standard {
+  max-width: 1280px;
 }
 
 // Content Layout
@@ -751,28 +450,5 @@ watch(
     border-left-color: $primary;
     padding-left: 56px;
   }
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.2;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-}
-
-.shadow-15 {
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-}
-
-.border-radius-10 {
-  border-radius: 10px;
 }
 </style>

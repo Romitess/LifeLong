@@ -29,6 +29,10 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/course-quiz-page.vue'),
       },
       {
+        path: 'course/:id/assign/:moduleId',
+        component: () => import('pages/course-assignment-page.vue'),
+      },
+      {
         path: 'course-home',
         component: () => import('pages/course-home-page.vue'),
       },

@@ -5,6 +5,9 @@ export interface Lesson {
   type: 'video' | 'article' | 'quiz';
   duration: string;
   completed?: boolean;
+  moodleUrl?: string;
+  moodleModuleId?: number;
+  moodleModname?: string;
 }
 
 export interface CourseModule {
