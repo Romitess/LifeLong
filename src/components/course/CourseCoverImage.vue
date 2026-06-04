@@ -4,12 +4,21 @@
       v-if="course.imageUrl"
       :src="course.imageUrl"
       :ratio="imageRatio"
-      :fit="fit"
+      fit="cover"
       class="course-cover__image"
       :loading="loading"
       :no-transition="instant"
       :no-spinner="instant"
     >
+      <!-- Crop overlay — only when cropBox is set; fills q-img via absolute-full -->
+      <BaseCroppedImage
+        v-if="parsedCropBox"
+        :src="course.imageUrl"
+        :crop-box="parsedCropBox"
+        :aspect="ratio"
+        class="absolute-full"
+        loading="eager"
+      />
       <template #error>
         <div class="course-cover__generated absolute-full">
           <q-icon :name="course.cover.icon" size="3rem" />
@@ -30,12 +39,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Course } from 'src/types/course';
+import BaseCroppedImage from 'components/base/BaseCroppedImage.vue';
+import type { CropBox } from 'src/composables/use-image-cropper';
 
 type ImageFit = 'cover' | 'fill' | 'contain' | 'none' | 'scale-down';
 type ImageLoading = 'eager' | 'lazy';
 
 interface Props {
-  course: Pick<Course, 'cover' | 'imageUrl' | 'title'>;
+  course: Pick<Course, 'cover' | 'imageUrl' | 'imageCrop' | 'title'>;
   ratio?: number;
   fit?: ImageFit;
   fill?: boolean;
@@ -52,6 +63,15 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const imageRatio = computed<number | undefined>(() => (props.fill ? undefined : props.ratio));
+
+const parsedCropBox = computed<CropBox | null>(() => {
+  if (!props.course.imageCrop) return null;
+  try {
+    return JSON.parse(props.course.imageCrop) as CropBox;
+  } catch {
+    return null;
+  }
+});
 
 const coverStyle = computed<Record<string, string>>(() => ({
   '--cover-accent': props.course.cover.accentColor,

@@ -185,6 +185,7 @@ async function submitOverride(payload: CreateCoursePayload): Promise<{ courseId:
   if (payload.contactUrl) form.append('contactUrl', payload.contactUrl);
   if (payload.vdo) form.append('vdo', payload.vdo);
   if (payload.image) form.append('image', payload.image);
+  if (payload.imageCrop) form.append('imageCrop', payload.imageCrop);
   if (payload.removeImage) form.append('removeImage', 'true');
   for (const f of payload.files ?? []) form.append('files', f);
   if (payload.removeFileIds?.length) form.append('removeFileIds', payload.removeFileIds.join(','));
@@ -198,9 +199,9 @@ async function submitOverride(payload: CreateCoursePayload): Promise<{ courseId:
   return updateCourse(courseId, form);
 }
 
-function onSaved() {
+async function onSaved(): Promise<void> {
   $q.notify({ type: 'positive', message: 'บันทึกการแก้ไขสำเร็จ', position: 'top', timeout: 3000 });
-  void router.push('/admin/courses');
+  await reload();
 }
 </script>
 

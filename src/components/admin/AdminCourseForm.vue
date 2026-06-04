@@ -608,7 +608,7 @@
                 hide-bottom-space
                 class="course-form__input"
                 :disable="props.readonly"
-                @update:model-value="imageError = null"
+                @update:model-value="onImageSelected"
                 @rejected="onImageRejected"
               >
                 <template #prepend>
@@ -619,7 +619,11 @@
                     name="close"
                     class="cursor-pointer"
                     color="negative"
-                    @click.stop.prevent="form.image = undefined"
+                    @click.stop.prevent="
+                      form.image = undefined;
+                      form.imageCrop = undefined;
+                      currentCropBox = null;
+                    "
                   />
                 </template>
               </q-file>
@@ -632,29 +636,74 @@
                 class="course-form__image-preview"
                 style="pointer-events: auto"
               >
-                <img
-                  :src="imagePreviewUrl"
-                  class="course-form__image-thumb"
-                  alt="รูปหน้าปก"
-                  @click="imageZoomOpen = true"
-                />
-                <q-dialog v-model="imageZoomOpen" transition-show="scale" transition-hide="scale">
-                  <div class="course-form__zoom-wrap">
-                    <div class="course-form__zoom-toolbar">
-                      <q-btn
-                        flat
-                        round
-                        dense
-                        icon="close"
-                        color="white"
-                        class="course-form__zoom-close"
-                        v-close-popup
-                      />
-                    </div>
-                    <img :src="imagePreviewUrl" class="course-form__zoom-img" alt="รูปหน้าปก" />
+                <div class="course-form__image-thumb-wrap" @click="imageZoomOpen = true">
+                  <BaseCroppedImage
+                    :src="imagePreviewUrl"
+                    :crop-box="currentCropBox"
+                    :aspect="16 / 9"
+                    class="course-form__image-thumb"
+                    alt="รูปหน้าปก"
+                    loading="eager"
+                  />
+                  <div class="course-form__image-thumb-overlay">
+                    <q-icon name="zoom_in" size="28px" color="white" />
                   </div>
-                </q-dialog>
+                </div>
+                <q-btn
+                  v-if="!props.readonly"
+                  flat
+                  dense
+                  no-caps
+                  icon="crop"
+                  label="ปรับ crop"
+                  color="primary"
+                  size="sm"
+                  class="q-mt-xs"
+                  @click="openRecrop"
+                />
               </div>
+
+              <!-- Preview dialog — shows crop result if cropBox set, else original -->
+              <q-dialog v-model="imageZoomOpen" transition-show="scale" transition-hide="scale">
+                <div class="course-form__zoom-wrap">
+                  <div class="course-form__zoom-toolbar">
+                    <q-btn
+                      flat
+                      round
+                      dense
+                      icon="close"
+                      color="white"
+                      class="course-form__zoom-close"
+                      v-close-popup
+                    />
+                  </div>
+                  <BaseCroppedImage
+                    v-if="currentCropBox"
+                    :src="imagePreviewUrl ?? ''"
+                    :crop-box="currentCropBox"
+                    :aspect="16 / 9"
+                    class="course-form__zoom-cropped"
+                    loading="eager"
+                  />
+                  <img
+                    v-else
+                    :src="imagePreviewUrl ?? ''"
+                    class="course-form__zoom-img"
+                    alt="รูปหน้าปก"
+                  />
+                </div>
+              </q-dialog>
+
+              <!-- Cropper dialog -->
+              <BaseImageCropperDialog
+                v-model="cropperOpen"
+                :image-src="cropperSrc"
+                :aspect="16 / 9"
+                mask-shape="rect"
+                title="ปรับรูปหน้าปก (16:9)"
+                :initial-crop-box="currentCropBox"
+                @save="onCropSaved"
+              />
             </div>
 
             <!-- ระยะเวลาที่อนุมัติ -->
@@ -1229,6 +1278,9 @@ import type {
   CostplanFormOption,
 } from 'src/types/admin-courses';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
+import BaseImageCropperDialog from 'components/base/BaseImageCropperDialog.vue';
+import BaseCroppedImage from 'components/base/BaseCroppedImage.vue';
+import type { CropBox } from 'src/composables/use-image-cropper';
 import AdminSurfaceCard from './AdminSurfaceCard.vue';
 import AdminActionButton from './AdminActionButton.vue';
 import AdminCourseChapterTab from './AdminCourseChapterTab.vue';
@@ -1326,6 +1378,7 @@ const form = reactive({
   contactUrl: '',
   vdo: '',
   image: undefined as File | undefined,
+  imageCrop: undefined as string | undefined,
   newFiles: [] as File[],
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   stutypeFeeAmounts: {} as { [id: number]: number | null },
@@ -1358,8 +1411,13 @@ const existingImageCleared = ref(false);
 const removedFileIds = ref<number[]>([]);
 const cbsPickerModel = ref<File | File[] | null>(null);
 
-const imageBlobUrl = ref<string | null>(null);
+// ─── Image state (must be before immediate watch) ─────────────
 const imageZoomOpen = ref(false);
+const cropperOpen = ref(false);
+const cropperSrc = ref<string | null>(null);
+const currentCropBox = ref<CropBox | null>(null);
+
+const imageBlobUrl = ref<string | null>(null);
 watch(
   () => form.image,
   (file, prev) => {
@@ -1391,6 +1449,19 @@ watch(
     removedFileIds.value = [];
     form.newFiles = [];
     cbsPickerModel.value = null;
+    // Restore saved crop box when editing an existing course
+    if (data.imageCrop) {
+      try {
+        currentCropBox.value = JSON.parse(data.imageCrop) as CropBox;
+        form.imageCrop = data.imageCrop;
+      } catch {
+        currentCropBox.value = null;
+        form.imageCrop = undefined;
+      }
+    } else {
+      currentCropBox.value = null;
+      form.imageCrop = undefined;
+    }
     form.nameTh = data.nameTh ?? '';
     form.nameEn = data.nameEn ?? '';
     form.description = data.description ?? '';
@@ -1455,10 +1526,7 @@ watch(
       (data.stutypeFees ?? []).map((f) => [f.stutypeId, f.amount]),
     );
     form.stutypeFeeAmounts = Object.fromEntries(
-      formOptions.value.studentTypes.map((st) => [
-        st.id,
-        loadedFees[st.id] ?? (data.classFee === 0 ? 0 : null),
-      ]),
+      formOptions.value.studentTypes.map((st) => [st.id, loadedFees[st.id] ?? 0]),
     );
   },
   { immediate: true },
@@ -1467,9 +1535,12 @@ watch(
 watch(
   () => formOptions.value.studentTypes,
   (types) => {
+    const loadedFees = Object.fromEntries(
+      (props.initialData?.stutypeFees ?? []).map((f) => [f.stutypeId, f.amount]),
+    );
     for (const st of types) {
       if (form.stutypeFeeAmounts[st.id] == null) {
-        form.stutypeFeeAmounts[st.id] = form.classFee === 0 ? 0 : null;
+        form.stutypeFeeAmounts[st.id] = loadedFees[st.id] ?? 0;
       }
     }
   },
@@ -1558,6 +1629,7 @@ function filterCostplans(val: string, update: (fn: () => void) => void) {
 
 const fileError = ref<string | null>(null);
 const imageError = ref<string | null>(null);
+
 const creditBankFieldRef = ref<HTMLElement | null>(null);
 const creditBankInputRef = ref<InstanceType<typeof QInput> | null>(null);
 const endDateInputRef = ref<InstanceType<typeof BaseDateInput> | null>(null);
@@ -1706,6 +1778,38 @@ function onImageRejected(entries: { failedPropValidation: string }[]) {
       : 'ไฟล์รูปต้องเป็น jpg, png หรือ webp และไม่เกิน 2MB';
 }
 
+function onImageSelected(file: File | null | undefined): void {
+  imageError.value = null;
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    cropperSrc.value = e.target?.result as string;
+    cropperOpen.value = true;
+  };
+  reader.readAsDataURL(file);
+}
+
+function onCropSaved(box: CropBox): void {
+  currentCropBox.value = box;
+  form.imageCrop = JSON.stringify(box);
+}
+
+function openRecrop(): void {
+  const src = imageBlobUrl.value ?? props.initialData?.imageUrl ?? null;
+  if (!src) return;
+  // Use the most-recently confirmed crop box; only fall back to server value if none exists yet
+  if (!currentCropBox.value) {
+    try {
+      const existing = props.initialData?.imageCrop;
+      currentCropBox.value = existing ? (JSON.parse(existing) as CropBox) : null;
+    } catch {
+      currentCropBox.value = null;
+    }
+  }
+  cropperSrc.value = src;
+  cropperOpen.value = true;
+}
+
 function buildTargets(): CourseTargetPayload[] {
   const targets: CourseTargetPayload[] = [];
 
@@ -1821,6 +1925,7 @@ async function submit() {
     contactUrl: form.contactUrl || undefined,
     vdo: form.vdo || undefined,
     image: form.image,
+    imageCrop: form.imageCrop,
     removeImage: existingImageCleared.value || undefined,
     files: form.newFiles.length ? form.newFiles : undefined,
     removeFileIds: removedFileIds.value.length ? removedFileIds.value : undefined,
@@ -2098,7 +2203,7 @@ async function submitAndPublish() {
 }
 
 .course-form__input--compact {
-  width: 120px;
+  width: 200px;
 }
 
 .course-form__fee-unit {
@@ -2231,6 +2336,33 @@ async function submitAndPublish() {
 
 .course-form__image-preview {
   margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.course-form__image-thumb-wrap {
+  position: relative;
+  display: inline-block;
+  cursor: zoom-in;
+  border-radius: 8px;
+  overflow: hidden;
+
+  &:hover .course-form__image-thumb-overlay {
+    opacity: 1;
+  }
+}
+
+.course-form__image-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
 }
 
 .course-form__image-thumb {
@@ -2238,7 +2370,6 @@ async function submitAndPublish() {
   width: 320px;
   height: 180px;
   border-radius: 8px;
-  cursor: zoom-in;
   border: 1px solid rgba(0, 0, 0, 0.08);
   object-fit: cover;
 }
@@ -2268,6 +2399,13 @@ async function submitAndPublish() {
   max-height: 86vh;
   border-radius: 8px;
   object-fit: contain;
+}
+
+.course-form__zoom-cropped {
+  width: min(720px, 86vw);
+  aspect-ratio: 16/9;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .course-form__file-link {

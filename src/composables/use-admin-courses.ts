@@ -17,6 +17,7 @@ export interface FetchCoursesOptions {
   facultyId?: number | null;
   typeCourseId?: number | null;
   search?: string | null;
+  feeType?: 'free' | 'paid' | null;
 }
 
 function createEmptyPagination(): AdminCoursesPagination {
@@ -64,6 +65,7 @@ export function useAdminCourses() {
           facultyId: options.facultyId ?? undefined,
           typeCourseId: options.typeCourseId ?? undefined,
           search: options.search || undefined,
+          feeType: options.feeType ?? undefined,
         },
       });
 

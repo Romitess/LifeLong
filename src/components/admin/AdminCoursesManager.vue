@@ -68,6 +68,24 @@
             />
           </div>
 
+          <div class="courses-manager__field">
+            <div class="courses-manager__field-label">ค่าใช้จ่าย</div>
+            <q-select
+              v-model="filterFeeType"
+              outlined
+              dense
+              clearable
+              emit-value
+              map-options
+              :options="feeTypeOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="ทั้งหมด"
+              hint=" "
+              class="courses-manager__select"
+            />
+          </div>
+
           <div class="courses-manager__field courses-manager__field--actions">
             <div class="courses-manager__filter-actions">
               <AdminActionButton
@@ -324,7 +342,13 @@ const { items, filterOptions, pagination, isLoading, error, fetchData, removeCou
 const filterCourseName = ref<string>('');
 const filterFacultyId = ref<number | null>(null);
 const filterTypeCourseId = ref<number | null>(null);
+const filterFeeType = ref<'free' | 'paid' | null>(null);
 const globalSearch = ref<string>('');
+
+const feeTypeOptions = [
+  { label: 'ฟรี', value: 'free' },
+  { label: 'เสียเงิน', value: 'paid' },
+];
 const currentPage = ref(1);
 const paginationRef = ref<HTMLElement | null>(null);
 const confirmDeleteOpen = ref(false);
@@ -355,6 +379,7 @@ const hasActiveFilters = computed(
     !!filterCourseName.value ||
     filterFacultyId.value !== null ||
     filterTypeCourseId.value !== null ||
+    filterFeeType.value !== null ||
     !!globalSearch.value,
 );
 
@@ -378,6 +403,7 @@ async function load(page = 1): Promise<void> {
       courseName: filterCourseName.value || null,
       facultyId: filterFacultyId.value,
       typeCourseId: filterTypeCourseId.value,
+      feeType: filterFeeType.value,
       search: globalSearch.value || null,
     });
     currentPage.value = pagination.value.page;
@@ -394,6 +420,7 @@ async function resetFilters(): Promise<void> {
   filterCourseName.value = '';
   filterFacultyId.value = null;
   filterTypeCourseId.value = null;
+  filterFeeType.value = null;
   globalSearch.value = '';
   await load(1);
 }

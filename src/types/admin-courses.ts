@@ -115,6 +115,7 @@ export interface CreateCoursePayload {
   contactUrl?: string | undefined;
   vdo?: string | undefined;
   image?: File | undefined;
+  imageCrop?: string | undefined;
   removeImage?: boolean | undefined;
   files?: File[] | undefined;
   removeFileIds?: number[] | undefined;
@@ -175,6 +176,7 @@ export interface AdminCourseDetail {
   summary: string | null;
   description: string | null;
   imageUrl: string | null;
+  imageCrop: string | null;
   files: CourseFile[];
   facultyId: number | null;
   typeCourseId: number | null;

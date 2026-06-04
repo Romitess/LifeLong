@@ -21,6 +21,7 @@ interface ApiLltcourse {
   status: string | null;
   hours: number | null;
   imageUrl: string | null;
+  imageCrop?: string | null;
   moodleId: number | null;
   maxSeats: number | null;
   amount: number | null;
@@ -72,6 +73,7 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     title: raw.titleTh ?? '',
     ...(raw.titleEn ? { titleEn: raw.titleEn } : {}),
     imageUrl: raw.imageUrl?.trim() ?? '',
+    imageCrop: raw.imageCrop ?? null,
     cover: { icon: coverIcon, accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
     registrationStart: regStart,
     registrationEnd: regEnd,

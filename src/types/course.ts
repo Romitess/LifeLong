@@ -21,6 +21,7 @@ export interface Course {
   instructorId?: string;
   instructorEmail?: string;
   imageUrl: string;
+  imageCrop?: string | null;
   cover: CourseCover;
   registrationStart: string;
   registrationStartEn?: string;

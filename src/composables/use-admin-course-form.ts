@@ -98,6 +98,7 @@ export function useAdminCourseForm() {
       if (payload.contactUrl) form.append('contactUrl', payload.contactUrl);
       if (payload.vdo) form.append('vdo', payload.vdo);
       if (payload.image) form.append('image', payload.image);
+      if (payload.imageCrop) form.append('imageCrop', payload.imageCrop);
       for (const f of payload.files ?? []) form.append('files', f);
       if (payload.createUser) form.append('createUser', payload.createUser);
       if (payload.instructors?.length)

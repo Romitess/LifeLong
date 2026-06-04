@@ -82,67 +82,15 @@
     </div>
   </section>
 
-  <!-- Crop Dialog -->
-  <q-dialog v-model="showCropDialog" persistent transition-show="scale" transition-hide="scale">
-    <q-card class="crop-dialog">
-      <q-card-section class="crop-dialog__header q-pa-md row items-center">
-        <q-icon name="crop" size="24px" color="primary" class="q-mr-sm" />
-        <div class="text-subtitle1 text-weight-bold">{{ $t('profile.dialogs.cropAvatar') }}</div>
-        <q-space />
-        <q-btn flat round dense icon="close" color="grey-7" @click="cancelCrop" />
-      </q-card-section>
-
-      <q-card-section class="crop-dialog__body q-pa-none">
-        <div
-          ref="cropArea"
-          class="crop-dialog__viewport"
-          @mousedown="onCropMouseDown"
-          @mousemove="onCropMouseMove"
-          @mouseup="onCropMouseUp"
-          @mouseleave="onCropMouseUp"
-          @touchstart.prevent="onCropTouchStart"
-          @touchmove.prevent="onCropTouchMove"
-          @touchend="onCropTouchEnd"
-          @wheel.prevent="onCropWheel"
-        >
-          <div class="crop-dialog__image-container">
-            <img
-              v-if="cropImageSrc"
-              ref="cropImage"
-              :src="cropImageSrc"
-              class="crop-dialog__image"
-              :style="cropImageStyle"
-              draggable="false"
-              @load="onCropImageLoad"
-            />
-          </div>
-          <div class="crop-dialog__circle-mask" />
-        </div>
-      </q-card-section>
-
-      <q-card-section class="q-px-lg q-py-md">
-        <div class="row items-center q-gutter-sm">
-          <q-icon name="photo_size_select_small" color="grey-6" size="20px" />
-          <q-slider v-model="cropZoom" :min="1" :max="3" :step="0.01" color="primary" class="col" />
-          <q-icon name="photo_size_select_large" color="grey-6" size="20px" />
-        </div>
-      </q-card-section>
-
-      <q-card-actions align="right" class="q-px-lg q-pb-lg">
-        <q-btn flat :label="$t('quiz.cancel')" color="grey-7" no-caps @click="cancelCrop" />
-        <q-btn
-          unelevated
-          rounded
-          :label="$t('profile.dialogs.saveAvatar')"
-          color="primary"
-          icon="save"
-          no-caps
-          padding="sm lg"
-          @click="saveCroppedAvatar"
-        />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+  <!-- Crop Dialog (uses central BaseImageCropperDialog, bakes to canvas for avatar) -->
+  <BaseImageCropperDialog
+    v-model="showCropDialog"
+    :image-src="cropImageSrc"
+    :aspect="1"
+    mask-shape="circle"
+    :title="$t('profile.dialogs.cropAvatar')"
+    @save="onCropDialogSave()"
+  />
 
   <!-- Full Avatar Dialog -->
   <q-dialog v-model="showFullAvatar" transition-show="scale" transition-hide="scale">
@@ -170,6 +118,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
+import BaseImageCropperDialog from 'src/components/base/BaseImageCropperDialog.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useProfileAvatar } from 'src/composables/use-profile-avatar';
 import { useAvatarCrop } from 'src/composables/use-avatar-crop';
@@ -199,23 +148,16 @@ const displayAvatarUrl = computed<string>(() => fullAvatarUrl.value || currentAv
 const {
   showCropDialog,
   cropImageSrc,
-  cropZoom,
-  cropImage,
   avatarInput,
-  cropImageStyle,
   triggerAvatarUpload,
   onAvatarSelected,
-  onCropImageLoad,
-  onCropMouseDown,
-  onCropMouseMove,
-  onCropMouseUp,
-  onCropTouchStart,
-  onCropTouchMove,
-  onCropTouchEnd,
-  onCropWheel,
-  cancelCrop,
   saveCroppedAvatar,
 } = useAvatarCrop(fullAvatarUrl, pendingFullAvatarSrc);
+
+// Avatar stays as baked canvas dataURL until backend persist is ready
+function onCropDialogSave(): void {
+  saveCroppedAvatar();
+}
 </script>
 
 <style lang="scss" scoped>
