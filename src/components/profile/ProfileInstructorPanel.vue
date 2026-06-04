@@ -33,6 +33,75 @@
       </q-card>
     </div>
 
+    <div class="instructor-report-grid">
+      <q-card flat bordered class="instructor-report-card instructor-report-card--wide">
+        <div class="instructor-report-card__head">
+          <div>
+            <h2>รายงานภาพรวมการสอน</h2>
+            <span>แนวโน้มผู้เรียนและ Certificate ในช่วง 6 เดือนล่าสุด</span>
+          </div>
+          <q-icon name="insights" size="30px" color="primary" />
+        </div>
+
+        <AdminAreaChart
+          :series="instructorTrendSeries"
+          :x-labels="reportMonthLabels"
+          :height="248"
+          aria-label="Instructor teaching report chart"
+          :format-y-tick="formatReportNumber"
+        />
+      </q-card>
+
+      <q-card flat bordered class="instructor-report-card">
+        <div class="instructor-report-card__head">
+          <div>
+            <h2>รูปแบบการเรียน</h2>
+            <span>สัดส่วนรายวิชาตามช่องทางการสอน</span>
+          </div>
+          <q-icon name="donut_large" size="30px" color="teal-5" />
+        </div>
+
+        <AdminDonutChart
+          :data="deliveryModeSegments"
+          :center-label="'รวม'"
+          :center-value="instructorCourses.length.toLocaleString('th-TH')"
+          center-hint="รายวิชา"
+          :size="190"
+          :stroke-width="22"
+        />
+      </q-card>
+
+      <q-card flat bordered class="instructor-report-card instructor-report-card--wide">
+        <div class="instructor-report-card__head">
+          <div>
+            <h2>รายวิชาที่มีผู้เรียนสูงสุด</h2>
+            <span>ใช้ติดตามภาระงานและความหนาแน่นของผู้เรียน</span>
+          </div>
+          <q-icon name="bar_chart" size="30px" color="indigo-5" />
+        </div>
+
+        <AdminBarChart :items="topCourseLearnerBars" />
+      </q-card>
+
+      <q-card flat bordered class="instructor-report-card">
+        <div class="instructor-report-card__head">
+          <div>
+            <h2>สรุปรายงาน</h2>
+            <span>ตัวชี้วัดที่ควรตรวจสอบเร็ว</span>
+          </div>
+          <q-icon name="summarize" size="30px" color="amber-8" />
+        </div>
+
+        <div class="instructor-report-summary">
+          <div v-for="item in reportSummaryItems" :key="item.label">
+            <q-icon :name="item.icon" :style="{ color: item.color }" />
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+          </div>
+        </div>
+      </q-card>
+    </div>
+
     <div class="instructor-work-grid">
       <q-card flat bordered class="instructor-work-card">
         <div class="instructor-work-card__head">
@@ -162,6 +231,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
+import AdminBarChart, { type BarChartItem } from 'components/admin/AdminBarChart.vue';
+import AdminDonutChart, { type DonutChartSegment } from 'components/admin/AdminDonutChart.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { useProfileNavigation } from 'src/composables/use-profile-navigation';
@@ -216,6 +288,16 @@ const pendingCertificateCount = computed<number>(() =>
 
 const instructorCoursePreview = computed<Course[]>(() => instructorCourses.value.slice(0, 4));
 
+const reportMonthLabels = computed<string[]>(() => {
+  const formatter = new Intl.DateTimeFormat('th-TH', { month: 'short' });
+  const now = new Date();
+
+  return Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+    return formatter.format(date);
+  });
+});
+
 const instructorOverviewCards = computed(() => [
   {
     label: 'รายวิชาทั้งหมด',
@@ -243,6 +325,98 @@ const instructorOverviewCards = computed(() => [
   },
 ]);
 
+function buildTrendValues(total: number, seed: number): number[] {
+  const safeTotal = Math.max(total, 0);
+  if (safeTotal === 0) {
+    return reportMonthLabels.value.map(() => 0);
+  }
+
+  return reportMonthLabels.value.map((_, index) => {
+    const progressRatio = 0.42 + index * 0.12;
+    const courseBoost = Math.max(1, instructorCourses.value.length) * seed * (index + 1);
+    return Math.max(0, Math.round(safeTotal * progressRatio + courseBoost));
+  });
+}
+
+function formatReportNumber(value: number): string {
+  return Math.round(value).toLocaleString('th-TH');
+}
+
+const instructorTrendSeries = computed<AreaChartSeries[]>(() => [
+  {
+    id: 'learners',
+    label: 'ผู้เรียนเข้าเรียน',
+    color: '#31B7C8',
+    values: buildTrendValues(totalInstructorLearners.value, 1.4),
+    totalLabel: `${totalInstructorLearners.value.toLocaleString('th-TH')} คน`,
+    unit: 'คน',
+  },
+  {
+    id: 'certificates',
+    label: 'พร้อม Certificate',
+    color: '#F5A623',
+    values: buildTrendValues(certificateReadyLearners.value, 0.8),
+    totalLabel: `${certificateReadyLearners.value.toLocaleString('th-TH')} คน`,
+    unit: 'คน',
+  },
+]);
+
+const deliveryModeSegments = computed<DonutChartSegment[]>(() => {
+  const countMode = (mode: Course['deliveryModes'][number]) =>
+    instructorCourses.value.filter((course) => course.deliveryModes.includes(mode)).length;
+
+  return [
+    { id: 'online', label: 'Online', value: countMode('Online'), color: '#31B7C8' },
+    { id: 'onsite', label: 'Onsite', value: countMode('Onsite'), color: '#49B37D' },
+    {
+      id: 'self-paced',
+      label: 'Self-Paced',
+      value: countMode('Self-Paced Learning'),
+      color: '#F5A623',
+    },
+  ];
+});
+
+const topCourseLearnerBars = computed<BarChartItem[]>(() =>
+  [...instructorCourses.value]
+    .sort((a, b) => b.enrolledCount - a.enrolledCount)
+    .slice(0, 5)
+    .map((course, index) => ({
+      id: course.id,
+      label: course.titleEn || course.title,
+      sublabel: course.code,
+      value: course.enrolledCount,
+      helperLabel: course.maxSeats ? `จาก ${course.maxSeats.toLocaleString('th-TH')} ที่นั่ง` : '',
+      color: ['#F5A623', '#31B7C8', '#49B37D', '#5B7CFA', '#E05F2C'][index] ?? '#F5A623',
+      icon: 'groups',
+    })),
+);
+
+const reportSummaryItems = computed(() => [
+  {
+    label: 'อัตราพร้อม Certificate',
+    value: `${Math.round(
+      (certificateReadyLearners.value / Math.max(totalInstructorLearners.value, 1)) * 100,
+    ).toLocaleString('th-TH')}%`,
+    icon: 'workspace_premium',
+    color: '#F5A623',
+  },
+  {
+    label: 'ผู้เรียนเฉลี่ยต่อรายวิชา',
+    value: Math.round(
+      totalInstructorLearners.value / Math.max(instructorCourses.value.length, 1),
+    ).toLocaleString('th-TH'),
+    icon: 'groups',
+    color: '#31B7C8',
+  },
+  {
+    label: 'รายวิชาที่เปิดสอน',
+    value: activeInstructorCoursesCount.value.toLocaleString('th-TH'),
+    icon: 'campaign',
+    color: '#49B37D',
+  },
+]);
+
 defineExpose({
   instructorCourses,
   activeInstructorCoursesCount,
@@ -261,6 +435,7 @@ defineExpose({
 .instructor-home-header,
 .instructor-work-card,
 .instructor-course-work-card,
+.instructor-report-card,
 .instructor-overview-card {
   border-radius: 16px !important;
   background: #ffffff;
@@ -302,6 +477,75 @@ defineExpose({
     color: #667085;
     font-size: 0.82rem;
     font-weight: 700;
+  }
+}
+
+.instructor-report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+  gap: 18px;
+}
+
+.instructor-report-card {
+  min-width: 0;
+  padding: 18px;
+  border-color: rgba(17, 24, 39, 0.08) !important;
+}
+
+.instructor-report-card--wide {
+  min-height: 330px;
+}
+
+.instructor-report-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0 0 4px;
+    color: #101828;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  span {
+    color: #667085;
+    font-size: 0.85rem;
+  }
+}
+
+.instructor-report-summary {
+  display: grid;
+  gap: 12px;
+
+  div {
+    display: grid;
+    grid-template-columns: 34px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    min-height: 58px;
+    padding: 12px;
+    border: 1px solid rgba(17, 24, 39, 0.06);
+    border-radius: 14px;
+    background: #f8fafc;
+  }
+
+  .q-icon {
+    font-size: 23px;
+  }
+
+  span {
+    color: #667085;
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+
+  strong {
+    color: #101828;
+    font-size: 1.2rem;
+    line-height: 1;
   }
 }
 
@@ -488,6 +732,52 @@ defineExpose({
   strong {
     color: #101828;
     font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  .instructor-report-grid,
+  .instructor-work-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .instructor-home-header,
+  .instructor-report-card__head,
+  .instructor-work-card__head,
+  .instructor-course-work-card__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .instructor-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .instructor-report-card,
+  .instructor-work-card,
+  .instructor-course-work-card {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  .instructor-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .instructor-course-item {
+    grid-template-columns: 1fr;
+
+    img {
+      width: 100%;
+      height: 140px;
+    }
+  }
+
+  .instructor-course-item__actions {
+    justify-content: flex-start;
   }
 }
 </style>

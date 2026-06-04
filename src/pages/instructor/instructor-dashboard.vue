@@ -368,8 +368,8 @@ const stats = computed(() => [
     label: 'นิสิตทั้งหมด',
     value: (instructorBackend.summary.value?.totalStudents ?? 0).toLocaleString('th-TH'),
     icon: 'people',
-    color: '#5B2A00',
-    bgColor: '#FFE600',
+    color: 'white',
+    bgColor: '#F59E0B',
   },
   {
     label: 'รายวิชาที่เปิด',
@@ -377,22 +377,22 @@ const stats = computed(() => [
       instructorBackend.summary.value?.activeCourses ?? instructorCourses.value.length
     ).toLocaleString('th-TH'),
     icon: 'menu_book',
-    color: '#081A8C',
-    bgColor: '#5B8CFF',
+    color: 'white',
+    bgColor: '#4F7DF3',
   },
   {
     label: 'คะแนนเฉลี่ย',
     value: instructorBackend.summary.value?.averageScore?.toFixed(2) ?? '-',
     icon: 'star',
-    color: '#005A20',
-    bgColor: '#5DFF8B',
+    color: 'white',
+    bgColor: '#18B65A',
   },
   {
     label: 'ห้องสนทนา',
     value: (instructorBackend.summary.value?.conversations ?? 0).toLocaleString('th-TH'),
     icon: 'forum',
-    color: '#6E1B00',
-    bgColor: '#FF7A1A',
+    color: 'white',
+    bgColor: '#D94A00',
   },
 ]);
 
