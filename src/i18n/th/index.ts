@@ -1288,6 +1288,30 @@ export default {
       cancel: 'ยกเลิก',
       success: 'ส่งออกรายงานเป็นไฟล์ {format} สำเร็จแล้ว',
     },
+    receiptUsage: {
+      hero: {
+        title: 'รายงานการใช้ใบเสร็จรับเงิน',
+        description: 'รายงานการใช้ใบเสร็จรับเงินค่าลงทะเบียนหลักสูตรระยะสั้นรวมทุกส่วนงาน',
+      },
+      reportTitle: 'รายงานการใช้ใบเสร็จรับเงิน LifeLong Learning มหาวิทยาลัยบูรพา',
+      filters: {
+        fiscalYear: 'ปีงบประมาณ',
+        receiptDate: 'วันที่ใบเสร็จรับเงิน',
+        toDate: 'ถึงวันที่',
+        courseName: 'ชื่อโครงการ/อบรม/หลักสูตร',
+        courseNamePlaceholder: 'ระบุชื่อโครงการ/อบรม/หลักสูตร',
+        customerName: 'ชื่อผู้ชำระเงิน (Customer Name)',
+        customerNamePlaceholder: 'ระบุชื่อผู้ชำระเงิน',
+        collector: 'ผู้รับเงิน (Collector)',
+        collectorPlaceholder: 'ระบุชื่อผู้รับเงิน',
+        receiptNo: 'เลขที่ใบเสร็จรับเงิน',
+        receiptNoPlaceholder: 'ระบุเลขที่ใบเสร็จรับเงิน',
+        status: 'สถานะ',
+        statusAll: 'ทั้งหมด',
+        searchBtn: 'ค้นหา',
+        clearBtn: 'ล้างค่า',
+      },
+    },
     receiptSummary: {
       hero: {
         title: 'รายงานสรุปการรับเงินค่าลงทะเบียน',

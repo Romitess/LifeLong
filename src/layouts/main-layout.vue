@@ -782,12 +782,12 @@ const navItems = computed<NavItem[]>(() => {
         icon: 'description',
         to: '/central-finance/fund-sources',
       },
-      {
-        name: 'central-finance-transactions',
-        label: 'รายละเอียดรายการรับเงิน',
-        icon: 'gavel',
-        to: '/central-finance/transactions',
-      },
+      // {
+      //   name: 'central-finance-transactions',
+      //   label: 'รายละเอียดรายการรับเงิน',
+      //   icon: 'gavel',
+      //   to: '/central-finance/transactions',
+      // },
       {
         name: 'central-finance-daily-report',
         label: 'รายงานการรับเงินประจำวัน',
@@ -796,9 +796,15 @@ const navItems = computed<NavItem[]>(() => {
       },
       {
         name: 'central-finance-receipt-summary',
-        label: 'รายงานสรุปการรับเงิน',
+        label: 'รายงานสรุปการรับเงินค่าลงทะเบียน ',
         icon: 'receipt_long',
         to: '/central-finance/receipt-summary',
+      },
+      {
+        name: 'central-finance-receipt-usage',
+        label: 'รายงานการใช้ใบเสร็จ',
+        icon: 'receipt',
+        to: '/central-finance/receipt-usage',
       },
     ];
   }
@@ -1102,6 +1108,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'central-finance-fund-sources';
   } else if (path.includes('/central-finance/receipt-summary')) {
     activeNav.value = 'central-finance-receipt-summary';
+  } else if (path.includes('/central-finance/receipt-usage')) {
+    activeNav.value = 'central-finance-receipt-usage';
   } else if (path.includes('/finance/source-of-funds-chart')) {
     activeNav.value = 'finance-source-of-funds-chart';
   } else if (path.includes('/finance/payment-import')) {

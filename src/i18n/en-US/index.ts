@@ -1271,6 +1271,30 @@ export default {
       cancel: 'Cancel',
       success: 'Report exported as {format} successfully',
     },
+    receiptUsage: {
+      hero: {
+        title: 'Receipt Usage Report',
+        description: 'Report of registration fee receipt usage across all faculties',
+      },
+      reportTitle: 'Receipt Usage Report — LifeLong Learning, Burapha University',
+      filters: {
+        fiscalYear: 'Fiscal Year',
+        receiptDate: 'Receipt Date',
+        toDate: 'To Date',
+        courseName: 'Course / Training / Program Name',
+        courseNamePlaceholder: 'Enter course name',
+        customerName: 'Customer Name',
+        customerNamePlaceholder: 'Enter customer name',
+        collector: 'Collector',
+        collectorPlaceholder: 'Enter collector name',
+        receiptNo: 'Receipt No.',
+        receiptNoPlaceholder: 'Enter receipt number',
+        status: 'Status',
+        statusAll: 'All',
+        searchBtn: 'Search',
+        clearBtn: 'Clear',
+      },
+    },
     receiptSummary: {
       hero: {
         title: 'Registration Fee Receipt Summary Report',
