@@ -26,7 +26,11 @@
         </div>
       </template>
     </q-img>
-    <div v-else class="course-cover__generated">
+    <div
+      v-else
+      class="course-cover__generated"
+      :style="imageRatio ? { aspectRatio: String(imageRatio) } : {}"
+    >
       <q-icon :name="course.cover.icon" size="3rem" />
       <div class="course-cover__generated-title">{{ titleLabel }}</div>
     </div>
@@ -108,7 +112,6 @@ const titleLabel = computed<string>(
   }
 
   &__generated {
-    min-height: 180px;
     width: 100%;
     color: white;
     display: flex;
