@@ -18,95 +18,100 @@
 
     <section class="admin-shell admin-content">
       <AppSurfaceCard class="q-mt-md" card-class="q-pa-none">
-        <div class="text-center q-pt-lg q-pb-xs text-weight-bold text-subtitle1">
-          {{ $t('finance.applicantSearch.resultsTitle') }}
-        </div>
-        <div class="text-center q-pb-md text-caption text-grey-7">
-          {{ userFacName }}
-        </div>
+        <div class="applicant-list-head row items-center justify-between q-mb-md q-px-md">
+          <div class="applicant-list-head__title text-weight-bold text-body1">
+            {{ $t('finance.applicantSearch.resultsTitle') }}
+          </div>
+          <div class="applicant-table-toolbar">
+            <q-input
+              v-model="searchForm.keyword"
+              outlined
+              clearable
+              debounce="200"
+              :placeholder="$t('finance.applicantSearch.fields.learnerNamePlaceholder')"
+              bg-color="white"
+              class="applicant-search-input-main"
+              @update:model-value="handleSearch"
+            >
+              <template #prepend>
+                <q-icon name="search" color="grey-5" />
+              </template>
+              <template #append>
+                <q-separator vertical class="q-mx-sm" />
+                <q-btn flat round color="grey-7" icon="filter_list">
+                  <q-menu
+                    padding
+                    class="applicant-filter-menu shadow-10"
+                    style="border-radius: 16px"
+                  >
+                    <div class="q-pa-md" style="min-width: 260px">
+                      <div class="text-subtitle1 text-weight-bold q-mb-md">
+                        {{ $t('additionalFilters') }}
+                      </div>
 
-        <div class="row justify-end items-center q-px-md q-pb-md">
-          <q-input
-            v-model="searchForm.keyword"
-            dense
-            outlined
-            :placeholder="$t('finance.applicantSearch.fields.learnerNamePlaceholder')"
-            class="receipt-search"
-            debounce="500"
-            @update:model-value="handleSearch"
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" />
-            </template>
-            <template v-slot:append>
-              <q-separator vertical class="q-mx-xs" inset />
-              <q-btn flat round dense icon="filter_list" color="primary" class="q-ml-xs">
-                <q-tooltip>{{ $t('additionalFilters') }}</q-tooltip>
-                <q-menu padding class="filter-menu-premium shadow-15">
-                  <div class="q-pa-lg" style="min-width: 320px">
-                    <div class="text-h6 text-weight-bold q-mb-lg row items-center">
-                      <q-icon name="filter_alt" color="primary" class="q-mr-sm" />
-                      {{ $t('additionalFilters') }}
-                    </div>
+                      <div class="filter-group q-mb-md">
+                        <div class="text-caption text-grey-7 q-mb-xs">
+                          {{ $t('finance.applicantSearch.columns.status') }}
+                        </div>
+                        <div class="row q-gutter-xs">
+                          <q-btn
+                            unelevated
+                            dense
+                            no-caps
+                            :color="searchForm.status === 'Paid' ? 'positive' : 'grey-2'"
+                            :text-color="searchForm.status === 'Paid' ? 'white' : 'dark'"
+                            :label="$t('finance.applicantSearch.status.paid')"
+                            class="q-px-md text-caption"
+                            @click="
+                              searchForm.status = searchForm.status === 'Paid' ? null : 'Paid';
+                              void handleSearch();
+                            "
+                          />
+                          <q-btn
+                            unelevated
+                            dense
+                            no-caps
+                            :color="searchForm.status === 'Pending' ? 'warning' : 'grey-2'"
+                            :text-color="searchForm.status === 'Pending' ? 'white' : 'dark'"
+                            :label="$t('finance.applicantSearch.status.pending')"
+                            class="q-px-md text-caption"
+                            @click="
+                              searchForm.status =
+                                searchForm.status === 'Pending' ? null : 'Pending';
+                              void handleSearch();
+                            "
+                          />
+                        </div>
+                      </div>
 
-                    <div class="filter-field-group q-mb-lg">
-                      <label class="filter-label">{{
-                        $t('finance.applicantSearch.columns.status')
-                      }}</label>
-                      <div class="row q-gutter-xs">
+                      <q-separator class="q-my-sm" />
+                      <div class="row q-gutter-sm">
                         <q-btn
                           unelevated
+                          :label="$t('clear')"
+                          color="grey-2"
+                          text-color="dark"
                           dense
-                          :color="searchForm.status === 'Paid' ? 'positive' : 'grey-2'"
-                          :text-color="searchForm.status === 'Paid' ? 'white' : 'dark'"
-                          :label="$t('finance.applicantSearch.status.paid')"
-                          class="q-px-md text-caption"
                           no-caps
-                          @click="
-                            searchForm.status = searchForm.status === 'Paid' ? null : 'Paid';
-                            void handleSearch();
-                          "
+                          class="col q-px-md rounded-borders"
+                          @click="resetSearch"
                         />
                         <q-btn
                           unelevated
+                          :label="$t('ok')"
+                          color="primary"
                           dense
-                          :color="searchForm.status === 'Pending' ? 'warning' : 'grey-2'"
-                          :text-color="searchForm.status === 'Pending' ? 'white' : 'dark'"
-                          :label="$t('finance.applicantSearch.status.pending')"
-                          class="q-px-md text-caption"
                           no-caps
-                          @click="
-                            searchForm.status = searchForm.status === 'Pending' ? null : 'Pending';
-                            void handleSearch();
-                          "
+                          class="col q-px-md rounded-borders"
+                          v-close-popup
                         />
                       </div>
                     </div>
-
-                    <div class="row q-gutter-sm">
-                      <q-btn
-                        unelevated
-                        :label="$t('clear')"
-                        color="grey-2"
-                        text-color="dark"
-                        class="col rounded-borders"
-                        no-caps
-                        @click="resetSearch"
-                      />
-                      <q-btn
-                        unelevated
-                        :label="$t('ok')"
-                        color="primary"
-                        class="col rounded-borders"
-                        no-caps
-                        v-close-popup
-                      />
-                    </div>
-                  </div>
-                </q-menu>
-              </q-btn>
-            </template>
-          </q-input>
+                  </q-menu>
+                </q-btn>
+              </template>
+            </q-input>
+          </div>
         </div>
 
         <q-table
@@ -115,22 +120,18 @@
           :columns="columns"
           row-key="id"
           flat
-          dense
-          class="receipt-table applicant-results-table"
+          class="applicant-table"
           :loading="loading"
           :rows-per-page-options="[10, 25, 50, 100]"
-          :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
         >
           <template #body-cell-index="props">
-            <q-td :props="props" class="text-center">
-              {{ props.rowIndex + 1 }}
+            <q-td :props="props">
+              {{ props.rowIndex + 1 + (pagination.page - 1) * pagination.rowsPerPage }}
             </q-td>
           </template>
 
           <template #body-cell-amount="props">
-            <q-td :props="props" class="text-center text-weight-medium">
-              &#3647;{{ props.value.toLocaleString() }}
-            </q-td>
+            <q-td :props="props"> &#3647;{{ props.value.toLocaleString() }} </q-td>
           </template>
 
           <template #body-cell-courseInfo="props">
@@ -143,8 +144,8 @@
             <q-td :props="props" class="text-center">
               <q-badge
                 rounded
-                class="status-badge"
-                :class="props.value === 'Paid' ? 'status-badge--paid' : 'status-badge--pending'"
+                class="applicant-status-badge"
+                :color="props.value === 'Paid' ? 'positive' : 'grey-6'"
                 :label="
                   props.value === 'Paid'
                     ? $t('finance.applicantSearch.status.paid')
@@ -187,7 +188,7 @@
                   dense
                   options-dense
                   style="width: 80px"
-                  class="bg-white receipt-rows-select"
+                  class="bg-white applicant-rows-select"
                 />
                 <span class="text-subtitle2 text-grey-8">{{
                   $t('finance.receiptSummary.entries')
@@ -468,51 +469,122 @@ onMounted(() => {
   box-shadow: var(--admin-shadow-sm) !important;
 }
 
-.receipt-search {
-  width: 250px;
-}
+.applicant-list-head {
+  flex-wrap: wrap;
+  gap: 12px;
 
-.receipt-table {
-  :deep(.q-table__card) {
-    box-shadow: none;
-  }
-
-  :deep(thead tr) {
-    background: #e2e8f0;
-  }
-
-  :deep(th) {
-    font-weight: 600;
-    color: #334155;
-    font-size: 0.75rem;
-    white-space: pre-wrap;
-    text-align: center !important;
-    vertical-align: middle;
-    line-height: 1.3;
-    padding: 8px 6px;
-  }
-
-  :deep(tbody td) {
-    vertical-align: middle;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    white-space: pre-wrap;
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch !important;
   }
 }
 
-.status-badge {
-  padding: 6px 12px;
+.applicant-list-head__title {
+  color: var(--admin-navy, #10233f);
+}
+
+.applicant-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 320px;
+
+  @media (max-width: 600px) {
+    flex: 1 1 100%;
+    justify-content: stretch;
+
+    .applicant-search-input-main {
+      max-width: none;
+      flex: 1 1 100%;
+    }
+  }
+}
+
+.applicant-search-input-main {
+  flex: 1 1 280px;
+  min-width: 200px;
+  max-width: 520px;
+
+  :deep(.q-field__control) {
+    height: 52px;
+    padding: 0 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 2px solid #edf2f7;
+    border-radius: 26px !important;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+    background: #fff !important;
+
+    &:hover {
+      border-color: rgba(245, 166, 35, 0.35);
+    }
+
+    &.q-field__control--focused {
+      border-color: #f5a623;
+      box-shadow: 0 12px 28px rgba(245, 166, 35, 0.12);
+    }
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+
+  :deep(.q-field__native) {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1e293b;
+  }
+
+  :deep(.q-field__native::placeholder) {
+    color: #9e9e9e;
+    opacity: 1;
+  }
+
+  :deep(.q-field__marginal) {
+    height: 52px;
+  }
+}
+
+.applicant-table {
+  :deep(.q-table__top) {
+    padding: 0;
+  }
+
+  :deep(.q-table thead tr th) {
+    background: linear-gradient(180deg, #f1f5f9 0%, #e8eef5 100%);
+    font-weight: 800;
+    font-size: 0.8125rem;
+    color: #475569;
+    letter-spacing: 0.02em;
+  }
+
+  :deep(.q-table tbody tr:nth-child(even)) {
+    background: rgba(248, 246, 241, 0.55);
+  }
+
+  :deep(.q-table tbody td) {
+    font-size: 0.9rem;
+  }
+
+  :deep(.q-table__bottom) {
+    border-top: 1px solid var(--admin-line, #e2e8f0);
+  }
+}
+
+.applicant-status-badge {
   font-weight: 700;
-  font-size: 0.75rem;
+  padding: 6px 12px;
+  text-transform: none;
+}
 
-  &--paid {
-    background: rgba(34, 197, 94, 0.1) !important;
-    color: #16a34a !important;
-  }
-
-  &--pending {
-    background: rgba(239, 68, 68, 0.1) !important;
-    color: #dc2626 !important;
+.applicant-rows-select {
+  :deep(.q-field__control) {
+    min-height: 40px;
   }
 }
 

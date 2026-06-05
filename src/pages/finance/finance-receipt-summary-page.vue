@@ -184,22 +184,25 @@
           />
         </template>
 
-        <div class="text-center q-pt-lg q-pb-sm text-weight-bold text-subtitle1">
-          {{ $t('finance.receiptSummary.title') }}
-        </div>
-
-        <div class="row justify-end items-center q-px-md q-pb-md">
-          <q-input
-            v-model="search"
-            dense
-            outlined
-            :placeholder="$t('finance.receiptSummary.searchLabel')"
-            class="receipt-search"
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" />
-            </template>
-          </q-input>
+        <div class="receipt-table-head row items-center justify-between q-mb-md q-px-md">
+          <div class="receipt-table-head__title text-weight-bold text-body1">
+            {{ $t('finance.receiptSummary.title') }}
+          </div>
+          <div class="receipt-table-toolbar">
+            <q-input
+              v-model="search"
+              outlined
+              clearable
+              debounce="200"
+              :placeholder="$t('finance.receiptSummary.searchLabel')"
+              bg-color="white"
+              class="receipt-search-input-main"
+            >
+              <template #prepend>
+                <q-icon name="search" color="grey-5" />
+              </template>
+            </q-input>
+          </div>
         </div>
 
         <q-table
@@ -208,12 +211,13 @@
           row-key="id"
           flat
           dense
+          wrap-cells
           :filter="search"
           :loading="isLoading"
           class="receipt-table"
           v-model:pagination="pagination"
           :rows-per-page-options="[10, 25, 50, 100]"
-          :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
+          :header-style="{ fontSize: '0.72rem', whiteSpace: 'normal', lineHeight: '1.3' }"
         >
           <template v-slot:body-cell-status="props">
             <q-td :props="props">
@@ -358,7 +362,6 @@ import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import { ref, computed, nextTick, onMounted } from 'vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
 import { Notify, type QTableProps } from 'quasar';
-import { useI18n } from 'vue-i18n';
 import jsPDF from 'jspdf';
 import { autoTable, type CellHookData } from 'jspdf-autotable';
 import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
@@ -366,7 +369,6 @@ import * as XLSX from 'xlsx';
 import { useAuthStore } from 'stores/auth-store';
 import { api } from 'src/boot/axios';
 
-const { t } = useI18n();
 const authStore = useAuthStore();
 const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุ');
 
@@ -630,77 +632,92 @@ async function exportToPdf() {
 const columns = computed<QTableProps['columns']>(() => [
   {
     name: 'no',
-    label: t('finance.receiptSummary.columns.no'),
+    label: 'ลำดับ',
     field: 'no',
     align: 'center',
     sortable: true,
+    style: 'width: 60px; min-width: 60px;',
+    headerStyle: 'white-space: nowrap; width: 60px;',
   },
   {
     name: 'receiptNo',
-    label: t('finance.receiptSummary.columns.receiptNo'),
+    label: 'เลขที่ใบเสร็จรับเงิน',
     field: 'receiptNo',
     align: 'center',
     sortable: true,
+    style: 'width: 110px; min-width: 110px;',
+    headerStyle: 'white-space: normal; width: 110px;',
   },
   {
     name: 'customerName',
-    label: t('finance.receiptSummary.columns.fullName'),
+    label: 'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
     field: 'customerName',
     align: 'center',
     sortable: true,
-    style: 'white-space: nowrap;',
+    style: 'width: 150px; min-width: 120px; white-space: normal;',
+    headerStyle: 'white-space: normal; width: 150px;',
   },
   {
     name: 'amount',
-    label: t('finance.receiptSummary.columns.amount'),
+    label: 'จำนวนเงิน',
     field: 'amount',
     align: 'center',
     sortable: true,
+    style: 'width: 90px; min-width: 90px;',
+    headerStyle: 'white-space: nowrap; width: 90px;',
   },
   {
     name: 'effectiveDate',
-    label: t('finance.receiptSummary.columns.effectiveDate'),
+    label: 'วันที่ชำระเงิน (effective date)',
     field: 'effectiveDate',
     align: 'center',
     sortable: true,
+    style: 'width: 120px; min-width: 100px; white-space: normal;',
+    headerStyle: 'white-space: normal; width: 120px;',
   },
   {
     name: 'learnerName',
-    label: t('finance.receiptSummary.columns.learnerName'),
+    label: 'ชื่อ-สกุล ผู้เรียน',
     field: 'learnerName',
     align: 'center',
     sortable: true,
-    style: 'white-space: nowrap;',
+    style: 'width: 120px; min-width: 100px; white-space: normal;',
+    headerStyle: 'white-space: normal; width: 120px;',
   },
   {
     name: 'courseName',
-    label: t('finance.receiptSummary.columns.courseName'),
+    label: 'ชื่อโครงการ/อบรม/หลักสูตร',
     field: 'courseName',
     align: 'center',
     sortable: true,
-    style: 'width: 250px',
-    headerStyle: 'white-space: pre-wrap; width: 250px',
+    style: 'width: 180px; min-width: 140px; white-space: normal;',
+    headerStyle: 'white-space: normal; width: 180px;',
   },
   {
     name: 'collector',
-    label: t('finance.receiptSummary.columns.collector'),
+    label: 'ผู้รับเงิน (Collector)\nวันที่ใบเสร็จรับเงิน',
     field: 'collector',
     align: 'center',
     sortable: true,
-    headerStyle: 'white-space: pre-wrap;',
+    style: 'width: 200px; min-width: 150px; white-space: normal;',
+    headerStyle: 'white-space: normal; width: 200px;',
   },
   {
     name: 'status',
-    label: t('finance.receiptSummary.columns.status'),
+    label: 'สถานะ',
     field: 'status',
     align: 'center',
     sortable: true,
+    style: 'width: 90px; min-width: 90px;',
+    headerStyle: 'white-space: nowrap; width: 90px;',
   },
   {
     name: 'printReceipt',
-    label: t('finance.receiptSummary.columns.actions'),
+    label: 'พิมพ์สำเนาใบเสร็จรับเงิน',
     field: 'printReceipt',
     align: 'center',
+    style: 'width: 90px; min-width: 90px;',
+    headerStyle: 'white-space: normal; width: 90px;',
   },
 ]);
 
@@ -789,32 +806,124 @@ function exportToExcel() {
 </script>
 
 <style lang="scss" scoped>
-.receipt-search {
-  width: 250px;
+.receipt-table-head {
+  flex-wrap: wrap;
+  gap: 12px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+}
+
+.receipt-table-head__title {
+  color: var(--admin-navy, #10233f);
+}
+
+.receipt-table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 320px;
+
+  @media (max-width: 600px) {
+    flex: 1 1 100%;
+    justify-content: stretch;
+
+    .receipt-search-input-main {
+      max-width: none;
+      flex: 1 1 100%;
+    }
+  }
+}
+
+.receipt-search-input-main {
+  flex: 1 1 280px;
+  min-width: 200px;
+  max-width: 520px;
+
+  :deep(.q-field__control) {
+    height: 52px;
+    padding: 0 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 2px solid #edf2f7;
+    border-radius: 26px !important;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+    background: #fff !important;
+
+    &:hover {
+      border-color: rgba(245, 166, 35, 0.35);
+    }
+
+    &.q-field__control--focused {
+      border-color: #f5a623;
+      box-shadow: 0 12px 28px rgba(245, 166, 35, 0.12);
+    }
+
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+
+  :deep(.q-field__native) {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1e293b;
+  }
+
+  :deep(.q-field__native::placeholder) {
+    color: #9e9e9e;
+    opacity: 1;
+  }
+
+  :deep(.q-field__marginal) {
+    height: 52px;
+  }
+}
+
+.receipt-filter-button {
+  min-width: 40px;
+  height: 40px;
 }
 
 .receipt-table {
-  :deep(.q-table__card) {
-    box-shadow: none;
+  :deep(.q-table__top) {
+    padding: 0;
   }
-  :deep(thead tr) {
-    background: #e2e8f0; // slightly darker for header as in screenshot
+
+  :deep(.q-table thead tr th) {
+    background: linear-gradient(180deg, #f1f5f9 0%, #e8eef5 100%);
+    font-weight: 800;
+    font-size: 0.78rem;
+    color: #475569;
+    letter-spacing: 0.02em;
+    padding: 8px 10px;
   }
-  :deep(th) {
-    font-weight: 600;
-    color: #334155;
-    font-size: 0.75rem;
-    white-space: pre-wrap; // To allow \n in labels
-    text-align: center !important;
+
+  :deep(.q-table tbody tr:nth-child(even)) {
+    background: rgba(248, 246, 241, 0.55);
+  }
+
+  :deep(.q-table tbody td) {
+    font-size: 0.86rem;
     vertical-align: middle;
+    padding: 6px 8px;
     line-height: 1.3;
-    padding: 8px 6px;
+    word-break: break-word;
   }
-  :deep(tbody td) {
-    vertical-align: middle;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    white-space: pre-wrap; // To allow \n in content like dates
+
+  :deep(.q-table tbody tr) {
+    min-height: 34px;
+  }
+
+  :deep(.q-table__bottom) {
+    border-top: 1px solid var(--admin-line, #e2e8f0);
   }
 }
 
