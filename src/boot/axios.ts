@@ -1,6 +1,5 @@
 import { defineBoot } from '#q-app/wrappers';
 import axios, { type AxiosInstance } from 'axios';
-import { Notify } from 'quasar';
 import { useAuthStore } from 'src/stores/auth-store';
 
 declare module 'vue' {
@@ -41,13 +40,7 @@ export default defineBoot(({ app, router: vueRouter }) => {
         void vueRouter.push('/login');
       }
       if (status === 403) {
-        Notify.create({
-          type: 'negative',
-          icon: 'lock',
-          message: 'คุณไม่มีสิทธิ์เข้าถึงส่วนนี้',
-          position: 'top',
-          timeout: 3000,
-        });
+        void vueRouter.push('/403');
       }
       return Promise.reject(error instanceof Error ? error : new Error(String(error)));
     },

@@ -236,6 +236,11 @@ const routes: RouteRecordRaw[] = [
     children: [{ path: '', component: () => import('pages/register-page.vue') }],
   },
   {
+    path: '/403',
+    component: () => import('pages/Error403Forbidden.vue'),
+    meta: { public: true },
+  },
+  {
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),
   },
