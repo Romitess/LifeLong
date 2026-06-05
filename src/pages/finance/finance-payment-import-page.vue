@@ -14,7 +14,7 @@
       </template>
     </AdminPageHero>
 
-    <section class="admin-shell admin-content">
+    <section v-if="!isFinalized" class="admin-shell admin-content">
       <div class="payment-import-main-container">
         <AdminSurfaceCard :title="$t('finance.paymentImport.uploadSectionTitle')" body-padding="lg">
           <div class="import-station-container">
@@ -749,33 +749,111 @@
       </div>
     </section>
 
+    <section v-else class="admin-shell admin-content">
+      <AdminSurfaceCard class="q-mt-md flex-center column q-pa-xl">
+        <q-icon name="check_circle" color="positive" size="64px" class="q-mb-md" />
+        <div class="text-h5 text-weight-bold q-mb-lg">บันทึกและออกใบเสร็จสำเร็จ</div>
+
+        <div class="row q-col-gutter-lg q-mb-xl full-width justify-center">
+          <div class="col-12 col-sm-3 text-center">
+            <div class="text-h4 text-weight-bold text-primary">
+              {{ importResult?.summary.totalImported || 0 }}
+            </div>
+            <div class="text-subtitle1 text-grey-8">นำเข้าสำเร็จ (รายการ)</div>
+          </div>
+          <div class="col-12 col-sm-3 text-center">
+            <div class="text-h4 text-weight-bold text-positive">
+              {{ importResult?.summary.totalReceiptGenerated || 0 }}
+            </div>
+            <div class="text-subtitle1 text-grey-8">ออกใบเสร็จ (ใบ)</div>
+          </div>
+          <div class="col-12 col-sm-3 text-center">
+            <div class="text-h4 text-weight-bold text-warning">
+              {{ importResult?.summary.totalSkipped || 0 }}
+            </div>
+            <div class="text-subtitle1 text-grey-8">ข้าม/ซ้ำ (รายการ)</div>
+          </div>
+        </div>
+
+        <div class="row q-gutter-md">
+          <q-btn unelevated color="primary" label="นำเข้าชุดใหม่" no-caps @click="resetImport" />
+        </div>
+      </AdminSurfaceCard>
+    </section>
+
     <!-- Unified Confirm Dialog -->
-    <AdminConfirmDialog
-      v-model="showSaveConfirm"
-      :title="$t('finance.paymentImport.confirmSaveTitle')"
-      :message="$t('finance.paymentImport.confirmSaveMessage')"
-      :confirm-label="$t('finance.paymentImport.confirmBtn')"
-      :cancel-label="$t('finance.paymentImport.cancelBtn')"
-      icon="fact_check"
-      @confirm="executeFinalizeImport"
-    />
+    <q-dialog v-model="showSaveConfirm" persistent>
+      <q-card style="min-width: 400px; border-radius: 16px" class="q-pa-sm">
+        <q-card-section class="row items-center q-pb-sm">
+          <div class="text-h6 text-weight-bold">ยืนยันการบันทึกและออกใบเสร็จ</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup :disable="isGenerating" />
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <div class="text-subtitle1 text-weight-bold q-mb-sm">ประเภทใบเสร็จ:</div>
+          <q-option-group
+            v-model="receiptType"
+            :options="[
+              { label: 'ตัวจริง (R)', value: 'R' },
+              { label: 'สำเนา (D)', value: 'D' },
+            ]"
+            color="primary"
+            inline
+            :disable="isGenerating"
+          />
+
+          <div class="text-subtitle1 text-weight-bold q-mt-md q-mb-sm">ผู้ออกใบเสร็จ:</div>
+          <q-option-group
+            v-model="createdBy"
+            :options="[
+              { label: 'นักศึกษาออกเอง (S)', value: 'S' },
+              { label: 'เจ้าหน้าที่ออกให้ (P)', value: 'P' },
+            ]"
+            color="primary"
+            inline
+            :disable="isGenerating"
+          />
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-px-md q-pb-md">
+          <q-btn flat label="ยกเลิก" color="grey-8" v-close-popup no-caps :disable="isGenerating" />
+          <q-btn
+            unelevated
+            label="ยืนยันและออกใบเสร็จ"
+            color="primary"
+            no-caps
+            :loading="isGenerating"
+            @click="executeFinalizeImport"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import AdminPageHero from 'components/admin/AdminPageHero.vue';
 import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
 import { useQuasar, type QTableProps } from 'quasar';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from 'stores/auth-store';
+import { usePaymentImportApi } from 'src/composables/usePaymentImportApi';
+import type { ImportAndGenerateResponse } from 'src/composables/usePaymentImportApi';
 
 const $q = useQuasar();
 const { t } = useI18n();
 const router = useRouter();
 const authStore = useAuthStore();
+const { importAndGenerate } = usePaymentImportApi();
+
+const isFinalized = ref(false);
+const isGenerating = ref(false);
+const importResult = ref<ImportAndGenerateResponse | null>(null);
+const receiptType = ref<'R' | 'D'>('R');
+const createdBy = ref<'S' | 'P'>('P');
 
 type ImportedPaymentRow = {
   id: string;
@@ -1218,15 +1296,70 @@ function finalizeImport() {
   showSaveConfirm.value = true;
 }
 
-function executeFinalizeImport() {
-  isVerifying.value = false;
-  $q.notify({
-    type: 'positive',
-    message: t('finance.paymentImport.notifications.completed'),
-    icon: 'verified_user',
-    position: 'top',
-    timeout: 2500,
-  });
+async function executeFinalizeImport() {
+  isGenerating.value = true;
+
+  try {
+    const records = importedRows.value
+      .filter((row) => row.status === 'verified')
+      .map((row) => ({
+        learnerRef: row.learnerRef,
+        applicationRef: row.applicationRef,
+        payerName: row.payerName,
+        paymentDate: row.paymentDate,
+        paymentTime: row.paymentTime,
+        amount: row.amount,
+      }));
+
+    const response = await importAndGenerate({
+      records,
+      receiptType: receiptType.value,
+      createdBy: createdBy.value,
+      creatorUserId: Number(authStore.user?.id) || 0,
+      creatorIp: '',
+      creatorDevice: navigator.userAgent,
+    });
+
+    importResult.value = response;
+    showSaveConfirm.value = false;
+    isFinalized.value = true;
+
+    if (response.summary.totalFailed > 0) {
+      const errorDetail = response.summary.errors?.length
+        ? `\nรายละเอียด: ${response.summary.errors[0]}`
+        : '';
+      $q.notify({
+        type: 'warning',
+        message: `มีข้อผิดพลาดบางส่วน (ไม่สำเร็จ ${response.summary.totalFailed} รายการ)${errorDetail}`,
+        position: 'top',
+        timeout: 10000,
+        multiLine: true,
+      });
+    } else {
+      $q.notify({
+        type: 'positive',
+        message: 'นำเข้าและออกใบเสร็จสำเร็จทั้งหมด',
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    console.error('Failed to import and generate receipts:', error);
+    $q.notify({
+      type: 'negative',
+      message: 'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์',
+      position: 'top',
+    });
+  } finally {
+    isGenerating.value = false;
+    isVerifying.value = false;
+  }
+}
+
+function resetImport() {
+  importedRows.value = [];
+  selectedFiles.value = [];
+  isFinalized.value = false;
+  importResult.value = null;
 }
 
 function confirmClearAll() {
