@@ -1,18 +1,17 @@
 <template>
   <q-page class="instructor-chat-page">
     <div v-if="isTeachingRole" class="section-container instructor-chat-page__inner">
-      <section class="chat-hero">
-        <div>
-          <div class="text-overline text-primary text-weight-bold">Instructor Chat</div>
-          <h1 class="chat-hero__title">สนทนากับผู้เรียน</h1>
-          <p class="chat-hero__subtitle">
-            ติดตามข้อความจากผู้เรียนในรายวิชาที่คุณรับผิดชอบ และตอบกลับจากหน้าผู้สอนได้ทันที
-          </p>
-        </div>
-        <q-badge rounded color="primary" class="chat-hero__badge">
-          {{ conversationEntries.length }} ห้องสนทนา
-        </q-badge>
-      </section>
+      <InstructorPageHero
+        eyebrow="Instructor Workspace"
+        title="สนทนากับผู้เรียน"
+        description="ติดตามข้อความจากผู้เรียนในรายวิชาที่คุณรับผิดชอบ และตอบกลับจากหน้าผู้สอนได้ทันที"
+      >
+        <template #actions>
+          <q-badge rounded color="primary" class="chat-hero__badge">
+            {{ conversationEntries.length }} ห้องสนทนา
+          </q-badge>
+        </template>
+      </InstructorPageHero>
 
       <div v-if="conversationEntriesUnsorted.length > 0" class="row q-col-gutter-lg">
         <div class="col-12 col-lg-4">
@@ -198,6 +197,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
+import InstructorPageHero from 'components/instructor/InstructorPageHero.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { useInstructorBackend } from 'src/composables/use-instructor-backend';

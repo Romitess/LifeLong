@@ -32,10 +32,7 @@ export function useProfileNavigation() {
   }
 
   function goToInstructorLearningResults(): void {
-    void router.push({
-      path: '/instructor/students',
-      query: { tab: 'results' },
-    });
+    void router.push('/instructor/results');
   }
 
   function goToInstructorCertificates(): void {

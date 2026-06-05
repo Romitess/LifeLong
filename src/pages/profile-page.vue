@@ -697,7 +697,7 @@ function formatThaiDateTime(date: Date): string {
 
 onMounted(async () => {
   const username = authStore.user?.username;
-  if (username) {
+  if (username && !isTeachingRole.value) {
     await courseRegistrationStore.fetchMyEnrollments(username);
     const enrollIds = courseRegistrationStore.myRegistrations
       .map((r) => r.enrollId)

@@ -1,25 +1,23 @@
 <template>
   <q-page class="instructor-students-page">
     <div class="section-container instructor-students">
-      <section class="students-hero">
-        <div>
-          <div class="students-hero__eyebrow">Student Report Card</div>
-          <h1>บันทึกผลการเรียน</h1>
-          <p v-if="selectedCourse">
-            {{ selectedCourse.code }} {{ selectedCourse.titleEn || selectedCourse.title }}
-          </p>
-          <p v-else>เลือกคอร์สเพื่อบันทึกผลการเรียน</p>
-        </div>
-        <BaseButton
-          v-if="selectedCourse"
-          outline
-          color="primary"
-          icon="arrow_back"
-          label="กลับไปเลือกคอร์ส"
-          no-caps
-          @click="clearSelectedCourse"
-        />
-      </section>
+      <InstructorPageHero
+        eyebrow="Instructor Workspace"
+        :title="studentHeroTitle"
+        :description="studentHeroDescription"
+      >
+        <template #actions>
+          <BaseButton
+            v-if="selectedCourse"
+            outline
+            color="primary"
+            icon="arrow_back"
+            label="กลับไปเลือกคอร์ส"
+            no-caps
+            @click="clearSelectedCourse"
+          />
+        </template>
+      </InstructorPageHero>
 
       <section v-if="!selectedCourse" class="student-course-list-panel">
         <div class="student-course-list-panel__header">
@@ -1044,6 +1042,7 @@ import type { Course } from 'src/types/course';
 import buuLogoUrl from 'src/assets/buu-logo-receipt.png';
 import BaseDateInput from 'src/components/base/BaseDateInput.vue';
 import BaseButton from 'src/components/base/BaseButton.vue';
+import InstructorPageHero from 'src/components/instructor/InstructorPageHero.vue';
 
 interface LearnerRow {
   id: string;
@@ -1091,6 +1090,18 @@ const selectedCourseId = ref(typeof route.query.courseId === 'string' ? route.qu
 const activeStudentTab = computed<'roster' | 'results'>(() =>
   route.path.includes('/instructor/results') ? 'results' : 'roster',
 );
+const studentHeroTitle = computed(() =>
+  activeStudentTab.value === 'results' ? 'บันทึกผลการเรียน' : 'ตรวจสอบรายชื่อ',
+);
+const studentHeroDescription = computed(() => {
+  if (selectedCourse.value) {
+    return `${selectedCourse.value.code} ${selectedCourse.value.titleEn || selectedCourse.value.title}`;
+  }
+
+  return activeStudentTab.value === 'results'
+    ? 'เลือกคอร์สเพื่อบันทึกผลการเรียน'
+    : 'เลือกคอร์สเพื่อตรวจสอบรายชื่อผู้เรียน';
+});
 const learnerDetailDialogOpen = ref(false);
 const selectedLearner = ref<LearnerRow | null>(null);
 const searchQuery = ref('');

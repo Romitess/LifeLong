@@ -19,7 +19,7 @@
 
             <div class="instructor-hero__copy">
               <div class="instructor-hero__eyebrow">Instructor Workspace</div>
-              <h1>{{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}</h1>
+              <h1>{{ instructorHeroTitle }}</h1>
               <div class="instructor-hero__meta">
                 <q-badge rounded color="positive" label="Teacher" class="text-weight-bold" />
                 <span>{{ authStore.user?.studentId }}</span>
@@ -1649,6 +1649,9 @@ const isCourseTableView = computed(() => route.query.view === 'table');
 const courseTableTitle = computed(() =>
   courseStatusFilter.value === 'active' ? 'รายวิชาที่เปิดสอน' : 'รายวิชาของฉัน',
 );
+const instructorHeroTitle = computed(() =>
+  isCourseTableView.value ? courseTableTitle.value : 'รายวิชาของฉัน',
+);
 const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
 );
@@ -2723,12 +2726,39 @@ function openQuickDialog(title: string): void {
   }
 }
 
+.instructor-hero::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: -42%;
+  left: -34%;
+  width: 34%;
+  height: 184%;
+  background: linear-gradient(
+    105deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.08) 32%,
+    rgba(255, 255, 255, 0.34) 48%,
+    rgba(255, 246, 199, 0.24) 56%,
+    rgba(255, 255, 255, 0) 74%
+  );
+  filter: blur(1px);
+  opacity: 0.88;
+  pointer-events: none;
+  transform: rotate(10deg);
+  animation: instructorHeroShine 9.5s ease-in-out infinite;
+}
+
 .instructor-hero__particles,
 .instructor-hero__overlay {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+}
+
+.instructor-hero__particles {
+  z-index: 2;
 }
 
 .instructor-hero__overlay {
@@ -2751,7 +2781,7 @@ function openQuickDialog(title: string): void {
 
 .instructor-hero__content {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2760,6 +2790,17 @@ function openQuickDialog(title: string): void {
   margin: 0 auto;
   min-height: 200px;
   padding: 32px 24px;
+}
+
+@keyframes instructorHeroShine {
+  0% {
+    transform: translateX(0) rotate(10deg);
+  }
+
+  42%,
+  100% {
+    transform: translateX(440%) rotate(10deg);
+  }
 }
 
 .instructor-hero__identity {

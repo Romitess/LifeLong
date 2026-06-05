@@ -1,22 +1,23 @@
 <template>
   <q-page class="certificate-page">
     <div class="section-container certificate-page__inner">
-      <section class="certificate-hero">
-        <div>
-          <div class="certificate-hero__eyebrow">Certificate Builder</div>
-          <h1>สร้าง Certificate</h1>
-          <p>เลือกรายวิชา ตรวจสอบผู้เรียนที่ผ่านเกณฑ์ แล้วสร้างหรือพิมพ์ Certificate รายบุคคล</p>
-        </div>
-        <q-btn
-          v-if="selectedCourse"
-          outline
-          color="primary"
-          icon="arrow_back"
-          label="กลับไปเลือกรายวิชา"
-          no-caps
-          @click="clearSelectedCourse"
-        />
-      </section>
+      <InstructorPageHero
+        eyebrow="Instructor Workspace"
+        title="สร้าง Certificate"
+        description="เลือกรายวิชา ตรวจสอบผู้เรียนที่ผ่านเกณฑ์ แล้วสร้างหรือพิมพ์ Certificate รายบุคคล"
+      >
+        <template #actions>
+          <q-btn
+            v-if="selectedCourse"
+            outline
+            color="primary"
+            icon="arrow_back"
+            label="กลับไปเลือกรายวิชา"
+            no-caps
+            @click="clearSelectedCourse"
+          />
+        </template>
+      </InstructorPageHero>
 
       <section v-if="!selectedCourse" class="certificate-panel">
         <div class="certificate-panel__header">
@@ -183,6 +184,7 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import CertificateModal from 'components/certificate/CertificateModal.vue';
+import InstructorPageHero from 'components/instructor/InstructorPageHero.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import type { Course } from 'src/types/course';
