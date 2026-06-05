@@ -1,13 +1,13 @@
 <template>
   <div class="chapter-tab">
-    <AdminSurfaceCard
+    <AppSurfaceCard
       eyebrow="Chapter Structure"
       title="บทเรียน"
       subtitle="โครงสร้างบทเรียนและหัวข้อย่อยของรายวิชา"
       body-padding="lg"
     >
       <template v-if="!readonly" #header-actions>
-        <AdminActionButton variant="primary" icon="add" label="เพิ่มบทเรียน" @click="addChapter" />
+        <AppActionButton variant="primary" icon="add" label="เพิ่มบทเรียน" @click="addChapter" />
       </template>
 
       <div v-if="chapters.length === 0" class="chapter-tab__empty">
@@ -19,7 +19,7 @@
 
       <div v-else class="chapter-tab__list">
         <div v-for="(chapter, idx) in chapters" :key="idx">
-          <AdminSurfaceCard surface="subtle" body-padding="md">
+          <AppSurfaceCard surface="subtle" body-padding="md">
             <!-- Header row -->
             <div class="chapter-tab__card-header">
               <span class="chapter-tab__seq">{{ idx + 1 }}</span>
@@ -173,10 +173,10 @@
                 />
               </div>
             </div>
-          </AdminSurfaceCard>
+          </AppSurfaceCard>
         </div>
       </div>
-    </AdminSurfaceCard>
+    </AppSurfaceCard>
   </div>
 </template>
 
@@ -184,8 +184,8 @@
 import { computed } from 'vue';
 import type { ChapterTypeFormOption, CourseChapterPayload } from 'src/types/admin-courses';
 import BaseButton from 'components/base/BaseButton.vue';
-import AdminSurfaceCard from './AdminSurfaceCard.vue';
-import AdminActionButton from './AdminActionButton.vue';
+import AppSurfaceCard from './AppSurfaceCard.vue';
+import AppActionButton from './AppActionButton.vue';
 
 interface Props {
   modelValue: CourseChapterPayload[];

@@ -24,8 +24,8 @@
       </q-card-section>
 
       <q-card-actions class="admin-confirm-dialog__actions">
-        <AdminActionButton variant="secondary" :label="cancelLabel" no-caps @click="onCancel" />
-        <AdminActionButton
+        <AppActionButton variant="secondary" :label="cancelLabel" no-caps @click="onCancel" />
+        <AppActionButton
           :variant="toneMeta.buttonVariant"
           :label="confirmLabel"
           :icon="confirmIcon || toneMeta.confirmIcon"
@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import AdminActionButton from './AdminActionButton.vue';
+import AppActionButton from './AppActionButton.vue';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger';
 

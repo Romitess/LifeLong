@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page admin-basics-page">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Base Settings"
       eyebrow-icon="tune"
       title="จัดการข้อมูลพื้นฐาน"
@@ -14,7 +14,7 @@
           class="admin-basics-page__hero-badge"
         />
       </template>
-    </AdminPageHero>
+    </AppPageHero>
 
     <section ref="basicsContentRef" class="admin-shell admin-content admin-basics-page__shell">
       <AdminSectionNav v-model="activeMenu" :items="menuItems" />
@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
 import CategoriesManager from 'components/admin/CategoriesManager.vue';
 import CertificateSignerManager from 'components/admin/CertificateSignerManager.vue';
 import CertificateTemplateManager from 'components/admin/CertificateTemplateManager.vue';

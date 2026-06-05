@@ -1,5 +1,5 @@
 <template>
-  <AdminSurfaceCard :accent="accent" body-class="admin-metric-card__body">
+  <AppSurfaceCard :accent="accent" body-class="admin-metric-card__body">
     <div class="admin-metric-card__icon" :style="{ background: iconTint, color: iconColor }">
       <q-icon :name="icon" size="24px" />
     </div>
@@ -10,11 +10,11 @@
     <div v-if="$slots.footer" class="admin-metric-card__footer">
       <slot name="footer" />
     </div>
-  </AdminSurfaceCard>
+  </AppSurfaceCard>
 </template>
 
 <script setup lang="ts">
-import AdminSurfaceCard from './AdminSurfaceCard.vue';
+import AppSurfaceCard from './AppSurfaceCard.vue';
 
 interface Props {
   icon: string;

@@ -13,7 +13,7 @@
       </div>
     </div>
 
-    <AdminSurfaceCard
+    <AppSurfaceCard
       :eyebrow="t('finance.registrationStatistics.eyebrow')"
       :title="t('finance.registrationStatistics.cardTitle')"
       :subtitle="t('finance.registrationStatistics.cardSubtitle')"
@@ -21,13 +21,13 @@
     >
       <template #header-actions>
         <div class="row items-center q-gutter-x-sm">
-          <AdminSearchInput
+          <AppSearchInput
             v-model="searchQuery"
             :placeholder="t('finance.registrationStatistics.searchPlaceholder')"
             class="registration-statistics-report__search"
             @update:model-value="handleSearch"
           />
-          <AdminActionButton
+          <AppActionButton
             variant="primary"
             icon="download"
             :label="t('finance.registrationStatistics.exportBtn')"
@@ -244,16 +244,16 @@
           @update:model-value="handlePageChange"
         />
       </div>
-    </AdminSurfaceCard>
+    </AppSurfaceCard>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
 import AdminRegistrationExportDialog from 'components/admin/AdminRegistrationExportDialog.vue';
-import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppSearchInput from 'components/admin/AppSearchInput.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminRegistrationStatisticsReport } from 'src/composables/use-admin-registration-statistics-report';
 import type { AdminRegistrationStatisticsReportResponse } from 'src/types/admin-registration-statistics-report';

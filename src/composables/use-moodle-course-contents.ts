@@ -18,7 +18,7 @@ interface MoodleSection {
 const MODULE_CONFIG: Record<string, { icon: string; type: Lesson['type'] }> = {
   forum: { icon: 'forum', type: 'article' },
   quiz: { icon: 'help_outline', type: 'quiz' },
-  assign: { icon: 'assignment', type: 'quiz' },
+  assign: { icon: 'upload_file', type: 'quiz' },
   resource: { icon: 'insert_drive_file', type: 'article' },
   page: { icon: 'article', type: 'article' },
   url: { icon: 'link', type: 'article' },
@@ -35,35 +35,28 @@ const MODULE_CONFIG: Record<string, { icon: string; type: Lesson['type'] }> = {
 
 const DEFAULT_MODULE_CONFIG = { icon: 'open_in_new', type: 'article' as const };
 
-const SECTION_COLORS = [
-  'info',
-  'secondary',
-  'warning',
-  'primary',
-  'teal',
-  'deep-orange',
-  'pink',
-  'purple',
-  'blue',
-  'cyan',
-  'red',
-  'positive',
-];
+function getSectionColor(modules: MoodleModule[]): string {
+  const countable = modules.filter((m) => m.modname !== 'label');
+  if (!countable.length) return 'grey';
 
-const SECTION_ICONS = [
-  'info',
-  'campaign',
-  'assignment',
-  'auto_awesome',
-  'edit_note',
-  'construction',
-  'palette',
-  'image',
-  'description',
-  'code',
-  'movie',
-  'task_alt',
-];
+  const modnames = countable.map((m) => m.modname);
+  if (modnames.some((n) => n === 'assign')) return 'deep-orange';
+  if (modnames.some((n) => n === 'quiz' || n === 'choice' || n === 'workshop')) return 'teal';
+  if (modnames.some((n) => n === 'forum' || n === 'chat')) return 'info';
+  if (modnames.some((n) => n === 'scorm' || n === 'h5pactivity')) return 'purple';
+  return 'blue';
+}
+
+function getSectionIcon(modules: MoodleModule[]): string {
+  const countable = modules.filter((m) => m.modname !== 'label');
+  if (!countable.length) return 'folder_open';
+
+  const modnames = countable.map((m) => m.modname);
+  if (modnames.some((n) => n === 'assign')) return 'upload_file';
+  if (modnames.some((n) => n === 'quiz' || n === 'choice' || n === 'workshop'))
+    return MODULE_CONFIG['quiz']!.icon;
+  return (MODULE_CONFIG[modnames[0]!] ?? DEFAULT_MODULE_CONFIG).icon;
+}
 
 function mapSections(sections: MoodleSection[]): CourseModule[] {
   return sections
@@ -71,8 +64,8 @@ function mapSections(sections: MoodleSection[]): CourseModule[] {
     .map(
       (section, idx): CourseModule => ({
         title: section.name || `ส่วนที่ ${idx + 1}`,
-        icon: SECTION_ICONS[idx % SECTION_ICONS.length]!,
-        color: SECTION_COLORS[idx % SECTION_COLORS.length]!,
+        icon: getSectionIcon(section.modules ?? []),
+        color: getSectionColor(section.modules ?? []),
         lessons: (section.modules ?? [])
           .filter((m) => m.modname !== 'label')
           .map((mod): Lesson => {
@@ -80,6 +73,7 @@ function mapSections(sections: MoodleSection[]): CourseModule[] {
             return {
               title: mod.name,
               type: cfg.type,
+              icon: cfg.icon,
               duration: '',
               ...(mod.url !== undefined ? { moodleUrl: mod.url } : {}),
               moodleModuleId: mod.id,

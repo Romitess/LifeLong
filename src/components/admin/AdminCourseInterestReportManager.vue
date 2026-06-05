@@ -13,14 +13,14 @@
       </div>
     </div>
 
-    <AdminSurfaceCard
+    <AppSurfaceCard
       eyebrow="Course Interest Report"
       title="รายวิชาที่ได้รับความสนใจ"
       subtitle="เรียงตามจำนวนการเข้าชมรายวิชาและจำนวนผู้ลงทะเบียนจากฐานข้อมูลจริง"
       body-padding="none"
     >
       <template #header-actions>
-        <AdminSearchInput
+        <AppSearchInput
           v-model="search"
           placeholder="ค้นหาด้วยชื่อรายวิชา รหัสวิชา หรือผู้รับผิดชอบ..."
           :debounce="250"
@@ -187,14 +187,14 @@
           @update:model-value="handlePageChange"
         />
       </div>
-    </AdminSurfaceCard>
+    </AppSurfaceCard>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppSearchInput from 'components/admin/AppSearchInput.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCourseInterestReport } from 'src/composables/use-admin-course-interest-report';

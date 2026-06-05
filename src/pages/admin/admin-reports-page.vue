@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page admin-reports-page">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Admin Reports"
       eyebrow-icon="analytics"
       title="รายงาน"
@@ -14,7 +14,7 @@
           class="admin-reports-page__hero-badge"
         />
       </template>
-    </AdminPageHero>
+    </AppPageHero>
 
     <section ref="reportsContentRef" class="admin-shell admin-content admin-reports-page__shell">
       <AdminSectionNav v-model="activeMenu" :items="menuItems" />
@@ -33,7 +33,7 @@
 import { computed, nextTick, ref, watch } from 'vue';
 import AdminCourseInterestReportManager from 'components/admin/AdminCourseInterestReportManager.vue';
 import AdminRegistrationStatisticsReportManager from 'components/admin/AdminRegistrationStatisticsReportManager.vue';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
 import AdminSectionNav, { type AdminSectionNavItem } from 'components/admin/AdminSectionNav.vue';
 
 type ReportsMenu = 'interested-courses' | 'registration-statistics';

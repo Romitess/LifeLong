@@ -235,6 +235,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import {
@@ -290,6 +291,8 @@ const courseStore = useCourseStore();
 courseStore.init();
 const { myRegistrations, myRegisteredCourseEntries } = useMyRegisteredCourses();
 const { goToCourse } = useProfileNavigation();
+const route = useRoute();
+const router = useRouter();
 
 // Page state
 const isTeachingRole = computed(
@@ -475,6 +478,45 @@ const menuItems = computed<MenuItem[]>(() => [
   { label: t('profile.menu.benefits'), value: 'benefits', icon: 'card_giftcard' },
   { label: t('profile.menu.chat'), value: 'chat', icon: 'chat' },
 ]);
+
+// Nested routing for profile tabs: /profile/<slug> ↔ activeMenu (no query params).
+// URL slug ('courses') differs from the internal tab value ('my-courses').
+const TAB_TO_SLUG: Record<string, string> = {
+  'my-courses': 'courses',
+  'saved-courses': 'saved',
+  'personal-info': 'personal-info',
+  benefits: 'benefits',
+  chat: 'chat',
+};
+const SLUG_TO_TAB: Record<string, string> = Object.fromEntries(
+  Object.entries(TAB_TO_SLUG).map(([tab, slug]) => [slug, tab]),
+);
+
+function getRouteSlug(): string {
+  const raw = route.params.tab;
+  return Array.isArray(raw) ? (raw[0] ?? '') : (raw ?? '');
+}
+
+// Route → tab: render the correct tab component for /profile/<slug>.
+// Falls back to the existing default ('my-courses') when the slug is absent or invalid.
+watch(
+  () => route.params.tab,
+  () => {
+    const tab = SLUG_TO_TAB[getRouteSlug()];
+    if (tab && tab !== activeMenu.value) {
+      activeMenu.value = tab;
+    }
+  },
+  { immediate: true },
+);
+
+// Tab → route: keep the URL in sync when the user switches tabs via the sidebar.
+watch(activeMenu, (tab) => {
+  const slug = TAB_TO_SLUG[tab];
+  if (slug && slug !== getRouteSlug()) {
+    void router.replace({ path: `/profile/${slug}` });
+  }
+});
 
 const filteredRegistrations = computed<RegisteredCourseEntry[]>(() => {
   if (!courseSearch.value.trim()) return myRegisteredCourseEntries.value;

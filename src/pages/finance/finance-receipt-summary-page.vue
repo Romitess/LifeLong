@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page finance-receipt-summary-page">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="receipt_long"
       :title="$t('finance.receiptSummary.title')"
@@ -12,10 +12,10 @@
           <div class="faculty-scope-card__faculty">{{ userFacName || 'ไม่ระบุคณะ' }}</div>
         </div>
       </template>
-    </AdminPageHero>
+    </AppPageHero>
 
     <section class="admin-shell admin-content">
-      <AdminSurfaceCard>
+      <AppSurfaceCard>
         <div class="row q-col-gutter-md q-mb-md">
           <!-- Filter section -->
           <div class="col-12 col-md-8 offset-md-2">
@@ -161,9 +161,9 @@
             </div>
           </div>
         </div>
-      </AdminSurfaceCard>
+      </AppSurfaceCard>
 
-      <AdminSurfaceCard class="q-mt-md" card-class="q-pa-none">
+      <AppSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
           <q-btn
             outline
@@ -321,7 +321,7 @@
             </div>
           </template>
         </q-table>
-      </AdminSurfaceCard>
+      </AppSurfaceCard>
     </section>
 
     <ReceiptCard
@@ -342,8 +342,8 @@
 </template>
 
 <script setup lang="ts">
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import { ref, computed, nextTick } from 'vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
 import type { QTableProps } from 'quasar';

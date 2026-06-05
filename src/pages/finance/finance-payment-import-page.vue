@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page finance-payment-import-page finance-payment-import-page--static-cards">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="upload_file"
       :title="$t('finance.paymentImport.title')"
@@ -12,11 +12,11 @@
           <div class="faculty-scope-card__faculty">{{ defaultDivision || 'ไม่ระบุคณะ' }}</div>
         </div>
       </template>
-    </AdminPageHero>
+    </AppPageHero>
 
     <section v-if="!isFinalized" class="admin-shell admin-content">
       <div class="payment-import-main-container">
-        <AdminSurfaceCard :title="$t('finance.paymentImport.uploadSectionTitle')" body-padding="lg">
+        <AppSurfaceCard :title="$t('finance.paymentImport.uploadSectionTitle')" body-padding="lg">
           <div class="import-station-container">
             <!-- Left Side: Contextual Information -->
             <div class="import-station-context">
@@ -135,9 +135,9 @@
               </div>
             </div>
           </div>
-        </AdminSurfaceCard>
+        </AppSurfaceCard>
 
-        <AdminSurfaceCard
+        <AppSurfaceCard
           :title="$t('finance.paymentImport.importedRecords')"
           :subtitle="
             $t('finance.paymentImport.showingRecords', {
@@ -745,7 +745,7 @@
               />
             </div>
           </div>
-        </AdminSurfaceCard>
+        </AppSurfaceCard>
       </div>
     </section>
 
@@ -833,8 +833,8 @@
 </template>
 
 <script setup lang="ts">
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import { useQuasar, type QTableProps } from 'quasar';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';

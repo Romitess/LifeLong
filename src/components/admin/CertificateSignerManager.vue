@@ -1,13 +1,13 @@
 <template>
   <div class="signer-manager">
-    <AdminSurfaceCard
+    <AppSurfaceCard
       eyebrow="Certificate Signer"
       title="ผู้เซ็น Certificate"
       subtitle="จัดการรายชื่อผู้ลงนามบนวุฒิบัตร พร้อมตำแหน่งและลายเซ็น"
       body-padding="none"
     >
       <template #header-actions>
-        <AdminActionButton
+        <AppActionButton
           variant="primary"
           icon="add"
           label="เพิ่มผู้เซ็น Certificate"
@@ -17,7 +17,7 @@
       </template>
 
       <div class="signer-manager__toolbar">
-        <AdminSearchInput
+        <AppSearchInput
           v-model="globalSearch"
           placeholder="ค้นหาชื่อหรือตำแหน่ง..."
           class="signer-manager__search"
@@ -179,7 +179,7 @@
           @update:model-value="handlePageChange"
         />
       </div>
-    </AdminSurfaceCard>
+    </AppSurfaceCard>
 
     <!-- Add / Edit Dialog -->
     <q-dialog
@@ -348,13 +348,13 @@
         </q-card-section>
 
         <q-card-actions class="signer-manager-dialog__actions">
-          <AdminActionButton
+          <AppActionButton
             variant="secondary"
             label="ยกเลิก"
             class="signer-manager-dialog__cancel-btn"
             @click="closeDialog"
           />
-          <AdminActionButton
+          <AppActionButton
             variant="primary"
             icon="save"
             label="บันทึก"
@@ -390,7 +390,7 @@
       </q-card>
     </q-dialog>
 
-    <AdminConfirmDialog
+    <AppConfirmDialog
       v-model="confirmDeleteOpen"
       title="ลบผู้เซ็น Certificate"
       :message="`ต้องการลบ &quot;${pendingDeleteName}&quot; ใช่หรือไม่ การดำเนินการนี้ไม่สามารถย้อนกลับได้`"
@@ -407,10 +407,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
-import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
-import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
+import AppSearchInput from 'components/admin/AppSearchInput.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCertSigners } from 'src/composables/use-admin-cert-signers';
 import type { AdminCertSignerItem } from 'src/types/admin-cert-signers';

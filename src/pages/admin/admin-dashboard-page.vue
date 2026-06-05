@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page admin-dashboard-page">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="BUU Lifelong Admin Console"
       eyebrow-icon="admin_panel_settings"
       title="แดชบอร์ดผู้ดูแลระบบ"
@@ -14,7 +14,7 @@
           class="admin-dashboard__hero-badge"
         />
       </template>
-    </AdminPageHero>
+    </AppPageHero>
 
     <section class="admin-shell admin-content">
       <q-banner v-if="errorMessage" rounded dense class="bg-negative text-white q-mb-md">
@@ -210,7 +210,7 @@
       </div>
 
       <div class="admin-dashboard__main-row">
-        <AdminSurfaceCard
+        <AppSurfaceCard
           :eyebrow="primaryChartContent.eyebrow"
           :title="primaryChartContent.title"
           :subtitle="periodLabel"
@@ -237,9 +237,9 @@
             :format-y-tick="formatChartTick"
             :aria-label="primaryChartContent.title"
           />
-        </AdminSurfaceCard>
+        </AppSurfaceCard>
 
-        <AdminSurfaceCard
+        <AppSurfaceCard
           eyebrow="Enrollment Mix"
           title="สัดส่วนการลงทะเบียน"
           :subtitle="periodLabel"
@@ -252,11 +252,11 @@
             :center-value="formatCount(totals.enrolledLearners)"
             center-hint="รวมทุกสถานะ"
           />
-        </AdminSurfaceCard>
+        </AppSurfaceCard>
       </div>
 
       <div class="admin-dashboard__mid-row">
-        <AdminSurfaceCard
+        <AppSurfaceCard
           eyebrow="Category Performance"
           title="ผู้ลงทะเบียนตามหมวดหมู่"
           :subtitle="periodLabel"
@@ -267,9 +267,9 @@
             :items="categoryBarItems"
             :format-value="(value) => `${formatCount(value)} คน`"
           />
-        </AdminSurfaceCard>
+        </AppSurfaceCard>
 
-        <AdminSurfaceCard
+        <AppSurfaceCard
           eyebrow="Top Performing Courses"
           title="คอร์สยอดนิยม"
           :subtitle="periodLabel"
@@ -315,11 +315,11 @@
               </div>
             </li>
           </ul>
-        </AdminSurfaceCard>
+        </AppSurfaceCard>
       </div>
 
       <div class="admin-dashboard__bottom-row">
-        <AdminSurfaceCard
+        <AppSurfaceCard
           eyebrow="Recent Activity"
           title="การลงทะเบียนล่าสุด"
           :subtitle="periodLabel"
@@ -363,9 +363,9 @@
               </span>
             </li>
           </ul>
-        </AdminSurfaceCard>
+        </AppSurfaceCard>
 
-        <AdminSurfaceCard
+        <AppSurfaceCard
           eyebrow="Faculty Breakdown"
           title="ผู้เรียนแบ่งตามคณะ"
           :subtitle="periodLabel"
@@ -376,7 +376,7 @@
             :items="facultyBarItems"
             :format-value="(value) => `${formatCount(value)} คน`"
           />
-        </AdminSurfaceCard>
+        </AppSurfaceCard>
       </div>
 
       <q-inner-loading :showing="isLoading" color="primary" />
@@ -389,8 +389,8 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
 import AdminBarChart, { type BarChartItem } from 'components/admin/AdminBarChart.vue';
 import AdminDonutChart from 'components/admin/AdminDonutChart.vue';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import { useAdminDashboardMetrics } from 'src/composables/use-admin-dashboard-metrics';
 import type {

@@ -13,20 +13,20 @@
       </div>
     </div>
 
-    <AdminSurfaceCard
+    <AppSurfaceCard
       eyebrow="Category Manager"
       title="รายการหมวด/หมู่วิชา"
       subtitle="ข้อมูลหน้านี้เชื่อมกับ LLTCATEGORY และ LLTSUBCATEGORY โดยตรง"
       body-padding="none"
     >
       <template #header-actions>
-        <AdminSearchInput
+        <AppSearchInput
           v-model="search"
           placeholder="ค้นหาหมวด/หมู่..."
           :debounce="200"
           class="categories-manager__search"
         />
-        <AdminActionButton
+        <AppActionButton
           variant="primary"
           icon="add"
           label="เพิ่มหมวด"
@@ -248,7 +248,7 @@
                 <td class="text-right">
                   <div class="category-cell__actions">
                     <template v-if="row.kind === 'category'">
-                      <AdminActionButton
+                      <AppActionButton
                         variant="primary"
                         icon="add"
                         label="เพิ่มหมู่"
@@ -334,7 +334,7 @@
           @update:model-value="handlePageChange"
         />
       </div>
-    </AdminSurfaceCard>
+    </AppSurfaceCard>
 
     <q-dialog
       v-model="formDialogOpen"
@@ -419,14 +419,14 @@
           </q-card-section>
 
           <q-card-actions class="taxonomy-dialog__actions">
-            <AdminActionButton
+            <AppActionButton
               variant="secondary"
               label="ยกเลิก"
               no-caps
               type="button"
               @click="formDialogOpen = false"
             />
-            <AdminActionButton
+            <AppActionButton
               variant="primary"
               no-caps
               :loading="isSaving"
@@ -439,7 +439,7 @@
       </q-card>
     </q-dialog>
 
-    <AdminConfirmDialog
+    <AppConfirmDialog
       v-model="confirmDeleteOpen"
       :title="deleteTitle"
       :message="deleteConfirmMessage"
@@ -457,10 +457,10 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import type { QForm, ValidationRule } from 'quasar';
 import { useQuasar } from 'quasar';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
-import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
-import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
+import AppSearchInput from 'components/admin/AppSearchInput.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCourseTaxonomy } from 'src/composables/use-admin-course-taxonomy';

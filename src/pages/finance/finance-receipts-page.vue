@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page finance-receipts-page">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="receipt_long"
       :title="$t('finance.receipts.title')"
@@ -12,10 +12,10 @@
           <div class="faculty-scope-card__faculty">{{ currentUserFaculty || 'ไม่ระบุคณะ' }}</div>
         </div>
       </template>
-    </AdminPageHero>
+    </AppPageHero>
 
     <section class="admin-shell admin-content">
-      <AdminSurfaceCard :title="$t('finance.receipts.allReceipts')" card-class="q-pa-none">
+      <AppSurfaceCard :title="$t('finance.receipts.allReceipts')" card-class="q-pa-none">
         <template #header-actions>
           <q-input
             v-model="search"
@@ -60,14 +60,14 @@
             </q-td>
           </template>
         </q-table>
-      </AdminSurfaceCard>
+      </AppSurfaceCard>
     </section>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import { ref, computed } from 'vue';
 import type { QTableProps } from 'quasar';
 import { useI18n } from 'vue-i18n';

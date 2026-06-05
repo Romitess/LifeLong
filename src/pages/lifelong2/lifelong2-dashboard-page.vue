@@ -1,7 +1,7 @@
 <template>
   <q-page class="lifelong2-page lifelong2-dashboard-page">
     <!-- Premium LLL Hero Header -->
-    <AdminPageHero
+    <AppPageHero
       eyebrow="BUU Lifelong Learning Console"
       eyebrow-icon="school"
       title="ระบบบริหารจัดการและแดชบอร์ด LLL"
@@ -29,7 +29,7 @@
           />
         </div>
       </template>
-    </AdminPageHero>
+    </AppPageHero>
 
     <!-- Shell Container -->
     <section class="lifelong2-shell lifelong2-content">
@@ -316,7 +316,7 @@ import { computed, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
 import AdminDonutChart from 'components/admin/AdminDonutChart.vue';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
 import { useAdminDashboardMetrics } from 'src/composables/use-admin-dashboard-metrics';
 import { formatCount } from 'src/utils/course-format';
 

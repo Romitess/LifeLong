@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page admin-course-edit-page">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Course Registry"
       eyebrow-icon="edit"
       :title="course ? `แก้ไข: ${course.nameTh}` : 'แก้ไขรายวิชา'"
@@ -9,7 +9,7 @@
 
     <section class="admin-shell admin-content">
       <div class="admin-course-edit-page__back">
-        <AdminActionButton
+        <AppActionButton
           variant="primary"
           icon="arrow_back"
           label="กลับไปรายการ"
@@ -45,9 +45,9 @@ import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import type { AdminCourseDetail, CreateCoursePayload } from 'src/types/admin-courses';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
 import AdminCourseForm from 'components/admin/AdminCourseForm.vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
 
 const router = useRouter();
 const route = useRoute();

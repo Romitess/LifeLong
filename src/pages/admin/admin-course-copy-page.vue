@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page admin-course-copy-page">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Course Registry"
       eyebrow-icon="content_copy"
       :title="course?.nameTh ?? 'คัดลอกทะเบียนรายวิชา'"
@@ -9,7 +9,7 @@
 
     <section class="admin-shell admin-content">
       <div class="admin-course-copy-page__back">
-        <AdminActionButton
+        <AppActionButton
           variant="primary"
           icon="arrow_back"
           label="กลับไปรายการ"
@@ -48,13 +48,13 @@
         </div>
 
         <div class="admin-course-copy-page__actions">
-          <AdminActionButton
+          <AppActionButton
             variant="secondary"
             label="ยกเลิก"
             no-caps
             @click="void router.push('/admin/courses')"
           />
-          <AdminActionButton
+          <AppActionButton
             variant="primary"
             icon="content_copy"
             label="คัดลอกทะเบียนรายวิชา"
@@ -66,7 +66,7 @@
       </template>
     </section>
 
-    <AdminConfirmDialog
+    <AppConfirmDialog
       v-model="confirmCopyOpen"
       title="คัดลอกทะเบียนรายวิชา"
       :message="`ยืนยันการคัดลอกรายวิชา &quot;${course?.nameTh ?? ''}&quot; ระบบจะสร้างรายวิชาใหม่พร้อม generate รหัสวิชาใหม่อัตโนมัติ`"
@@ -86,10 +86,10 @@ import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import type { AdminCourseDetail } from 'src/types/admin-courses';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
 import AdminCourseForm from 'components/admin/AdminCourseForm.vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
-import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
 
 const router = useRouter();
 const route = useRoute();

@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page admin-course-form-page">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Course Registry"
       eyebrow-icon="menu_book"
       :title="'เพิ่มทะเบียนรายวิชา/หลักสูตรระยะสั้น'"
@@ -9,7 +9,7 @@
 
     <section class="admin-shell admin-content">
       <div class="admin-course-form-page__back">
-        <AdminActionButton
+        <AppActionButton
           variant="primary"
           icon="arrow_back"
           label="กลับไปรายการ"
@@ -27,9 +27,9 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
 import AdminCourseForm from 'components/admin/AdminCourseForm.vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
 
 const router = useRouter();
 const $q = useQuasar();

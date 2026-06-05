@@ -143,14 +143,14 @@
         </q-card-section>
 
         <q-card-actions class="category-form-dialog__actions">
-          <AdminActionButton
+          <AppActionButton
             variant="secondary"
             label="ยกเลิก"
             no-caps
             type="button"
             @click="onCancel"
           />
-          <AdminActionButton
+          <AppActionButton
             variant="primary"
             :label="isEditing ? 'บันทึกการแก้ไข' : 'เพิ่มหมวดหมู่'"
             :icon="isEditing ? 'save' : 'add'"
@@ -166,7 +166,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import type { QForm, ValidationRule } from 'quasar';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
 import ColorPickerInput from 'src/components/common/ColorPickerInput.vue';
 import type { Category, CategoryFormPayload } from 'src/types/category';
 

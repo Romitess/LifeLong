@@ -1,23 +1,15 @@
 import { useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
 import { useAuthStore } from 'src/stores/auth-store';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 import { getCourseDetailById } from 'src/data/mock-courses';
 
 export function useProfileNavigation() {
   const router = useRouter();
-  const $q = useQuasar();
   const authStore = useAuthStore();
 
   function goToCourse(courseId: string, courseCode?: string, moodleCourseId?: number): void {
     if (authStore.user?.username) {
       const courseDetail = getCourseDetailById(courseId);
-      $q.notify({
-        type: 'info',
-        message: 'Opening Moodle',
-        position: 'top',
-        timeout: 1800,
-      });
       pushMoodleLearningRoute(router, courseId, undefined, {
         moodleCourseId: moodleCourseId ?? courseDetail?.moodleId ?? courseId,
         courseCode,

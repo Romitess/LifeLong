@@ -4,6 +4,8 @@ export interface Lesson {
   title: string;
   type: 'video' | 'article' | 'quiz';
   duration: string;
+  /** Material icon resolved from the Moodle module type (modname). Optional for mock structures. */
+  icon?: string;
   completed?: boolean;
   moodleUrl?: string;
   moodleModuleId?: number;

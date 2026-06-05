@@ -1,13 +1,13 @@
 <template>
   <div class="courses-manager">
-    <AdminSurfaceCard
+    <AppSurfaceCard
       eyebrow="Course Registry"
       title="ทะเบียนรายวิชา/หลักสูตรระยะสั้น"
       subtitle="รายการรายวิชาและหลักสูตรระยะสั้นทั้งหมดในระบบ"
       body-padding="none"
     >
       <template #header-actions>
-        <AdminActionButton
+        <AppActionButton
           variant="primary"
           icon="add"
           label="เพิ่มทะเบียนรายวิชา/หลักสูตรระยะสั้น"
@@ -88,7 +88,7 @@
 
           <div class="courses-manager__field courses-manager__field--actions">
             <div class="courses-manager__filter-actions">
-              <AdminActionButton
+              <AppActionButton
                 variant="primary"
                 icon="filter_alt"
                 label="แสดงผล"
@@ -96,7 +96,7 @@
                 class="courses-manager__filter-btn"
                 @click="applyFilters"
               />
-              <AdminActionButton
+              <AppActionButton
                 variant="secondary"
                 icon="restart_alt"
                 label="ล้างตัวกรอง"
@@ -108,7 +108,7 @@
         </div>
 
         <div class="courses-manager__search-row">
-          <AdminSearchInput
+          <AppSearchInput
             v-model="globalSearch"
             placeholder="ค้นหาจากทุกคอลัมน์..."
             class="courses-manager__search"
@@ -306,9 +306,9 @@
           @update:model-value="handlePageChange"
         />
       </div>
-    </AdminSurfaceCard>
+    </AppSurfaceCard>
 
-    <AdminConfirmDialog
+    <AppConfirmDialog
       v-model="confirmDeleteOpen"
       title="ลบรายวิชา"
       :message="deleteMessage"
@@ -326,10 +326,10 @@
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
-import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
-import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
+import AppSearchInput from 'components/admin/AppSearchInput.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
 import type { AdminCourseItem } from 'src/types/admin-courses';

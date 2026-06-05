@@ -18,7 +18,7 @@
         </p>
 
         <!-- ─── ข้อมูลทั่วไป ─── -->
-        <AdminSurfaceCard
+        <AppSurfaceCard
           eyebrow="Course Info"
           title="ข้อมูลทั่วไป"
           subtitle="ข้อมูลพื้นฐานของรายวิชาหรือหลักสูตรระยะสั้น"
@@ -1070,10 +1070,10 @@
               </div>
             </div>
           </div>
-        </AdminSurfaceCard>
+        </AppSurfaceCard>
 
         <!-- ─── ข้อมูลในการติดต่อสอบถาม ─── -->
-        <AdminSurfaceCard
+        <AppSurfaceCard
           eyebrow="Contact Info"
           title="ข้อมูลในการติดต่อสอบถาม"
           subtitle="ช่องทางการติดต่อของผู้รับผิดชอบรายวิชา"
@@ -1160,7 +1160,7 @@
               />
             </div>
           </div>
-        </AdminSurfaceCard>
+        </AppSurfaceCard>
       </section>
 
       <section
@@ -1214,7 +1214,7 @@
         size="md"
         :label="moodleSyncLabel"
       />
-      <AdminActionButton
+      <AppActionButton
         v-if="!props.readonly && moodleSyncFlag !== 'Y'"
         variant="secondary"
         icon="refresh"
@@ -1227,13 +1227,13 @@
 
     <!-- Actions -->
     <div v-if="!props.readonly" class="course-form__actions">
-      <AdminActionButton
+      <AppActionButton
         variant="secondary"
         label="ยกเลิก"
         class="course-form__btn"
         @click="$emit('cancel')"
       />
-      <AdminActionButton
+      <AppActionButton
         v-if="props.initialData && publishedFlag === 'Y'"
         variant="secondary"
         icon="lock"
@@ -1242,7 +1242,7 @@
         class="course-form__btn"
         @click="$emit('unpublish')"
       />
-      <AdminActionButton
+      <AppActionButton
         v-else-if="props.initialData"
         variant="secondary"
         icon="public"
@@ -1251,7 +1251,7 @@
         class="course-form__btn"
         @click="submitAndPublish"
       />
-      <AdminActionButton
+      <AppActionButton
         variant="primary"
         icon="save"
         label="บันทึก"
@@ -1281,8 +1281,8 @@ import BaseDateInput from 'components/base/BaseDateInput.vue';
 import BaseImageCropperDialog from 'components/base/BaseImageCropperDialog.vue';
 import BaseCroppedImage from 'components/base/BaseCroppedImage.vue';
 import type { CropBox } from 'src/composables/use-image-cropper';
-import AdminSurfaceCard from './AdminSurfaceCard.vue';
-import AdminActionButton from './AdminActionButton.vue';
+import AppSurfaceCard from './AppSurfaceCard.vue';
+import AppActionButton from './AppActionButton.vue';
 import AdminCourseChapterTab from './AdminCourseChapterTab.vue';
 import AdminSectionNav, { type AdminSectionNavItem } from './AdminSectionNav.vue';
 

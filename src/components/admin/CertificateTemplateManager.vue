@@ -1,13 +1,13 @@
 <template>
   <div class="cert-manager">
-    <AdminSurfaceCard
+    <AppSurfaceCard
       eyebrow="Certificate Templates"
       title="รูปแบบ Certificate"
       subtitle="จัดการเทมเพลตวุฒิบัตรสำหรับใช้งานในระบบ"
       body-padding="none"
     >
       <template #header-actions>
-        <AdminActionButton
+        <AppActionButton
           variant="primary"
           icon="add"
           label="เพิ่มรูปแบบ Certificate"
@@ -17,7 +17,7 @@
       </template>
 
       <div class="cert-manager__toolbar">
-        <AdminSearchInput
+        <AppSearchInput
           v-model="globalSearch"
           placeholder="ค้นหาชื่อรูปแบบ..."
           class="cert-manager__search"
@@ -173,7 +173,7 @@
           @update:model-value="handlePageChange"
         />
       </div>
-    </AdminSurfaceCard>
+    </AppSurfaceCard>
 
     <!-- Add / Edit Dialog -->
     <q-dialog
@@ -327,13 +327,13 @@
         </q-card-section>
 
         <q-card-actions class="cert-manager-dialog__actions">
-          <AdminActionButton
+          <AppActionButton
             variant="secondary"
             label="ยกเลิก"
             class="cert-manager-dialog__cancel-btn"
             @click="closeDialog"
           />
-          <AdminActionButton
+          <AppActionButton
             variant="primary"
             icon="save"
             label="บันทึก"
@@ -366,7 +366,7 @@
       </q-card>
     </q-dialog>
 
-    <AdminConfirmDialog
+    <AppConfirmDialog
       v-model="confirmDeleteOpen"
       title="ลบรูปแบบ Certificate"
       :message="`ต้องการลบ &quot;${pendingDeleteName}&quot; ใช่หรือไม่ การดำเนินการนี้ไม่สามารถย้อนกลับได้`"
@@ -383,10 +383,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
-import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
-import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
+import AppSearchInput from 'components/admin/AppSearchInput.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCertTemplates } from 'src/composables/use-admin-cert-templates';
 import type { AdminCertTemplateItem } from 'src/types/admin-cert-templates';

@@ -41,7 +41,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/short-courses-page.vue'),
         meta: { public: true },
       },
-      { path: 'profile', component: () => import('pages/profile-page.vue') },
+      {
+        path: 'profile/:tab?',
+        name: 'profile',
+        component: () => import('pages/profile-page.vue'),
+      },
       { path: 'admin', redirect: '/admin/dashboard', meta: { role: 'admin' } },
       {
         path: 'admin/dashboard',

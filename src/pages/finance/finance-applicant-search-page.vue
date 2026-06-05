@@ -2,7 +2,7 @@
   <q-page
     class="admin-page finance-applicant-search-page finance-applicant-search-page--static-cards"
   >
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="person_search"
       :title="$t('finance.applicantSearch.title')"
@@ -14,10 +14,10 @@
           <div class="faculty-scope-card__faculty">{{ userFacName || 'ไม่ระบุคณะ' }}</div>
         </div>
       </template>
-    </AdminPageHero>
+    </AppPageHero>
 
     <section class="admin-shell admin-content">
-      <AdminSurfaceCard class="q-mt-md" card-class="q-pa-none">
+      <AppSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <div class="text-center q-pt-lg q-pb-xs text-weight-bold text-subtitle1">
           {{ $t('finance.applicantSearch.resultsTitle') }}
         </div>
@@ -238,14 +238,14 @@
             </div>
           </template>
         </q-table>
-      </AdminSurfaceCard>
+      </AppSurfaceCard>
     </section>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import { api } from 'src/boot/axios';
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';

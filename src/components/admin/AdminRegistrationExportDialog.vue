@@ -50,14 +50,14 @@
       </q-card-section>
 
       <q-card-actions class="registration-export-dialog__actions">
-        <AdminActionButton
+        <AppActionButton
           variant="secondary"
           label="ยกเลิก"
           no-caps
           :disable="isExporting"
           @click="onCancel"
         />
-        <AdminActionButton
+        <AppActionButton
           variant="primary"
           :label="isExporting ? 'กำลังส่งออก...' : 'ส่งออกไฟล์'"
           icon="download"
@@ -74,7 +74,7 @@
 import { computed, ref, watch } from 'vue';
 import ExcelJS from 'exceljs';
 import { api } from 'src/boot/axios';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
 import type { DateRangeValue } from 'components/base/BaseDateRangeFilter.vue';
 import type { AdminRegistrationStatisticsReportFilterOption } from 'src/types/admin-registration-statistics-report';
 

@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page admin-course-detail-page">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Course Registry"
       eyebrow-icon="menu_book"
       :title="course?.nameTh ?? 'รายละเอียดรายวิชา'"
@@ -9,7 +9,7 @@
 
     <section class="admin-shell admin-content">
       <div class="admin-course-detail-page__back">
-        <AdminActionButton
+        <AppActionButton
           variant="primary"
           icon="arrow_back"
           label="กลับไปรายการ"
@@ -33,9 +33,9 @@ import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import type { AdminCourseDetail } from 'src/types/admin-courses';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
 import AdminCourseForm from 'components/admin/AdminCourseForm.vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
 
 const router = useRouter();
 const route = useRoute();

@@ -158,7 +158,7 @@
       </q-card-section>
 
       <q-card-actions class="course-detail-dialog__footer">
-        <AdminActionButton variant="secondary" label="ปิด" @click="dialogModel = false" />
+        <AppActionButton variant="secondary" label="ปิด" @click="dialogModel = false" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -171,7 +171,7 @@ import type {
   AdminCourseFormOptions,
   CourseChapterPayload,
 } from 'src/types/admin-courses';
-import AdminActionButton from './AdminActionButton.vue';
+import AppActionButton from './AppActionButton.vue';
 
 const DetailField = {
   props: ['label', 'value', 'full'],

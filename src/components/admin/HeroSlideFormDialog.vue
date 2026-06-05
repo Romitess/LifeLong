@@ -40,8 +40,8 @@
         </q-card-section>
 
         <q-card-actions class="hero-slide-form-dialog__actions">
-          <AdminActionButton variant="secondary" label="ยกเลิก" type="button" @click="onCancel" />
-          <AdminActionButton
+          <AppActionButton variant="secondary" label="ยกเลิก" type="button" @click="onCancel" />
+          <AppActionButton
             variant="primary"
             icon="check"
             :label="mode === 'create' ? 'เพิ่มสไลด์' : 'บันทึก'"
@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import type { QForm } from 'quasar';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
 import BaseDateRangeFilter, { type DateRangeValue } from 'components/base/BaseDateRangeFilter.vue';
 
 export interface HeroSlideFormPayload {

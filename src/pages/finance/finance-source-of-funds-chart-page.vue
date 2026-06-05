@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page finance-sof-page finance-sof-page--static-cards">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="schema"
       :title="$t('finance.sourceOfFunds.title')"
@@ -12,10 +12,10 @@
           <div class="faculty-scope-card__faculty">{{ userFacName || 'ไม่ระบุคณะ' }}</div>
         </div>
       </template>
-    </AdminPageHero>
+    </AppPageHero>
 
     <section class="admin-shell admin-content">
-      <AdminSurfaceCard
+      <AppSurfaceCard
         :title="$t('finance.sourceOfFunds.title')"
         :subtitle="
           editingId ? $t('finance.sourceOfFunds.editHint') : $t('finance.sourceOfFunds.createHint')
@@ -356,10 +356,10 @@
           <q-icon name="info" size="18px" class="q-mr-sm" />
           {{ $t('finance.sourceOfFunds.note') }}
         </div>
-      </AdminSurfaceCard>
+      </AppSurfaceCard>
     </section>
 
-    <AdminConfirmDialog
+    <AppConfirmDialog
       v-model="confirmDeleteOpen"
       title="ลบผังแหล่งเงิน"
       :message="
@@ -378,9 +378,9 @@
 </template>
 
 <script setup lang="ts">
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
-import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
 import { useQuasar, type QTableProps, type QInput } from 'quasar';
 import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';

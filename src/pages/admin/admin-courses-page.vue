@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page admin-courses-page">
-    <AdminPageHero
+    <AppPageHero
       eyebrow="Course Registry"
       eyebrow-icon="menu_book"
       title="ทะเบียนรายวิชา/หลักสูตรระยะสั้น"
@@ -15,5 +15,5 @@
 
 <script setup lang="ts">
 import AdminCoursesManager from 'components/admin/AdminCoursesManager.vue';
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
 </script>

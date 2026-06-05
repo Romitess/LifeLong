@@ -1,6 +1,6 @@
 <template>
   <q-page class="admin-page finance-faculty-education-report-page">
-    <AdminPageHero
+    <AppPageHero
       :eyebrow="$t('finance.educationReport.eyebrow')"
       eyebrow-icon="school"
       :title="$t('finance.educationReport.title')"
@@ -14,7 +14,7 @@
           <div class="faculty-scope-card__faculty">{{ currentFacultyName }}</div>
         </div>
       </template>
-    </AdminPageHero>
+    </AppPageHero>
 
     <section class="admin-shell admin-content">
       <AdminRegistrationStatisticsReportManager
@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import AdminPageHero from 'components/admin/AdminPageHero.vue';
+import AppPageHero from 'components/admin/AppPageHero.vue';
 import AdminRegistrationStatisticsReportManager from 'components/admin/AdminRegistrationStatisticsReportManager.vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';

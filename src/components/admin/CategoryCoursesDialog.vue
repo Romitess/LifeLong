@@ -126,7 +126,7 @@
       </q-card-section>
 
       <q-card-actions class="category-courses-dialog__actions">
-        <AdminActionButton
+        <AppActionButton
           variant="secondary"
           label="ปิด"
           icon="close"
@@ -140,7 +140,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
 import type { Category } from 'src/types/category';
 import type { Course } from 'src/types/course';
 

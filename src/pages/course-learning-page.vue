@@ -1,179 +1,190 @@
 <template>
-  <q-page class="bg-grey-1 course-page overflow-hidden">
-    <q-layout view="lHh Lpr lFf" container style="height: 100vh" class="learning-layout">
-      <!-- Sidebar Navigation (Drawer) -->
-      <q-drawer v-model="leftDrawerOpen" bordered :width="300" :breakpoint="1024" class="bg-white">
+  <q-page class="course-page">
+    <!-- Sidebar overlay (mobile) -->
+    <Transition name="fade">
+      <div
+        v-if="leftDrawerOpen"
+        class="sidebar-overlay"
+        aria-hidden="true"
+        @click="leftDrawerOpen = false"
+      />
+    </Transition>
+
+    <!-- Sliding sidebar panel -->
+    <Transition name="slide-sidebar">
+      <aside v-if="leftDrawerOpen" class="course-sidebar" aria-label="Course navigation">
+        <div class="course-sidebar__header">
+          <BaseButton
+            flat
+            round
+            dense
+            icon="chevron_left"
+            color="grey-7"
+            @click="leftDrawerOpen = false"
+            aria-label="Close sidebar"
+          />
+        </div>
         <SidebarNavigation />
-      </q-drawer>
+      </aside>
+    </Transition>
 
-      <q-page-container>
-        <div class="course-breadcrumb-bar">
-          <div class="course-breadcrumb-inner section-container">
-            <nav class="breadcrumb-nav" aria-label="Course breadcrumb">
-              <RouterLink to="/course-home" class="breadcrumb-el">
-                <q-icon name="home" size="18px" />
-                <span>หน้าแรก</span>
-              </RouterLink>
-              <q-icon name="chevron_right" size="16px" color="grey-4" />
-              <span class="breadcrumb-el breadcrumb-el--current">{{ courseTitle }}</span>
-            </nav>
-          </div>
+    <!-- Main content -->
+    <div class="course-main" :class="{ 'course-main--shifted': leftDrawerOpen && !isMobile }">
+      <!-- Breadcrumb bar -->
+      <div class="course-breadcrumb-bar">
+        <div class="course-breadcrumb-inner section-container">
+          <nav class="breadcrumb-nav" aria-label="Course breadcrumb">
+            <RouterLink to="/main" class="breadcrumb-el">
+              <q-icon name="home" size="18px" />
+              <span>หน้าหลัก</span>
+            </RouterLink>
+            <q-icon name="chevron_right" size="16px" color="grey-4" />
+            <RouterLink to="/profile/courses" class="breadcrumb-el">
+              <q-icon name="menu_book" size="18px" />
+              <span>วิชาของฉัน</span>
+            </RouterLink>
+            <q-icon name="chevron_right" size="16px" color="grey-4" />
+            <span class="breadcrumb-el breadcrumb-el--current">{{ courseTitle }}</span>
+          </nav>
         </div>
+      </div>
 
-        <div class="content-area section-container content-standard">
-          <!-- Course Content -->
-          <div class="course-content-wrapper">
-            <div class="row items-center justify-between q-mb-xl">
-              <div class="row items-center">
-                <div class="title-accent bg-primary q-mr-md"></div>
-                <div>
-                  <h2 class="text-h5 text-weight-bolder text-dark q-my-none">
-                    {{ $t('learning.content') }}
-                  </h2>
-                  <div class="text-caption text-grey-6 q-mt-xs">
-                    {{ $t('learning.manageContent') || 'จัดการเนื้อหาบทเรียนและการเรียนรู้ของคุณ' }}
+      <!-- Page content -->
+      <div class="content-area section-container content-standard">
+        <div class="course-content-wrapper">
+          <div class="row justify-end q-mb-md">
+            <BaseButton
+              color="primary"
+              no-caps
+              :icon="allExpanded ? 'expand_less' : 'expand_more'"
+              :label="allExpanded ? $t('learning.collapseAll') : $t('learning.expandAll')"
+              @click="toggleAll"
+              class="expand-btn-modern"
+            />
+          </div>
+
+          <!-- Loading state -->
+          <BaseSpinner v-if="moodleContentsLoading" />
+
+          <q-list v-else class="course-list-modern">
+            <q-expansion-item
+              v-for="(module, index) in courseModulesWithProgress"
+              :key="index"
+              v-model="courseModules[index]!.expanded"
+              class="module-item-modern q-mb-md"
+              header-class="module-header-modern q-pa-lg"
+              expand-icon-class="text-primary"
+            >
+              <template v-slot:header>
+                <q-item-section avatar>
+                  <div
+                    class="module-icon-box"
+                    :class="`bg-${module.color || 'primary'}-1 text-${module.color || 'primary'}`"
+                  >
+                    <q-icon :name="module.icon || 'folder_open'" size="22px" />
                   </div>
-                </div>
-              </div>
-              <q-btn
-                unelevated
-                color="primary"
-                no-caps
-                :icon="allExpanded ? 'expand_less' : 'expand_more'"
-                :label="allExpanded ? $t('learning.collapseAll') : $t('learning.expandAll')"
-                @click="toggleAll"
-                class="expand-btn-modern shadow-2"
-              />
-            </div>
+                </q-item-section>
 
-            <!-- Loading state -->
-            <div v-if="moodleContentsLoading" class="row justify-center q-py-xl">
-              <q-spinner color="primary" size="40px" />
-            </div>
+                <q-item-section>
+                  <q-item-label class="text-h6 text-weight-bold text-dark">{{
+                    module.title
+                  }}</q-item-label>
+                  <q-item-label
+                    caption
+                    v-if="module.subtitle"
+                    class="text-grey-6 text-subtitle2 q-mt-xs"
+                  >
+                    {{ module.subtitle }}
+                  </q-item-label>
+                </q-item-section>
 
-            <q-list v-else class="course-list-modern">
-              <q-expansion-item
-                v-for="(module, index) in courseModulesWithProgress"
-                :key="index"
-                v-model="courseModules[index]!.expanded"
-                class="module-item-modern q-mb-md"
-                header-class="module-header-modern q-pa-lg"
-                expand-icon-class="text-primary"
-              >
-                <template v-slot:header>
-                  <q-item-section avatar>
-                    <div
-                      class="module-icon-box"
-                      :class="`bg-${module.color || 'primary'}-1 text-${module.color || 'primary'}`"
+                <q-item-section side>
+                  <div class="row items-center q-gutter-sm">
+                    <span class="text-caption text-grey-6 gt-xs"
+                      >{{ module.lessons.length }} {{ $t('learning.lessons') }}</span
                     >
-                      <q-icon :name="module.icon || 'folder_open'" size="22px" />
-                    </div>
-                  </q-item-section>
+                    <q-circular-progress
+                      v-if="module.progress !== undefined"
+                      :value="module.progress"
+                      size="28px"
+                      :thickness="0.3"
+                      :color="module.progress === 100 ? 'positive' : 'primary'"
+                      track-color="grey-2"
+                    />
+                  </div>
+                </q-item-section>
+              </template>
 
-                  <q-item-section>
-                    <q-item-label class="text-h6 text-weight-bold text-dark">{{
-                      module.title
-                    }}</q-item-label>
-                    <q-item-label
-                      caption
-                      v-if="module.subtitle"
-                      class="text-grey-6 text-subtitle2 q-mt-xs"
-                    >
-                      {{ module.subtitle }}
-                    </q-item-label>
-                  </q-item-section>
-
-                  <q-item-section side>
-                    <div class="row items-center q-gutter-sm">
-                      <span class="text-caption text-grey-6 gt-xs"
-                        >{{ module.lessons.length }} {{ $t('learning.lessons') }}</span
-                      >
-                      <q-circular-progress
-                        v-if="module.progress !== undefined"
-                        :value="module.progress"
-                        size="28px"
-                        :thickness="0.3"
-                        :color="module.progress === 100 ? 'positive' : 'primary'"
-                        track-color="grey-2"
+              <div class="lessons-container bg-white">
+                <q-list separator>
+                  <q-item
+                    v-for="(lesson, lIndex) in module.lessons"
+                    :key="lIndex"
+                    clickable
+                    v-ripple
+                    class="lesson-row q-py-lg q-px-xl"
+                    @click="navigateToLesson(lesson)"
+                  >
+                    <q-item-section avatar>
+                      <q-icon
+                        :name="getLessonIcon(lesson)"
+                        :color="lesson.isCompleted ? 'positive' : 'grey-5'"
+                        size="sm"
                       />
-                    </div>
-                  </q-item-section>
-                </template>
+                    </q-item-section>
 
-                <div class="lessons-container bg-white">
-                  <q-list separator>
-                    <q-item
-                      v-for="(lesson, lIndex) in module.lessons"
-                      :key="lIndex"
-                      clickable
-                      v-ripple
-                      class="lesson-row q-py-lg q-px-xl"
-                      @click="navigateToLesson(lesson)"
-                    >
-                      <q-item-section avatar>
-                        <q-icon
-                          :name="
-                            lesson.type === 'video'
-                              ? 'play_circle'
-                              : lesson.type === 'quiz'
-                                ? 'help_outline'
-                                : 'article'
-                          "
-                          :color="lesson.isCompleted ? 'positive' : 'grey-5'"
-                          size="sm"
-                        />
-                      </q-item-section>
+                    <q-item-section>
+                      <q-item-label
+                        class="text-subtitle1"
+                        :class="{
+                          'text-grey-5 text-strike': lesson.isCompleted,
+                          'text-dark text-weight-medium': !lesson.isCompleted,
+                        }"
+                      >
+                        {{ lesson.title }}
+                      </q-item-label>
+                      <q-item-label
+                        v-if="lesson.duration"
+                        caption
+                        class="row items-center q-mt-xs text-grey-6"
+                      >
+                        <q-icon name="history" size="14px" class="q-mr-xs" />
+                        {{ lesson.duration }}
+                      </q-item-label>
+                    </q-item-section>
 
-                      <q-item-section>
-                        <q-item-label
-                          class="text-subtitle1"
-                          :class="{
-                            'text-grey-5 text-strike': lesson.isCompleted,
-                            'text-dark text-weight-medium': !lesson.isCompleted,
-                          }"
-                        >
-                          {{ lesson.title }}
-                        </q-item-label>
-                        <q-item-label
-                          v-if="lesson.duration"
-                          caption
-                          class="row items-center q-mt-xs text-grey-6"
-                        >
-                          <q-icon name="history" size="14px" class="q-mr-xs" />
-                          {{ lesson.duration }}
-                        </q-item-label>
-                      </q-item-section>
-
-                      <q-item-section side>
-                        <q-btn
-                          flat
-                          round
-                          dense
-                          :icon="lesson.isCompleted ? 'check_circle' : 'panorama_fish_eye'"
-                          :color="lesson.isCompleted ? 'positive' : 'grey-4'"
-                          @click.stop="
-                            progressStore.toggleLessonCompletion(courseId || '', lesson.title)
-                          "
-                          size="sm"
-                        />
-                      </q-item-section>
-                    </q-item>
-                  </q-list>
-                </div>
-              </q-expansion-item>
-            </q-list>
-          </div>
+                    <q-item-section side>
+                      <q-btn
+                        flat
+                        round
+                        dense
+                        :icon="lesson.isCompleted ? 'check_circle' : 'panorama_fish_eye'"
+                        :color="lesson.isCompleted ? 'positive' : 'grey-4'"
+                        @click.stop="
+                          progressStore.toggleLessonCompletion(courseId || '', lesson.title)
+                        "
+                        size="sm"
+                      />
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </div>
+            </q-expansion-item>
+          </q-list>
         </div>
-      </q-page-container>
-    </q-layout>
+      </div>
+    </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { RouterLink, useRouter, useRoute } from 'vue-router';
+import { useQuasar } from 'quasar';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
+import BaseButton from 'components/base/BaseButton.vue';
+import BaseSpinner from 'components/base/BaseSpinner.vue';
 import { getCourseStructure, type CourseModule, type Lesson } from 'src/data/course-structure';
 import { useCourseStore } from 'src/stores/course-store';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -184,6 +195,19 @@ interface CourseModuleState extends CourseModule {
   expanded: boolean;
 }
 
+// Fallback icon by lesson type for mock structures that have no modname-derived icon.
+const LESSON_TYPE_ICON: Record<Lesson['type'], string> = {
+  video: 'play_circle',
+  quiz: 'help_outline',
+  article: 'article',
+};
+
+function getLessonIcon(lesson: Lesson): string {
+  return lesson.icon || LESSON_TYPE_ICON[lesson.type] || 'article';
+}
+
+const $q = useQuasar();
+const isMobile = computed(() => $q.screen.lt.md);
 const router = useRouter();
 const route = useRoute();
 const progressStore = useCourseProgressStore();
@@ -317,10 +341,56 @@ watch(
 </script>
 
 <style lang="scss" scoped>
+$sidebar-width: 300px;
+$sidebar-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ── Page shell ──────────────────────────────────────────────
 .course-page {
-  height: calc(100vh - 64px);
+  min-height: calc(100vh - 64px);
+  background-color: transparent;
+  position: relative;
+}
+
+// ── Sidebar overlay (mobile backdrop) ───────────────────────
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 199;
+}
+
+// ── Sliding sidebar panel ────────────────────────────────────
+.course-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: $sidebar-width;
+  background: #ffffff;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  background-color: #f8f6f1;
+
+  &__header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 8px 0;
+    flex-shrink: 0;
+  }
+}
+
+// ── Main content area ────────────────────────────────────────
+.course-main {
+  transition: margin-left $sidebar-transition;
+
+  &--shifted {
+    @media (min-width: 1024px) {
+      margin-left: $sidebar-width;
+    }
+  }
 }
 
 // Breadcrumb Bar
@@ -450,5 +520,24 @@ watch(
     border-left-color: $primary;
     padding-left: 56px;
   }
+}
+
+// ── Vue transitions ──────────────────────────────────────────
+.slide-sidebar-enter-active,
+.slide-sidebar-leave-active {
+  transition: transform $sidebar-transition;
+}
+.slide-sidebar-enter-from,
+.slide-sidebar-leave-to {
+  transform: translateX(-100%);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.22s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

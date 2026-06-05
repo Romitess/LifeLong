@@ -1,7 +1,7 @@
 <template>
   <div class="hero-template-editor">
     <div class="hero-template-editor__layout">
-      <AdminSurfaceCard
+      <AppSurfaceCard
         card-class="hero-template-sidebar"
         body-class="hero-template-sidebar__body"
         body-padding="md"
@@ -59,7 +59,7 @@
         </div>
 
         <div class="hero-slide-filters">
-          <AdminSearchInput
+          <AppSearchInput
             :model-value="slideSearch"
             placeholder="ค้นหาชื่อสไลด์..."
             :debounce="200"
@@ -72,7 +72,7 @@
             from-hint="ตั้งแต่"
             to-hint="ถึง"
           />
-          <AdminActionButton
+          <AppActionButton
             v-if="hasActiveSlideFilters"
             variant="secondary"
             icon="restart_alt"
@@ -112,9 +112,9 @@
           class="full-width"
           @click="requestResetTemplate"
         />
-      </AdminSurfaceCard>
+      </AppSurfaceCard>
 
-      <AdminSurfaceCard
+      <AppSurfaceCard
         v-if="selectedSlide"
         card-class="hero-template-workspace"
         body-class="hero-template-workspace__body"
@@ -160,14 +160,14 @@
             />
             <q-toggle v-model="selectedSlide.enabled" color="positive" label="แสดงผล" />
             <div class="hero-template-toolbar__save-actions">
-              <AdminActionButton
+              <AppActionButton
                 variant="secondary"
                 icon="undo"
                 label="ยกเลิก draft"
                 :disable="!hasUnsavedChanges"
                 @click="requestDiscardDraft"
               />
-              <AdminActionButton
+              <AppActionButton
                 variant="primary"
                 icon="check_circle"
                 label="ยืนยันการบันทึก"
@@ -272,7 +272,7 @@
         </div>
 
         <div class="hero-control-grid">
-          <AdminSurfaceCard card-class="hero-control-card" body-padding="none">
+          <AppSurfaceCard card-class="hero-control-card" body-padding="none">
             <q-expansion-item v-model="isHeroSettingsOpen" class="hero-control-card--collapsible">
               <template #header>
                 <q-item-section>
@@ -364,9 +364,9 @@
                 </div>
               </div>
             </q-expansion-item>
-          </AdminSurfaceCard>
+          </AppSurfaceCard>
 
-          <AdminSurfaceCard card-class="hero-control-card" body-padding="none">
+          <AppSurfaceCard card-class="hero-control-card" body-padding="none">
             <q-expansion-item
               v-model="isTextBlockSettingsOpen"
               class="hero-control-card--collapsible"
@@ -496,10 +496,10 @@
                 </div>
               </div>
             </q-expansion-item>
-          </AdminSurfaceCard>
+          </AppSurfaceCard>
         </div>
 
-        <AdminSurfaceCard
+        <AppSurfaceCard
           card-class="hero-control-card hero-text-lines-card"
           body-class="hero-text-lines-card__body"
           body-padding="md"
@@ -666,11 +666,11 @@
               </div>
             </div>
           </q-expansion-item>
-        </AdminSurfaceCard>
-      </AdminSurfaceCard>
+        </AppSurfaceCard>
+      </AppSurfaceCard>
     </div>
 
-    <AdminConfirmDialog
+    <AppConfirmDialog
       v-model="confirmDialog.open"
       :title="confirmDialog.title"
       :message="confirmDialog.message"
@@ -707,10 +707,10 @@ import {
   type CSSProperties,
 } from 'vue';
 import { useQuasar } from 'quasar';
-import AdminActionButton from 'components/admin/AdminActionButton.vue';
-import AdminConfirmDialog from 'components/admin/AdminConfirmDialog.vue';
-import AdminSearchInput from 'components/admin/AdminSearchInput.vue';
-import AdminSurfaceCard from 'components/admin/AdminSurfaceCard.vue';
+import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
+import AppSearchInput from 'components/admin/AppSearchInput.vue';
+import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import HeroSlideFormDialog, {
   type HeroSlideFormPayload,
 } from 'components/admin/HeroSlideFormDialog.vue';
