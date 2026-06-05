@@ -111,6 +111,7 @@ export function useProfileChat(
 
     socket = io(`${origin}/chat`, {
       transports: ['websocket'],
+      auth: { token: authStore.token ? `Bearer ${authStore.token}` : '' },
     });
 
     socket.on('connect', () => {

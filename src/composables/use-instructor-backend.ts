@@ -2,6 +2,7 @@ import { computed, ref } from 'vue';
 import { api } from 'src/boot/axios';
 import { io } from 'socket.io-client';
 import type { Socket } from 'socket.io-client';
+import { useAuthStore } from 'src/stores/auth-store';
 
 interface WrappedListResponse<T> {
   value?: T[];
@@ -165,6 +166,7 @@ function extractArrayPayload<T>(payload: T[] | WrappedListResponse<T> | null | u
 }
 
 export function useInstructorBackend() {
+  const authStore = useAuthStore();
   const hasSummary = computed(() => summary.value !== null);
 
   async function fetchSummary(email?: string): Promise<void> {
@@ -392,6 +394,7 @@ export function useInstructorBackend() {
 
     socket = io(`${origin}/chat`, {
       transports: ['websocket'],
+      auth: { token: authStore.token ? `Bearer ${authStore.token}` : '' },
     });
 
     socket.on('connect', () => {
