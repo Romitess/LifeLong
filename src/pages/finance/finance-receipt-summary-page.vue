@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="admin-page finance-receipt-summary-page">
     <AppPageHero
       eyebrow="Financial Operations"
@@ -149,6 +149,8 @@
                   :label="$t('finance.receiptSummary.filters.searchBtn')"
                   unelevated
                   class="q-px-xl"
+                  :loading="isLoading"
+                  @click="fetchData"
                 />
                 <q-btn
                   outline
@@ -201,12 +203,13 @@
         </div>
 
         <q-table
-          :rows="mockData"
+          :rows="tableData"
           :columns="columns"
           row-key="id"
           flat
           dense
           :filter="search"
+          :loading="isLoading"
           class="receipt-table"
           v-model:pagination="pagination"
           :rows-per-page-options="[10, 25, 50, 100]"
@@ -251,6 +254,14 @@
             </q-td>
           </template>
 
+          <template v-slot:body-cell-collector="props">
+            <q-td :props="props">
+              <div style="white-space: pre-wrap; word-break: break-word">
+                {{ formatCollectorDate(props.value) }}
+              </div>
+            </q-td>
+          </template>
+
           <template v-slot:bottom="scope">
             <div class="row full-width justify-between items-center q-py-sm">
               <div class="row items-center q-gutter-sm">
@@ -273,13 +284,13 @@
               <div class="row items-center q-gutter-sm">
                 <span class="text-caption text-grey-8 q-mr-sm">
                   {{
-                    mockData.length > 0
+                    tableData.length > 0
                       ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
                       : 0
                   }}-{{
-                    Math.min(scope.pagination.page * scope.pagination.rowsPerPage, mockData.length)
+                    Math.min(scope.pagination.page * scope.pagination.rowsPerPage, tableData.length)
                   }}
-                  of {{ mockData.length }}
+                  of {{ tableData.length }}
                 </span>
                 <q-btn
                   icon="first_page"
@@ -344,21 +355,24 @@
 <script setup lang="ts">
 import AppPageHero from 'components/admin/AppPageHero.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, onMounted } from 'vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
-import type { QTableProps } from 'quasar';
+import { Notify, type QTableProps } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import jsPDF from 'jspdf';
 import { autoTable, type CellHookData } from 'jspdf-autotable';
 import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
 import * as XLSX from 'xlsx';
 import { useAuthStore } from 'stores/auth-store';
+import { api } from 'src/boot/axios';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
 const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุ');
 
 const search = ref('');
+const tableData = ref<ReceiptSummaryItem[]>([]);
+const isLoading = ref(false);
 
 const pagination = ref({
   sortBy: 'no',
@@ -400,7 +414,10 @@ const courseTitle = computed(() => {
   return parts.slice(1).join(':').replace(/\n/g, ' ') || selectedReceipt.value.courseName;
 });
 
-const amount = computed(() => selectedReceipt.value?.amount ?? 0);
+const amount = computed(() => {
+  const numericAmount = Number(selectedReceipt.value?.amount ?? 0);
+  return Number.isNaN(numericAmount) ? 0 : numericAmount;
+});
 
 function parseThaiDate(dateStr: string): Date | null {
   if (!dateStr) return null;
@@ -447,6 +464,21 @@ function parseThaiDate(dateStr: string): Date | null {
   }
 }
 
+function formatCollectorDate(value: string | undefined): string {
+  if (!value) return '';
+  const lines = value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return '';
+
+  const name = lines[0];
+  const dateLine = lines.slice(1).join(' ');
+  const dateOnly = dateLine.replace(/\s*\d{1,2}:\d{2}(:\d{2})?\s*$/, '').trim();
+
+  return [name, dateOnly].filter(Boolean).join('\n');
+}
+
 async function downloadReceipt(row: ReceiptSummaryItem) {
   selectedReceipt.value = row;
   await nextTick();
@@ -460,6 +492,33 @@ function clearDates() {
   filters.value.receiptDateEnd = '';
   filters.value.effectiveDateStart = '';
   filters.value.effectiveDateEnd = '';
+}
+async function fetchData() {
+  isLoading.value = true;
+  try {
+    const params = Object.fromEntries(
+      Object.entries(filters.value).filter(([, value]) => value.trim() !== ''),
+    );
+    Object.assign(params, { allFaculties: true });
+    const { data } = await api.get<ReceiptSummaryResponse>(
+      '/api/lltenrollreceipt/receipt-summary',
+      { params },
+    );
+    tableData.value = data.data;
+    pagination.value.page = 1;
+  } catch (error: unknown) {
+    const message =
+      (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+      'ไม่สามารถดึงข้อมูลรายงานใบเสร็จได้';
+    console.error('Receipt summary fetch failed:', error);
+    Notify.create({
+      type: 'negative',
+      message,
+      position: 'top',
+    });
+  } finally {
+    isLoading.value = false;
+  }
 }
 
 async function exportToPdf() {
@@ -491,7 +550,7 @@ async function exportToPdf() {
   const title = 'รายงานสรุปการรับเงินค่าลงทะเบียน LifeLong Learning มหาวิทยาลัยบูรพา';
   doc.text(title, doc.internal.pageSize.getWidth() / 2, 40, { align: 'center' });
 
-  const rows = mockData.map((row) => [
+  const rows = tableData.value.map((row) => [
     row.no,
     row.receiptNo,
     row.customerName,
@@ -499,7 +558,7 @@ async function exportToPdf() {
     row.effectiveDate,
     row.learnerName,
     row.courseName,
-    row.collector,
+    formatCollectorDate(row.collector),
     row.status === 'ยกเลิก'
       ? 'ยกเลิก\n' + (row.cancelBy ?? '') + '\n' + (row.cancelDate ?? '')
       : 'ใช้งาน',
@@ -646,11 +705,11 @@ const columns = computed<QTableProps['columns']>(() => [
 ]);
 
 interface ReceiptSummaryItem {
-  id: number;
+  id: number | string;
   no: number;
   receiptNo: string;
   customerName: string;
-  amount: number;
+  amount: number | string;
   effectiveDate: string;
   learnerName: string;
   courseName: string;
@@ -660,82 +719,15 @@ interface ReceiptSummaryItem {
   cancelDate?: string | undefined;
 }
 
-const generateMockData = (): ReceiptSummaryItem[] => {
-  const data: ReceiptSummaryItem[] = [];
-  data.push({
-    id: 1,
-    no: 1,
-    receiptNo: '256706000001',
-    customerName: 'นัธพร ยะโสวงษ์',
-    amount: 1,
-    effectiveDate: '30 พ.ย. 2566\n13:26:28',
-    learnerName: 'นัธพร ยะโสวงษ์',
-    courseName: 'C66061004:การถ่ายภาพโฆษณา\nคณะศิลปกรรมศาสตร์\n99999 สำหรับทดสอบ Direct link',
-    collector: 'นางสาวนัธพร ยะโสวงษ์\n20 มี.ค. 2567',
-    status: 'ยกเลิก',
-    cancelBy: 'นัธพร ยะโสวงษ์',
-    cancelDate: '15/05/2567\nทดสอบใบเสร็จ',
-  });
-  data.push({
-    id: 2,
-    no: 2,
-    receiptNo: '256706000002',
-    customerName: 'นัธพร ยะโสวงษ์',
-    amount: 1,
-    effectiveDate: '30 พ.ย. 2566\n13:26:28',
-    learnerName: 'นัธพร ยะโสวงษ์',
-    courseName: 'C66061004:การถ่ายภาพโฆษณา\nคณะศิลปกรรมศาสตร์\n99999 สำหรับทดสอบ Direct link',
-    collector: 'นางสาวนัธพร ยะโสวงษ์\n20 มี.ค. 2567',
-    status: 'ใช้งาน',
-  });
-  data.push({
-    id: 3,
-    no: 3,
-    receiptNo: '256706000003',
-    customerName: 'นัธพร ยะโสวงษ์',
-    amount: 1,
-    effectiveDate: '30 พ.ย. 2566\n13:26:28',
-    learnerName: 'นัธพร ยะโสวงษ์',
-    courseName: 'C66061004:การถ่ายภาพโฆษณา',
-    collector: 'นางสาวนัธพร ยะโสวงษ์\n22 มี.ค. 2567',
-    status: 'ใช้งาน',
-  });
+interface ReceiptSummaryResponse {
+  success: boolean;
+  total: number;
+  data: ReceiptSummaryItem[];
+}
 
-  const names = [
-    'นัธพร ยะโสวงษ์',
-    'วิมลรัตน์ ดีเลิศ',
-    'สมชาย รักเรียน',
-    'อนันต์ ยอดเยี่ยม',
-    'เกศรา พูนผล',
-  ];
-  const courses = [
-    'C66061004:การถ่ายภาพโฆษณา\nคณะศิลปกรรมศาสตร์\n99999 สำหรับทดสอบ Direct link',
-    'C67052002:การพัฒนาเว็บแอปพลิเคชัน\nสำนักคอมพิวเตอร์',
-    'C65091001:ภาษาอังกฤษเพื่อการสื่อสาร\nคณะมนุษยศาสตร์',
-  ];
-  const collectors = ['นางสาวนัธพร ยะโสวงษ์\n20 มี.ค. 2567', 'นายสมชาย ดีงาม\n21 มี.ค. 2567'];
-
-  for (let i = 4; i <= 85; i++) {
-    const isCancelled = i % 15 === 0;
-    data.push({
-      id: i,
-      no: i,
-      receiptNo: '256706' + String(i).padStart(6, '0'),
-      customerName: names[i % names.length] ?? '',
-      amount: 1,
-      effectiveDate: `30 พ.ย. 2566\n13:${20 + (i % 39)}:28`,
-      learnerName: names[i % names.length] ?? '',
-      courseName: courses[i % courses.length] ?? '',
-      collector: collectors[i % collectors.length] ?? '',
-      status: isCancelled ? 'ยกเลิก' : 'ใช้งาน',
-      cancelBy: isCancelled ? 'นัธพร ยะโสวงษ์' : undefined,
-      cancelDate: isCancelled ? '15/05/2567\nทดสอบยกเลิก' : undefined,
-    });
-  }
-  return data;
-};
-
-const mockData = generateMockData();
+onMounted(() => {
+  void fetchData();
+});
 
 function exportToExcel() {
   // สร้าง header row
@@ -752,7 +744,7 @@ function exportToExcel() {
   ];
 
   // สร้าง data rows
-  const rows = mockData.map((row) => [
+  const rows = tableData.value.map((row) => [
     row.no,
     row.receiptNo,
     row.customerName,
@@ -760,7 +752,7 @@ function exportToExcel() {
     row.effectiveDate.replace('\n', ' '),
     row.learnerName,
     row.courseName.replace(/\n/g, ' '),
-    row.collector.replace('\n', ' '),
+    formatCollectorDate(row.collector).replace(/\n/g, ' '),
     row.status === 'ยกเลิก'
       ? `ยกเลิก ${row.cancelBy ?? ''} ${row.cancelDate?.replace('\n', ' ') ?? ''}`
       : 'ใช้งาน',
