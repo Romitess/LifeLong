@@ -129,6 +129,51 @@
           </div>
         </div>
 
+        <!-- Template Selector -->
+        <div class="template-selector">
+          <div class="template-selector__header">
+            <q-icon name="workspace_premium" size="20px" color="amber-8" />
+            <span class="template-selector__title">Template Certificate สำหรับวิชานี้</span>
+          </div>
+
+          <div v-if="isLoadingTemplates" class="template-selector__loading">
+            <q-skeleton type="rect" width="180px" height="80px" />
+            <q-skeleton type="rect" width="180px" height="80px" />
+          </div>
+
+          <div v-else-if="availableTemplates.length === 0" class="template-selector__empty">
+            <q-icon name="warning" size="18px" color="warning" />
+            ยังไม่มี Template ที่เปิดใช้งาน กรุณาให้ Admin เพิ่ม Template ก่อน
+          </div>
+
+          <div v-else class="template-selector__grid">
+            <button
+              v-for="tmpl in availableTemplates"
+              :key="tmpl.id"
+              type="button"
+              class="template-card"
+              :class="{ 'template-card--selected': selectedTemplateId === tmpl.id }"
+              @click="selectedTemplateId = tmpl.id"
+            >
+              <div v-if="tmpl.url" class="template-card__img-thumb">
+                <img :src="tmpl.url" :alt="tmpl.name" />
+              </div>
+              <div v-else class="template-card__no-thumb">
+                <q-icon name="image_not_supported" size="28px" color="grey-4" />
+              </div>
+              <div class="template-card__label">{{ tmpl.name }}</div>
+              <q-badge rounded color="blue-5" label="PNG" class="template-card__badge" />
+              <q-icon
+                v-if="selectedTemplateId === tmpl.id"
+                name="check_circle"
+                size="18px"
+                color="positive"
+                class="template-card__check"
+              />
+            </button>
+          </div>
+        </div>
+
         <div class="certificate-table-scroll">
           <table class="certificate-learner-table">
             <thead>
@@ -176,18 +221,21 @@
       v-model="certificateDialogOpen"
       :course="selectedCourse ?? null"
       :user-name="selectedLearner?.name ?? ''"
+      :template="selectedTemplate"
     />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import CertificateModal from 'components/certificate/CertificateModal.vue';
 import InstructorPageHero from 'components/instructor/InstructorPageHero.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
+import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
+import type { ActiveCertTemplate, CertLayout } from 'src/types/admin-cert-templates';
 
 type CertificateResultStatus = 'ผ่าน' | 'ไม่ผ่าน';
 
@@ -210,6 +258,31 @@ const selectedCourseId = ref(typeof route.query.courseId === 'string' ? route.qu
 const courseSearch = ref('');
 const certificateDialogOpen = ref(false);
 const selectedLearner = ref<CertificateLearner | null>(null);
+
+const availableTemplates = ref<ActiveCertTemplate[]>([]);
+const isLoadingTemplates = ref(false);
+const selectedTemplateId = ref<number | null>(null);
+
+const selectedTemplate = computed<ActiveCertTemplate | null>(
+  () => availableTemplates.value.find((t) => t.id === selectedTemplateId.value) ?? null,
+);
+
+onMounted(async () => {
+  isLoadingTemplates.value = true;
+  try {
+    const { data } = await api.get<
+      { id: number; name: string; url: string | null; layout: CertLayout | null }[]
+    >('/api/instructor/cert-templates');
+    availableTemplates.value = data;
+    if (data.length > 0 && selectedTemplateId.value === null) {
+      selectedTemplateId.value = data[0]?.id ?? null;
+    }
+  } catch {
+    availableTemplates.value = [];
+  } finally {
+    isLoadingTemplates.value = false;
+  }
+});
 
 const learnerNames = [
   'ณัฐพงศ์ ไม้อยู่',
@@ -469,6 +542,136 @@ function openCertificate(learner: CertificateLearner): void {
   color: #344054;
   font-weight: 800;
   text-align: right;
+}
+
+.template-selector {
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  border: 1px solid rgba(245, 166, 35, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 250, 235, 0.6);
+}
+
+.template-selector__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.template-selector__title {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #101828;
+}
+
+.template-selector__loading {
+  display: flex;
+  gap: 12px;
+}
+
+.template-selector__empty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #667085;
+  padding: 8px 0;
+}
+
+.template-selector__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.template-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  width: 180px;
+  border: 2px solid rgba(15, 23, 42, 0.1);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover {
+    border-color: rgba(37, 99, 235, 0.4);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  }
+
+  &--selected {
+    border-color: #16a34a;
+    background: rgba(22, 163, 74, 0.04);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.14);
+  }
+}
+
+.template-card__html-thumb {
+  width: 160px;
+  height: 114px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.template-card__svg-preview {
+  width: 100%;
+  height: 100%;
+}
+
+.template-card__img-thumb {
+  width: 160px;
+  height: 114px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+.template-card__no-thumb {
+  width: 160px;
+  height: 114px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.template-card__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #101828;
+  text-align: center;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.template-card__badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.template-card__check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
 }
 
 @media (max-width: 700px) {

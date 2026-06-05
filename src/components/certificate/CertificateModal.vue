@@ -1,53 +1,45 @@
 <template>
   <q-dialog v-model="isVisible" maximized transition-show="scale" transition-hide="scale">
-    <q-card class="certificate-dialog bg-grey-2">
+    <q-card class="certificate-dialog bg-grey-3">
       <q-card-section class="flex flex-center q-pa-md scroll cert-container-section">
-        <div id="certificate-print-area" class="certificate-wrapper shadow-10 bg-white">
-          <svg class="bg-graphics" viewBox="0 0 1000 707" preserveAspectRatio="none">
-            <path d="M0,707 L280,707 Q120,600 0,580 Z" fill="#ffe600" />
-            <path d="M1000,400 Q780,480 480,707 L540,707 Q800,500 1000,430 Z" fill="#d3d4d4" />
-            <path d="M1000,430 Q800,500 540,707 L1000,707 Z" fill="#ffe600" />
-            <path d="M0,55 Q500,160 1000,40 L1000,70 Q500,190 0,85 Z" fill="#d3d4d4" />
-            <path d="M0,0 L1000,0 L1000,40 Q500,160 0,55 Z" fill="#ffe600" />
-          </svg>
+        <div id="certificate-print-area" class="certificate-wrapper shadow-10">
+          <template v-if="props.template?.url">
+            <!-- Background image -->
+            <img
+              :src="props.template.url"
+              alt="certificate background"
+              class="cert-bg-img"
+              crossorigin="anonymous"
+              draggable="false"
+            />
 
-          <div class="watermark-buu">BUU</div>
-
-          <div class="cert-content relative-position">
-            <img src="~assets/logo-1.svg" alt="BUU Seal" class="uni-seal" />
-
-            <div class="uni-title">มหาวิทยาลัยบูรพา</div>
-            <div class="cert-subtitle">ขอมอบประกาศนียบัตรฉบับนี้เพื่อแสดงว่า</div>
-
-            <div class="recipient-name">{{ userName }}</div>
-
-            <div class="cert-status">ผ่านการประเมิน จากการเข้าร่วมในหลักสูตร</div>
-
-            <div class="course-name">{{ course?.title || 'หลักสูตรทดสอบ' }}</div>
-
-            <div class="organizer">จัดโดย {{ course?.faculty || 'สำนักคอมพิวเตอร์' }}</div>
-          </div>
-
-          <div class="cert-footer">
-            <div class="footer-left text-grey-7">
-              เอกสารนี้ลงนามด้วยลายเซ็นอิเล็กทรอนิกส์ ตรวจสอบได้ที่
-              (https://e-sign.buu.ac.th/verify)
+            <!-- Text overlays positioned by layout -->
+            <div class="cert-field cert-field--recipient" :style="fieldStyle('recipient')">
+              {{ userName }}
             </div>
 
-            <div class="footer-center flex column items-center">
-              <div class="signature-box"></div>
-              <div class="sign-line"></div>
-              <div class="sign-position">อธิการบดีมหาวิทยาลัยบูรพา</div>
+            <div class="cert-field cert-field--course" :style="fieldStyle('course')">
+              {{ course?.title || '' }}
             </div>
 
-            <div class="footer-right text-grey-8">ให้ไว้ ณ วันที่ {{ formattedShortDate }}</div>
-          </div>
+            <div class="cert-field cert-field--date" :style="fieldStyle('date')">
+              {{ formattedShortDate }}
+            </div>
+          </template>
 
-          <div class="footer-bottom-en text-grey-6">BURAPHA UNIVERSITY</div>
+          <!-- No template selected -->
+          <div v-else class="cert-no-template">
+            <q-icon name="workspace_premium" size="48px" color="grey-4" />
+            <p>ไม่มีรูปแบบ Certificate</p>
+          </div>
         </div>
       </q-card-section>
 
       <q-card-actions align="center" class="bg-white q-py-md sticky-actions hide-on-print">
+        <div v-if="props.template" class="cert-modal-template-badge">
+          <q-icon name="workspace_premium" size="14px" color="amber-8" />
+          {{ props.template.name }}
+        </div>
         <q-btn flat color="grey-8" label="ปิด" v-close-popup class="q-px-lg" />
         <q-btn
           unelevated
@@ -76,6 +68,8 @@ import { computed, ref } from 'vue';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import type { Course } from 'src/types/course';
+import type { ActiveCertTemplate, CertLayout } from 'src/types/admin-cert-templates';
+import { DEFAULT_LAYOUT } from 'src/types/admin-cert-templates';
 
 type CertificateCourse = Pick<Course, 'title' | 'faculty'>;
 
@@ -83,6 +77,7 @@ const props = defineProps<{
   modelValue: boolean;
   course: CertificateCourse | null;
   userName: string;
+  template?: ActiveCertTemplate | null;
 }>();
 
 const emit = defineEmits<{
@@ -101,6 +96,26 @@ const formattedShortDate = computed(() => {
   const year = d.getFullYear() + 543;
   return `${day}/${month}/${year}`;
 });
+
+const layout = computed<CertLayout>(() => props.template?.layout ?? DEFAULT_LAYOUT);
+
+function fieldStyle(key: keyof CertLayout): Record<string, string> {
+  const f = layout.value[key];
+  return {
+    top: `${f.top}%`,
+    left: `${f.left}%`,
+    fontSize: `clamp(${Math.max(8, f.fontSize * 0.5)}px, ${f.fontSize * 0.12}vw, ${f.fontSize}px)`,
+    color: f.color,
+    fontWeight: f.bold ? '700' : '400',
+    textAlign: f.align,
+    transform:
+      f.align === 'center'
+        ? 'translate(-50%, -50%)'
+        : f.align === 'right'
+          ? 'translate(-100%, -50%)'
+          : 'translate(0%, -50%)',
+  };
+}
 
 const downloading = ref(false);
 
@@ -143,151 +158,59 @@ async function downloadCertificate(): Promise<void> {
   position: relative;
   margin: 0 auto;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
-.bg-graphics {
+.cert-bg-img {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.watermark-buu {
-  position: absolute;
-  left: -2%;
-  top: 50%;
-  transform: translateY(-50%) rotate(-90deg);
-  font-size: clamp(80px, 20vw, 280px);
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: 900;
-  color: transparent;
-  -webkit-text-stroke: clamp(1px, 0.2vw, 3px) rgba(0, 0, 0, 0.04);
-  z-index: 2;
+  object-fit: fill;
+  display: block;
   user-select: none;
 }
 
-.cert-content {
-  z-index: 10;
-  flex: 1;
+.cert-field {
+  position: absolute;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 80%;
+  line-height: 1.35;
+  font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
+  pointer-events: none;
+}
+
+.cert-no-template {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 0 10%;
-  margin-top: 2%;
-  padding-bottom: clamp(60px, 10vw, 100px);
+  gap: 12px;
+  color: #94a3b8;
+  font-size: 1rem;
+  background: #f8fafc;
 }
 
-.uni-seal {
-  width: clamp(60px, 10vw, 110px);
-  margin-bottom: clamp(10px, 2vw, 20px);
-}
-
-.uni-title {
-  font-size: clamp(16px, 3vw, 34px);
-  font-weight: 700;
-  color: #333;
-  margin-bottom: clamp(4px, 1vw, 10px);
-}
-
-.cert-subtitle {
-  font-size: clamp(10px, 1.6vw, 18px);
-  color: #555;
-  margin-bottom: clamp(10px, 2vw, 25px);
-}
-
-.recipient-name {
-  font-size: clamp(18px, 3.5vw, 40px);
-  font-weight: 700;
-  color: #333;
-  margin-bottom: clamp(10px, 2vw, 25px);
-}
-
-.cert-status {
-  font-size: clamp(10px, 1.6vw, 18px);
-  color: #555;
-  margin-bottom: clamp(8px, 1.6vw, 20px);
-}
-
-.course-name {
-  font-size: clamp(14px, 2.6vw, 30px);
-  font-weight: 700;
-  color: #333;
-  margin-bottom: clamp(6px, 1.2vw, 15px);
-}
-
-.organizer {
-  font-size: clamp(10px, 1.5vw, 16px);
-  color: #666;
-}
-
-.cert-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  z-index: 10;
-  padding: 0 clamp(20px, 4vw, 40px) clamp(15px, 3vw, 35px);
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: end;
-}
-
-.footer-left {
-  font-size: clamp(6px, 1vw, 11px);
-}
-
-.footer-center {
-  margin-bottom: 5px;
-  justify-self: center;
-}
-
-.footer-right {
-  font-size: clamp(8px, 1.3vw, 14px);
-  text-align: right;
-  margin-bottom: 5px;
-}
-
-.signature-box {
-  height: clamp(30px, 5vw, 60px);
+.cert-modal-template-badge {
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(245, 166, 35, 0.12);
+  color: #92400e;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-right: 8px;
 }
 
-.sign-img {
-  max-height: 120%;
-  mix-blend-mode: multiply;
-  margin-bottom: -10px;
-}
-
-.sign-line {
-  width: clamp(120px, 20vw, 220px);
-  height: 1px;
-  background: #999;
-  margin: 5px 0;
-}
-
-.sign-position {
-  font-size: clamp(9px, 1.4vw, 15px);
-  color: #555;
-}
-
-.footer-bottom-en {
-  position: absolute;
-  bottom: clamp(5px, 1vw, 15px);
-  left: 0;
-  width: 100%;
-  text-align: center;
-  font-size: clamp(10px, 1.8vw, 20px);
-  letter-spacing: 1px;
-  z-index: 10;
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
 }
 
 @media print {
@@ -295,16 +218,13 @@ async function downloadCertificate(): Promise<void> {
     size: A4 landscape;
     margin: 0;
   }
-
   body * {
     visibility: hidden !important;
   }
-
   #certificate-print-area,
   #certificate-print-area * {
     visibility: visible !important;
   }
-
   #certificate-print-area {
     position: fixed !important;
     left: 0 !important;

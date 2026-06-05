@@ -77,8 +77,11 @@
                 </td>
                 <td class="text-center">
                   <div class="cert-manager-table__actions-cell">
-                    <q-skeleton type="QBtn" width="34px" height="34px" />
-                    <q-skeleton type="QBtn" width="34px" height="34px" />
+                    <q-skeleton type="QBtn" width="34px" height="34px" /><q-skeleton
+                      type="QBtn"
+                      width="34px"
+                      height="34px"
+                    />
                   </div>
                 </td>
               </tr>
@@ -126,9 +129,8 @@
                       class="cert-manager-action-btn cert-manager-action-btn--edit"
                       aria-label="แก้ไข"
                       @click="openEditDialog(item)"
+                      ><q-tooltip>แก้ไข</q-tooltip></q-btn
                     >
-                      <q-tooltip>แก้ไข</q-tooltip>
-                    </q-btn>
                     <q-btn
                       dense
                       round
@@ -138,13 +140,11 @@
                       class="cert-manager-action-btn cert-manager-action-btn--delete"
                       aria-label="ลบ"
                       @click="askDelete(item)"
+                      ><q-tooltip>ลบ</q-tooltip></q-btn
                     >
-                      <q-tooltip>ลบ</q-tooltip>
-                    </q-btn>
                   </div>
                 </td>
               </tr>
-
               <tr v-if="fillerRowHeight > 0" class="cert-manager-table__filler-row">
                 <td colspan="5" :style="{ height: `${fillerRowHeight}px` }" />
               </tr>
@@ -198,6 +198,7 @@
         <q-separator />
 
         <q-card-section class="cert-manager-dialog__body">
+          <!-- Name -->
           <div class="cert-manager-dialog__field">
             <div class="cert-manager-dialog__label">
               ชื่อรูปแบบ Certificate <span class="text-negative">*</span>
@@ -213,10 +214,10 @@
             />
           </div>
 
+          <!-- File upload -->
           <div class="cert-manager-dialog__field">
-            <div class="cert-manager-dialog__label">รูปแบบ Certificate</div>
+            <div class="cert-manager-dialog__label">รูปพื้นหลัง Certificate (PNG)</div>
 
-            <!-- Existing file section (edit mode only) -->
             <div
               v-if="dialogMode === 'edit' && existingFile && !pendingDeleteFile"
               class="cert-manager-dialog__existing-file"
@@ -236,13 +237,13 @@
                   :href="existingFile.url"
                   class="cert-manager-dialog__filename-link"
                   @click.prevent="downloadExistingFile"
+                  ><q-icon name="download" size="14px" />{{
+                    existingFile.filename ?? 'ดาวน์โหลดไฟล์'
+                  }}</a
                 >
-                  <q-icon name="download" size="14px" />
-                  {{ existingFile.filename ?? 'ดาวน์โหลดไฟล์' }}
-                </a>
-                <span v-if="existingFile.imgSize" class="cert-manager-dialog__file-size">
-                  {{ existingFile.imgSize }}
-                </span>
+                <span v-if="existingFile.imgSize" class="cert-manager-dialog__file-size">{{
+                  existingFile.imgSize
+                }}</span>
               </div>
               <q-btn
                 flat
@@ -253,12 +254,10 @@
                 size="sm"
                 class="cert-manager-dialog__delete-file-btn"
                 @click="pendingDeleteFile = true"
+                ><q-tooltip>ลบไฟล์</q-tooltip></q-btn
               >
-                <q-tooltip>ลบไฟล์</q-tooltip>
-              </q-btn>
             </div>
 
-            <!-- New file upload input -->
             <div
               v-if="!existingFile || pendingDeleteFile || dialogMode === 'add'"
               class="cert-manager-dialog__upload-area"
@@ -295,23 +294,119 @@
                 <template v-else>
                   <q-icon name="cloud_upload" size="36px" color="grey-4" />
                   <p class="cert-manager-dialog__drop-hint">ลากไฟล์มาวางที่นี่ หรือ</p>
-                  <label class="cert-manager-dialog__browse-label">
-                    เลือกไฟล์
-                    <input
+                  <label class="cert-manager-dialog__browse-label"
+                    >เลือกไฟล์<input
                       ref="fileInputRef"
                       type="file"
                       accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                       class="cert-manager-dialog__file-input"
                       @change="onFileSelect"
-                    />
-                  </label>
-                  <p class="cert-manager-dialog__file-hint">JPG, JPEG, PNG · ขนาดไม่เกิน 2 MB</p>
+                  /></label>
+                  <p class="cert-manager-dialog__file-hint">PNG, JPG · ขนาดไม่เกิน 2 MB</p>
                 </template>
               </div>
               <p v-if="fileError" class="cert-manager-dialog__file-error">{{ fileError }}</p>
             </div>
           </div>
 
+          <!-- Position Editor -->
+          <div v-if="hasImage" class="cert-manager-dialog__field">
+            <div class="cert-manager-dialog__label">
+              กำหนดตำแหน่งข้อความ
+              <q-btn
+                flat
+                dense
+                size="xs"
+                icon="restart_alt"
+                color="grey-6"
+                label="รีเซ็ต"
+                class="q-ml-sm"
+                @click="resetLayout"
+              />
+            </div>
+            <div class="position-editor">
+              <div
+                ref="editorRef"
+                class="position-editor__canvas"
+                @mousemove="onEditorMouseMove"
+                @mouseup="onEditorMouseUp"
+                @mouseleave="onEditorMouseUp"
+              >
+                <img
+                  :src="editorImageSrc"
+                  alt="template preview"
+                  class="position-editor__img"
+                  draggable="false"
+                />
+                <div
+                  v-for="field in layoutFields"
+                  :key="field.key"
+                  class="position-editor__handle"
+                  :class="`position-editor__handle--${field.key}`"
+                  :style="{
+                    top: `${form.layout[field.key].top}%`,
+                    left: `${form.layout[field.key].left}%`,
+                  }"
+                  @mousedown.prevent="startDrag(field.key, $event)"
+                >
+                  <span class="position-editor__handle-label">{{ field.label }}</span>
+                  <span class="position-editor__handle-sample" :style="getSampleStyle(field.key)">{{
+                    field.sample
+                  }}</span>
+                </div>
+              </div>
+              <p class="position-editor__hint">
+                <q-icon name="drag_indicator" size="14px" /> ลากข้อความเพื่อจัดตำแหน่ง
+              </p>
+
+              <!-- Field settings -->
+              <div class="position-editor__fields">
+                <div
+                  v-for="field in layoutFields"
+                  :key="field.key"
+                  class="position-editor__field-row"
+                >
+                  <span class="position-editor__field-name" :class="`text-${field.color}`">{{
+                    field.label
+                  }}</span>
+                  <div class="position-editor__field-controls">
+                    <q-input
+                      v-model.number="form.layout[field.key].fontSize"
+                      type="number"
+                      outlined
+                      dense
+                      label="ขนาด"
+                      suffix="px"
+                      style="width: 80px"
+                      :min="8"
+                      :max="72"
+                    />
+                    <input
+                      v-model="form.layout[field.key].color"
+                      type="color"
+                      class="position-editor__color-input"
+                      :title="`สีของ ${field.label}`"
+                    />
+                    <q-btn-toggle
+                      v-model="form.layout[field.key].align"
+                      dense
+                      unelevated
+                      :options="[
+                        { value: 'left', icon: 'format_align_left' },
+                        { value: 'center', icon: 'format_align_center' },
+                        { value: 'right', icon: 'format_align_right' },
+                      ]"
+                      toggle-color="primary"
+                      class="position-editor__align-toggle"
+                    />
+                    <q-toggle v-model="form.layout[field.key].bold" dense size="sm" label="B" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status -->
           <div class="cert-manager-dialog__field cert-manager-dialog__field--status">
             <div class="cert-manager-dialog__label">สถานะ</div>
             <div class="cert-manager-dialog__status-row">
@@ -319,9 +414,8 @@
               <span
                 :class="form.statusOn ? 'text-positive' : 'text-grey-6'"
                 class="cert-manager-dialog__status-label"
+                >{{ form.statusOn ? 'เปิด' : 'ปิด' }}</span
               >
-                {{ form.statusOn ? 'เปิด' : 'ปิด' }}
-              </span>
             </div>
           </div>
         </q-card-section>
@@ -389,7 +483,12 @@ import AppSearchInput from 'components/admin/AppSearchInput.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCertTemplates } from 'src/composables/use-admin-cert-templates';
-import type { AdminCertTemplateItem } from 'src/types/admin-cert-templates';
+import type {
+  AdminCertTemplateItem,
+  CertLayout,
+  CertLayoutField,
+} from 'src/types/admin-cert-templates';
+import { DEFAULT_LAYOUT } from 'src/types/admin-cert-templates';
 
 const $q = useQuasar();
 const {
@@ -427,20 +526,87 @@ interface ExistingFile {
   filename?: string;
   imgSize?: string;
 }
-
 const existingFile = ref<ExistingFile | null>(null);
 const pendingDeleteFile = ref(false);
 
-const form = ref({
+function cloneLayout(src: CertLayout): CertLayout {
+  return JSON.parse(JSON.stringify(src)) as CertLayout;
+}
+
+interface CertForm {
+  name: string;
+  statusOn: boolean;
+  file: File | null;
+  layout: CertLayout;
+}
+
+const form = ref<CertForm>({
   name: '',
   statusOn: true,
-  file: null as File | null,
+  file: null,
+  layout: cloneLayout(DEFAULT_LAYOUT),
 });
 
 const nameError = ref(false);
 const fileError = ref('');
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const filePreviewUrl = ref('');
+
+// computed — does the editor have an image to work with?
+const hasImage = computed(
+  () => !!(form.value.file ? filePreviewUrl.value : existingFile.value?.url),
+);
+const editorImageSrc = computed(() =>
+  form.value.file ? filePreviewUrl.value : (existingFile.value?.url ?? ''),
+);
+
+// ——— Layout fields config ———
+const layoutFields: { key: keyof CertLayout; label: string; sample: string; color: string }[] = [
+  { key: 'recipient', label: 'ชื่อผู้รับ', sample: 'ชื่อ-นามสกุล', color: 'blue-8' },
+  { key: 'course', label: 'ชื่อวิชา', sample: 'ชื่อหลักสูตร', color: 'green-8' },
+  { key: 'date', label: 'วันที่', sample: '01/01/2568', color: 'orange-8' },
+];
+
+function getSampleStyle(key: keyof CertLayout): Record<string, string> {
+  const f: CertLayoutField = form.value.layout[key];
+  return {
+    fontSize: `${Math.max(9, Math.min(f.fontSize * 0.4, 14))}px`,
+    color: f.color,
+    fontWeight: f.bold ? '700' : '400',
+    textAlign: f.align,
+  };
+}
+
+// ——— Drag logic ———
+const editorRef = ref<HTMLElement | null>(null);
+const dragging = ref<keyof CertLayout | null>(null);
+
+function startDrag(key: keyof CertLayout, e: MouseEvent): void {
+  dragging.value = key;
+  updateDragPosition(e);
+}
+
+function onEditorMouseMove(e: MouseEvent): void {
+  if (!dragging.value) return;
+  updateDragPosition(e);
+}
+
+function onEditorMouseUp(): void {
+  dragging.value = null;
+}
+
+function updateDragPosition(e: MouseEvent): void {
+  if (!dragging.value || !editorRef.value) return;
+  const rect = editorRef.value.getBoundingClientRect();
+  const top = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+  const left = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+  form.value.layout[dragging.value].top = Math.round(top * 10) / 10;
+  form.value.layout[dragging.value].left = Math.round(left * 10) / 10;
+}
+
+function resetLayout(): void {
+  form.value.layout = cloneLayout(DEFAULT_LAYOUT);
+}
 
 // ——— Preview dialog ———
 const previewOpen = ref(false);
@@ -478,7 +644,6 @@ async function load(page = 1): Promise<void> {
 async function onSearchChange(): Promise<void> {
   await load(1);
 }
-
 function clearSearch(): void {
   globalSearch.value = '';
   void load(1);
@@ -497,7 +662,7 @@ function openAddDialog(): void {
   editingId.value = null;
   existingFile.value = null;
   pendingDeleteFile.value = false;
-  form.value = { name: '', statusOn: true, file: null };
+  form.value = { name: '', statusOn: true, file: null, layout: cloneLayout(DEFAULT_LAYOUT) };
   nameError.value = false;
   fileError.value = '';
   filePreviewUrl.value = '';
@@ -515,7 +680,12 @@ function openEditDialog(item: AdminCertTemplateItem): void {
         ...(item.imgSize ? { imgSize: item.imgSize } : {}),
       }
     : null;
-  form.value = { name: item.name, statusOn: item.status === 'Y', file: null };
+  form.value = {
+    name: item.name,
+    statusOn: item.status === 'Y',
+    file: null,
+    layout: item.layout ? cloneLayout(item.layout) : cloneLayout(DEFAULT_LAYOUT),
+  };
   nameError.value = false;
   fileError.value = '';
   filePreviewUrl.value = '';
@@ -526,7 +696,6 @@ function closeDialog(): void {
   dialogOpen.value = false;
   revokePreview();
 }
-
 function handleDialogHide(): void {
   revokePreview();
 }
@@ -555,7 +724,7 @@ function onFileDrop(e: DragEvent): void {
 function validateAndSetFile(file: File): void {
   fileError.value = '';
   if (!['image/jpeg', 'image/png'].includes(file.type)) {
-    fileError.value = 'รองรับเฉพาะไฟล์ JPG, JPEG, PNG เท่านั้น';
+    fileError.value = 'รองรับเฉพาะไฟล์ PNG, JPG เท่านั้น';
     return;
   }
   if (file.size > 2 * 1024 * 1024) {
@@ -564,9 +733,8 @@ function validateAndSetFile(file: File): void {
   }
   revokePreview();
   form.value.file = file;
-  if (dialogMode.value === 'add' && !form.value.name.trim()) {
+  if (dialogMode.value === 'add' && !form.value.name.trim())
     form.value.name = file.name.replace(/\.[^.]+$/, '');
-  }
   pendingDeleteFile.value = false;
   filePreviewUrl.value = URL.createObjectURL(file);
 }
@@ -579,13 +747,9 @@ function clearFile(): void {
 
 async function downloadExistingFile(): Promise<void> {
   if (!existingFile.value) return;
-
   try {
     const response = await fetch(existingFile.value.url);
-    if (!response.ok) {
-      throw new Error(`Download failed with status ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`Download failed ${response.status}`);
     const blob = await response.blob();
     const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -609,9 +773,8 @@ async function saveDialog(): Promise<void> {
     const fd = new FormData();
     fd.append('name', form.value.name.trim());
     fd.append('status', form.value.statusOn ? 'Y' : 'N');
-    if (form.value.file) {
-      fd.append('file', form.value.file);
-    }
+    fd.append('layout', JSON.stringify(form.value.layout));
+    if (form.value.file) fd.append('file', form.value.file);
 
     if (dialogMode.value === 'add') {
       const created = await createTemplate(fd);
@@ -623,9 +786,7 @@ async function saveDialog(): Promise<void> {
         position: 'top',
       });
     } else {
-      if (pendingDeleteFile.value && !form.value.file) {
-        fd.append('deleteFile', 'true');
-      }
+      if (pendingDeleteFile.value && !form.value.file) fd.append('deleteFile', 'true');
       const updated = await updateTemplate(editingId.value!, fd);
       const idx = items.value.findIndex((i) => i.id === editingId.value);
       if (idx !== -1) items.value[idx] = updated;
@@ -659,9 +820,8 @@ async function confirmDelete(): Promise<void> {
   try {
     await removeTemplate(id);
     $q.notify({ type: 'positive', message: 'ลบรูปแบบ Certificate เรียบร้อย', position: 'top' });
-    if (items.value.length === 0 && pagination.value.page > 1) {
+    if (items.value.length === 0 && pagination.value.page > 1)
       await load(pagination.value.page - 1);
-    }
   } catch {
     $q.notify({ type: 'negative', message: 'ลบไม่สำเร็จ กรุณาลองใหม่', position: 'top' });
   }
@@ -686,21 +846,17 @@ function formatFileSize(bytes: number): string {
   font-weight: 700;
   font-size: 0.84rem;
 }
-
 .cert-manager__toolbar {
   padding: 16px 24px 12px;
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 }
-
 .cert-manager__search {
   width: min(380px, 100%);
 }
-
 .cert-manager__table-wrap {
   overflow-x: auto;
   min-height: var(--cert-manager-table-height);
 }
-
 .cert-manager__table-wrap--loading tbody {
   opacity: 0.45;
   pointer-events: none;
@@ -709,16 +865,14 @@ function formatFileSize(bytes: number): string {
 
 .cert-manager-table {
   width: 100%;
-  min-width: 680px;
+  min-width: 600px;
   border-collapse: collapse;
-
   th,
   td {
     padding: 14px 16px;
     border-bottom: 1px solid rgba(15, 23, 42, 0.08);
     vertical-align: middle;
   }
-
   thead th {
     background: #f8fafc;
     color: #475467;
@@ -728,12 +882,10 @@ function formatFileSize(bytes: number): string {
     text-transform: uppercase;
     white-space: nowrap;
   }
-
   tbody tr.cert-manager-table__skeleton-row:hover,
   tbody tr.cert-manager-table__filler-row:hover {
     background: transparent;
   }
-
   tbody td {
     height: var(--cert-manager-row-height);
   }
@@ -754,30 +906,25 @@ function formatFileSize(bytes: number): string {
 .cert-manager-table__col-actions {
   width: 110px;
 }
-
 .cert-manager-table__index {
   color: #1d4ed8;
   font-weight: 800;
   text-align: center;
 }
-
 .cert-manager-table__row {
-  background: #ffffff;
+  background: #fff;
   &:hover {
     background: rgba(37, 99, 235, 0.03);
   }
 }
-
 .cert-manager-table__skeleton-row td {
-  background: #ffffff;
+  background: #fff;
 }
-
 .cert-manager-table__filler-row td {
   padding: 0 !important;
   border-bottom: 0 !important;
   background: transparent !important;
 }
-
 .cert-manager-table__empty {
   height: calc(var(--cert-manager-table-height) - 1px) !important;
   padding: 38px 18px !important;
@@ -785,7 +932,6 @@ function formatFileSize(bytes: number): string {
   text-align: center;
   vertical-align: middle !important;
 }
-
 .cert-manager-table__name {
   display: -webkit-box;
   overflow: hidden;
@@ -799,13 +945,11 @@ function formatFileSize(bytes: number): string {
   -webkit-line-clamp: 2;
   line-clamp: 2;
 }
-
 .cert-manager-table__status-badge {
   font-size: 0.75rem;
   font-weight: 700;
   padding: 4px 10px;
 }
-
 .cert-manager-table__thumb-wrap {
   display: flex;
   align-items: center;
@@ -814,7 +958,6 @@ function formatFileSize(bytes: number): string {
   height: 60px;
   margin: 0 auto;
 }
-
 .cert-manager-table__thumb {
   width: 100%;
   height: 100%;
@@ -823,28 +966,23 @@ function formatFileSize(bytes: number): string {
   border: 1px solid rgba(15, 23, 42, 0.1);
   cursor: pointer;
   transition: box-shadow 0.18s ease;
-
   &:hover {
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
   }
 }
-
 .cert-manager-table__thumb-skeleton {
   border-radius: 6px;
 }
-
 .cert-manager-table__no-file {
   color: #94a3b8;
   font-size: 0.88rem;
 }
-
 .cert-manager-table__actions-cell {
   display: inline-flex;
   gap: 6px;
   align-items: center;
   justify-content: center;
 }
-
 .cert-manager__pagination {
   display: flex;
   justify-content: center;
@@ -859,18 +997,16 @@ function formatFileSize(bytes: number): string {
   width: 34px;
   height: 34px;
   min-height: 34px;
-  background: #ffffff !important;
+  background: #fff !important;
   color: var(--action-color) !important;
   border: 1px solid var(--action-border) !important;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
   transition:
     transform 0.18s ease,
     box-shadow 0.18s ease;
-
   :deep(.q-icon) {
     font-size: 17px;
   }
-
   &:hover {
     transform: translateY(-2px);
     box-shadow:
@@ -878,13 +1014,11 @@ function formatFileSize(bytes: number): string {
       0 0 0 1px var(--action-ring) !important;
   }
 }
-
 .cert-manager-action-btn--edit {
   --action-color: var(--admin-gold);
   --action-border: rgba(245, 166, 35, 0.28);
   --action-ring: rgba(245, 166, 35, 0.1);
 }
-
 .cert-manager-action-btn--delete {
   --action-color: var(--admin-danger-ink);
   --action-border: rgba(225, 29, 72, 0.18);
@@ -893,21 +1027,26 @@ function formatFileSize(bytes: number): string {
 
 // ——— Dialog ———
 .cert-manager-dialog__card {
-  width: min(520px, calc(100vw - 32px));
+  width: min(600px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
   border-radius: 20px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
+.cert-manager-dialog__body {
+  overflow-y: auto;
+  flex: 1;
+}
 .cert-manager-dialog__header {
   padding: 20px 24px 16px;
 }
-
 .cert-manager-dialog__title-row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
 .cert-manager-dialog__icon-wrap {
   display: inline-flex;
   align-items: center;
@@ -918,50 +1057,42 @@ function formatFileSize(bytes: number): string {
   background: rgba(245, 166, 35, 0.14);
   flex-shrink: 0;
 }
-
 .cert-manager-dialog__title {
   margin: 0;
   color: var(--admin-navy);
   font-size: 1.05rem;
   font-weight: 850;
 }
-
 .cert-manager-dialog__body {
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
-
 .cert-manager-dialog__field {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-
 .cert-manager-dialog__label {
   color: #475467;
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-
 .cert-manager-dialog__field--status {
   flex-direction: column;
 }
-
 .cert-manager-dialog__status-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
 .cert-manager-dialog__status-label {
   font-weight: 700;
   font-size: 0.92rem;
 }
 
-// Existing file
 .cert-manager-dialog__existing-file {
   display: flex;
   align-items: center;
@@ -971,7 +1102,6 @@ function formatFileSize(bytes: number): string {
   border-radius: 12px;
   background: #f8fafc;
 }
-
 .cert-manager-dialog__existing-thumb {
   flex-shrink: 0;
   width: 72px;
@@ -980,13 +1110,11 @@ function formatFileSize(bytes: number): string {
   overflow: hidden;
   border: 1px solid rgba(15, 23, 42, 0.1);
 }
-
 .cert-manager-dialog__thumb-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
-
 .cert-manager-dialog__existing-info {
   flex: 1;
   display: flex;
@@ -994,7 +1122,6 @@ function formatFileSize(bytes: number): string {
   gap: 4px;
   min-width: 0;
 }
-
 .cert-manager-dialog__filename-link {
   display: inline-flex;
   align-items: center;
@@ -1006,28 +1133,23 @@ function formatFileSize(bytes: number): string {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-
   &:hover {
     text-decoration: underline;
   }
 }
-
 .cert-manager-dialog__file-size {
   color: #94a3b8;
   font-size: 0.75rem;
 }
-
 .cert-manager-dialog__delete-file-btn {
   flex-shrink: 0;
 }
 
-// Upload area
 .cert-manager-dialog__upload-area {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-
 .cert-manager-dialog__drop-zone {
   display: flex;
   flex-direction: column;
@@ -1040,11 +1162,9 @@ function formatFileSize(bytes: number): string {
   background: #fafbfc;
   min-height: 120px;
   transition: border-color 0.2s ease;
-
   &:hover {
     border-color: rgba(37, 99, 235, 0.4);
   }
-
   &.cert-manager-dialog__drop-zone--has-file {
     padding: 16px;
     flex-direction: row;
@@ -1055,41 +1175,35 @@ function formatFileSize(bytes: number): string {
     background: rgba(37, 99, 235, 0.04);
   }
 }
-
 .cert-manager-dialog__drop-hint {
   margin: 0;
   color: #64748b;
   font-size: 0.82rem;
 }
-
 .cert-manager-dialog__browse-label {
   display: inline-flex;
   align-items: center;
   padding: 6px 16px;
   border-radius: 8px;
   background: #1d4ed8;
-  color: #ffffff;
+  color: #fff;
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
 }
-
 .cert-manager-dialog__file-input {
   display: none;
 }
-
 .cert-manager-dialog__file-hint {
   margin: 0;
   color: #94a3b8;
   font-size: 0.75rem;
 }
-
 .cert-manager-dialog__file-error {
   margin: 0;
   color: #e11d48;
   font-size: 0.78rem;
 }
-
 .cert-manager-dialog__preview-img {
   max-width: 80px;
   max-height: 60px;
@@ -1097,7 +1211,6 @@ function formatFileSize(bytes: number): string {
   object-fit: contain;
   flex-shrink: 0;
 }
-
 .cert-manager-dialog__preview-info {
   flex: 1;
   display: flex;
@@ -1105,7 +1218,6 @@ function formatFileSize(bytes: number): string {
   gap: 2px;
   min-width: 0;
 }
-
 .cert-manager-dialog__preview-name {
   color: var(--admin-navy);
   font-size: 0.82rem;
@@ -1114,37 +1226,171 @@ function formatFileSize(bytes: number): string {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .cert-manager-dialog__preview-size {
   color: #94a3b8;
   font-size: 0.75rem;
 }
-
 .cert-manager-dialog__clear-file {
   flex-shrink: 0;
 }
-
 .cert-manager-dialog__actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding: 0 24px 24px;
 }
-
 .cert-manager-dialog__cancel-btn,
 .cert-manager-dialog__save-btn {
   width: 100%;
-  border-radius: 10px;
+  border-radius: 10px !important;
   font-weight: 700;
   min-height: 42px;
 }
 
-// Image preview dialog
+.cert-manager-dialog__save-btn {
+  background: var(--admin-gold, #f5a623) !important;
+  color: #ffffff !important;
+  border-color: rgba(245, 166, 35, 0.7) !important;
+
+  :deep(.q-btn__content) {
+    color: #ffffff !important;
+  }
+}
+
+// ——— Position Editor ———
+.position-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.position-editor__canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.414;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  cursor: crosshair;
+  user-select: none;
+}
+
+.position-editor__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+}
+
+.position-editor__handle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: grab;
+  z-index: 10;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &--recipient .position-editor__handle-label {
+    background: rgba(29, 78, 216, 0.85);
+  }
+  &--course .position-editor__handle-label {
+    background: rgba(22, 101, 52, 0.85);
+  }
+  &--date .position-editor__handle-label {
+    background: rgba(146, 64, 14, 0.85);
+  }
+}
+
+.position-editor__handle-label {
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.position-editor__handle-sample {
+  pointer-events: none;
+  white-space: nowrap;
+  display: block;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.position-editor__hint {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.position-editor__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  background: #fafbfc;
+}
+
+.position-editor__field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.position-editor__field-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  min-width: 72px;
+}
+
+.position-editor__field-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.position-editor__color-input {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  padding: 2px;
+  cursor: pointer;
+  background: none;
+}
+
+.position-editor__align-toggle {
+  :deep(.q-btn) {
+    min-height: 28px;
+    min-width: 28px;
+    padding: 0;
+  }
+}
+
+// ——— Image preview dialog ———
 .cert-manager-preview-card {
   max-width: min(800px, calc(100vw - 32px));
   border-radius: 16px;
 }
-
+.cert-manager-preview-card__header {
+  padding: 16px 20px 0;
+}
 .cert-manager-preview-card__img {
   display: block;
   max-width: 100%;
