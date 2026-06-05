@@ -21,7 +21,7 @@
 
     <section class="finance-shell finance-content">
       <!-- ── KPI Metric Cards ─────────────────────────────────── -->
-      <div class="fac-stat-grid">
+      <!-- <div class="fac-stat-grid">
         <CentralFinanceMetricCard
           icon="account_balance_wallet"
           icon-color="#047857"
@@ -43,7 +43,7 @@
           :value="String(activeFacultyCount)"
           :label="$t('centralFinance.facultyRevenue.summary.facultyCount')"
         />
-      </div>
+      </div> -->
 
       <!-- ── Filter Card ─────────────────────────────────────── -->
       <CentralFinanceSurfaceCard>
@@ -117,35 +117,10 @@
         </div>
       </CentralFinanceSurfaceCard>
 
-      <!-- ── Analysis Grid (Chart + Table) ──────────────────── -->
-      <div v-if="hasSearched" class="fac-analysis-grid q-mt-md">
-        <!-- Donut Chart -->
-        <CentralFinanceSurfaceCard
-          :accent="false"
-          :title="$t('centralFinance.facultyRevenue.chart.title')"
-          class="h-full"
-        >
-          <div class="column items-center justify-center q-pa-md">
-            <RevenueDonutChart :data="chartData" />
-            <div class="q-mt-lg text-center">
-              <div class="text-caption text-grey-6 q-mb-xs">
-                {{ $t('centralFinance.facultyRevenue.chart.totalRevenue') }}
-                {{ filters.fiscalYear }}
-              </div>
-              <div class="text-h4 text-weight-bolder text-navy">
-                {{ formatCurrency(totalRevenue) }}
-              </div>
-            </div>
-          </div>
-        </CentralFinanceSurfaceCard>
-
+      <!-- ── Table ──────────────────────────────────────────── -->
+      <div v-if="hasSearched" class="q-mt-md">
         <!-- Faculty Table -->
-        <CentralFinanceSurfaceCard
-          :accent="false"
-          :title="$t('centralFinance.facultyRevenue.table.title')"
-          body-padding="none"
-          class="h-full"
-        >
+        <CentralFinanceSurfaceCard>
           <template #header-actions>
             <q-btn
               outline
@@ -205,20 +180,7 @@
             <!-- Rank -->
             <template #body-cell-rank="props">
               <q-td :props="props" class="text-center">
-                <q-badge
-                  :color="
-                    props.row.rank === 1
-                      ? 'warning'
-                      : props.row.rank === 2
-                        ? 'blue-6'
-                        : props.row.rank === 3
-                          ? 'teal'
-                          : 'grey-5'
-                  "
-                  :label="String(props.row.rank)"
-                  rounded
-                  class="text-weight-bold"
-                />
+                {{ props.row.rank }}
               </q-td>
             </template>
 
@@ -232,19 +194,10 @@
               </q-td>
             </template>
 
-            <!-- Proportion bar -->
+            <!-- Proportion -->
             <template #body-cell-percent="props">
               <q-td :props="props">
-                <div class="row items-center no-wrap q-gutter-sm">
-                  <q-linear-progress
-                    :value="props.row.percent / 100"
-                    :color="props.row.barColor"
-                    rounded
-                    size="8px"
-                    style="width: 70px"
-                  />
-                  <span class="text-weight-bold">{{ props.row.percent }}%</span>
-                </div>
+                <span class="text-weight-bold">{{ props.row.percent }}%</span>
               </q-td>
             </template>
 
@@ -341,8 +294,6 @@ import { useI18n } from 'vue-i18n';
 import type { QTableColumn } from 'quasar';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
-import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
-import RevenueDonutChart from 'components/finance/RevenueDonutChart.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
@@ -385,24 +336,15 @@ interface FacultyStat {
   name: string;
   revenue: number;
   percent: number;
-  color: string;
-  barColor: string;
-}
-
-interface ChartDataItem {
-  name: string;
-  amount: number;
-  percent: number;
-  color: string;
 }
 
 const FACULTY_CONFIG = [
-  { name: 'คณะวิทยาการสารสนเทศ', color: '#10233F', barColor: 'primary' },
-  { name: 'คณะวิศวกรรมศาสตร์', color: '#F5A623', barColor: 'warning' },
-  { name: 'คณะวิทยาศาสตร์', color: '#0EA5E9', barColor: 'blue-5' },
-  { name: 'คณะพยาบาลศาสตร์', color: '#EC4899', barColor: 'pink-5' },
-  { name: 'คณะบริหารธุรกิจ', color: '#8B5CF6', barColor: 'purple-5' },
-  { name: 'สำนักคอมพิวเตอร์', color: '#10B981', barColor: 'teal-5' },
+  { name: 'คณะวิทยาการสารสนเทศ' },
+  { name: 'คณะวิศวกรรมศาสตร์' },
+  { name: 'คณะวิทยาศาสตร์' },
+  { name: 'คณะพยาบาลศาสตร์' },
+  { name: 'คณะบริหารธุรกิจ' },
+  { name: 'สำนักคอมพิวเตอร์' },
 ];
 
 const facultyStats = computed<FacultyStat[]>(() => {
@@ -424,8 +366,6 @@ const facultyStats = computed<FacultyStat[]>(() => {
       name: f.name,
       revenue,
       percent: Math.round((revenue / total) * 100),
-      color: f.color,
-      barColor: f.barColor,
       rank: 0,
     };
   })
@@ -433,27 +373,12 @@ const facultyStats = computed<FacultyStat[]>(() => {
     .map((f, i) => ({ ...f, rank: i + 1 }));
 });
 
-const totalRevenue = computed<number>(() =>
-  facultyStats.value.reduce((sum, f) => sum + f.revenue, 0),
-);
-
-const topFaculty = computed<string>(() => facultyStats.value[0]?.name ?? '-');
-
 const activeFacultyCount = computed<number>(
   () => facultyStats.value.filter((f) => f.revenue > 0).length,
 );
 
 const activeFacultyLabel = computed<string>(
   () => `${activeFacultyCount.value} ${t('centralFinance.facultyRevenue.summary.facultyCount')}`,
-);
-
-const chartData = computed<ChartDataItem[]>(() =>
-  facultyStats.value.map((f) => ({
-    name: f.name,
-    amount: f.revenue,
-    percent: f.percent,
-    color: f.color,
-  })),
 );
 
 // ── Table Columns ────────────────────────────────────────────
