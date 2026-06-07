@@ -27,20 +27,12 @@
 
         <!-- Assignment iframe -->
         <div v-else class="assignment-shell">
-          <div class="assignment-topbar">
-            <div class="assignment-topbar-inner">
-              <q-btn flat dense round icon="arrow_back" color="grey-7" @click="goBack" />
-              <nav class="assignment-breadcrumb">
-                <RouterLink to="/course-home" class="breadcrumb-el">
-                  <q-icon name="home" size="16px" />
-                </RouterLink>
-                <q-icon name="chevron_right" size="14px" color="grey-4" />
-                <span class="breadcrumb-el cursor-pointer" @click="goBack">{{ courseTitle }}</span>
-                <q-icon name="chevron_right" size="14px" color="grey-4" />
-                <span class="breadcrumb-el breadcrumb-el--current">{{ assignmentTitle }}</span>
-              </nav>
-            </div>
-          </div>
+          <CoursePageHeader
+            :course-id="courseId"
+            :course-title="courseTitle"
+            :current="assignmentTitle"
+            with-back
+          />
 
           <iframe
             :src="ssoUrl"
@@ -56,8 +48,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { RouterLink, useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
+import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import { useCourseStore } from 'src/stores/course-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
@@ -167,55 +160,6 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 64px);
-}
-
-.assignment-topbar {
-  background: #fff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 8px 16px;
-  flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-
-.assignment-topbar-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 1280px;
-  margin: 0 auto;
-}
-
-.assignment-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  flex: 1;
-  overflow: hidden;
-}
-
-.breadcrumb-el {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #6b7280;
-  text-decoration: none;
-  padding: 2px 4px;
-  border-radius: 4px;
-  white-space: nowrap;
-  transition: color 0.2s;
-
-  &:hover {
-    color: var(--q-primary);
-  }
-
-  &--current {
-    color: #1a1a1a;
-    font-weight: 700;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
 }
 
 .assignment-frame {

@@ -15,6 +15,12 @@
       </q-drawer>
 
       <q-page-container>
+        <CoursePageHeader
+          :course-id="String($route.params.id)"
+          :course-title="courseTitle"
+          :current="`${$t('learning.videoLesson')} ${lessonTitle}`"
+          with-back
+        />
         <div
           class="content-area"
           :class="isFullscreen ? 'content-fullscreen' : 'section-container content-standard'"
@@ -23,27 +29,6 @@
           <!-- Video Content -->
           <div class="video-content-wrapper row">
             <div class="col-12">
-              <!-- Breadcrumbs -->
-              <q-breadcrumbs class="text-grey-8 q-mb-xl modern-breadcrumbs" active-color="primary">
-                <template v-slot:separator>
-                  <q-icon size="1.4em" name="chevron_right" color="grey-4" />
-                </template>
-                <q-breadcrumbs-el
-                  :label="$t('learning.home')"
-                  icon="home"
-                  to="/course-home"
-                  class="breadcrumb-link"
-                />
-                <q-breadcrumbs-el
-                  :label="courseTitle"
-                  class="breadcrumb-link cursor-pointer"
-                  @click="$router.push(`/course/${String($route.params.id)}/learn`)"
-                />
-                <q-breadcrumbs-el
-                  :label="`${$t('learning.videoLesson')} ${lessonTitle}`"
-                  class="text-weight-bold text-dark q-px-sm"
-                />
-              </q-breadcrumbs>
               <div class="row items-center justify-between q-mb-xl">
                 <div class="row items-center">
                   <div class="title-accent bg-primary q-mr-md"></div>
@@ -128,6 +113,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
+import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import { getNavigation, type Lesson } from 'src/data/course-structure';
 import CourseLayout from 'layouts/course-layout.vue';
 import { useUiStore } from 'src/stores/ui-store';
@@ -254,31 +240,6 @@ const navigateToActivity = (lesson: Lesson) => {
   width: 8px;
   height: 40px;
   border-radius: 4px;
-}
-
-// Breadcrumbs
-.modern-breadcrumbs {
-  font-size: 0.95rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-
-  .breadcrumb-link {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 6px 12px;
-    border-radius: 10px;
-    text-decoration: none;
-    color: inherit;
-
-    &:hover {
-      color: var(--q-primary) !important;
-      background: rgba(var(--q-primary), 0.08);
-    }
-  }
-
-  .q-breadcrumbs__el-icon {
-    margin-right: 8px;
-    font-size: 1.2rem;
-  }
 }
 
 .learning-layout {

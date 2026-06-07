@@ -31,23 +31,7 @@
     <!-- Main content -->
     <div class="course-main" :class="{ 'course-main--shifted': leftDrawerOpen && !isMobile }">
       <!-- Breadcrumb bar -->
-      <div class="course-breadcrumb-bar">
-        <div class="course-breadcrumb-inner section-container">
-          <nav class="breadcrumb-nav" aria-label="Course breadcrumb">
-            <RouterLink to="/main" class="breadcrumb-el">
-              <q-icon name="home" size="18px" />
-              <span>หน้าหลัก</span>
-            </RouterLink>
-            <q-icon name="chevron_right" size="16px" color="grey-4" />
-            <RouterLink to="/profile/courses" class="breadcrumb-el">
-              <q-icon name="menu_book" size="18px" />
-              <span>วิชาของฉัน</span>
-            </RouterLink>
-            <q-icon name="chevron_right" size="16px" color="grey-4" />
-            <span class="breadcrumb-el breadcrumb-el--current">{{ courseTitle }}</span>
-          </nav>
-        </div>
-      </div>
+      <CoursePageHeader :course-id="courseId" :course-title="courseTitle" with-back />
 
       <!-- Page content -->
       <div class="content-area section-container content-standard">
@@ -179,10 +163,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { RouterLink, useRouter, useRoute } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
+import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import { getCourseStructure, type CourseModule, type Lesson } from 'src/data/course-structure';
@@ -194,6 +179,9 @@ import { useMoodleCourseContents } from 'src/composables/use-moodle-course-conte
 interface CourseModuleState extends CourseModule {
   expanded: boolean;
 }
+
+// Moodle module types rendered natively in-app instead of redirecting to Moodle.
+const CONTENT_MODNAMES = new Set(['page', 'resource', 'label', 'url', 'folder', 'book', 'forum']);
 
 // Fallback icon by lesson type for mock structures that have no modname-derived icon.
 const LESSON_TYPE_ICON: Record<Lesson['type'], string> = {
@@ -235,6 +223,13 @@ const currentCourse = computed(() => {
 
 const courseTitle = computed<string>(() => currentCourse.value?.title || 'Course Learning');
 
+const resolvedMoodleCourseId = computed<number | null>(() => {
+  const fromCourse = currentCourse.value?.moodleId;
+  if (fromCourse) return fromCourse;
+  const fromQuery = Number(getQueryString(route.query.moodleCourseId));
+  return fromQuery > 0 ? fromQuery : null;
+});
+
 const courseModulesWithProgress = computed(() => {
   const cid = courseId.value;
   if (!cid) return [];
@@ -268,22 +263,38 @@ const navigateToLesson = async (lesson: Lesson): Promise<void> => {
   const courseIdValue = courseId.value;
   if (!courseIdValue) return;
 
-  // Moodle assignment or quiz → in-app activity page
+  // Moodle quiz → native in-app quiz engine
+  if (lesson.moodleModuleId && lesson.moodleModname === 'quiz' && resolvedMoodleCourseId.value) {
+    await router.push({
+      path: `/course/${courseIdValue}/moodle-quiz/${lesson.moodleModuleId}`,
+      query: { title: lesson.title, moodleCourseId: String(resolvedMoodleCourseId.value) },
+    });
+    return;
+  }
+
+  // Moodle assignment → native in-app submission page
+  if (lesson.moodleModuleId && lesson.moodleModname === 'assign' && resolvedMoodleCourseId.value) {
+    await router.push({
+      path: `/course/${courseIdValue}/moodle-assign/${lesson.moodleModuleId}`,
+      query: { title: lesson.title, moodleCourseId: String(resolvedMoodleCourseId.value) },
+    });
+    return;
+  }
+
+  // Content-type modules → dedicated in-app content page (native render, no Moodle redirect)
   if (
     lesson.moodleModuleId &&
-    (lesson.moodleModname === 'assign' || lesson.moodleModname === 'quiz')
+    lesson.moodleModname &&
+    CONTENT_MODNAMES.has(lesson.moodleModname) &&
+    resolvedMoodleCourseId.value
   ) {
-    const query: Record<string, string> = {
-      title: encodeURIComponent(lesson.title),
-      modname: lesson.moodleModname,
-    };
-    if (lesson.moodleUrl) query.moodleUrl = lesson.moodleUrl;
-    const moodleId = currentCourse.value?.moodleId;
-    if (moodleId) query.moodleCourseId = String(moodleId);
-
     await router.push({
-      path: `/course/${courseIdValue}/assign/${lesson.moodleModuleId}`,
-      query,
+      path: `/course/${courseIdValue}/learn/${lesson.moodleModuleId}`,
+      query: {
+        title: lesson.title,
+        modname: lesson.moodleModname,
+        moodleCourseId: String(resolvedMoodleCourseId.value),
+      },
     });
     return;
   }
@@ -389,55 +400,6 @@ $sidebar-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   &--shifted {
     @media (min-width: 1024px) {
       margin-left: $sidebar-width;
-    }
-  }
-}
-
-// Breadcrumb Bar
-.course-breadcrumb-bar {
-  background: #ffffff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  padding: 10px 0;
-  flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-
-.course-breadcrumb-inner {
-  display: flex;
-  align-items: center;
-}
-
-.breadcrumb-nav {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.breadcrumb-el {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #6b7280;
-  text-decoration: none;
-  padding: 4px 6px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: var(--q-primary);
-    background: rgba(247, 208, 70, 0.12);
-  }
-
-  &--current {
-    color: #1a1a1a;
-    font-weight: 700;
-    cursor: default;
-
-    &:hover {
-      background: transparent;
-      color: #1a1a1a;
     }
   }
 }

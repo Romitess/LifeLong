@@ -14,6 +14,12 @@
         <SidebarNavigation />
       </q-drawer>
       <q-page-container>
+        <CoursePageHeader
+          :course-id="String($route.params.id)"
+          :course-title="courseTitle"
+          :current="quizTitle"
+          with-back
+        />
         <div
           class="content-area"
           :class="isFullscreen ? 'content-fullscreen' : 'section-container content-standard'"
@@ -22,30 +28,6 @@
           <!-- Start Screen with Attempts History -->
           <div v-if="!quizStarted && !quizSubmitted && !showSummary" class="quiz-intro-wrapper row">
             <div class="col-12">
-              <q-breadcrumbs class="text-grey-8 q-mb-xl modern-breadcrumbs" active-color="primary">
-                <template v-slot:separator>
-                  <q-icon size="1.4em" name="chevron_right" color="grey-4" />
-                </template>
-                <q-breadcrumbs-el
-                  label="หน้าแรก"
-                  icon="home"
-                  to="/course-home"
-                  class="breadcrumb-link"
-                />
-                <!-- <q-breadcrumbs-el
-                  label="This course"
-                  icon="school"
-                  class="breadcrumb-link cursor-pointer"
-                  @click="$router.push(`/course/${String($route.params.id)}/learn`)"
-                /> -->
-                <q-breadcrumbs-el
-                  :label="courseTitle"
-                  class="breadcrumb-link cursor-pointer"
-                  @click="$router.push(`/course/${String($route.params.id)}/learn`)"
-                />
-                <q-breadcrumbs-el :label="quizTitle" class="text-weight-bold text-dark q-px-sm" />
-              </q-breadcrumbs>
-
               <div class="row items-center justify-between q-mb-xl">
                 <div class="row items-center">
                   <div class="title-accent bg-primary q-mr-md"></div>
@@ -198,30 +180,6 @@
           <!-- Summary of Attempt Screen (Full Width) -->
           <div v-else-if="showSummary" class="quiz-summary-wrapper row justify-center">
             <div :class="isFullscreen ? 'col-12' : 'col-12 col-lg-10 col-xl-9'">
-              <q-breadcrumbs class="text-grey-8 q-mb-xl modern-breadcrumbs" active-color="primary">
-                <template v-slot:separator
-                  ><q-icon size="1.4em" name="chevron_right" color="grey-4"
-                /></template>
-                <q-breadcrumbs-el
-                  :label="$t('learning.home')"
-                  icon="home"
-                  to="/course-home"
-                  class="breadcrumb-link"
-                />
-                <q-breadcrumbs-el
-                  :label="$t('learning.thisCourse')"
-                  icon="school"
-                  @click="$router.push(`/course/${String($route.params.id)}/learn`)"
-                  class="breadcrumb-link cursor-pointer"
-                />
-                <q-breadcrumbs-el
-                  :label="courseTitle"
-                  @click="$router.push(`/course/${String($route.params.id)}/learn`)"
-                  class="breadcrumb-link cursor-pointer"
-                />
-                <q-breadcrumbs-el :label="quizTitle" class="text-weight-bold text-dark q-px-sm" />
-              </q-breadcrumbs>
-
               <div class="summary-card q-pa-xl bg-white shadow-1 border-radius-16">
                 <h2 class="text-h4 text-weight-bolder q-mt-none q-mb-xl">
                   {{ $t('quiz.summary') }}
@@ -297,30 +255,6 @@
           <!-- Active Quiz Screen (With Sidebar) -->
           <div v-else class="quiz-content-wrapper row">
             <div class="col-12">
-              <q-breadcrumbs class="text-grey-8 q-mb-xl modern-breadcrumbs" active-color="primary">
-                <template v-slot:separator
-                  ><q-icon size="1.4em" name="chevron_right" color="grey-4"
-                /></template>
-                <q-breadcrumbs-el
-                  :label="$t('learning.home')"
-                  icon="home"
-                  to="/course-home"
-                  class="breadcrumb-link"
-                />
-                <q-breadcrumbs-el
-                  :label="$t('learning.thisCourse')"
-                  icon="school"
-                  @click="$router.push(`/course/${String($route.params.id)}/learn`)"
-                  class="breadcrumb-link cursor-pointer"
-                />
-                <q-breadcrumbs-el
-                  :label="courseTitle"
-                  @click="$router.push(`/course/${String($route.params.id)}/learn`)"
-                  class="breadcrumb-link cursor-pointer"
-                />
-                <q-breadcrumbs-el :label="quizTitle" class="text-weight-bold text-dark q-px-sm" />
-              </q-breadcrumbs>
-
               <div class="row q-col-gutter-lg">
                 <!-- Sidebar -->
                 <div class="col-12 col-sm-3">
@@ -485,6 +419,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
+import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import { getNavigation, type Lesson } from 'src/data/course-structure';
 import CourseLayout from 'layouts/course-layout.vue';
 import { useUiStore } from 'src/stores/ui-store';
@@ -802,22 +737,6 @@ const navigateToActivity = (lesson: Lesson) => {
   &:hover {
     color: white !important;
     background: rgba(255, 255, 255, 0.12) !important;
-  }
-}
-
-.modern-breadcrumbs {
-  font-size: 0.95rem;
-  font-weight: 500;
-  .breadcrumb-link {
-    transition: all 0.3s ease;
-    padding: 6px 12px;
-    border-radius: 10px;
-    text-decoration: none;
-    color: inherit;
-    &:hover {
-      background: rgba(var(--q-primary), 0.08);
-      color: var(--q-primary) !important;
-    }
   }
 }
 

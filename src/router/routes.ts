@@ -17,6 +17,18 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/course-learning-page.vue'),
       },
       {
+        path: 'course/:id/learn/:moduleId',
+        component: () => import('pages/course-content-page.vue'),
+      },
+      {
+        path: 'course/:id/moodle-quiz/:moduleId',
+        component: () => import('pages/course-moodle-quiz-page.vue'),
+      },
+      {
+        path: 'course/:id/moodle-assign/:moduleId',
+        component: () => import('pages/course-moodle-assign-page.vue'),
+      },
+      {
         path: 'course/:id/video/:videoId',
         component: () => import('pages/course-video-page.vue'),
       },
