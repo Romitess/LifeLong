@@ -10,19 +10,12 @@
           {{ $t('profile.courses.totalCount', { count: myRegistrationsCount }) }}
         </div>
       </div>
-      <q-input
+      <BaseSearchInput
         :model-value="courseSearch"
-        dense
-        outlined
-        rounded
         :placeholder="$t('profile.courses.search')"
         class="profile-search-input"
-        @update:model-value="$emit('update:courseSearch', $event as string)"
-      >
-        <template v-slot:prepend>
-          <q-icon name="search" color="grey-5" />
-        </template>
-      </q-input>
+        @update:model-value="$emit('update:courseSearch', $event)"
+      />
     </div>
 
     <!-- Registered Courses Table Header -->
@@ -177,6 +170,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import BaseSearchInput from 'components/base/BaseSearchInput.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
 import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import { useCourseBookmarkStore } from 'src/stores/course-bookmark-store';
@@ -234,13 +228,9 @@ function hasPayment(courseId: string): boolean {
 
 .profile-search-input {
   width: 310px;
-
-  :deep(.q-field__control) {
-    background: white;
-    border-color: rgba(17, 24, 39, 0.08);
-    min-height: 44px;
-    box-shadow: 0 5px 16px rgba(17, 24, 39, 0.03);
-  }
+  --base-search-height: 42px;
+  --base-search-padding-x: 14px;
+  --base-search-font-size: 0.92rem;
 }
 
 .course-list-header {

@@ -36,18 +36,12 @@
                   </div>
                 </div>
                 <div class="row items-center q-gutter-md">
-                  <q-input
+                  <BaseSearchInput
                     v-model="searchQuery"
-                    dense
-                    outlined
                     :placeholder="t('homepage.searchPlaceholder')"
-                    class="search-input bg-white border-radius-12"
+                    class="search-input"
                     style="width: 300px"
-                  >
-                    <template v-slot:prepend>
-                      <q-icon name="search" color="grey-6" />
-                    </template>
-                  </q-input>
+                  />
                 </div>
               </div>
 
@@ -128,6 +122,7 @@ import { useQuasar } from 'quasar';
 import { useAuthStore } from 'src/stores/auth-store';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 import BaseButton from 'components/base/BaseButton.vue';
+import BaseSearchInput from 'components/base/BaseSearchInput.vue';
 import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
@@ -225,13 +220,7 @@ const formatDate = (dateStr: string) => {
 }
 
 .search-input {
-  :deep(.q-field__control) {
-    border-radius: 12px;
-    transition: all 0.3s ease;
-  }
-  &:hover :deep(.q-field__control) {
-    border-color: $primary;
-  }
+  max-width: 100%;
 }
 
 .border-radius-12 {

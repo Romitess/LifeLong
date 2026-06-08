@@ -1,22 +1,15 @@
 <template>
-  <q-input
+  <BaseSearchInput
     :model-value="modelValue"
-    outlined
-    dense
     :debounce="debounce"
     :placeholder="placeholder"
-    v-bind="$attrs"
-    @update:model-value="emit('update:modelValue', $event as string)"
-  >
-    <template #prepend><q-icon name="search" /></template>
-    <template v-if="modelValue" #append>
-      <q-icon name="close" class="cursor-pointer" @click="onClear" />
-    </template>
-  </q-input>
+    @update:model-value="emit('update:modelValue', $event)"
+    @clear="emit('clear')"
+  />
 </template>
 
 <script setup lang="ts">
-defineOptions({ inheritAttrs: false });
+import BaseSearchInput from 'components/base/BaseSearchInput.vue';
 
 interface Props {
   modelValue: string;
@@ -33,9 +26,4 @@ const emit = defineEmits<{
   'update:modelValue': [value: string];
   clear: [];
 }>();
-
-function onClear() {
-  emit('update:modelValue', '');
-  emit('clear');
-}
 </script>

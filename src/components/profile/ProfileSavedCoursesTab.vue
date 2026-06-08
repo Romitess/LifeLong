@@ -12,19 +12,12 @@
           }}
         </div>
       </div>
-      <q-input
+      <BaseSearchInput
         :model-value="savedCourseSearch"
-        dense
-        outlined
-        rounded
         :placeholder="$t('profile.courses.savedSearch')"
         class="profile-search-input"
-        @update:model-value="$emit('update:savedCourseSearch', $event as string)"
-      >
-        <template v-slot:prepend>
-          <q-icon name="search" color="grey-5" />
-        </template>
-      </q-input>
+        @update:model-value="$emit('update:savedCourseSearch', $event)"
+      />
     </div>
 
     <!-- Saved Courses List Header -->
@@ -187,6 +180,7 @@
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import BaseButton from 'components/base/BaseButton.vue';
+import BaseSearchInput from 'components/base/BaseSearchInput.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
 import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import { useCourseBookmarkStore, type CourseBookmark } from 'src/stores/course-bookmark-store';
@@ -336,13 +330,9 @@ function formatDate(isoDate: string): string {
 <style lang="scss" scoped>
 .profile-search-input {
   width: 310px;
-
-  :deep(.q-field__control) {
-    background: white;
-    border-color: rgba(17, 24, 39, 0.08);
-    min-height: 44px;
-    box-shadow: 0 5px 16px rgba(17, 24, 39, 0.03);
-  }
+  --base-search-height: 42px;
+  --base-search-padding-x: 14px;
+  --base-search-font-size: 0.92rem;
 }
 
 .course-list-header {
