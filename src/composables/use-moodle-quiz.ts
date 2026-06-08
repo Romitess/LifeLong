@@ -44,6 +44,20 @@ export interface QuizReview {
   questions: QuizQuestionView[];
 }
 
+export interface QuizSummaryQuestion {
+  slot: number;
+  number: number | string;
+  page: number;
+  state: string; // 'todo' | 'complete' | 'invalid' | ...
+  status: string; // human label from Moodle
+  flagged: boolean;
+}
+
+export interface QuizAttemptSummary {
+  questions: QuizSummaryQuestion[];
+  totalUnanswered: number;
+}
+
 export interface QuizAnswerField {
   name: string;
   value: string;
@@ -99,11 +113,12 @@ export function useMoodleQuiz() {
     attemptId: number,
     finish: boolean,
     data: QuizAnswerField[],
+    timeUp = false,
   ): Promise<{ state: string } | null> {
     return run(async () => {
       const { data: res } = await api.post<{ state: string }>(
         `/api/moodle/quiz/attempts/${attemptId}/process`,
-        { finish, data },
+        { finish, data, timeUp },
       );
       return res;
     });
@@ -116,5 +131,23 @@ export function useMoodleQuiz() {
     });
   }
 
-  return { loading, error, getQuiz, startAttempt, getAttemptData, processAttempt, getReview };
+  function getSummary(attemptId: number): Promise<QuizAttemptSummary | null> {
+    return run(async () => {
+      const { data } = await api.get<QuizAttemptSummary>(
+        `/api/moodle/quiz/attempts/${attemptId}/summary`,
+      );
+      return data;
+    });
+  }
+
+  return {
+    loading,
+    error,
+    getQuiz,
+    startAttempt,
+    getAttemptData,
+    processAttempt,
+    getReview,
+    getSummary,
+  };
 }
