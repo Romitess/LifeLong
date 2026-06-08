@@ -41,6 +41,8 @@ export default defineBoot(({ app, router: vueRouter }) => {
       }
       if (status === 403) {
         void vueRouter.push('/403');
+        // Never resolve/reject so the calling component's catch block never fires
+        return new Promise(() => {});
       }
       return Promise.reject(error instanceof Error ? error : new Error(String(error)));
     },
