@@ -205,8 +205,95 @@
                       color="grey-7"
                       icon="more_horiz"
                       dense
-                      @click="showDevelopmentDialog('เพิ่มเติม')"
-                    />
+                      aria-label="ดูรายละเอียดรายวิชา"
+                    >
+                      <q-tooltip>ดูรายละเอียดรายวิชา</q-tooltip>
+                      <q-menu
+                        anchor="center right"
+                        self="center left"
+                        :offset="[12, 0]"
+                        transition-show="jump-down"
+                        transition-hide="jump-up"
+                        class="course-syllabus-menu"
+                      >
+                        <q-card class="course-syllabus-card">
+                          <q-card-section class="course-syllabus-card__header">
+                            <div class="course-syllabus-card__header-copy">
+                              <div class="course-syllabus-card__eyebrow">Course Syllabus</div>
+                              <div class="course-syllabus-card__title">{{ course.title }}</div>
+                              <div v-if="course.titleEn" class="course-syllabus-card__subtitle">
+                                {{ course.titleEn }}
+                              </div>
+                            </div>
+                            <div class="course-syllabus-card__hours">
+                              <strong>{{ course.totalHours ?? 0 }}</strong>
+                              <span>ชม.</span>
+                            </div>
+                          </q-card-section>
+
+                          <q-card-section class="course-syllabus-card__body">
+                            <div class="course-syllabus-card__quick-row">
+                              <q-chip dense square class="course-syllabus-card__chip">
+                                <q-icon name="confirmation_number" />
+                                {{ course.code }}
+                              </q-chip>
+                              <q-chip dense square class="course-syllabus-card__chip">
+                                <q-icon name="groups" />
+                                {{ course.enrolledCount }}/{{ course.maxSeats ?? '-' }} นิสิต
+                              </q-chip>
+                              <q-chip dense square class="course-syllabus-card__chip">
+                                <q-icon name="sell" />
+                                {{ formatCoursePrice(course) }}
+                              </q-chip>
+                            </div>
+
+                            <div class="course-syllabus-card__meta-grid">
+                              <div
+                                v-for="item in getCourseSyllabusMeta(course)"
+                                :key="item.label"
+                                class="course-syllabus-card__meta-item"
+                              >
+                                <q-icon :name="item.icon" />
+                                <div>
+                                  <span>{{ item.label }}</span>
+                                  <strong>{{ item.value }}</strong>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div
+                              v-if="getCourseDetail(course.id)?.descriptionFull"
+                              class="course-syllabus-card__description"
+                            >
+                              {{ getCourseDetail(course.id)?.descriptionFull }}
+                            </div>
+
+                            <div class="course-syllabus-card__section-label">หัวข้อบทเรียน</div>
+                            <div
+                              v-if="getCourseDetail(course.id)?.syllabus?.length"
+                              class="course-syllabus-card__timeline"
+                            >
+                              <div
+                                v-for="lesson in getCourseDetail(course.id)?.syllabus.slice(0, 4)"
+                                :key="lesson.week"
+                                class="course-syllabus-card__timeline-item"
+                              >
+                                <div class="course-syllabus-card__timeline-marker">
+                                  {{ lesson.week }}
+                                </div>
+                                <div>
+                                  <strong>{{ lesson.topic }}</strong>
+                                  <span>{{ lesson.description }}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div v-else class="course-syllabus-card__empty">
+                              ยังไม่มีหัวข้อบทเรียนในระบบ
+                            </div>
+                          </q-card-section>
+                        </q-card>
+                      </q-menu>
+                    </q-btn>
                   </div>
                 </q-card-section>
               </q-card-section>
@@ -275,6 +362,7 @@ import { useCourseStore } from 'src/stores/course-store';
 import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import StatCard from 'src/components/base/StatCard.vue';
 import type { Course } from 'src/types/course';
+import type { CourseDetail } from 'src/types/course-detail';
 import heroOverviewImageUrl from 'src/assets/we1.png';
 import heroCourseImageUrl from 'src/assets/homepicture1.png';
 import heroClassroomImageUrl from 'src/assets/homepicture2.png';
@@ -569,6 +657,57 @@ function formatActivityDate(value: string | null): string {
   }).format(date);
 }
 
+function getCourseDetail(courseId: string): CourseDetail | undefined {
+  return courseStore.getCourseDetailById(courseId);
+}
+
+function formatDeliveryModes(course: Course): string {
+  return course.deliveryModes.length > 0 ? course.deliveryModes.join(', ') : '-';
+}
+
+function formatCoursePrice(course: Course): string {
+  if (course.isFree || course.price === 0) {
+    return 'ฟรี';
+  }
+
+  return `${course.price.toLocaleString('th-TH')} บาท`;
+}
+
+function getCourseSyllabusMeta(course: Course) {
+  return [
+    {
+      icon: 'account_balance',
+      label: 'คณะ/หน่วยงาน',
+      value: course.faculty || '-',
+    },
+    {
+      icon: 'category',
+      label: 'หมวดหมู่',
+      value: course.category || '-',
+    },
+    {
+      icon: 'schedule',
+      label: 'ชั่วโมงเรียน',
+      value: `${course.totalHours ?? 0} ชั่วโมง`,
+    },
+    {
+      icon: 'devices',
+      label: 'รูปแบบเรียน',
+      value: formatDeliveryModes(course),
+    },
+    {
+      icon: 'event',
+      label: 'รับสมัคร',
+      value: `${course.registrationStart} - ${course.registrationEnd}`,
+    },
+    {
+      icon: 'payments',
+      label: 'ค่าลงทะเบียน',
+      value: formatCoursePrice(course),
+    },
+  ];
+}
+
 function showDevelopmentDialog(featureName: string) {
   $q.dialog({
     title: 'ฟีเจอร์นี้กำลังอยู่ระหว่างการพัฒนา',
@@ -840,6 +979,295 @@ function goToCourseManagement(courseId: string) {
     border-color: $primary;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
   }
+}
+
+.course-syllabus-menu {
+  border-radius: 14px;
+  overflow: visible;
+  box-shadow: 0 22px 58px rgba(15, 23, 42, 0.2);
+}
+
+.course-syllabus-card {
+  position: relative;
+  width: min(420px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.88);
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.course-syllabus-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, $primary, #4f7df3 56%, #18b65a);
+}
+
+.course-syllabus-card__header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  background:
+    radial-gradient(circle at 88% 10%, rgba(79, 125, 243, 0.16), transparent 30%),
+    linear-gradient(135deg, rgba(255, 247, 230, 0.98), rgba(255, 255, 255, 0.98) 54%), #ffffff;
+}
+
+.course-syllabus-card__header-copy {
+  min-width: 0;
+}
+
+.course-syllabus-card__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(245, 166, 35, 0.13);
+  color: $primary;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.course-syllabus-card__title {
+  margin-top: 8px;
+  color: #111827;
+  font-size: 1.04rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.course-syllabus-card__subtitle {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.course-syllabus-card__hours {
+  display: grid;
+  place-items: center;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  border: 1px solid rgba(79, 125, 243, 0.18);
+  border-radius: 50%;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(145deg, #4f7df3, $primary) border-box;
+  box-shadow: 0 10px 24px rgba(79, 125, 243, 0.16);
+  color: #163b73;
+  line-height: 1;
+}
+
+.course-syllabus-card__hours strong {
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.course-syllabus-card__hours span {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 0.64rem;
+  font-weight: 800;
+}
+
+.course-syllabus-card__body {
+  padding: 16px 18px 18px;
+}
+
+.course-syllabus-card__quick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.course-syllabus-card__chip {
+  margin: 0;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.course-syllabus-card__chip .q-icon {
+  margin-right: 5px;
+  color: $primary;
+  font-size: 16px;
+}
+
+.course-syllabus-card__meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.course-syllabus-card__meta-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 11px 10px;
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fbfdff, #f8fafc);
+  transition:
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.course-syllabus-card__meta-item:hover {
+  border-color: rgba(245, 166, 35, 0.55);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+  transform: translateY(-1px);
+}
+
+.course-syllabus-card__meta-item .q-icon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: $primary;
+  font-size: 18px;
+}
+
+.course-syllabus-card__meta-item span {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.course-syllabus-card__meta-item strong {
+  display: block;
+  margin-top: 3px;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.course-syllabus-card__description {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(245, 166, 35, 0.2);
+  border-left: 4px solid $primary;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(245, 166, 35, 0.1), rgba(255, 255, 255, 0.96)), #ffffff;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.course-syllabus-card__section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  color: #0f172a;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.course-syllabus-card__section-label::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #18b65a;
+  box-shadow: 0 0 0 4px rgba(24, 182, 90, 0.12);
+}
+
+.course-syllabus-card__timeline {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding-left: 3px;
+}
+
+.course-syllabus-card__timeline::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 17px;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(245, 166, 35, 0.75), rgba(79, 125, 243, 0.42));
+}
+
+.course-syllabus-card__timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 10px 10px 0;
+  border-radius: 12px;
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.course-syllabus-card__timeline-item:hover {
+  background: rgba(248, 250, 252, 0.92);
+  transform: translateX(2px);
+}
+
+.course-syllabus-card__timeline-marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $primary, #4f7df3);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  box-shadow: 0 8px 16px rgba(245, 166, 35, 0.22);
+}
+
+.course-syllabus-card__timeline-item strong {
+  display: block;
+  color: #1f2937;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.course-syllabus-card__timeline-item span {
+  display: block;
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.course-syllabus-card__empty {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px dashed rgba(148, 163, 184, 0.65);
+  border-radius: 10px;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .activity-card {
