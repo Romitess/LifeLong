@@ -112,22 +112,51 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
   },
 
   actions: {
+    async saveEnrollmentToBackend(
+      course: CourseDetail,
+      paymentStatus: 'pending' | 'paid' | 'free',
+      registrantInfo?: RegistrantInfo,
+    ): Promise<void> {
+      const authStore = useAuthStore();
+      const username = authStore.user?.username;
+      if (!username || !course.code) {
+        return;
+      }
+
+      await api.post('/api/moodle/enroll', {
+        courseCode: course.code,
+        username,
+        paymentStatus,
+        citizen: registrantInfo?.taxId,
+        nameReceipt: registrantInfo?.fullName,
+        address: registrantInfo?.billingAddress,
+        telephone: registrantInfo?.phone,
+      });
+    },
+
     async registerCourse(
       course: CourseDetail,
       eligibility: LearnerEligibility,
       paymentStatus: 'pending' | 'paid' | 'free' = 'paid',
       registrantInfo?: RegistrantInfo,
     ): Promise<void> {
-      const authStore = useAuthStore();
       const userId = getAuthenticatedUserId();
 
       if (!userId) {
         return;
       }
 
+      const resolvedPaymentStatus = course.isFree ? 'free' : paymentStatus;
+
       const existingIndex = this.registrations.findIndex(
         (reg) => reg.courseId === course.id && reg.userId === userId,
       );
+
+      try {
+        await this.saveEnrollmentToBackend(course, resolvedPaymentStatus, registrantInfo);
+      } catch (err) {
+        console.warn('Backend enrollment failed (saving locally only):', err);
+      }
 
       if (existingIndex !== -1) {
         const existing = this.registrations[existingIndex];
@@ -135,8 +164,8 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
           const updated = { ...existing };
           let changed = false;
 
-          if (existing.paymentStatus !== paymentStatus) {
-            updated.paymentStatus = paymentStatus;
+          if (existing.paymentStatus !== resolvedPaymentStatus) {
+            updated.paymentStatus = resolvedPaymentStatus;
             changed = true;
           }
 
@@ -155,25 +184,6 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
         return;
       }
 
-      // Sync enrollment to backend (LLL DB + Moodle)
-      const username = authStore.user?.username;
-      if (username && course.code) {
-        try {
-          await api.post('/api/moodle/enroll', { courseCode: course.code, username });
-          // Fetch from API to sync enrollId
-          await this.syncEnrollmentFromApi(course.code, course.id, course.title, course.imageUrl);
-        } catch (err) {
-          console.warn('Backend enrollment failed (saving locally only):', err);
-        }
-      }
-
-      const alreadyAdded = this.registrations.some(
-        (r) => r.courseId === course.id && r.userId === userId,
-      );
-      if (alreadyAdded) {
-        return;
-      }
-
       const nextRegistrations: CourseRegistration[] = [
         ...this.registrations,
         {
@@ -188,7 +198,7 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
             backgroundColor: course.cover.backgroundColor,
           },
           eligibility,
-          paymentStatus: course.isFree ? 'free' : paymentStatus,
+          paymentStatus: resolvedPaymentStatus,
           ...(registrantInfo ? { registrantInfo } : {}),
           registeredAt: new Date().toISOString(),
           userId,
@@ -243,7 +253,7 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
                 courseImageUrl: courseImageUrl ?? '',
                 courseCover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
                 eligibility: 'student',
-                paymentStatus: 'free',
+                paymentStatus: 'pending',
                 registeredAt: new Date().toISOString(),
                 userId,
                 enrollId: data.enrollId,

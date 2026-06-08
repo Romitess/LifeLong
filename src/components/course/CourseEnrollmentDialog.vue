@@ -559,7 +559,13 @@ function onPaymentDone(): void {
     .toString()
     .padStart(6, '0')}`;
 
-  void courseRegistrationStore.registerCourse(enrollingCourse.value, 'student', 'paid');
+  void courseRegistrationStore.registerCourse(enrollingCourse.value, 'student', 'paid', {
+    fullName: userInfo.name,
+    email: userInfo.email,
+    phone: userInfo.phone,
+    taxId: userInfo.taxId,
+    billingAddress: userInfo.billingAddress,
+  });
   coursePaymentStore.recordPaidCourse(enrollingCourse.value, {
     receiptId: nextReceiptId,
     paymentDate: issuedAt.toISOString(),
