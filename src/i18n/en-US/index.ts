@@ -140,6 +140,8 @@ export default {
       fillRequired: 'Please enter email and password',
       invalid: 'Invalid email or password',
       tooManyRequests: 'Too many incorrect login attempts. Please try again later.',
+      accountLocked:
+        'Your account has been temporarily locked due to too many failed login attempts. Please try again in 15 minutes.',
       failed: 'Login failed',
     },
     register: {

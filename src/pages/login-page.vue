@@ -328,7 +328,9 @@ async function onLogin(): Promise<void> {
 
     if (!result.success) {
       let message = t('auth.login.invalid');
-      if (result.errorType === 'rate-limit') {
+      if (result.errorType === 'account-locked') {
+        message = t('auth.login.accountLocked');
+      } else if (result.errorType === 'rate-limit') {
         message = t('auth.login.tooManyRequests');
       } else if (result.errorType === 'other') {
         message = t('auth.login.failed');

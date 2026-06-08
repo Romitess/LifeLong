@@ -357,7 +357,7 @@ export const useAuthStore = defineStore('auth', {
       password: string,
     ): Promise<{
       success: boolean;
-      errorType?: 'rate-limit' | 'invalid-credentials' | 'other';
+      errorType?: 'rate-limit' | 'account-locked' | 'invalid-credentials' | 'other';
     }> {
       try {
         const response = await api.post('/api/auth/login', {
@@ -413,6 +413,9 @@ export const useAuthStore = defineStore('auth', {
             return { success: false, errorType: 'rate-limit' };
           }
           if (error.response?.status === 401) {
+            if (error.response.data?.message === 'ACCOUNT_LOCKED') {
+              return { success: false, errorType: 'account-locked' };
+            }
             return { success: false, errorType: 'invalid-credentials' };
           }
         }
