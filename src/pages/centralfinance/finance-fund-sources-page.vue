@@ -7,7 +7,7 @@
       :title="$t('centralFinance.fundSources.hero.title')"
       :description="$t('centralFinance.fundSources.hero.desc')"
     >
-      <template #actions>
+      <!-- <template #actions>
         <CentralFinanceActionButton
           icon="add_circle_outline"
           :label="$t('centralFinance.dashboard.quickLinks.addFundSource')"
@@ -28,7 +28,7 @@
           no-caps
           @click="onExport"
         />
-      </template>
+      </template> -->
     </CentralFinancePageHero>
 
     <!-- ── Content Section ───────────────────────────────────── -->
@@ -584,7 +584,6 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
@@ -593,9 +592,8 @@ import type { FundSourceRequest } from 'src/stores/central-finance-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
-import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
 
-const router = useRouter();
+// const router = useRouter();
 const { t } = useI18n();
 const $q = useQuasar();
 const financeStore = useCentralFinanceStore();
@@ -778,17 +776,17 @@ function getStatusColor(status: string) {
   }
 }
 
-async function onCreateNew() {
-  await router.push('/central-finance/fund-sources/add');
-}
+// async function onCreateNew() {
+//   await router.push('/central-finance/fund-sources/add');
+// }
 
-function onExport() {
-  $q.notify({
-    type: 'positive',
-    message: 'Preparing export of all fund source requests',
-    icon: 'file_download',
-  });
-}
+// function onExport() {
+//   $q.notify({
+//     type: 'positive',
+//     message: 'Preparing export of all fund source requests',
+//     icon: 'file_download',
+//   });
+// }
 
 function onViewDetail(row: FundSourceRequest) {
   selectedRequest.value = row;
