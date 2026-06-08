@@ -124,6 +124,8 @@ type ReceiptDate = Date | string | number | null | undefined;
 
 interface ReceiptCardReceipt {
   receiptNo: string;
+  receiptFilename?: string;
+  receiptType?: 'R' | 'D';
   fullName: string;
   nationalId: string;
   address: string;
@@ -135,6 +137,8 @@ interface ReceiptCardReceipt {
 
 interface ReceiptView {
   receiptNo: string;
+  receiptFilename: string;
+  receiptType: 'R' | 'D';
   customerName: string;
   customerTaxId: string;
   customerAddress: string;
@@ -161,6 +165,8 @@ interface Props {
   modelValue?: boolean;
   receipt?: Partial<ReceiptCardReceipt>;
   receiptId?: string;
+  receiptFilename?: string;
+  receiptType?: 'R' | 'D';
   issuedAt?: ReceiptDate;
   customerName?: string;
   customerTaxId?: string;
@@ -232,6 +238,13 @@ const receiptView = computed<ReceiptView>(() => {
 
   return {
     receiptNo: source.receiptNo || props.receiptId || '-',
+    receiptFilename:
+      source.receiptFilename ||
+      props.receiptFilename ||
+      source.receiptNo ||
+      props.receiptId ||
+      'download',
+    receiptType: source.receiptType || props.receiptType || (props.isCopy ? 'D' : 'R'),
     customerName: legacyAm(source.fullName || props.customerName || '-'),
     customerTaxId: source.nationalId || props.customerTaxId || '-',
     customerAddress: legacyAm(source.address || props.customerAddress || '-'),
@@ -243,7 +256,7 @@ const receiptView = computed<ReceiptView>(() => {
     shortDate: formatThaiShortDate(transactionDate),
     collectorName: legacyAm(source.collectorName || props.collectorName || RECEIPT_COLLECTOR_NAME),
     showQr: props.showQr,
-    isCopy: props.isCopy,
+    isCopy: (source.receiptType || props.receiptType || (props.isCopy ? 'D' : 'R')) === 'D',
   };
 });
 
@@ -401,7 +414,7 @@ async function downloadReceiptPdf(): Promise<void> {
   if (typeof window === 'undefined') return;
 
   const pdf = await buildReceiptPdf();
-  pdf.save(safeReceiptFilename(receiptView.value.receiptNo));
+  pdf.save(safeReceiptFilename(receiptView.value.receiptFilename, receiptView.value.receiptType));
 }
 
 defineExpose({ printReceipt, downloadReceiptPdf });

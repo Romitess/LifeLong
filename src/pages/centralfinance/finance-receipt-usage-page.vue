@@ -407,7 +407,8 @@
       :course-title="courseTitle"
       :course-code="courseCode"
       :amount="amount"
-      :is-copy="true"
+      :receipt-filename="selectedReceipt?.receiptFilename ?? ''"
+      :is-copy="selectedReceipt?.receiptType === 'D'"
     />
   </q-page>
 </template>
@@ -419,6 +420,7 @@ import type { QTableProps } from 'quasar';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
+import { usePaymentImportApi } from 'src/composables/usePaymentImportApi';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import jsPDF from 'jspdf';
 import { autoTable, type CellHookData } from 'jspdf-autotable';
@@ -430,6 +432,8 @@ interface ReceiptUsageItem {
   no: number;
   faculty: string;
   receiptNo: string;
+  receiptFilename?: string;
+  receiptType?: 'R' | 'D';
   customerName: string;
   amount: number;
   effectiveDate: string;
@@ -699,9 +703,23 @@ function parseThaiDate(dateStr: string): Date | null {
 }
 
 async function downloadReceipt(row: ReceiptUsageItem): Promise<void> {
-  selectedReceipt.value = row;
-  await nextTick();
-  receiptDialogRef.value?.downloadReceiptPdf();
+  try {
+    const { getReceiptFile } = usePaymentImportApi();
+    const resp = await getReceiptFile(row.id);
+    const file = resp.realReceipt ?? resp.copyReceipt ?? null;
+    selectedReceipt.value = {
+      ...row,
+      receiptFilename: file?.filename ?? row.receiptNo ?? '',
+      receiptType: (file?.receiptType as 'R' | 'D') ?? 'R',
+    };
+    await nextTick();
+    receiptDialogRef.value?.downloadReceiptPdf();
+  } catch (err) {
+    console.error(err);
+    selectedReceipt.value = row;
+    await nextTick();
+    receiptDialogRef.value?.downloadReceiptPdf();
+  }
 }
 
 async function loadSarabunFont(): Promise<string> {

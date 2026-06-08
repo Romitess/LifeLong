@@ -233,7 +233,12 @@ export function createReceiptPdf(receipt, assets) {
   return doc;
 }
 
-export function safeReceiptFilename(receiptNo) {
-  const name = String(receiptNo || 'download').replace(/[\\/:*?"<>|]/g, '-');
-  return `receipt-${name}.pdf`;
+export function safeReceiptFilename(filenameOrReceiptNo, receiptType = 'R') {
+  const baseName = String(filenameOrReceiptNo || 'download').replace(/\.pdf$/i, '');
+  const safeBaseName = baseName.replace(/[\\/:*?"<>|]/g, '-');
+  const finalName =
+    receiptType === 'D' && !safeBaseName.toLowerCase().endsWith('_copy')
+      ? `${safeBaseName}_copy`
+      : safeBaseName;
+  return `${finalName}.pdf`;
 }

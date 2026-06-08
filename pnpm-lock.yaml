@@ -23,6 +23,9 @@ importers:
       axios:
         specifier: ^1.16.0
         version: 1.16.0
+      dompurify:
+        specifier: ^3.4.2
+        version: 3.4.2
       exceljs:
         specifier: ^4.4.0
         version: 4.4.0
@@ -6025,7 +6028,6 @@ snapshots:
   dompurify@3.4.2:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
-    optional: true
 
   dot-case@3.0.4:
     dependencies:
