@@ -1,17 +1,23 @@
 import { ref } from 'vue';
 import { api } from 'src/boot/axios';
-import type { CourseModule, Lesson } from 'src/data/course-structure';
+import type { CourseModule, CourseSubsection, Lesson } from 'src/data/course-structure';
 
 interface MoodleModule {
   id: number;
   name: string;
   modname: string;
   url?: string;
+  /** For modname='subsection': JSON like {"sectionid":226} linking to the delegate section. */
+  customdata?: string;
 }
 
 interface MoodleSection {
   id: number;
+  section?: number;
   name: string;
+  summary?: string;
+  /** 'mod_subsection' for subsection delegate sections. */
+  component?: string | null;
   modules: MoodleModule[];
 }
 
@@ -58,31 +64,66 @@ function getSectionIcon(modules: MoodleModule[]): string {
   return (MODULE_CONFIG[modnames[0]!] ?? DEFAULT_MODULE_CONFIG).icon;
 }
 
+function mapLesson(mod: MoodleModule): Lesson {
+  const cfg = MODULE_CONFIG[mod.modname] ?? DEFAULT_MODULE_CONFIG;
+  return {
+    title: mod.name,
+    type: cfg.type,
+    icon: cfg.icon,
+    duration: '',
+    ...(mod.url !== undefined ? { moodleUrl: mod.url } : {}),
+    moodleModuleId: mod.id,
+    moodleModname: mod.modname,
+  };
+}
+
+function subsectionId(mod: MoodleModule): number {
+  try {
+    return Number((JSON.parse(mod.customdata ?? '{}') as { sectionid?: number }).sectionid) || 0;
+  } catch {
+    return 0;
+  }
+}
+
 function mapSections(sections: MoodleSection[]): CourseModule[] {
+  // Subsection delegate sections (component='mod_subsection') are nested under their
+  // parent chapter, not shown as top-level sections. Index them by section id.
+  const subsectionById = new Map<number, MoodleSection>();
+  sections.forEach((s) => {
+    if (s.component === 'mod_subsection') subsectionById.set(s.id, s);
+  });
+
   return sections
-    .filter((s) => s.name || (s.modules ?? []).filter((m) => m.modname !== 'label').length > 0)
-    .map(
-      (section, idx): CourseModule => ({
+    .filter((s) => s.component !== 'mod_subsection')
+    .map((section, idx): CourseModule => {
+      const directLessons: Lesson[] = [];
+      const subsections: CourseSubsection[] = [];
+
+      (section.modules ?? []).forEach((mod) => {
+        if (mod.modname === 'label') return;
+        if (mod.modname === 'subsection') {
+          const sub = subsectionById.get(subsectionId(mod));
+          if (sub) {
+            subsections.push({
+              title: sub.name || 'หัวข้อย่อย',
+              lessons: (sub.modules ?? []).filter((m) => m.modname !== 'label').map(mapLesson),
+            });
+          }
+          return;
+        }
+        directLessons.push(mapLesson(mod));
+      });
+
+      return {
         title: section.name || `ส่วนที่ ${idx + 1}`,
         icon: getSectionIcon(section.modules ?? []),
         color: getSectionColor(section.modules ?? []),
-        lessons: (section.modules ?? [])
-          .filter((m) => m.modname !== 'label')
-          .map((mod): Lesson => {
-            const cfg = MODULE_CONFIG[mod.modname] ?? DEFAULT_MODULE_CONFIG;
-            return {
-              title: mod.name,
-              type: cfg.type,
-              icon: cfg.icon,
-              duration: '',
-              ...(mod.url !== undefined ? { moodleUrl: mod.url } : {}),
-              moodleModuleId: mod.id,
-              moodleModname: mod.modname,
-            };
-          }),
-      }),
-    )
-    .filter((m) => m.lessons.length > 0 || m.title);
+        ...(section.summary ? { summary: section.summary } : {}),
+        lessons: directLessons,
+        ...(subsections.length ? { subsections } : {}),
+      };
+    })
+    .filter((m) => m.lessons.length > 0 || (m.subsections?.length ?? 0) > 0 || m.title);
 }
 
 export function useMoodleCourseContents() {

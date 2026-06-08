@@ -12,6 +12,12 @@ export interface Lesson {
   moodleModname?: string;
 }
 
+/** A Moodle subsection (mod_subsection) nested under a chapter, with its own lessons. */
+export interface CourseSubsection {
+  title: string;
+  lessons: Lesson[];
+}
+
 export interface CourseModule {
   title: string;
   subtitle?: string;
@@ -19,6 +25,10 @@ export interface CourseModule {
   color?: string;
   expanded?: boolean;
   progress?: number;
+  /** Moodle section summary HTML (chapter type/hours). */
+  summary?: string;
+  /** Nested subsections (หัวข้อย่อย) synced as Moodle subsections. */
+  subsections?: CourseSubsection[];
   lessons: Lesson[];
 }
 

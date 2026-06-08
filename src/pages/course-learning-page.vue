@@ -100,6 +100,80 @@
               </template>
 
               <div class="lessons-container bg-white">
+                <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify -->
+                <div
+                  v-if="module.summary"
+                  class="chapter-summary q-px-xl q-pt-lg"
+                  v-html="sanitizeHtml(module.summary)"
+                />
+
+                <!-- Nested subsections (หัวข้อย่อย) — collapsible -->
+                <q-expansion-item
+                  v-for="(sub, subIdx) in module.subsections"
+                  :key="`sub-${subIdx}`"
+                  default-opened
+                  dense
+                  class="subsection-item"
+                  header-class="subsection-header"
+                  expand-icon-class="text-grey-6"
+                >
+                  <template v-slot:header>
+                    <q-item-section avatar class="subsection-header__avatar">
+                      <q-icon name="subdirectory_arrow_right" size="18px" color="amber-8" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label class="subsection-title-text">{{ sub.title }}</q-item-label>
+                    </q-item-section>
+                    <q-item-section side>
+                      <span class="subsection-count">{{ sub.lessons.length }} รายการ</span>
+                    </q-item-section>
+                  </template>
+
+                  <q-list v-if="sub.lessons.length" separator>
+                    <q-item
+                      v-for="(lesson, lIdx) in sub.lessons"
+                      :key="`sub-${subIdx}-${lIdx}`"
+                      clickable
+                      v-ripple
+                      class="lesson-row lesson-row--nested q-py-md q-px-xl"
+                      @click="navigateToLesson(lesson)"
+                    >
+                      <q-item-section avatar>
+                        <q-icon
+                          :name="getLessonIcon(lesson)"
+                          :color="lesson.isCompleted ? 'positive' : 'grey-5'"
+                          size="sm"
+                        />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label
+                          class="text-subtitle1"
+                          :class="{
+                            'text-grey-5 text-strike': lesson.isCompleted,
+                            'text-dark text-weight-medium': !lesson.isCompleted,
+                          }"
+                        >
+                          {{ lesson.title }}
+                        </q-item-label>
+                      </q-item-section>
+                      <q-item-section side>
+                        <q-btn
+                          flat
+                          round
+                          dense
+                          :icon="lesson.isCompleted ? 'check_circle' : 'panorama_fish_eye'"
+                          :color="lesson.isCompleted ? 'positive' : 'grey-4'"
+                          @click.stop="
+                            progressStore.toggleLessonCompletion(courseId || '', lesson.title)
+                          "
+                          size="sm"
+                        />
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                  <div v-else class="subsection-empty">ยังไม่มีเนื้อหาในหัวข้อย่อยนี้</div>
+                </q-expansion-item>
+
                 <q-list separator>
                   <q-item
                     v-for="(lesson, lIndex) in module.lessons"
@@ -165,6 +239,7 @@
 import { ref, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
+import DOMPurify from 'dompurify';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
@@ -192,6 +267,10 @@ const LESSON_TYPE_ICON: Record<Lesson['type'], string> = {
 
 function getLessonIcon(lesson: Lesson): string {
   return lesson.icon || LESSON_TYPE_ICON[lesson.type] || 'article';
+}
+
+function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html, { ADD_ATTR: ['target'] });
 }
 
 const $q = useQuasar();
@@ -235,18 +314,29 @@ const courseModulesWithProgress = computed(() => {
   if (!cid) return [];
 
   return courseModules.value.map((module) => {
-    const total = module.lessons.length;
+    let total = 0;
     let completedCount = 0;
-
-    const lessonsWithProgress = module.lessons.map((lesson) => {
+    const mark = (lesson: Lesson): Lesson & { isCompleted: boolean } => {
       const isCompleted = progressStore.isLessonCompleted(cid, lesson.title);
+      total++;
       if (isCompleted) completedCount++;
       return { ...lesson, isCompleted };
-    });
+    };
+
+    const lessonsWithProgress = module.lessons.map(mark);
+    const subsectionsWithProgress = (module.subsections ?? []).map((sub) => ({
+      ...sub,
+      lessons: sub.lessons.map(mark),
+    }));
 
     const progress = total === 0 ? 0 : Math.round((completedCount / total) * 100);
 
-    return { ...module, lessons: lessonsWithProgress, progress };
+    return {
+      ...module,
+      lessons: lessonsWithProgress,
+      subsections: subsectionsWithProgress,
+      progress,
+    };
   });
 });
 
@@ -354,6 +444,64 @@ watch(
 <style lang="scss" scoped>
 $sidebar-width: 300px;
 $sidebar-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+// Chapter summary (type/hours from Moodle section summary)
+.chapter-summary {
+  color: #5a5a5a;
+  font-size: 0.9rem;
+  line-height: 1.6;
+
+  :deep(p) {
+    margin: 0 0 6px;
+    color: #888;
+    font-size: 0.8rem;
+  }
+  :deep(ul) {
+    margin: 0;
+    padding-left: 18px;
+  }
+  :deep(li) {
+    margin: 2px 0;
+  }
+}
+
+// Nested subsection (หัวข้อย่อย) — collapsible
+.subsection-item {
+  margin: 6px 16px 6px 28px;
+  border-left: 3px solid rgba(247, 208, 70, 0.55);
+  border-radius: 0 10px 10px 0;
+  background: rgba(247, 208, 70, 0.04);
+  overflow: hidden;
+
+  :deep(.subsection-header) {
+    min-height: 48px;
+    padding: 6px 16px;
+    border-radius: 0;
+  }
+  .subsection-header__avatar {
+    min-width: auto;
+    padding-right: 10px;
+  }
+  .subsection-title-text {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+  }
+  .subsection-count {
+    font-size: 0.72rem;
+    color: #999;
+    white-space: nowrap;
+  }
+  .subsection-empty {
+    padding: 6px 24px 12px 46px;
+    font-size: 0.82rem;
+    color: #aaa;
+  }
+  .lesson-row--nested {
+    padding-left: 40px !important;
+    background: #fff;
+  }
+}
 
 // ── Page shell ──────────────────────────────────────────────
 .course-page {
