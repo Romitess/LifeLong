@@ -720,7 +720,9 @@ onUnmounted(() => {
 .attempt-nav {
   flex: 0 0 250px;
   position: sticky;
-  top: 24px;
+  top: 132px;
+  max-height: calc(100vh - 156px);
+  overflow-y: auto;
 }
 
 @media (max-width: 1023px) {
