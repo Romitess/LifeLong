@@ -139,16 +139,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import {
-  STUDENT_NOTIFICATION_ITEMS,
   TEACHER_NOTIFICATION_ITEMS,
   isTeachingRole as isTeachingNotificationRole,
   type AppNotification,
 } from 'src/data/mock-notifications';
+import { useNotifications } from 'src/composables/use-notifications';
 
 type NotificationFilter = 'all' | 'urgent' | 'grading' | 'system';
 
@@ -157,17 +157,44 @@ const router = useRouter();
 const authStore = useAuthStore();
 const activeFilter = ref<NotificationFilter>('all');
 const searchText = ref('');
+const notificationsApi = useNotifications();
 
 const teacherNotifications = ref<AppNotification[]>(
   TEACHER_NOTIFICATION_ITEMS.map((item) => ({ ...item })),
 );
-const studentNotifications = ref<AppNotification[]>(
-  STUDENT_NOTIFICATION_ITEMS.map((item) => ({ ...item })),
-);
 const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
-const notifications = computed(() =>
-  isTeachingRole.value ? teacherNotifications.value : studentNotifications.value,
+
+const apiStudentNotifications = computed<AppNotification[]>(() =>
+  notificationsApi.notifications.value.map((n) => ({
+    id: n.id,
+    type: 'course' as const,
+    priority: 'normal' as const,
+    title: n.title,
+    message: n.message,
+    course: '',
+    time: new Date(n.createDate).toLocaleDateString('th-TH', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }),
+    badge: 'ประกาศ',
+    badgeColor: 'teal',
+    icon: 'campaign',
+    iconBg: 'rgba(245, 166, 35, 0.15)',
+    iconColor: '#f5a623',
+    read: n.isRead,
+  })),
 );
+
+const notifications = computed(() =>
+  isTeachingRole.value ? teacherNotifications.value : apiStudentNotifications.value,
+);
+
+onMounted(async () => {
+  if (!isTeachingRole.value && !notificationsApi.loaded.value) {
+    await notificationsApi.fetchNotifications();
+  }
+});
 const notificationPageTitle = computed(() =>
   isTeachingRole.value ? 'แจ้งเตือนสำหรับผู้สอน' : 'การแจ้งเตือนของฉัน',
 );
@@ -277,13 +304,12 @@ const filteredNotifications = computed(() => {
   });
 });
 
-function markAllAsRead() {
-  const targetNotifications = isTeachingRole.value ? teacherNotifications : studentNotifications;
-
-  targetNotifications.value = targetNotifications.value.map((notification) => ({
-    ...notification,
-    read: true,
-  }));
+async function markAllAsRead(): Promise<void> {
+  if (isTeachingRole.value) {
+    teacherNotifications.value = teacherNotifications.value.map((n) => ({ ...n, read: true }));
+  } else {
+    await notificationsApi.markAllRead();
+  }
 
   $q.notify({
     type: 'positive',
@@ -293,8 +319,12 @@ function markAllAsRead() {
   });
 }
 
-function openNotification(notification: AppNotification) {
-  notification.read = true;
+async function openNotification(notification: AppNotification): Promise<void> {
+  if (!isTeachingRole.value) {
+    await notificationsApi.markRead(notification.id);
+  } else {
+    notification.read = true;
+  }
 
   if (notification.action) {
     void router.push(notification.action);

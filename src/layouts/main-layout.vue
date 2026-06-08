@@ -432,6 +432,7 @@ import { useCategoryStore } from 'src/stores/category-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCategoryList } from 'src/composables/use-category-list';
 import { useInstructorBackend } from 'src/composables/use-instructor-backend';
+import { useNotifications } from 'src/composables/use-notifications';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import AppFooter from 'components/AppFooter.vue';
@@ -608,6 +609,7 @@ function getNotificationItemsForRole(role: string | undefined) {
 }
 
 const instructorBackend = useInstructorBackend();
+const notificationsApi = useNotifications();
 const isTeachingRole = computed(() => isTeachingNotificationRole(authStore.user?.role));
 const isAdminRole = computed(() => isAdminNotificationRole(authStore.user?.role));
 const isFinanceRole = computed(() => authStore.user?.role === 'finance');
@@ -991,16 +993,36 @@ const announcementNotifications = computed(() =>
     : [],
 );
 
+const studentNotifications = computed(() =>
+  !isTeachingRole.value && !isAdminRole.value
+    ? notificationsApi.notifications.value.map((n) => ({
+        id: n.id,
+        title: n.title,
+        message: n.message,
+        time: new Date(n.createDate).toLocaleDateString('th-TH', {
+          day: 'numeric',
+          month: 'short',
+        }),
+        icon: 'campaign',
+        iconBg: 'rgba(245, 166, 35, 0.15)',
+        iconColor: '#f5a623',
+        action: '/notifications',
+        read: n.isRead,
+      }))
+    : [],
+);
+
 const notificationPreviewItems = computed(() => {
   const base = getNotificationItemsForRole(authStore.user?.role);
-  const all = [...announcementNotifications.value, ...base];
+  const all = [...studentNotifications.value, ...announcementNotifications.value, ...base];
   return all.slice(0, 3);
 });
 const notificationUnreadCount = computed(() => {
   const base = getNotificationItemsForRole(authStore.user?.role).filter(
     (item) => !item.read,
   ).length;
-  return base + announcementNotifications.value.length;
+  const studentUnread = studentNotifications.value.filter((n) => !n.read).length;
+  return base + announcementNotifications.value.length + studentUnread;
 });
 const notificationPreviewSubtitle = computed(() =>
   isAdminRole.value
@@ -1142,6 +1164,16 @@ watch(
     }
 
     showPageSwitchLoading();
+  },
+  { immediate: true },
+);
+
+watch(
+  () => authStore.isLoggedIn,
+  (isLoggedIn) => {
+    if (isLoggedIn && !isTeachingRole.value && !isAdminRole.value) {
+      void notificationsApi.fetchNotifications();
+    }
   },
   { immediate: true },
 );
