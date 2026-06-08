@@ -1325,4 +1325,12 @@ export default {
       computerCenter: 'Computer Center',
     },
   },
+  error403: {
+    code: '403',
+    title: 'Access Denied',
+    subtitle: 'You do not have permission to access this page.',
+    hint: 'Please contact the system administrator if you believe this is an error.',
+    goHome: 'Go to Home',
+    goBack: 'Go Back',
+  },
 };

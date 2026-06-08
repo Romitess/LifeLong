@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
+import LanguageToggle from 'components/navigation/language-toggle.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n({ useScope: 'global' });
 
 const homeRoute = computed(() => {
   switch (authStore.user?.role) {
@@ -35,8 +38,11 @@ function goBack() {
 </script>
 
 <template>
-  <div class="error-403 fullscreen flex flex-center">
-    <!-- Ambient glowing shapes in the background -->
+  <div class="error-403 fullscreen flex flex-center ds-grain ds-grain--page">
+    <div class="error-403__lang">
+      <LanguageToggle />
+    </div>
+
     <div class="error-403__bg-shapes" aria-hidden="true">
       <div class="shape shape--circle-1" />
       <div class="shape shape--circle-2" />
@@ -48,12 +54,12 @@ function goBack() {
         <q-icon name="lock" class="error-403__icon" />
       </div>
 
-      <div class="error-403__code">403</div>
+      <div class="error-403__code">{{ t('error403.code') }}</div>
 
-      <h1 class="error-403__title">ไม่มีสิทธิ์เข้าถึง</h1>
+      <h1 class="error-403__title">{{ t('error403.title') }}</h1>
       <p class="error-403__subtitle">
-        คุณไม่มีสิทธิ์เข้าถึงหน้านี้<br />
-        กรุณาติดต่อผู้ดูแลระบบหากคิดว่านี่เป็นข้อผิดพลาด
+        {{ t('error403.subtitle') }}<br />
+        {{ t('error403.hint') }}
       </p>
 
       <div class="error-403__actions">
@@ -61,16 +67,16 @@ function goBack() {
           unelevated
           color="primary"
           text-color="white"
-          label="กลับหน้าหลัก"
+          :label="t('error403.goHome')"
           icon="home"
           no-caps
           class="error-403__btn"
-          @click="$router.push(homeRoute)"
+          @click="router.push(homeRoute)"
         />
         <q-btn
           outline
           color="secondary"
-          label="ย้อนกลับ"
+          :label="t('error403.goBack')"
           icon="arrow_back"
           no-caps
           class="error-403__btn-back"
@@ -82,18 +88,20 @@ function goBack() {
 </template>
 
 <style lang="scss" scoped>
+.error-403__lang {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 3;
+
+  @media (max-width: 480px) {
+    top: 16px;
+    right: 16px;
+  }
+}
+
 .error-403 {
-  background:
-    linear-gradient(
-      110deg,
-      rgba(248, 246, 241, 0.95) 0%,
-      rgba(255, 250, 239, 0.9) 52%,
-      rgba(248, 246, 241, 0.85) 100%
-    ),
-    url('../assets/login-bg.png');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+  background: var(--grad-page, linear-gradient(160deg, #f8f6f1 0%, #f0ede4 100%));
   position: relative;
   overflow: hidden;
   min-height: 100vh;
