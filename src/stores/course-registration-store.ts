@@ -309,14 +309,10 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
           enrollId: item.enrollId,
         }));
 
-        // Merge: backend is authoritative; keep local-only registrations (e.g. pending payment)
-        const backendIds = new Set(fromBackend.map((r) => r.courseId));
-        const localOnly = this.registrations.filter(
-          (r) => r.userId === userId && !backendIds.has(r.courseId),
-        );
+        // Backend is the single source of truth — it returns all enrollments including
+        // pending-payment ones, so there is no need to carry over local-only entries.
         const otherUsers = this.registrations.filter((r) => r.userId !== userId);
-
-        const merged = [...otherUsers, ...fromBackend, ...localOnly];
+        const merged = [...otherUsers, ...fromBackend];
         this.registrations = merged;
         writeStoredRegistrations(merged);
       } catch {
