@@ -5,6 +5,7 @@ const MOODLE_URL_STORAGE_PREFIX = 'lll:moodle-url:';
 export interface MoodleLearningRouteOptions {
   moodleCourseId?: string | number | null | undefined;
   courseCode?: string | null | undefined;
+  courseTitle?: string | null | undefined;
 }
 
 function getQueryValue(value: unknown): string {
@@ -33,6 +34,10 @@ export function pushMoodleLearningRoute(
 
   if (options.courseCode) {
     query.courseCode = options.courseCode;
+  }
+
+  if (options.courseTitle) {
+    query.courseTitle = options.courseTitle;
   }
 
   void router.push({

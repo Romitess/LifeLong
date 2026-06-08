@@ -236,7 +236,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import DOMPurify from 'dompurify';
@@ -300,7 +300,13 @@ const currentCourse = computed(() => {
   return courseStore.getCourseDetailById(courseId.value);
 });
 
-const courseTitle = computed<string>(() => currentCourse.value?.title || 'Course Learning');
+const courseTitle = computed<string>(() => {
+  const titleFromCourse = currentCourse.value?.title;
+  if (titleFromCourse) return titleFromCourse;
+
+  const titleFromQuery = getQueryString(route.query.courseTitle);
+  return titleFromQuery || 'Course Learning';
+});
 
 const resolvedMoodleCourseId = computed<number | null>(() => {
   const fromCourse = currentCourse.value?.moodleId;
@@ -417,6 +423,10 @@ function getQueryString(value: unknown): string {
   if (Array.isArray(value)) return String(value[0] ?? '');
   return typeof value === 'string' ? value : '';
 }
+
+onMounted(() => {
+  courseStore.init();
+});
 
 watch(
   [courseId, () => currentCourse.value?.moodleId] as const,

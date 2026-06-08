@@ -1217,7 +1217,11 @@ async function goToLearningPage(targetCourseId = courseId.value): Promise<void> 
     const moodleCourseId = String(course.value?.moodleId ?? targetCourseId);
     const url = await getMoodleCourseUrl(moodleCourseId, username, courseCode);
     if (url) {
-      pushMoodleLearningRoute(router, targetCourseId, url);
+      pushMoodleLearningRoute(router, targetCourseId, url, {
+        moodleCourseId,
+        courseCode,
+        courseTitle: course.value?.title,
+      });
       return;
     }
   }
