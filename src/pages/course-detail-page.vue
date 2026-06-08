@@ -543,18 +543,41 @@
                     @click="onEnrollmentActionClick"
                   />
 
-                  <q-btn
-                    flat
-                    :color="isBookmarked ? 'negative' : 'primary'"
-                    :label="
-                      isBookmarked ? $t('profile.courses.unsave') : $t('profile.courses.save')
-                    "
-                    class="full-width save-btn"
-                    :icon="isBookmarked ? 'bookmark_remove' : 'bookmark_add'"
-                    no-caps
-                    size="md"
-                    @click="onToggleBookmark"
-                  />
+                  <div
+                    class="save-action"
+                    :class="{
+                      'save-action--active': bookmarkFeedbackActive,
+                      'save-action--saved': isBookmarked,
+                    }"
+                  >
+                    <q-btn
+                      flat
+                      :color="saveButtonColor"
+                      :label="saveButtonLabel"
+                      class="full-width save-btn"
+                      :class="{
+                        'save-btn--pop': bookmarkFeedbackActive,
+                        'save-btn--saved': isBookmarked,
+                      }"
+                      :icon="saveButtonIcon"
+                      no-caps
+                      size="md"
+                      @click="onToggleBookmark"
+                    />
+                    <span
+                      v-if="bookmarkFeedbackActive"
+                      class="save-action__ring"
+                      aria-hidden="true"
+                    />
+                    <span
+                      v-for="dot in saveBurstDots"
+                      v-show="bookmarkFeedbackActive && isBookmarked"
+                      :key="dot"
+                      class="save-action__dot"
+                      :class="`save-action__dot--${dot}`"
+                      aria-hidden="true"
+                    />
+                  </div>
                 </q-card-section>
               </q-card>
 
@@ -793,7 +816,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { api } from 'src/boot/axios';
 import { useRoute, useRouter } from 'vue-router';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
@@ -990,6 +1013,10 @@ const enrollmentDialogOpenKey = ref(0);
 const showLoginRequiredDialog = ref(false);
 const showEnterClassDialog = ref(false);
 const previewControlsVisible = ref(false);
+const bookmarkFeedbackActive = ref(false);
+const bookmarkFeedbackMode = ref<'saved' | 'removed'>('saved');
+const saveBurstDots = [1, 2, 3, 4, 5, 6, 7, 8];
+let bookmarkFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 
 const isCourseRegistered = computed<boolean>(() => {
   if (!course.value) {
@@ -1014,6 +1041,34 @@ const isBookmarked = computed<boolean>(() => {
   }
 
   return courseBookmarkStore.isBookmarked(course.value.id);
+});
+
+const saveButtonColor = computed(() => {
+  if (bookmarkFeedbackActive.value && bookmarkFeedbackMode.value === 'saved') {
+    return 'positive';
+  }
+
+  return isBookmarked.value ? 'negative' : 'primary';
+});
+
+const saveButtonIcon = computed(() => {
+  if (bookmarkFeedbackActive.value && bookmarkFeedbackMode.value === 'saved') {
+    return 'check_circle';
+  }
+
+  if (bookmarkFeedbackActive.value && bookmarkFeedbackMode.value === 'removed') {
+    return 'bookmark_remove';
+  }
+
+  return isBookmarked.value ? 'bookmark_remove' : 'bookmark_add';
+});
+
+const saveButtonLabel = computed(() => {
+  if (bookmarkFeedbackActive.value && bookmarkFeedbackMode.value === 'saved') {
+    return locale.value === 'th' ? 'บันทึกแล้ว' : 'Saved';
+  }
+
+  return isBookmarked.value ? t('profile.courses.unsave') : t('profile.courses.save');
 });
 
 const isCourseFull = computed<boolean>(() => {
@@ -1218,8 +1273,33 @@ function onToggleBookmark(): void {
     return;
   }
 
+  const wasBookmarked = isBookmarked.value;
   courseBookmarkStore.toggleBookmark(course.value);
+  playBookmarkFeedback(wasBookmarked ? 'removed' : 'saved');
 }
+
+function playBookmarkFeedback(mode: 'saved' | 'removed'): void {
+  bookmarkFeedbackMode.value = mode;
+  bookmarkFeedbackActive.value = false;
+
+  if (bookmarkFeedbackTimer) {
+    clearTimeout(bookmarkFeedbackTimer);
+  }
+
+  requestAnimationFrame(() => {
+    bookmarkFeedbackActive.value = true;
+    bookmarkFeedbackTimer = setTimeout(() => {
+      bookmarkFeedbackActive.value = false;
+      bookmarkFeedbackTimer = null;
+    }, 820);
+  });
+}
+
+onBeforeUnmount(() => {
+  if (bookmarkFeedbackTimer) {
+    clearTimeout(bookmarkFeedbackTimer);
+  }
+});
 
 function recordCourseClick(id: string): void {
   const numericId = Number(id.replace('db-', ''));
@@ -1611,10 +1691,146 @@ watch(
   }
 }
 
+.save-action {
+  position: relative;
+  isolation: isolate;
+}
+
 .save-btn {
+  position: relative;
+  z-index: 2;
+  overflow: visible;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
   border-width: 2px;
+  transition:
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s cubic-bezier(0.2, 1.4, 0.35, 1);
+}
+
+.save-btn--saved {
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.save-btn--pop {
+  animation: saveButtonSubscribePop 0.64s cubic-bezier(0.18, 1.35, 0.32, 1);
+}
+
+.save-action--active .save-btn {
+  box-shadow: 0 12px 26px rgba(34, 197, 94, 0.22);
+}
+
+.save-action__ring {
+  position: absolute;
+  inset: -5px;
+  z-index: 1;
+  border: 2px solid rgba(34, 197, 94, 0.42);
+  border-radius: 12px;
+  pointer-events: none;
+  animation: saveButtonSubscribeRing 0.72s ease-out both;
+}
+
+.save-action__dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #22c55e;
+  pointer-events: none;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+  animation: saveButtonSubscribeDot 0.78s ease-out both;
+}
+
+.save-action__dot--1 {
+  --save-dot-x: -134px;
+  --save-dot-y: -28px;
+  background: #22c55e;
+}
+
+.save-action__dot--2 {
+  --save-dot-x: -92px;
+  --save-dot-y: 30px;
+  background: #f59e0b;
+}
+
+.save-action__dot--3 {
+  --save-dot-x: -34px;
+  --save-dot-y: -36px;
+  background: #0ea5e9;
+}
+
+.save-action__dot--4 {
+  --save-dot-x: 38px;
+  --save-dot-y: 34px;
+  background: #22c55e;
+}
+
+.save-action__dot--5 {
+  --save-dot-x: 92px;
+  --save-dot-y: -34px;
+  background: #ef4444;
+}
+
+.save-action__dot--6 {
+  --save-dot-x: 132px;
+  --save-dot-y: 24px;
+  background: #f59e0b;
+}
+
+.save-action__dot--7 {
+  --save-dot-x: -156px;
+  --save-dot-y: 10px;
+  background: #ef4444;
+}
+
+.save-action__dot--8 {
+  --save-dot-x: 156px;
+  --save-dot-y: -10px;
+  background: #0ea5e9;
+}
+
+@keyframes saveButtonSubscribePop {
+  0% {
+    transform: scale(1);
+  }
+  34% {
+    transform: scale(0.92);
+  }
+  62% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes saveButtonSubscribeRing {
+  0% {
+    opacity: 0.72;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.16);
+  }
+}
+
+@keyframes saveButtonSubscribeDot {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--save-dot-x)), calc(-50% + var(--save-dot-y))) scale(0.95);
+  }
 }
 
 // ── Registration Dialog ──────────────────────────────────────
