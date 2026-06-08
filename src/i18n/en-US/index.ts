@@ -159,7 +159,7 @@ export default {
       email: 'Email',
       password: 'Password',
       confirmPassword: 'Confirm Password',
-      passwordHint: 'Use at least 6 characters',
+      passwordHint: 'At least 8 characters with 2 of: uppercase, lowercase, digit',
       privacyNotice:
         'Privacy Notice details for users of the Burapha University Credit Bank system',
       privacyLink: 'View document',
@@ -175,7 +175,8 @@ export default {
       duplicateCitizenId: 'This citizen ID is already registered.',
       fillRequired: 'Please complete all required fields.',
       passwordMismatch: 'Passwords do not match.',
-      passwordTooShort: 'Password must be at least 6 characters.',
+      passwordTooShort:
+        'Password must be at least 8 characters with 2 of: uppercase, lowercase, digit.',
       failed: 'Registration failed',
       citizenId: 'Citizen ID',
       citizenIdHint:

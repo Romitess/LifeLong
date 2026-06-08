@@ -282,7 +282,13 @@ function emailRule(value: string): true | string {
 }
 
 function passwordRule(value: string): true | string {
-  return value.trim().length >= 6 || t('auth.register.passwordTooShort');
+  const v = value.trim();
+  if (v.length < 8) return t('auth.register.passwordTooShort');
+  const hasUpper = /[A-Z]/.test(v);
+  const hasLower = /[a-z]/.test(v);
+  const hasDigit = /[0-9]/.test(v);
+  const score = [hasUpper, hasLower, hasDigit].filter(Boolean).length;
+  return score >= 2 || t('auth.register.passwordTooShort');
 }
 
 function citizenIdRequiredRule(value: string): true | string {
@@ -338,12 +344,9 @@ async function onRegister(): Promise<void> {
     return;
   }
 
-  if (passwordRule(registerForm.password) !== true) {
-    $q.notify({
-      type: 'negative',
-      message: t('auth.register.passwordTooShort'),
-      position: 'top',
-    });
+  const passwordError = passwordRule(registerForm.password);
+  if (passwordError !== true) {
+    $q.notify({ type: 'negative', message: passwordError, position: 'top' });
     return;
   }
 
