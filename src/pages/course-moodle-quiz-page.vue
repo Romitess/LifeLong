@@ -99,7 +99,7 @@
         </div>
         <q-separator class="q-mb-md" />
 
-        <form ref="formEl" @submit.prevent>
+        <form ref="formEl" @submit.prevent @click.capture="handleFormClick">
           <div
             v-for="q in attemptData.questions"
             :key="q.slot"
@@ -327,6 +327,33 @@ async function loadPage(page: number): Promise<void> {
   screen.value = 'attempt';
 }
 
+function handleFormClick(e: MouseEvent): void {
+  const target = e.target as HTMLElement;
+
+  // Intercept all <a> links inside the Moodle HTML to prevent page navigation.
+  // "Clear my choice" is rendered as an anchor by Moodle; clicking it should
+  // uncheck the radios in that question block instead of navigating away.
+  const link = target.closest('a');
+  if (link) {
+    e.preventDefault();
+    const block = link.closest('.ablock, .formulation, .que');
+    if (block) {
+      block.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((r) => {
+        r.checked = false;
+      });
+    }
+    return;
+  }
+
+  // Make the entire answer-row div clickable, not just the radio circle.
+  // Skip if the click already landed on a native interactive element so we
+  // don't double-fire (label clicks already trigger the associated radio).
+  const row = target.closest<HTMLElement>('.answer > div');
+  if (row && !target.closest('input, label')) {
+    row.querySelector<HTMLInputElement>('input[type="radio"], input[type="checkbox"]')?.click();
+  }
+}
+
 function serializeForm(): QuizAnswerField[] {
   if (!formEl.value) return [];
   const fd = new FormData(formEl.value);
@@ -458,9 +485,30 @@ onMounted(() => {
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 10px;
     transition: background 0.2s ease;
+    cursor: pointer;
+    user-select: none;
   }
   :deep(.answer > div:hover) {
     background: rgba(247, 208, 70, 0.08);
+  }
+  :deep(.qtype_multichoice_clearchoice) {
+    margin-top: 8px;
+
+    input[type='radio'] {
+      display: none;
+    }
+
+    label {
+      color: var(--q-primary);
+      cursor: pointer;
+      font-size: 0.85rem;
+      text-decoration: underline;
+      user-select: none;
+
+      &:hover {
+        opacity: 0.75;
+      }
+    }
   }
   :deep(input[type='radio']),
   :deep(input[type='checkbox']) {
