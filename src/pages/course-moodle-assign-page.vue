@@ -150,6 +150,13 @@
         <div v-else class="assign-card text-grey-7">
           <q-icon name="lock" class="q-mr-xs" />ไม่สามารถส่ง/แก้ไขงานได้ในขณะนี้
         </div>
+
+        <CourseActivityNavigation
+          :course-id="courseId"
+          :moodle-course-id="moodleCourseId"
+          :current-module-id="moduleId"
+          :current-title="assignTitle"
+        />
       </template>
     </div>
 
@@ -182,6 +189,7 @@ import { useQuasar } from 'quasar';
 import DOMPurify from 'dompurify';
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
+import CourseActivityNavigation from 'components/course/CourseActivityNavigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import { useCourseStore } from 'src/stores/course-store';
 import {

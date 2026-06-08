@@ -283,6 +283,14 @@
           @click="backToCourse"
         />
       </div>
+
+      <CourseActivityNavigation
+        v-if="screen === 'intro' || screen === 'review'"
+        :course-id="courseId"
+        :moodle-course-id="moodleCourseId"
+        :current-module-id="moduleId"
+        :current-title="quizTitle"
+      />
     </div>
 
     <q-dialog v-model="confirmSubmit">
@@ -313,6 +321,7 @@ import { useRoute, useRouter } from 'vue-router';
 import DOMPurify from 'dompurify';
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
+import CourseActivityNavigation from 'components/course/CourseActivityNavigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import QuizNavigationPanel from 'components/course/QuizNavigationPanel.vue';
 import { useCourseStore } from 'src/stores/course-store';

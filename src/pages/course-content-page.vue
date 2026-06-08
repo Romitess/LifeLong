@@ -70,6 +70,13 @@
           </div>
         </template>
       </div>
+
+      <CourseActivityNavigation
+        :course-id="courseId"
+        :moodle-course-id="moodleCourseId"
+        :current-module-id="moduleId"
+        :current-title="lessonTitle"
+      />
     </div>
   </q-page>
 </template>
@@ -80,6 +87,7 @@ import { useRoute } from 'vue-router';
 import DOMPurify from 'dompurify';
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
+import CourseActivityNavigation from 'components/course/CourseActivityNavigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import { useCourseStore } from 'src/stores/course-store';
 import {
