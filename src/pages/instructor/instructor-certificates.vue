@@ -1,21 +1,36 @@
-<template>
+﻿<template>
   <q-page class="certificate-page">
     <div class="section-container certificate-page__inner">
-      <InstructorPageHero
-        eyebrow="Instructor Workspace"
-        title="สร้าง Certificate"
-        description="เลือกรายวิชา ตรวจสอบผู้เรียนที่ผ่านเกณฑ์ แล้วสร้างหรือพิมพ์ Certificate รายบุคคล"
-      >
+      <InstructorPageHero eyebrow="Instructor Workspace" title="สร้าง Certificate">
         <template #actions>
-          <q-btn
-            v-if="selectedCourse"
-            outline
-            color="primary"
-            icon="arrow_back"
-            label="กลับไปเลือกรายวิชา"
-            no-caps
-            @click="clearSelectedCourse"
-          />
+          <div class="certificate-hero-actions">
+            <div class="certificate-hero-summary">
+              <div
+                v-for="card in certificateSummaryCards"
+                :key="card.label"
+                class="certificate-summary-card"
+                :style="{ '--summary-accent': card.color, '--summary-soft': card.softColor }"
+              >
+                <div class="certificate-summary-card__icon">
+                  <q-icon :name="card.icon" />
+                </div>
+                <div>
+                  <strong>{{ card.value }}</strong>
+                  <span>{{ card.label }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-if="selectedCourse" class="certificate-hero-actions__footer">
+              <q-btn
+                outline
+                color="primary"
+                icon="arrow_back"
+                label="กลับไปเลือกรายวิชา"
+                no-caps
+                @click="clearSelectedCourse"
+              />
+            </div>
+          </div>
         </template>
       </InstructorPageHero>
 
@@ -248,6 +263,14 @@ interface CertificateLearner {
   resultStatus: CertificateResultStatus;
 }
 
+interface CertificateSummaryCard {
+  label: string;
+  value: string;
+  icon: string;
+  color: string;
+  softColor: string;
+}
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -258,6 +281,7 @@ const selectedCourseId = ref(typeof route.query.courseId === 'string' ? route.qu
 const courseSearch = ref('');
 const certificateDialogOpen = ref(false);
 const selectedLearner = ref<CertificateLearner | null>(null);
+const issuedCertificateIds = ref<Set<string>>(new Set());
 
 const availableTemplates = ref<ActiveCertTemplate[]>([]);
 const isLoadingTemplates = ref(false);
@@ -326,6 +350,80 @@ const passedLearners = computed<CertificateLearner[]>(() =>
   courseLearners.value.filter((learner) => learner.resultStatus === 'ผ่าน'),
 );
 
+function hasCertificateDataIssue(learner: CertificateLearner): boolean {
+  return (
+    learner.studentId.trim().length === 0 ||
+    learner.name.trim().length === 0 ||
+    learner.email.trim().length === 0 ||
+    !learner.email.includes('@')
+  );
+}
+
+function getCertificateSummaryForCourses(courses: Course[]) {
+  return courses.reduce(
+    (summary, course) => {
+      const passed = getPassedLearners(course);
+      summary.eligible += passed.length;
+      summary.issued += passed.filter((learner) =>
+        issuedCertificateIds.value.has(learner.id),
+      ).length;
+      summary.issues += passed.filter(hasCertificateDataIssue).length;
+      return summary;
+    },
+    { eligible: 0, issued: 0, issues: 0 },
+  );
+}
+
+const certificateSummaryCounts = computed(() => {
+  const summary = selectedCourse.value
+    ? {
+        eligible: passedLearners.value.length,
+        issued: passedLearners.value.filter((learner) => issuedCertificateIds.value.has(learner.id))
+          .length,
+        issues: passedLearners.value.filter(hasCertificateDataIssue).length,
+      }
+    : getCertificateSummaryForCourses(instructorCourses.value);
+
+  return {
+    ...summary,
+    pending: Math.max(summary.eligible - summary.issued, 0),
+  };
+});
+
+const certificateSummaryCards = computed<CertificateSummaryCard[]>(() => {
+  const counts = certificateSummaryCounts.value;
+  return [
+    {
+      label: 'ผู้ผ่านเกณฑ์',
+      value: counts.eligible.toLocaleString('th-TH'),
+      icon: 'workspace_premium',
+      color: '#f59e0b',
+      softColor: 'rgba(245, 158, 11, 0.14)',
+    },
+    {
+      label: 'ออกใบรับรองแล้ว',
+      value: counts.issued.toLocaleString('th-TH'),
+      icon: 'verified',
+      color: '#16a34a',
+      softColor: 'rgba(22, 163, 74, 0.12)',
+    },
+    {
+      label: 'รอออกใบรับรอง',
+      value: counts.pending.toLocaleString('th-TH'),
+      icon: 'pending_actions',
+      color: '#2563eb',
+      softColor: 'rgba(37, 99, 235, 0.12)',
+    },
+    {
+      label: 'ข้อมูลไม่ครบ',
+      value: counts.issues.toLocaleString('th-TH'),
+      icon: 'report_problem',
+      color: '#dc2626',
+      softColor: 'rgba(220, 38, 38, 0.12)',
+    },
+  ];
+});
+
 watch(
   () => route.query.courseId,
   (courseId) => {
@@ -381,6 +479,7 @@ function clearSelectedCourse(): void {
 
 function openCertificate(learner: CertificateLearner): void {
   selectedLearner.value = learner;
+  issuedCertificateIds.value = new Set([...issuedCertificateIds.value, learner.id]);
   certificateDialogOpen.value = true;
 }
 </script>
@@ -392,7 +491,83 @@ function openCertificate(learner: CertificateLearner): void {
 }
 
 .certificate-page__inner {
-  padding: 40px 24px 56px;
+  padding: 0 24px 56px;
+}
+
+.certificate-hero-actions {
+  display: grid;
+  gap: 14px;
+  width: min(720px, 100%);
+}
+
+.certificate-hero-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(132px, 1fr));
+  gap: 14px;
+  width: min(720px, 100%);
+}
+
+.certificate-hero-actions__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.certificate-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 78px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(4px);
+}
+
+.certificate-summary-card__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--summary-accent);
+  font-size: 23px;
+}
+
+.certificate-summary-card div:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.certificate-summary-card strong {
+  color: #ffffff;
+  font-size: 1.48rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.certificate-summary-card span {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+@media (max-width: 1180px) {
+  .certificate-hero-actions,
+  .certificate-hero-summary {
+    width: 100%;
+  }
+
+  .certificate-hero-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .certificate-hero,
@@ -676,7 +851,15 @@ function openCertificate(learner: CertificateLearner): void {
 
 @media (max-width: 700px) {
   .certificate-page__inner {
-    padding: 24px 14px 40px;
+    padding: 0 14px 40px;
+  }
+
+  .certificate-hero-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .certificate-hero-actions__footer {
+    justify-content: flex-start;
   }
 
   .certificate-hero,

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="instructor-students-page">
     <div class="section-container instructor-students">
       <InstructorPageHero
@@ -7,15 +7,34 @@
         :description="studentHeroDescription"
       >
         <template #actions>
-          <BaseButton
-            v-if="selectedCourse"
-            outline
-            color="primary"
-            icon="arrow_back"
-            label="กลับไปเลือกคอร์ส"
-            no-caps
-            @click="clearSelectedCourse"
-          />
+          <div class="student-hero-actions">
+            <div class="student-roster-hero-summary">
+              <div
+                v-for="card in studentHeroSummaryCards"
+                :key="card.label"
+                class="student-roster-summary-card student-roster-summary-card--hero"
+                :style="{ '--summary-accent': card.color, '--summary-soft': card.softColor }"
+              >
+                <div class="student-roster-summary-card__icon">
+                  <q-icon :name="card.icon" />
+                </div>
+                <div>
+                  <strong>{{ card.value }}</strong>
+                  <span>{{ card.label }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-if="selectedCourse" class="student-hero-actions__footer">
+              <BaseButton
+                outline
+                color="primary"
+                icon="arrow_back"
+                label="กลับไปเลือกคอร์ส"
+                no-caps
+                @click="clearSelectedCourse"
+              />
+            </div>
+          </div>
         </template>
       </InstructorPageHero>
 
@@ -151,7 +170,7 @@
       </section>
 
       <section v-else class="student-roster-panel">
-        <div class="student-roster-panel__summary">
+        <div v-if="activeStudentTab === 'results'" class="student-roster-panel__summary">
           <div>
             <span>ลงทะเบียนแล้ว</span>
             <strong>{{ displayedEnrolledCount.toLocaleString() }}</strong>
@@ -1078,6 +1097,15 @@ interface ImportedLearningResult {
   status: string;
 }
 
+interface RosterSummaryCard {
+  label: string;
+  value: string;
+  caption: string;
+  icon: string;
+  color: string;
+  softColor: string;
+}
+
 const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
@@ -1094,6 +1122,14 @@ const studentHeroTitle = computed(() =>
   activeStudentTab.value === 'results' ? 'บันทึกผลการเรียน' : 'ตรวจสอบรายชื่อ',
 );
 const studentHeroDescription = computed(() => {
+  if (activeStudentTab.value === 'roster') {
+    return '';
+  }
+
+  if (activeStudentTab.value === 'results') {
+    return '';
+  }
+
   if (selectedCourse.value) {
     return `${selectedCourse.value.code} ${selectedCourse.value.titleEn || selectedCourse.value.title}`;
   }
@@ -1401,6 +1437,189 @@ const averageProgress = computed(() => {
   const total = learners.value.reduce((sum, learner) => sum + learner.progress, 0);
   return Math.round(total / learners.value.length);
 });
+
+function hasRosterIssue(learner: LearnerRow): boolean {
+  return (
+    !learner.studentId.trim() ||
+    !learner.name.trim() ||
+    learner.email === '-' ||
+    learner.email.trim().length === 0
+  );
+}
+
+function isPendingRosterVerification(learner: LearnerRow): boolean {
+  const paymentStatus = learner.paymentStatus.toLowerCase();
+  return (
+    hasRosterIssue(learner) ||
+    paymentStatus === '-' ||
+    paymentStatus.includes('ยัง') ||
+    paymentStatus.includes('pending') ||
+    paymentStatus.includes('unpaid')
+  );
+}
+
+const rosterSummaryCounts = computed(() => {
+  if (!selectedCourse.value) {
+    const total = instructorCourses.value.reduce((sum, course) => sum + course.enrolledCount, 0);
+    return {
+      total,
+      verified: total,
+      pending: 0,
+      issue: 0,
+      scope: `${instructorCourses.value.length.toLocaleString('th-TH')} รายวิชา`,
+    };
+  }
+
+  const total = displayedEnrolledCount.value;
+  const issue = learners.value.filter(hasRosterIssue).length;
+  const pendingFromMissingRows = Math.max(total - learners.value.length, 0);
+  const pending =
+    pendingFromMissingRows + learners.value.filter(isPendingRosterVerification).length;
+  const verified = Math.max(total - pending, 0);
+
+  return {
+    total,
+    verified,
+    pending,
+    issue,
+    scope: selectedCourse.value.code,
+  };
+});
+
+const rosterSummaryCards = computed<RosterSummaryCard[]>(() => {
+  const counts = rosterSummaryCounts.value;
+  return [
+    {
+      label: 'นิสิตทั้งหมด',
+      value: counts.total.toLocaleString('th-TH'),
+      caption: counts.scope,
+      icon: 'groups',
+      color: '#2563eb',
+      softColor: 'rgba(37, 99, 235, 0.12)',
+    },
+    {
+      label: 'ยืนยันรายชื่อแล้ว',
+      value: counts.verified.toLocaleString('th-TH'),
+      caption: 'ผ่านการตรวจสอบ',
+      icon: 'verified_user',
+      color: '#16a34a',
+      softColor: 'rgba(22, 163, 74, 0.12)',
+    },
+    {
+      label: 'รอตรวจสอบ',
+      value: counts.pending.toLocaleString('th-TH'),
+      caption: 'ข้อมูล/สถานะรอจัดการ',
+      icon: 'pending_actions',
+      color: '#f59e0b',
+      softColor: 'rgba(245, 158, 11, 0.14)',
+    },
+    {
+      label: 'มีปัญหา/ต้องแก้ไข',
+      value: counts.issue.toLocaleString('th-TH'),
+      caption: 'ข้อมูลไม่ครบหรือผิดปกติ',
+      icon: 'report_problem',
+      color: '#dc2626',
+      softColor: 'rgba(220, 38, 38, 0.12)',
+    },
+  ];
+});
+
+function hasSavedLearningResult(learner: LearnerRow): boolean {
+  return Boolean(
+    learner.importedGradeName ||
+    learner.lmsFinalscore !== null ||
+    learner.finalScore > 0 ||
+    learner.resultNote.trim(),
+  );
+}
+
+function needsLearningResultReview(learner: LearnerRow): boolean {
+  if (learner.finalScore < 0 || learner.finalScore > 100) {
+    return true;
+  }
+
+  if (!hasSavedLearningResult(learner)) {
+    return false;
+  }
+
+  return learner.importedGradeName === null || learner.lmsFinalscore === null;
+}
+
+function getLearningResultSummaryForCourses(courses: Course[]) {
+  return courses.reduce(
+    (summary, course) => {
+      const courseLearners = buildLearnersForCourse(course);
+      const total = Math.max(course.enrolledCount, courseLearners.length);
+      const saved = courseLearners.filter(hasSavedLearningResult).length;
+      const review = courseLearners.filter(needsLearningResultReview).length;
+
+      summary.total += total;
+      summary.saved += saved;
+      summary.review += review;
+      return summary;
+    },
+    { total: 0, saved: 0, review: 0 },
+  );
+}
+
+const learningResultSummaryCounts = computed(() => {
+  const summary = selectedCourse.value
+    ? {
+        total: displayedEnrolledCount.value,
+        saved: learners.value.filter(hasSavedLearningResult).length,
+        review: learners.value.filter(needsLearningResultReview).length,
+      }
+    : getLearningResultSummaryForCourses(instructorCourses.value);
+
+  return {
+    ...summary,
+    pending: Math.max(summary.total - summary.saved, 0),
+  };
+});
+
+const learningResultSummaryCards = computed<RosterSummaryCard[]>(() => {
+  const counts = learningResultSummaryCounts.value;
+  return [
+    {
+      label: 'นิสิตทั้งหมด',
+      value: counts.total.toLocaleString('th-TH'),
+      caption: '',
+      icon: 'groups',
+      color: '#2563eb',
+      softColor: 'rgba(37, 99, 235, 0.12)',
+    },
+    {
+      label: 'บันทึกผลแล้ว',
+      value: counts.saved.toLocaleString('th-TH'),
+      caption: '',
+      icon: 'task_alt',
+      color: '#16a34a',
+      softColor: 'rgba(22, 163, 74, 0.12)',
+    },
+    {
+      label: 'รอบันทึกผล',
+      value: counts.pending.toLocaleString('th-TH'),
+      caption: '',
+      icon: 'pending_actions',
+      color: '#f59e0b',
+      softColor: 'rgba(245, 158, 11, 0.14)',
+    },
+    {
+      label: 'ต้องตรวจทาน',
+      value: counts.review.toLocaleString('th-TH'),
+      caption: '',
+      icon: 'rule',
+      color: '#dc2626',
+      softColor: 'rgba(220, 38, 38, 0.12)',
+    },
+  ];
+});
+
+const studentHeroSummaryCards = computed<RosterSummaryCard[]>(() =>
+  activeStudentTab.value === 'results'
+    ? learningResultSummaryCards.value
+    : rosterSummaryCards.value,
+);
 
 const filteredLearners = computed(() => {
   let result = learners.value;
@@ -2215,7 +2434,7 @@ function exportLearnersPdf(): void {
 }
 
 .instructor-students {
-  padding-block: 32px 54px;
+  padding-block: 0 54px;
 }
 
 .students-hero,
@@ -2293,6 +2512,113 @@ function exportLearnersPdf(): void {
 
 .student-course-list {
   display: grid;
+}
+
+.student-roster-hero-summary,
+.student-roster-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(132px, 1fr));
+  gap: 14px;
+}
+
+.student-hero-actions {
+  display: grid;
+  gap: 14px;
+  width: min(720px, 100%);
+}
+
+.student-hero-actions__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.student-roster-hero-summary {
+  width: min(720px, 100%);
+}
+
+.student-roster-summary-grid {
+  padding: 16px 18px;
+}
+
+.student-roster-panel > .student-roster-summary-grid {
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.student-roster-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 78px;
+  padding: 14px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--summary-soft), rgba(255, 255, 255, 0.96) 48%), #ffffff;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.student-roster-summary-card__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--summary-soft);
+  color: var(--summary-accent);
+  font-size: 23px;
+}
+
+.student-roster-summary-card div:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.student-roster-summary-card span {
+  color: #64748b;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.student-roster-summary-card strong {
+  color: #09213f;
+  font-size: 1.48rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.student-roster-summary-card small {
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.22;
+}
+
+.student-roster-summary-card--hero {
+  min-height: 78px;
+  padding: 14px;
+  border-color: rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(4px);
+}
+
+.student-roster-summary-card--hero .student-roster-summary-card__icon {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.student-roster-summary-card--hero span,
+.student-roster-summary-card--hero small {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.student-roster-summary-card--hero strong {
+  color: #ffffff;
 }
 
 .learning-result-table-scroll {
@@ -3395,6 +3721,21 @@ function exportLearnersPdf(): void {
   box-shadow: 0 7px 18px rgba($primary, 0.2) !important;
 }
 
+@media (max-width: 1180px) {
+  .student-hero-actions {
+    width: 100%;
+  }
+
+  .student-roster-hero-summary {
+    width: 100%;
+  }
+
+  .student-roster-hero-summary,
+  .student-roster-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 980px) {
   .student-roster-panel__summary,
   .student-detail-stats {
@@ -3416,6 +3757,20 @@ function exportLearnersPdf(): void {
   .students-hero {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .student-roster-hero-summary,
+  .student-roster-summary-grid {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .student-roster-hero-summary {
+    padding: 0;
+  }
+
+  .student-hero-actions__footer {
+    justify-content: flex-start;
   }
 
   .student-course-row {

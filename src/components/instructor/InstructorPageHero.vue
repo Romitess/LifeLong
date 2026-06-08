@@ -2,10 +2,26 @@
   <section class="instructor-page-hero">
     <div class="instructor-page-hero__overlay" />
     <div class="instructor-page-hero__content">
-      <div class="instructor-page-hero__copy">
-        <div class="instructor-page-hero__eyebrow">{{ eyebrow }}</div>
-        <h1>{{ title }}</h1>
-        <p v-if="description">{{ description }}</p>
+      <div class="instructor-page-hero__identity">
+        <q-avatar size="100px" class="instructor-page-hero__avatar">
+          <img
+            v-if="authStore.user?.avatar"
+            :src="authStore.user.avatar"
+            alt="Instructor avatar"
+            class="instructor-page-hero__avatar-image"
+          />
+          <q-icon v-else name="person" size="56px" color="white" />
+        </q-avatar>
+
+        <div class="instructor-page-hero__copy">
+          <div class="instructor-page-hero__eyebrow">{{ eyebrow }}</div>
+          <h1>{{ title }}</h1>
+          <div class="instructor-page-hero__meta">
+            <q-badge rounded color="positive" label="Teacher" class="text-weight-bold" />
+            <span>{{ authStore.user?.studentId || authStore.user?.username || '-' }}</span>
+          </div>
+          <p v-if="description">{{ description }}</p>
+        </div>
       </div>
 
       <div v-if="$slots.actions" class="instructor-page-hero__actions">
@@ -16,6 +32,10 @@
 </template>
 
 <script setup lang="ts">
+import { useAuthStore } from 'src/stores/auth-store';
+
+const authStore = useAuthStore();
+
 defineProps<{
   description?: string;
   eyebrow: string;
@@ -89,11 +109,31 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 34px;
   max-width: 1280px;
-  min-height: 176px;
+  min-height: 200px;
   margin: 0 auto;
   padding: 32px 24px;
+}
+
+.instructor-page-hero__identity {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 26px;
+}
+
+.instructor-page-hero__avatar {
+  flex: 0 0 auto;
+  border: 3px solid rgba(245, 166, 35, 0.48);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.08),
+    0 14px 30px rgba(0, 0, 0, 0.24);
+}
+
+.instructor-page-hero__avatar-image {
+  object-fit: cover;
 }
 
 .instructor-page-hero__copy {
@@ -115,9 +155,19 @@ defineProps<{
   line-height: 1.12;
 }
 
+.instructor-page-hero__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
 .instructor-page-hero p {
   max-width: 720px;
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   color: rgba(255, 255, 255, 0.72);
   font-size: 0.96rem;
   font-weight: 700;
@@ -130,8 +180,9 @@ defineProps<{
   display: flex;
   flex: 0 0 auto;
   align-items: center;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 14px;
 }
 
 @keyframes instructorPageHeroShine {
@@ -145,6 +196,18 @@ defineProps<{
   }
 }
 
+@media (max-width: 1180px) {
+  .instructor-page-hero__content {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .instructor-page-hero__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 760px) {
   .instructor-page-hero__content {
     align-items: flex-start;
@@ -153,9 +216,16 @@ defineProps<{
     padding: 30px 16px;
   }
 
-  .instructor-page-hero__actions {
-    width: 100%;
-    justify-content: flex-start;
+  .instructor-page-hero__identity {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .instructor-page-hero__avatar {
+    width: 82px !important;
+    height: 82px !important;
+    font-size: 82px !important;
   }
 }
 </style>
