@@ -146,30 +146,41 @@
                         />
                       </q-item-section>
                       <q-item-section>
-                        <q-item-label
-                          class="text-subtitle1"
-                          :class="{
-                            'text-grey-5 text-strike': lesson.isCompleted,
-                            'text-dark text-weight-medium': !lesson.isCompleted,
-                          }"
-                        >
+                        <q-item-label class="text-subtitle1">
                           {{ lesson.title }}
                         </q-item-label>
                       </q-item-section>
                       <q-item-section side>
-                        <q-btn
+                        <!-- quiz/assign: read-only status badge -->
+                        <BaseButton
                           v-if="
+                            (lesson.moodleModname === 'quiz' ||
+                              lesson.moodleModname === 'assign') &&
+                            lesson.isCompleted
+                          "
+                          color="positive"
+                          icon="check_circle"
+                          label="เสร็จแล้ว"
+                          no-caps
+                          dense
+                          disable
+                          class="mark-done-btn"
+                        />
+                        <!-- other lessons: toggleable -->
+                        <BaseButton
+                          v-else-if="
                             lesson.moodleModname !== 'quiz' && lesson.moodleModname !== 'assign'
                           "
-                          flat
-                          round
+                          :outline="!lesson.isCompleted"
+                          :color="lesson.isCompleted ? 'positive' : 'grey-7'"
+                          :icon="lesson.isCompleted ? 'check_circle' : 'check_circle_outline'"
+                          :label="lesson.isCompleted ? 'เสร็จแล้ว' : 'ทำเสร็จแล้ว'"
+                          no-caps
                           dense
-                          :icon="lesson.isCompleted ? 'check_circle' : 'panorama_fish_eye'"
-                          :color="lesson.isCompleted ? 'positive' : 'grey-4'"
+                          class="mark-done-btn"
                           @click.stop="
                             progressStore.toggleLessonCompletion(courseId || '', lesson.title)
                           "
-                          size="sm"
                         />
                       </q-item-section>
                     </q-item>
@@ -195,13 +206,7 @@
                     </q-item-section>
 
                     <q-item-section>
-                      <q-item-label
-                        class="text-subtitle1"
-                        :class="{
-                          'text-grey-5 text-strike': lesson.isCompleted,
-                          'text-dark text-weight-medium': !lesson.isCompleted,
-                        }"
-                      >
+                      <q-item-label class="text-subtitle1 text-dark text-weight-medium">
                         {{ lesson.title }}
                       </q-item-label>
                       <q-item-label
@@ -215,17 +220,35 @@
                     </q-item-section>
 
                     <q-item-section side>
-                      <q-btn
-                        v-if="lesson.moodleModname !== 'quiz' && lesson.moodleModname !== 'assign'"
-                        flat
-                        round
+                      <!-- quiz/assign: read-only status badge -->
+                      <BaseButton
+                        v-if="
+                          (lesson.moodleModname === 'quiz' || lesson.moodleModname === 'assign') &&
+                          lesson.isCompleted
+                        "
+                        color="positive"
+                        icon="check_circle"
+                        label="เสร็จแล้ว"
+                        no-caps
                         dense
-                        :icon="lesson.isCompleted ? 'check_circle' : 'panorama_fish_eye'"
-                        :color="lesson.isCompleted ? 'positive' : 'grey-4'"
+                        disable
+                        class="mark-done-btn"
+                      />
+                      <!-- other lessons: toggleable -->
+                      <BaseButton
+                        v-else-if="
+                          lesson.moodleModname !== 'quiz' && lesson.moodleModname !== 'assign'
+                        "
+                        :outline="!lesson.isCompleted"
+                        :color="lesson.isCompleted ? 'positive' : 'grey-7'"
+                        :icon="lesson.isCompleted ? 'check_circle' : 'check_circle_outline'"
+                        :label="lesson.isCompleted ? 'เสร็จแล้ว' : 'ทำเสร็จแล้ว'"
+                        no-caps
+                        dense
+                        class="mark-done-btn"
                         @click.stop="
                           progressStore.toggleLessonCompletion(courseId || '', lesson.title)
                         "
-                        size="sm"
                       />
                     </q-item-section>
                   </q-item>
@@ -661,6 +684,14 @@ $sidebar-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     border-left-color: $primary;
     padding-left: 56px;
   }
+}
+
+.mark-done-btn {
+  min-height: 32px !important;
+  padding: 4px 12px !important;
+  font-size: 12px !important;
+  border-radius: 8px !important;
+  white-space: nowrap;
 }
 
 // ── Vue transitions ──────────────────────────────────────────
