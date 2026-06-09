@@ -10,7 +10,29 @@
     :visual-items="visualItems"
   >
     <q-form class="auth-form auth-form--register" @submit.prevent="onRegister">
-      <div class="form-section form-section--personal">
+      <div class="register-stepper" aria-label="register steps">
+        <button
+          type="button"
+          class="register-stepper__item"
+          :class="{ 'register-stepper__item--active': registerStep === 1 }"
+          @click="registerStep = 1"
+        >
+          <span>1</span>
+          <strong>{{ $t('auth.register.personalSection') }}</strong>
+        </button>
+        <div class="register-stepper__line" />
+        <button
+          type="button"
+          class="register-stepper__item"
+          :class="{ 'register-stepper__item--active': registerStep === 2 }"
+          @click="goToAccountStep"
+        >
+          <span>2</span>
+          <strong>{{ $t('auth.register.accountSection') }}</strong>
+        </button>
+      </div>
+
+      <div v-if="registerStep === 1" class="form-section form-section--personal">
         <div class="form-section__title">
           <q-icon name="badge" />
           <span>{{ $t('auth.register.personalSection') }}</span>
@@ -102,9 +124,20 @@
             </q-input>
           </div>
         </div>
+
+        <BaseButton
+          class="register-step-action"
+          color="primary"
+          text-color="white"
+          icon-right="arrow_forward"
+          label="ถัดไป"
+          type="button"
+          no-caps
+          @click="goToAccountStep"
+        />
       </div>
 
-      <div class="form-section form-section--account">
+      <div v-else class="form-section form-section--account">
         <div class="form-section__title">
           <q-icon name="lock" />
           <span>{{ $t('auth.register.accountSection') }}</span>
@@ -167,38 +200,49 @@
         </div>
 
         <div class="password-hint">{{ $t('auth.register.passwordHint') }}</div>
+
+        <div class="privacy-notice privacy-notice--register">
+          <q-icon name="privacy_tip" />
+          <span>{{ $t('auth.register.privacyNotice') }}</span>
+          <a
+            href="https://lifelong.buu.ac.th/document/PrivacyNoticeLifelong.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ $t('auth.register.privacyLink') }}
+          </a>
+        </div>
+
+        <q-checkbox
+          v-model="registerForm.acceptTerms"
+          color="primary"
+          dense
+          class="auth-terms auth-terms--register"
+          :label="$t('auth.register.acceptTerms')"
+        />
+
+        <div class="register-step-actions">
+          <BaseButton
+            outline
+            color="primary"
+            icon="arrow_back"
+            label="ย้อนกลับ"
+            type="button"
+            no-caps
+            @click="registerStep = 1"
+          />
+          <BaseButton
+            class="auth-submit auth-submit--register"
+            color="primary"
+            text-color="white"
+            icon-right="person_add"
+            :label="$t('auth.register.submit')"
+            type="submit"
+            :loading="isLoading"
+            no-caps
+          />
+        </div>
       </div>
-
-      <div class="privacy-notice privacy-notice--register">
-        <q-icon name="privacy_tip" />
-        <span>{{ $t('auth.register.privacyNotice') }}</span>
-        <a
-          href="https://lifelong.buu.ac.th/document/PrivacyNoticeLifelong.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {{ $t('auth.register.privacyLink') }}
-        </a>
-      </div>
-
-      <q-checkbox
-        v-model="registerForm.acceptTerms"
-        color="primary"
-        dense
-        class="auth-terms auth-terms--register"
-        :label="$t('auth.register.acceptTerms')"
-      />
-
-      <BaseButton
-        class="auth-submit auth-submit--register"
-        color="primary"
-        text-color="white"
-        icon-right="person_add"
-        :label="$t('auth.register.submit')"
-        type="submit"
-        :loading="isLoading"
-        no-caps
-      />
     </q-form>
 
     <div class="auth-switch">
@@ -243,6 +287,7 @@ const authStore = useAuthStore();
 
 const isLoading = ref(false);
 const isPasswordVisible = ref(false);
+const registerStep = ref<1 | 2>(1);
 const switchingTo = ref<'login' | null>(null);
 
 const registerForm = reactive<RegisterForm>({
@@ -296,6 +341,17 @@ function citizenIdRequiredRule(value: string): true | string {
   return /^\d{13}$/.test(value.trim()) || t('auth.register.citizenIdInvalid');
 }
 
+function isPersonalStepComplete(): boolean {
+  return Boolean(
+    registerForm.firstNameTh.trim() &&
+    registerForm.lastNameTh.trim() &&
+    registerForm.firstNameEn.trim() &&
+    registerForm.lastNameEn.trim() &&
+    registerForm.phone.trim() &&
+    registerForm.citizenId.trim(),
+  );
+}
+
 function isRequiredFormComplete(): boolean {
   return Boolean(
     registerForm.firstNameTh.trim() &&
@@ -303,6 +359,7 @@ function isRequiredFormComplete(): boolean {
     registerForm.firstNameEn.trim() &&
     registerForm.lastNameEn.trim() &&
     registerForm.phone.trim() &&
+    registerForm.citizenId.trim() &&
     registerForm.email.trim() &&
     registerForm.password.trim() &&
     registerForm.confirmPassword.trim(),
@@ -323,6 +380,25 @@ async function goToLogin(): Promise<void> {
   switchingTo.value = 'login';
   await wait(560);
   void router.push('/login');
+}
+
+function goToAccountStep(): void {
+  if (!isPersonalStepComplete()) {
+    $q.notify({
+      type: 'negative',
+      message: t('auth.register.fillRequired'),
+      position: 'top',
+    });
+    return;
+  }
+
+  const citizenIdError = citizenIdRequiredRule(registerForm.citizenId);
+  if (citizenIdError !== true) {
+    $q.notify({ type: 'negative', message: citizenIdError, position: 'top' });
+    return;
+  }
+
+  registerStep.value = 2;
 }
 
 async function onRegister(): Promise<void> {
@@ -428,6 +504,71 @@ async function onRegister(): Promise<void> {
   align-items: stretch;
 }
 
+.register-stepper {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.register-stepper__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 12px;
+  color: #667085;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+
+  span {
+    display: grid;
+    place-items: center;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    color: #475467;
+    font-size: 0.78rem;
+    font-weight: 900;
+  }
+
+  strong {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.82rem;
+    font-weight: 900;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.register-stepper__item--active {
+  color: #3d2600;
+  background: rgba(245, 166, 35, 0.14);
+
+  span {
+    color: #ffffff;
+    background: $secondary;
+  }
+}
+
+.register-stepper__line {
+  height: 2px;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
 .form-section {
   display: grid;
   gap: 12px;
@@ -494,6 +635,19 @@ async function onRegister(): Promise<void> {
   min-height: 46px;
 }
 
+.register-step-action {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 2px;
+}
+
+.register-step-actions {
+  display: grid;
+  grid-template-columns: minmax(128px, 0.44fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
 .auth-switch {
   display: flex;
   align-items: center;
@@ -503,6 +657,18 @@ async function onRegister(): Promise<void> {
 }
 
 @media (max-width: 520px) {
+  .register-stepper {
+    grid-template-columns: 1fr;
+  }
+
+  .register-stepper__line {
+    display: none;
+  }
+
+  .register-step-actions {
+    grid-template-columns: 1fr;
+  }
+
   .auth-switch {
     align-items: flex-start;
     flex-direction: column;
