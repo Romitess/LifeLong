@@ -1,11 +1,7 @@
-<template>
+﻿<template>
   <q-page class="instructor-chat-page">
     <div v-if="isTeachingRole" class="section-container instructor-chat-page__inner">
-      <InstructorPageHero
-        eyebrow="Instructor Workspace"
-        title="สนทนากับผู้เรียน"
-        description="ติดตามข้อความจากผู้เรียนในรายวิชาที่คุณรับผิดชอบ และตอบกลับจากหน้าผู้สอนได้ทันที"
-      >
+      <InstructorPageHero eyebrow="Instructor Workspace" title="สนทนากับผู้เรียน">
         <template #actions>
           <q-badge rounded color="primary" class="chat-hero__badge">
             {{ conversationEntries.length }} ห้องสนทนา
@@ -493,7 +489,7 @@ function scrollToLatestMessage(): void {
 }
 
 .instructor-chat-page__inner {
-  padding: 48px 0 64px;
+  padding: 0 0 64px;
 }
 
 .chat-hero {
@@ -640,7 +636,7 @@ function scrollToLatestMessage(): void {
 
 @media (max-width: 1023px) {
   .instructor-chat-page__inner {
-    padding: 28px 16px 48px;
+    padding: 0 16px 48px;
   }
 
   .chat-hero {

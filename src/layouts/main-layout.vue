@@ -20,6 +20,7 @@
             loading="eager"
             decoding="sync"
           />
+          <q-tooltip>คลิกเพื่อกลับหน้าหลัก</q-tooltip>
         </div>
 
         <q-space />

@@ -24,19 +24,22 @@
                 </div>
               </div>
             </div>
-            <div v-if="selectedCourse" class="student-hero-actions__footer">
-              <BaseButton
-                outline
-                color="primary"
-                icon="arrow_back"
-                label="กลับไปเลือกคอร์ส"
-                no-caps
-                @click="clearSelectedCourse"
-              />
-            </div>
           </div>
         </template>
       </InstructorPageHero>
+
+      <nav v-if="selectedCourse" class="student-breadcrumb-nav" aria-label="breadcrumb">
+        <button type="button" class="student-breadcrumb-nav__item" @click="clearSelectedCourse">
+          <q-icon name="menu_book" size="20px" />
+          <span>วิชาของฉัน</span>
+        </button>
+
+        <q-icon name="chevron_right" size="18px" class="student-breadcrumb-nav__separator" />
+
+        <span class="student-breadcrumb-nav__item student-breadcrumb-nav__item--current">
+          {{ selectedCourse.titleEn || selectedCourse.title }}
+        </span>
+      </nav>
 
       <section v-if="!selectedCourse" class="student-course-list-panel">
         <div class="student-course-list-panel__header">
@@ -2486,6 +2489,59 @@ function exportLearnersPdf(): void {
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
 }
 
+.student-breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -8px 0 22px;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.student-breadcrumb-nav__item {
+  border: 0;
+  background: transparent;
+  font: inherit;
+}
+
+.student-breadcrumb-nav__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 4px 2px;
+  color: #6b7280;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: $primary;
+  }
+}
+
+.student-breadcrumb-nav__item--current {
+  min-width: 0;
+  max-width: min(560px, 100%);
+  overflow: hidden;
+  color: #111827;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+
+  &:hover {
+    color: #111827;
+  }
+}
+
+.student-breadcrumb-nav__separator {
+  flex: 0 0 auto;
+  color: #d1d5db;
+}
+
 .student-course-list-panel__header {
   display: flex;
   align-items: center;
@@ -2525,11 +2581,6 @@ function exportLearnersPdf(): void {
   display: grid;
   gap: 14px;
   width: min(720px, 100%);
-}
-
-.student-hero-actions__footer {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .student-roster-hero-summary {
@@ -3767,10 +3818,6 @@ function exportLearnersPdf(): void {
 
   .student-roster-hero-summary {
     padding: 0;
-  }
-
-  .student-hero-actions__footer {
-    justify-content: flex-start;
   }
 
   .student-course-row {

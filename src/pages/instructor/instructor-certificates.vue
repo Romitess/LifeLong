@@ -20,19 +20,22 @@
                 </div>
               </div>
             </div>
-            <div v-if="selectedCourse" class="certificate-hero-actions__footer">
-              <q-btn
-                outline
-                color="primary"
-                icon="arrow_back"
-                label="กลับไปเลือกรายวิชา"
-                no-caps
-                @click="clearSelectedCourse"
-              />
-            </div>
           </div>
         </template>
       </InstructorPageHero>
+
+      <nav v-if="selectedCourse" class="certificate-breadcrumb-nav" aria-label="breadcrumb">
+        <button type="button" class="certificate-breadcrumb-nav__item" @click="clearSelectedCourse">
+          <q-icon name="menu_book" size="20px" />
+          <span>วิชาของฉัน</span>
+        </button>
+
+        <q-icon name="chevron_right" size="18px" class="certificate-breadcrumb-nav__separator" />
+
+        <span class="certificate-breadcrumb-nav__item certificate-breadcrumb-nav__item--current">
+          {{ selectedCourse.titleEn || selectedCourse.title }}
+        </span>
+      </nav>
 
       <section v-if="!selectedCourse" class="certificate-panel">
         <div class="certificate-panel__header">
@@ -507,11 +510,6 @@ function openCertificate(learner: CertificateLearner): void {
   width: min(720px, 100%);
 }
 
-.certificate-hero-actions__footer {
-  display: flex;
-  justify-content: flex-end;
-}
-
 .certificate-summary-card {
   display: flex;
   align-items: center;
@@ -568,6 +566,56 @@ function openCertificate(learner: CertificateLearner): void {
   .certificate-hero-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.certificate-breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -8px 0 22px;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.certificate-breadcrumb-nav__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 4px 2px;
+  border: 0;
+  color: #6b7280;
+  background: transparent;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: $primary;
+  }
+}
+
+.certificate-breadcrumb-nav__item--current {
+  min-width: 0;
+  max-width: min(560px, 100%);
+  overflow: hidden;
+  color: #111827;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+
+  &:hover {
+    color: #111827;
+  }
+}
+
+.certificate-breadcrumb-nav__separator {
+  flex: 0 0 auto;
+  color: #d1d5db;
 }
 
 .certificate-hero,
@@ -856,10 +904,6 @@ function openCertificate(learner: CertificateLearner): void {
 
   .certificate-hero-summary {
     grid-template-columns: 1fr;
-  }
-
-  .certificate-hero-actions__footer {
-    justify-content: flex-start;
   }
 
   .certificate-hero,
