@@ -158,6 +158,9 @@
                       </q-item-section>
                       <q-item-section side>
                         <q-btn
+                          v-if="
+                            lesson.moodleModname !== 'quiz' && lesson.moodleModname !== 'assign'
+                          "
                           flat
                           round
                           dense
@@ -213,6 +216,7 @@
 
                     <q-item-section side>
                       <q-btn
+                        v-if="lesson.moodleModname !== 'quiz' && lesson.moodleModname !== 'assign'"
                         flat
                         round
                         dense
@@ -241,6 +245,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import DOMPurify from 'dompurify';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
+import { useCourseRegistrationStore } from 'src/stores/course-registration-store';
 import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import BaseButton from 'components/base/BaseButton.vue';
@@ -280,6 +285,7 @@ const route = useRoute();
 const progressStore = useCourseProgressStore();
 const courseStore = useCourseStore();
 const authStore = useAuthStore();
+const registrationStore = useCourseRegistrationStore();
 const { getMoodleActivityUrl } = useMoodleSso();
 const {
   sections: moodleSections,
@@ -306,6 +312,11 @@ const courseTitle = computed<string>(() => {
 
   const titleFromQuery = getQueryString(route.query.courseTitle);
   return titleFromQuery || 'Course Learning';
+});
+
+const enrollId = computed<number | null>(() => {
+  const reg = registrationStore.myRegistrations.find((r) => r.courseId === courseId.value);
+  return reg?.enrollId ?? null;
 });
 
 const resolvedMoodleCourseId = computed<number | null>(() => {
@@ -361,18 +372,28 @@ const navigateToLesson = async (lesson: Lesson): Promise<void> => {
 
   // Moodle quiz → native in-app quiz engine
   if (lesson.moodleModuleId && lesson.moodleModname === 'quiz' && resolvedMoodleCourseId.value) {
+    const q: Record<string, string> = {
+      title: lesson.title,
+      moodleCourseId: String(resolvedMoodleCourseId.value),
+    };
+    if (enrollId.value != null) q.enrollId = String(enrollId.value);
     await router.push({
       path: `/course/${courseIdValue}/moodle-quiz/${lesson.moodleModuleId}`,
-      query: { title: lesson.title, moodleCourseId: String(resolvedMoodleCourseId.value) },
+      query: q,
     });
     return;
   }
 
   // Moodle assignment → native in-app submission page
   if (lesson.moodleModuleId && lesson.moodleModname === 'assign' && resolvedMoodleCourseId.value) {
+    const q: Record<string, string> = {
+      title: lesson.title,
+      moodleCourseId: String(resolvedMoodleCourseId.value),
+    };
+    if (enrollId.value != null) q.enrollId = String(enrollId.value);
     await router.push({
       path: `/course/${courseIdValue}/moodle-assign/${lesson.moodleModuleId}`,
-      query: { title: lesson.title, moodleCourseId: String(resolvedMoodleCourseId.value) },
+      query: q,
     });
     return;
   }

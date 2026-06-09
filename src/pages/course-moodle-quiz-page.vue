@@ -266,6 +266,26 @@
           <div class="text-caption text-grey-6">คะแนนที่ได้</div>
         </div>
 
+        <q-banner
+          v-if="quizPassed === true"
+          rounded
+          class="summary-banner summary-banner--ok q-mb-lg"
+        >
+          <template #avatar><q-icon name="check_circle" color="positive" /></template>
+          <span class="text-weight-medium">ผ่านเกณฑ์คะแนนขั้นต่ำ</span> —
+          ระบบบันทึกความคืบหน้าเรียบร้อยแล้ว
+        </q-banner>
+
+        <q-banner
+          v-else-if="quizPassed === false"
+          rounded
+          class="summary-banner summary-banner--fail q-mb-lg"
+        >
+          <template #avatar><q-icon name="cancel" color="negative" /></template>
+          <span class="text-weight-medium">คุณยังไม่ผ่านเกณฑ์คะแนนขั้นต่ำ (Passing Grade)</span>
+          <br />ระบบยังไม่บันทึกความคืบหน้า กรุณาลองใหม่อีกครั้ง
+        </q-banner>
+
         <div
           v-for="q in review.questions"
           :key="q.slot"
@@ -325,6 +345,10 @@ import CourseActivityNavigation from 'components/course/CourseActivityNavigation
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import QuizNavigationPanel from 'components/course/QuizNavigationPanel.vue';
 import { useCourseStore } from 'src/stores/course-store';
+import { useCourseProgressStore } from 'src/stores/course-progress-store';
+import { useEnrollmentProgressStore } from 'src/stores/enrollment-progress-store';
+import { useCourseRegistrationStore } from 'src/stores/course-registration-store';
+import { useAuthStore } from 'src/stores/auth-store';
 import {
   useMoodleQuiz,
   type QuizInfo,
@@ -340,6 +364,10 @@ type Screen = 'loading' | 'intro' | 'attempt' | 'summary' | 'review';
 const route = useRoute();
 const router = useRouter();
 const courseStore = useCourseStore();
+const progressStore = useCourseProgressStore();
+const enrollmentProgressStore = useEnrollmentProgressStore();
+const registrationStore = useCourseRegistrationStore();
+const authStore = useAuthStore();
 const {
   loading,
   error,
@@ -361,6 +389,7 @@ const currentAttemptId = ref<number | null>(null);
 const currentPage = ref(0);
 const confirmSubmit = ref(false);
 const formEl = ref<HTMLFormElement | null>(null);
+const quizPassed = ref<boolean | null>(null); // null = unknown (before submit)
 
 // Timer (only for time-limited quizzes)
 const attemptDeadline = ref<number | null>(null); // unix seconds
@@ -396,6 +425,12 @@ const moodleCourseId = computed<number | null>(() => {
   if (c) return c;
   const q = Number(queryStr(route.query.moodleCourseId));
   return q > 0 ? q : null;
+});
+const enrollId = computed<number | null>(() => {
+  const reg = registrationStore.myRegistrations.find((r) => r.courseId === courseId.value);
+  if (reg?.enrollId != null) return reg.enrollId;
+  const fromQuery = Number(queryStr(route.query.enrollId));
+  return fromQuery > 0 ? fromQuery : null;
 });
 const quizTitle = computed<string>(
   () => quiz.value?.name || queryStr(route.query.title) || 'แบบทดสอบ',
@@ -447,7 +482,11 @@ async function init(): Promise<void> {
     error.value = 'ไม่พบข้อมูลรายวิชา';
     return;
   }
-  const res = await getQuiz(moodleCourseId.value, moduleId.value);
+  const username = authStore.user?.username;
+  const [res] = await Promise.all([
+    getQuiz(moodleCourseId.value, moduleId.value),
+    username ? registrationStore.fetchMyEnrollments(username) : Promise.resolve(),
+  ]);
   if (!res) return; // error shown
   quiz.value = res.quiz;
   attempts.value = res.attempts;
@@ -645,27 +684,56 @@ async function goPage(page: number): Promise<void> {
   await loadPage(page);
 }
 
+function buildCompletion() {
+  if (moodleCourseId.value == null || !moduleId.value) return undefined;
+  const base = { moodleCourseId: moodleCourseId.value, cmid: Number(moduleId.value) };
+  return enrollId.value != null ? { ...base, enrollId: enrollId.value } : base;
+}
+
+async function handlePassedResult(passed: boolean): Promise<void> {
+  quizPassed.value = passed;
+  if (passed) {
+    progressStore.markLessonComplete(courseId.value, quizTitle.value);
+    if (enrollId.value != null) {
+      await enrollmentProgressStore.fetchCompletion(enrollId.value);
+    }
+  }
+}
+
 async function submit(): Promise<void> {
   if (currentAttemptId.value == null || finishing) return;
   finishing = true;
   stopTimer();
-  // On the summary screen there is no form; saved answers already persisted.
-  const res = await processAttempt(currentAttemptId.value, true, serializeForm());
+  const res = await processAttempt(
+    currentAttemptId.value,
+    true,
+    serializeForm(),
+    false,
+    buildCompletion(),
+  );
   finishing = false;
   if (!res) return;
   confirmSubmit.value = false;
-  await openReview(currentAttemptId.value);
+  await handlePassedResult(res.passed);
+  void openReview(currentAttemptId.value);
 }
 
 // Auto-submit when the quiz time limit expires (Moodle overdue handling).
 async function autoSubmit(): Promise<void> {
   if (currentAttemptId.value == null || finishing) return;
   finishing = true;
-  const res = await processAttempt(currentAttemptId.value, true, serializeForm(), true);
+  const res = await processAttempt(
+    currentAttemptId.value,
+    true,
+    serializeForm(),
+    true,
+    buildCompletion(),
+  );
   finishing = false;
   if (!res) return;
   confirmSubmit.value = false;
-  await openReview(currentAttemptId.value);
+  await handlePassedResult(res.passed);
+  void openReview(currentAttemptId.value);
 }
 
 async function openReview(attemptId: number): Promise<void> {
@@ -807,6 +875,10 @@ onUnmounted(() => {
   }
   &--ok {
     background: rgba(33, 186, 69, 0.06);
+  }
+  &--fail {
+    background: rgba(193, 0, 21, 0.06);
+    border-color: rgba(193, 0, 21, 0.18);
   }
 }
 .summary-num {

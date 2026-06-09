@@ -180,6 +180,17 @@ export const useCourseProgressStore = defineStore('course-progress', () => {
     return quizAttemptsByUser.value[userId];
   };
 
+  const markLessonComplete = (courseId: string, lessonTitle: string) => {
+    const userId = getAuthenticatedUserId();
+    if (!userId) return;
+    const userCompletedLessons = ensureCompletedLessons(userId);
+    if (!userCompletedLessons[courseId]) userCompletedLessons[courseId] = [];
+    if (!userCompletedLessons[courseId].includes(lessonTitle)) {
+      userCompletedLessons[courseId].push(lessonTitle);
+      persist();
+    }
+  };
+
   const toggleLessonCompletion = (courseId: string, lessonTitle: string) => {
     const userId = getAuthenticatedUserId();
 
@@ -273,6 +284,7 @@ export const useCourseProgressStore = defineStore('course-progress', () => {
   return {
     completedLessons,
     quizAttempts,
+    markLessonComplete,
     toggleLessonCompletion,
     isLessonCompleted,
     getCompletedLessonCount,

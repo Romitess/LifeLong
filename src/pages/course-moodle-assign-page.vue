@@ -86,6 +86,25 @@
           <div v-if="feedbackHtml" class="assign-html q-mt-sm" v-html="feedbackHtml" />
         </div>
 
+        <!-- Auto-mark result banner -->
+        <q-banner
+          v-if="assignPassed === true"
+          rounded
+          class="assign-banner assign-banner--ok q-mb-md"
+        >
+          <template #avatar><q-icon name="check_circle" color="positive" /></template>
+          <span class="text-weight-medium">ระบบบันทึกความคืบหน้าเรียบร้อยแล้ว</span>
+        </q-banner>
+        <q-banner
+          v-else-if="assignPassed === false"
+          rounded
+          class="assign-banner assign-banner--fail q-mb-md"
+        >
+          <template #avatar><q-icon name="cancel" color="negative" /></template>
+          <span class="text-weight-medium">ยังไม่ผ่านเกณฑ์การส่งงาน</span>
+          <br />ระบบยังไม่บันทึกความคืบหน้า กรุณาตรวจสอบเงื่อนไขและลองใหม่อีกครั้ง
+        </q-banner>
+
         <!-- Current submission (read) -->
         <div v-if="hasSubmittedContent" class="assign-card q-mb-md">
           <div class="text-subtitle1 text-weight-bold q-mb-sm">งานที่ส่งแล้ว</div>
@@ -192,6 +211,10 @@ import BaseSpinner from 'components/base/BaseSpinner.vue';
 import CourseActivityNavigation from 'components/course/CourseActivityNavigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import { useCourseStore } from 'src/stores/course-store';
+import { useCourseProgressStore } from 'src/stores/course-progress-store';
+import { useEnrollmentProgressStore } from 'src/stores/enrollment-progress-store';
+import { useCourseRegistrationStore } from 'src/stores/course-registration-store';
+import { useAuthStore } from 'src/stores/auth-store';
 import {
   useMoodleAssign,
   type AssignInfo,
@@ -202,6 +225,10 @@ import {
 const route = useRoute();
 const $q = useQuasar();
 const courseStore = useCourseStore();
+const progressStore = useCourseProgressStore();
+const enrollmentProgressStore = useEnrollmentProgressStore();
+const registrationStore = useCourseRegistrationStore();
+const authStore = useAuthStore();
 const { loading, error, getAssignment, uploadFile, saveSubmission } = useMoodleAssign();
 
 const assign = ref<AssignInfo | null>(null);
@@ -209,6 +236,7 @@ const submission = ref<AssignSubmission | null>(null);
 const onlineText = ref('');
 const file = ref<File | null>(null);
 const confirmSubmit = ref(false);
+const assignPassed = ref<boolean | null>(null);
 
 const courseId = computed<string>(() => {
   const id = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
@@ -233,6 +261,12 @@ const moodleCourseId = computed<number | null>(() => {
   if (c) return c;
   const q = Number(queryStr(route.query.moodleCourseId));
   return q > 0 ? q : null;
+});
+const enrollId = computed<number | null>(() => {
+  const reg = registrationStore.myRegistrations.find((r) => r.courseId === courseId.value);
+  if (reg?.enrollId != null) return reg.enrollId;
+  const fromQuery = Number(queryStr(route.query.enrollId));
+  return fromQuery > 0 ? fromQuery : null;
 });
 const assignTitle = computed<string>(
   () => assign.value?.name || queryStr(route.query.title) || 'งาน',
@@ -297,7 +331,11 @@ async function load(): Promise<void> {
     error.value = 'ไม่พบข้อมูลรายวิชา';
     return;
   }
-  const res = await getAssignment(moodleCourseId.value, moduleId.value);
+  const username = authStore.user?.username;
+  const [res] = await Promise.all([
+    getAssignment(moodleCourseId.value, moduleId.value),
+    username ? registrationStore.fetchMyEnrollments(username) : Promise.resolve(),
+  ]);
   if (!res) return;
   assign.value = res.assign;
   submission.value = res.submission;
@@ -322,9 +360,19 @@ async function submit(): Promise<void> {
     fileItemId = up.itemid;
   }
 
-  const payload: { onlineText?: string; fileItemId?: number; submit: boolean } = { submit: true };
+  const payload: {
+    onlineText?: string;
+    fileItemId?: number;
+    submit: boolean;
+    moodleCourseId?: number;
+    cmid?: number;
+    enrollId?: number;
+  } = { submit: true };
   if (assign.value.textSubmission) payload.onlineText = `<p>${escapeHtml(onlineText.value)}</p>`;
   if (fileItemId != null) payload.fileItemId = fileItemId;
+  if (moodleCourseId.value != null) payload.moodleCourseId = moodleCourseId.value;
+  payload.cmid = assign.value.cmid;
+  if (enrollId.value != null) payload.enrollId = enrollId.value;
 
   const res = await saveSubmission(assign.value.id, payload);
   confirmSubmit.value = false;
@@ -333,6 +381,11 @@ async function submit(): Promise<void> {
     return;
   }
   submission.value = res.submission;
+  assignPassed.value = res.passed;
+  if (res.passed) {
+    progressStore.markLessonComplete(courseId.value, assignTitle.value);
+    if (enrollId.value != null) void enrollmentProgressStore.fetchCompletion(enrollId.value);
+  }
   file.value = null;
   $q.notify({ type: 'positive', message: 'ส่งงานสำเร็จ', position: 'top' });
 }
@@ -392,6 +445,16 @@ onMounted(() => {
     line-height: 1.3;
     margin: 0;
     color: #1a1a1a;
+  }
+}
+.assign-banner {
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  &--ok {
+    background: rgba(33, 186, 69, 0.06);
+  }
+  &--fail {
+    background: rgba(193, 0, 21, 0.06);
+    border-color: rgba(193, 0, 21, 0.18);
   }
 }
 .assign-html {

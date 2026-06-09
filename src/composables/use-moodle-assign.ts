@@ -78,13 +78,22 @@ export function useMoodleAssign() {
 
   function saveSubmission(
     assignId: number,
-    payload: { onlineText?: string; fileItemId?: number; submit?: boolean },
-  ): Promise<{ submission: AssignSubmission } | null> {
+    payload: {
+      onlineText?: string;
+      fileItemId?: number;
+      submit?: boolean;
+      moodleCourseId?: number;
+      cmid?: number;
+      enrollId?: number;
+      subChapterId?: number;
+    },
+  ): Promise<{ submission: AssignSubmission; autoMarked: boolean; passed: boolean } | null> {
     return run(async () => {
-      const { data } = await api.post<{ submission: AssignSubmission }>(
-        `/api/moodle/assign/${assignId}/submit`,
-        payload,
-      );
+      const { data } = await api.post<{
+        submission: AssignSubmission;
+        autoMarked: boolean;
+        passed: boolean;
+      }>(`/api/moodle/assign/${assignId}/submit`, payload);
       return data;
     });
   }

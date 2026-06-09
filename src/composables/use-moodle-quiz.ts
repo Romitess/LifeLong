@@ -114,11 +114,12 @@ export function useMoodleQuiz() {
     finish: boolean,
     data: QuizAnswerField[],
     timeUp = false,
-  ): Promise<{ state: string } | null> {
+    completion?: { moodleCourseId: number; cmid: number; enrollId?: number; subChapterId?: number },
+  ): Promise<{ state: string; autoMarked: boolean; passed: boolean } | null> {
     return run(async () => {
-      const { data: res } = await api.post<{ state: string }>(
+      const { data: res } = await api.post<{ state: string; autoMarked: boolean; passed: boolean }>(
         `/api/moodle/quiz/attempts/${attemptId}/process`,
-        { finish, data, timeUp },
+        { finish, data, timeUp, ...completion },
       );
       return res;
     });
