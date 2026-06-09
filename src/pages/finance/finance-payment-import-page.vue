@@ -791,29 +791,24 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          <div class="text-subtitle1 text-weight-bold q-mb-sm">ประเภทใบเสร็จ:</div>
-          <q-option-group
-            v-model="receiptType"
-            :options="[
-              { label: 'ตัวจริง (R)', value: 'R' },
-              { label: 'สำเนา (D)', value: 'D' },
-            ]"
-            color="primary"
-            inline
-            :disable="isGenerating"
-          />
-
-          <div class="text-subtitle1 text-weight-bold q-mt-md q-mb-sm">ผู้ออกใบเสร็จ:</div>
-          <q-option-group
-            v-model="createdBy"
-            :options="[
-              { label: 'นักศึกษาออกเอง (S)', value: 'S' },
-              { label: 'เจ้าหน้าที่ออกให้ (P)', value: 'P' },
-            ]"
-            color="primary"
-            inline
-            :disable="isGenerating"
-          />
+          <div class="receipt-confirm-summary">
+            <div class="receipt-confirm-summary__item">
+              <q-icon name="verified_user" color="primary" size="22px" />
+              <div>
+                <div class="text-subtitle1 text-weight-bold">ผู้ออกใบเสร็จ: เจ้าหน้าที่</div>
+                <div class="text-caption text-grey-7">ระบบจะบันทึกเป็นเจ้าหน้าที่ออกให้ (P)</div>
+              </div>
+            </div>
+            <div class="receipt-confirm-summary__item">
+              <q-icon name="receipt_long" color="positive" size="22px" />
+              <div>
+                <div class="text-subtitle1 text-weight-bold">ประเภทใบเสร็จ: ตัวจริงและสำเนา</div>
+                <div class="text-caption text-grey-7">
+                  สร้างพร้อมกันทั้งตัวจริง (R) และสำเนา (D)
+                </div>
+              </div>
+            </div>
+          </div>
         </q-card-section>
 
         <q-card-actions align="right" class="q-px-md q-pb-md">
@@ -852,8 +847,6 @@ const { importAndGenerate } = usePaymentImportApi();
 const isFinalized = ref(false);
 const isGenerating = ref(false);
 const importResult = ref<ImportAndGenerateResponse | null>(null);
-const receiptType = ref<'R' | 'D'>('R');
-const createdBy = ref<'S' | 'P'>('P');
 
 type ImportedPaymentRow = {
   id: string;
@@ -1313,8 +1306,7 @@ async function executeFinalizeImport() {
 
     const response = await importAndGenerate({
       records,
-      receiptType: receiptType.value,
-      createdBy: createdBy.value,
+      createdBy: 'P',
       creatorUserId: Number(authStore.user?.id) || 0,
       creatorIp: '',
       creatorDevice: navigator.userAgent,
@@ -1933,6 +1925,22 @@ function loadMockData() {
   .notice-text {
     flex: 1;
   }
+}
+
+.receipt-confirm-summary {
+  display: grid;
+  gap: 12px;
+}
+
+.receipt-confirm-summary__item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--admin-line);
+  border-radius: 8px;
+  background: #f8fafc;
 }
 
 .payment-status-badge {

@@ -9,7 +9,6 @@ export type ImportAndGeneratePayload = {
     paymentTime: string;
     amount: number;
   }[];
-  receiptType: 'R' | 'D';
   createdBy: 'S' | 'P';
   creatorUserId: number;
   creatorIp: string;

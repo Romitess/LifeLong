@@ -739,6 +739,12 @@ const navItems = computed<NavItem[]>(() => {
         to: '/finance/source-of-funds-chart',
       },
       {
+        name: 'finance-payment-download',
+        label: t('finance.menu.paymentDownload'),
+        icon: 'download',
+        to: '/finance/payment-download',
+      },
+      {
         name: 'finance-payment-import',
         label: t('finance.menu.paymentImport'),
         icon: 'upload_file',
@@ -1141,6 +1147,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = 'central-finance-receipt-usage';
   } else if (path.includes('/finance/source-of-funds-chart')) {
     activeNav.value = 'finance-source-of-funds-chart';
+  } else if (path.includes('/finance/payment-download')) {
+    activeNav.value = 'finance-payment-download';
   } else if (path.includes('/finance/payment-import')) {
     activeNav.value = 'finance-payment-import';
   } else if (path.includes('/finance/applicant-search')) {
@@ -1818,6 +1826,7 @@ async function onCategoryClick(category: string) {
     :deep(.nav-tab--finance-applicant-search),
     :deep(.nav-tab--finance-dashboard),
     :deep(.nav-tab--finance-source-of-funds-chart),
+    :deep(.nav-tab--finance-payment-download),
     :deep(.nav-tab--finance-payment-import),
     :deep(.nav-tab--finance-receipt-summary) {
       flex: 1 1 auto !important;
@@ -2029,6 +2038,14 @@ async function onCategoryClick(category: string) {
     min-width: 196px;
   }
 
+  :deep(.nav-tab--finance-payment-download) {
+    --nav-tab-label-width: 132px;
+    flex-basis: 184px;
+    width: 184px;
+    max-width: 184px;
+    min-width: 184px;
+  }
+
   :deep(.nav-tab--finance-payment-import) {
     --nav-tab-label-width: 122px;
     flex-basis: 174px;
@@ -2095,6 +2112,12 @@ async function onCategoryClick(category: string) {
       width: 174px;
       max-width: 174px;
       min-width: 174px;
+    }
+
+    :deep(.nav-tab--finance-payment-download) {
+      --nav-tab-label-width: 120px;
+      flex-basis: 168px;
+      width: 168px;
     }
 
     :deep(.nav-tab--finance-payment-import) {

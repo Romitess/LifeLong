@@ -352,6 +352,7 @@
       :course-code="courseCode"
       :amount="amount"
       :receipt-filename="selectedReceipt?.receiptFilename ?? ''"
+      :receipt-type="selectedReceipt?.receiptType ?? 'D'"
       :is-copy="selectedReceipt?.receiptType === 'D'"
     />
   </q-page>
@@ -369,7 +370,6 @@ import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
 import * as XLSX from 'xlsx';
 import { useAuthStore } from 'stores/auth-store';
 import { api } from 'src/boot/axios';
-import { usePaymentImportApi } from 'src/composables/usePaymentImportApi';
 
 const authStore = useAuthStore();
 const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุ');
@@ -484,23 +484,13 @@ function formatCollectorDate(value: string | undefined): string {
 }
 
 async function downloadReceipt(row: ReceiptSummaryItem) {
-  try {
-    const { getReceiptFile } = usePaymentImportApi();
-    const resp = await getReceiptFile(row.id as number);
-    const file = resp.realReceipt ?? resp.copyReceipt ?? null;
-    selectedReceipt.value = {
-      ...row,
-      receiptFilename: file?.filename ?? (row.receiptNo || ''),
-      receiptType: (file?.receiptType as 'R' | 'D') ?? 'R',
-    };
-    await nextTick();
-    receiptDialogRef.value?.downloadReceiptPdf();
-  } catch (err) {
-    console.error(err);
-    selectedReceipt.value = row;
-    await nextTick();
-    receiptDialogRef.value?.downloadReceiptPdf();
-  }
+  selectedReceipt.value = {
+    ...row,
+    receiptFilename: row.receiptFilename ?? row.receiptNo ?? '',
+    receiptType: row.receiptType ?? 'D',
+  };
+  await nextTick();
+  receiptDialogRef.value?.downloadReceiptPdf();
 }
 
 function clearDates() {

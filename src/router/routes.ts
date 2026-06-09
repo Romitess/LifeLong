@@ -161,6 +161,11 @@ const routes: RouteRecordRaw[] = [
         meta: { role: 'finance' },
       },
       {
+        path: 'finance/payment-download',
+        component: () => import('pages/finance/finance-payment-download-page.vue'),
+        meta: { role: 'finance' },
+      },
+      {
         path: 'finance/payment-import',
         component: () => import('pages/finance/finance-payment-import-page.vue'),
         meta: { role: 'finance' },

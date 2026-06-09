@@ -242,7 +242,7 @@ import {
   useCourseRegistrationStore,
   type CourseRegistration,
 } from 'src/stores/course-registration-store';
-import { useCoursePaymentStore, type CoursePaymentRecord } from 'src/stores/course-payment-store';
+import { type CoursePaymentRecord } from 'src/stores/course-payment-store';
 import { useCourseBookmarkStore, type CourseBookmark } from 'src/stores/course-bookmark-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useEnrollmentProgressStore } from 'src/stores/enrollment-progress-store';
@@ -283,7 +283,6 @@ interface MenuItem {
 const { t, locale } = useI18n();
 const $q = useQuasar();
 const courseRegistrationStore = useCourseRegistrationStore();
-const coursePaymentStore = useCoursePaymentStore();
 const courseBookmarkStore = useCourseBookmarkStore();
 const authStore = useAuthStore();
 const enrollmentProgressStore = useEnrollmentProgressStore();
@@ -603,11 +602,99 @@ function onSavedCourseEnrolled(): void {
 
 // Receipt
 async function downloadReceiptByCourseId(courseId: string): Promise<void> {
-  const payment = coursePaymentStore.myPayments.find((p) => p.courseId === courseId);
-  if (!payment) return;
-  selectedPayment.value = payment;
-  await nextTick();
-  receiptDialogRef.value?.downloadReceiptPdf();
+  try {
+    // Find the registration to get enrollId
+    const registration = myRegistrations.value.find((r) => r.courseId === courseId);
+    if (!registration?.enrollId) {
+      $q.notify({
+        type: 'info',
+        message: t('profile.notifications.receiptNotReady'),
+        position: 'top',
+      });
+      return;
+    }
+
+    // Fetch receipt data from backend API
+    $q.loading.show({ message: t('profile.notifications.loadingReceipt') });
+
+    const { data } = await api.get<{
+      enrollReceiptId: number;
+      realReceipt: {
+        receiptId: number;
+        filename: string;
+        receiptType: string;
+        url: string;
+      } | null;
+      copyReceipt: {
+        receiptId: number;
+        filename: string;
+        receiptType: string;
+        url: string;
+      } | null;
+    }>(`/api/lltenrollreceipt/${registration.enrollId}/receipt-file`);
+
+    const receipt = data.realReceipt || data.copyReceipt;
+
+    if (!receipt) {
+      $q.notify({
+        type: 'info',
+        message: t('profile.notifications.receiptPending'),
+        position: 'top',
+      });
+      return;
+    }
+
+    // Fetch the enrollment receipt details to get payment info
+    const { data: enrollReceiptData } = await api.get<{
+      id: number;
+      enrollId: number;
+      coseCode: string;
+      coseNameTh: string;
+      amount: number;
+      effectiveDate: string;
+      receiptName: string;
+      receiptNo: number;
+    }>(`/api/lltenrollreceipt/${registration.enrollId}`);
+
+    // Set payment data for receipt dialog
+    const paymentData: CoursePaymentRecord = {
+      id: `receipt-${enrollReceiptData.id}`,
+      courseId: registration.courseId,
+      courseCode: registration.courseCode,
+      courseTitle: registration.courseTitle,
+      amount: enrollReceiptData.amount || 0,
+      paymentDate: enrollReceiptData.effectiveDate
+        ? new Date(enrollReceiptData.effectiveDate).toISOString()
+        : new Date().toISOString(),
+      status: 'ชำระเงินสำเร็จ',
+      method: 'Thai QR Payment',
+      receiptId: enrollReceiptData.receiptNo?.toString() || '',
+      userId: authStore.user?.id || '',
+      customerName: enrollReceiptData.receiptName || '',
+    };
+
+    // Add optional fields only if they exist
+    if (registration.registrantInfo?.taxId) {
+      paymentData.taxId = registration.registrantInfo.taxId;
+    }
+    if (registration.registrantInfo?.billingAddress) {
+      paymentData.customerAddress = registration.registrantInfo.billingAddress;
+    }
+
+    selectedPayment.value = paymentData;
+
+    $q.loading.hide();
+    await nextTick();
+    receiptDialogRef.value?.downloadReceiptPdf();
+  } catch (error) {
+    $q.loading.hide();
+    console.error('Failed to fetch receipt:', error);
+    $q.notify({
+      type: 'negative',
+      message: t('profile.notifications.receiptFetchError'),
+      position: 'top',
+    });
+  }
 }
 
 // Benefits
