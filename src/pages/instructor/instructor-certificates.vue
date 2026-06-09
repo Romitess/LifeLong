@@ -707,8 +707,17 @@ function openCertificate(learner: CertificateLearner): void {
     font-weight: 800;
   }
 
+  tbody tr {
+    background: #ffffff;
+    transition: background-color 0.16s ease;
+  }
+
   tbody tr:nth-child(even) {
-    background: #fbfdff;
+    background: #fffaf1;
+  }
+
+  tbody tr:hover {
+    background: #fff4dd;
   }
 }
 
