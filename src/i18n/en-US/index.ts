@@ -739,6 +739,9 @@ export default {
       loadingReceipt: 'Loading receipt information...',
       receiptPending: 'Waiting for finance department to issue receipt.',
       receiptFetchError: 'Unable to retrieve receipt information. Please try again.',
+      unregistering: 'Unregistering from course...',
+      unregisterSuccess: 'Successfully unregistered from course',
+      unregisterError: 'Unable to unregister from course. Please try again.',
     },
     dialogs: {
       unregisterTitle: 'Unregister?',

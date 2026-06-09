@@ -320,19 +320,49 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
       }
     },
 
-    unregisterCourse(courseId: string): void {
+    async unregisterCourse(courseId: string): Promise<void> {
       const userId = getAuthenticatedUserId();
 
       if (!userId) {
         return;
       }
 
-      const nextRegistrations = this.registrations.filter(
-        (registration) => !(registration.courseId === courseId && registration.userId === userId),
+      const authStore = useAuthStore();
+      const username = authStore.user?.username;
+
+      // Find the registration to get enrollId
+      const registration = this.registrations.find(
+        (r) => r.courseId === courseId && r.userId === userId,
       );
 
-      this.registrations = nextRegistrations;
-      writeStoredRegistrations(nextRegistrations);
+      // Delete from backend first if enrollId exists
+      if (registration?.enrollId && username) {
+        try {
+          await api.delete(`/api/moodle/enroll/${registration.enrollId}`, {
+            params: { username },
+          });
+
+          // Only delete from local state if backend deletion succeeded
+          const nextRegistrations = this.registrations.filter(
+            (r) => !(r.courseId === courseId && r.userId === userId),
+          );
+
+          this.registrations = nextRegistrations;
+          writeStoredRegistrations(nextRegistrations);
+        } catch (err) {
+          console.error('Failed to unregister from backend:', err);
+          // Re-throw the error so the UI can show an error message
+          throw err;
+        }
+      } else {
+        // No backend enrollment — just delete locally
+        const nextRegistrations = this.registrations.filter(
+          (r) => !(r.courseId === courseId && r.userId === userId),
+        );
+
+        this.registrations = nextRegistrations;
+        writeStoredRegistrations(nextRegistrations);
+      }
     },
 
     updateRegistrationPaymentStatus(courseId: string, status: 'pending' | 'paid' | 'free'): void {

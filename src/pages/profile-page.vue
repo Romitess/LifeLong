@@ -567,12 +567,35 @@ function cancelUnregister(): void {
   courseToUnregister.value = null;
 }
 
-function confirmUnregister(): void {
-  if (courseToUnregister.value) {
-    courseRegistrationStore.unregisterCourse(courseToUnregister.value.courseId);
+async function confirmUnregister(): Promise<void> {
+  if (!courseToUnregister.value) {
+    showUnregisterDialog.value = false;
+    return;
   }
-  showUnregisterDialog.value = false;
-  courseToUnregister.value = null;
+
+  try {
+    $q.loading.show({ message: t('profile.notifications.processing') || 'กำลังดำเนินการ...' });
+
+    await courseRegistrationStore.unregisterCourse(courseToUnregister.value.courseId);
+
+    $q.notify({
+      type: 'positive',
+      message: t('profile.notifications.unregisterSuccess'),
+      position: 'top',
+    });
+  } catch (error) {
+    console.error('Unregister error:', error);
+    $q.notify({
+      type: 'negative',
+      message:
+        t('profile.notifications.unregisterError') || 'เกิดข้อผิดพลาดในการยกเลิกการลงทะเบียน',
+      position: 'top',
+    });
+  } finally {
+    $q.loading.hide();
+    showUnregisterDialog.value = false;
+    courseToUnregister.value = null;
+  }
 }
 
 function promptUnregisterFromSaved(bookmark: CourseBookmark): void {

@@ -735,6 +735,10 @@ export default {
       loadingReceipt: 'กำลังโหลดข้อมูลใบเสร็จ...',
       receiptPending: 'รอกองคลังออกใบเสร็จให้',
       receiptFetchError: 'ไม่สามารถดึงข้อมูลใบเสร็จได้ กรุณาลองใหม่อีกครั้ง',
+      processing: 'กำลังดำเนินการ...',
+      unregistering: 'กำลังยกเลิกการลงทะเบียน...',
+      unregisterSuccess: 'ยกเลิกการลงทะเบียนสำเร็จ',
+      unregisterError: 'ไม่สามารถยกเลิกการลงทะเบียนได้ กรุณาลองใหม่อีกครั้ง',
     },
     dialogs: {
       unregisterTitle: 'ยกเลิกการลงทะเบียน?',
