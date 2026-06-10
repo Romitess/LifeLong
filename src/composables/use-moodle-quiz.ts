@@ -7,6 +7,7 @@ export interface QuizInfo {
   name: string;
   intro: string | null;
   grade: number | null;
+  gradepass: number | null;
   sumgrades: number | null;
   attempts: number; // allowed attempts, 0 = unlimited
   grademethod: number;
