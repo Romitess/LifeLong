@@ -99,6 +99,14 @@ body .q-btn {
   }
 }
 
+// ปุ่ม outline/flat: ตอน hover Quasar ใส่ tint = currentColor (สีของปุ่ม เช่นส้ม)
+// ทำให้ปุ่ม secondary "กลายเป็นส้ม". ปรับ tint เป็นเทากลางๆ ให้ hover เหมือนกันทุกปุ่ม
+// (ต่างกันแค่สีพื้น/ตัวอักษร ไม่ใช่สี hover)
+body .q-btn--outline .q-focus-helper,
+body .q-btn--flat .q-focus-helper {
+  background: rgb(15, 23, 42) !important;
+}
+
 // ข้อยกเว้นสำหรับปุ่มในปฏิทิน (Reset Calendar Buttons)
 .q-date .q-btn {
   border: none !important;
