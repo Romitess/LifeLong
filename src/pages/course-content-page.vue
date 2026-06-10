@@ -90,6 +90,7 @@ import BaseSpinner from 'components/base/BaseSpinner.vue';
 import CourseActivityNavigation from 'components/course/CourseActivityNavigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import { useCourseStore } from 'src/stores/course-store';
+import { useCourseProgressStore } from 'src/stores/course-progress-store';
 import {
   useMoodleModuleContent,
   type MoodleModuleFile,
@@ -107,6 +108,7 @@ const MODNAME_ICON: Record<string, string> = {
 
 const route = useRoute();
 const courseStore = useCourseStore();
+const progressStore = useCourseProgressStore();
 const { content, loading, error, fetchModule } = useMoodleModuleContent();
 
 const courseId = computed<string>(() => {
@@ -177,6 +179,9 @@ function openFile(file: MoodleModuleFile): void {
 async function load(): Promise<void> {
   if (moodleCourseId.value == null || !moduleId.value) return;
   await fetchModule(moodleCourseId.value, moduleId.value);
+  if (content.value && !error.value && courseId.value && lessonTitle.value) {
+    progressStore.markLessonComplete(courseId.value, lessonTitle.value);
+  }
 }
 
 function reload(): void {
