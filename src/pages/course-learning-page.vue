@@ -545,13 +545,13 @@ $sidebar-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 
 // Chapter summary (type/hours from Moodle section summary)
 .chapter-summary {
-  color: #5a5a5a;
+  color: rgba(15, 23, 42, 0.65);
   font-size: 0.9rem;
   line-height: 1.6;
 
   :deep(p) {
     margin: 0 0 6px;
-    color: #888;
+    color: rgba(15, 23, 42, 0.5);
     font-size: 0.8rem;
   }
   :deep(ul) {
