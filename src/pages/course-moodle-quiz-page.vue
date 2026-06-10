@@ -13,12 +13,14 @@
     >
       <BaseSpinner v-if="loading && screen === 'loading'" message="กำลังโหลดแบบทดสอบ..." />
 
-      <div
+      <BaseContentCard
         v-else-if="error && screen === 'loading'"
-        class="quiz-card column items-center text-center q-py-xl"
+        class="column items-center text-center q-py-xl"
       >
         <q-icon name="error_outline" size="48px" color="negative" />
-        <div class="text-subtitle1 text-weight-medium q-mt-md">โหลดแบบทดสอบไม่สำเร็จ</div>
+        <div class="text-subtitle1 text-weight-medium text-grey-9 q-mt-md">
+          โหลดแบบทดสอบไม่สำเร็จ
+        </div>
         <div class="text-body2 text-grey-7 q-mt-xs">{{ error }}</div>
         <BaseButton
           color="primary"
@@ -28,14 +30,14 @@
           class="q-mt-lg"
           @click="init"
         />
-      </div>
+      </BaseContentCard>
 
       <!-- INTRO -->
-      <div v-else-if="screen === 'intro' && quiz" class="quiz-card">
-        <header class="quiz-card__header">
+      <BaseContentCard v-else-if="screen === 'intro' && quiz">
+        <div class="row items-center q-gutter-sm q-mb-md">
           <q-icon name="quiz" size="26px" color="primary" />
-          <h1 class="quiz-card__title">{{ quiz.name }}</h1>
-        </header>
+          <span class="text-h6 text-weight-bold text-grey-9">{{ quiz.name }}</span>
+        </div>
 
         <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify -->
         <div v-if="introHtml" class="quiz-html q-mb-lg" v-html="introHtml" />
@@ -92,11 +94,11 @@
         <div v-if="!canStartNew" class="text-caption text-grey-6 q-mt-sm">
           ทำครบจำนวนครั้งที่กำหนดแล้ว
         </div>
-      </div>
+      </BaseContentCard>
 
       <!-- ATTEMPT -->
       <div v-else-if="screen === 'attempt' && attemptData" class="attempt-layout">
-        <div class="quiz-card attempt-main">
+        <BaseContentCard class="attempt-main">
           <div class="row items-center justify-between q-mb-md">
             <div class="text-subtitle1 text-weight-bold">{{ quizTitle }}</div>
             <div class="row items-center q-gutter-sm">
@@ -154,7 +156,7 @@
               />
               <BaseButton
                 v-else
-                color="positive"
+                color="primary"
                 no-caps
                 unelevated
                 icon="flag"
@@ -164,7 +166,7 @@
               />
             </div>
           </div>
-        </div>
+        </BaseContentCard>
 
         <QuizNavigationPanel
           v-if="summaryQuestions.length"
@@ -178,11 +180,11 @@
       </div>
 
       <!-- SUMMARY (review answers before final submit) -->
-      <div v-else-if="screen === 'summary'" class="quiz-card">
-        <header class="quiz-card__header">
+      <BaseContentCard v-else-if="screen === 'summary'">
+        <div class="row items-center q-gutter-sm q-mb-md">
           <q-icon name="fact_check" size="26px" color="primary" />
-          <h1 class="quiz-card__title">สรุปการทำแบบทดสอบ</h1>
-        </header>
+          <span class="text-h6 text-weight-bold text-grey-9">สรุปการทำแบบทดสอบ</span>
+        </div>
 
         <div
           v-if="remainingSec != null"
@@ -243,21 +245,21 @@
           <BaseButton
             unelevated
             no-caps
-            color="positive"
+            color="primary"
             icon="check"
             label="ส่งคำตอบทั้งหมด"
             :loading="loading"
             @click="confirmSubmit = true"
           />
         </div>
-      </div>
+      </BaseContentCard>
 
       <!-- REVIEW -->
-      <div v-else-if="screen === 'review' && review" class="quiz-card">
-        <header class="quiz-card__header">
+      <BaseContentCard v-else-if="screen === 'review' && review">
+        <div class="row items-center q-gutter-sm q-mb-md">
           <q-icon name="emoji_events" size="26px" color="positive" />
-          <h1 class="quiz-card__title">ผลการทำแบบทดสอบ</h1>
-        </header>
+          <span class="text-h6 text-weight-bold text-grey-9">ผลการทำแบบทดสอบ</span>
+        </div>
         <div class="quiz-score q-mb-lg">
           <div class="text-h4 text-weight-bold text-primary">
             {{ review.grade ?? 0
@@ -306,7 +308,7 @@
           label="กลับสู่บทเรียน"
           @click="backToCourse"
         />
-      </div>
+      </BaseContentCard>
 
       <CourseActivityNavigation
         v-if="screen === 'intro' || screen === 'review'"
@@ -328,7 +330,7 @@
           <BaseButton
             unelevated
             no-caps
-            color="positive"
+            color="primary"
             label="ส่งคำตอบ"
             :loading="loading"
             @click="submit"
@@ -345,6 +347,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import DOMPurify from 'dompurify';
 import BaseButton from 'components/base/BaseButton.vue';
+import BaseContentCard from 'components/base/BaseContentCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import CourseActivityNavigation from 'components/course/CourseActivityNavigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
@@ -862,31 +865,6 @@ onUnmounted(() => {
   padding-bottom: 64px;
 }
 
-.quiz-card {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  padding: 32px;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  }
-
-  &__title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    line-height: 1.3;
-    margin: 0;
-    color: #1a1a1a;
-  }
-}
-
 .quiz-score {
   text-align: center;
   padding: 20px;
@@ -961,6 +939,17 @@ onUnmounted(() => {
   :deep(video) {
     max-width: 100%;
     height: auto;
+  }
+  // Normalize Moodle-sourced headings (e.g. intro) so they don't render huge.
+  // (.info h2/h3 below is more specific and keeps the question-label sizing.)
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4) {
+    margin: 14px 0 6px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.35;
   }
   :deep(.qtext) {
     margin: 8px 0 12px;
