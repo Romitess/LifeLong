@@ -104,14 +104,13 @@
                   />
                 </td>
                 <td class="text-center">
-                  <div v-if="item.url" class="cert-manager-table__thumb-wrap">
+                  <div v-if="itemBlobUrls[item.id]" class="cert-manager-table__thumb-wrap">
                     <img
-                      :src="item.url"
+                      :src="itemBlobUrls[item.id]"
                       :alt="item.name"
                       class="cert-manager-table__thumb"
                       width="100"
                       height="60"
-                      loading="lazy"
                       decoding="async"
                       @click="openPreview(item)"
                     />
@@ -224,7 +223,8 @@
             >
               <div class="cert-manager-dialog__existing-thumb">
                 <img
-                  :src="existingFile.url"
+                  v-if="existingFileBlobUrl"
+                  :src="existingFileBlobUrl"
                   :alt="existingFile.filename ?? ''"
                   class="cert-manager-dialog__thumb-img"
                   width="72"
@@ -451,8 +451,8 @@
         </q-card-section>
         <q-card-section>
           <img
-            v-if="previewItem?.url"
-            :src="previewItem.url"
+            v-if="previewItem && itemBlobUrls[previewItem.id]"
+            :src="itemBlobUrls[previewItem.id]"
             :alt="previewItem.name"
             class="cert-manager-preview-card__img"
           />
@@ -475,7 +475,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import AppActionButton from 'components/admin/AppActionButton.vue';
 import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
@@ -483,6 +483,7 @@ import AppSearchInput from 'components/admin/AppSearchInput.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCertTemplates } from 'src/composables/use-admin-cert-templates';
+import { api } from 'src/boot/axios';
 import type {
   AdminCertTemplateItem,
   CertLayout,
@@ -505,6 +506,7 @@ const {
 const globalSearch = ref('');
 const currentPage = ref(1);
 const paginationRef = ref<HTMLElement | null>(null);
+const itemBlobUrls = ref<Record<number, string>>({});
 
 const rowsPerPage = 10;
 const tableRowHeight = 96;
@@ -552,12 +554,16 @@ const fileError = ref('');
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const filePreviewUrl = ref('');
 
+const existingFileBlobUrl = computed<string | null>(() =>
+  editingId.value !== null ? (itemBlobUrls.value[editingId.value] ?? null) : null,
+);
+
 // computed — does the editor have an image to work with?
 const hasImage = computed(
-  () => !!(form.value.file ? filePreviewUrl.value : existingFile.value?.url),
+  () => !!(form.value.file ? filePreviewUrl.value : existingFileBlobUrl.value),
 );
 const editorImageSrc = computed(() =>
-  form.value.file ? filePreviewUrl.value : (existingFile.value?.url ?? ''),
+  form.value.file ? filePreviewUrl.value : (existingFileBlobUrl.value ?? ''),
 );
 
 // ——— Layout fields config ———
@@ -628,14 +634,37 @@ async function preservePaginationPosition(update: () => Promise<void> | void): P
   window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
 }
 
+async function replaceItemBlobUrls(templateItems: AdminCertTemplateItem[]): Promise<void> {
+  const newUrls: Record<number, string> = {};
+  await Promise.all(
+    templateItems
+      .filter((item) => item.url)
+      .map(async (item) => {
+        try {
+          const response = await api.get<Blob>(item.url!, { responseType: 'blob' });
+          newUrls[item.id] = URL.createObjectURL(response.data);
+        } catch {
+          // leave undefined — broken image handled in template
+        }
+      }),
+  );
+  Object.values(itemBlobUrls.value).forEach((u) => URL.revokeObjectURL(u));
+  itemBlobUrls.value = newUrls;
+}
+
 onMounted(() => {
   void load();
+});
+
+onUnmounted(() => {
+  Object.values(itemBlobUrls.value).forEach((u) => URL.revokeObjectURL(u));
 });
 
 async function load(page = 1): Promise<void> {
   try {
     await fetchData({ page, pageSize: rowsPerPage, search: globalSearch.value || null });
     currentPage.value = pagination.value.page;
+    await replaceItemBlobUrls(items.value);
   } catch {
     $q.notify({ type: 'negative', message: 'ไม่สามารถโหลดข้อมูลได้', position: 'top' });
   }
@@ -748,10 +777,8 @@ function clearFile(): void {
 async function downloadExistingFile(): Promise<void> {
   if (!existingFile.value) return;
   try {
-    const response = await fetch(existingFile.value.url);
-    if (!response.ok) throw new Error(`Download failed ${response.status}`);
-    const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
+    const response = await api.get<Blob>(existingFile.value.url, { responseType: 'blob' });
+    const objectUrl = URL.createObjectURL(response.data);
     const link = document.createElement('a');
     link.href = objectUrl;
     link.download = existingFile.value.filename ?? 'certificate-template';
@@ -760,7 +787,7 @@ async function downloadExistingFile(): Promise<void> {
     document.body.removeChild(link);
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
   } catch {
-    window.open(existingFile.value.url, '_blank', 'noopener,noreferrer');
+    // no fallback — URL requires auth so opening in tab would fail too
   }
 }
 

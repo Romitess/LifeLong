@@ -173,8 +173,8 @@
               :class="{ 'template-card--selected': selectedTemplateId === tmpl.id }"
               @click="selectedTemplateId = tmpl.id"
             >
-              <div v-if="tmpl.url" class="template-card__img-thumb">
-                <img :src="tmpl.url" :alt="tmpl.name" />
+              <div v-if="templateBlobUrls[tmpl.id]" class="template-card__img-thumb">
+                <img :src="templateBlobUrls[tmpl.id]" :alt="tmpl.name" />
               </div>
               <div v-else class="template-card__no-thumb">
                 <q-icon name="image_not_supported" size="28px" color="grey-4" />
@@ -239,13 +239,13 @@
       v-model="certificateDialogOpen"
       :course="selectedCourse ?? null"
       :user-name="selectedLearner?.name ?? ''"
-      :template="selectedTemplate"
+      :template="selectedTemplateForModal"
     />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import CertificateModal from 'components/certificate/CertificateModal.vue';
 import InstructorPageHero from 'components/instructor/InstructorPageHero.vue';
@@ -289,10 +289,35 @@ const issuedCertificateIds = ref<Set<string>>(new Set());
 const availableTemplates = ref<ActiveCertTemplate[]>([]);
 const isLoadingTemplates = ref(false);
 const selectedTemplateId = ref<number | null>(null);
+const templateBlobUrls = ref<Record<number, string>>({});
 
 const selectedTemplate = computed<ActiveCertTemplate | null>(
   () => availableTemplates.value.find((t) => t.id === selectedTemplateId.value) ?? null,
 );
+
+const selectedTemplateForModal = computed<ActiveCertTemplate | null>(() => {
+  const t = selectedTemplate.value;
+  if (!t) return null;
+  return { ...t, url: templateBlobUrls.value[t.id] ?? null };
+});
+
+async function loadTemplateBlobUrls(templates: ActiveCertTemplate[]): Promise<void> {
+  const newUrls: Record<number, string> = {};
+  await Promise.all(
+    templates
+      .filter((t) => t.url)
+      .map(async (t) => {
+        try {
+          const response = await api.get<Blob>(t.url!, { responseType: 'blob' });
+          newUrls[t.id] = URL.createObjectURL(response.data);
+        } catch {
+          // leave undefined — broken image handled by v-else
+        }
+      }),
+  );
+  Object.values(templateBlobUrls.value).forEach((u) => URL.revokeObjectURL(u));
+  templateBlobUrls.value = newUrls;
+}
 
 onMounted(async () => {
   isLoadingTemplates.value = true;
@@ -304,11 +329,16 @@ onMounted(async () => {
     if (data.length > 0 && selectedTemplateId.value === null) {
       selectedTemplateId.value = data[0]?.id ?? null;
     }
+    await loadTemplateBlobUrls(data);
   } catch {
     availableTemplates.value = [];
   } finally {
     isLoadingTemplates.value = false;
   }
+});
+
+onUnmounted(() => {
+  Object.values(templateBlobUrls.value).forEach((u) => URL.revokeObjectURL(u));
 });
 
 const learnerNames = [

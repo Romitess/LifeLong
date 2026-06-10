@@ -32,7 +32,7 @@
           ? t('profile.documents.certificateButtonCompact')
           : t('profile.documents.certificateButton')
       "
-      @click="showCertificateDialog = true"
+      @click="openCertificateDialog"
     />
 
     <CourseLearningResultDialog
@@ -44,14 +44,16 @@
       v-model="showCertificateDialog"
       :course="entry.courseDetail"
       :userName="userName"
+      :template="activeTemplate"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
+import { api } from 'src/boot/axios';
 import BaseButton from 'components/base/BaseButton.vue';
 import CertificateModal from 'components/certificate/CertificateModal.vue';
 import CourseLearningResultDialog from 'components/course/CourseLearningResultDialog.vue';
@@ -59,6 +61,7 @@ import {
   useCourseCompletionDocuments,
   type LearningResultDocumentData,
 } from 'src/composables/use-course-completion-documents';
+import type { ActiveCertTemplate } from 'src/types/admin-cert-templates';
 import type { RegisteredCourseEntry } from 'src/composables/use-my-registered-courses';
 
 interface Props {
@@ -76,6 +79,31 @@ const { buildLearningResultDocument } = useCourseCompletionDocuments();
 
 const showLearningResultDialog = ref(false);
 const showCertificateDialog = ref(false);
+
+const activeTemplate = ref<ActiveCertTemplate | null>(null);
+let blobUrl: string | null = null;
+
+async function openCertificateDialog(): Promise<void> {
+  showCertificateDialog.value = true;
+  if (activeTemplate.value) return;
+  try {
+    const { data } = await api.get<ActiveCertTemplate[]>('/api/certificates/templates/active');
+    const first = data[0] ?? null;
+    if (!first?.url) {
+      activeTemplate.value = first;
+      return;
+    }
+    const response = await api.get<Blob>(first.url, { responseType: 'blob' });
+    blobUrl = URL.createObjectURL(response.data);
+    activeTemplate.value = { ...first, url: blobUrl };
+  } catch {
+    activeTemplate.value = null;
+  }
+}
+
+onUnmounted(() => {
+  if (blobUrl) URL.revokeObjectURL(blobUrl);
+});
 
 const learningResultDocument = computed<LearningResultDocumentData | null>(() =>
   buildLearningResultDocument(props.entry),
