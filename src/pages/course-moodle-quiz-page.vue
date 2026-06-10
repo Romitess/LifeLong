@@ -49,7 +49,7 @@
         </div>
 
         <!-- Previous attempts -->
-        <q-list v-if="attempts.length" bordered separator class="rounded-borders q-mb-lg">
+        <q-list v-if="attempts.length" separator class="q-mb-lg">
           <q-item-label header class="text-weight-bold">ประวัติการทำ</q-item-label>
           <q-item v-for="a in attempts" :key="a.id">
             <q-item-section>
@@ -954,6 +954,19 @@ onUnmounted(() => {
   :deep(.qtext) {
     margin: 8px 0 12px;
     font-size: 1.05rem;
+  }
+  // Moodle wraps answer options in a <fieldset> with a default square border —
+  // round it to match the rest of the cards.
+  :deep(fieldset) {
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 0;
+  }
+  :deep(legend) {
+    padding: 0 6px;
+    font-size: 0.85rem;
+    color: var(--q-primary);
   }
   // Moodle question info bar (Question N / state / flag).
   // Render it as a clean header row and CONSTRAIN the flag image — the raw
