@@ -355,6 +355,16 @@ onMounted(() => {
   min-height: calc(100vh - 64px);
 }
 
+// Match the shared width/spacing of the other Moodle learner pages.
+.section-container {
+  max-width: 920px;
+}
+
+.content-area {
+  padding-top: 40px;
+  padding-bottom: 64px;
+}
+
 .forum-html {
   line-height: 1.7;
 

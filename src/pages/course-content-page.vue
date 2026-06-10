@@ -207,7 +207,7 @@ watch(
 }
 
 .section-container {
-  max-width: 1024px;
+  max-width: 920px;
   margin: 0 auto;
   padding-left: 24px;
   padding-right: 24px;

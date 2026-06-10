@@ -97,6 +97,12 @@ async function openInMoodle(): Promise<void> {
   min-height: calc(100vh - 64px);
 }
 
+// Match the shared top/bottom spacing of the other Moodle learner pages.
+.content-area {
+  padding-top: 40px;
+  padding-bottom: 64px;
+}
+
 .unsupported-wrap {
   max-width: 720px;
   margin: 0 auto;
