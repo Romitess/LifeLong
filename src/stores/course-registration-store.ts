@@ -30,6 +30,7 @@ export interface CourseRegistration {
   registeredAt: string;
   userId: string;
   enrollId?: number | null | undefined;
+  hasReceipt?: boolean;
 }
 
 interface CourseRegistrationState {
@@ -295,24 +296,48 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
           }[]
         >('/api/moodle/enroll/my-courses', { params: { username } });
 
-        const fromBackend: CourseRegistration[] = data.map((item) => ({
-          id: `${userId}-${item.courseId}`,
-          courseId: item.courseId,
-          courseCode: item.courseCode,
-          courseTitle: item.courseTitle,
-          courseImageUrl: item.imageUrl ?? '',
-          courseCover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
-          eligibility: 'student' as const,
-          paymentStatus: item.paymentStatus,
-          registeredAt: item.enrolledAt ?? new Date().toISOString(),
-          userId,
-          enrollId: item.enrollId,
-        }));
+        // Check receipt status for each enrollment
+        const enrollmentsWithReceipts = await Promise.all(
+          data.map(async (item) => {
+            let hasReceipt = false;
+
+            // Only check for receipt if payment status is 'paid' and we have enrollId
+            if (item.paymentStatus === 'paid' && item.enrollId) {
+              try {
+                const { data: receiptData } = await api.get<{
+                  enrollReceiptId: number;
+                  realReceipt: { receiptId: number } | null;
+                  copyReceipt: { receiptId: number } | null;
+                }>(`/api/lltenrollreceipt/enroll/${item.enrollId}/receipt-data`);
+
+                hasReceipt = !!(receiptData.realReceipt || receiptData.copyReceipt);
+              } catch {
+                // Receipt not found or error - keep hasReceipt as false
+                hasReceipt = false;
+              }
+            }
+
+            return {
+              id: `${userId}-${item.courseId}`,
+              courseId: item.courseId,
+              courseCode: item.courseCode,
+              courseTitle: item.courseTitle,
+              courseImageUrl: item.imageUrl ?? '',
+              courseCover: { icon: 'school', accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
+              eligibility: 'student' as const,
+              paymentStatus: item.paymentStatus,
+              registeredAt: item.enrolledAt ?? new Date().toISOString(),
+              userId,
+              enrollId: item.enrollId,
+              hasReceipt,
+            };
+          }),
+        );
 
         // Backend is the single source of truth — it returns all enrollments including
         // pending-payment ones, so there is no need to carry over local-only entries.
         const otherUsers = this.registrations.filter((r) => r.userId !== userId);
-        const merged = [...otherUsers, ...fromBackend];
+        const merged = [...otherUsers, ...enrollmentsWithReceipts];
         this.registrations = merged;
         writeStoredRegistrations(merged);
       } catch {

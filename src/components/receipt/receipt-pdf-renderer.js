@@ -218,7 +218,7 @@ export function createReceiptPdf(receipt, assets) {
     ? 'Burapha University receipt copy'
     : 'Burapha University receipt';
   doc.setProperties({
-    title: `Receipt ${receipt.receiptNo}`,
+    title: safeReceiptFilename(receipt.receiptFilename, receipt.receiptType),
     subject: pdfSubject,
     creator: 'Burapha University Lifelong Learning',
   });
