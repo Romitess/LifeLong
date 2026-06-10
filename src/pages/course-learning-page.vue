@@ -278,13 +278,11 @@ import { useCourseStore } from 'src/stores/course-store';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
 import { useMoodleCourseContents } from 'src/composables/use-moodle-course-contents';
+import { getMoodleModuleTypeConfig } from 'src/utils/moodle-module-registry';
 
 interface CourseModuleState extends CourseModule {
   expanded: boolean;
 }
-
-// Moodle module types rendered natively in-app instead of redirecting to Moodle.
-const CONTENT_MODNAMES = new Set(['page', 'resource', 'label', 'url', 'folder', 'book', 'forum']);
 
 // Fallback icon by lesson type for mock structures that have no modname-derived icon.
 const LESSON_TYPE_ICON: Record<Lesson['type'], string> = {
@@ -392,6 +390,7 @@ const toggleAll = (): void => {
 const navigateToLesson = async (lesson: Lesson): Promise<void> => {
   const courseIdValue = courseId.value;
   if (!courseIdValue) return;
+  const moduleConfig = getMoodleModuleTypeConfig(lesson.moodleModname);
 
   // Moodle quiz → native in-app quiz engine
   if (lesson.moodleModuleId && lesson.moodleModname === 'quiz' && resolvedMoodleCourseId.value) {
@@ -421,11 +420,24 @@ const navigateToLesson = async (lesson: Lesson): Promise<void> => {
     return;
   }
 
+  // Moodle feedback → native in-app questionnaire flow
+  if (
+    lesson.moodleModuleId &&
+    lesson.moodleModname === 'feedback' &&
+    resolvedMoodleCourseId.value
+  ) {
+    await router.push({
+      path: `/course/${courseIdValue}/moodle-feedback/${lesson.moodleModuleId}`,
+      query: { title: lesson.title, moodleCourseId: String(resolvedMoodleCourseId.value) },
+    });
+    return;
+  }
+
   // Content-type modules → dedicated in-app content page (native render, no Moodle redirect)
   if (
     lesson.moodleModuleId &&
     lesson.moodleModname &&
-    CONTENT_MODNAMES.has(lesson.moodleModname) &&
+    moduleConfig.decision === 'native' &&
     resolvedMoodleCourseId.value
   ) {
     await router.push({
@@ -439,7 +451,26 @@ const navigateToLesson = async (lesson: Lesson): Promise<void> => {
     return;
   }
 
-  // Other Moodle activities → open in new tab via SSO
+  // Unsupported Moodle modules stay in-app with the real module type and an explicit Moodle button.
+  if (
+    lesson.moodleModuleId &&
+    lesson.moodleModname &&
+    moduleConfig.decision === 'unsupported' &&
+    resolvedMoodleCourseId.value
+  ) {
+    await router.push({
+      path: `/course/${courseIdValue}/moodle-unsupported/${lesson.moodleModuleId}`,
+      query: {
+        title: lesson.title,
+        modname: lesson.moodleModname,
+        moodleUrl: lesson.moodleUrl ?? '',
+        moodleCourseId: String(resolvedMoodleCourseId.value),
+      },
+    });
+    return;
+  }
+
+  // Legacy/mock Moodle links without a mapped module id still open via SSO.
   if (lesson.moodleUrl) {
     const moodleId = currentCourse.value?.moodleId;
     const username = authStore.user?.username || authStore.user?.email || '';
