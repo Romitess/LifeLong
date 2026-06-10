@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import { api } from 'src/boot/axios';
 import type { CourseModule, CourseSubsection, Lesson } from 'src/data/course-structure';
+import { getMoodleModuleTypeConfig } from 'src/utils/moodle-module-registry';
 
 interface MoodleModule {
   id: number;
@@ -20,24 +21,6 @@ interface MoodleSection {
   component?: string | null;
   modules: MoodleModule[];
 }
-
-const MODULE_CONFIG: Record<string, { icon: string; type: Lesson['type'] }> = {
-  forum: { icon: 'forum', type: 'article' },
-  quiz: { icon: 'help_outline', type: 'quiz' },
-  assign: { icon: 'upload_file', type: 'quiz' },
-  resource: { icon: 'insert_drive_file', type: 'article' },
-  page: { icon: 'article', type: 'article' },
-  url: { icon: 'link', type: 'article' },
-  scorm: { icon: 'slideshow', type: 'video' },
-  h5pactivity: { icon: 'play_circle', type: 'video' },
-  lesson: { icon: 'menu_book', type: 'article' },
-  folder: { icon: 'folder', type: 'article' },
-  chat: { icon: 'chat', type: 'article' },
-  choice: { icon: 'poll', type: 'quiz' },
-  feedback: { icon: 'rate_review', type: 'article' },
-  survey: { icon: 'bar_chart', type: 'article' },
-  workshop: { icon: 'group_work', type: 'quiz' },
-};
 
 const DEFAULT_MODULE_CONFIG = { icon: 'open_in_new', type: 'article' as const };
 
@@ -60,16 +43,16 @@ function getSectionIcon(modules: MoodleModule[]): string {
   const modnames = countable.map((m) => m.modname);
   if (modnames.some((n) => n === 'assign')) return 'upload_file';
   if (modnames.some((n) => n === 'quiz' || n === 'choice' || n === 'workshop'))
-    return MODULE_CONFIG['quiz']!.icon;
-  return (MODULE_CONFIG[modnames[0]!] ?? DEFAULT_MODULE_CONFIG).icon;
+    return getMoodleModuleTypeConfig('quiz').icon;
+  return getMoodleModuleTypeConfig(modnames[0]).icon || DEFAULT_MODULE_CONFIG.icon;
 }
 
 function mapLesson(mod: MoodleModule): Lesson {
-  const cfg = MODULE_CONFIG[mod.modname] ?? DEFAULT_MODULE_CONFIG;
+  const cfg = getMoodleModuleTypeConfig(mod.modname);
   return {
     title: mod.name,
-    type: cfg.type,
-    icon: cfg.icon,
+    type: cfg.type || DEFAULT_MODULE_CONFIG.type,
+    icon: cfg.icon || DEFAULT_MODULE_CONFIG.icon,
     duration: '',
     ...(mod.url !== undefined ? { moodleUrl: mod.url } : {}),
     moodleModuleId: mod.id,
@@ -100,13 +83,16 @@ function mapSections(sections: MoodleSection[]): CourseModule[] {
       const subsections: CourseSubsection[] = [];
 
       (section.modules ?? []).forEach((mod) => {
-        if (mod.modname === 'label') return;
+        const modConfig = getMoodleModuleTypeConfig(mod.modname);
+        if (modConfig.decision === 'skip') return;
         if (mod.modname === 'subsection') {
           const sub = subsectionById.get(subsectionId(mod));
           if (sub) {
             subsections.push({
               title: sub.name || 'หัวข้อย่อย',
-              lessons: (sub.modules ?? []).filter((m) => m.modname !== 'label').map(mapLesson),
+              lessons: (sub.modules ?? [])
+                .filter((m) => getMoodleModuleTypeConfig(m.modname).decision !== 'skip')
+                .map(mapLesson),
             });
           }
           return;

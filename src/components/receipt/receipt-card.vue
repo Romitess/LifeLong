@@ -403,6 +403,11 @@ async function printReceipt(): Promise<void> {
     return;
   }
 
+  printWindow.document.title = safeReceiptFilename(
+    receiptView.value.receiptFilename,
+    receiptView.value.receiptType,
+  );
+
   setTimeout(() => {
     printWindow.focus();
     printWindow.print();

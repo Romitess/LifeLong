@@ -386,6 +386,55 @@ const userInfo = reactive({
   billingAddress: '',
 });
 
+const PAID_INFO_STORAGE_KEY = 'enrollment_paid_info';
+
+function savePaidInfoToStorage(courseId: string): void {
+  try {
+    const stored = JSON.parse(localStorage.getItem(PAID_INFO_STORAGE_KEY) || '{}') as Record<
+      string,
+      typeof userInfo
+    >;
+    stored[courseId] = { ...userInfo };
+    localStorage.setItem(PAID_INFO_STORAGE_KEY, JSON.stringify(stored));
+  } catch {
+    /* silently ignore storage errors */
+  }
+}
+
+function loadPaidInfoFromStorage(courseId: string): boolean {
+  try {
+    const stored = JSON.parse(localStorage.getItem(PAID_INFO_STORAGE_KEY) || '{}') as Record<
+      string,
+      typeof userInfo
+    >;
+    const saved = stored[courseId];
+    if (saved && saved.name) {
+      userInfo.name = saved.name;
+      userInfo.email = saved.email || '';
+      userInfo.phone = saved.phone || '';
+      userInfo.taxId = saved.taxId || '';
+      userInfo.billingAddress = saved.billingAddress || '';
+      return true;
+    }
+  } catch {
+    /* silently ignore storage errors */
+  }
+  return false;
+}
+
+function clearPaidInfoFromStorage(courseId: string): void {
+  try {
+    const stored = JSON.parse(localStorage.getItem(PAID_INFO_STORAGE_KEY) || '{}') as Record<
+      string,
+      typeof userInfo
+    >;
+    delete stored[courseId];
+    localStorage.setItem(PAID_INFO_STORAGE_KEY, JSON.stringify(stored));
+  } catch {
+    /* silently ignore storage errors */
+  }
+}
+
 const effectivePrice = computed<number>(
   () => privilegeInfo.value?.effectivePrice ?? enrollingCourse.value?.price ?? 0,
 );
@@ -455,8 +504,9 @@ function proceedEnrollment(): void {
   if (isFreeNow) {
     showFreeConfirmDialog.value = true;
   } else {
+    const courseId = enrollingCourse.value.id;
     const existingRegistration = courseRegistrationStore.myRegistrations.find(
-      (r) => r.courseId === enrollingCourse.value!.id && r.paymentStatus === 'pending',
+      (r) => r.courseId === courseId && r.paymentStatus === 'pending',
     );
 
     if (existingRegistration && existingRegistration.registrantInfo) {
@@ -465,7 +515,7 @@ function proceedEnrollment(): void {
       userInfo.phone = existingRegistration.registrantInfo.phone;
       userInfo.taxId = existingRegistration.registrantInfo.taxId || '';
       userInfo.billingAddress = existingRegistration.registrantInfo.billingAddress || '';
-    } else {
+    } else if (!loadPaidInfoFromStorage(courseId)) {
       resetPaidInfo();
     }
 
@@ -522,6 +572,8 @@ async function submitPaidInfo(): Promise<void> {
   // Close the info dialog first
   showPaidInfoDialog.value = false;
 
+  savePaidInfoToStorage(enrollingCourse.value.id);
+
   void courseRegistrationStore.registerCourse(enrollingCourse.value, 'student', 'pending', {
     fullName: userInfo.name,
     email: userInfo.email,
@@ -573,6 +625,7 @@ function onPaymentDone(): void {
     customerName: userInfo.name,
     customerAddress: userInfo.billingAddress,
   });
+  clearPaidInfoFromStorage(enrollingCourse.value.id);
   emit('enrolled', enrollingCourse.value.id);
 
   showQrDialog.value = false;

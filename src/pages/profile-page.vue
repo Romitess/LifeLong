@@ -235,6 +235,7 @@
       :course-code="selectedPayment?.courseCode || ''"
       :amount="selectedPayment?.amount ?? 0"
       :is-copy="false"
+      :receipt-filename="currentReceiptFilename"
     />
   </q-page>
 </template>
@@ -324,6 +325,7 @@ const savedEnrollmentDialogOpenKey = ref(0);
 const selectedPayment = ref<CoursePaymentRecord | null>(null);
 const showReceiptDialog = ref(false);
 const receiptDialogRef = ref<InstanceType<typeof ReceiptCard> | null>(null);
+const currentReceiptFilename = ref<string>('');
 
 // Derived state
 const currentAvatarUrl = computed<string>(() => authStore.user?.avatar || '');
@@ -526,10 +528,15 @@ watch(
 );
 
 // Tab → route: keep the URL in sync when the user switches tabs via the sidebar.
-watch(activeMenu, (tab) => {
+watch(activeMenu, async (tab) => {
   const slug = TAB_TO_SLUG[tab];
   if (slug && slug !== getRouteSlug()) {
     void router.replace({ path: `/profile/${slug}` });
+  }
+
+  // Refresh enrollments when switching to my-courses tab to check for new receipts
+  if (tab === 'my-courses' && authStore.user?.username && !isTeachingRole.value) {
+    await courseRegistrationStore.fetchMyEnrollments(authStore.user.username);
   }
 });
 
@@ -671,7 +678,18 @@ async function downloadReceiptByCourseId(courseId: string): Promise<void> {
         receiptType: string;
         url: string;
       } | null;
-    }>(`/api/lltenrollreceipt/${registration.enrollId}/receipt-file`);
+      enrollData: {
+        receiptNo: number;
+        receivedFrom: string;
+        taxId: string;
+        address: string;
+        date: string;
+        amount: number;
+        effectiveDate: string;
+        coseCode: string;
+        coseNameTh: string;
+      } | null;
+    }>(`/api/lltenrollreceipt/enroll/${registration.enrollId}/receipt-data`);
 
     const receipt = data.realReceipt || data.copyReceipt;
 
@@ -684,42 +702,23 @@ async function downloadReceiptByCourseId(courseId: string): Promise<void> {
       return;
     }
 
-    // Fetch the enrollment receipt details to get payment info
-    const { data: enrollReceiptData } = await api.get<{
-      id: number;
-      enrollId: number;
-      coseCode: string;
-      coseNameTh: string;
-      amount: number;
-      effectiveDate: string;
-      receiptName: string;
-      receiptNo: number;
-    }>(`/api/lltenrollreceipt/${registration.enrollId}`);
+    currentReceiptFilename.value = receipt.filename || '';
 
-    // Set payment data for receipt dialog
     const paymentData: CoursePaymentRecord = {
-      id: `receipt-${enrollReceiptData.id}`,
+      id: `receipt-${data.enrollData?.receiptNo || data.enrollReceiptId}`,
       courseId: registration.courseId,
       courseCode: registration.courseCode,
       courseTitle: registration.courseTitle,
-      amount: enrollReceiptData.amount || 0,
-      paymentDate: enrollReceiptData.effectiveDate
-        ? new Date(enrollReceiptData.effectiveDate).toISOString()
-        : new Date().toISOString(),
+      amount: data.enrollData?.amount || 0,
+      paymentDate: data.enrollData?.date || new Date().toISOString(),
       status: 'ชำระเงินสำเร็จ',
       method: 'Thai QR Payment',
-      receiptId: enrollReceiptData.receiptNo?.toString() || '',
+      receiptId: data.enrollData?.receiptNo?.toString() || data.enrollReceiptId?.toString() || '',
       userId: authStore.user?.id || '',
-      customerName: enrollReceiptData.receiptName || '',
+      customerName: data.enrollData?.receivedFrom || '',
+      taxId: data.enrollData?.taxId || '',
+      customerAddress: data.enrollData?.address || '',
     };
-
-    // Add optional fields only if they exist
-    if (registration.registrantInfo?.taxId) {
-      paymentData.taxId = registration.registrantInfo.taxId;
-    }
-    if (registration.registrantInfo?.billingAddress) {
-      paymentData.customerAddress = registration.registrantInfo.billingAddress;
-    }
 
     selectedPayment.value = paymentData;
 

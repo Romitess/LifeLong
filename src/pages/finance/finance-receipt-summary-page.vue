@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="admin-page finance-receipt-summary-page">
     <AppPageHero
       eyebrow="Financial Operations"
@@ -343,7 +343,7 @@
       ref="receiptDialogRef"
       v-model="showReceiptDialog"
       :receipt-id="receiptId"
-      :issued-at="issuedAt"
+      :issued-at="issuedAtDate"
       :customer-name="customerName"
       :customer-tax-id="customerTaxId"
       :customer-address="customerAddress"
@@ -397,76 +397,18 @@ const showReceiptDialog = ref(false);
 const selectedReceipt = ref<ReceiptSummaryItem | null>(null);
 
 const receiptId = computed(() => selectedReceipt.value?.receiptNo || '');
-const issuedAt = computed(() => {
-  return selectedReceipt.value ? parseThaiDate(selectedReceipt.value.effectiveDate) : null;
-});
-const customerName = computed(() => selectedReceipt.value?.customerName || '');
-const customerTaxId = computed(() => '0994000249357');
-const customerAddress = computed(
-  () => '169 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมือง จังหวัดชลบุรี 20131',
-);
+const issuedAtDate = ref<string | null>(null);
+const customerName = ref('');
+const customerTaxId = ref('');
+const customerAddress = ref('');
 
-const courseCode = computed(() => {
-  if (!selectedReceipt.value) return '';
-  const parts = selectedReceipt.value.courseName.split(':');
-  return parts[0] || '';
-});
-
-const courseTitle = computed(() => {
-  if (!selectedReceipt.value) return '';
-  const parts = selectedReceipt.value.courseName.split(':');
-  return parts.slice(1).join(':').replace(/\n/g, ' ') || selectedReceipt.value.courseName;
-});
+const courseCode = ref('');
+const courseTitle = ref('');
 
 const amount = computed(() => {
   const numericAmount = Number(selectedReceipt.value?.amount ?? 0);
   return Number.isNaN(numericAmount) ? 0 : numericAmount;
 });
-
-function parseThaiDate(dateStr: string): Date | null {
-  if (!dateStr) return null;
-  try {
-    const cleanStr = dateStr.replace('\n', ' ').trim();
-    const parts = cleanStr.split(' ');
-    if (parts.length < 3) return null;
-    const day = parseInt(parts[0] || '0');
-    const monthThai = parts[1] || '';
-    const yearThai = parseInt(parts[2] || '0');
-
-    const months = [
-      'ม.ค.',
-      'ก.พ.',
-      'มี.ค.',
-      'เม.ย.',
-      'พ.ค.',
-      'มิ.ย.',
-      'ก.ค.',
-      'ส.ค.',
-      'ก.ย.',
-      'ต.ค.',
-      'พ.ย.',
-      'ธ.ค.',
-    ];
-    const monthIndex = months.indexOf(monthThai);
-    if (monthIndex === -1) return null;
-
-    const year = yearThai - 543;
-
-    let hour = 0,
-      minute = 0,
-      second = 0;
-    if (parts[3]) {
-      const timeParts = parts[3].split(':');
-      hour = parseInt(timeParts[0] || '0');
-      minute = parseInt(timeParts[1] || '0');
-      second = parseInt(timeParts[2] || '0');
-    }
-
-    return new Date(year, monthIndex, day, hour, minute, second);
-  } catch {
-    return null;
-  }
-}
 
 function formatCollectorDate(value: string | undefined): string {
   if (!value) return '';
@@ -484,13 +426,44 @@ function formatCollectorDate(value: string | undefined): string {
 }
 
 async function downloadReceipt(row: ReceiptSummaryItem) {
-  selectedReceipt.value = {
-    ...row,
-    receiptFilename: row.receiptFilename ?? row.receiptNo ?? '',
-    receiptType: row.receiptType ?? 'D',
-  };
-  await nextTick();
-  receiptDialogRef.value?.downloadReceiptPdf();
+  try {
+    const { data } = await api.get(`/api/lltenrollreceipt/${row.id}/full-receipt-data`);
+    const receipt = data.copyReceipt || data.realReceipt;
+
+    selectedReceipt.value = {
+      ...row,
+      receiptFilename: receipt?.filename ?? row.receiptFilename ?? row.receiptNo ?? '',
+      receiptType: 'D',
+    };
+
+    customerTaxId.value = data.enrollData?.taxId || '';
+    customerAddress.value = data.enrollData?.address || '';
+    customerName.value = data.enrollData?.receivedFrom || row.customerName || '';
+
+    courseCode.value = data.enrollData?.coseCode || row.courseName.split(':')[0] || '';
+    courseTitle.value =
+      data.enrollData?.coseNameTh ||
+      row.courseName.split(':').slice(1).join(':').trim() ||
+      row.courseName;
+
+    // Use the exact date format from backend which is compatible with ReceiptCard's Date parsing
+    issuedAtDate.value =
+      data.enrollData?.date ||
+      (data.enrollData?.effectiveDate
+        ? new Date(data.enrollData.effectiveDate).toISOString()
+        : null) ||
+      null;
+
+    await nextTick();
+    receiptDialogRef.value?.downloadReceiptPdf();
+  } catch (error) {
+    console.error('Failed to load full receipt data:', error);
+    Notify.create({
+      type: 'negative',
+      message: 'ไม่สามารถดึงข้อมูลรายละเอียดใบเสร็จได้',
+      position: 'top',
+    });
+  }
 }
 
 function clearDates() {

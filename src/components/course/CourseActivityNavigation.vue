@@ -105,7 +105,14 @@ const { getMoodleActivityUrl } = useMoodleSso();
 const { sections, loading, fetchSections } = useMoodleCourseContents();
 
 const lessons = computed<Lesson[]>(() => {
-  const source = sections.value.length ? sections.value : getCourseStructure(props.courseId);
+  // When moodleCourseId is provided, never fall back to mock data —
+  // empty sections means loading or fetch failed, both should hide the nav.
+  const source =
+    sections.value.length > 0
+      ? sections.value
+      : props.moodleCourseId
+        ? []
+        : getCourseStructure(props.courseId);
   return source.flatMap((module) => [
     ...(module.subsections ?? []).flatMap((sub) => sub.lessons),
     ...module.lessons,

@@ -123,20 +123,36 @@
             "
           />
           <q-btn
-            v-if="
-              entry.registration.paymentStatus === 'paid' &&
-              !entry.course.isFree &&
-              hasPayment(entry.registration.courseId)
-            "
+            v-if="entry.registration.paymentStatus === 'paid' && !entry.course.isFree"
             flat
-            color="primary"
-            :label="locale === 'th' ? 'ดาวน์โหลดใบเสร็จ' : 'Receipt'"
-            icon="receipt_long"
+            :color="entry.registration.hasReceipt ? 'primary' : 'grey-7'"
+            :label="
+              entry.registration.hasReceipt
+                ? locale === 'th'
+                  ? 'ดาวน์โหลดใบเสร็จ'
+                  : 'Download Receipt'
+                : locale === 'th'
+                  ? 'รอเจ้าหน้าที่ออกใบเสร็จ'
+                  : 'Waiting for Receipt'
+            "
+            :icon="entry.registration.hasReceipt ? 'receipt_long' : 'schedule'"
             no-caps
             size="md"
+            :disable="!entry.registration.hasReceipt"
             class="course-action-btn"
-            @click="$emit('download-receipt', entry.registration.courseId)"
-          />
+            @click="
+              entry.registration.hasReceipt &&
+              $emit('download-receipt', entry.registration.courseId)
+            "
+          >
+            <q-tooltip v-if="!entry.registration.hasReceipt">
+              {{
+                locale === 'th'
+                  ? 'กรุณารอให้เจ้าหน้าที่การเงินออกใบเสร็จให้ก่อน'
+                  : 'Please wait for finance staff to issue the receipt'
+              }}
+            </q-tooltip>
+          </q-btn>
         </template>
       </ProfileCourseCard>
     </div>
@@ -174,7 +190,6 @@ import BaseSearchInput from 'components/base/BaseSearchInput.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
 import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import { useCourseBookmarkStore } from 'src/stores/course-bookmark-store';
-import { useCoursePaymentStore } from 'src/stores/course-payment-store';
 import type { RegisteredCourseEntry } from 'src/composables/use-my-registered-courses';
 import type { CourseRegistration } from 'src/stores/course-registration-store';
 import type { Course } from 'src/types/course';
@@ -197,7 +212,6 @@ defineEmits<{
 const { t, locale } = useI18n();
 const router = useRouter();
 const courseBookmarkStore = useCourseBookmarkStore();
-const coursePaymentStore = useCoursePaymentStore();
 
 function getTranslatedCourseTitle(course: { title: string; titleEn?: string }): string {
   if (locale.value === 'th') return course.title;
@@ -214,10 +228,6 @@ function formatDate(isoDate: string): string {
 
 function getCoursePriceLabel(course: Pick<Course, 'isFree' | 'price'>): string {
   return course.isFree ? t('free') : `THB ${(course.price ?? 0).toLocaleString()}`;
-}
-
-function hasPayment(courseId: string): boolean {
-  return coursePaymentStore.myPayments.some((p) => p.courseId === courseId);
 }
 </script>
 
