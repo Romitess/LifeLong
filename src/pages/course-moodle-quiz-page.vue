@@ -286,13 +286,17 @@
           <br />ระบบยังไม่บันทึกความคืบหน้า กรุณาลองใหม่อีกครั้ง
         </q-banner>
 
-        <div
-          v-for="q in review.questions"
-          :key="q.slot"
-          class="quiz-question quiz-html q-mb-lg"
-          v-html="sanitize(q.html)"
-        />
-        <!-- eslint-disable-line vue/no-v-html -->
+        <template v-if="review.questions.length">
+          <q-separator class="q-my-lg" />
+          <div class="text-subtitle2 text-weight-bold text-grey-7 q-mb-md">เฉลยรายข้อ</div>
+          <div
+            v-for="q in review.questions"
+            :key="q.slot"
+            class="quiz-question quiz-html q-mb-lg"
+            v-html="sanitize(q.html)"
+          />
+          <!-- eslint-disable-line vue/no-v-html -->
+        </template>
 
         <BaseButton
           color="primary"
@@ -1090,6 +1094,49 @@ onUnmounted(() => {
   :deep(.incorrect) {
     border-color: var(--q-negative) !important;
     background: rgba(193, 0, 21, 0.05);
+  }
+  // Review mode: feedback block rendered by Moodle after each question
+  :deep(.outcome) {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  :deep(.specificfeedback),
+  :deep(.generalfeedback) {
+    font-size: 0.9rem;
+    color: #444;
+    line-height: 1.6;
+  }
+  :deep(.rightanswer) {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1a6b3a;
+    background: rgba(33, 186, 69, 0.1);
+    border-radius: 8px;
+    padding: 6px 12px;
+  }
+  :deep(.feedback) {
+    font-size: 0.9rem;
+    color: #555;
+    font-style: italic;
+  }
+  // Left border accent on the question card by result
+  :deep(.que.correct) {
+    border-left: 4px solid var(--q-positive);
+    padding-left: 12px;
+  }
+  :deep(.que.incorrect) {
+    border-left: 4px solid var(--q-negative);
+    padding-left: 12px;
+  }
+  :deep(.que.partiallycorrect) {
+    border-left: 4px solid var(--q-warning);
+    padding-left: 12px;
   }
 }
 
