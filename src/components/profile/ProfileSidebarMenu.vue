@@ -39,6 +39,9 @@
         <q-item-section v-if="menu.value === 'saved-courses' && myBookmarksCount > 0" side>
           <q-badge rounded color="amber-8" :label="myBookmarksCount" />
         </q-item-section>
+        <q-item-section v-if="menu.value === 'my-certificates' && myCertificatesCount > 0" side>
+          <q-badge rounded color="positive" :label="myCertificatesCount" />
+        </q-item-section>
       </q-item>
     </q-list>
 
@@ -101,6 +104,7 @@ defineProps<{
   menuItems: MenuItem[];
   myRegistrationsCount: number;
   myBookmarksCount: number;
+  myCertificatesCount: number;
   studentId: string;
 }>();
 

@@ -16,8 +16,9 @@
             <ProfileSidebarMenu
               v-model="activeMenu"
               :menu-items="menuItems"
-              :my-registrations-count="myRegistrations.length"
+              :my-registrations-count="activeCoursesCount"
               :my-bookmarks-count="courseBookmarkStore.myBookmarks.length"
+              :my-certificates-count="completedCoursesCount"
               :student-id="authStore.user?.studentId ?? ''"
               @show-student-card="showStudentCardDialog = true"
             />
@@ -32,7 +33,7 @@
                 v-else-if="activeMenu === 'my-courses'"
                 :filtered-registrations="filteredRegistrations"
                 :course-search="courseSearch"
-                :my-registrations-count="myRegistrations.length"
+                :my-registrations-count="activeCoursesCount"
                 @update:course-search="courseSearch = $event"
                 @toggle-bookmark="toggleRegisteredCourseBookmark"
                 @prompt-unregister="promptUnregister"
@@ -70,6 +71,11 @@
               <ProfileChatTab
                 v-else-if="activeMenu === 'chat'"
                 :current-avatar-url="currentAvatarUrl"
+              />
+
+              <ProfileMyCertificatesTab
+                v-else-if="activeMenu === 'my-certificates'"
+                :registered-course-entries="myRegisteredCourseEntries"
               />
 
               <!-- Enrollment Dialog for Saved Courses -->
@@ -258,6 +264,7 @@ import ProfileSavedCoursesTab from 'components/profile/ProfileSavedCoursesTab.vu
 import ProfilePersonalInfoTab from 'components/profile/ProfilePersonalInfoTab.vue';
 import ProfileBenefitsTab from 'components/profile/ProfileBenefitsTab.vue';
 import ProfileChatTab from 'components/profile/ProfileChatTab.vue';
+import ProfileMyCertificatesTab from 'components/profile/ProfileMyCertificatesTab.vue';
 import {
   useMyRegisteredCourses,
   type RegisteredCourseEntry,
@@ -391,6 +398,9 @@ const inProgressCoursesCount = computed<number>(
 const completedCoursesCount = computed<number>(
   () => myRegisteredCourseEntries.value.filter((e) => e.progress.isCompleted).length,
 );
+const activeCoursesCount = computed<number>(
+  () => myRegisteredCourseEntries.value.filter((e) => !e.progress.isCompleted).length,
+);
 
 function withOpacity(hexColor: string, opacity: number): string {
   const hex = hexColor.replace('#', '');
@@ -476,6 +486,11 @@ const menuItems = computed<MenuItem[]>(() => [
   { label: t('profile.menu.personalInfo'), value: 'personal-info', icon: 'person' },
   { label: t('profile.menu.benefits'), value: 'benefits', icon: 'card_giftcard' },
   { label: t('profile.menu.chat'), value: 'chat', icon: 'chat' },
+  {
+    label: t('profile.menu.myCertificates'),
+    value: 'my-certificates',
+    icon: 'workspace_premium',
+  },
 ]);
 
 // Nested routing for profile tabs: /profile/<slug> ↔ activeMenu (no query params).
@@ -486,6 +501,7 @@ const TAB_TO_SLUG: Record<string, string> = {
   'personal-info': 'personal-info',
   benefits: 'benefits',
   chat: 'chat',
+  'my-certificates': 'certificates',
 };
 const SLUG_TO_TAB: Record<string, string> = Object.fromEntries(
   Object.entries(TAB_TO_SLUG).map(([tab, slug]) => [slug, tab]),
@@ -518,9 +534,10 @@ watch(activeMenu, (tab) => {
 });
 
 const filteredRegistrations = computed<RegisteredCourseEntry[]>(() => {
-  if (!courseSearch.value.trim()) return myRegisteredCourseEntries.value;
+  const notCompleted = myRegisteredCourseEntries.value.filter((e) => !e.progress.isCompleted);
+  if (!courseSearch.value.trim()) return notCompleted;
   const keyword = courseSearch.value.toLowerCase();
-  return myRegisteredCourseEntries.value.filter(
+  return notCompleted.filter(
     (e) =>
       e.course.title.toLowerCase().includes(keyword) ||
       e.course.code.toLowerCase().includes(keyword),
@@ -805,6 +822,29 @@ function formatThaiDateTime(date: Date): string {
   return isTh ? `${dateLabel} at ${timeLabel}` : `${dateLabel} ${timeLabel}`;
 }
 
+async function autoGenerateCertsForCompletedCourses(): Promise<void> {
+  const completed = myRegisteredCourseEntries.value.filter((e) => e.progress.isCompleted);
+  if (completed.length === 0) return;
+
+  let anyGenerated = false;
+  for (const entry of completed) {
+    const enrollId = entry.registration.enrollId;
+    if (!enrollId) continue;
+    try {
+      const { data } = await api.post<{ cert: object; alreadyExisted: boolean }>(
+        `/api/certificates/generate/${enrollId}?force=true`,
+      );
+      if (!data.alreadyExisted) anyGenerated = true;
+    } catch {
+      // Not truly complete in Moodle yet, or cert already exists — skip silently
+    }
+  }
+
+  if (anyGenerated && authStore.user?.username) {
+    await courseRegistrationStore.fetchMyEnrollments(authStore.user.username);
+  }
+}
+
 onMounted(async () => {
   const username = authStore.user?.username;
   if (username && !isTeachingRole.value) {
@@ -812,7 +852,8 @@ onMounted(async () => {
     const enrollIds = courseRegistrationStore.myRegistrations
       .map((r) => r.enrollId)
       .filter((id): id is number => id != null);
-    void enrollmentProgressStore.fetchAllCompletions(enrollIds);
+    await enrollmentProgressStore.fetchAllCompletions(enrollIds);
+    void autoGenerateCertsForCompletedCourses();
   }
   void fetchBenefits();
 });
