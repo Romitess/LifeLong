@@ -8,24 +8,28 @@
     />
 
     <div class="content-area section-container">
-      <div class="unsupported-panel">
-        <q-icon :name="moduleConfig.icon" size="52px" color="primary" />
-        <h1 class="unsupported-panel__title">{{ activityTitle }}</h1>
-        <q-chip dense color="grey-2" text-color="grey-8" class="q-mb-md">
-          {{ moduleConfig.label }} ({{ modname }})
-        </q-chip>
-        <p class="unsupported-panel__reason">
-          {{ moduleConfig.reason || 'กิจกรรมชนิดนี้ยังไม่รองรับการเปิดในแอป' }}
-        </p>
-        <BaseButton
-          color="primary"
-          no-caps
-          icon="open_in_new"
-          label="เปิดใน Moodle"
-          :loading="opening"
-          :disable="!moodleUrl"
-          @click="openInMoodle"
-        />
+      <div class="unsupported-wrap">
+        <BaseContentCard class="text-center q-py-xl">
+          <q-icon :name="moduleConfig.icon" size="52px" color="primary" />
+          <div class="text-h6 text-weight-bold text-grey-9 q-mt-md q-mb-xs">
+            {{ activityTitle }}
+          </div>
+          <q-chip dense color="grey-2" text-color="grey-8" class="q-mb-md">
+            {{ moduleConfig.label }} ({{ modname }})
+          </q-chip>
+          <p class="unsupported-reason text-grey-7 q-mx-auto q-mb-lg">
+            {{ moduleConfig.reason || 'กิจกรรมชนิดนี้ยังไม่รองรับการเปิดในแอป' }}
+          </p>
+          <BaseButton
+            color="primary"
+            no-caps
+            icon="open_in_new"
+            label="เปิดใน Moodle"
+            :loading="opening"
+            :disable="!moodleUrl"
+            @click="openInMoodle"
+          />
+        </BaseContentCard>
       </div>
     </div>
   </q-page>
@@ -36,6 +40,7 @@ import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import BaseButton from 'components/base/BaseButton.vue';
+import BaseContentCard from 'components/base/BaseContentCard.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { useMoodleSso } from 'src/composables/use-moodle-sso';
@@ -92,28 +97,13 @@ async function openInMoodle(): Promise<void> {
   min-height: calc(100vh - 64px);
 }
 
-.unsupported-panel {
+.unsupported-wrap {
   max-width: 720px;
   margin: 0 auto;
-  padding: 40px 24px;
-  text-align: center;
-  border: 1px solid #e8edf3;
-  border-radius: 8px;
-  background: #fff;
 }
 
-.unsupported-panel__title {
-  margin: 16px 0 8px;
-  font-size: 1.45rem;
-  line-height: 1.25;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.unsupported-panel__reason {
+.unsupported-reason {
   max-width: 540px;
-  margin: 0 auto 24px;
-  color: #667085;
   line-height: 1.7;
 }
 </style>

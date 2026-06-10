@@ -10,12 +10,14 @@
     <div class="content-area section-container">
       <BaseSpinner v-if="loading && !feedback" message="กำลังโหลดแบบสอบถาม..." />
 
-      <div
+      <BaseContentCard
         v-else-if="error && !feedback"
-        class="feedback-card column items-center text-center q-py-xl"
+        class="column items-center text-center q-py-xl"
       >
         <q-icon name="error_outline" size="48px" color="negative" />
-        <div class="text-subtitle1 text-weight-medium q-mt-md">โหลดแบบสอบถามไม่สำเร็จ</div>
+        <div class="text-subtitle1 text-weight-medium text-grey-9 q-mt-md">
+          โหลดแบบสอบถามไม่สำเร็จ
+        </div>
         <div class="text-body2 text-grey-7 q-mt-xs">{{ error }}</div>
         <BaseButton
           color="primary"
@@ -25,30 +27,37 @@
           class="q-mt-lg"
           @click="load"
         />
-      </div>
+      </BaseContentCard>
 
       <template v-else-if="feedback && page">
-        <div class="feedback-card q-mb-md">
-          <header class="feedback-card__header">
+        <BaseContentCard class="q-mb-md">
+          <div class="row items-center q-gutter-sm">
             <q-icon name="rate_review" size="26px" color="primary" />
-            <h1 class="feedback-card__title">{{ feedback.name }}</h1>
-          </header>
+            <span class="text-h6 text-weight-bold text-grey-9">{{ feedback.name }}</span>
+          </div>
 
           <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify -->
-          <div v-if="introHtml" class="feedback-html q-mt-md" v-html="introHtml" />
+          <div
+            v-if="introHtml"
+            class="feedback-html text-body2 text-grey-8 q-mt-md"
+            v-html="introHtml"
+          />
 
           <q-banner v-if="feedback.completed" rounded class="bg-green-1 text-green-9 q-mt-md">
             <template v-slot:avatar><q-icon name="check_circle" /></template>
             ส่งแบบสอบถามนี้แล้ว
           </q-banner>
-        </div>
+        </BaseContentCard>
 
         <q-form v-if="!feedback.completed && feedback.canSubmit" @submit.prevent="submit">
-          <div class="feedback-card">
+          <BaseContentCard>
             <div v-for="item in page.items" :key="item.id" class="feedback-item">
               <template v-if="isStaticItem(item)">
                 <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify -->
-                <div class="feedback-html" v-html="sanitize(item.label || item.name)" />
+                <div
+                  class="feedback-html text-body1 text-grey-9"
+                  v-html="sanitize(item.label || item.name)"
+                />
               </template>
 
               <template v-else-if="isTextArea(item)">
@@ -76,7 +85,7 @@
 
               <template v-else-if="isMultiChoice(item)">
                 <fieldset class="feedback-choice">
-                  <legend>
+                  <legend class="text-grey-9 text-weight-medium q-mb-sm">
                     {{ plainLabel(item) }} <span v-if="item.required" class="text-negative">*</span>
                   </legend>
                   <q-option-group
@@ -105,12 +114,12 @@
                 type="submit"
               />
             </div>
-          </div>
+          </BaseContentCard>
         </q-form>
 
-        <div v-else-if="!feedback.completed" class="feedback-card text-grey-7">
+        <BaseContentCard v-else-if="!feedback.completed" class="text-grey-7">
           <q-icon name="lock" class="q-mr-xs" />ไม่สามารถส่งแบบสอบถามนี้ได้ในขณะนี้
-        </div>
+        </BaseContentCard>
 
         <CourseActivityNavigation
           :course-id="courseId"
@@ -129,6 +138,7 @@ import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import DOMPurify from 'dompurify';
 import BaseButton from 'components/base/BaseButton.vue';
+import BaseContentCard from 'components/base/BaseContentCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import CourseActivityNavigation from 'components/course/CourseActivityNavigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
@@ -276,29 +286,7 @@ onMounted(() => {
   min-height: calc(100vh - 64px);
 }
 
-.feedback-card {
-  padding: 24px;
-  border: 1px solid #e8edf3;
-  border-radius: 8px;
-  background: #fff;
-}
-
-.feedback-card__header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.feedback-card__title {
-  margin: 0;
-  font-size: 1.35rem;
-  line-height: 1.3;
-  font-weight: 700;
-  color: #1f2937;
-}
-
 .feedback-html {
-  color: #344054;
   line-height: 1.7;
 
   :deep(p) {
@@ -308,22 +296,11 @@ onMounted(() => {
 
 .feedback-item {
   padding: 18px 0;
-  border-bottom: 1px solid #eef2f6;
-
-  &:last-child {
-    border-bottom: 0;
-  }
 }
 
 .feedback-choice {
   margin: 0;
   padding: 0;
   border: 0;
-
-  legend {
-    margin-bottom: 10px;
-    font-weight: 600;
-    color: #1f2937;
-  }
 }
 </style>
