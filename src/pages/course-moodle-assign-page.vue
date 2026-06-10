@@ -86,6 +86,33 @@
           <div v-if="feedbackHtml" class="assign-html q-mt-sm" v-html="feedbackHtml" />
         </BaseContentCard>
 
+        <!-- Waiting for grade banner -->
+        <q-banner
+          v-if="isWaitingGrade"
+          rounded
+          class="assign-banner assign-banner--waiting q-mb-md"
+        >
+          <template #avatar>
+            <q-spinner-dots color="amber-8" size="28px" />
+          </template>
+          <span class="text-weight-medium">รอผลการตรวจจากอาจารย์</span>
+          <br />
+          <span class="text-caption text-grey-7"
+            >ระบบจะแจ้งเตือนเมื่อมีผล (ตรวจสอบอัตโนมัติทุก 30 วินาที)</span
+          >
+          <template #action>
+            <BaseButton
+              flat
+              no-caps
+              color="amber-9"
+              label="ตรวจสอบเดี๋ยวนี้"
+              icon="refresh"
+              :loading="loading"
+              @click="() => void pollGrade()"
+            />
+          </template>
+        </q-banner>
+
         <!-- Auto-mark result banner -->
         <q-banner v-if="assignPassed === true" rounded class="bg-green-1 text-grey-9 q-mb-md">
           <template #avatar><q-icon name="check_circle" color="positive" /></template>
@@ -194,7 +221,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import DOMPurify from 'dompurify';
@@ -230,6 +257,8 @@ const onlineText = ref('');
 const file = ref<File | null>(null);
 const confirmSubmit = ref(false);
 const assignPassed = ref<boolean | null>(null);
+const isWaitingGrade = ref(false);
+let pollHandle: ReturnType<typeof setInterval> | null = null;
 
 const courseId = computed<string>(() => {
   const id = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
@@ -306,6 +335,36 @@ const statusIcon = computed(() =>
   submission.value?.status === 'submitted' ? 'check_circle' : 'pending',
 );
 
+function stopGradePolling(): void {
+  if (pollHandle) {
+    clearInterval(pollHandle);
+    pollHandle = null;
+  }
+  isWaitingGrade.value = false;
+}
+
+async function pollGrade(): Promise<void> {
+  if (moodleCourseId.value == null || !moduleId.value) return;
+  const res = await getAssignment(moodleCourseId.value, moduleId.value);
+  if (!res) return;
+  if (res.submission.grade != null) {
+    submission.value = res.submission;
+    stopGradePolling();
+    $q.notify({
+      type: 'positive',
+      message: 'มีผลการตรวจงานแล้ว',
+      icon: 'emoji_events',
+      timeout: 4000,
+    });
+  }
+}
+
+function startGradePolling(): void {
+  stopGradePolling();
+  isWaitingGrade.value = true;
+  pollHandle = setInterval(() => void pollGrade(), 30_000);
+}
+
 function sanitize(html: string): string {
   return DOMPurify.sanitize(html, { ADD_ATTR: ['target'] });
 }
@@ -379,6 +438,9 @@ async function submit(): Promise<void> {
     progressStore.markLessonComplete(courseId.value, assignTitle.value);
     if (enrollId.value != null) void enrollmentProgressStore.fetchCompletion(enrollId.value);
   }
+  if (res.submission.grade == null && res.submission.status === 'submitted') {
+    startGradePolling();
+  }
   file.value = null;
   $q.notify({ type: 'positive', message: 'ส่งงานสำเร็จ', position: 'top' });
 }
@@ -397,6 +459,10 @@ function notifyError(msg: string): void {
 onMounted(() => {
   void load();
 });
+
+onUnmounted(() => {
+  stopGradePolling();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -413,6 +479,10 @@ onMounted(() => {
 .content-area {
   padding-top: 40px;
   padding-bottom: 64px;
+}
+.assign-banner--waiting {
+  background: rgba(251, 192, 45, 0.08);
+  border-color: rgba(251, 192, 45, 0.3);
 }
 .assign-html {
   line-height: 1.7;

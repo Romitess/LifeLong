@@ -263,12 +263,45 @@
           <span class="text-h6 text-weight-bold text-grey-9">ผลการทำแบบทดสอบ</span>
         </div>
         <div class="quiz-score q-mb-lg">
-          <div class="text-h4 text-weight-bold text-primary">
-            {{ review.grade ?? 0
-            }}<span v-if="quiz?.grade" class="text-h6 text-grey-6"> / {{ quiz.grade }}</span>
-          </div>
-          <div class="text-caption text-grey-6">คะแนนที่ได้</div>
+          <template v-if="review.grade !== null">
+            <div class="text-h4 text-weight-bold text-primary">
+              {{ review.grade
+              }}<span v-if="quiz?.grade" class="text-h6 text-grey-6"> / {{ quiz.grade }}</span>
+            </div>
+            <div class="text-caption text-grey-6">คะแนนที่ได้</div>
+          </template>
+          <template v-else>
+            <div class="text-h5 text-weight-bold text-grey-5">—</div>
+            <div class="text-caption text-grey-6">รอผลการตรวจ</div>
+          </template>
         </div>
+
+        <!-- Waiting for manual grade -->
+        <q-banner
+          v-if="isWaitingReviewGrade"
+          rounded
+          class="summary-banner summary-banner--waiting q-mb-lg"
+        >
+          <template #avatar>
+            <q-spinner-dots color="amber-8" size="28px" />
+          </template>
+          <span class="text-weight-medium">รอผลการตรวจจากอาจารย์</span>
+          <br />
+          <span class="text-caption text-grey-7"
+            >ระบบจะแจ้งเตือนเมื่อมีผล (ตรวจสอบอัตโนมัติทุก 30 วินาที)</span
+          >
+          <template #action>
+            <BaseButton
+              flat
+              no-caps
+              color="amber-9"
+              label="ตรวจสอบเดี๋ยวนี้"
+              icon="refresh"
+              :loading="loading"
+              @click="() => void pollReviewGrade()"
+            />
+          </template>
+        </q-banner>
 
         <q-banner
           v-if="quizPassed === true"
@@ -408,6 +441,10 @@ const attemptDeadline = ref<number | null>(null); // unix seconds
 const remainingSec = ref<number | null>(null);
 let timerHandle: ReturnType<typeof setInterval> | null = null;
 let finishing = false;
+
+// Grade polling (for manually-graded quizzes where review.grade === null)
+const isWaitingReviewGrade = ref(false);
+let reviewPollHandle: ReturnType<typeof setInterval> | null = null;
 
 function tabSwitchStorageKey(): string | null {
   return currentAttemptId.value != null ? `quiz-tab-switch-${currentAttemptId.value}` : null;
@@ -764,7 +801,7 @@ async function submit(): Promise<void> {
   if (!res) return;
   confirmSubmit.value = false;
   clearTabSwitchCount();
-  await handlePassedResult(res.passed);
+  if (res.autoMarked) await handlePassedResult(res.passed);
   void openReview(currentAttemptId.value);
 }
 
@@ -783,25 +820,62 @@ async function autoSubmit(): Promise<void> {
   if (!res) return;
   confirmSubmit.value = false;
   clearTabSwitchCount();
-  await handlePassedResult(res.passed);
+  if (res.autoMarked) await handlePassedResult(res.passed);
   void openReview(currentAttemptId.value);
 }
 
 async function openReview(attemptId: number): Promise<void> {
   stopTimer();
+  stopReviewPoll();
   currentAttemptId.value = attemptId;
   const rev = await getReview(attemptId);
   if (!rev) return;
   review.value = rev;
-  // Use actual attempt grade vs gradepass threshold — not Moodle's historical completion state
-  if (quiz.value?.gradepass != null && rev.grade !== null) {
-    quizPassed.value = rev.grade >= quiz.value.gradepass;
+  if (rev.grade !== null) {
+    const gp = quiz.value?.gradepass;
+    const passed = gp != null && gp > 0 ? rev.grade >= gp : true;
+    await handlePassedResult(passed);
+  } else {
+    quizPassed.value = null;
+    startReviewPoll();
   }
   screen.value = 'review';
 }
 
 function backToCourse(): void {
   void router.push(`/course/${courseId.value}/learn`);
+}
+
+function stopReviewPoll(): void {
+  if (reviewPollHandle) {
+    clearInterval(reviewPollHandle);
+    reviewPollHandle = null;
+  }
+  isWaitingReviewGrade.value = false;
+}
+
+async function pollReviewGrade(): Promise<void> {
+  if (currentAttemptId.value == null) return;
+  const rev = await getReview(currentAttemptId.value);
+  if (!rev) return;
+  if (rev.grade !== null) {
+    review.value = rev;
+    const passed = quiz.value?.gradepass != null ? rev.grade >= quiz.value.gradepass : true;
+    await handlePassedResult(passed);
+    stopReviewPoll();
+    $q.notify({
+      type: 'positive',
+      message: 'มีผลการตรวจแบบทดสอบแล้ว',
+      icon: 'emoji_events',
+      timeout: 4000,
+    });
+  }
+}
+
+function startReviewPoll(): void {
+  stopReviewPoll();
+  isWaitingReviewGrade.value = true;
+  reviewPollHandle = setInterval(() => void pollReviewGrade(), 30_000);
 }
 
 onMounted(() => {
@@ -811,6 +885,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopTimer();
+  stopReviewPoll();
   document.removeEventListener('visibilitychange', onVisibilityChange);
 });
 </script>
@@ -919,6 +994,10 @@ onUnmounted(() => {
   &--fail {
     background: rgba(193, 0, 21, 0.06);
     border-color: rgba(193, 0, 21, 0.18);
+  }
+  &--waiting {
+    background: rgba(251, 192, 45, 0.08);
+    border-color: rgba(251, 192, 45, 0.3);
   }
 }
 .summary-num {
