@@ -333,6 +333,38 @@
             </q-list>
           </q-expansion-item>
 
+          <!-- Generic Menu (Expansion) -->
+          <q-expansion-item
+            v-else-if="nav.children && nav.children.length > 0"
+            :icon="nav.icon"
+            :label="nav.label"
+            header-class="drawer-expansion-header"
+            class="drawer-expansion-item"
+            :model-value="nav.children.some((child) => activeNav === child.name)"
+          >
+            <q-list class="q-pl-sm">
+              <q-item
+                v-for="child in nav.children"
+                :key="child.name"
+                clickable
+                v-ripple
+                class="drawer-subitem"
+                :active="activeNav === child.name"
+                active-class="drawer-subitem--active"
+                @click="onNavClick(child)"
+              >
+                <q-item-section avatar v-if="child.icon" style="min-width: 36px">
+                  <q-icon :name="child.icon" size="sm" />
+                </q-item-section>
+                <q-item-section>
+                  <span class="drawer-subitem-label text-weight-medium">
+                    {{ child.label }}
+                  </span>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-expansion-item>
+
           <!-- Standard Item -->
           <q-item
             v-else
@@ -448,6 +480,7 @@ interface NavItem {
   icon: string;
   to?: string;
   link?: string;
+  children?: NavItem[];
 }
 
 const router = useRouter();
@@ -757,22 +790,29 @@ const navItems = computed<NavItem[]>(() => {
         to: '/finance/applicant-search',
       },
       {
-        name: 'finance-faculty-education-report',
-        label: t('finance.menu.educationReport'),
-        icon: 'school',
-        to: '/finance/faculty-education-report',
-      },
-      {
-        name: 'finance-receipt-summary',
-        label: t('finance.menu.receiptSummary'),
-        icon: 'receipt_long',
-        to: '/finance/receipt-summary',
-      },
-      {
-        name: 'finance-daily-report',
-        label: t('finance.menu.dailyReport'),
-        icon: 'account_balance_wallet',
-        to: '/finance/daily-report',
+        name: 'finance-reports',
+        label: 'รายงาน',
+        icon: 'analytics',
+        children: [
+          {
+            name: 'finance-daily-report',
+            label: t('finance.menu.dailyReport'),
+            icon: 'account_balance_wallet',
+            to: '/finance/daily-report',
+          },
+          {
+            name: 'finance-faculty-education-report',
+            label: t('finance.menu.educationReport'),
+            icon: 'school',
+            to: '/finance/faculty-education-report',
+          },
+          {
+            name: 'finance-receipt-summary',
+            label: t('finance.menu.receiptSummary'),
+            icon: 'receipt_long',
+            to: '/finance/receipt-summary',
+          },
+        ],
       },
     ];
   }
@@ -791,35 +831,36 @@ const navItems = computed<NavItem[]>(() => {
         icon: 'description',
         to: '/central-finance/fund-sources',
       },
-      // {
-      //   name: 'central-finance-transactions',
-      //   label: 'รายละเอียดรายการรับเงิน',
-      //   icon: 'gavel',
-      //   to: '/central-finance/transactions',
-      // },
       {
-        name: 'central-finance-faculty-revenue-report',
-        label: 'รายงานการจัดการศึกษาแยกตามคณะ/ส่วนงาน',
-        icon: 'school',
-        to: '/central-finance/faculty-revenue',
-      },
-      {
-        name: 'central-finance-daily-report',
-        label: 'รายงานการรับเงินประจำวัน',
-        icon: 'account_balance_wallet',
-        to: '/central-finance/daily-report',
-      },
-      {
-        name: 'central-finance-receipt-summary',
-        label: 'รายงานสรุปการรับเงินค่าลงทะเบียน ',
-        icon: 'receipt_long',
-        to: '/central-finance/receipt-summary',
-      },
-      {
-        name: 'central-finance-receipt-usage',
-        label: 'รายงานการใช้ใบเสร็จ',
-        icon: 'receipt',
-        to: '/central-finance/receipt-usage',
+        name: 'central-finance-reports',
+        label: 'รายงาน',
+        icon: 'analytics',
+        children: [
+          {
+            name: 'central-finance-faculty-revenue-report',
+            label: 'รายงานการจัดการศึกษาแยกตามคณะ/ส่วนงาน',
+            icon: 'school',
+            to: '/central-finance/faculty-revenue',
+          },
+          {
+            name: 'central-finance-daily-report',
+            label: 'รายงานการรับเงินประจำวัน',
+            icon: 'account_balance_wallet',
+            to: '/central-finance/daily-report',
+          },
+          {
+            name: 'central-finance-receipt-summary',
+            label: 'รายงานสรุปการรับเงินค่าลงทะเบียน ',
+            icon: 'receipt_long',
+            to: '/central-finance/receipt-summary',
+          },
+          {
+            name: 'central-finance-receipt-usage',
+            label: 'รายงานการใช้ใบเสร็จ',
+            icon: 'receipt',
+            to: '/central-finance/receipt-usage',
+          },
+        ],
       },
     ];
   }

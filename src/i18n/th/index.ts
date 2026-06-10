@@ -496,7 +496,7 @@ export default {
     educationReport: {
       title: 'รายงานการจัดศึกษาของคณะ',
       description: 'สรุปข้อมูลการจัดการเรียนการสอนและจำนวนผู้เรียนของคณะที่ฝ่ายการเงินดูแล',
-      scopeLabel: 'คณะที่แสดงผล',
+      scopeLabel: 'ข้อมูลที่แสดง',
       unknownFaculty: 'ไม่ระบุคณะ',
       eyebrow: 'Faculty Education Report',
     },
