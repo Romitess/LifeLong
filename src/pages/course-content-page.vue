@@ -10,11 +10,11 @@
 
     <!-- Content area -->
     <div class="content-area section-container">
-      <div class="content-card">
-        <header class="content-card__header">
+      <BaseContentCard>
+        <div class="row items-center q-gutter-sm content-card__header">
           <q-icon :name="headerIcon" size="26px" color="primary" />
-          <h1 class="content-card__title">{{ lessonTitle }}</h1>
-        </header>
+          <span class="text-h6 text-weight-bold text-grey-9">{{ lessonTitle }}</span>
+        </div>
 
         <!-- Loading -->
         <BaseSpinner v-if="loading" message="กำลังโหลดเนื้อหา..." />
@@ -22,7 +22,9 @@
         <!-- Error -->
         <div v-else-if="error" class="column items-center q-pa-xl text-center">
           <q-icon name="error_outline" size="48px" color="negative" />
-          <div class="text-subtitle1 text-weight-medium q-mt-md">โหลดเนื้อหาไม่สำเร็จ</div>
+          <div class="text-subtitle1 text-weight-medium text-grey-9 q-mt-md">
+            โหลดเนื้อหาไม่สำเร็จ
+          </div>
           <div class="text-body2 text-grey-7 q-mt-xs">{{ error }}</div>
           <BaseButton
             color="primary"
@@ -37,7 +39,7 @@
         <!-- Success -->
         <template v-else-if="content">
           <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify (safeHtml) -->
-          <div v-if="safeHtml" class="content-card__html" v-html="safeHtml" />
+          <div v-if="safeHtml" class="content-card__html text-grey-8" v-html="safeHtml" />
 
           <q-list v-if="content.contents.length" separator class="q-mt-md">
             <q-item-label header class="text-weight-bold">ไฟล์แนบ</q-item-label>
@@ -69,7 +71,7 @@
             <div class="text-body2 q-mt-md">{{ emptyText }}</div>
           </div>
         </template>
-      </div>
+      </BaseContentCard>
 
       <CourseActivityNavigation
         :course-id="courseId"
@@ -86,6 +88,7 @@ import { computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import DOMPurify from 'dompurify';
 import BaseButton from 'components/base/BaseButton.vue';
+import BaseContentCard from 'components/base/BaseContentCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import CourseActivityNavigation from 'components/course/CourseActivityNavigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
@@ -215,57 +218,43 @@ watch(
   padding-bottom: 64px;
 }
 
-.content-card {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  padding: 32px;
-
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  }
-
-  &__title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    line-height: 1.3;
-    margin: 0;
-    color: #1a1a1a;
-  }
-
-  &__html {
-    line-height: 1.7;
-    word-break: break-word;
-    color: #333;
-
-    :deep(img),
-    :deep(video),
-    :deep(iframe) {
-      max-width: 100%;
-      height: auto;
-    }
-
-    :deep(table) {
-      max-width: 100%;
-      border-collapse: collapse;
-    }
-
-    :deep(a) {
-      color: var(--q-primary);
-      word-break: break-all;
-    }
-  }
+.content-card__header {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
 }
 
-@media (max-width: 600px) {
-  .content-card {
-    padding: 20px;
+.content-card__html {
+  line-height: 1.7;
+  word-break: break-word;
+
+  // Normalize Moodle-sourced headings so they don't render at the browser
+  // default (huge) size inside our cards.
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4) {
+    margin: 16px 0 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  :deep(img),
+  :deep(video),
+  :deep(iframe) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  :deep(table) {
+    max-width: 100%;
+    border-collapse: collapse;
+  }
+
+  :deep(a) {
+    color: var(--q-primary);
+    word-break: break-all;
   }
 }
 </style>
