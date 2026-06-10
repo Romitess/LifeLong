@@ -78,5 +78,34 @@ export function useMoodleForum() {
     });
   }
 
-  return { loading, error, getForum, getDiscussion };
+  function replyToPost(
+    discussionId: number | string,
+    parentPostId: number,
+    message: string,
+  ): Promise<{ postId: number } | null> {
+    return run(async () => {
+      const { data } = await api.post<{ postId: number }>(
+        `/api/moodle/forum/discussion/${discussionId}/reply`,
+        { parentPostId, message },
+      );
+      return data;
+    });
+  }
+
+  function createDiscussion(
+    moodleCourseId: number | string,
+    moduleId: number | string,
+    subject: string,
+    message: string,
+  ): Promise<{ discussionId: number } | null> {
+    return run(async () => {
+      const { data } = await api.post<{ discussionId: number }>(
+        `/api/moodle/forum/${moodleCourseId}/module/${moduleId}/discussion`,
+        { subject, message },
+      );
+      return data;
+    });
+  }
+
+  return { loading, error, getForum, getDiscussion, replyToPost, createDiscussion };
 }

@@ -66,11 +66,84 @@
               <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify -->
               <div class="forum-html q-mt-sm" v-html="sanitize(post.message)" />
             </article>
+
+            <div v-if="canReplyThread" class="forum-reply q-mt-md">
+              <q-input
+                v-model="replyText"
+                type="textarea"
+                outlined
+                autogrow
+                label="เขียนตอบกลับ..."
+                :disable="loading"
+              />
+              <div class="row justify-end q-mt-sm">
+                <BaseButton
+                  color="primary"
+                  no-caps
+                  unelevated
+                  icon="send"
+                  label="ตอบกลับ"
+                  :loading="loading"
+                  :disable="!replyText.trim()"
+                  @click="submitReply"
+                />
+              </div>
+            </div>
           </div>
         </template>
 
         <!-- Discussion list -->
         <template v-else>
+          <div v-if="canCreateTopic" class="q-mb-md">
+            <BaseButton
+              v-if="!showNewTopic"
+              color="primary"
+              no-caps
+              unelevated
+              icon="add"
+              label="ตั้งกระทู้ใหม่"
+              @click="showNewTopic = true"
+            />
+            <div v-else class="forum-card">
+              <h2 class="forum-thread__subject">ตั้งกระทู้ใหม่</h2>
+              <q-input
+                v-model="newSubject"
+                outlined
+                label="หัวข้อ"
+                maxlength="255"
+                class="q-mb-sm"
+                :disable="loading"
+              />
+              <q-input
+                v-model="newMessage"
+                type="textarea"
+                outlined
+                autogrow
+                label="เนื้อหา"
+                :disable="loading"
+              />
+              <div class="row justify-end q-gutter-sm q-mt-sm">
+                <BaseButton
+                  flat
+                  no-caps
+                  label="ยกเลิก"
+                  :disable="loading"
+                  @click="showNewTopic = false"
+                />
+                <BaseButton
+                  color="primary"
+                  no-caps
+                  unelevated
+                  icon="send"
+                  label="โพสต์กระทู้"
+                  :loading="loading"
+                  :disable="!newSubject.trim() || !newMessage.trim()"
+                  @click="submitNewTopic"
+                />
+              </div>
+            </div>
+          </div>
+
           <div v-if="discussions.length === 0" class="forum-card text-grey-7 text-center q-py-lg">
             <q-icon name="forum" size="40px" color="grey-5" />
             <div class="q-mt-sm">ยังไม่มีกระทู้ในกระดานนี้</div>
@@ -129,11 +202,16 @@ import {
 
 const route = useRoute();
 const courseStore = useCourseStore();
-const { loading, error, getForum, getDiscussion } = useMoodleForum();
+const { loading, error, getForum, getDiscussion, replyToPost, createDiscussion } = useMoodleForum();
 
 const forum = ref<ForumInfo | null>(null);
 const discussions = ref<ForumDiscussionSummary[]>([]);
 const activeThread = ref<ForumDiscussionThread | null>(null);
+
+const replyText = ref('');
+const showNewTopic = ref(false);
+const newSubject = ref('');
+const newMessage = ref('');
 
 function queryStr(value: unknown): string {
   if (Array.isArray(value)) return String(value[0] ?? '');
@@ -165,6 +243,13 @@ const forumTitle = computed<string>(
 );
 const introHtml = computed(() => (forum.value?.intro ? sanitize(forum.value.intro) : ''));
 
+// News forums are announcement-only — students can't start discussions there.
+const canCreateTopic = computed<boolean>(() => !!forum.value && forum.value.type !== 'news');
+const rootPost = computed(
+  () => activeThread.value?.posts.find((p) => !p.hasParent) ?? activeThread.value?.posts[0] ?? null,
+);
+const canReplyThread = computed<boolean>(() => rootPost.value?.canReply === true);
+
 function sanitize(html: string | null): string {
   return html ? DOMPurify.sanitize(html, { ADD_ATTR: ['target'] }) : '';
 }
@@ -194,11 +279,43 @@ async function loadForum(): Promise<void> {
 
 async function openThread(discussion: ForumDiscussionSummary): Promise<void> {
   const thread = await getDiscussion(discussion.id);
-  if (thread) activeThread.value = thread;
+  if (thread) {
+    activeThread.value = thread;
+    replyText.value = '';
+  }
 }
 
 function closeThread(): void {
   activeThread.value = null;
+  replyText.value = '';
+}
+
+async function submitReply(): Promise<void> {
+  const thread = activeThread.value;
+  const parent = rootPost.value;
+  if (!thread || !parent || !replyText.value.trim()) return;
+  const result = await replyToPost(thread.discussionId, parent.id, replyText.value.trim());
+  if (!result) return;
+  replyText.value = '';
+  const refreshed = await getDiscussion(thread.discussionId);
+  if (refreshed) activeThread.value = refreshed;
+}
+
+async function submitNewTopic(): Promise<void> {
+  if (moodleCourseId.value == null || !moduleId.value) return;
+  if (!newSubject.value.trim() || !newMessage.value.trim()) return;
+  const result = await createDiscussion(
+    moodleCourseId.value,
+    moduleId.value,
+    newSubject.value.trim(),
+    newMessage.value.trim(),
+  );
+  if (!result) return;
+  showNewTopic.value = false;
+  newSubject.value = '';
+  newMessage.value = '';
+  await loadForum();
+  await openThread({ id: result.discussionId } as ForumDiscussionSummary);
 }
 
 onMounted(() => {
