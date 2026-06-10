@@ -32,6 +32,7 @@ export interface Course {
   price: number;
   isFree: boolean;
   views: number;
+  topEnrollmentRank?: number;
   status: CourseStatus;
   deliveryModes: DeliveryMode[];
   isActive: boolean;

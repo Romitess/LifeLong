@@ -47,6 +47,7 @@ interface BackendCourse {
   typestudyDetail?: { id: number; name: string | null } | null;
   maxSeats?: number | null;
   enrolledCount?: number | null;
+  topEnrollmentRank?: number | null;
   amount?: number | null;
   clickCount?: number | null;
   openclassId?: number | null;
@@ -184,6 +185,7 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     price: course.amount ?? 0,
     isFree: !course.amount,
     views: course.clickCount ?? 0,
+    ...(course.topEnrollmentRank ? { topEnrollmentRank: course.topEnrollmentRank } : {}),
     openclassId: course.openclassId ?? null,
     status: computedStatus,
     deliveryModes: mapDeliveryModes(course.typestudyDetail?.name),
@@ -365,12 +367,18 @@ export const useCourseStore = defineStore('course', {
     selectedCategory: string | null;
     backendCoursesLoaded: boolean;
     backendCoursesLoading: boolean;
+    topEnrolledCourses: Course[];
+    topEnrolledCoursesLoaded: boolean;
+    topEnrolledCoursesLoading: boolean;
   } => ({
     courses: [],
     courseDetails: {},
     selectedCategory: null,
     backendCoursesLoaded: false,
     backendCoursesLoading: false,
+    topEnrolledCourses: [],
+    topEnrolledCoursesLoaded: false,
+    topEnrolledCoursesLoading: false,
   }),
   actions: {
     setSelectedCategory(category: string | null) {
@@ -446,6 +454,33 @@ export const useCourseStore = defineStore('course', {
       })();
 
       return backendCoursesLoadPromise;
+    },
+    async fetchTopEnrolledCourses() {
+      if (this.topEnrolledCoursesLoaded) {
+        return;
+      }
+
+      this.topEnrolledCoursesLoading = true;
+      let succeeded = false;
+      try {
+        const { data } = await api.get<BackendCourseResponse | BackendCourse[]>(
+          '/api/moodle/courses/top-enrolled',
+        );
+        this.topEnrolledCourses = extractArrayPayload(data)
+          .map(mapBackendCourse)
+          .filter((course): course is Course => Boolean(course))
+          .slice(0, 10);
+        succeeded = true;
+      } catch (error) {
+        console.warn('Failed to fetch top enrolled courses', error);
+        this.topEnrolledCoursesLoaded = false;
+        throw error;
+      } finally {
+        if (succeeded) {
+          this.topEnrolledCoursesLoaded = true;
+        }
+        this.topEnrolledCoursesLoading = false;
+      }
     },
     async fetchInstructorCourses(email: string) {
       if (!email?.trim()) return;

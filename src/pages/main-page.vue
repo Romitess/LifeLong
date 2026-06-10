@@ -212,6 +212,148 @@
       <HomeMarquee />
     </div>
 
+    <section
+      v-if="!courseStore.selectedCategory"
+      class="top-courses-section q-py-xl"
+      aria-labelledby="top-courses-heading"
+    >
+      <div class="section-container">
+        <div
+          v-motion
+          :initial="headingRevealVariant().initial"
+          :visible-once="headingRevealVariant().visibleOnce"
+          class="top-courses-header"
+        >
+          <div class="top-courses-header__copy">
+            <span class="top-courses-kicker">
+              <q-icon name="leaderboard" size="18px" />
+              Top 10
+            </span>
+            <h2 id="top-courses-heading">วิชายอดฮิตจากยอดสมัครเรียน</h2>
+          </div>
+        </div>
+
+        <div v-if="isTopCoursesLoading" class="top-courses-loading">
+          <q-skeleton v-for="item in 5" :key="item" type="rect" class="top-course-skeleton" />
+        </div>
+
+        <div v-else-if="topCoursesError" class="top-courses-empty">
+          <q-icon name="cloud_off" size="2.4rem" />
+          <span>{{ topCoursesError }}</span>
+          <q-btn
+            flat
+            no-caps
+            color="primary"
+            label="ลองใหม่"
+            icon="refresh"
+            @click="fetchTopEnrolledCourses"
+          />
+        </div>
+
+        <div v-else-if="selectedTopCourse" class="top-course-preview">
+          <div class="top-course-preview__media">
+            <img
+              :src="getPreferredCourseImageUrl(selectedTopCourse.imageUrl)"
+              :alt="selectedTopCourse.title"
+            />
+            <span class="top-course-preview__rank">
+              #{{ selectedTopCourse.topEnrollmentRank ?? getTopCourseRank(selectedTopCourse) }}
+            </span>
+          </div>
+          <div class="top-course-preview__content">
+            <div class="top-course-preview__eyebrow">
+              <q-icon name="leaderboard" size="18px" />
+              อันดับ
+              {{ selectedTopCourse.topEnrollmentRank ?? getTopCourseRank(selectedTopCourse) }}
+            </div>
+            <h3>{{ selectedTopCourse.title }}</h3>
+            <p>{{ selectedTopCourse.faculty }}</p>
+            <div class="top-course-preview__facts">
+              <span>
+                <q-icon name="groups" size="17px" />
+                {{ formatLearnerCount(selectedTopCourse.enrolledCount) }}
+              </span>
+              <span>
+                <q-icon name="payments" size="17px" />
+                {{ formatTopCoursePrice(selectedTopCourse) }}
+              </span>
+              <span v-if="selectedTopCourse.totalHours">
+                <q-icon name="schedule" size="17px" />
+                {{ selectedTopCourse.totalHours }} ชั่วโมง
+              </span>
+              <span>
+                <q-icon name="event_available" size="17px" />
+                ถึง {{ selectedTopCourse.registrationEnd }}
+              </span>
+            </div>
+            <div class="top-course-preview__modes">
+              <span v-for="mode in selectedTopCourse.deliveryModes" :key="mode">
+                {{ mode }}
+              </span>
+            </div>
+            <div class="top-course-preview__actions">
+              <q-btn
+                unelevated
+                no-caps
+                color="primary"
+                icon-right="chevron_right"
+                label="ดูรายละเอียดเพิ่มเติม"
+                @click="onCourseClick(selectedTopCourse)"
+              />
+              <q-btn
+                flat
+                no-caps
+                color="secondary"
+                icon="apps"
+                label="กลับไปดู 10 อันดับ"
+                @click="showTopCourseList"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div
+          v-else-if="topEnrolledCourses.length > 0"
+          class="top-courses-rail"
+          @wheel="onTopCoursesWheel"
+        >
+          <button
+            v-for="(course, index) in topEnrolledCourses"
+            :key="course.id"
+            type="button"
+            class="top-course-card"
+            @click="selectTopCourse(course)"
+          >
+            <span
+              class="top-course-card__rank"
+              :class="{
+                'top-course-card__rank--double': (course.topEnrollmentRank ?? index + 1) >= 10,
+              }"
+            >
+              {{ course.topEnrollmentRank ?? index + 1 }}
+            </span>
+            <span class="top-course-card__poster">
+              <img :src="getPreferredCourseImageUrl(course.imageUrl)" :alt="course.title" />
+              <span class="top-course-card__shade" />
+              <span class="top-course-card__badge">
+                <q-icon name="groups" size="16px" />
+                {{ formatLearnerCount(course.enrolledCount) }}
+              </span>
+            </span>
+            <span class="top-course-card__body">
+              <span class="top-course-card__title">{{ course.title }}</span>
+              <span class="top-course-card__meta">{{ course.faculty }}</span>
+            </span>
+          </button>
+        </div>
+
+        <div v-else class="top-courses-empty">
+          <q-icon name="leaderboard" size="2.4rem" />
+          <span>ยังไม่มีข้อมูลการสมัครเรียน</span>
+        </div>
+      </div>
+    </section>
+
     <!-- ─── ACTIVE COURSES ─── -->
     <section class="courses-section courses-section--active q-py-xl">
       <div class="section-container">
@@ -371,6 +513,7 @@ import {
 import { useCourseList } from 'src/composables/use-course-list';
 import { useLearnerProgress } from 'src/composables/use-learner-progress';
 import { useAuthStore } from 'src/stores/auth-store';
+import { formatPriceLabel } from 'src/utils/course-format';
 import type { Course } from 'src/types/course';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
@@ -438,6 +581,9 @@ type HomeHeroSlide =
 const { courses, isLoading, error, activeCourses, fetchCourses } = useCourseList();
 
 const isCategoryLoading = ref(false);
+const isTopCoursesLoading = ref(false);
+const topCoursesError = ref<string | null>(null);
+const selectedTopCourse = ref<Course | null>(null);
 const heroTypedCharCounts = ref<number[]>([]);
 const heroTypingLineIndex = ref(-1);
 const isHeroTypingComplete = ref(false);
@@ -459,6 +605,60 @@ const categoryMap: Record<string, string> = {
 };
 function getPreferredCourseImageUrl(imageUrl?: string | null): string {
   return imageUrl?.trim() ? imageUrl : fallbackCourseImageUrl;
+}
+
+function formatLearnerCount(value?: number | null): string {
+  return `${new Intl.NumberFormat('th-TH').format(value ?? 0)} สมัคร`;
+}
+
+function formatTopCoursePrice(course: Course): string {
+  return formatPriceLabel(course, locale.value === 'th' ? 'th' : 'en');
+}
+
+function getTopCourseRank(course: Course): number {
+  const courseIndex = topEnrolledCourses.value.findIndex((candidate) => candidate.id === course.id);
+  return courseIndex >= 0 ? courseIndex + 1 : 1;
+}
+
+function selectTopCourse(course: Course): void {
+  selectedTopCourse.value = course;
+}
+
+function showTopCourseList(): void {
+  selectedTopCourse.value = null;
+}
+
+function onTopCoursesWheel(event: WheelEvent): void {
+  const rail = event.currentTarget;
+  if (!(rail instanceof HTMLElement) || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
+    return;
+  }
+
+  const maxScrollLeft = rail.scrollWidth - rail.clientWidth;
+  if (maxScrollLeft <= 0) {
+    return;
+  }
+
+  const isAtStart = rail.scrollLeft <= 0;
+  const isAtEnd = rail.scrollLeft >= maxScrollLeft - 1;
+  if ((event.deltaY < 0 && isAtStart) || (event.deltaY > 0 && isAtEnd)) {
+    return;
+  }
+
+  event.preventDefault();
+  rail.scrollBy({ left: event.deltaY, behavior: 'smooth' });
+}
+
+async function fetchTopEnrolledCourses(): Promise<void> {
+  isTopCoursesLoading.value = true;
+  topCoursesError.value = null;
+  try {
+    await courseStore.fetchTopEnrolledCourses();
+  } catch {
+    topCoursesError.value = 'ไม่สามารถโหลดอันดับวิชายอดฮิตได้';
+  } finally {
+    isTopCoursesLoading.value = false;
+  }
 }
 
 function createHeroAvatar(seed: string): string {
@@ -505,6 +705,8 @@ const displayedActiveCourses = computed(() => {
 const displayedAllCourses = computed(() => {
   return courses.value.slice(0, maxHomeItems.value);
 });
+
+const topEnrolledCourses = computed(() => courseStore.topEnrolledCourses.slice(0, 10));
 
 const stats = computed<HomeInfoItem[]>(() => [
   {
@@ -969,6 +1171,7 @@ function onCourseClick(course: Course): void {
 
 onMounted(() => {
   void fetchCourses();
+  void fetchTopEnrolledCourses();
   startHeroTyping();
   restartHeroSlideTimer();
 });
@@ -1957,6 +2160,350 @@ onBeforeUnmount(() => {
 }
 
 // ── Course Sections ───────────────────────────────────────────
+.top-courses-section {
+  background: transparent;
+  color: $secondary;
+  overflow: hidden;
+}
+
+.top-courses-section .section-container {
+  padding: clamp(18px, 2.4vw, 30px);
+  border: 1px solid rgba($primary, 0.1);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(255, 250, 238, 0.96) 0%, rgba(255, 255, 255, 0.98) 42%), #ffffff;
+  box-shadow:
+    0 0 0 1px rgba($primary, 0.04),
+    0 10px 28px rgba(17, 24, 39, 0.04);
+}
+
+.top-courses-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.top-courses-header__copy {
+  min-width: 0;
+}
+
+.top-courses-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: $primary;
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.top-courses-header h2 {
+  margin: 0;
+  color: $secondary;
+  font-size: clamp(1.55rem, 2.6vw, 2.35rem);
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.top-courses-rail,
+.top-courses-loading {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 330px);
+  gap: 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 2px 18px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: rgba($primary, 0.72) rgba($primary, 0.12);
+}
+
+.top-courses-rail::-webkit-scrollbar,
+.top-courses-loading::-webkit-scrollbar {
+  height: 8px;
+}
+
+.top-courses-rail::-webkit-scrollbar-track,
+.top-courses-loading::-webkit-scrollbar-track {
+  background: rgba($primary, 0.12);
+  border-radius: 999px;
+}
+
+.top-courses-rail::-webkit-scrollbar-thumb,
+.top-courses-loading::-webkit-scrollbar-thumb {
+  background: $primary;
+  border-radius: 999px;
+}
+
+.top-course-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-rows: minmax(168px, 1fr) auto;
+  gap: 0;
+  min-height: 248px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  scroll-snap-align: start;
+  text-align: left;
+  transform-origin: center;
+  transition:
+    transform 0.22s ease,
+    filter 0.22s ease;
+}
+
+.top-course-card:hover,
+.top-course-card:focus-visible {
+  transform: translateY(-6px) scale(1.02);
+  filter: drop-shadow(0 18px 26px rgba(245, 166, 35, 0.18));
+  outline: none;
+}
+
+.top-course-card__rank {
+  position: absolute;
+  z-index: 0;
+  right: calc(100% - 108px);
+  bottom: 48px;
+  color: rgba($primary, 0.1);
+  -webkit-text-stroke: 2.4px rgba($primary, 0.64);
+  font-size: clamp(7rem, 9.6vw, 9.4rem);
+  font-weight: 1000;
+  line-height: 0.78;
+  letter-spacing: 0;
+  opacity: 1;
+  pointer-events: none;
+  text-shadow: 0 10px 26px rgba($primary, 0.1);
+}
+
+.top-course-card__rank--double {
+  right: calc(100% - 156px);
+}
+
+.top-course-card__poster {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  display: block;
+  min-width: 0;
+  min-height: 168px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #26364d;
+  box-shadow:
+    0 16px 34px rgba(17, 24, 39, 0.1),
+    0 0 0 1px rgba($primary, 0.12);
+}
+
+.top-course-card__poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.32s ease;
+}
+
+.top-course-card:hover .top-course-card__poster img,
+.top-course-card:focus-visible .top-course-card__poster img {
+  transform: scale(1.08);
+}
+
+.top-course-card__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 42%, rgba(38, 54, 77, 0.74) 100%);
+}
+
+.top-course-card__badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: calc(100% - 20px);
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba($primary, 0.94);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.top-course-card__body {
+  grid-column: 2;
+  display: grid;
+  gap: 5px;
+  padding-top: 11px;
+  min-width: 0;
+}
+
+.top-course-card__title,
+.top-course-card__meta {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+}
+
+.top-course-card__title {
+  color: $secondary;
+  font-size: 0.98rem;
+  font-weight: 900;
+  line-height: 1.28;
+  -webkit-line-clamp: 2;
+}
+
+.top-course-card__meta {
+  color: rgba($secondary, 0.66);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.25;
+  -webkit-line-clamp: 1;
+}
+
+.top-course-preview {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: clamp(18px, 2.6vw, 30px);
+  align-items: stretch;
+  padding: clamp(16px, 2vw, 22px);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba($primary, 0.12);
+  box-shadow: inset 0 0 0 1px rgba($primary, 0.04);
+}
+
+.top-course-preview__media {
+  position: relative;
+  min-height: 220px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #26364d;
+  box-shadow:
+    0 16px 34px rgba(17, 24, 39, 0.12),
+    0 0 0 1px rgba($primary, 0.14);
+}
+
+.top-course-preview__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.top-course-preview__rank {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba($primary, 0.94);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.top-course-preview__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.top-course-preview__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-bottom: 10px;
+  color: $primary;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.top-course-preview__content h3 {
+  margin: 0;
+  color: $secondary;
+  font-size: clamp(1.35rem, 2.2vw, 2rem);
+  font-weight: 900;
+  line-height: 1.18;
+}
+
+.top-course-preview__content p {
+  margin: 9px 0 0;
+  color: rgba($secondary, 0.68);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.top-course-preview__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.top-course-preview__facts span,
+.top-course-preview__modes span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: rgba($primary, 0.1);
+  color: $secondary;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.top-course-preview__modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.top-course-preview__modes span {
+  background: rgba($secondary, 0.08);
+}
+
+.top-course-preview__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.top-courses-empty {
+  display: flex;
+  min-height: 150px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: rgba($secondary, 0.66);
+  text-align: center;
+}
+
+.top-course-skeleton {
+  height: 220px;
+  border-radius: 8px;
+  background: rgba($primary, 0.12);
+}
+
 .courses-section {
   padding: 16px 0 28px;
   background: transparent;
@@ -2333,6 +2880,58 @@ onBeforeUnmount(() => {
 
   .course-section-panel__header {
     gap: 12px;
+  }
+
+  .top-courses-header {
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .top-courses-rail,
+  .top-courses-loading {
+    grid-auto-columns: minmax(226px, 78vw);
+    gap: 14px;
+  }
+
+  .top-course-card {
+    grid-template-columns: 54px minmax(0, 1fr);
+    min-height: 218px;
+  }
+
+  .top-course-card__rank {
+    -webkit-text-stroke-width: 1.8px;
+    right: calc(100% - 82px);
+    bottom: 46px;
+    font-size: 6rem;
+  }
+
+  .top-course-card__rank--double {
+    right: calc(100% - 120px);
+  }
+
+  .top-course-card__poster {
+    min-height: 148px;
+  }
+
+  .top-course-preview {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 14px;
+  }
+
+  .top-course-preview__media {
+    min-height: 180px;
+  }
+
+  .top-course-preview__content h3 {
+    font-size: 1.24rem;
+  }
+
+  .top-course-preview__actions {
+    flex-direction: column;
+  }
+
+  .top-course-preview__actions .q-btn {
+    width: 100%;
   }
 }
 

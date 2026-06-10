@@ -28,6 +28,7 @@ interface ApiLltcourse {
   regStartDate: string | null;
   regEndDate: string | null;
   enrolledCount: number;
+  topEnrollmentRank?: number | null;
   clickCount?: number | null;
   openclassId?: number | null;
   facultyName?: string | null;
@@ -82,6 +83,7 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     price: amount,
     isFree: amount === 0,
     views: raw.clickCount ?? 0,
+    ...(raw.topEnrollmentRank ? { topEnrollmentRank: raw.topEnrollmentRank } : {}),
     openclassId: raw.openclassId ?? null,
     status: computedStatus,
     deliveryModes: mapDeliveryModes(raw.typestudyDetail?.name),
