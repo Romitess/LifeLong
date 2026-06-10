@@ -53,22 +53,24 @@
 
               <template v-else-if="isTextArea(item)">
                 <q-input
-                  v-model="answers[item.id]"
+                  :model-value="textValue(item.id)"
                   type="textarea"
                   outlined
                   autogrow
                   :label="plainLabel(item)"
                   :rules="item.required ? [requiredRule] : []"
+                  @update:model-value="(val) => setTextValue(item.id, val)"
                 />
               </template>
 
               <template v-else-if="isTextInput(item)">
                 <q-input
-                  v-model="answers[item.id]"
+                  :model-value="textValue(item.id)"
                   :type="item.typ === 'numeric' ? 'number' : 'text'"
                   outlined
                   :label="plainLabel(item)"
                   :rules="item.required ? [requiredRule] : []"
+                  @update:model-value="(val) => setTextValue(item.id, val)"
                 />
               </template>
 
@@ -186,6 +188,15 @@ function plainLabel(item: FeedbackItem): string {
   const html = item.label || item.name || 'คำถาม';
   const doc = new DOMParser().parseFromString(sanitize(html), 'text/html');
   return doc.body.textContent?.trim() || 'คำถาม';
+}
+
+function textValue(id: number): string {
+  const value = answers[id];
+  return typeof value === 'string' ? value : '';
+}
+
+function setTextValue(id: number, value: string | number | null): void {
+  answers[id] = value == null ? '' : String(value);
 }
 
 function isStaticItem(item: FeedbackItem): boolean {
