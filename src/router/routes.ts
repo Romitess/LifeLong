@@ -33,6 +33,10 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/course-moodle-feedback-page.vue'),
       },
       {
+        path: 'course/:id/moodle-forum/:moduleId',
+        component: () => import('pages/course-moodle-forum-page.vue'),
+      },
+      {
         path: 'course/:id/moodle-unsupported/:moduleId',
         component: () => import('pages/course-moodle-unsupported-page.vue'),
       },

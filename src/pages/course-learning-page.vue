@@ -433,6 +433,15 @@ const navigateToLesson = async (lesson: Lesson): Promise<void> => {
     return;
   }
 
+  // Moodle forum → native in-app discussion board (list + thread)
+  if (lesson.moodleModuleId && lesson.moodleModname === 'forum' && resolvedMoodleCourseId.value) {
+    await router.push({
+      path: `/course/${courseIdValue}/moodle-forum/${lesson.moodleModuleId}`,
+      query: { title: lesson.title, moodleCourseId: String(resolvedMoodleCourseId.value) },
+    });
+    return;
+  }
+
   // Content-type modules → dedicated in-app content page (native render, no Moodle redirect)
   if (
     lesson.moodleModuleId &&
