@@ -122,10 +122,14 @@
                       <q-icon name="subdirectory_arrow_right" size="18px" color="amber-8" />
                     </q-item-section>
                     <q-item-section>
-                      <q-item-label class="subsection-title-text">{{ sub.title }}</q-item-label>
+                      <q-item-label class="subsection-title-text text-grey-9 text-weight-medium">{{
+                        sub.title
+                      }}</q-item-label>
                     </q-item-section>
                     <q-item-section side>
-                      <span class="subsection-count">{{ sub.lessons.length }} รายการ</span>
+                      <span class="subsection-count text-grey-6"
+                        >{{ sub.lessons.length }} รายการ</span
+                      >
                     </q-item-section>
                   </template>
 
@@ -577,19 +581,16 @@ $sidebar-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     padding-right: 10px;
   }
   .subsection-title-text {
-    font-weight: 600;
     font-size: 0.9rem;
-    color: #1a1a1a;
   }
   .subsection-count {
     font-size: 0.72rem;
-    color: #999;
     white-space: nowrap;
   }
   .subsection-empty {
     padding: 6px 24px 12px 46px;
     font-size: 0.82rem;
-    color: #aaa;
+    color: rgba(15, 23, 42, 0.45);
   }
   .lesson-row--nested {
     padding-left: 40px !important;
