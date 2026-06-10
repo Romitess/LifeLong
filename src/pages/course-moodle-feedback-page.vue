@@ -65,7 +65,6 @@
                   :model-value="textValue(item.id)"
                   type="textarea"
                   outlined
-                  rounded
                   autogrow
                   :label="plainLabel(item)"
                   :rules="item.required ? [requiredRule] : []"
@@ -78,7 +77,6 @@
                   :model-value="textValue(item.id)"
                   :type="item.typ === 'numeric' ? 'number' : 'text'"
                   outlined
-                  rounded
                   :label="plainLabel(item)"
                   :rules="item.required ? [requiredRule] : []"
                   @update:model-value="(val) => setTextValue(item.id, val)"

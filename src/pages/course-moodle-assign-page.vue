@@ -129,7 +129,6 @@
             v-model="onlineText"
             type="textarea"
             outlined
-            rounded
             autogrow
             label="คำตอบ (ข้อความ)"
             class="q-mb-md"
@@ -140,7 +139,6 @@
             v-if="assign.fileSubmission"
             v-model="file"
             outlined
-            rounded
             label="แนบไฟล์"
             class="q-mb-md"
             clearable

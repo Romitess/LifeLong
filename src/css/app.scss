@@ -107,6 +107,14 @@ body .q-btn--flat .q-focus-helper {
   background: rgb(15, 23, 42) !important;
 }
 
+// Input/field ขอบมน 12px ให้เท่ากับปุ่ม/การ์ด/admin ทั้งระบบ
+// (เลี่ยง pill 28px ของ prop `rounded` ที่มนเกิน)
+.q-field--outlined .q-field__control,
+.q-field--outlined .q-field__control::before,
+.q-field--outlined .q-field__control::after {
+  border-radius: 12px;
+}
+
 // ข้อยกเว้นสำหรับปุ่มในปฏิทิน (Reset Calendar Buttons)
 .q-date .q-btn {
   border: none !important;

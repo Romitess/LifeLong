@@ -85,7 +85,6 @@
                 v-model="replyText"
                 type="textarea"
                 outlined
-                rounded
                 autogrow
                 label="เขียนตอบกลับ..."
                 :disable="loading"
@@ -123,7 +122,6 @@
               <q-input
                 v-model="newSubject"
                 outlined
-                rounded
                 label="หัวข้อ"
                 maxlength="255"
                 class="q-mb-sm"
@@ -133,7 +131,6 @@
                 v-model="newMessage"
                 type="textarea"
                 outlined
-                rounded
                 autogrow
                 label="เนื้อหา"
                 :disable="loading"
