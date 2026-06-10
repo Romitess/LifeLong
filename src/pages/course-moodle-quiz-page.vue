@@ -931,12 +931,12 @@ onUnmounted(() => {
   border: 1.5px solid rgba(0, 0, 0, 0.18);
   font-weight: 600;
   font-size: 0.85rem;
-  color: #555;
+  color: rgba(15, 23, 42, 0.6);
 
   &--answered {
     background: var(--q-primary);
     border-color: var(--q-primary);
-    color: #1a1a1a;
+    color: rgba(15, 23, 42, 0.85);
   }
 }
 
@@ -1029,21 +1029,21 @@ onUnmounted(() => {
     .no {
       font-size: 0.72rem;
       font-weight: 700;
-      color: #888;
+      color: rgba(15, 23, 42, 0.5);
       margin: 0;
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
     .state {
       font-size: 0.72rem;
-      color: #888;
+      color: rgba(15, 23, 42, 0.5);
       background: rgba(0, 0, 0, 0.04);
       border-radius: 20px;
       padding: 2px 10px;
     }
     .grade {
       font-size: 0.72rem;
-      color: #aaa;
+      color: rgba(15, 23, 42, 0.45);
     }
     // Flag control: checkbox(hidden) + label. Clicking the label toggles the
     // checkbox natively, which is serialized to Moodle on the next save. Moodle's
@@ -1061,7 +1061,7 @@ onUnmounted(() => {
       align-items: center;
       gap: 4px;
       font-size: 0.78rem;
-      color: #999;
+      color: rgba(15, 23, 42, 0.5);
       cursor: pointer;
       margin: 0;
       user-select: none;
@@ -1155,7 +1155,7 @@ onUnmounted(() => {
   :deep(.specificfeedback),
   :deep(.generalfeedback) {
     font-size: 0.9rem;
-    color: #444;
+    color: rgba(15, 23, 42, 0.7);
     line-height: 1.6;
   }
   :deep(.rightanswer) {
@@ -1168,7 +1168,7 @@ onUnmounted(() => {
   }
   :deep(.feedback) {
     font-size: 0.9rem;
-    color: #555;
+    color: rgba(15, 23, 42, 0.6);
     font-style: italic;
   }
   // Left border accent on the question card by result
