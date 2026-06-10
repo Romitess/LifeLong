@@ -80,16 +80,15 @@ function cellAriaLabel(q: QuizSummaryQuestion): string {
 
 <style lang="scss" scoped>
 .quiz-nav {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 12px;
   padding: 20px;
 
   &__title {
     font-size: 0.9rem;
     font-weight: 700;
-    color: #1a1a1a;
+    color: rgba(15, 23, 42, 0.85);
     margin-bottom: 14px;
   }
 
@@ -104,10 +103,10 @@ function cellAriaLabel(q: QuizSummaryQuestion): string {
     position: relative;
     aspect-ratio: 1;
     min-height: 40px;
-    border: 1.5px solid rgba(0, 0, 0, 0.18);
+    border: 1.5px solid rgba(15, 23, 42, 0.18);
     border-radius: 10px;
     background: #fff;
-    color: #555;
+    color: rgba(15, 23, 42, 0.6);
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
@@ -131,7 +130,7 @@ function cellAriaLabel(q: QuizSummaryQuestion): string {
     &--answered {
       background: var(--q-primary);
       border-color: var(--q-primary);
-      color: #1a1a1a;
+      color: rgba(15, 23, 42, 0.85);
     }
 
     // Current question: strong ring
@@ -158,7 +157,7 @@ function cellAriaLabel(q: QuizSummaryQuestion): string {
     gap: 12px;
     margin-bottom: 16px;
     font-size: 0.72rem;
-    color: #888;
+    color: rgba(15, 23, 42, 0.55);
   }
   &__legend-item {
     display: inline-flex;
@@ -169,7 +168,7 @@ function cellAriaLabel(q: QuizSummaryQuestion): string {
     width: 12px;
     height: 12px;
     border-radius: 4px;
-    border: 1.5px solid rgba(0, 0, 0, 0.18);
+    border: 1.5px solid rgba(15, 23, 42, 0.18);
     background: #fff;
     &--answered {
       background: var(--q-primary);

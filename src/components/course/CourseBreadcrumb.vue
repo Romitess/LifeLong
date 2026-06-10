@@ -49,7 +49,7 @@ withDefaults(defineProps<Props>(), { current: '' });
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #6b7280;
+  color: rgba(15, 23, 42, 0.55);
   text-decoration: none;
   padding: 4px 6px;
   border-radius: 6px;
@@ -61,13 +61,13 @@ withDefaults(defineProps<Props>(), { current: '' });
   }
 
   &--current {
-    color: #1a1a1a;
+    color: rgba(15, 23, 42, 0.85);
     font-weight: 700;
     cursor: default;
 
     &:hover {
       background: transparent;
-      color: #1a1a1a;
+      color: rgba(15, 23, 42, 0.85);
     }
   }
 }

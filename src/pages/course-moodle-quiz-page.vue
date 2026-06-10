@@ -994,7 +994,11 @@ onUnmounted(() => {
     border-left-color: var(--q-warning);
   }
   :deep(.que.notanswered) {
-    border-left-color: rgba(15, 23, 42, 0.25);
+    border-left-color: rgba(15, 23, 42, 0.4);
+  }
+  :deep(.que.notanswered .state) {
+    color: rgba(15, 23, 42, 0.6);
+    background: rgba(15, 23, 42, 0.06);
   }
   :deep(.que.correct .state) {
     color: var(--q-positive);

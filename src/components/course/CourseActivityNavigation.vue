@@ -297,7 +297,7 @@ watch(
 .activity-nav__label {
   font-size: 0.7rem;
   font-weight: 700;
-  color: #777;
+  color: rgba(15, 23, 42, 0.5);
   text-transform: uppercase;
   letter-spacing: 0;
 }
@@ -307,7 +307,7 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #222;
+  color: rgba(15, 23, 42, 0.85);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -351,7 +351,7 @@ watch(
 
 .activity-nav__item-icon {
   min-width: 34px;
-  color: #555;
+  color: rgba(15, 23, 42, 0.6);
 }
 
 .activity-nav__item-title {
@@ -362,7 +362,7 @@ watch(
 }
 
 :deep(.activity-nav__item--active) {
-  color: #1a1a1a;
+  color: rgba(15, 23, 42, 0.85);
   background: rgba(247, 208, 70, 0.16);
   border-radius: 8px;
 }
