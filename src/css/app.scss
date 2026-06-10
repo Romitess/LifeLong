@@ -87,10 +87,10 @@ body .q-btn {
   border: 1px solid rgba(17, 24, 39, 0.12) !important;
   box-shadow: none !important; // ปิดเงาเดิมเพื่อให้ขอบชัด
 
-  // สถานะตอนเอาเมาส์ชี้ (Hover): เด้งเฉพาะปุ่มที่กดได้ (ไม่ disabled)
+  // สถานะ Hover: ยก + เงานุ่ม เหมือนกันทุกปุ่ม (primary/secondary ต่างแค่สี)
+  // ไม่เปลี่ยนขอบเป็นสีส้ม เพื่อไม่ให้ปุ่ม solid/secondary hover แปลกๆ
   &:not(:disabled):not(.disabled):hover {
     transform: translateY(-4px) !important;
-    border-color: rgba($primary, 0.6) !important;
     box-shadow: 0 16px 32px rgba(17, 24, 39, 0.12) !important;
   }
 

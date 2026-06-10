@@ -59,20 +59,22 @@
             <q-item-section side>
               <BaseButton
                 v-if="a.state === 'finished'"
-                flat
+                outline
                 dense
                 no-caps
                 color="primary"
+                class="bg-white"
                 icon="visibility"
                 label="ดูผล"
                 @click="openReview(a.id)"
               />
               <BaseButton
                 v-else
-                flat
+                outline
                 dense
                 no-caps
                 color="deep-orange"
+                class="bg-white"
                 icon="play_arrow"
                 label="ทำต่อ"
                 @click="resume(a)"
@@ -294,7 +296,7 @@
           <div
             v-for="q in review.questions"
             :key="q.slot"
-            class="quiz-question quiz-html q-mb-lg"
+            class="quiz-question quiz-html quiz-question--review q-mb-lg"
             v-html="sanitize(q.html)"
           />
           <!-- eslint-disable-line vue/no-v-html -->
@@ -865,6 +867,14 @@ onUnmounted(() => {
   padding-bottom: 64px;
 }
 
+// Flag control is meaningless on the review (เฉลย) screen — the attempt is
+// already submitted, so hide it there.
+.quiz-question--review {
+  :deep(.questionflag) {
+    display: none;
+  }
+}
+
 .quiz-score {
   text-align: center;
   padding: 20px;
@@ -966,7 +976,37 @@ onUnmounted(() => {
   :deep(legend) {
     padding: 0 6px;
     font-size: 0.85rem;
-    color: var(--q-primary);
+    font-weight: 600;
+  }
+  // Review screen: colour each question by its Moodle grading state
+  // (verified classes: que.correct / .incorrect / .partiallycorrect / .notanswered).
+  :deep(.que) {
+    border-left: 3px solid transparent;
+    padding-left: 14px;
+  }
+  :deep(.que.correct) {
+    border-left-color: var(--q-positive);
+  }
+  :deep(.que.incorrect) {
+    border-left-color: var(--q-negative);
+  }
+  :deep(.que.partiallycorrect) {
+    border-left-color: var(--q-warning);
+  }
+  :deep(.que.notanswered) {
+    border-left-color: rgba(15, 23, 42, 0.25);
+  }
+  :deep(.que.correct .state) {
+    color: var(--q-positive);
+    background: rgba(33, 186, 69, 0.12);
+  }
+  :deep(.que.incorrect .state) {
+    color: var(--q-negative);
+    background: rgba(193, 0, 21, 0.1);
+  }
+  :deep(.que.partiallycorrect .state) {
+    color: var(--q-warning);
+    background: rgba(242, 192, 55, 0.18);
   }
   // Moodle question info bar (Question N / state / flag).
   // Render it as a clean header row and CONSTRAIN the flag image — the raw

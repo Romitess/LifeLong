@@ -52,21 +52,16 @@ withDefaults(defineProps<Props>(), {
     letter-spacing: 0.02em;
   }
 
-  // 2. Hover effect: Lift up and show border
+  // 2. Hover effect: lift + soft shadow (เหมือนกันทุกปุ่ม ไม่เปลี่ยนขอบเป็นสีส้ม)
   &--hover-lift {
     &:hover {
       transform: translateY(-4px);
-      box-shadow: 0 12px 24px rgba(245, 166, 35, 0.2) !important;
-      border-color: $primary !important; // ขอบจะชัดขึ้นและเป็นสีทองเมื่อ Hover
-
-      &.bg-white {
-        border-color: $primary !important;
-      }
+      box-shadow: 0 12px 24px rgba(17, 24, 39, 0.12) !important;
     }
 
     &:active {
       transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(245, 166, 35, 0.15) !important;
+      box-shadow: 0 4px 8px rgba(17, 24, 39, 0.1) !important;
     }
   }
 }
