@@ -65,6 +65,7 @@
                   :model-value="textValue(item.id)"
                   type="textarea"
                   outlined
+                  rounded
                   autogrow
                   :label="plainLabel(item)"
                   :rules="item.required ? [requiredRule] : []"
@@ -77,6 +78,7 @@
                   :model-value="textValue(item.id)"
                   :type="item.typ === 'numeric' ? 'number' : 'text'"
                   outlined
+                  rounded
                   :label="plainLabel(item)"
                   :rules="item.required ? [requiredRule] : []"
                   @update:model-value="(val) => setTextValue(item.id, val)"
@@ -291,6 +293,22 @@ onMounted(() => {
 
   :deep(p) {
     margin: 0 0 8px;
+  }
+
+  // Normalize Moodle-sourced headings so they don't render huge in our cards.
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4) {
+    margin: 14px 0 6px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  :deep(img) {
+    max-width: 100%;
+    height: auto;
   }
 }
 

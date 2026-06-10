@@ -17,6 +17,7 @@ withDefaults(defineProps<Props>(), { padding: 'lg' });
 
 <style lang="scss" scoped>
 .base-content-card {
+  overflow: hidden;
   background: #fff;
   border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 12px;

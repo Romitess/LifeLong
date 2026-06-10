@@ -10,9 +10,9 @@
     <div class="content-area section-container">
       <BaseSpinner v-if="loading && !assign" message="กำลังโหลดงาน..." />
 
-      <div v-else-if="error && !assign" class="assign-card column items-center text-center q-py-xl">
+      <BaseContentCard v-else-if="error && !assign" class="column items-center text-center q-py-xl">
         <q-icon name="error_outline" size="48px" color="negative" />
-        <div class="text-subtitle1 text-weight-medium q-mt-md">โหลดงานไม่สำเร็จ</div>
+        <div class="text-subtitle1 text-weight-medium text-grey-9 q-mt-md">โหลดงานไม่สำเร็จ</div>
         <div class="text-body2 text-grey-7 q-mt-xs">{{ error }}</div>
         <BaseButton
           color="primary"
@@ -22,15 +22,15 @@
           class="q-mt-lg"
           @click="load"
         />
-      </div>
+      </BaseContentCard>
 
       <template v-else-if="assign && submission">
         <!-- Assignment brief -->
-        <div class="assign-card q-mb-md">
-          <header class="assign-card__header">
+        <BaseContentCard class="q-mb-md">
+          <div class="row items-center q-gutter-sm q-mb-md">
             <q-icon name="assignment" size="26px" color="primary" />
-            <h1 class="assign-card__title">{{ assign.name }}</h1>
-          </header>
+            <span class="text-h6 text-weight-bold text-grey-9">{{ assign.name }}</span>
+          </div>
 
           <div class="row q-gutter-sm q-mb-md">
             <q-chip v-if="assign.duedate" dense icon="event" color="grey-2" text-color="grey-8">
@@ -66,14 +66,14 @@
               </q-item>
             </q-list>
           </div>
-        </div>
+        </BaseContentCard>
 
         <!-- Graded feedback -->
-        <div
+        <BaseContentCard
           v-if="submission.grade != null || submission.feedback"
-          class="assign-card assign-card--graded q-mb-md"
+          class="bg-green-1 q-mb-md"
         >
-          <div class="text-h6 text-weight-bold q-mb-sm">
+          <div class="text-h6 text-weight-bold text-grey-9 q-mb-sm">
             <q-icon name="emoji_events" color="positive" class="q-mr-xs" />ผลการตรวจ
           </div>
           <div v-if="submission.grade != null" class="text-h5 text-primary text-weight-bold">
@@ -84,30 +84,22 @@
           </div>
           <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify -->
           <div v-if="feedbackHtml" class="assign-html q-mt-sm" v-html="feedbackHtml" />
-        </div>
+        </BaseContentCard>
 
         <!-- Auto-mark result banner -->
-        <q-banner
-          v-if="assignPassed === true"
-          rounded
-          class="assign-banner assign-banner--ok q-mb-md"
-        >
+        <q-banner v-if="assignPassed === true" rounded class="bg-green-1 text-grey-9 q-mb-md">
           <template #avatar><q-icon name="check_circle" color="positive" /></template>
           <span class="text-weight-medium">ระบบบันทึกความคืบหน้าเรียบร้อยแล้ว</span>
         </q-banner>
-        <q-banner
-          v-else-if="assignPassed === false"
-          rounded
-          class="assign-banner assign-banner--fail q-mb-md"
-        >
+        <q-banner v-else-if="assignPassed === false" rounded class="bg-red-1 text-grey-9 q-mb-md">
           <template #avatar><q-icon name="cancel" color="negative" /></template>
           <span class="text-weight-medium">ยังไม่ผ่านเกณฑ์การส่งงาน</span>
           <br />ระบบยังไม่บันทึกความคืบหน้า กรุณาตรวจสอบเงื่อนไขและลองใหม่อีกครั้ง
         </q-banner>
 
         <!-- Current submission (read) -->
-        <div v-if="hasSubmittedContent" class="assign-card q-mb-md">
-          <div class="text-subtitle1 text-weight-bold q-mb-sm">งานที่ส่งแล้ว</div>
+        <BaseContentCard v-if="hasSubmittedContent" class="q-mb-md">
+          <div class="text-subtitle1 text-weight-bold text-grey-9 q-mb-sm">งานที่ส่งแล้ว</div>
           <!-- eslint-disable-next-line vue/no-v-html -- sanitized via DOMPurify -->
           <div v-if="submittedTextHtml" class="assign-html" v-html="submittedTextHtml" />
           <q-list v-if="submission.files.length" dense class="q-mt-sm">
@@ -121,14 +113,14 @@
               /></q-item-section>
             </q-item>
           </q-list>
-        </div>
+        </BaseContentCard>
 
         <!-- Submission form -->
-        <div v-if="assign.noSubmissions" class="assign-card text-grey-7">
+        <BaseContentCard v-if="assign.noSubmissions" class="text-grey-7">
           งานนี้ไม่รับการส่งผ่านระบบออนไลน์ (ส่งตามที่อาจารย์กำหนด)
-        </div>
-        <div v-else-if="submission.canEdit" class="assign-card">
-          <div class="text-subtitle1 text-weight-bold q-mb-md">
+        </BaseContentCard>
+        <BaseContentCard v-else-if="submission.canEdit">
+          <div class="text-subtitle1 text-weight-bold text-grey-9 q-mb-md">
             {{ hasSubmittedContent ? 'แก้ไขงานที่ส่ง' : 'ส่งงาน' }}
           </div>
 
@@ -137,6 +129,7 @@
             v-model="onlineText"
             type="textarea"
             outlined
+            rounded
             autogrow
             label="คำตอบ (ข้อความ)"
             class="q-mb-md"
@@ -147,6 +140,7 @@
             v-if="assign.fileSubmission"
             v-model="file"
             outlined
+            rounded
             label="แนบไฟล์"
             class="q-mb-md"
             clearable
@@ -156,7 +150,7 @@
           </q-file>
 
           <BaseButton
-            color="positive"
+            color="primary"
             no-caps
             unelevated
             icon="send"
@@ -165,10 +159,10 @@
             :disable="!canSubmitNow"
             @click="confirmSubmit = true"
           />
-        </div>
-        <div v-else class="assign-card text-grey-7">
+        </BaseContentCard>
+        <BaseContentCard v-else class="text-grey-7">
           <q-icon name="lock" class="q-mr-xs" />ไม่สามารถส่ง/แก้ไขงานได้ในขณะนี้
-        </div>
+        </BaseContentCard>
 
         <CourseActivityNavigation
           :course-id="courseId"
@@ -190,7 +184,7 @@
           <BaseButton
             unelevated
             no-caps
-            color="positive"
+            color="primary"
             label="ส่งงาน"
             :loading="loading"
             @click="submit"
@@ -207,6 +201,7 @@ import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import DOMPurify from 'dompurify';
 import BaseButton from 'components/base/BaseButton.vue';
+import BaseContentCard from 'components/base/BaseContentCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import CourseActivityNavigation from 'components/course/CourseActivityNavigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
@@ -421,46 +416,19 @@ onMounted(() => {
   padding-top: 40px;
   padding-bottom: 64px;
 }
-.assign-card {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  padding: 28px;
-
-  &--graded {
-    background: rgba(33, 186, 69, 0.04);
-    border-color: rgba(33, 186, 69, 0.2);
-  }
-
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  &__title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    line-height: 1.3;
-    margin: 0;
-    color: #1a1a1a;
-  }
-}
-.assign-banner {
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  &--ok {
-    background: rgba(33, 186, 69, 0.06);
-  }
-  &--fail {
-    background: rgba(193, 0, 21, 0.06);
-    border-color: rgba(193, 0, 21, 0.18);
-  }
-}
 .assign-html {
   line-height: 1.7;
   word-break: break-word;
 
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4) {
+    margin: 14px 0 6px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
   :deep(img),
   :deep(video) {
     max-width: 100%;
@@ -469,11 +437,6 @@ onMounted(() => {
   :deep(a) {
     color: var(--q-primary);
     word-break: break-all;
-  }
-}
-@media (max-width: 600px) {
-  .assign-card {
-    padding: 20px;
   }
 }
 </style>

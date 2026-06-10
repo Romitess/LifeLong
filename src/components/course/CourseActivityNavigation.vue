@@ -179,6 +179,22 @@ async function goTo(lesson: Lesson | null): Promise<void> {
     return;
   }
 
+  if (lesson.moodleModuleId && lesson.moodleModname === 'feedback' && props.moodleCourseId) {
+    await router.push({
+      path: `/course/${props.courseId}/moodle-feedback/${lesson.moodleModuleId}`,
+      query: { title: lesson.title, moodleCourseId: String(props.moodleCourseId) },
+    });
+    return;
+  }
+
+  if (lesson.moodleModuleId && lesson.moodleModname === 'forum' && props.moodleCourseId) {
+    await router.push({
+      path: `/course/${props.courseId}/moodle-forum/${lesson.moodleModuleId}`,
+      query: { title: lesson.title, moodleCourseId: String(props.moodleCourseId) },
+    });
+    return;
+  }
+
   if (
     lesson.moodleModuleId &&
     lesson.moodleModname &&

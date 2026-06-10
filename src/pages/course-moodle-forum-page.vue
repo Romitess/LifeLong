@@ -54,7 +54,6 @@
             <div class="text-h6 text-weight-bold text-grey-9 q-mb-md">
               {{ activeThread.subject }}
             </div>
-            <BaseSpinner v-if="loading" message="กำลังโหลดกระทู้..." />
             <template v-for="(post, idx) in activeThread.posts" :key="post.id">
               <q-separator v-if="idx > 0" class="q-my-md" />
               <article
@@ -86,6 +85,7 @@
                 v-model="replyText"
                 type="textarea"
                 outlined
+                rounded
                 autogrow
                 label="เขียนตอบกลับ..."
                 :disable="loading"
@@ -123,6 +123,7 @@
               <q-input
                 v-model="newSubject"
                 outlined
+                rounded
                 label="หัวข้อ"
                 maxlength="255"
                 class="q-mb-sm"
@@ -132,6 +133,7 @@
                 v-model="newMessage"
                 type="textarea"
                 outlined
+                rounded
                 autogrow
                 label="เนื้อหา"
                 :disable="loading"
@@ -358,6 +360,23 @@ onMounted(() => {
 
   :deep(p) {
     margin: 0 0 8px;
+  }
+
+  // Normalize headings that come from Moodle HTML so they don't render
+  // at the browser default (huge) size inside our cards.
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4) {
+    margin: 14px 0 6px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  :deep(img) {
+    max-width: 100%;
+    height: auto;
   }
 }
 
