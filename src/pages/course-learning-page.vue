@@ -174,7 +174,7 @@
                           :outline="!lesson.isCompleted"
                           :color="lesson.isCompleted ? 'positive' : 'grey-7'"
                           :icon="lesson.isCompleted ? 'check_circle' : 'check_circle_outline'"
-                          :label="lesson.isCompleted ? 'เสร็จแล้ว' : 'ทำเสร็จแล้ว'"
+                          :label="lesson.isCompleted ? 'เสร็จแล้ว' : 'ทำเครื่องหมายว่าเสร็จแล้ว'"
                           no-caps
                           dense
                           class="mark-done-btn"
@@ -242,7 +242,7 @@
                         :outline="!lesson.isCompleted"
                         :color="lesson.isCompleted ? 'positive' : 'grey-7'"
                         :icon="lesson.isCompleted ? 'check_circle' : 'check_circle_outline'"
-                        :label="lesson.isCompleted ? 'เสร็จแล้ว' : 'ทำเสร็จแล้ว'"
+                        :label="lesson.isCompleted ? 'เสร็จแล้ว' : 'ทำเครื่องหมายว่าเสร็จแล้ว'"
                         no-caps
                         dense
                         class="mark-done-btn"
