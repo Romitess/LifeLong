@@ -186,11 +186,12 @@
           </div>
 
           <div v-else class="pending-list">
-            <div
+            <a
               v-for="req in pendingRequests"
               :key="req.id"
               class="pending-item"
-              @click="router.push('/central-finance/fund-sources')"
+              :href="resolveFullUrl('/central-finance/fund-sources')"
+              @click="onManageAllRequestsClick"
             >
               <div class="pending-item__left">
                 <div
@@ -206,9 +207,8 @@
               <q-badge
                 :color="req.status === 'new' ? 'warning' : 'blue-7'"
                 :label="req.status === 'new' ? 'รอรับเรื่อง' : 'กำลังตรวจสอบ'"
-                class="pending-item__badge"
               />
-            </div>
+            </a>
           </div>
 
           <q-btn
@@ -219,7 +219,9 @@
             icon-right="arrow_forward"
             label="จัดการคำขอทั้งหมด"
             class="full-width q-mt-md pipeline-goto-btn"
-            @click="router.push('/central-finance/fund-sources')"
+            tag="a"
+            :href="resolveFullUrl('/central-finance/fund-sources')"
+            @click="onManageAllRequestsClick"
           />
         </CentralFinanceSurfaceCard>
       </div>
@@ -235,11 +237,20 @@ import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMe
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const router = useRouter();
 const { t } = useI18n();
 const financeStore = useCentralFinanceStore();
 const chartPeriod = ref<'7d' | '30d'>('7d');
+
+function onManageAllRequestsClick(event: Event) {
+  if (isNewTabClick(event)) {
+    return;
+  }
+  event.preventDefault();
+  void router.push('/central-finance/fund-sources');
+}
 
 interface MetricCard {
   label: string;

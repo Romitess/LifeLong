@@ -298,7 +298,8 @@
                 color="primary"
                 icon-right="chevron_right"
                 label="ดูรายละเอียดเพิ่มเติม"
-                @click="onCourseClick(selectedTopCourse)"
+                :href="resolveFullUrl(`/course/${selectedTopCourse.id}`)"
+                @click.prevent="onCourseClick(selectedTopCourse, $event)"
               />
               <q-btn
                 flat
@@ -317,12 +318,13 @@
           class="top-courses-rail"
           @wheel="onTopCoursesWheel"
         >
-          <button
+          <a
             v-for="(course, index) in topEnrolledCourses"
             :key="course.id"
-            type="button"
+            :href="resolveFullUrl(`/course/${course.id}`)"
             class="top-course-card"
-            @click="selectTopCourse(course)"
+            style="text-decoration: none"
+            @click.prevent="selectTopCourse(course, $event)"
           >
             <span
               class="top-course-card__rank"
@@ -344,7 +346,7 @@
               <span class="top-course-card__title">{{ course.title }}</span>
               <span class="top-course-card__meta">{{ course.faculty }}</span>
             </span>
-          </button>
+          </a>
         </div>
 
         <div v-else class="top-courses-empty">
@@ -391,7 +393,9 @@
               :label="$t('viewAll')"
               color="primary"
               icon-right="chevron_right"
-              @click="void router.push('/short-courses?availability=open')"
+              tag="a"
+              :href="resolveFullUrl('/short-courses?availability=open')"
+              @click="onViewActiveCoursesClick"
             />
           </div>
 
@@ -421,7 +425,11 @@
               :visible-once="revealVariant(0).visibleOnce"
               class="col-xs-12 col-sm-6 col-md-4 col-lg-3"
             >
-              <BaseCourseCard :course="course" @click="onCourseClick" />
+              <BaseCourseCard
+                :course="course"
+                :href="resolveFullUrl(`/course/${course.id}`)"
+                @click="onCourseClick"
+              />
             </div>
           </div>
 
@@ -469,7 +477,9 @@
               :label="$t('viewAll')"
               color="primary"
               icon-right="chevron_right"
-              @click="void router.push('/short-courses')"
+              tag="a"
+              :href="resolveFullUrl('/short-courses')"
+              @click="onViewAllCoursesClick"
             />
           </div>
 
@@ -486,7 +496,11 @@
               :visible-once="revealVariant(0).visibleOnce"
               class="col-xs-12 col-sm-6 col-md-4 col-lg-3"
             >
-              <BaseCourseCard :course="course" @click="onCourseClick" />
+              <BaseCourseCard
+                :course="course"
+                :href="resolveFullUrl(`/course/${course.id}`)"
+                @click="onCourseClick"
+              />
             </div>
           </div>
         </div>
@@ -521,6 +535,7 @@ import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import { useQuasar } from 'quasar';
 import learnerHeroBackgroundUrl from 'src/assets/bb.png';
 import fallbackCourseImageUrl from 'src/assets/homepicture1.png';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -620,7 +635,8 @@ function getTopCourseRank(course: Course): number {
   return courseIndex >= 0 ? courseIndex + 1 : 1;
 }
 
-function selectTopCourse(course: Course): void {
+function selectTopCourse(course: Course, event?: Event): void {
+  if (event && isNewTabClick(event)) return;
   selectedTopCourse.value = course;
 }
 
@@ -1165,8 +1181,23 @@ function getTranslatedCategory(category: string | null): string {
   return categoryKey ? t(categoryKey) : category;
 }
 
-function onCourseClick(course: Course): void {
+function onCourseClick(course: Course, event?: Event): void {
+  if (event && isNewTabClick(event)) {
+    return; // Let browser natively open href in a new tab
+  }
   void router.push(`/course/${course.id}`);
+}
+
+function onViewActiveCoursesClick(event: Event): void {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  void router.push('/short-courses?availability=open');
+}
+
+function onViewAllCoursesClick(event: Event): void {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  void router.push('/short-courses');
 }
 
 onMounted(() => {
@@ -2359,7 +2390,7 @@ onBeforeUnmount(() => {
   font-size: 0.98rem;
   font-weight: 900;
   line-height: 1.28;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 .top-course-card__meta {
@@ -2367,7 +2398,7 @@ onBeforeUnmount(() => {
   font-size: 0.8rem;
   font-weight: 700;
   line-height: 1.25;
-  -webkit-line-clamp: 1;
+  line-clamp: 1;
 }
 
 .top-course-preview {

@@ -264,7 +264,11 @@
             :key="course.id"
             class="col-xs-12 col-sm-6 col-md-3 short-courses-grid__cell"
           >
-            <BaseCourseCard :course="course" @click="onCourseClick(course)" />
+            <BaseCourseCard
+              :course="course"
+              :href="resolveFullUrl(`/course/${course.id}`)"
+              @click="onCourseClick"
+            />
           </div>
           <div v-if="filteredCourses.length === 0" class="col-12 text-center q-py-xl">
             <q-icon name="search_off" size="4rem" color="grey-4" />
@@ -302,6 +306,7 @@ import { useCategoryStore } from 'src/stores/category-store';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const router = useRouter();
 const route = useRoute();
@@ -583,7 +588,10 @@ function handlePageChange(page: number): void {
   });
 }
 
-function onCourseClick(course: Course): void {
+function onCourseClick(course: Course, event?: Event): void {
+  if (event && isNewTabClick(event)) {
+    return; // Browser handles href in new tab
+  }
   void router.push(`/course/${course.id}`);
 }
 

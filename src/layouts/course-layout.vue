@@ -2,7 +2,12 @@
   <!-- Course Toolbar -->
   <q-toolbar class="top-toolbar">
     <!-- Logo -->
-    <div class="logo row items-center cursor-pointer" @click="$router.push('/main')">
+    <a
+      :href="resolveFullUrl('/main')"
+      class="logo row items-center cursor-pointer"
+      style="text-decoration: none"
+      @click.prevent="onLogoClick"
+    >
       <img
         src="~assets/brand/buu-lll-logo.png"
         class="logo__image"
@@ -10,7 +15,7 @@
         loading="eager"
         decoding="sync"
       />
-    </div>
+    </a>
 
     <div class="vertical-divider q-mx-lg"></div>
 
@@ -38,7 +43,7 @@
         icon="home"
         :label="$t('learning.home')"
         class="nav-tab nav-tab--home"
-        @click="$router.push('/course-home')"
+        @click="onTabClick('/course-home', $event)"
       />
 
       <q-tab
@@ -144,7 +149,8 @@
               clickable
               v-ripple
               class="this-course-menu-item"
-              @click="$router.push(`/course/${courseId}/grades`)"
+              @click="onTabClick(`/course/${courseId}/grades`, $event)"
+              @auxclick.prevent="onTabClick(`/course/${courseId}/grades`, $event)"
             >
               <q-item-section avatar class="this-course-icon-section">
                 <q-icon name="grid_on" size="20px" color="teal-6" />
@@ -159,7 +165,8 @@
               clickable
               v-ripple
               class="this-course-menu-item"
-              @click="$router.push(`/course/${courseId}/learn`)"
+              @click="onTabClick(`/course/${courseId}/learn`, $event)"
+              @auxclick.prevent="onTabClick(`/course/${courseId}/learn`, $event)"
             >
               <q-item-section avatar class="this-course-icon-section">
                 <q-icon name="description" size="20px" color="orange-7" />
@@ -179,7 +186,7 @@
         icon="stars"
         :label="$t('learning.systemTitle')"
         class="nav-tab nav-tab--lll-system"
-        @click="$router.push('/profile')"
+        @click="onTabClick('/profile', $event)"
       />
     </q-tabs>
 
@@ -247,7 +254,8 @@
                   v-ripple
                   v-close-popup
                   class="profile-action-card__item"
-                  @click="$router.push('/profile')"
+                  @click="onTabClick('/profile', $event)"
+                  @auxclick.prevent="onTabClick('/profile', $event)"
                 >
                   <q-item-section avatar class="profile-action-card__item-icon">
                     <q-icon name="person" />
@@ -365,7 +373,12 @@
       <q-btn flat round icon="account_circle" color="grey-7" size="sm">
         <q-menu>
           <q-list style="min-width: 150px">
-            <q-item clickable v-ripple @click="$router.push('/profile')">
+            <q-item
+              clickable
+              v-ripple
+              @click="onTabClick('/profile', $event)"
+              @auxclick.prevent="onTabClick('/profile', $event)"
+            >
               <q-item-section>{{ $t('myProfile') }}</q-item-section>
             </q-item>
             <q-item
@@ -396,6 +409,7 @@ import { useI18n } from 'vue-i18n';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
 import NavRealtimeClock from 'components/navigation/NavRealtimeClock.vue';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
+import { isNewTabClick, openInNewTab, resolveFullUrl } from 'src/composables/use-nav-link';
 import type { Course } from 'src/types/course';
 
 const emit = defineEmits<{
@@ -516,6 +530,21 @@ const closeThisCourseMenu = (): void => {
 function onLogout(): void {
   authStore.logout();
   void router.push('/main');
+}
+
+function onLogoClick(event: Event): void {
+  if (isNewTabClick(event)) return;
+  void router.push('/main');
+}
+
+function onTabClick(path: string, event: Event): void {
+  if (isNewTabClick(event)) {
+    event.preventDefault();
+    event.stopPropagation();
+    openInNewTab(path);
+    return;
+  }
+  void router.push(path);
 }
 
 function isTeachingNotificationRole(role: string | undefined): boolean {

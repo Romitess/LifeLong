@@ -113,7 +113,8 @@
             no-caps
             size="md"
             class="course-action-btn course-action-btn--primary"
-            @click="
+            :href="resolveFullUrl(`/course/${entry.registration.courseId}/learn`)"
+            @click.prevent="
               $emit(
                 'go-to-course',
                 entry.registration.courseId,
@@ -193,6 +194,7 @@ import { useCourseBookmarkStore } from 'src/stores/course-bookmark-store';
 import type { RegisteredCourseEntry } from 'src/composables/use-my-registered-courses';
 import type { CourseRegistration } from 'src/stores/course-registration-store';
 import type { Course } from 'src/types/course';
+import { resolveFullUrl } from 'src/composables/use-nav-link';
 
 defineProps<{
   filteredRegistrations: RegisteredCourseEntry[];

@@ -252,7 +252,9 @@
         color="primary"
         :label="$t('auth.register.loginCta')"
         no-caps
-        @click="goToLogin"
+        tag="a"
+        :href="resolveFullUrl('/login')"
+        @click="onLoginClick"
       />
     </div>
   </AuthPageShell>
@@ -266,6 +268,7 @@ import { useRouter } from 'vue-router';
 import AuthPageShell, { type AuthVisualItem } from 'components/auth/AuthPageShell.vue';
 import BaseButton from 'components/base/BaseButton.vue';
 import { useAuthStore } from 'src/stores/auth-store';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 interface RegisterForm {
   firstNameTh: string;
@@ -380,6 +383,14 @@ async function goToLogin(): Promise<void> {
   switchingTo.value = 'login';
   await wait(560);
   void router.push('/login');
+}
+
+function onLoginClick(event: Event): void {
+  if (isNewTabClick(event)) {
+    return;
+  }
+  event.preventDefault();
+  void goToLogin();
 }
 
 function goToAccountStep(): void {

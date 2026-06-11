@@ -74,8 +74,10 @@
                 <q-item
                   clickable
                   v-ripple
+                  tag="a"
+                  :href="resolveFullUrl(`/course/${course.id}/learn`)"
                   class="course-detail-item"
-                  @click="$router.push(`/course/${course.id}/learn`)"
+                  @click.prevent="onSidebarNavClick(`/course/${course.id}/learn`, $event)"
                 >
                   <q-item-section avatar>
                     <q-icon name="task_alt" size="18px" />
@@ -86,8 +88,10 @@
                 <q-item
                   clickable
                   v-ripple
+                  tag="a"
+                  :href="resolveFullUrl(`/course/${course.id}/grades`)"
                   class="course-detail-item"
-                  @click="$router.push(`/course/${course.id}/grades`)"
+                  @click.prevent="onSidebarNavClick(`/course/${course.id}/grades`, $event)"
                 >
                   <q-item-section avatar>
                     <q-icon name="grid_on" size="18px" />
@@ -129,8 +133,10 @@
                       :key="lIdx"
                       clickable
                       v-ripple
+                      tag="a"
+                      :href="resolveFullUrl(getLessonPath(lesson, course.id))"
                       class="lesson-sub-item"
-                      @click="navigateToLesson(lesson, course.id)"
+                      @click.prevent="navigateToLesson(lesson, course.id, $event)"
                       :active="lesson.isActive"
                     >
                       <q-item-section avatar>
@@ -159,6 +165,7 @@
 import { useRoute, useRouter } from 'vue-router';
 import { getCourseStructure, type Lesson } from 'src/data/course-structure';
 import { useMyRegisteredCourses } from 'src/composables/use-my-registered-courses';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import { computed } from 'vue';
 
 const route = useRoute();
@@ -199,15 +206,24 @@ const myCourses = computed(() => {
   });
 });
 
-const navigateToLesson = (lesson: Lesson, cid?: string) => {
+const getLessonPath = (lesson: Lesson, cid?: string) => {
   const courseId = cid || String(route.params.id);
-  if (!courseId || courseId === 'undefined') return;
+  if (!courseId || courseId === 'undefined') return '';
 
   if (lesson.type === 'quiz') {
-    void router.push(`/course/${courseId}/quiz/${encodeURIComponent(lesson.title)}`);
-  } else {
-    // Both video and article use the video page layout
-    void router.push(`/course/${courseId}/video/${encodeURIComponent(lesson.title)}`);
+    return `/course/${courseId}/quiz/${encodeURIComponent(lesson.title)}`;
+  }
+  return `/course/${courseId}/video/${encodeURIComponent(lesson.title)}`;
+};
+
+const navigateToLesson = (lesson: Lesson, cid?: string, event?: Event) => {
+  if (event && isNewTabClick(event)) {
+    return;
+  }
+
+  const path = getLessonPath(lesson, cid);
+  if (path) {
+    void router.push(path);
   }
 };
 
@@ -223,6 +239,13 @@ const getLessonIcon = (type: string) => {
       return 'circle';
   }
 };
+
+function onSidebarNavClick(path: string, event: Event): void {
+  if (isNewTabClick(event)) {
+    return;
+  }
+  void router.push(path);
+}
 </script>
 
 <style lang="scss" scoped>
@@ -348,7 +371,7 @@ const getLessonIcon = (type: string) => {
 
 .ellipsis-2-lines {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

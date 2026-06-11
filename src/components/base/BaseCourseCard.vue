@@ -3,8 +3,10 @@
     class="course-card cursor-pointer"
     flat
     bordered
-    :style="{ '--cat-color': categoryColor }"
-    @click="emit('click', course)"
+    :style="{ '--cat-color': categoryColor, 'text-decoration': 'none', color: 'inherit' }"
+    :tag="href ? 'a' : 'div'"
+    :href="href"
+    @click.prevent="emit('click', course, $event)"
   >
     <CourseCoverImage :course="course" :ratio="16 / 9" class="course-card__cover" />
 
@@ -74,11 +76,12 @@ const categoryStore = useCategoryStore();
 
 interface Props {
   course: Course;
+  href?: string;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
-  click: [course: Course];
+  click: [course: Course, event: Event];
 }>();
 
 const categoryColor = computed<string>(() => {

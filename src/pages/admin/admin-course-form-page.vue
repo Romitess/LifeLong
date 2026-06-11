@@ -15,7 +15,9 @@
           label="กลับไปรายการ"
           no-caps
           dense
-          @click="void router.push('/admin/courses')"
+          tag="a"
+          :href="resolveFullUrl('/admin/courses')"
+          @click="onBackClick"
         />
       </div>
 
@@ -27,12 +29,21 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import AppPageHero from 'components/admin/AppPageHero.vue';
 import AdminCourseForm from 'components/admin/AdminCourseForm.vue';
 import AppActionButton from 'components/admin/AppActionButton.vue';
 
 const router = useRouter();
 const $q = useQuasar();
+
+function onBackClick(event: Event) {
+  if (isNewTabClick(event)) {
+    return;
+  }
+  event.preventDefault();
+  void router.push('/admin/courses');
+}
 
 function onSaved(courseId: number) {
   $q.notify({

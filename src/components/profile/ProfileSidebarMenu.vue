@@ -13,10 +13,12 @@
         :key="menu.value"
         clickable
         v-ripple
+        tag="a"
+        :href="resolveFullUrl(`/profile/${menu.slug ?? menu.value}`)"
         :active="modelValue === menu.value"
         active-class="profile-menu-item--active"
         class="profile-menu-item"
-        @click="$emit('update:modelValue', menu.value)"
+        @click.prevent="onMenuClick(menu.value, $event)"
       >
         <q-item-section avatar>
           <q-icon
@@ -93,9 +95,12 @@
 </template>
 
 <script setup lang="ts">
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
+
 interface MenuItem {
   label: string;
   value: string;
+  slug?: string;
   icon: string;
 }
 
@@ -108,10 +113,17 @@ defineProps<{
   studentId: string;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   'update:modelValue': [value: string];
   'show-student-card': [];
 }>();
+
+function onMenuClick(value: string, event: Event): void {
+  if (isNewTabClick(event)) {
+    return;
+  }
+  emit('update:modelValue', value);
+}
 </script>
 
 <style lang="scss" scoped>

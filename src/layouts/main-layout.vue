@@ -12,7 +12,12 @@
           @click="toggleDrawer"
         />
 
-        <div class="logo row items-center cursor-pointer" @click="onLogoClick">
+        <a
+          :href="resolveFullUrl(logoPath)"
+          class="logo row items-center cursor-pointer"
+          style="text-decoration: none"
+          @click.prevent="onLogoClick"
+        >
           <img
             src="~assets/brand/buu-lll-logo.png"
             class="logo__image"
@@ -21,7 +26,7 @@
             decoding="sync"
           />
           <q-tooltip>คลิกเพื่อกลับหน้าหลัก</q-tooltip>
-        </div>
+        </a>
 
         <q-space />
 
@@ -33,12 +38,14 @@
               <HeaderAuthButton
                 variant="login"
                 :label="$t('login')"
-                @click="goToAuthPage('/login')"
+                :href="resolveFullUrl('/login')"
+                @click="goToAuthPage('/login', $event)"
               />
               <HeaderAuthButton
                 variant="register"
                 :label="$t('register')"
-                @click="goToAuthPage('/register')"
+                :href="resolveFullUrl('/register')"
+                @click="goToAuthPage('/register', $event)"
               />
             </div>
           </template>
@@ -106,8 +113,10 @@
                         clickable
                         v-ripple
                         v-close-popup
+                        tag="a"
+                        :href="resolveFullUrl('/profile')"
                         class="profile-action-card__item"
-                        @click="goToProfile"
+                        @click="goToProfile($event)"
                       >
                         <q-item-section avatar class="profile-action-card__item-icon">
                           <q-icon name="person" />
@@ -177,8 +186,16 @@
                         :key="notification.id"
                         clickable
                         v-ripple
+                        tag="a"
+                        :href="
+                          resolveFullUrl(
+                            isPrivilegedRole && notification.action
+                              ? notification.action
+                              : '/notifications',
+                          )
+                        "
                         class="notification-preview__item"
-                        @click="openNotificationPreview(notification)"
+                        @click.prevent="openNotificationPreview(notification, $event)"
                         v-close-popup
                       >
                         <q-item-section avatar top>
@@ -231,15 +248,33 @@
             <q-menu>
               <q-list style="min-width: 150px">
                 <template v-if="!authStore.isLoggedIn">
-                  <q-item clickable v-ripple @click="goToAuthPage('/login')">
+                  <q-item
+                    clickable
+                    v-ripple
+                    tag="a"
+                    :href="resolveFullUrl('/login')"
+                    @click="goToAuthPage('/login', $event)"
+                  >
                     <q-item-section>{{ $t('login') }}</q-item-section>
                   </q-item>
-                  <q-item clickable v-ripple @click="goToAuthPage('/register')">
+                  <q-item
+                    clickable
+                    v-ripple
+                    tag="a"
+                    :href="resolveFullUrl('/register')"
+                    @click="goToAuthPage('/register', $event)"
+                  >
                     <q-item-section>{{ $t('register') }}</q-item-section>
                   </q-item>
                 </template>
                 <template v-else>
-                  <q-item clickable v-ripple @click="goToProfile">
+                  <q-item
+                    clickable
+                    v-ripple
+                    tag="a"
+                    :href="resolveFullUrl('/profile')"
+                    @click="goToProfile($event)"
+                  >
                     <q-item-section>{{ $t('myProfile') }}</q-item-section>
                   </q-item>
                   <q-item v-if="isPrivilegedRole" clickable v-ripple @click="goToNotifications">
@@ -314,10 +349,12 @@
                 :key="cat.id"
                 clickable
                 v-ripple
+                tag="a"
+                :href="resolveFullUrl(`/short-courses?category=${encodeURIComponent(cat.name)}`)"
                 class="drawer-subitem"
                 :active="route.query.category === cat.name"
                 active-class="drawer-subitem--active"
-                @click="onCategoryClick(cat.name)"
+                @click="onCategoryClick(cat.name, $event)"
               >
                 <q-item-section>
                   <div class="row items-center justify-between no-wrap full-width">
@@ -348,10 +385,12 @@
                 :key="child.name"
                 clickable
                 v-ripple
+                tag="a"
+                :href="resolveFullUrl(child.link || child.to || '')"
                 class="drawer-subitem"
                 :active="activeNav === child.name"
                 active-class="drawer-subitem--active"
-                @click="onNavClick(child)"
+                @click="onNavClick(child, $event)"
               >
                 <q-item-section avatar v-if="child.icon" style="min-width: 36px">
                   <q-icon :name="child.icon" size="sm" />
@@ -370,10 +409,12 @@
             v-else
             clickable
             v-ripple
+            tag="a"
+            :href="resolveFullUrl(nav.link || nav.to || '')"
             :active="activeNav === nav.name"
             active-class="drawer-item--active"
             class="drawer-item"
-            @click="onNavClick(nav)"
+            @click="onNavClick(nav, $event)"
           >
             <q-item-section avatar class="drawer-item-icon-section">
               <q-icon :name="nav.icon" />
@@ -388,7 +429,14 @@
 
         <!-- Auth Items for non-logged in users in sidebar -->
         <template v-if="!authStore.isLoggedIn">
-          <q-item clickable v-ripple class="drawer-item" @click="goToAuthPage('/login')">
+          <q-item
+            clickable
+            v-ripple
+            tag="a"
+            :href="resolveFullUrl('/login')"
+            class="drawer-item"
+            @click="goToAuthPage('/login', $event)"
+          >
             <q-item-section avatar class="drawer-item-icon-section">
               <q-icon name="login" color="primary" />
             </q-item-section>
@@ -396,7 +444,14 @@
               <q-item-label class="drawer-item-label">{{ $t('login') }}</q-item-label>
             </q-item-section>
           </q-item>
-          <q-item clickable v-ripple class="drawer-item" @click="goToAuthPage('/register')">
+          <q-item
+            clickable
+            v-ripple
+            tag="a"
+            :href="resolveFullUrl('/register')"
+            class="drawer-item"
+            @click="goToAuthPage('/register', $event)"
+          >
             <q-item-section avatar class="drawer-item-icon-section">
               <q-icon name="person_add" color="primary" />
             </q-item-section>
@@ -473,6 +528,7 @@ import LanguageToggle from 'components/navigation/language-toggle.vue';
 import NavRealtimeClock from 'components/navigation/NavRealtimeClock.vue';
 import HeaderAuthButton from 'components/navigation/header-auth-button.vue';
 import { useI18n } from 'vue-i18n';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 interface NavItem {
   name: string;
@@ -1134,7 +1190,12 @@ async function navigateWithPageLoading(path: string): Promise<void> {
   await router.push(path);
 }
 
-async function goToAuthPage(path: AuthPath): Promise<void> {
+async function goToAuthPage(path: AuthPath, event?: Event): Promise<void> {
+  if (event && isNewTabClick(event)) {
+    return;
+  }
+  if (event) event.preventDefault();
+
   drawerOpen.value = false;
 
   if (router.currentRoute.value.path === path) {
@@ -1266,31 +1327,45 @@ function confirmLogout() {
   void router.push('/main');
 }
 
-async function onLogoClick() {
+const logoPath = computed(() => {
+  if (isLifelong2Role.value) return '/lifelong2/dashboard';
+  if (isAdminRole.value) return '/admin/dashboard';
+  if (isCentralFinanceRole.value) return '/central-finance/dashboard';
+  if (isFinanceRole.value) return '/finance/dashboard';
+  if (isTeachingRole.value) return '/instructor/dashboard';
+  return '/main';
+});
+
+async function onLogoClick(event: Event) {
+  if (isNewTabClick(event)) {
+    return; // Let browser natively open href in a new tab
+  }
+
   courseStore.setSelectedCategory(null);
 
   if (isLifelong2Role.value) {
     activeNav.value = 'lifelong2-dashboard';
-    await navigateWithPageLoading('/lifelong2/dashboard');
   } else if (isAdminRole.value) {
     activeNav.value = 'admin-dashboard';
-    await navigateWithPageLoading('/admin/dashboard');
   } else if (isCentralFinanceRole.value) {
     activeNav.value = 'central-finance-dashboard';
-    await navigateWithPageLoading('/central-finance/dashboard');
   } else if (isFinanceRole.value) {
     activeNav.value = 'finance-dashboard';
-    await navigateWithPageLoading('/finance/dashboard');
   } else if (isTeachingRole.value) {
     activeNav.value = 'dashboard';
-    await navigateWithPageLoading('/instructor/dashboard');
   } else {
     activeNav.value = 'home';
-    await navigateWithPageLoading('/main');
   }
+
+  await navigateWithPageLoading(logoPath.value);
 }
 
-async function goToProfile() {
+async function goToProfile(event?: Event) {
+  if (event && isNewTabClick(event)) {
+    return;
+  }
+  if (event) event.preventDefault();
+
   drawerOpen.value = false;
   await navigateWithPageLoading('/profile');
 }
@@ -1300,7 +1375,11 @@ async function goToNotifications() {
   await router.push('/notifications');
 }
 
-async function openNotificationPreview(notification: { action?: string }) {
+async function openNotificationPreview(notification: { action?: string }, event?: Event) {
+  if (event && isNewTabClick(event)) {
+    return;
+  }
+
   if (isPrivilegedRole.value && notification.action) {
     await router.push(notification.action);
     return;
@@ -1309,7 +1388,12 @@ async function openNotificationPreview(notification: { action?: string }) {
   await router.push('/notifications');
 }
 
-async function onNavClick(nav: NavItem) {
+async function onNavClick(nav: NavItem, event?: Event) {
+  if (event && isNewTabClick(event)) {
+    return;
+  }
+  if (event) event.preventDefault();
+
   drawerOpen.value = false;
 
   // Clear category when clicking other nav items
@@ -1349,7 +1433,12 @@ async function onNavClick(nav: NavItem) {
   }
 }
 
-async function onCategoryClick(category: string) {
+async function onCategoryClick(category: string, event?: Event) {
+  if (event && isNewTabClick(event)) {
+    return;
+  }
+  if (event) event.preventDefault();
+
   activeNav.value = 'category';
   drawerOpen.value = false;
   await router.push({

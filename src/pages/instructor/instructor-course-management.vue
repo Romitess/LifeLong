@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="instructor-dashboard">
     <div v-if="isTeachingRole" class="section-container instructor-dashboard__inner">
       <section class="instructor-hero">
@@ -187,7 +187,9 @@
                       label="รายละเอียด"
                       no-caps
                       class="course-action-btn"
-                      @click="openCourseWorkspace(course.id)"
+                      tag="a"
+                      :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
+                      @click="openCourseWorkspace(course.id, $event)"
                     />
                     <q-btn
                       outline
@@ -196,7 +198,9 @@
                       label="แก้ไข"
                       no-caps
                       class="course-action-btn"
-                      @click="openCourseWorkspace(course.id)"
+                      tag="a"
+                      :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
+                      @click="openCourseWorkspace(course.id, $event)"
                     />
                     <q-btn
                       unelevated
@@ -350,7 +354,9 @@
                         icon="list_alt"
                         class="table-action-btn table-action-btn--list"
                         aria-label="รายละเอียด"
-                        @click="openCourseWorkspace(course.id)"
+                        tag="a"
+                        :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
+                        @click="openCourseWorkspace(course.id, $event)"
                       >
                         <q-tooltip>รายละเอียด</q-tooltip>
                       </q-btn>
@@ -361,7 +367,9 @@
                         icon="edit"
                         class="table-action-btn table-action-btn--edit"
                         aria-label="แก้ไข"
-                        @click="openCourseWorkspace(course.id)"
+                        tag="a"
+                        :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
+                        @click="openCourseWorkspace(course.id, $event)"
                       >
                         <q-tooltip>แก้ไข</q-tooltip>
                       </q-btn>
@@ -1000,7 +1008,9 @@
                     label="ตรวจงาน"
                     no-caps
                     class="full-width"
-                    @click="router.push('/instructor/students')"
+                    tag="a"
+                    :href="resolveFullUrl('/instructor/students')"
+                    @click="onGradeWorkClick"
                   />
                 </div>
               </div>
@@ -1475,6 +1485,7 @@ import type { Course, DeliveryMode } from 'src/types/course';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import { api } from 'src/boot/axios';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 type WorkspaceTab =
   | 'overview'
@@ -2392,13 +2403,21 @@ function setCoursePublished(courseId: string, isPublished: boolean): void {
   courseStore.updateCourse(courseId, { isActive: isPublished });
 }
 
-function openCourseWorkspace(courseId: string): void {
+function openCourseWorkspace(courseId: string, event?: Event): void {
+  if (event && isNewTabClick(event)) return;
+  if (event) event.preventDefault();
   selectedCourseId.value = courseId;
   activeWorkspaceTab.value = 'overview';
   void router.push({
     path: '/instructor/courses',
     query: { courseId },
   });
+}
+
+function onGradeWorkClick(event: Event) {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  void router.push('/instructor/students');
 }
 
 function goToActiveInstructorCoursesTable(): void {

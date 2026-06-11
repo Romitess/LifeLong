@@ -5,7 +5,7 @@
     class="header-auth-button"
     :class="`header-auth-button--${variant}`"
     :aria-label="label"
-    @click="emit('click')"
+    @click="(e) => emit('click', e)"
   >
     <span class="header-auth-button__inner">
       <span class="header-auth-button__label">{{ label }}</span>
@@ -27,7 +27,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
-  click: [];
+  click: [event: Event];
 }>();
 
 const defaultIcons: Record<HeaderAuthButtonVariant, string> = {

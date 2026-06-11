@@ -15,7 +15,9 @@
           label="กลับไปรายการ"
           no-caps
           dense
-          @click="void router.push('/admin/courses')"
+          tag="a"
+          :href="resolveFullUrl('/admin/courses')"
+          @click="onBackClick"
         />
       </div>
 
@@ -31,6 +33,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import type { AdminCourseDetail } from 'src/types/admin-courses';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
 import AppPageHero from 'components/admin/AppPageHero.vue';
@@ -39,6 +42,15 @@ import AppActionButton from 'components/admin/AppActionButton.vue';
 
 const router = useRouter();
 const route = useRoute();
+
+function onBackClick(event: Event) {
+  if (isNewTabClick(event)) {
+    return;
+  }
+  event.preventDefault();
+  void router.push('/admin/courses');
+}
+
 const { fetchCourseDetail, fetchFormOptions } = useAdminCourses();
 
 const course = ref<AdminCourseDetail | null>(null);

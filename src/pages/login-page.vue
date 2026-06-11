@@ -60,9 +60,13 @@
           color="primary"
           :label="$t('auth.login.remember')"
         />
-        <button type="button" class="auth-text-button" @click="goToForgotPassword">
+        <a
+          class="auth-text-button"
+          :href="resolveFullUrl('/login-forget')"
+          @click="onForgotPasswordClick"
+        >
           {{ $t('auth.login.forgot') }}
-        </button>
+        </a>
       </div>
 
       <BaseButton
@@ -108,7 +112,9 @@
         color="primary"
         :label="$t('auth.login.registerCta')"
         no-caps
-        @click="goToRegister"
+        tag="a"
+        :href="resolveFullUrl('/register')"
+        @click="onRegisterClick"
       />
     </div>
   </AuthPageShell>
@@ -155,6 +161,7 @@ import {
   type LoginCheckInSnapshot,
 } from 'src/composables/use-login-check-in';
 import { useAuthStore } from 'src/stores/auth-store';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 interface LoginForm {
   username: string;
@@ -265,6 +272,22 @@ async function goToForgotPassword(): Promise<void> {
   showForgotLoading.value = true;
   await wait(360);
   void router.push('/login-forget');
+}
+
+function onRegisterClick(event: Event): void {
+  if (isNewTabClick(event)) {
+    return;
+  }
+  event.preventDefault();
+  void goToRegister();
+}
+
+function onForgotPasswordClick(event: Event): void {
+  if (isNewTabClick(event)) {
+    return;
+  }
+  event.preventDefault();
+  void goToForgotPassword();
 }
 
 function getPostLoginPath(): string {
@@ -425,6 +448,8 @@ async function onLogin(): Promise<void> {
   font-weight: 700;
   cursor: pointer;
   transition: color 0.2s ease;
+
+  text-decoration: none;
 
   &:hover {
     color: #8a5a11;

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="certificate-page">
     <div class="section-container certificate-page__inner">
       <InstructorPageHero eyebrow="Instructor Workspace" title="สร้าง Certificate">
@@ -25,10 +25,14 @@
       </InstructorPageHero>
 
       <nav v-if="selectedCourse" class="certificate-breadcrumb-nav" aria-label="breadcrumb">
-        <button type="button" class="certificate-breadcrumb-nav__item" @click="clearSelectedCourse">
+        <a
+          :href="resolveFullUrl('/instructor/certificates')"
+          class="certificate-breadcrumb-nav__item"
+          @click="onClearSelectedCourseClick"
+        >
           <q-icon name="menu_book" size="20px" />
           <span>วิชาของฉัน</span>
-        </button>
+        </a>
 
         <q-icon name="chevron_right" size="18px" class="certificate-breadcrumb-nav__separator" />
 
@@ -114,7 +118,9 @@
                     flat
                     color="primary"
                     icon="edit"
-                    @click="selectCourse(course.id)"
+                    tag="a"
+                    :href="resolveFullUrl(`/instructor/certificates?courseId=${course.id}`)"
+                    @click="onSelectCourseClick(course.id, $event)"
                   >
                     <q-tooltip>จัดการ Certificate</q-tooltip>
                   </q-btn>
@@ -251,6 +257,7 @@ import CertificateModal from 'components/certificate/CertificateModal.vue';
 import InstructorPageHero from 'components/instructor/InstructorPageHero.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
 import type { ActiveCertTemplate, CertLayout } from 'src/types/admin-cert-templates';
@@ -504,10 +511,22 @@ function selectCourse(courseId: string): void {
   });
 }
 
+function onSelectCourseClick(courseId: string, event: Event) {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  selectCourse(courseId);
+}
+
 function clearSelectedCourse(): void {
   selectedLearner.value = null;
   certificateDialogOpen.value = false;
   void router.push('/instructor/certificates');
+}
+
+function onClearSelectedCourseClick(event: Event) {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  clearSelectedCourse();
 }
 
 function openCertificate(learner: CertificateLearner): void {

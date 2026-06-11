@@ -76,12 +76,14 @@
             :key="notification.id"
             clickable
             v-ripple
+            tag="a"
+            :href="resolveFullUrl(notification.action || '')"
             class="notification-item"
             :class="{
               'notification-item--unread': !notification.read,
               'notification-item--urgent': notification.priority === 'urgent',
             }"
-            @click="openNotification(notification)"
+            @click.prevent="openNotification(notification, $event)"
           >
             <q-item-section avatar top>
               <div
@@ -149,6 +151,7 @@ import {
   type AppNotification,
 } from 'src/data/mock-notifications';
 import { useNotifications } from 'src/composables/use-notifications';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 type NotificationFilter = 'all' | 'urgent' | 'grading' | 'system';
 
@@ -319,7 +322,16 @@ async function markAllAsRead(): Promise<void> {
   });
 }
 
-async function openNotification(notification: AppNotification): Promise<void> {
+async function openNotification(notification: AppNotification, event?: Event): Promise<void> {
+  if (event && isNewTabClick(event)) {
+    if (!isTeachingRole.value) {
+      void notificationsApi.markRead(notification.id);
+    } else {
+      notification.read = true;
+    }
+    return;
+  }
+
   if (!isTeachingRole.value) {
     await notificationsApi.markRead(notification.id);
   } else {

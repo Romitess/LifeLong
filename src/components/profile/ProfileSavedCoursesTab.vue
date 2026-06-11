@@ -170,7 +170,8 @@
         no-caps
         class="q-mt-xl"
         padding="sm xl"
-        @click="router.push('/short-courses')"
+        @click="navClick('/short-courses', $event)"
+        @auxclick.prevent="navClick('/short-courses', $event)"
       />
     </q-card>
   </div>
@@ -179,6 +180,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import { isNewTabClick, openInNewTab } from 'src/composables/use-nav-link';
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseSearchInput from 'components/base/BaseSearchInput.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
@@ -207,6 +209,16 @@ defineEmits<{
 
 const { t, locale } = useI18n();
 const router = useRouter();
+
+function navClick(path: string, event: Event): void {
+  if (isNewTabClick(event)) {
+    event.preventDefault();
+    event.stopPropagation();
+    openInNewTab(path);
+    return;
+  }
+  void router.push(path);
+}
 const courseBookmarkStore = useCourseBookmarkStore();
 const courseRegistrationStore = useCourseRegistrationStore();
 const courseStore = useCourseStore();

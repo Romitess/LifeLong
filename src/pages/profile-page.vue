@@ -285,6 +285,7 @@ interface ProfileStatCardItem {
 interface MenuItem {
   label: string;
   value: string;
+  slug?: string;
   icon: string;
 }
 
@@ -483,14 +484,25 @@ const profileStats = computed<ProfileStatCardItem[]>(() => {
 });
 
 const menuItems = computed<MenuItem[]>(() => [
-  { label: t('profile.menu.myCourses'), value: 'my-courses', icon: 'menu_book' },
-  { label: t('profile.menu.savedCourses'), value: 'saved-courses', icon: 'bookmark' },
-  { label: t('profile.menu.personalInfo'), value: 'personal-info', icon: 'person' },
-  { label: t('profile.menu.benefits'), value: 'benefits', icon: 'card_giftcard' },
-  { label: t('profile.menu.chat'), value: 'chat', icon: 'chat' },
+  { label: t('profile.menu.myCourses'), value: 'my-courses', slug: 'courses', icon: 'menu_book' },
+  {
+    label: t('profile.menu.savedCourses'),
+    value: 'saved-courses',
+    slug: 'saved',
+    icon: 'bookmark',
+  },
+  {
+    label: t('profile.menu.personalInfo'),
+    value: 'personal-info',
+    slug: 'personal-info',
+    icon: 'person',
+  },
+  { label: t('profile.menu.benefits'), value: 'benefits', slug: 'benefits', icon: 'card_giftcard' },
+  { label: t('profile.menu.chat'), value: 'chat', slug: 'chat', icon: 'chat' },
   {
     label: t('profile.menu.myCertificates'),
     value: 'my-certificates',
+    slug: 'certificates',
     icon: 'workspace_premium',
   },
 ]);

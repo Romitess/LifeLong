@@ -12,7 +12,9 @@
           icon="add"
           label="เพิ่มทะเบียนรายวิชา/หลักสูตรระยะสั้น"
           class="courses-manager__add-btn"
-          @click="void router.push('/admin/courses/new')"
+          tag="a"
+          :href="resolveFullUrl('/admin/courses/new')"
+          @click="navClick('/admin/courses/new', $event)"
         />
       </template>
 
@@ -231,7 +233,9 @@
                     size="sm"
                     class="courses-manager-action-btn courses-manager-action-btn--copy"
                     aria-label="คัดลอก"
-                    @click="void router.push(`/admin/courses/${item.courseId}/copy`)"
+                    tag="a"
+                    :href="resolveFullUrl(`/admin/courses/${item.courseId}/copy`)"
+                    @click="navClick(`/admin/courses/${item.courseId}/copy`, $event)"
                   >
                     <q-tooltip>คัดลอก</q-tooltip>
                   </q-btn>
@@ -246,7 +250,9 @@
                       size="sm"
                       class="courses-manager-action-btn courses-manager-action-btn--view"
                       aria-label="ดูรายละเอียด"
-                      @click="void openDetail(item)"
+                      tag="a"
+                      :href="resolveFullUrl(`/admin/courses/${item.courseId}`)"
+                      @click="navClick(`/admin/courses/${item.courseId}`, $event)"
                     >
                       <q-tooltip>ดูรายละเอียด</q-tooltip>
                     </q-btn>
@@ -258,7 +264,9 @@
                       size="sm"
                       class="courses-manager-action-btn courses-manager-action-btn--edit"
                       aria-label="แก้ไข"
-                      @click="void router.push(`/admin/courses/${item.courseId}/edit`)"
+                      tag="a"
+                      :href="resolveFullUrl(`/admin/courses/${item.courseId}/edit`)"
+                      @click="navClick(`/admin/courses/${item.courseId}/edit`, $event)"
                     >
                       <q-tooltip>แก้ไข</q-tooltip>
                     </q-btn>
@@ -332,6 +340,7 @@ import AppSearchInput from 'components/admin/AppSearchInput.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import type { AdminCourseItem } from 'src/types/admin-courses';
 
 const $q = useQuasar();
@@ -442,8 +451,12 @@ async function handlePageChange(page: number): Promise<void> {
   });
 }
 
-function openDetail(item: AdminCourseItem): void {
-  void router.push(`/admin/courses/${item.courseId}`);
+function navClick(path: string, event: Event): void {
+  if (isNewTabClick(event)) {
+    return;
+  }
+  event.preventDefault();
+  void router.push(path);
 }
 
 function askDelete(item: AdminCourseItem): void {

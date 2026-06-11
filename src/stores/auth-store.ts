@@ -68,7 +68,15 @@ const TOKEN_SESSION_KEY = 'lll-token';
 function readSessionToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return window.sessionStorage.getItem(TOKEN_SESSION_KEY);
+    let token = window.localStorage.getItem(TOKEN_SESSION_KEY);
+    if (!token) {
+      token = window.sessionStorage.getItem(TOKEN_SESSION_KEY);
+      if (token) {
+        window.localStorage.setItem(TOKEN_SESSION_KEY, token);
+        window.sessionStorage.removeItem(TOKEN_SESSION_KEY);
+      }
+    }
+    return token;
   } catch {
     return null;
   }
@@ -77,7 +85,7 @@ function readSessionToken(): string | null {
 function writeSessionToken(token: string): void {
   if (typeof window === 'undefined') return;
   try {
-    window.sessionStorage.setItem(TOKEN_SESSION_KEY, token);
+    window.localStorage.setItem(TOKEN_SESSION_KEY, token);
   } catch {
     // ignore
   }
@@ -86,7 +94,7 @@ function writeSessionToken(token: string): void {
 function removeSessionToken(): void {
   if (typeof window === 'undefined') return;
   try {
-    window.sessionStorage.removeItem(TOKEN_SESSION_KEY);
+    window.localStorage.removeItem(TOKEN_SESSION_KEY);
   } catch {
     // ignore
   }

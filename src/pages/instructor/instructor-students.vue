@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="instructor-students-page">
     <div class="section-container instructor-students">
       <InstructorPageHero
@@ -29,10 +29,16 @@
       </InstructorPageHero>
 
       <nav v-if="selectedCourse" class="student-breadcrumb-nav" aria-label="breadcrumb">
-        <button type="button" class="student-breadcrumb-nav__item" @click="clearSelectedCourse">
+        <a
+          :href="
+            resolveFullUrl(`/instructor/${activeStudentTab === 'results' ? 'results' : 'students'}`)
+          "
+          class="student-breadcrumb-nav__item"
+          @click="onClearSelectedCourseClick"
+        >
           <q-icon name="menu_book" size="20px" />
           <span>วิชาของฉัน</span>
-        </button>
+        </a>
 
         <q-icon name="chevron_right" size="18px" class="student-breadcrumb-nav__separator" />
 
@@ -115,7 +121,9 @@
                     color="primary"
                     icon="edit"
                     class="learning-result-icon-btn"
-                    @click="selectCourse(course.id)"
+                    tag="a"
+                    :href="resolveFullUrl(`/instructor/results?courseId=${course.id}`)"
+                    @click="onSelectCourseClick(course.id, $event)"
                   >
                     <q-tooltip>บันทึกผลการเรียน</q-tooltip>
                   </q-btn>
@@ -166,7 +174,9 @@
               label="ตรวจสอบรายชื่อ"
               no-caps
               class="student-course-row__action"
-              @click.stop="selectCourse(course.id)"
+              tag="a"
+              :href="resolveFullUrl(`/instructor/students?courseId=${course.id}`)"
+              @click="onSelectCourseClick(course.id, $event)"
             />
           </button>
         </div>
@@ -1059,6 +1069,7 @@ import { useCourseStore } from 'src/stores/course-store';
 import { getCourseStructure } from 'src/data/course-structure';
 import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import type { GradeItemBreakdown } from 'src/composables/use-instructor-backend';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
 import buuLogoUrl from 'src/assets/buu-logo-receipt.png';
@@ -1727,6 +1738,13 @@ function selectCourse(courseId: string): void {
   });
 }
 
+function onSelectCourseClick(courseId: string, event: Event) {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  selectCourse(courseId);
+}
+
 function clearSelectedCourse(): void {
   selectedCourseId.value = '';
   selectedLearner.value = null;
@@ -1734,6 +1752,12 @@ function clearSelectedCourse(): void {
   const nextQuery = { ...route.query };
   delete nextQuery.courseId;
   void router.replace({ query: nextQuery });
+}
+
+function onClearSelectedCourseClick(event: Event) {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  clearSelectedCourse();
 }
 
 function clearFilters(): void {

@@ -248,7 +248,9 @@
                   :label="$t('finance.paymentImport.searchApplicantBtn')"
                   no-caps
                   class="rounded-borders"
-                  @click="router.push('/finance/applicant-search')"
+                  tag="a"
+                  :href="resolveFullUrl('/finance/applicant-search')"
+                  @click="onSearchApplicantClick"
                 />
               </div>
               <div
@@ -837,12 +839,21 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from 'stores/auth-store';
 import { usePaymentImportApi } from 'src/composables/usePaymentImportApi';
 import type { ImportAndGenerateResponse } from 'src/composables/usePaymentImportApi';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const $q = useQuasar();
 const { t } = useI18n();
 const router = useRouter();
 const authStore = useAuthStore();
 const { importAndGenerate } = usePaymentImportApi();
+
+function onSearchApplicantClick(event: Event) {
+  if (isNewTabClick(event)) {
+    return;
+  }
+  event.preventDefault();
+  void router.push('/finance/applicant-search');
+}
 
 const isFinalized = ref(false);
 const isGenerating = ref(false);

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-page class="instructor-dashboard">
     <div
       v-if="showGreetingBanner"
@@ -134,7 +134,9 @@
               color="primary"
               label="ดูทั้งหมด"
               no-caps
-              @click="router.push('/instructor/courses')"
+              tag="a"
+              :href="resolveFullUrl('/instructor/courses')"
+              @click="onViewAllCoursesClick"
             />
           </div>
 
@@ -185,7 +187,9 @@
                       label="จัดการรายวิชา"
                       size="sm"
                       class="q-px-md"
-                      @click="goToCourseManagement(course.id)"
+                      tag="a"
+                      :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
+                      @click="onManageCourseClick(course.id, $event)"
                     />
                     <q-btn
                       outline
@@ -193,12 +197,11 @@
                       label="ตรวจงาน / ให้เกรด"
                       size="sm"
                       class="q-px-md"
-                      @click="
-                        router.push({
-                          path: '/instructor/students',
-                          query: { courseId: course.id, tab: 'results' },
-                        })
+                      tag="a"
+                      :href="
+                        resolveFullUrl(`/instructor/students?courseId=${course.id}&tab=results`)
                       "
+                      @click="onGradeClick(course.id, $event)"
                     />
                     <q-btn
                       flat
@@ -335,7 +338,9 @@
                 color="primary"
                 label="ดูกิจกรรมทั้งหมด"
                 no-caps
-                @click="router.push('/instructor/students')"
+                tag="a"
+                :href="resolveFullUrl('/instructor/students')"
+                @click="onViewAllActivitiesClick"
               />
             </q-card-section>
           </q-card>
@@ -367,6 +372,7 @@ import heroOverviewImageUrl from 'src/assets/we1.png';
 import heroCourseImageUrl from 'src/assets/homepicture1.png';
 import heroClassroomImageUrl from 'src/assets/homepicture2.png';
 import heroInstructorImageUrl from 'src/assets/in.png';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const $q = useQuasar();
 const router = useRouter();
@@ -725,6 +731,33 @@ function goToCourseManagement(courseId: string) {
     path: '/instructor/courses',
     query: { courseId },
   });
+}
+
+function onViewAllCoursesClick(event: Event) {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  void router.push('/instructor/courses');
+}
+
+function onManageCourseClick(courseId: string, event: Event) {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  goToCourseManagement(courseId);
+}
+
+function onGradeClick(courseId: string, event: Event) {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  void router.push({
+    path: '/instructor/students',
+    query: { courseId, tab: 'results' },
+  });
+}
+
+function onViewAllActivitiesClick(event: Event) {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  void router.push('/instructor/students');
 }
 </script>
 
