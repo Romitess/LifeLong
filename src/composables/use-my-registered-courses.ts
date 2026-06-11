@@ -92,7 +92,7 @@ export function useMyRegisteredCourses() {
       registration,
       course: hydrateRegisteredCourse(registration),
       courseDetail: courseStore.getCourseDetailById(registration.courseId) ?? null,
-      progress: getCourseProgressSummary(registration.enrollId),
+      progress: getCourseProgressSummary(registration.enrollId, registration.courseId),
     })),
   );
 
