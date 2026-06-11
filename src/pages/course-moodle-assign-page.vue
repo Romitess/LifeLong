@@ -312,7 +312,9 @@ const canSubmitNow = computed(() => {
   return false;
 });
 
+const isGraded = computed(() => submission.value?.grade != null);
 const statusLabel = computed(() => {
+  if (isGraded.value) return 'ส่งแล้ว';
   switch (submission.value?.status) {
     case 'submitted':
       return 'ส่งแล้ว';
@@ -324,15 +326,13 @@ const statusLabel = computed(() => {
       return 'ยังไม่ส่ง';
   }
 });
-const statusColor = computed(() =>
-  submission.value?.status === 'submitted'
-    ? 'positive'
-    : submission.value?.status === 'draft'
-      ? 'orange'
-      : 'grey',
-);
+const statusColor = computed(() => {
+  if (isGraded.value || submission.value?.status === 'submitted') return 'positive';
+  if (submission.value?.status === 'draft') return 'orange';
+  return 'grey';
+});
 const statusIcon = computed(() =>
-  submission.value?.status === 'submitted' ? 'check_circle' : 'pending',
+  isGraded.value || submission.value?.status === 'submitted' ? 'check_circle' : 'pending',
 );
 
 function stopGradePolling(): void {
@@ -350,6 +350,9 @@ async function pollGrade(): Promise<void> {
   if (res.submission.grade != null) {
     submission.value = res.submission;
     stopGradePolling();
+    assignPassed.value = true;
+    progressStore.markLessonComplete(courseId.value, assignTitle.value);
+    if (enrollId.value != null) void enrollmentProgressStore.fetchCompletion(enrollId.value);
     $q.notify({
       type: 'positive',
       message: 'มีผลการตรวจงานแล้ว',
@@ -392,6 +395,11 @@ async function load(): Promise<void> {
   assign.value = res.assign;
   submission.value = res.submission;
   if (res.submission.onlineText) onlineText.value = stripTags(res.submission.onlineText);
+  // Already graded on load → silently mark as done (covers noSubmissions + online assignments revisited after grading)
+  if (res.submission.grade != null) {
+    progressStore.markLessonComplete(courseId.value, assignTitle.value);
+    if (enrollId.value != null) void enrollmentProgressStore.fetchCompletion(enrollId.value);
+  }
 }
 
 function stripTags(html: string): string {
