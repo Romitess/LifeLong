@@ -259,6 +259,12 @@ const routes: RouteRecordRaw[] = [
   },
 
   {
+    path: '/reset-password',
+    component: () => import('layouts/fullscreen-layout.vue'),
+    meta: { public: true },
+    children: [{ path: '', component: () => import('pages/reset-password-page.vue') }],
+  },
+  {
     path: '/register',
     component: () => import('layouts/fullscreen-layout.vue'),
     meta: { public: true },

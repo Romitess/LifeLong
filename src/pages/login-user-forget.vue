@@ -81,83 +81,102 @@
         </section>
 
         <section class="form-card">
-          <div class="form-card__header">
-            <div class="form-card__icon">
-              <q-icon name="mark_email_unread" />
+          <template v-if="!submitted">
+            <div class="form-card__header">
+              <div class="form-card__icon">
+                <q-icon name="mark_email_unread" />
+              </div>
+              <div>
+                <h2>{{ $t('auth.forgot.title') }}</h2>
+                <p>{{ $t('auth.forgot.generalUser') }}</p>
+              </div>
             </div>
-            <div>
-              <h2>{{ $t('auth.forgot.title') }}</h2>
-              <p>{{ $t('auth.forgot.generalUser') }}</p>
-            </div>
-          </div>
 
-          <q-form class="forgot-form" @submit.prevent="submitEmail">
-            <q-input
-              v-model="email"
-              outlined
-              dense
-              bg-color="white"
-              type="email"
-              autocomplete="email"
-              class="email-input"
-              :label="$t('auth.forgot.emailLabel')"
-            >
-              <template #prepend>
-                <q-icon name="alternate_email" />
-              </template>
-            </q-input>
+            <q-form class="forgot-form" @submit.prevent="submitEmail">
+              <q-input
+                v-model="email"
+                outlined
+                dense
+                bg-color="white"
+                type="email"
+                autocomplete="email"
+                class="email-input"
+                :label="$t('auth.forgot.emailLabel')"
+                :disable="isLoading"
+              >
+                <template #prepend>
+                  <q-icon name="alternate_email" />
+                </template>
+              </q-input>
 
-            <q-btn
-              class="submit-btn"
-              color="primary"
-              text-color="white"
-              icon-right="send"
-              :label="$t('auth.forgot.submit')"
-              type="submit"
-              unelevated
-              no-caps
-            />
-          </q-form>
+              <div v-if="error" class="error-msg">{{ error }}</div>
 
-          <div class="related-links">
-            <h3>{{ $t('auth.forgot.relatedLinks') }}</h3>
-            <div class="related-link">
-              <q-icon name="support_agent" />
-              <span>{{ $t('auth.forgot.staffLink') }}</span>
+              <q-btn
+                class="submit-btn"
+                color="primary"
+                text-color="white"
+                icon-right="send"
+                :label="isLoading ? $t('auth.forgot.submitting') : $t('auth.forgot.submit')"
+                type="submit"
+                unelevated
+                no-caps
+                :loading="isLoading"
+              />
+            </q-form>
+
+            <div class="related-links">
+              <h3>{{ $t('auth.forgot.relatedLinks') }}</h3>
+              <div class="related-link">
+                <q-icon name="support_agent" />
+                <span>{{ $t('auth.forgot.staffLink') }}</span>
+              </div>
+              <div class="related-link">
+                <q-icon name="menu_book" />
+                <span>{{ $t('auth.forgot.courseLink') }}</span>
+              </div>
             </div>
-            <div class="related-link">
-              <q-icon name="menu_book" />
-              <span>{{ $t('auth.forgot.courseLink') }}</span>
+          </template>
+
+          <template v-else>
+            <div class="success-state">
+              <div class="success-state__icon">
+                <q-icon name="mark_email_read" />
+              </div>
+              <h2>{{ $t('auth.forgot.successTitle') }}</h2>
+              <p>{{ $t('auth.forgot.successDesc') }}</p>
+              <q-btn
+                class="submit-btn"
+                color="primary"
+                text-color="white"
+                icon-right="login"
+                :label="$t('auth.forgot.backToLogin')"
+                unelevated
+                no-caps
+                to="/login"
+              />
             </div>
-          </div>
+          </template>
         </section>
       </div>
     </main>
   </q-page>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script lang="ts" setup>
+import { ref } from 'vue';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
+import { useForgotPassword } from 'src/composables/use-forgot-password';
 
-export default defineComponent({
-  name: 'ForgotPasswordPage',
-  components: {
-    LanguageToggle,
-  },
+defineOptions({ name: 'ForgotPasswordPage' });
 
-  data() {
-    return {
-      email: '',
-    };
-  },
+const email = ref('');
+const submitted = ref(false);
+const { isLoading, error, requestReset } = useForgotPassword();
 
-  methods: {
-    submitEmail() {
-      console.log('Email:', this.email);
-    },
-  },
-});
+async function submitEmail() {
+  const ok = await requestReset(email.value);
+  if (ok) submitted.value = true;
+}
 </script>
 
 <style scoped>
@@ -617,5 +636,47 @@ export default defineComponent({
   .page-accent {
     display: none;
   }
+}
+
+.error-msg {
+  color: #dc2626;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.success-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.success-state__icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.1);
+  font-size: 28px;
+}
+
+.success-state h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.22rem;
+  font-weight: 800;
+}
+
+.success-state p {
+  margin: 0;
+  color: #475467;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.6;
+  max-width: 340px;
 }
 </style>
