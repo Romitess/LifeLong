@@ -9,18 +9,20 @@
     @touchstart.passive="onTouchStart"
   >
     <div ref="trackEl" class="marquee__track">
-      <button
+      <a
         v-for="(item, i) in quad"
         :key="i"
+        :href="getCategoryUrl(item.name)"
         class="marquee__item"
-        :style="{ '--cat-color': item.color }"
-        @click="select(item.name)"
+        :style="{ '--cat-color': item.color, textDecoration: 'none' }"
+        draggable="false"
+        @click="select(item.name, $event)"
       >
         <span class="marquee__icon-bubble">
           <q-icon :name="item.icon" size="13px" />
         </span>
         {{ item.name }}
-      </button>
+      </a>
     </div>
   </div>
 </template>
@@ -29,6 +31,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCategoryStore } from 'src/stores/category-store';
+import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const router = useRouter();
 const categoryStore = useCategoryStore();
@@ -175,11 +178,26 @@ function endDrag() {
   lastTimestamp = 0;
 }
 
-function select(name: string) {
+function getCategoryUrl(name: string): string {
+  if (name === 'ทั้งหมด') {
+    return resolveFullUrl('/short-courses');
+  }
+  return resolveFullUrl(`/short-courses?category=${encodeURIComponent(name)}`);
+}
+
+function select(name: string, event?: Event) {
   if (hasDragged) {
     hasDragged = false;
+    if (event) event.preventDefault();
     return;
   }
+
+  if (event && isNewTabClick(event)) {
+    return;
+  }
+
+  if (event) event.preventDefault();
+
   if (name === 'ทั้งหมด') {
     void router.push({ path: '/short-courses' });
   } else {
