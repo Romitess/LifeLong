@@ -156,6 +156,26 @@ export default defineRouter(({ store /*, ssrContext */ }) => {
         return match;
       })();
 
+      const getDefaultRouteForRole = (role?: string) => {
+        if (!role) return '/main';
+        const normalizedRole = role.toLowerCase().replace(/-/g, '_');
+        switch (normalizedRole) {
+          case 'admin':
+            return '/admin/dashboard';
+          case 'finance':
+            return '/finance/dashboard';
+          case 'teach':
+          case 'instructor':
+            return '/instructor/dashboard';
+          case 'central_finance':
+            return '/central-finance/dashboard';
+          case 'lifelong2':
+            return '/lifelong2/dashboard';
+          default:
+            return '/main';
+        }
+      };
+
       console.log(`[Router Guard] Role check for ${to.path}:`, {
         required: requiredRole,
         userRole: finalUserRole,
@@ -166,7 +186,69 @@ export default defineRouter(({ store /*, ssrContext */ }) => {
         console.warn(
           `[Router Guard] Access denied. Required: ${requiredRole}, User: ${finalUserRole}`,
         );
-        return '/main';
+        return getDefaultRouteForRole(finalUserRole);
+      }
+    } else if (isLoggedIn && !requiredRole) {
+      // 3. Prevent staff from accessing public/student pages when logged in
+      let finalUserRole = storeUserRole;
+
+      if (!finalUserRole && userEmail) {
+        finalUserRole = authStore.user?.role;
+      }
+
+      if (finalUserRole) {
+        const normalizedUserRole = finalUserRole.toLowerCase().replace(/-/g, '_');
+        const staffRoles = [
+          'admin',
+          'finance',
+          'teach',
+          'instructor',
+          'central_finance',
+          'lifelong2',
+        ];
+        const isStaff = staffRoles.includes(normalizedUserRole);
+
+        if (isStaff) {
+          const isSharedRoute =
+            to.path.startsWith('/profile') ||
+            to.path.startsWith('/notifications') ||
+            to.path === '/403' ||
+            to.path.startsWith('/login') ||
+            to.path.startsWith('/register') ||
+            to.path.startsWith('/login-forget') ||
+            to.path.startsWith('/reset-password');
+
+          const isInstructorCourseView =
+            (normalizedUserRole === 'teach' || normalizedUserRole === 'instructor') &&
+            to.path.startsWith('/course/');
+
+          if (!isSharedRoute && !isInstructorCourseView) {
+            const getDefaultRouteForRole = (role?: string) => {
+              if (!role) return '/main';
+              const normRole = role.toLowerCase().replace(/-/g, '_');
+              switch (normRole) {
+                case 'admin':
+                  return '/admin/dashboard';
+                case 'finance':
+                  return '/finance/dashboard';
+                case 'teach':
+                case 'instructor':
+                  return '/instructor/dashboard';
+                case 'central_finance':
+                  return '/central-finance/dashboard';
+                case 'lifelong2':
+                  return '/lifelong2/dashboard';
+                default:
+                  return '/main';
+              }
+            };
+
+            console.log(
+              `[Router Guard] Staff user ${normalizedUserRole} accessing non-staff route ${to.path}. Redirecting to home.`,
+            );
+            return getDefaultRouteForRole(finalUserRole);
+          }
+        }
       }
     }
 
