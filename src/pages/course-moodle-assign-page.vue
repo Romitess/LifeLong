@@ -86,39 +86,16 @@
           <div v-if="feedbackHtml" class="assign-html q-mt-sm" v-html="feedbackHtml" />
         </BaseContentCard>
 
-        <!-- Waiting for grade banner -->
-        <q-banner
-          v-if="isWaitingGrade"
-          rounded
-          class="assign-banner assign-banner--waiting q-mb-md"
-        >
-          <template #avatar>
-            <q-spinner-dots color="amber-8" size="28px" />
-          </template>
-          <span class="text-weight-medium">รอผลการตรวจจากอาจารย์</span>
-          <br />
-          <span class="text-caption text-grey-7"
-            >ระบบจะแจ้งเตือนเมื่อมีผล (ตรวจสอบอัตโนมัติทุก 30 วินาที)</span
-          >
-          <template #action>
-            <BaseButton
-              flat
-              no-caps
-              color="amber-9"
-              label="ตรวจสอบเดี๋ยวนี้"
-              icon="refresh"
-              :loading="loading"
-              @click="() => void pollGrade()"
-            />
-          </template>
-        </q-banner>
-
         <!-- Auto-mark result banner -->
         <q-banner v-if="assignPassed === true" rounded class="bg-green-1 text-grey-9 q-mb-md">
           <template #avatar><q-icon name="check_circle" color="positive" /></template>
           <span class="text-weight-medium">ระบบบันทึกความคืบหน้าเรียบร้อยแล้ว</span>
         </q-banner>
-        <q-banner v-else-if="assignPassed === false" rounded class="bg-red-1 text-grey-9 q-mb-md">
+        <q-banner
+          v-else-if="assignPassed === false && !isWaitingForTeacher"
+          rounded
+          class="bg-red-1 text-grey-9 q-mb-md"
+        >
           <template #avatar><q-icon name="cancel" color="negative" /></template>
           <span class="text-weight-medium">ยังไม่ผ่านเกณฑ์การส่งงาน</span>
           <br />ระบบยังไม่บันทึกความคืบหน้า กรุณาตรวจสอบเงื่อนไขและลองใหม่อีกครั้ง
@@ -313,27 +290,27 @@ const canSubmitNow = computed(() => {
 });
 
 const isGraded = computed(() => submission.value?.grade != null);
+const isWaitingForTeacher = computed(
+  () => submission.value?.status === 'submitted' && submission.value?.grade == null,
+);
 const statusLabel = computed(() => {
-  if (isGraded.value) return 'ส่งแล้ว';
-  switch (submission.value?.status) {
-    case 'submitted':
-      return 'ส่งแล้ว';
-    case 'draft':
-      return 'ฉบับร่าง';
-    case 'reopened':
-      return 'เปิดให้แก้ไข';
-    default:
-      return 'ยังไม่ส่ง';
-  }
+  if (isGraded.value) return 'เสร็จสิ้น';
+  if (submission.value?.status === 'submitted') return 'กำลังตรวจ';
+  if (submission.value?.status === 'draft') return 'ฉบับร่าง';
+  if (submission.value?.status === 'reopened') return 'เปิดให้แก้ไข';
+  return 'ยังไม่ส่ง';
 });
 const statusColor = computed(() => {
-  if (isGraded.value || submission.value?.status === 'submitted') return 'positive';
+  if (isGraded.value) return 'positive';
+  if (submission.value?.status === 'submitted') return 'amber-8';
   if (submission.value?.status === 'draft') return 'orange';
   return 'grey';
 });
-const statusIcon = computed(() =>
-  isGraded.value || submission.value?.status === 'submitted' ? 'check_circle' : 'pending',
-);
+const statusIcon = computed(() => {
+  if (isGraded.value) return 'check_circle';
+  if (submission.value?.status === 'submitted') return 'hourglass_empty';
+  return 'pending';
+});
 
 function stopGradePolling(): void {
   if (pollHandle) {
