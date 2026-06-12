@@ -1026,6 +1026,7 @@ export default {
     seatsFull: 'Seats Full',
     enrollNow: 'Enroll Now',
     pendingPayment: 'Pending Payment',
+    courseCompleted: 'Course Completed',
   },
   homepage: {
     mycourse: 'My Courses',

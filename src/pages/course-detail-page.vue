@@ -1026,6 +1026,11 @@ const isCourseRegistered = computed<boolean>(() => {
   return courseRegistrationStore.isRegistered(course.value.id);
 });
 
+const isCourseCompleted = computed<boolean>(() => {
+  if (!course.value) return false;
+  return courseRegistrationStore.isCourseCompleted(course.value.id);
+});
+
 const courseRegistration = computed(() => {
   if (!course.value) {
     return null;
@@ -1101,6 +1106,15 @@ const registrationWindowStatus = computed<RegistrationWindowStatus>(() => {
 });
 
 const enrollmentAction = computed<EnrollmentAction>(() => {
+  if (isCourseCompleted.value) {
+    return {
+      label: t('courseDetail.courseCompleted'),
+      icon: 'verified',
+      color: 'positive',
+      disabled: true,
+    };
+  }
+
   if (isCourseRegistered.value) {
     if (courseRegistration.value?.paymentStatus === 'pending') {
       return {

@@ -31,6 +31,7 @@ export interface CourseRegistration {
   userId: string;
   enrollId?: number | null | undefined;
   hasReceipt?: boolean;
+  isCompleted?: boolean;
 }
 
 interface CourseRegistrationState {
@@ -98,6 +99,16 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
 
         return state.registrations.some(
           (registration) => registration.courseId === courseId && registration.userId === userId,
+        );
+      },
+
+    isCourseCompleted:
+      (state) =>
+      (courseId: string): boolean => {
+        const userId = getAuthenticatedUserId();
+        if (!userId) return false;
+        return state.registrations.some(
+          (r) => r.courseId === courseId && r.userId === userId && r.isCompleted === true,
         );
       },
 
@@ -293,6 +304,7 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
             moodleCourseId: number | null;
             enrolledAt: string | null;
             paymentStatus: 'free' | 'paid' | 'pending';
+            isCompleted: boolean;
           }[]
         >('/api/moodle/enroll/my-courses', { params: { username } });
 
@@ -330,6 +342,7 @@ export const useCourseRegistrationStore = defineStore('course-registration', {
               userId,
               enrollId: item.enrollId,
               hasReceipt,
+              isCompleted: item.isCompleted,
             };
           }),
         );

@@ -1039,6 +1039,7 @@ export default {
     seatsFull: 'ที่นั่งเต็มแล้ว',
     enrollNow: 'ลงทะเบียนเรียน',
     pendingPayment: 'รอชำระเงิน',
+    courseCompleted: 'เรียนจบแล้ว',
   },
   homepage: {
     mycourse: 'วิชาเรียนของฉัน',
