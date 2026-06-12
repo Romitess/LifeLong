@@ -410,12 +410,27 @@
                 <q-card-section>
                   <div class="detail-card__header">
                     <q-icon name="calendar_month" size="24px" color="primary" />
-                    <h2 class="detail-card__title">{{ $t('schedule') }}</h2>
+                    <h2 class="detail-card__title">
+                      {{ $t('schedule') }}
+                    </h2>
                   </div>
-
-                  <div v-if="course.teachTime" class="q-mt-md q-pa-sm">
-                    <span class="text-caption text-grey-7"> </span>
-                    <span class="text-body2">{{ course.teachTime }}</span>
+                  <div class="q-mt-md">
+                    <div
+                      v-if="course?.teachTime && course.teachTime.trim()"
+                      class="text-body2 text-grey-9 q-pa-md"
+                    >
+                      {{ course.teachTime }}
+                    </div>
+                    <!-- Placeholder when no schedule details yet -->
+                    <div v-else class="q-pa-md objectives-pending">
+                      <span class="text-body2 text-grey-9">
+                        {{
+                          locale === 'th'
+                            ? 'ไม่มีรายละเอียดตารางเรียน'
+                            : 'No schedule details provided'
+                        }}
+                      </span>
+                    </div>
                   </div>
                 </q-card-section>
               </q-card>
