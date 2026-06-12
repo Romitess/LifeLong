@@ -21,6 +21,7 @@ interface BackendCourseDetailResponse {
   typeClasses?: CourseTypeClass[] | null;
   privilege?: string | null;
   vdo?: string | null;
+  teachTime?: string | null;
   creditBank?: number | null;
   syllabus?: { seq: number; subject: string | null; hour: number | null }[];
   instructorInfo?: {
@@ -133,6 +134,7 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
               typeClasses: data.typeClasses ?? null,
               privilege: data.privilege ?? null,
               ...(data.vdo ? { previewVideoUrl: data.vdo } : {}),
+              teachTime: data.teachTime ?? null,
               ...(data.creditBank != null ? { creditHours: Number(data.creditBank) } : {}),
               ...(data.syllabus?.length
                 ? {

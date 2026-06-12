@@ -412,22 +412,11 @@
                     <q-icon name="calendar_month" size="24px" color="primary" />
                     <h2 class="detail-card__title">{{ $t('schedule') }}</h2>
                   </div>
-                  <q-markup-table flat bordered wrap-cells class="q-mt-md schedule-table">
-                    <thead>
-                      <tr>
-                        <th class="text-left">{{ $t('day') }}</th>
-                        <th class="text-left">{{ $t('time') }}</th>
-                        <th class="text-left">{{ $t('room') }}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(sch, idx) in course.schedules" :key="idx">
-                        <td>{{ getTranslatedDay(sch) }}</td>
-                        <td>{{ sch.time }}</td>
-                        <td>{{ getTranslatedRoom(sch) }}</td>
-                      </tr>
-                    </tbody>
-                  </q-markup-table>
+
+                  <div v-if="course.teachTime" class="q-mt-md q-pa-sm">
+                    <span class="text-caption text-grey-7"> </span>
+                    <span class="text-body2">{{ course.teachTime }}</span>
+                  </div>
                 </q-card-section>
               </q-card>
               <!-- Privilege -->
@@ -833,7 +822,6 @@ import { useCourseBookmarkStore } from 'src/stores/course-bookmark-store';
 import type { Course, DeliveryMode } from 'src/types/course';
 import type {
   CourseDetail,
-  CourseSchedule,
   CourseSyllabus,
   EnrollmentAction,
   RegistrationWindowStatus,
@@ -911,16 +899,6 @@ function getTranslatedTopic(item: CourseSyllabus): string {
 function getTranslatedSyllabusDesc(item: CourseSyllabus): string {
   if (locale.value === 'th') return item.description;
   return item.descriptionEn || item.description;
-}
-
-function getTranslatedDay(sch: CourseSchedule): string {
-  if (locale.value === 'th') return sch.day;
-  return sch.dayEn || sch.day;
-}
-
-function getTranslatedRoom(sch: CourseSchedule): string {
-  if (locale.value === 'th') return sch.room;
-  return sch.roomEn || sch.room;
 }
 
 function getTranslatedRegStart(course: Course): string {

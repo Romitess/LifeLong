@@ -1040,6 +1040,7 @@ export default {
     enrollNow: 'ลงทะเบียนเรียน',
     pendingPayment: 'รอชำระเงิน',
     courseCompleted: 'เรียนจบแล้ว',
+    teachTime: 'ตารางเรียน',
   },
   homepage: {
     mycourse: 'วิชาเรียนของฉัน',

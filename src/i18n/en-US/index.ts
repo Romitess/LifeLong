@@ -1027,6 +1027,7 @@ export default {
     enrollNow: 'Enroll Now',
     pendingPayment: 'Pending Payment',
     courseCompleted: 'Course Completed',
+    teachTime: 'Class Schedule',
   },
   homepage: {
     mycourse: 'My Courses',
