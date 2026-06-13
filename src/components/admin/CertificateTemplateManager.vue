@@ -643,8 +643,8 @@ async function replaceItemBlobUrls(templateItems: AdminCertTemplateItem[]): Prom
         try {
           const response = await api.get<Blob>(item.url!, { responseType: 'blob' });
           newUrls[item.id] = URL.createObjectURL(response.data);
-        } catch {
-          // leave undefined — broken image handled in template
+        } catch (err) {
+          console.error('[CertTemplate] failed to load image', item.url, err);
         }
       }),
   );

@@ -317,8 +317,8 @@ async function loadTemplateBlobUrls(templates: ActiveCertTemplate[]): Promise<vo
         try {
           const response = await api.get<Blob>(t.url!, { responseType: 'blob' });
           newUrls[t.id] = URL.createObjectURL(response.data);
-        } catch {
-          // leave undefined — broken image handled by v-else
+        } catch (err) {
+          console.error('[CertTemplate] failed to load image', t.url, err);
         }
       }),
   );
