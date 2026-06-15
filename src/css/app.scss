@@ -78,7 +78,7 @@ body {
 // ── GLOBAL BUTTON & COMPONENT STYLES ────────────────────────
 // บังคับสไตล์ให้ "ทุกปุ่ม" มีขอบและเด้งตามที่กำหนด
 body .q-btn {
-  border-radius: 12px !important;
+  border-radius: var(--radius-md) !important; // token กลาง (radius.scss) = 12px
   text-transform: none !important;
   font-weight: 600 !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -112,7 +112,7 @@ body .q-btn--flat .q-focus-helper {
 .q-field--outlined .q-field__control,
 .q-field--outlined .q-field__control::before,
 .q-field--outlined .q-field__control::after {
-  border-radius: 12px;
+  border-radius: var(--radius-md); // token กลาง (radius.scss) = 12px ให้เท่าปุ่ม/การ์ด
 }
 
 // ข้อยกเว้นสำหรับปุ่มในปฏิทิน (Reset Calendar Buttons)

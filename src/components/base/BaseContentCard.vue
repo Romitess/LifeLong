@@ -18,9 +18,11 @@ withDefaults(defineProps<Props>(), { padding: 'lg' });
 <style lang="scss" scoped>
 .base-content-card {
   overflow: hidden;
-  background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 12px;
+  // อ้างอิง design token กลาง (theme-tokens/colors.scss + radius.scss) — single source
+  // (ค่าเดิม #fff / rgba(15,23,42,.1) / 12px → token ที่ค่าเท่ากัน ไม่เปลี่ยนหน้าตา)
+  background: var(--color-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
 }
 
 .base-content-card--none {
