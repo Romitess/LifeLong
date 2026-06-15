@@ -43,15 +43,15 @@
               />
             </div>
             <div class="column">
-              <div class="text-overline text-white" style="opacity: 0.6; letter-spacing: 0.12em">
+              <div class="text-overline text-white" style="opacity: 0.7; letter-spacing: 0.12em">
                 {{ heroRoleLabel }}
               </div>
               <div class="text-h4 text-weight-bolder text-white q-mt-xs">
                 {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
               </div>
               <div class="row items-center q-gutter-sm q-mt-xs">
-                <q-badge rounded color="positive" label="Active" class="text-weight-bold" />
-                <span class="text-body2 text-white" style="opacity: 0.7">
+                <q-badge rounded color="primary" label="Active" class="text-weight-bold" />
+                <span class="text-body2 text-white" style="opacity: 0.75">
                   {{ idLabel }} : {{ authStore.user?.studentId }}
                 </span>
               </div>
@@ -163,40 +163,19 @@ function onCropDialogSave(): void {
 <style lang="scss" scoped>
 .profile-hero {
   position: relative;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #234e70 100%);
+  // พื้นเข้ม navy-teal ให้ตรงกับ admin hero (AppPageHero)
+  background:
+    linear-gradient(135deg, rgba(16, 35, 63, 0.98), rgba(20, 84, 106, 0.92)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
   padding: 0;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -45%;
-    bottom: -45%;
-    left: -38%;
-    width: 34%;
-    background: linear-gradient(
-      105deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.02) 18%,
-      rgba(255, 255, 255, 0.2) 46%,
-      rgba(255, 214, 102, 0.18) 52%,
-      rgba(255, 255, 255, 0.08) 62%,
-      transparent 100%
-    );
-    filter: blur(10px);
-    opacity: 0;
-    pointer-events: none;
-    transform: skewX(-18deg) translateX(0);
-    animation: profileHeroLightSweep 12s ease-in-out infinite;
-    z-index: 1;
-  }
 
   &__particles {
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(circle at 15% 25%, rgba($primary, 0.3), transparent 40%),
-      radial-gradient(circle at 85% 75%, rgba(35, 78, 112, 0.4), transparent 40%),
+      radial-gradient(circle at 15% 25%, rgba($primary, 0.18), transparent 40%),
+      radial-gradient(circle at 85% 78%, rgba(20, 84, 106, 0.5), transparent 42%),
       radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04), transparent 60%);
     z-index: 0;
   }
@@ -207,15 +186,15 @@ function onCropDialogSave(): void {
     background:
       repeating-linear-gradient(
         0deg,
-        rgba(255, 255, 255, 0.015) 0px,
-        rgba(255, 255, 255, 0.015) 1px,
+        rgba(255, 255, 255, 0.02) 0px,
+        rgba(255, 255, 255, 0.02) 1px,
         transparent 1px,
         transparent 48px
       ),
       repeating-linear-gradient(
         90deg,
-        rgba(255, 255, 255, 0.015) 0px,
-        rgba(255, 255, 255, 0.015) 1px,
+        rgba(255, 255, 255, 0.02) 0px,
+        rgba(255, 255, 255, 0.02) 1px,
         transparent 1px,
         transparent 48px
       );
@@ -311,13 +290,13 @@ function onCropDialogSave(): void {
   &__icon-wrap {
     width: 44px;
     height: 44px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background: linear-gradient(
       135deg,
       var(--profile-stat-accent, #{$primary}) 0%,
       var(--profile-stat-accent-strong, rgba($primary, 0.88)) 100%
     );
-    box-shadow: 0 12px 24px var(--profile-stat-shadow, rgba($primary, 0.22));
+    // ไม่มี glow (colored shadow) — flat ตามที่เจ้าของงานต้องการ
     display: flex;
     align-items: center;
     justify-content: center;
@@ -354,7 +333,7 @@ function onCropDialogSave(): void {
   max-width: 92vw;
   max-height: 92vh;
   padding: 16px;
-  border-radius: 24px !important;
+  border-radius: var(--radius-2xl) !important; // token = 24px
   background: rgba(15, 23, 42, 0.88) !important;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35) !important;
   overflow: visible;
@@ -439,25 +418,6 @@ function onCropDialogSave(): void {
       border: 2px solid rgba(255, 255, 255, 0.5);
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
     }
-  }
-}
-
-@keyframes profileHeroLightSweep {
-  0%,
-  42% {
-    opacity: 0;
-    transform: skewX(-18deg) translateX(0);
-  }
-  50% {
-    opacity: 0.86;
-  }
-  66% {
-    opacity: 0.48;
-  }
-  78%,
-  100% {
-    opacity: 0;
-    transform: skewX(-18deg) translateX(520%);
   }
 }
 </style>

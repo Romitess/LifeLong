@@ -39,10 +39,10 @@
           <q-badge rounded color="primary" :label="myRegistrationsCount" />
         </q-item-section>
         <q-item-section v-if="menu.value === 'saved-courses' && myBookmarksCount > 0" side>
-          <q-badge rounded color="amber-8" :label="myBookmarksCount" />
+          <q-badge rounded color="primary" :label="myBookmarksCount" />
         </q-item-section>
         <q-item-section v-if="menu.value === 'my-certificates' && myCertificatesCount > 0" side>
-          <q-badge rounded color="positive" :label="myCertificatesCount" />
+          <q-badge rounded color="primary" :label="myCertificatesCount" />
         </q-item-section>
       </q-item>
     </q-list>
@@ -132,7 +132,6 @@ function onMenuClick(value: string, event: Event): void {
   overflow: hidden;
   position: sticky;
   top: 140px;
-  min-height: 490px;
   background: #ffffff;
   border: 1px solid rgba(17, 24, 39, 0.12) !important;
   box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06) !important;

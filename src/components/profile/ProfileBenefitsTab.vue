@@ -27,7 +27,7 @@
         </div>
 
         <div class="benefits-check-card__verified row items-center q-gutter-sm q-mt-lg">
-          <q-icon name="check_circle" color="positive" size="24px" />
+          <q-icon name="check_circle" color="primary" size="24px" />
           <div class="text-weight-bold text-dark">{{ activeBenefitLabel }}</div>
         </div>
       </q-card-section>

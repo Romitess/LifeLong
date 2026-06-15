@@ -163,7 +163,7 @@
               loading="eager"
               decoding="sync"
             />
-            <q-badge rounded color="positive" class="student-card-dialog__status">
+            <q-badge rounded color="primary" class="student-card-dialog__status">
               Active Learner
             </q-badge>
           </div>
@@ -878,7 +878,8 @@ onMounted(async () => {
 }
 
 .profile-content {
-  background: #f8f6f1;
+  // ใช้พื้น body กลาง (เหมือน admin/หน้าอื่นที่เป็น transparent) แทน hardcode ครีม
+  background: transparent;
   min-height: 60vh;
   flex: 1;
 }

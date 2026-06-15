@@ -765,13 +765,13 @@ function savePersonalInfo(): void {
 <style lang="scss" scoped>
 .profile-form {
   padding: 32px 36px 36px;
-  border-radius: 20px !important;
+  border-radius: var(--radius-xl) !important; // = 20px (token)
   background: linear-gradient(180deg, #ffffff 0%, #fffdf7 100%) !important;
   border: 1px solid rgba(17, 24, 39, 0.08) !important;
   box-shadow: 0 14px 32px rgba(17, 24, 39, 0.05);
 
   h3 {
-    color: #ff9800;
+    color: var(--color-gold); // brand #f5a623 (เดิม #ff9800 ส้ม Material หลุดแบรนด์)
     font-size: 26px;
     margin-top: 0;
     margin-bottom: 18px;
@@ -795,7 +795,7 @@ function savePersonalInfo(): void {
     display: block;
     margin-bottom: 10px;
     font-weight: 600;
-    color: #374151;
+    color: var(--color-text-2); // = #374151 (token, ค่าเท่าเดิม)
   }
 }
 
@@ -803,7 +803,7 @@ function savePersonalInfo(): void {
   margin-top: 30px;
   min-width: 140px;
   min-height: 46px;
-  border-radius: 12px;
+  border-radius: var(--radius-md); // = 12px (token)
 }
 
 // Avatar section
@@ -1111,7 +1111,7 @@ function savePersonalInfo(): void {
 }
 
 .orange-text {
-  color: #ff9800;
+  color: var(--color-gold); // brand #f5a623 (เดิม #ff9800 ส้ม Material หลุดแบรนด์)
   text-align: left;
   margin-bottom: 8px;
 }

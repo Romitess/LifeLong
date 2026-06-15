@@ -35,7 +35,7 @@
               class="cert-card__cover"
             />
             <div v-else class="cert-card__cover-placeholder">
-              <q-icon name="workspace_premium" size="48px" color="amber-6" />
+              <q-icon name="workspace_premium" size="48px" color="primary" />
             </div>
             <div class="cert-card__badge">
               <q-icon name="verified" size="14px" />
@@ -59,7 +59,7 @@
         <q-card v-for="cert in apiOnlyCerts" :key="cert.certId" flat bordered class="cert-card">
           <div class="cert-card__cover-wrap">
             <div class="cert-card__cover-placeholder">
-              <q-icon name="workspace_premium" size="48px" color="amber-6" />
+              <q-icon name="workspace_premium" size="48px" color="primary" />
             </div>
             <div class="cert-card__badge">
               <q-icon name="verified" size="14px" />
@@ -71,7 +71,7 @@
             <div class="text-caption text-grey-6 q-mb-xs">{{ cert.courseCode }}</div>
             <div class="cert-card__title">{{ cert.courseName }}</div>
             <div v-if="cert.issueDate" class="cert-card__meta">
-              <q-icon name="workspace_premium" size="14px" color="amber-7" />
+              <q-icon name="workspace_premium" size="14px" color="primary" />
               <span
                 >{{ $t('profile.certificates.issuedAt') }} {{ formatDate(cert.issueDate) }}</span
               >
