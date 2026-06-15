@@ -224,7 +224,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'central-finance/faculty-revenue',
-        component: () => import('pages/centralfinance/finance-faculty-revenue-report.vue'),
+        component: () => import('pages/centralfinance/finance-faculty-education-report-page.vue'),
         meta: { role: 'central_finance' },
       },
       {
