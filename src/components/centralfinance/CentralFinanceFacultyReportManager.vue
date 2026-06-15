@@ -139,8 +139,8 @@
               </tr>
             </template>
 
-            <template v-else-if="groups.length > 0">
-              <template v-for="group in groups" :key="group.facultyId">
+            <template v-else-if="filteredGroups.length > 0">
+              <template v-for="group in filteredGroups" :key="group.facultyId">
                 <tr class="centralfinance-faculty-report-table__group-row">
                   <td colspan="6">
                     <div class="centralfinance-faculty-report__group-header">
@@ -323,6 +323,22 @@ const stats = computed<
 const facultyOptions = computed(() => filterOptions.value.faculties);
 const courseTypeOptions = computed(() => filterOptions.value.courseTypes);
 
+const filteredGroups = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  if (!query) return groups.value;
+  return groups.value
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) =>
+          item.courseName?.toLowerCase().includes(query) ||
+          item.courseCode?.toLowerCase().includes(query) ||
+          item.responsibleName?.toLowerCase().includes(query),
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
+});
+
 watch(
   () => props.initialFacultyId,
   (facultyId) => {
@@ -359,11 +375,8 @@ function loadReport(page = 1): Promise<void> {
   return fetchData({
     page,
     pageSize: rowsPerPage,
-    startDate: dateRange.value.start,
-    endDate: dateRange.value.end,
-    facultyId: selectedFacultyId.value,
-    typeCourseId: selectedTypeCourseId.value,
-    search: searchQuery.value || null,
+    ...(selectedFacultyId.value !== null && { facultyId: selectedFacultyId.value }),
+    ...(selectedTypeCourseId.value !== null && { typeCourseId: selectedTypeCourseId.value }),
   });
 }
 
@@ -386,9 +399,8 @@ async function preservePaginationPosition(update: () => Promise<void> | void): P
   window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
 }
 
-async function handleSearch(): Promise<void> {
+function handleSearch(): void {
   currentPage.value = 1;
-  await loadReport(1);
 }
 
 async function handlePageChange(page: number): Promise<void> {
