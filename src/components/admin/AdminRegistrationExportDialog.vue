@@ -120,6 +120,7 @@ interface Props {
   typeCourseId: number | null;
   facultyOptions: AdminRegistrationStatisticsReportFilterOption[];
   courseTypeOptions: AdminRegistrationStatisticsReportFilterOption[];
+  exportEndpoint?: string;
 }
 
 const props = defineProps<Props>();
@@ -385,7 +386,7 @@ async function onExport(): Promise<void> {
 
   try {
     const { data } = await api.get<ExportResponse>(
-      '/api/admin/reports/registration-statistics/export',
+      props.exportEndpoint ?? '/api/admin/reports/registration-statistics/export',
       {
         params: {
           startDate: normalizeDateForApi(localDateRange.value.start) || undefined,

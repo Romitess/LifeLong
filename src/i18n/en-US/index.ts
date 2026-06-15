@@ -1414,6 +1414,43 @@ export default {
         faculty: 'Faculty',
       },
     },
+    facultyRevenue: {
+      hero: {
+        title: 'Report by Faculty / Department',
+        desc: 'Analyze revenue distribution and collection by each faculty in the university',
+      },
+      filters: {
+        period: 'Reporting Period:',
+        month: 'Monthly',
+        quarter: 'Quarterly',
+        year: 'Yearly',
+        fiscalYear: 'Fiscal Year',
+        searchBtn: 'Search',
+        clearBtn: 'Clear',
+      },
+      summary: {
+        totalRevenue: 'Total Revenue',
+        topFaculty: 'Top Revenue Faculty',
+        facultyCount: 'Departments with Revenue',
+      },
+      chart: {
+        title: 'Revenue by Faculty',
+        totalRevenue: 'Total Annual Revenue',
+      },
+      table: {
+        reportTitle: 'Report by Faculty / Department — LifeLong Learning, Burapha University',
+        title: 'Faculty Comparison Table',
+        faculty: 'Faculty / Department',
+        proportion: 'Proportion',
+        revenue: 'Total Revenue',
+        rank: 'Rank',
+        pdfBtn: 'Export to PDF',
+        excelBtn: 'Export to Excel',
+        searchLabel: 'Search:',
+        showLabel: 'Show',
+        entriesLabel: 'entries',
+      },
+    },
   },
   common: {
     faculties: {

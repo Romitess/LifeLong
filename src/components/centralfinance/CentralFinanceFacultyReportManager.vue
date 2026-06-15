@@ -21,17 +21,22 @@
     >
       <template #header-actions>
         <div class="row items-center q-gutter-x-sm">
-          <AppSearchInput
+          <q-input
             v-model="searchQuery"
             :placeholder="t('finance.registrationStatistics.searchPlaceholder')"
-            class="centralfinance-faculty-report__search"
+            outlined
+            dense
+            class="bg-white centralfinance-faculty-report__search"
             @update:model-value="handleSearch"
-          />
-          <AppActionButton
-            variant="primary"
+          >
+            <template v-slot:prepend>
+              <q-icon name="search" color="grey-6" />
+            </template>
+          </q-input>
+          <q-btn
+            color="primary"
             icon="download"
             :label="t('finance.registrationStatistics.exportBtn')"
-            class="centralfinance-faculty-report__export-btn"
             @click="exportDialogOpen = true"
           />
         </div>
@@ -44,6 +49,7 @@
         :type-course-id="selectedTypeCourseId"
         :faculty-options="facultyOptions"
         :course-type-options="courseTypeOptions"
+        export-endpoint="/api/centralfinance/reports/registration-statistics/export"
       />
 
       <q-banner v-if="error" rounded dense class="bg-negative text-white q-ma-md">
@@ -251,13 +257,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import AppActionButton from 'components/admin/AppActionButton.vue';
 import AdminRegistrationExportDialog from 'components/admin/AdminRegistrationExportDialog.vue';
-import AppSearchInput from 'components/admin/AppSearchInput.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
-import { useAdminRegistrationStatisticsReport } from 'src/composables/use-admin-registration-statistics-report';
+import { useCentralFinanceFacultyReport } from 'src/composables/use-centralfinance-faculty-report';
 import { formatCount, formatCurrency } from 'src/utils/course-format';
 
 interface DateRangeValue {
@@ -282,7 +286,7 @@ const selectedFacultyId = ref<number | null>(null);
 const selectedTypeCourseId = ref<number | null>(null);
 
 const { groups, filterOptions, summary, pagination, isLoading, error, fetchData } =
-  useAdminRegistrationStatisticsReport();
+  useCentralFinanceFacultyReport();
 
 const stats = computed<
   {
@@ -432,16 +436,6 @@ onMounted(() => {
 <style lang="scss" scoped>
 .centralfinance-faculty-report__stats {
   margin-bottom: 18px;
-}
-
-.centralfinance-faculty-report__export-btn {
-  min-height: 38px;
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 12px;
-  font-size: 0.88rem;
-  font-weight: 700;
-  box-shadow: 0 8px 18px rgba(0, 121, 107, 0.16);
 }
 
 .centralfinance-faculty-report__search {
