@@ -586,7 +586,7 @@ export default {
         start: 'เริ่มต้น',
         end: 'สิ้นสุด',
         searchBtn: 'ค้นหา',
-        clearBtn: 'ล้างวันที่',
+        clearBtn: 'ล้าง',
       },
       columns: {
         no: 'ลำดับ',

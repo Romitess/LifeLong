@@ -589,7 +589,7 @@ export default {
         start: 'Start',
         end: 'End',
         searchBtn: 'Search',
-        clearBtn: 'Clear Dates',
+        clearBtn: 'Clear',
       },
       columns: {
         no: 'No.',

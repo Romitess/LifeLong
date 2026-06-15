@@ -165,6 +165,8 @@
                   :label="$t('finance.receiptSummary.filters.searchBtn')"
                   unelevated
                   class="q-px-xl"
+                  :loading="isLoading"
+                  @click="fetchData"
                 />
                 <q-btn
                   outline
@@ -224,12 +226,13 @@
         </div>
 
         <q-table
-          :rows="filteredRows"
+          :rows="rows"
           :columns="columns"
           row-key="id"
           flat
           dense
           :filter="search"
+          :loading="isLoading"
           class="receipt-table"
           v-model:pagination="pagination"
           :rows-per-page-options="[10, 25, 50, 100]"
@@ -298,16 +301,13 @@
               <div class="row items-center q-gutter-sm">
                 <span class="text-caption text-grey-8 q-mr-sm">
                   {{
-                    filteredRows.length > 0
+                    rows.length > 0
                       ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
                       : 0
                   }}-{{
-                    Math.min(
-                      scope.pagination.page * scope.pagination.rowsPerPage,
-                      filteredRows.length,
-                    )
+                    Math.min(scope.pagination.page * scope.pagination.rowsPerPage, rows.length)
                   }}
-                  of {{ filteredRows.length }}
+                  of {{ rows.length }}
                 </span>
                 <q-btn
                   icon="first_page"
@@ -373,6 +373,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { QTableProps } from 'quasar';
+import { api } from 'src/boot/axios';
 import { useFacultyList } from 'src/composables/use-faculty-list';
 import type { ApiFaculty } from 'src/types/faculty';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
@@ -389,7 +390,7 @@ interface ReceiptSummaryItem {
   faculty: string;
   receiptNo: string;
   customerName: string;
-  amount: number;
+  amount: number | string;
   effectiveDate: string;
   learnerName: string;
   courseName: string;
@@ -399,11 +400,19 @@ interface ReceiptSummaryItem {
   cancelDate?: string | undefined;
 }
 
+interface ReceiptSummaryResponse {
+  success: boolean;
+  total: number;
+  data: ReceiptSummaryItem[];
+}
+
 const { t } = useI18n();
 
 const { isLoading: isFacultyLoading, fetchFaculties } = useFacultyList();
 const faculties = ref<ApiFaculty[]>([]);
 
+const rows = ref<ReceiptSummaryItem[]>([]);
+const isLoading = ref(false);
 const search = ref('');
 const showReceiptDialog = ref(false);
 const selectedReceipt = ref<ReceiptSummaryItem | null>(null);
@@ -438,7 +447,7 @@ const activeFacultyScopeLabel = computed<string>(() => {
 // Receipt computed for ReceiptCard
 const receiptId = computed<string>(() => selectedReceipt.value?.receiptNo ?? '');
 const issuedAt = computed<Date | null>(() =>
-  selectedReceipt.value ? parseThaiDate(selectedReceipt.value.effectiveDate) : null,
+  selectedReceipt.value ? parseIsoDate(selectedReceipt.value.effectiveDate) : null,
 );
 const customerName = computed<string>(() => selectedReceipt.value?.customerName ?? '');
 const customerTaxId = computed<string>(() => '0994000249357');
@@ -454,12 +463,9 @@ const courseTitle = computed<string>(() => {
   const parts = selectedReceipt.value.courseName.split(':');
   return parts.slice(1).join(':').replace(/\n/g, ' ') || selectedReceipt.value.courseName;
 });
-const amount = computed<number>(() => selectedReceipt.value?.amount ?? 0);
-
-// Rows filtered by selected faculty
-const filteredRows = computed<ReceiptSummaryItem[]>(() => {
-  if (!filters.value.faculty) return mockData;
-  return mockData.filter((row) => row.faculty === filters.value.faculty);
+const amount = computed<number>(() => {
+  const val = selectedReceipt.value?.amount;
+  return typeof val === 'number' ? val : 0;
 });
 
 const columns = computed<QTableProps['columns']>(() => [
@@ -547,44 +553,31 @@ const columns = computed<QTableProps['columns']>(() => [
   },
 ]);
 
-function parseThaiDate(dateStr: string): Date | null {
-  if (!dateStr) return null;
+function parseIsoDate(dateStr: string): Date | null {
+  if (!dateStr || dateStr === '-') return null;
+  const d = new Date(dateStr);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+async function fetchData(): Promise<void> {
+  isLoading.value = true;
   try {
-    const cleanStr = dateStr.replace('\n', ' ').trim();
-    const parts = cleanStr.split(' ');
-    if (parts.length < 3) return null;
-    const day = parseInt(parts[0] ?? '0', 10);
-    const monthThai = parts[1] ?? '';
-    const yearThai = parseInt(parts[2] ?? '0', 10);
-    const months = [
-      'ม.ค.',
-      'ก.พ.',
-      'มี.ค.',
-      'เม.ย.',
-      'พ.ค.',
-      'มิ.ย.',
-      'ก.ค.',
-      'ส.ค.',
-      'ก.ย.',
-      'ต.ค.',
-      'พ.ย.',
-      'ธ.ค.',
-    ];
-    const monthIndex = months.indexOf(monthThai);
-    if (monthIndex === -1) return null;
-    const year = yearThai - 543;
-    let hour = 0,
-      minute = 0,
-      second = 0;
-    if (parts[3]) {
-      const timeParts = parts[3].split(':');
-      hour = parseInt(timeParts[0] ?? '0', 10);
-      minute = parseInt(timeParts[1] ?? '0', 10);
-      second = parseInt(timeParts[2] ?? '0', 10);
-    }
-    return new Date(year, monthIndex, day, hour, minute, second);
+    const params: Record<string, string> = {};
+    if (filters.value.faculty) params.facName = filters.value.faculty;
+    if (filters.value.receiptDateStart) params.receiptDateStart = filters.value.receiptDateStart;
+    if (filters.value.receiptDateEnd) params.receiptDateEnd = filters.value.receiptDateEnd;
+    if (filters.value.effectiveDateStart)
+      params.effectiveDateStart = filters.value.effectiveDateStart;
+    if (filters.value.effectiveDateEnd) params.effectiveDateEnd = filters.value.effectiveDateEnd;
+
+    const { data } = await api.get<ReceiptSummaryResponse>('/api/centralfinance/receipt-summary', {
+      params,
+    });
+    rows.value = data.data;
   } catch {
-    return null;
+    rows.value = [];
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -629,7 +622,7 @@ async function exportToPdf(): Promise<void> {
   doc.text(title, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
   doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
 
-  const rows = filteredRows.value.map((row) => [
+  const tableRows = rows.value.map((row) => [
     row.no,
     row.faculty,
     row.receiptNo,
@@ -660,7 +653,7 @@ async function exportToPdf(): Promise<void> {
         'สถานะ',
       ],
     ],
-    body: rows,
+    body: tableRows,
     styles: {
       font: 'Sarabun',
       fontSize: 7,
@@ -721,7 +714,7 @@ function exportToExcel(): void {
     'สถานะ',
   ];
 
-  const rows = filteredRows.value.map((row) => [
+  const excelRows = rows.value.map((row) => [
     row.no,
     row.faculty,
     row.receiptNo,
@@ -737,7 +730,7 @@ function exportToExcel(): void {
   ]);
 
   const title = t('centralFinance.receiptSummary.reportTitle');
-  const wsData = [[title], [], header, ...rows];
+  const wsData = [[title], [], header, ...excelRows];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
 
   ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
@@ -761,80 +754,8 @@ function exportToExcel(): void {
 
 onMounted(async () => {
   faculties.value = await fetchFaculties();
+  await fetchData();
 });
-
-// Mock data — multiple faculties
-function generateMockData(): ReceiptSummaryItem[] {
-  const faculties = [
-    'สำนักคอมพิวเตอร์',
-    'คณะวิทยาการสารสนเทศ',
-    'คณะวิทยาศาสตร์',
-    'คณะพยาบาลศาสตร์',
-    'คณะบริหารธุรกิจ',
-    'คณะวิศวกรรมศาสตร์',
-  ];
-
-  const coursesByFaculty: Record<string, string> = {
-    สำนักคอมพิวเตอร์: 'C67052002:การพัฒนาเว็บแอปพลิเคชัน\nสำนักคอมพิวเตอร์',
-    คณะวิทยาการสารสนเทศ: 'C66061004:Digital Product Design\nคณะวิทยาการสารสนเทศ',
-    คณะวิทยาศาสตร์: 'C65091001:วิทยาศาสตร์ข้อมูลเบื้องต้น\nคณะวิทยาศาสตร์',
-    คณะพยาบาลศาสตร์: 'C65082001:การดูแลผู้สูงอายุเบื้องต้น\nคณะพยาบาลศาสตร์',
-    คณะบริหารธุรกิจ: 'C66021005:การตลาดดิจิทัลยุคใหม่\nคณะบริหารธุรกิจ',
-    คณะวิศวกรรมศาสตร์: 'C66031002:ปัญญาประดิษฐ์ในอุตสาหกรรม\nคณะวิศวกรรมศาสตร์',
-  };
-
-  const collectors: Record<string, string> = {
-    สำนักคอมพิวเตอร์: 'นางสาวนัธพร ยะโสวงษ์\n20 มี.ค. 2567',
-    คณะวิทยาการสารสนเทศ: 'นายสมชาย ดีงาม\n21 มี.ค. 2567',
-    คณะวิทยาศาสตร์: 'นางวิมล รัตนาพร\n22 มี.ค. 2567',
-    คณะพยาบาลศาสตร์: 'นายอนันต์ ยอดเยี่ยม\n23 มี.ค. 2567',
-    คณะบริหารธุรกิจ: 'นางสาวเกศรา พูนผล\n24 มี.ค. 2567',
-    คณะวิศวกรรมศาสตร์: 'นายวิทยา มั่นคง\n25 มี.ค. 2567',
-  };
-
-  const names = [
-    'นัธพร ยะโสวงษ์',
-    'วิมลรัตน์ ดีเลิศ',
-    'สมชาย รักเรียน',
-    'อนันต์ ยอดเยี่ยม',
-    'เกศรา พูนผล',
-    'ธนพล สุขสันต์',
-    'พิมพ์ใจ เจริญสุข',
-    'ศิริพร ใจดี',
-    'วีระชัย กล้าหาญ',
-    'มนัสวี บุญช่วย',
-  ];
-
-  const data: ReceiptSummaryItem[] = [];
-  let id = 1;
-
-  for (const faculty of faculties) {
-    for (let i = 0; i < 14; i++) {
-      const isCancelled = i % 7 === 6;
-      const name = names[(id + i) % names.length] ?? '';
-      data.push({
-        id,
-        no: id,
-        faculty,
-        receiptNo: '256706' + String(id).padStart(6, '0'),
-        customerName: name,
-        amount: [1500, 2000, 2500, 3000, 3500, 4000][i % 6] ?? 1500,
-        effectiveDate: `${(i % 28) + 1} ${['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.'][Math.floor(i / 5) % 6] ?? 'ม.ค.'} 2566\n${10 + (i % 12)}:${String(20 + (i % 40)).padStart(2, '0')}:00`,
-        learnerName: name,
-        courseName: coursesByFaculty[faculty] ?? '',
-        collector: collectors[faculty] ?? '',
-        status: isCancelled ? 'ยกเลิก' : 'ใช้งาน',
-        cancelBy: isCancelled ? name : undefined,
-        cancelDate: isCancelled ? '15/05/2567\nทดสอบยกเลิก' : undefined,
-      });
-      id++;
-    }
-  }
-
-  return data;
-}
-
-const mockData = generateMockData();
 </script>
 
 <style lang="scss" scoped>
