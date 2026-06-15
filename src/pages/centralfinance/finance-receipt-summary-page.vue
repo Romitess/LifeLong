@@ -190,14 +190,14 @@
             icon="picture_as_pdf"
             :label="$t('finance.receiptSummary.exportPdf')"
             class="q-mr-sm"
-            @click="exportToPdf"
+            @click="handleExportToPdf"
           />
           <q-btn
             outline
             color="positive"
             icon="table_chart"
             :label="$t('finance.receiptSummary.exportExcel')"
-            @click="exportToExcel"
+            @click="handleExportToExcel"
           />
         </template>
 
@@ -226,7 +226,7 @@
         </div>
 
         <q-table
-          :rows="rows"
+          :rows="items"
           :columns="columns"
           row-key="id"
           flat
@@ -301,13 +301,13 @@
               <div class="row items-center q-gutter-sm">
                 <span class="text-caption text-grey-8 q-mr-sm">
                   {{
-                    rows.length > 0
+                    items.length > 0
                       ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
                       : 0
                   }}-{{
-                    Math.min(scope.pagination.page * scope.pagination.rowsPerPage, rows.length)
+                    Math.min(scope.pagination.page * scope.pagination.rowsPerPage, items.length)
                   }}
-                  of {{ rows.length }}
+                  of {{ items.length }}
                 </span>
                 <q-btn
                   icon="first_page"
@@ -373,46 +373,22 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { QTableProps } from 'quasar';
-import { api } from 'src/boot/axios';
 import { useFacultyList } from 'src/composables/use-faculty-list';
+import { useReceiptSummaryReport } from 'src/composables/use-receipt-summary-report';
+import { useReceiptSummaryExport } from 'src/composables/use-receipt-summary-export';
 import type { ApiFaculty } from 'src/types/faculty';
+import type { ReceiptSummaryItem } from 'src/types/receipt-summary-report';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
-import jsPDF from 'jspdf';
-import { autoTable, type CellHookData } from 'jspdf-autotable';
-import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
-import * as XLSX from 'xlsx';
-
-interface ReceiptSummaryItem {
-  id: number;
-  no: number;
-  faculty: string;
-  receiptNo: string;
-  customerName: string;
-  amount: number | string;
-  effectiveDate: string;
-  learnerName: string;
-  courseName: string;
-  collector: string;
-  status: string;
-  cancelBy?: string | undefined;
-  cancelDate?: string | undefined;
-}
-
-interface ReceiptSummaryResponse {
-  success: boolean;
-  total: number;
-  data: ReceiptSummaryItem[];
-}
 
 const { t } = useI18n();
 
 const { isLoading: isFacultyLoading, fetchFaculties } = useFacultyList();
-const faculties = ref<ApiFaculty[]>([]);
+const { items, isLoading, filters, fetchData, clearFilters } = useReceiptSummaryReport();
+const { exportToPdf, exportToExcel } = useReceiptSummaryExport();
 
-const rows = ref<ReceiptSummaryItem[]>([]);
-const isLoading = ref(false);
+const faculties = ref<ApiFaculty[]>([]);
 const search = ref('');
 const showReceiptDialog = ref(false);
 const selectedReceipt = ref<ReceiptSummaryItem | null>(null);
@@ -423,14 +399,6 @@ const pagination = ref({
   descending: false,
   page: 1,
   rowsPerPage: 10,
-});
-
-const filters = ref({
-  faculty: '',
-  receiptDateStart: '',
-  receiptDateEnd: '',
-  effectiveDateStart: '',
-  effectiveDateEnd: '',
 });
 
 const facultyOptions = computed(() => [
@@ -444,20 +412,20 @@ const activeFacultyScopeLabel = computed<string>(() => {
   return option?.label ?? filters.value.faculty;
 });
 
-// Receipt computed for ReceiptCard
+// Computed props for ReceiptCard dialog
 const receiptId = computed<string>(() => selectedReceipt.value?.receiptNo ?? '');
-const issuedAt = computed<Date | null>(() =>
-  selectedReceipt.value ? parseIsoDate(selectedReceipt.value.effectiveDate) : null,
-);
+const issuedAt = computed<Date | null>(() => {
+  const dateStr = selectedReceipt.value?.effectiveDate;
+  if (!dateStr || dateStr === '-') return null;
+  const d = new Date(dateStr);
+  return Number.isNaN(d.getTime()) ? null : d;
+});
 const customerName = computed<string>(() => selectedReceipt.value?.customerName ?? '');
 const customerTaxId = computed<string>(() => '0994000249357');
 const customerAddress = computed<string>(
   () => '169 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมือง จังหวัดชลบุรี 20131',
 );
-const courseCode = computed<string>(() => {
-  if (!selectedReceipt.value) return '';
-  return selectedReceipt.value.courseName.split(':')[0] ?? '';
-});
+const courseCode = computed<string>(() => selectedReceipt.value?.courseName.split(':')[0] ?? '');
 const courseTitle = computed<string>(() => {
   if (!selectedReceipt.value) return '';
   const parts = selectedReceipt.value.courseName.split(':');
@@ -553,203 +521,23 @@ const columns = computed<QTableProps['columns']>(() => [
   },
 ]);
 
-function parseIsoDate(dateStr: string): Date | null {
-  if (!dateStr || dateStr === '-') return null;
-  const d = new Date(dateStr);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
-async function fetchData(): Promise<void> {
-  isLoading.value = true;
-  try {
-    const params: Record<string, string> = {};
-    if (filters.value.faculty) params.facName = filters.value.faculty;
-    if (filters.value.receiptDateStart) params.receiptDateStart = filters.value.receiptDateStart;
-    if (filters.value.receiptDateEnd) params.receiptDateEnd = filters.value.receiptDateEnd;
-    if (filters.value.effectiveDateStart)
-      params.effectiveDateStart = filters.value.effectiveDateStart;
-    if (filters.value.effectiveDateEnd) params.effectiveDateEnd = filters.value.effectiveDateEnd;
-
-    const { data } = await api.get<ReceiptSummaryResponse>('/api/centralfinance/receipt-summary', {
-      params,
-    });
-    rows.value = data.data;
-  } catch {
-    rows.value = [];
-  } finally {
-    isLoading.value = false;
-  }
-}
-
 async function downloadReceipt(row: ReceiptSummaryItem): Promise<void> {
   selectedReceipt.value = row;
   await nextTick();
   receiptDialogRef.value?.downloadReceiptPdf();
 }
 
-function clearFilters(): void {
-  filters.value.faculty = '';
-  filters.value.receiptDateStart = '';
-  filters.value.receiptDateEnd = '';
-  filters.value.effectiveDateStart = '';
-  filters.value.effectiveDateEnd = '';
+async function handleExportToPdf(): Promise<void> {
+  await exportToPdf(
+    items.value,
+    t('centralFinance.receiptSummary.reportTitle'),
+    t('centralFinance.receiptSummary.filters.faculty'),
+    activeFacultyScopeLabel.value,
+  );
 }
 
-async function loadSarabunFont(): Promise<string> {
-  const response = await fetch(SarabunFontUrl);
-  const blob = await response.blob();
-  return new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const dataUrl = reader.result as string;
-      resolve(dataUrl.split(',')[1] ?? '');
-    };
-    reader.readAsDataURL(blob);
-  });
-}
-
-async function exportToPdf(): Promise<void> {
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-
-  const base64Font = await loadSarabunFont();
-  doc.addFileToVFS('THSarabunPSK.ttf', base64Font);
-  doc.addFont('THSarabunPSK.ttf', 'Sarabun', 'normal');
-  doc.setFont('Sarabun');
-
-  doc.setFontSize(13);
-  const title = t('centralFinance.receiptSummary.reportTitle');
-  const subtitle = `${t('centralFinance.receiptSummary.filters.faculty')}: ${activeFacultyScopeLabel.value}`;
-  doc.text(title, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
-  doc.text(subtitle, doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
-
-  const tableRows = rows.value.map((row) => [
-    row.no,
-    row.faculty,
-    row.receiptNo,
-    row.customerName,
-    row.amount,
-    row.effectiveDate,
-    row.learnerName,
-    row.courseName,
-    row.collector,
-    row.status === 'ยกเลิก' ? `ยกเลิก\n${row.cancelBy ?? ''}\n${row.cancelDate ?? ''}` : 'ใช้งาน',
-  ]);
-
-  autoTable(doc, {
-    startY: 65,
-    rowPageBreak: 'avoid',
-    showHead: 'everyPage',
-    head: [
-      [
-        'ลำดับ',
-        'ส่วนงาน',
-        'เลขที่ใบเสร็จรับเงิน',
-        'ชื่อ-สกุล ผู้ชำระเงิน\n(Customer Name)',
-        'จำนวนเงิน',
-        'วันที่ชำระเงิน\n(effective date)',
-        'ชื่อ-สกุล ผู้เรียน',
-        'ชื่อโครงการ/อบรม/\nหลักสูตร',
-        'ผู้รับเงิน (Collector)\nวันที่ใบเสร็จรับเงิน',
-        'สถานะ',
-      ],
-    ],
-    body: tableRows,
-    styles: {
-      font: 'Sarabun',
-      fontSize: 7,
-      cellPadding: 3,
-      valign: 'top',
-      lineColor: [180, 180, 180],
-      lineWidth: 0.5,
-      overflow: 'linebreak',
-    },
-    headStyles: {
-      font: 'Sarabun',
-      fillColor: [226, 232, 240],
-      textColor: [51, 65, 85],
-      fontStyle: 'normal',
-      fontSize: 7,
-      halign: 'center',
-      valign: 'middle',
-    },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 24 },
-      1: { cellWidth: 80 },
-      2: { halign: 'center', cellWidth: 75 },
-      3: { cellWidth: 90 },
-      4: { halign: 'center', cellWidth: 48 },
-      5: { halign: 'center', cellWidth: 68 },
-      6: { cellWidth: 90 },
-      7: { cellWidth: 130 },
-      8: { halign: 'center', cellWidth: 100 },
-      9: { halign: 'center', cellWidth: 75 },
-    },
-    alternateRowStyles: { fillColor: [255, 255, 255] },
-    didParseCell(data: CellHookData) {
-      if (data.section === 'body' && data.column.index === 9) {
-        const val = typeof data.cell.raw === 'string' ? data.cell.raw : '';
-        if (val.startsWith('ยกเลิก')) {
-          data.cell.styles.textColor = [220, 38, 38];
-        }
-      }
-    },
-    margin: { top: 20, left: 15, right: 15 },
-    tableWidth: 'auto',
-  });
-
-  doc.save('central-finance-receipt-summary.pdf');
-}
-
-function exportToExcel(): void {
-  const header = [
-    'ลำดับ',
-    'ส่วนงาน',
-    'เลขที่ใบเสร็จรับเงิน',
-    'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
-    'จำนวนเงิน',
-    'วันที่ชำระเงิน (effective date)',
-    'ชื่อ-สกุล ผู้เรียน',
-    'ชื่อโครงการ/อบรม/หลักสูตร',
-    'ผู้รับเงิน (Collector) วันที่ใบเสร็จรับเงิน',
-    'สถานะ',
-  ];
-
-  const excelRows = rows.value.map((row) => [
-    row.no,
-    row.faculty,
-    row.receiptNo,
-    row.customerName,
-    row.amount,
-    row.effectiveDate.replace('\n', ' '),
-    row.learnerName,
-    row.courseName.replace(/\n/g, ' '),
-    row.collector.replace('\n', ' '),
-    row.status === 'ยกเลิก'
-      ? `ยกเลิก ${row.cancelBy ?? ''} ${(row.cancelDate ?? '').replace('\n', ' ')}`
-      : 'ใช้งาน',
-  ]);
-
-  const title = t('centralFinance.receiptSummary.reportTitle');
-  const wsData = [[title], [], header, ...excelRows];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
-  ws['!cols'] = [
-    { wch: 7 },
-    { wch: 22 },
-    { wch: 18 },
-    { wch: 25 },
-    { wch: 12 },
-    { wch: 22 },
-    { wch: 25 },
-    { wch: 40 },
-    { wch: 30 },
-    { wch: 30 },
-  ];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'รายงาน');
-  XLSX.writeFile(wb, 'central-finance-receipt-summary.xlsx');
+function handleExportToExcel(): void {
+  exportToExcel(items.value, t('centralFinance.receiptSummary.reportTitle'));
 }
 
 onMounted(async () => {
