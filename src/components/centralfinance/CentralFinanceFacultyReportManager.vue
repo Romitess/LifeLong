@@ -20,7 +20,7 @@
       body-padding="none"
     >
       <template #header-actions>
-        <div class="row items-center q-gutter-x-sm">
+        <div class="centralfinance-faculty-report__header-actions">
           <q-input
             v-model="searchQuery"
             :placeholder="t('finance.registrationStatistics.searchPlaceholder')"
@@ -450,12 +450,32 @@ onMounted(() => {
   margin-bottom: 18px;
 }
 
+.centralfinance-faculty-report__header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  @media (max-width: 599px) {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+}
+
 .centralfinance-faculty-report__search {
-  min-width: 260px;
+  min-width: 220px;
+  flex: 1 1 220px;
+
+  @media (max-width: 599px) {
+    min-width: 0;
+    flex: none;
+  }
 }
 
 .centralfinance-faculty-report__table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   min-height: 0;
 }
 
@@ -701,10 +721,13 @@ tbody tr.centralfinance-faculty-report-table__group-row td {
   padding: 22px 24px 24px;
 }
 
-@media (max-width: 900px) {
-  .centralfinance-faculty-report__table-wrap {
-    min-height: 680px;
-    height: 680px;
+@media (max-width: 760px) {
+  .centralfinance-faculty-report__stats {
+    margin-bottom: 12px;
+  }
+
+  .centralfinance-faculty-report__pagination {
+    padding: 16px 12px 20px;
   }
 }
 </style>

@@ -26,7 +26,7 @@
           <div class="col-12 col-md-8 offset-md-2">
             <!-- คณะ/ส่วนงาน -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-section__label">
                 {{ $t('centralFinance.receiptSummary.filters.faculty') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -45,8 +45,8 @@
 
             <!-- ปุ่มค้นหา / ล้างค่า -->
             <div class="row items-center">
-              <div class="col-12 col-sm-4 text-right q-pr-md" />
-              <div class="col-12 col-sm-8 q-gutter-sm">
+              <div class="col-sm-4 gt-xs" />
+              <div class="col-12 col-sm-8 filter-section__actions">
                 <q-btn
                   color="warning"
                   text-color="black"
@@ -133,6 +133,12 @@ onMounted(async () => {
   backdrop-filter: blur(10px);
   display: grid;
   gap: 6px;
+
+  @media (max-width: 599px) {
+    min-width: 0;
+    width: 100%;
+    padding: 12px 14px;
+  }
 }
 
 .faculty-scope-card__label {
@@ -147,6 +153,28 @@ onMounted(async () => {
   color: #fff;
   font-size: 1rem;
   font-weight: 900;
+}
+
+.filter-section__label {
+  @media (min-width: 600px) {
+    text-align: right;
+    padding-right: 16px;
+  }
+
+  @media (max-width: 599px) {
+    margin-bottom: 4px;
+  }
+}
+
+.filter-section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  @media (max-width: 599px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 :deep(.q-field__label) {
