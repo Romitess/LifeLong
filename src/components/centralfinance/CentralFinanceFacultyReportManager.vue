@@ -83,7 +83,7 @@
           <tbody>
             <template v-if="isLoading">
               <tr
-                v-for="skeletonIndex in rowsPerPage"
+                v-for="skeletonIndex in ITEMS_PER_PAGE"
                 :key="`skeleton-${skeletonIndex}`"
                 class="centralfinance-faculty-report-table__skeleton-row"
               >
@@ -139,8 +139,8 @@
               </tr>
             </template>
 
-            <template v-else-if="filteredGroups.length > 0">
-              <template v-for="group in filteredGroups" :key="group.facultyId">
+            <template v-else-if="pagedGroups.length > 0">
+              <template v-for="group in pagedGroups" :key="group.facultyId">
                 <tr class="centralfinance-faculty-report-table__group-row">
                   <td colspan="6">
                     <div class="centralfinance-faculty-report__group-header">
@@ -237,13 +237,13 @@
       </div>
 
       <div
-        v-if="pagination.totalPages > 1"
+        v-if="totalClientPages > 1"
         ref="paginationRef"
         class="centralfinance-faculty-report__pagination"
       >
         <BasePagination
-          :model-value="currentPage"
-          :max="pagination.totalPages"
+          :model-value="clientPage"
+          :max="totalClientPages"
           :max-pages="7"
           gutter="md"
           :disable="isLoading"
@@ -276,8 +276,8 @@ const props = defineProps<{
 
 const { t } = useI18n();
 
-const rowsPerPage = 10;
-const currentPage = ref(1);
+const ITEMS_PER_PAGE = 10;
+const clientPage = ref(1);
 const paginationRef = ref<HTMLElement | null>(null);
 const exportDialogOpen = ref(false);
 const searchQuery = ref('');
@@ -285,7 +285,7 @@ const dateRange = ref<DateRangeValue>({ start: null, end: null });
 const selectedFacultyId = ref<number | null>(null);
 const selectedTypeCourseId = ref<number | null>(null);
 
-const { groups, filterOptions, summary, pagination, isLoading, error, fetchData } =
+const { groups, filterOptions, summary, isLoading, error, fetchData } =
   useCentralFinanceFacultyReport();
 
 const stats = computed<
@@ -323,20 +323,77 @@ const stats = computed<
 const facultyOptions = computed(() => filterOptions.value.faculties);
 const courseTypeOptions = computed(() => filterOptions.value.courseTypes);
 
-const filteredGroups = computed(() => {
+const allItemsFlat = computed(() =>
+  groups.value.flatMap((group) => group.items.map((item) => ({ item, group }))),
+);
+
+const filteredItemsFlat = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
-  if (!query) return groups.value;
-  return groups.value
-    .map((group) => ({
-      ...group,
-      items: group.items.filter(
-        (item) =>
-          item.courseName?.toLowerCase().includes(query) ||
-          item.courseCode?.toLowerCase().includes(query) ||
-          item.responsibleName?.toLowerCase().includes(query),
-      ),
-    }))
-    .filter((group) => group.items.length > 0);
+  if (!query) return allItemsFlat.value;
+  return allItemsFlat.value.filter(
+    ({ item }) =>
+      item.courseName?.toLowerCase().includes(query) ||
+      item.courseCode?.toLowerCase().includes(query) ||
+      item.responsibleName?.toLowerCase().includes(query),
+  );
+});
+
+const totalClientPages = computed(() =>
+  Math.max(1, Math.ceil(filteredItemsFlat.value.length / ITEMS_PER_PAGE)),
+);
+
+const pagedGroups = computed(() => {
+  const start = (clientPage.value - 1) * ITEMS_PER_PAGE;
+  const slice = filteredItemsFlat.value.slice(start, start + ITEMS_PER_PAGE);
+
+  if (slice.length === 0) return [];
+
+  // When viewing all faculties, merge into a single group to avoid duplicate headers
+  if (props.overrideFacultyLabel !== undefined) {
+    const pageItems = slice.map(({ item }) => item);
+    return [
+      {
+        facultyId: 0,
+        facultyName: props.overrideFacultyLabel,
+        items: pageItems,
+        totalCourses: filteredItemsFlat.value.length,
+        totalLearners: filteredItemsFlat.value.reduce(
+          (sum, { item }) => sum + item.learnerCount,
+          0,
+        ),
+        totalRegistrationFees: filteredItemsFlat.value.reduce(
+          (sum, { item }) =>
+            sum + (Number.isFinite(item.registrationFee) ? item.registrationFee : 0),
+          0,
+        ),
+      },
+    ];
+  }
+
+  // When viewing a specific faculty, group by faculty
+  type GroupEntry = {
+    group: (typeof groups.value)[number];
+    items: (typeof groups.value)[number]['items'];
+  };
+  const map = new Map<number, GroupEntry>();
+
+  for (const { item, group } of slice) {
+    if (!map.has(group.facultyId)) {
+      map.set(group.facultyId, { group, items: [] });
+    }
+    map.get(group.facultyId)!.items.push(item);
+  }
+
+  return Array.from(map.values()).map(({ group, items }) => ({
+    ...group,
+    items,
+    totalCourses: items.length,
+    totalLearners: items.reduce((sum, i) => sum + i.learnerCount, 0),
+    totalRegistrationFees: items.reduce(
+      (sum, i) => sum + (Number.isFinite(i.registrationFee) ? i.registrationFee : 0),
+      0,
+    ),
+  }));
 });
 
 watch(
@@ -371,10 +428,11 @@ function getUnitPriceLabel(
     : `${t('finance.registrationStatistics.table.priceSetPrefix')} ${formatCurrency(fallbackUnitPrice)}`;
 }
 
-function loadReport(page = 1): Promise<void> {
+function loadReport(): Promise<void> {
+  clientPage.value = 1;
   return fetchData({
-    page,
-    pageSize: rowsPerPage,
+    page: 1,
+    pageSize: 100,
     ...(selectedFacultyId.value !== null && { facultyId: selectedFacultyId.value }),
     ...(selectedTypeCourseId.value !== null && { typeCourseId: selectedTypeCourseId.value }),
   });
@@ -400,17 +458,14 @@ async function preservePaginationPosition(update: () => Promise<void> | void): P
 }
 
 function handleSearch(): void {
-  currentPage.value = 1;
+  clientPage.value = 1;
 }
 
 async function handlePageChange(page: number): Promise<void> {
-  if (page === currentPage.value && page === pagination.value.page) {
-    return;
-  }
+  if (page === clientPage.value) return;
 
-  await preservePaginationPosition(async () => {
-    currentPage.value = page;
-    await loadReport(page);
+  await preservePaginationPosition(() => {
+    clientPage.value = page;
   });
 }
 
