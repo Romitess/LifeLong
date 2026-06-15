@@ -17,121 +17,119 @@
     </AppPageHero>
 
     <section class="admin-shell admin-content">
-      <AppSurfaceCard>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-lg-8 offset-lg-2">
-            <div class="download-format-link q-mb-md">
-              <q-btn
-                flat
-                dense
-                no-caps
-                color="primary"
-                icon="article"
-                :label="$t('finance.paymentDownload.viewLayoutFormat')"
-                @click="showLayoutDialog = true"
-              />
-            </div>
+      <!-- Sticky sentinel — 1px div สำหรับ IntersectionObserver detect "stuck" -->
+      <div ref="sentinelRef" class="admin-filter-sentinel" />
 
-            <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
-                {{ $t('finance.paymentDownload.statementDate') }}
-              </div>
-              <div class="col-12 col-sm-8 row q-col-gutter-sm">
-                <div class="col-6">
-                  <q-input
-                    v-model="filters.dateFrom"
-                    outlined
-                    dense
-                    :label="$t('finance.paymentDownload.dateFrom')"
-                    placeholder="วว/ดด/ปปปป"
-                    mask="##/##/####"
-                    class="bg-white"
-                  >
-                    <template #append>
-                      <q-icon name="event" class="cursor-pointer" color="grey-7">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                          <q-date
-                            v-model="filters.dateFrom"
-                            mask="DD/MM/YYYY"
-                            color="warning"
-                            text-color="black"
-                          />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-                <div class="col-6">
-                  <q-input
-                    v-model="filters.dateTo"
-                    outlined
-                    dense
-                    :label="$t('finance.paymentDownload.dateTo')"
-                    placeholder="วว/ดด/ปปปป"
-                    mask="##/##/####"
-                    class="bg-white"
-                  >
-                    <template #append>
-                      <q-icon name="event" class="cursor-pointer" color="grey-7">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                          <q-date
-                            v-model="filters.dateTo"
-                            mask="DD/MM/YYYY"
-                            color="warning"
-                            text-color="black"
-                          />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-              </div>
-            </div>
+      <!-- Sticky Filter Bar -->
+      <div class="admin-filter-bar" :class="{ 'admin-filter-bar--stuck': filterStuck }">
+        <div class="admin-filter-bar__row1">
+          <span class="admin-filter-bar__label q-mr-sm">
+            <q-icon name="filter_alt" size="14px" class="q-mr-xs" /> ตัวกรอง
+          </span>
 
-            <div class="row items-center q-mb-md">
-              <div class="col-12 col-sm-4 text-right q-pr-md"></div>
-              <div class="col-12 col-sm-8">
-                <div class="text-caption text-grey-7">
-                  {{ $t('finance.paymentDownload.dateHint') }}
-                </div>
-              </div>
-            </div>
+          <button
+            v-for="opt in datePresetOptions"
+            :key="opt.value"
+            class="admin-filter-bar__item"
+            :class="{ 'admin-filter-bar__item--active': datePreset === opt.value }"
+            @click="applyDatePreset(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
 
-            <div class="row items-center">
-              <div class="col-12 col-sm-4 text-right q-pr-md"></div>
-              <div class="col-12 col-sm-8 q-gutter-sm">
-                <q-btn
-                  color="warning"
-                  text-color="black"
-                  :label="$t('finance.paymentDownload.searchBtn')"
-                  unelevated
-                  class="q-px-xl"
-                  :loading="isLoading"
-                  @click="fetchData"
-                />
-                <q-btn
-                  outline
-                  color="grey-7"
-                  :label="$t('finance.paymentDownload.clearBtn')"
-                  class="q-px-lg bg-white"
-                  @click="clearFilters"
-                />
-              </div>
-            </div>
-          </div>
+          <div class="admin-filter-bar__divider" />
+
+          <q-select
+            v-model="filters.receiptStatus"
+            :options="receiptStatusOptions"
+            emit-value
+            map-options
+            outlined
+            dense
+            options-dense
+            class="admin-filter-bar__select bg-white q-ml-sm"
+            @update:model-value="fetchData"
+          />
+
+          <q-space />
+
+          <q-btn flat dense round icon="refresh" color="grey-7" @click="clearFilters">
+            <q-tooltip>ล้างตัวกรอง</q-tooltip>
+          </q-btn>
         </div>
-      </AppSurfaceCard>
+
+        <div
+          class="admin-filter-bar__row2"
+          :class="{ 'admin-filter-bar__row2--inactive': datePreset !== 'custom' }"
+        >
+          <span class="admin-filter-bar__sub-label q-mr-sm">กำหนดช่วงเวลาเอง</span>
+          <q-input
+            v-model="filters.dateFrom"
+            @update:model-value="onCustomDateChange"
+            debounce="500"
+            borderless
+            dense
+            placeholder="จาก (วว/ดด/ปปปป)"
+            mask="##/##/####"
+            class="admin-filter-bar__input"
+          >
+            <template #append>
+              <q-icon name="event" class="cursor-pointer" color="primary">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-date
+                    v-model="filters.dateFrom"
+                    @update:model-value="onCustomDateChange"
+                    mask="DD/MM/YYYY"
+                    color="primary"
+                  />
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+
+          <span class="q-mx-sm text-grey-6">-</span>
+
+          <q-input
+            v-model="filters.dateTo"
+            @update:model-value="onCustomDateChange"
+            debounce="500"
+            borderless
+            dense
+            placeholder="ถึง (วว/ดด/ปปปป)"
+            mask="##/##/####"
+            class="admin-filter-bar__input"
+          >
+            <template #append>
+              <q-icon name="event" class="cursor-pointer" color="primary">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-date
+                    v-model="filters.dateTo"
+                    @update:model-value="onCustomDateChange"
+                    mask="DD/MM/YYYY"
+                    color="primary"
+                  />
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+        </div>
+      </div>
 
       <AppSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
-          <q-btn
-            unelevated
-            color="positive"
-            icon="download"
-            :label="$t('finance.paymentDownload.downloadCsv')"
-            :disable="tableData.length === 0"
-            @click="downloadCsv"
-          />
+          <div class="row items-center">
+            <span class="text-caption text-orange-8 text-weight-medium q-mr-md gt-xs">
+              * ข้อมูลที่ดาวน์โหลดจะเป็นไปตามตัวกรองที่เลือกอยู่
+            </span>
+            <q-btn
+              unelevated
+              color="positive"
+              icon="download"
+              :label="$t('finance.paymentDownload.downloadCsv')"
+              :disable="tableData.length === 0"
+              @click="downloadCsv"
+            />
+          </div>
         </template>
 
         <div class="payment-table-head row items-center justify-between q-mb-md q-px-md q-pt-md">
@@ -173,6 +171,31 @@
           v-model:pagination="pagination"
           :rows-per-page-options="[10, 25, 50, 100]"
         >
+          <template #body-cell-receiptStatus="props">
+            <q-td :props="props">
+              <q-chip
+                v-if="props.row.receiptIssued"
+                color="positive"
+                text-color="white"
+                dense
+                size="sm"
+                class="q-ma-none text-weight-medium"
+              >
+                ออกใบเสร็จแล้ว
+              </q-chip>
+              <q-chip
+                v-else
+                color="negative"
+                text-color="white"
+                dense
+                size="sm"
+                class="q-ma-none text-weight-medium"
+              >
+                ยังไม่ได้ออก
+              </q-chip>
+            </q-td>
+          </template>
+
           <template #bottom="scope">
             <div class="row full-width justify-between items-center q-py-sm">
               <div class="row items-center q-gutter-sm">
@@ -262,38 +285,6 @@
         />
       </div>
     </section>
-
-    <q-dialog v-model="showLayoutDialog">
-      <q-card class="layout-dialog-card">
-        <q-card-section class="row items-center q-pb-none">
-          <div class="text-h6">{{ $t('finance.paymentDownload.layoutDialogTitle') }}</div>
-          <q-space />
-          <q-btn v-close-popup icon="close" flat round dense />
-        </q-card-section>
-
-        <q-card-section>
-          <p class="text-body2 text-grey-8 q-mb-md">
-            {{ $t('finance.paymentDownload.layoutDialogDescription') }}
-          </p>
-          <q-markup-table flat bordered separator="cell" class="layout-table">
-            <thead>
-              <tr>
-                <th>{{ $t('finance.paymentDownload.layoutColumns.order') }}</th>
-                <th>{{ $t('finance.paymentDownload.layoutColumns.name') }}</th>
-                <th>{{ $t('finance.paymentDownload.layoutColumns.example') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="col in layoutColumns" :key="col.order">
-                <td class="text-center">{{ col.order }}</td>
-                <td>{{ col.name }}</td>
-                <td class="text-grey-8">{{ col.example }}</td>
-              </tr>
-            </tbody>
-          </q-markup-table>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 
@@ -301,7 +292,7 @@
 import AppPageHero from 'components/admin/AppPageHero.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import { api } from 'src/boot/axios';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Notify, type QTableProps } from 'quasar';
 import { useAuthStore } from 'stores/auth-store';
@@ -323,6 +314,7 @@ interface PaymentNotificationItem {
   courseInfo: string;
   enrollDate: string | null;
   notifyDate: string | null;
+  receiptIssued: boolean;
 }
 
 interface PaymentNotificationApiItem {
@@ -337,6 +329,7 @@ interface PaymentNotificationApiItem {
   status: 'Paid' | 'Pending';
   enrollDate: string | null;
   notifyDate: string | null;
+  receiptIssued: boolean;
 }
 
 interface PaymentNotificationApiResponse {
@@ -346,7 +339,6 @@ interface PaymentNotificationApiResponse {
 const search = ref('');
 const tableData = ref<PaymentNotificationItem[]>([]);
 const isLoading = ref(false);
-const showLayoutDialog = ref(false);
 
 const pagination = ref({
   sortBy: 'no',
@@ -366,48 +358,61 @@ function todayFormatted(): string {
   return formatDateInput(new Date());
 }
 
-function threeMonthsAgoFormatted(): string {
-  const now = new Date();
-  return formatDateInput(new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()));
-}
-
 const filters = ref({
-  dateFrom: threeMonthsAgoFormatted(),
+  dateFrom: todayFormatted(),
   dateTo: todayFormatted(),
+  receiptStatus: 'All',
 });
 
-const layoutColumns = computed(() => [
-  {
-    order: 1,
-    name: t('finance.paymentDownload.layoutColumns.learnerRef'),
-    example: '6700017',
-  },
-  {
-    order: 2,
-    name: t('finance.paymentDownload.layoutColumns.appRef'),
-    example: '6751300100003',
-  },
-  {
-    order: 3,
-    name: t('finance.paymentDownload.layoutColumns.payerName'),
-    example: 'นายสมชาย ใจดี',
-  },
-  {
-    order: 4,
-    name: t('finance.paymentDownload.layoutColumns.paymentDate'),
-    example: '09-06-2026',
-  },
-  {
-    order: 5,
-    name: t('finance.paymentDownload.layoutColumns.paymentTime'),
-    example: '14:30:00',
-  },
-  {
-    order: 6,
-    name: t('finance.paymentDownload.layoutColumns.amount'),
-    example: '1500.00',
-  },
-]);
+const receiptStatusOptions = [
+  { label: 'ทั้งหมด (All)', value: 'All' },
+  { label: 'ออกใบเสร็จแล้ว (Issued)', value: 'Issued' },
+  { label: 'ยังไม่ได้ออกใบเสร็จ (Not Issued)', value: 'NotIssued' },
+];
+
+const datePreset = ref('today');
+const datePresetOptions = [
+  { label: 'วันนี้', value: 'today' },
+  { label: 'สัปดาห์นี้', value: 'thisWeek' },
+  { label: 'เดือนนี้', value: 'thisMonth' },
+  { label: 'ปีนี้', value: 'thisYear' },
+  { label: 'ทั้งหมด', value: 'all' },
+  { label: 'กำหนดเอง', value: 'custom' },
+];
+
+function applyDatePreset(preset: string) {
+  datePreset.value = preset;
+  const now = new Date();
+  if (preset === 'today') {
+    filters.value.dateFrom = formatDateInput(now);
+    filters.value.dateTo = formatDateInput(now);
+  } else if (preset === 'thisWeek') {
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diff);
+    filters.value.dateFrom = formatDateInput(startOfWeek);
+    filters.value.dateTo = formatDateInput(new Date());
+  } else if (preset === 'thisMonth') {
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    filters.value.dateFrom = formatDateInput(startOfMonth);
+    filters.value.dateTo = formatDateInput(new Date());
+  } else if (preset === 'thisYear') {
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    filters.value.dateFrom = formatDateInput(startOfYear);
+    filters.value.dateTo = formatDateInput(new Date());
+  } else if (preset === 'all') {
+    filters.value.dateFrom = '';
+    filters.value.dateTo = '';
+  }
+  if (preset !== 'custom') {
+    void fetchData();
+  }
+}
+
+function onCustomDateChange() {
+  datePreset.value = 'custom';
+  void fetchData();
+}
 
 const columns = computed<QTableProps['columns']>(() => [
   {
@@ -479,6 +484,13 @@ const columns = computed<QTableProps['columns']>(() => [
     sortable: true,
     style: 'min-width: 180px',
   },
+  {
+    name: 'receiptStatus',
+    label: 'สถานะ',
+    field: 'receiptIssued',
+    align: 'center',
+    sortable: true,
+  },
 ]);
 
 function formatPaymentDate(isoDate: string | null): string {
@@ -515,12 +527,16 @@ function mapItem(item: PaymentNotificationApiItem, index: number): PaymentNotifi
     courseInfo: item.courseInfo,
     enrollDate: item.enrollDate,
     notifyDate: item.notifyDate,
+    receiptIssued: item.receiptIssued,
   };
 }
 
 function clearFilters() {
-  filters.value.dateFrom = threeMonthsAgoFormatted();
+  filters.value.dateFrom = todayFormatted();
   filters.value.dateTo = todayFormatted();
+  filters.value.receiptStatus = 'All';
+  datePreset.value = 'today';
+  void fetchData();
 }
 
 async function fetchData() {
@@ -537,6 +553,9 @@ async function fetchData() {
     }
     if (filters.value.dateTo.trim()) {
       params.dateTo = filters.value.dateTo.trim();
+    }
+    if (filters.value.receiptStatus) {
+      params.receiptStatus = filters.value.receiptStatus;
     }
 
     const { data } = await api.get<PaymentNotificationApiResponse>('/api/lltenroll', { params });
@@ -603,12 +622,153 @@ function downloadCsv() {
   });
 }
 
+const sentinelRef = ref<HTMLElement | null>(null);
+const filterStuck = ref(false);
+let stickyObserver: IntersectionObserver | null = null;
+
 onMounted(() => {
+  if (sentinelRef.value) {
+    stickyObserver = new IntersectionObserver(
+      ([entry]) => {
+        filterStuck.value = !(entry?.isIntersecting ?? true);
+      },
+      { threshold: 0, rootMargin: '-73px 0px 0px 0px' },
+    );
+    stickyObserver.observe(sentinelRef.value);
+  }
+
   void fetchData();
+});
+
+onUnmounted(() => {
+  stickyObserver?.disconnect();
 });
 </script>
 
 <style lang="scss" scoped>
+// ─── Sticky Filter Bar ───────────────────────────────────────
+.admin-filter-sentinel {
+  height: 1px;
+}
+
+.admin-filter-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 9;
+  margin-bottom: 16px;
+  border-radius: var(--admin-radius-lg, 16px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  transition: box-shadow 0.2s ease;
+  overflow: clip;
+
+  &--stuck {
+    box-shadow:
+      0 6px 28px rgba(17, 24, 39, 0.1),
+      0 1px 4px rgba(17, 24, 39, 0.05);
+  }
+}
+
+.admin-filter-bar__row1,
+.admin-filter-bar__row2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.admin-filter-bar__row1 {
+  padding: 8px 8px 4px;
+  min-height: 52px;
+}
+
+.admin-filter-bar__row2 {
+  padding: 4px 8px 8px;
+  border-top: 1px solid rgba(17, 24, 39, 0.06);
+  transition: opacity 0.18s ease;
+
+  &--inactive {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+}
+
+.admin-filter-bar__label,
+.admin-filter-bar__sub-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--admin-navy, #10233f);
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+.admin-filter-bar__sub-label {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.admin-filter-bar__item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--admin-muted, #64748b);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba($primary, 0.04);
+    color: var(--admin-navy, #10233f);
+  }
+
+  &--active {
+    background: rgba($primary, 0.08) !important;
+    box-shadow: inset 4px 0 0 $primary;
+    color: var(--admin-navy, #10233f);
+  }
+}
+
+.admin-filter-bar__divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(17, 24, 39, 0.08);
+  margin: 0 10px;
+  flex: 0 0 auto;
+}
+
+.admin-filter-bar__select {
+  width: 220px;
+  :deep(.q-field__control) {
+    border-radius: 8px !important;
+  }
+}
+
+.admin-filter-bar__input {
+  width: 180px;
+  :deep(.q-field__control) {
+    border-radius: 8px !important;
+    padding: 0 12px;
+    background: #f1f5f9 !important;
+  }
+}
+
 .finance-payment-download-page--static-cards
   :deep(.admin-surface-card:not(.admin-surface-card--glass)) {
   transition:
@@ -622,7 +782,6 @@ onMounted(() => {
   border-color: var(--admin-line) !important;
   box-shadow: var(--admin-shadow-sm) !important;
 }
-
 .download-format-link {
   display: flex;
   justify-content: flex-start;

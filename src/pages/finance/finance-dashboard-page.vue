@@ -15,6 +15,23 @@
     </CentralFinancePageHero>
 
     <section class="finance-shell finance-content">
+      <div class="row justify-end q-mb-md">
+        <q-btn-toggle
+          v-model="dashboardPeriod"
+          no-caps
+          rounded
+          unelevated
+          toggle-color="primary"
+          color="white"
+          text-color="grey-7"
+          :options="[
+            { label: 'วันนี้', value: 'today' },
+            { label: 'ทั้งหมด', value: 'allTime' },
+          ]"
+          class="finance-period-toggle"
+        />
+      </div>
+
       <div class="finance-stat-grid">
         <CentralFinanceMetricCard
           v-for="stat in metricCards"
@@ -122,9 +139,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
+import { api } from 'src/boot/axios';
 import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
@@ -132,18 +150,63 @@ import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceS
 const { t } = useI18n();
 const authStore = useAuthStore();
 
+const dashboardPeriod = ref<'today' | 'allTime'>('today');
+
+const dashboardStats = ref({
+  todayRevenue: 0,
+  yesterdayRevenue: 0,
+  revenueTrend: '+0%',
+});
+
+async function fetchDashboardStats() {
+  try {
+    const { data } = await api.get('/api/lltenroll/dashboard-stats', {
+      params: { period: dashboardPeriod.value },
+    });
+    dashboardStats.value.todayRevenue = data.todayRevenue || 0;
+    dashboardStats.value.yesterdayRevenue = data.yesterdayRevenue || 0;
+
+    if (dashboardPeriod.value === 'allTime') {
+      dashboardStats.value.revenueTrend = ''; // ไม่แสดง trend ถ้าดูทั้งหมด
+      return;
+    }
+
+    const current = data.todayRevenue || 0;
+    const previous = data.yesterdayRevenue || 0;
+    if (previous === 0) {
+      dashboardStats.value.revenueTrend = current > 0 ? '+100%' : '+0%';
+    } else {
+      const change = ((current - previous) / previous) * 100;
+      dashboardStats.value.revenueTrend = `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+    }
+  } catch (error) {
+    console.error('Failed to load dashboard stats', error);
+  }
+}
+
+onMounted(() => {
+  void fetchDashboardStats();
+});
+
+watch(dashboardPeriod, () => {
+  void fetchDashboardStats();
+});
+
 const chartPeriod = ref<'7d' | '30d'>('7d');
 const currentUserFaculty = computed(() => authStore.user?.facName ?? authStore.user?.faculty ?? '');
 
-const mockDashboardStats = [
+const mockDashboardStats = computed(() => [
   {
-    label: 'finance.dashboard.totalRevenueToday',
-    value: 48500,
+    label:
+      dashboardPeriod.value === 'allTime'
+        ? 'รายรับรวมทั้งหมด'
+        : t('finance.dashboard.totalRevenueToday'),
+    value: dashboardStats.value.todayRevenue,
     icon: 'payments',
     color: '#0d9488',
     tint: '#ccfbf1',
-    trend: '+12%',
-    trendColor: 'positive',
+    trend: dashboardStats.value.revenueTrend,
+    trendColor: dashboardStats.value.revenueTrend.startsWith('+') ? 'positive' : 'negative',
   },
   {
     label: 'finance.dashboard.pendingReview',
@@ -170,7 +233,7 @@ const mockDashboardStats = [
     color: '#059669',
     tint: '#d1fae5',
   },
-];
+]);
 
 const mockTrendSeriesByFaculty: Record<string, number[]> = {
   คอมพิวเตอร์และเทคโนโลยี: [125000, 148000, 132000, 155000, 172000, 188000],
@@ -238,8 +301,8 @@ interface ChartBarItem {
 }
 
 const metricCards = computed(() =>
-  mockDashboardStats.map((stat) => ({
-    label: t(stat.label),
+  mockDashboardStats.value.map((stat) => ({
+    label: stat.label.includes('.') ? t(stat.label) : stat.label,
     value: typeof stat.value === 'number' ? formatCurrency(stat.value) : stat.value,
     icon: stat.icon,
     color: stat.color,
