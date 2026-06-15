@@ -429,7 +429,7 @@ function onCancel(): void {
 }
 
 .category-form-dialog__icon-section {
-  border: 1px dashed rgba(15, 23, 42, 0.12);
+  border: 1px dashed var(--admin-line);
   border-radius: 14px;
   background: #f8fafc;
 }

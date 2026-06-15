@@ -1019,7 +1019,7 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   th,
   td {
     padding: 16px 18px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    border-bottom: 1px solid var(--admin-line); // token admin (เดิม rogue ink rgba(15,23,42,.08))
     vertical-align: middle;
   }
 

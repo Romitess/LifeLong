@@ -1104,7 +1104,7 @@ function formatRelativeTime(iso: string | null): string {
   gap: 16px;
   align-items: center;
   padding: 14px 22px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid var(--admin-line);
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
@@ -1200,7 +1200,7 @@ function formatRelativeTime(iso: string | null): string {
   gap: 14px;
   align-items: center;
   padding: 14px 22px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  border-bottom: 1px solid var(--admin-line);
   transition: background-color 0.2s ease;
 }
 

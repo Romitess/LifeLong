@@ -237,7 +237,7 @@ const activeCount = computed(() => props.courses.filter((course) => course.isAct
   padding: 12px 14px;
   border-radius: 12px;
   background: #f8fafc;
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--admin-line);
 }
 
 .category-courses-dialog__metric-label {
@@ -304,7 +304,7 @@ const activeCount = computed(() => props.courses.filter((course) => course.isAct
   grid-template-columns: 64px minmax(0, 1fr);
   gap: 14px;
   padding: 18px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--admin-line);
   border-radius: 18px;
   background:
     linear-gradient(135deg, var(--category-accent-soft), rgba(255, 255, 255, 0.98) 42%), #ffffff;
@@ -376,7 +376,7 @@ const activeCount = computed(() => props.courses.filter((course) => course.isAct
   gap: 14px;
   align-items: center;
   padding: 12px 14px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--admin-line);
   border-radius: 14px;
   background: #ffffff;
   transition:

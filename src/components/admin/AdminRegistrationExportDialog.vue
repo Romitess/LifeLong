@@ -550,7 +550,7 @@ function onCancel(): void {
   gap: 10px;
   padding: 14px 14px 14px 10px;
   border-radius: 14px;
-  border: 1.5px solid rgba(15, 23, 42, 0.1);
+  border: 1.5px solid var(--admin-line);
   background: #f8fafc;
   cursor: pointer;
   transition:

@@ -518,7 +518,7 @@ function getTypeColor(typeCourseId: number): string {
   flex-direction: column;
   gap: 0;
   padding: 18px 24px 4px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid var(--admin-line);
 }
 
 .courses-manager__filter-row {
@@ -601,7 +601,7 @@ function getTypeColor(typeCourseId: number): string {
   th,
   td {
     padding: 14px 16px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    border-bottom: 1px solid var(--admin-line);
     vertical-align: middle;
   }
 
