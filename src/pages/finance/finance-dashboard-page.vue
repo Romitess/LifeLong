@@ -15,21 +15,66 @@
     </CentralFinancePageHero>
 
     <section class="finance-shell finance-content">
-      <div class="row justify-end q-mb-md">
-        <q-btn-toggle
-          v-model="dashboardPeriod"
-          no-caps
-          rounded
-          unelevated
-          toggle-color="primary"
-          color="white"
-          text-color="grey-7"
-          :options="[
-            { label: 'วันนี้', value: 'today' },
-            { label: 'ทั้งหมด', value: 'allTime' },
-          ]"
-          class="finance-period-toggle"
-        />
+      <!-- Sticky sentinel — 1px div สำหรับ IntersectionObserver detect "stuck" -->
+      <div ref="sentinelRef" class="admin-filter-sentinel" />
+
+      <!-- Sticky Filter Bar -->
+      <div class="admin-filter-bar" :class="{ 'admin-filter-bar--stuck': filterStuck }">
+        <div class="admin-filter-bar__row1">
+          <span class="admin-filter-bar__label q-mr-sm">
+            <q-icon name="filter_alt" size="14px" class="q-mr-xs" /> ตัวกรอง
+          </span>
+
+          <button
+            v-for="opt in datePresetOptions"
+            :key="opt.value"
+            class="admin-filter-bar__item"
+            :class="{ 'admin-filter-bar__item--active': datePreset === opt.value }"
+            @click="applyDatePreset(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+
+          <q-btn
+            flat
+            dense
+            round
+            icon="filter_alt_off"
+            color="negative"
+            @click="clearFilters"
+            class="q-ml-sm"
+          >
+            <q-tooltip>ล้างตัวกรอง</q-tooltip>
+          </q-btn>
+        </div>
+
+        <div
+          class="admin-filter-bar__row2"
+          :class="{ 'admin-filter-bar__row2--inactive': datePreset !== 'custom' }"
+        >
+          <span class="admin-filter-bar__sub-label q-mr-sm">กำหนดช่วงเวลาเอง</span>
+          <q-input
+            v-model="dateRangeDisplay"
+            readonly
+            borderless
+            dense
+            placeholder="เลือกช่วงเวลา"
+            class="admin-filter-bar__input admin-filter-bar__input--range"
+          >
+            <template #append>
+              <q-icon name="event" class="cursor-pointer" color="primary">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-date v-model="dateRangeModel" range mask="DD/MM/YYYY" color="primary">
+                    <div class="row items-center justify-end q-gutter-sm">
+                      <q-btn label="ยกเลิก" color="primary" flat v-close-popup />
+                      <q-btn label="ตกลง" color="primary" flat v-close-popup />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+        </div>
       </div>
 
       <div class="finance-stat-grid">
@@ -41,77 +86,40 @@
           :label="stat.label"
           :icon-color="stat.color"
           :icon-tint="stat.tint"
-        >
-          <template #footer v-if="stat.trendText">
-            <div class="finance-metric-footer">
-              <q-icon :name="stat.trendIcon" size="16px" :color="stat.trendColor" />
-              <span :class="`text-${stat.trendColor}`">{{ stat.trendText }}</span>
-            </div>
-          </template>
-        </CentralFinanceMetricCard>
+        />
       </div>
 
       <div class="finance-main-grid">
         <CentralFinanceSurfaceCard
           eyebrow="Financial Trends"
-          title="ภาพรวมรายรับของคณะ"
+          title="ภาพรวมทางการเงิน"
+          :subtitle="dateRangeDisplay || 'ทั้งหมด'"
           card-class="finance-panel finance-panel--chart"
         >
-          <template #header-actions>
-            <q-btn-toggle
-              v-model="chartPeriod"
-              no-caps
-              rounded
-              unelevated
-              toggle-color="primary"
-              color="white"
-              text-color="grey-7"
-              :options="[
-                { label: '7D', value: '7d' },
-                { label: '30D', value: '30d' },
-              ]"
-              class="finance-period-toggle"
-            />
-          </template>
-
-          <div class="finance-chart-surface">
-            <div class="finance-chart-area">
-              <div class="finance-chart-summary">
-                <div class="finance-chart-summary__item">
-                  <span class="finance-chart-summary__label">วันนี้</span>
-                  <strong class="finance-chart-summary__value text-positive">{{
-                    todayRevenue
-                  }}</strong>
-                </div>
-                <div class="finance-chart-summary__divider" />
-                <div class="finance-chart-summary__item">
-                  <span class="finance-chart-summary__label">เมื่อวาน</span>
-                  <strong class="finance-chart-summary__value">{{ yesterdayRevenue }}</strong>
-                </div>
-                <div class="finance-chart-summary__divider" />
-                <div class="finance-chart-summary__item">
-                  <span class="finance-chart-summary__label">เปลี่ยนแปลง</span>
-                  <strong class="finance-chart-summary__value text-positive">{{
-                    revenueChange
-                  }}</strong>
-                </div>
-              </div>
-
-              <div class="finance-bar-chart">
-                <div v-for="(bar, i) in chartBars" :key="i" class="finance-bar-chart__col">
-                  <div class="finance-bar-chart__bar-wrap">
-                    <div
-                      class="finance-bar-chart__bar"
-                      :class="{ 'finance-bar-chart__bar--today': bar.isToday }"
-                      :style="{ height: `${bar.percent}%` }"
-                    >
-                      <q-tooltip>{{ bar.label }}<br />{{ bar.amountLabel }}</q-tooltip>
-                    </div>
-                  </div>
-                  <span class="finance-bar-chart__day">{{ bar.day }}</span>
-                </div>
-              </div>
+          <div class="q-mb-xl">
+            <div class="text-subtitle1 text-weight-bold q-mb-md text-grey-8">
+              รายรับรวมทั้งหมด (บาท)
             </div>
+            <AdminAreaChart
+              :series="revenueChartSeries"
+              :x-labels="trendChartLabels"
+              :height="240"
+              :format-y-tick="formatRevenueTick"
+              aria-label="รายรับรวมทั้งหมด"
+            />
+          </div>
+
+          <div>
+            <div class="text-subtitle1 text-weight-bold q-mb-md text-grey-8">
+              รายการชำระเงินใหม่ (รายการ)
+            </div>
+            <AdminAreaChart
+              :series="transactionsChartSeries"
+              :x-labels="trendChartLabels"
+              :height="240"
+              :format-y-tick="formatTransactionsTick"
+              aria-label="รายการชำระเงินใหม่"
+            />
           </div>
         </CentralFinanceSurfaceCard>
 
@@ -127,7 +135,7 @@
               :icon="activity.icon"
               :color="activity.color"
             >
-              <template #title>{{ $t(activity.title) }}</template>
+              <template #title>{{ activity.title }}</template>
               <template #subtitle>{{ activity.time }}</template>
               <div class="finance-timeline__detail">{{ activity.detail }}</div>
             </q-timeline-entry>
@@ -139,165 +147,266 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
 import { api } from 'src/boot/axios';
 import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
+import { formatCompactCurrency, formatCount } from 'src/utils/course-format';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
 
-const dashboardPeriod = ref<'today' | 'allTime'>('today');
+function formatDateInput(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+const filters = ref({
+  dateFrom: '',
+  dateTo: '',
+});
+
+const datePreset = ref('allTime');
+const datePresetOptions = computed(() => [
+  { label: t('finance.filters.today'), value: 'today' },
+  { label: t('finance.filters.thisWeek'), value: 'thisWeek' },
+  { label: t('finance.filters.thisMonth'), value: 'thisMonth' },
+  { label: t('finance.filters.thisYear'), value: 'thisYear' },
+  { label: t('finance.filters.allTime'), value: 'allTime' },
+  { label: t('finance.filters.custom'), value: 'custom' },
+]);
+
+const dateRangeModel = computed({
+  get() {
+    if (
+      filters.value.dateFrom &&
+      filters.value.dateTo &&
+      filters.value.dateFrom !== filters.value.dateTo
+    ) {
+      return { from: filters.value.dateFrom, to: filters.value.dateTo };
+    }
+    return filters.value.dateFrom || null;
+  },
+  set(val: { from: string; to: string } | string | null) {
+    if (val !== null && typeof val === 'object' && 'from' in val && 'to' in val) {
+      filters.value.dateFrom = val.from;
+      filters.value.dateTo = val.to;
+    } else if (typeof val === 'string') {
+      filters.value.dateFrom = val;
+      filters.value.dateTo = val;
+    } else {
+      filters.value.dateFrom = '';
+      filters.value.dateTo = '';
+    }
+    onCustomDateChange();
+  },
+});
+
+const dateRangeDisplay = computed(() => {
+  if (
+    filters.value.dateFrom &&
+    filters.value.dateTo &&
+    filters.value.dateFrom !== filters.value.dateTo
+  ) {
+    return `${filters.value.dateFrom} - ${filters.value.dateTo}`;
+  }
+  return filters.value.dateFrom || '';
+});
+
+function applyDatePreset(preset: string) {
+  datePreset.value = preset;
+  const now = new Date();
+  if (preset === 'today') {
+    filters.value.dateFrom = formatDateInput(now);
+    filters.value.dateTo = formatDateInput(now);
+  } else if (preset === 'thisWeek') {
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diff);
+    const endOfWeek = new Date(
+      startOfWeek.getFullYear(),
+      startOfWeek.getMonth(),
+      startOfWeek.getDate() + 6,
+    );
+    filters.value.dateFrom = formatDateInput(startOfWeek);
+    filters.value.dateTo = formatDateInput(endOfWeek);
+  } else if (preset === 'thisMonth') {
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    filters.value.dateFrom = formatDateInput(startOfMonth);
+    filters.value.dateTo = formatDateInput(endOfMonth);
+  } else if (preset === 'thisYear') {
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const endOfYear = new Date(now.getFullYear(), 11, 31);
+    filters.value.dateFrom = formatDateInput(startOfYear);
+    filters.value.dateTo = formatDateInput(endOfYear);
+  } else if (preset === 'allTime') {
+    filters.value.dateFrom = '';
+    filters.value.dateTo = '';
+  }
+  if (preset !== 'custom') {
+    void fetchDashboardStats();
+  }
+}
+
+function onCustomDateChange() {
+  datePreset.value = 'custom';
+  void fetchDashboardStats();
+}
+
+function clearFilters() {
+  filters.value.dateFrom = '';
+  filters.value.dateTo = '';
+  datePreset.value = 'allTime';
+  void fetchDashboardStats();
+}
 
 const dashboardStats = ref({
   todayRevenue: 0,
   yesterdayRevenue: 0,
-  revenueTrend: '+0%',
+  pendingReceipts: 0,
+  issuedReceipts: 0,
+  totalTransactions: 0,
 });
 
 async function fetchDashboardStats() {
   try {
-    const { data } = await api.get('/api/lltenroll/dashboard-stats', {
-      params: { period: dashboardPeriod.value },
-    });
-    dashboardStats.value.todayRevenue = data.todayRevenue || 0;
-    dashboardStats.value.yesterdayRevenue = data.yesterdayRevenue || 0;
-
-    if (dashboardPeriod.value === 'allTime') {
-      dashboardStats.value.revenueTrend = ''; // ไม่แสดง trend ถ้าดูทั้งหมด
-      return;
-    }
-
-    const current = data.todayRevenue || 0;
-    const previous = data.yesterdayRevenue || 0;
-    if (previous === 0) {
-      dashboardStats.value.revenueTrend = current > 0 ? '+100%' : '+0%';
+    const params: Record<string, string> = {};
+    if (datePreset.value === 'allTime') {
+      params.period = 'allTime';
     } else {
-      const change = ((current - previous) / previous) * 100;
-      dashboardStats.value.revenueTrend = `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+      params.period = 'custom';
+      params.dateFrom = filters.value.dateFrom;
+      params.dateTo = filters.value.dateTo;
     }
+
+    const [statsRes, trendRes] = await Promise.all([
+      api.get('/api/lltenroll/dashboard-stats', { params }),
+      api.get('/api/lltenroll/dashboard-trend', { params }),
+    ]);
+
+    const stats = statsRes.data;
+    dashboardStats.value.todayRevenue = stats.todayRevenue || 0;
+    dashboardStats.value.yesterdayRevenue = stats.yesterdayRevenue || 0;
+    dashboardStats.value.pendingReceipts = stats.pendingReceipts || 0;
+    dashboardStats.value.issuedReceipts = stats.issuedReceipts || 0;
+    dashboardStats.value.totalTransactions = stats.totalTransactions || 0;
+
+    const trend = trendRes.data;
+    trendData.value.months = trend.months || [];
+    trendData.value.enrollments = trend.enrollments || [];
+    trendData.value.paidEnrollments = trend.paidEnrollments || [];
+    trendData.value.revenue = trend.revenue || [];
   } catch (error) {
     console.error('Failed to load dashboard stats', error);
   }
 }
 
+const sentinelRef = ref<HTMLElement | null>(null);
+const filterStuck = ref(false);
+let stickyObserver: IntersectionObserver | null = null;
+
 onMounted(() => {
+  if (sentinelRef.value) {
+    stickyObserver = new IntersectionObserver(
+      ([entry]) => {
+        filterStuck.value = !(entry?.isIntersecting ?? true);
+      },
+      { threshold: 0, rootMargin: '-73px 0px 0px 0px' },
+    );
+    stickyObserver.observe(sentinelRef.value);
+  }
+
   void fetchDashboardStats();
+  void fetchRecentActivity();
 });
 
-watch(dashboardPeriod, () => {
-  void fetchDashboardStats();
+onUnmounted(() => {
+  stickyObserver?.disconnect();
 });
 
-const chartPeriod = ref<'7d' | '30d'>('7d');
 const currentUserFaculty = computed(() => authStore.user?.facName ?? authStore.user?.faculty ?? '');
 
 const mockDashboardStats = computed(() => [
   {
     label:
-      dashboardPeriod.value === 'allTime'
+      datePreset.value === 'allTime'
         ? 'รายรับรวมทั้งหมด'
-        : t('finance.dashboard.totalRevenueToday'),
+        : datePreset.value === 'today'
+          ? t('finance.dashboard.totalRevenueToday')
+          : 'รายรับตามช่วงเวลา',
     value: dashboardStats.value.todayRevenue,
     icon: 'payments',
     color: '#0d9488',
     tint: '#ccfbf1',
-    trend: dashboardStats.value.revenueTrend,
-    trendColor: dashboardStats.value.revenueTrend.startsWith('+') ? 'positive' : 'negative',
   },
   {
-    label: 'finance.dashboard.pendingReview',
-    value: 18,
+    label: 'รายการชำระเงินใหม่',
+    value: `${dashboardStats.value.totalTransactions} รายการ`,
+    icon: 'credit_card',
+    color: '#2563eb',
+    tint: '#dbeafe',
+  },
+  {
+    label: 'รายการที่รอออกใบเสร็จ',
+    value: `${dashboardStats.value.pendingReceipts} รายการ`,
     icon: 'hourglass_empty',
     color: '#d97706',
     tint: '#fef3c7',
-    trend: '+4',
-    trendColor: 'orange',
   },
   {
-    label: 'finance.dashboard.totalTransactions',
-    value: 248,
-    icon: 'confirmation_number',
-    color: '#2563eb',
-    tint: '#dbeafe',
-    trend: '+9%',
-    trendColor: 'positive',
-  },
-  {
-    label: 'finance.dashboard.receiptsIssued',
-    value: '96.4%',
+    label: 'ออกใบเสร็จไปแล้ว (สำเนา+ฉบับจริง)',
+    value: `${dashboardStats.value.issuedReceipts} ใบ`,
     icon: 'task_alt',
     color: '#059669',
     tint: '#d1fae5',
   },
 ]);
 
-const mockTrendSeriesByFaculty: Record<string, number[]> = {
-  คอมพิวเตอร์และเทคโนโลยี: [125000, 148000, 132000, 155000, 172000, 188000],
-  คณะวิทยาการสารสนเทศ: [250000, 280000, 260000, 310000, 290000, 340000],
-};
+const recentActivities = ref<
+  { title: string; time: string; detail: string; icon: string; color: string }[]
+>([]);
 
-const mockRecentActivities = [
-  {
-    title: 'finance.dashboard.confirmPayment',
-    time: '2 นาทีที่แล้ว',
-    detail: 'นิสิต ธนากร สุขใจ - ฿4,500 (บัตรเครดิต) #REC-70012',
-    icon: 'credit_card',
-    color: 'purple-5',
-    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
-  },
-  {
-    title: 'finance.dashboard.confirmPayment',
-    time: '15 นาทีที่แล้ว',
-    detail: 'นิสิต พรเทพ ดีมาก - ฿3,200 (โอนเงิน) #REC-70001',
-    icon: 'check_circle',
-    color: 'positive',
-    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
-  },
-  {
-    title: 'finance.dashboard.autoReceipt',
-    time: '1 ชั่วโมงที่แล้ว',
-    detail: 'ออกใบเสร็จอัตโนมัติ 5 รายการ - คอร์ส Data Science',
-    icon: 'receipt',
-    color: 'blue-6',
-    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
-  },
-  {
-    title: 'finance.dashboard.confirmPayment',
-    time: '2 ชั่วโมงที่แล้ว',
-    detail: 'นิสิต สมชาย ใจดี - ฿1,200 (โอนเงิน) #REC-69001',
-    icon: 'check_circle',
-    color: 'positive',
-    faculty: 'คณะวิทยาการสารสนเทศ',
-  },
-  {
-    title: 'finance.dashboard.autoReceipt',
-    time: '5 ชั่วโมงที่แล้ว',
-    detail: 'สร้างใบเสร็จรับเงินอัตโนมัติสำหรับคอร์ส Finance Basics',
-    icon: 'receipt_long',
-    color: 'blue-7',
-    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
-  },
-  {
-    title: 'finance.dashboard.confirmPayment',
-    time: 'วันนี้ 09:30',
-    detail: 'นิสิต นภัสสรณ์ รุ่งเรือง - ฿8,900 (QR Payment) #REC-70112',
-    icon: 'qr_code',
-    color: 'amber-8',
-    faculty: 'คอมพิวเตอร์และเทคโนโลยี',
-  },
-];
+async function fetchRecentActivity() {
+  try {
+    const { data } = await api.get('/api/lltenroll/recent-activity');
+    const items = data.activities || [];
+    recentActivities.value = items.map(
+      (a: { title: string; time: string; detail: string; icon: string; color: string }) => ({
+        ...a,
+        time: formatRelativeTime(a.time),
+      }),
+    );
+  } catch (error) {
+    console.error('Failed to load recent activity', error);
+  }
+}
 
-interface ChartBarItem {
-  day: string;
-  label: string;
-  amount: number;
-  amountLabel: string;
-  percent: number;
-  isToday?: boolean;
+function formatRelativeTime(isoStr: string): string {
+  const now = Date.now();
+  const then = new Date(isoStr).getTime();
+  if (Number.isNaN(then)) return isoStr;
+  const diffMs = now - then;
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return 'เมื่อสักครู่';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} นาทีที่แล้ว`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} ชั่วโมงที่แล้ว`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay === 1) return 'เมื่อวาน';
+  if (diffDay < 30) return `${diffDay} วันที่แล้ว`;
+  const d = new Date(isoStr);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear() + 543;
+  return `${dd}/${mm}/${yyyy}`;
 }
 
 const metricCards = computed(() =>
@@ -307,49 +416,89 @@ const metricCards = computed(() =>
     icon: stat.icon,
     color: stat.color,
     tint: stat.tint,
-    trendText: stat.trend ? `${stat.trend} จากสัปดาห์ก่อน` : '',
-    trendIcon: stat.trend ? 'trending_up' : 'trending_flat',
-    trendColor: stat.trendColor ?? 'grey-6',
   })),
 );
 
-const defaultTrendSeries = mockTrendSeriesByFaculty['คอมพิวเตอร์และเทคโนโลยี'] ?? [];
-
-const trendSeries = computed<number[]>(() => {
-  return mockTrendSeriesByFaculty[currentUserFaculty.value] ?? defaultTrendSeries;
+const trendData = ref<{
+  months: string[];
+  enrollments: number[];
+  paidEnrollments: number[];
+  revenue: number[];
+}>({
+  months: [],
+  enrollments: [],
+  paidEnrollments: [],
+  revenue: [],
 });
 
-const trendLabels = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.'];
+const THAI_MONTH_ABBR: Record<string, string> = {
+  '01': 'ม.ค.',
+  '02': 'ก.พ.',
+  '03': 'มี.ค.',
+  '04': 'เม.ย.',
+  '05': 'พ.ค.',
+  '06': 'มิ.ย.',
+  '07': 'ก.ค.',
+  '08': 'ส.ค.',
+  '09': 'ก.ย.',
+  '10': 'ต.ค.',
+  '11': 'พ.ย.',
+  '12': 'ธ.ค.',
+};
 
-const chartBars = computed<ChartBarItem[]>(() => {
-  const values = trendSeries.value;
-  const max = values.length ? Math.max(...values) : 1;
+function formatYmLabel(ym: string): string {
+  if (ym.includes(' ')) {
+    return ym.split(' ')[1] ?? ym;
+  }
+  const parts = ym.split('-');
+  if (parts.length === 3) {
+    const d = Number(parts[2]);
+    const mm = parts[1] ?? '01';
+    return `${d} ${THAI_MONTH_ABBR[mm] ?? mm}`;
+  }
+  const mm = parts[1] ?? '01';
+  const yyyy = Number(parts[0] ?? 0);
+  const buddhistYear = yyyy + 543;
+  return `${THAI_MONTH_ABBR[mm] ?? mm} ${String(buddhistYear).slice(-2)}`;
+}
 
-  return values.map((amount, index) => ({
-    day: trendLabels[index] ?? `W${index + 1}`,
-    label: trendLabels[index] ?? `W${index + 1}`,
-    amount,
-    amountLabel: formatCurrency(amount),
-    percent: Math.max(10, Math.round((amount / max) * 100)),
-    isToday: index === values.length - 1,
-  }));
+const trendChartLabels = computed(() => trendData.value.months.map(formatYmLabel));
+
+const revenueChartSeries = computed<AreaChartSeries[]>(() => {
+  const d = trendData.value;
+  return [
+    {
+      id: 'revenue',
+      label: 'รายรับรวมทั้งหมด',
+      color: '#0F766E',
+      values: d.revenue,
+      totalLabel: formatCompactCurrency(d.revenue.reduce((sum, v) => sum + v, 0)),
+      formatValue: (value) => formatCurrency(Math.round(value)),
+    },
+  ];
 });
 
-const todayRevenue = computed(() =>
-  formatCurrency(trendSeries.value[trendSeries.value.length - 1] ?? 0),
-);
-const yesterdayRevenue = computed(() =>
-  formatCurrency(trendSeries.value[trendSeries.value.length - 2] ?? 0),
-);
-const revenueChange = computed(() => {
-  const current = trendSeries.value[trendSeries.value.length - 1] ?? 0;
-  const previous = trendSeries.value[trendSeries.value.length - 2] ?? 0;
-  if (!previous) return '+0%';
-  const change = ((current - previous) / previous) * 100;
-  return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+const transactionsChartSeries = computed<AreaChartSeries[]>(() => {
+  const d = trendData.value;
+  return [
+    {
+      id: 'transactions',
+      label: 'รายการชำระเงินใหม่',
+      color: '#F5A623',
+      values: d.paidEnrollments,
+      totalLabel: `${formatCount(d.paidEnrollments.reduce((sum, v) => sum + v, 0))} รายการ`,
+      formatValue: (value) => `${formatCount(Math.round(value))} รายการ`,
+    },
+  ];
 });
 
-const recentActivities = computed(() => mockRecentActivities);
+function formatRevenueTick(value: number): string {
+  return formatCompactCurrency(Math.round(value));
+}
+
+function formatTransactionsTick(value: number): string {
+  return formatCount(Math.round(value));
+}
 
 function formatCurrency(value: number | string | undefined | null): string {
   if (typeof value === 'string') return value;
@@ -399,6 +548,10 @@ function formatCurrency(value: number | string | undefined | null): string {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 18px;
+
+  :deep(.cf-metric-card__copy) {
+    margin-top: 16px !important;
+  }
 }
 
 .finance-metric-footer {
@@ -417,215 +570,25 @@ function formatCurrency(value: number | string | undefined | null): string {
   margin-bottom: 18px;
 }
 
-.finance-chart-surface {
-  position: relative;
-  display: grid;
-  gap: 20px;
-}
-
-.finance-floating-summary {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 2;
-  width: min(300px, calc(100% - 24px));
-  padding: 14px 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.16);
-  border: 1px solid rgba(14, 116, 144, 0.16);
-  backdrop-filter: blur(4px);
-}
-
-.finance-floating-summary__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.finance-floating-summary__eyebrow {
-  display: block;
-  font-size: 0.6rem;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #0f766e;
-}
-
-.finance-floating-summary__title {
-  margin-top: 4px;
-  font-size: 0.92rem;
-  font-weight: 900;
-  color: #10223f;
-}
-
-.finance-floating-summary__pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: rgba(255, 215, 0, 0.18);
-  color: #b45309;
-  font-size: 0.58rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.finance-floating-summary__items {
-  display: grid;
-  gap: 10px;
-}
-
-.finance-floating-summary__item {
-  display: grid;
-  grid-template-columns: 32px 1fr;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid rgba(16, 35, 63, 0.08);
-}
-
-.finance-floating-summary__item-icon {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
+.finance-chart-toggle {
   border-radius: 10px;
-}
+  background: rgba(15, 23, 42, 0.04);
+  padding: 4px;
 
-.finance-floating-summary__item-copy {
-  display: grid;
-  gap: 2px;
-}
-
-.finance-floating-summary__item-label {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #64748b;
-}
-
-.finance-floating-summary__item-value {
-  font-size: 0.96rem;
-  font-weight: 950;
-  color: #10223f;
-}
-
-.finance-chart-area {
-  display: grid;
-  gap: 20px;
-  padding-top: 104px;
-}
-
-.finance-chart-summary {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 16px 20px;
-  border-radius: 14px;
-  background: #f8fafc;
-  border: 1px solid rgba(16, 35, 63, 0.07);
-}
-
-.finance-chart-summary__item {
-  flex: 1;
-  display: grid;
-  gap: 4px;
-  padding: 0 20px;
-
-  &:first-child {
-    padding-left: 0;
+  :deep(.q-btn) {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border-radius: 8px !important;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 0 14px;
+    min-height: 32px;
   }
 
-  &:last-child {
-    padding-right: 0;
+  :deep(.q-btn::before) {
+    box-shadow: none !important;
   }
-}
-
-.finance-chart-summary__label {
-  display: block;
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.finance-chart-summary__value {
-  display: block;
-  font-size: 1.15rem;
-  font-weight: 950;
-  color: #10223f;
-  line-height: 1.2;
-}
-
-.finance-chart-summary__divider {
-  width: 1px;
-  height: 40px;
-  background: rgba(16, 35, 63, 0.1);
-  flex-shrink: 0;
-}
-
-.finance-bar-chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  height: 160px;
-  padding: 0 4px 28px;
-  position: relative;
-}
-
-.finance-bar-chart::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 28px 0;
-  border-bottom: 2px solid rgba(16, 35, 63, 0.08);
-  pointer-events: none;
-}
-
-.finance-bar-chart__col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  height: 100%;
-}
-
-.finance-bar-chart__bar-wrap {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-}
-
-.finance-bar-chart__bar {
-  width: 100%;
-  border-radius: 6px 6px 0 0;
-  background: rgba(29, 78, 216, 0.22);
-  transition: height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  cursor: pointer;
-
-  &:hover {
-    background: rgba(29, 78, 216, 0.38);
-  }
-
-  &--today {
-    background: linear-gradient(180deg, #1d4ed8, #3b82f6);
-    box-shadow: 0 4px 16px rgba(29, 78, 216, 0.3);
-  }
-}
-
-.finance-bar-chart__day {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #64748b;
-  white-space: nowrap;
 }
 
 .finance-period-toggle {
@@ -684,6 +647,129 @@ function formatCurrency(value: number | string | undefined | null): string {
   font-size: 0.88rem;
   color: #64748b;
   margin-top: 3px;
+}
+
+// ─── Sticky Filter Bar ───────────────────────────────────────
+.admin-filter-sentinel {
+  height: 1px;
+}
+
+.admin-filter-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 9;
+  margin-bottom: 16px;
+  border-radius: var(--admin-radius-lg, 16px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  transition: box-shadow 0.2s ease;
+  overflow: clip;
+
+  &--stuck {
+    box-shadow:
+      0 6px 28px rgba(17, 24, 39, 0.1),
+      0 1px 4px rgba(17, 24, 39, 0.05);
+  }
+}
+
+.admin-filter-bar__row1,
+.admin-filter-bar__row2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.admin-filter-bar__row1 {
+  padding: 8px 8px 4px;
+  min-height: 52px;
+}
+
+.admin-filter-bar__row2 {
+  padding: 4px 8px 8px;
+  border-top: 1px solid rgba(17, 24, 39, 0.06);
+  transition: opacity 0.18s ease;
+
+  &--inactive {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+}
+
+.admin-filter-bar__label,
+.admin-filter-bar__sub-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--admin-navy, #10233f);
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+.admin-filter-bar__sub-label {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.admin-filter-bar__item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--admin-muted, #64748b);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba($primary, 0.04);
+    color: var(--admin-navy, #10233f);
+  }
+
+  &--active {
+    background: rgba($primary, 0.08) !important;
+    box-shadow: inset 4px 0 0 $primary;
+    color: var(--admin-navy, #10233f);
+  }
+}
+
+.admin-filter-bar__divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(17, 24, 39, 0.08);
+  margin: 0 10px;
+  flex: 0 0 auto;
+}
+
+.admin-filter-bar__input {
+  width: 140px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+}
+.admin-filter-bar__input--range {
+  width: 220px;
+}
+.admin-filter-bar__input:focus-within {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
 }
 
 @media (max-width: 1100px) {

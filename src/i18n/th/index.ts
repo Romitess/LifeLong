@@ -272,6 +272,14 @@ export default {
       receiptSummary: 'รายงานสรุปการรับเงิน',
       dailyReport: 'รายงานการรับเงินประจำวัน',
     },
+    filters: {
+      today: 'วันนี้',
+      thisWeek: 'สัปดาห์นี้',
+      thisMonth: 'เดือนนี้',
+      thisYear: 'ปีนี้',
+      allTime: 'ทั้งหมด',
+      custom: 'กำหนดเอง',
+    },
     dashboard: {
       console: 'Finance & Billing Console',
       title: 'แดชบอร์ดเจ้าหน้าที่การเงิน',

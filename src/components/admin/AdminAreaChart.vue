@@ -85,15 +85,16 @@
 
       <!-- x labels -->
       <g class="admin-area-chart__x-labels">
-        <text
-          v-for="(label, index) in xLabels"
-          :key="label + index"
-          :x="xPositions[index]"
-          :y="height - paddingBottom + 18"
-          text-anchor="middle"
-        >
-          {{ label }}
-        </text>
+        <template v-for="(label, index) in xLabels" :key="label + index">
+          <text
+            v-if="shouldShowLabel(index, xLabels.length)"
+            :x="xPositions[index]"
+            :y="height - paddingBottom + 18"
+            text-anchor="middle"
+          >
+            {{ label }}
+          </text>
+        </template>
       </g>
 
       <!-- hover guide -->
@@ -296,6 +297,12 @@ function formatTooltipValue(value: number, serie: AreaChartSeries): string {
   if (serie.formatValue) return serie.formatValue(value);
   const formatted = value.toLocaleString('th-TH');
   return serie.unit ? `${formatted} ${serie.unit}` : formatted;
+}
+
+function shouldShowLabel(index: number, total: number): boolean {
+  if (total <= 12) return true;
+  const step = Math.ceil(total / 8);
+  return index % step === 0;
 }
 </script>
 

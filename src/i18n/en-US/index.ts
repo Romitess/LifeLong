@@ -273,6 +273,14 @@ export default {
       receiptSummary: 'Receipt Summary',
       dailyReport: 'Daily Report',
     },
+    filters: {
+      today: 'Today',
+      thisWeek: 'This Week',
+      thisMonth: 'This Month',
+      thisYear: 'This Year',
+      allTime: 'All Time',
+      custom: 'Custom',
+    },
     dashboard: {
       console: 'Finance & Billing Console',
       title: 'Finance Officer Dashboard',

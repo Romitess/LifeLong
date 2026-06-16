@@ -491,9 +491,12 @@ async function fetchRows() {
   }
 }
 
-onMounted(() => {
-  void fetchFaculties();
-  void fetchRows();
+onMounted(async () => {
+  await fetchFaculties();
+  if (userFacName.value !== 'ไม่ระบุ' && userFacId.value) {
+    listFilter.value.faculty = userFacId.value;
+  }
+  await fetchRows();
 });
 
 const tableSearch = ref('');
