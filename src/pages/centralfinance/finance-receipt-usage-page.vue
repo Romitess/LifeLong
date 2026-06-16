@@ -208,6 +208,7 @@
                   :label="$t('centralFinance.receiptUsage.filters.searchBtn')"
                   unelevated
                   class="q-px-xl"
+                  :loading="isLoading"
                   @click="onSearch"
                 />
                 <q-btn
@@ -215,6 +216,7 @@
                   color="grey-7"
                   :label="$t('centralFinance.receiptUsage.filters.clearBtn')"
                   class="q-px-lg bg-white"
+                  :disable="isLoading"
                   @click="clearFilters"
                 />
               </div>
@@ -393,38 +395,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar';
 import type { QTableProps } from 'quasar';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
-import { useCentralFinanceStore } from 'src/stores/central-finance-store';
+import { useReceiptUsageReport } from 'src/composables/use-receipt-usage-report';
 import jsPDF from 'jspdf';
 import { autoTable, type CellHookData } from 'jspdf-autotable';
 import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
 import * as XLSX from 'xlsx';
 
-interface ReceiptUsageItem {
-  id: number;
-  no: number;
-  departmentCode: number;
-  faculty: string;
-  receiptNo: string;
-  receiptFilename?: string;
-  receiptType?: 'R' | 'D';
-  customerName: string;
-  amount: number;
-  effectiveDate: string;
-  fiscalYear: string;
-  courseName: string;
-  collector: string;
-  status: string;
-  cancelBy?: string | undefined;
-  cancelDate?: string | undefined;
-}
-
 const { t } = useI18n();
-const centralFinanceStore = useCentralFinanceStore();
+const $q = useQuasar();
+const {
+  items,
+  facultyOptions: apiFacultyOptions,
+  isLoading,
+  error,
+  filters,
+  fetchData,
+  fetchFacultyOptions,
+  clearFilters: clearComposableFilters,
+} = useReceiptUsageReport();
+
+watch(error, (msg) => {
+  if (msg) $q.notify({ type: 'negative', message: msg, position: 'top' });
+});
+
+onMounted(() => {
+  void fetchFacultyOptions();
+});
 
 const search = ref('');
 const hasSearched = ref(false);
@@ -434,18 +436,6 @@ const pagination = ref({
   descending: false,
   page: 1,
   rowsPerPage: 10,
-});
-
-const filters = ref({
-  fiscalYear: '',
-  receiptDateStart: '',
-  receiptDateEnd: '',
-  faculty: '',
-  courseName: '',
-  customerName: '',
-  collector: '',
-  receiptNo: '',
-  status: '',
 });
 
 const currentThaiYear = new Date().getFullYear() + 543;
@@ -458,21 +448,15 @@ const fiscalYearOptions = computed(() => [
   }),
 ]);
 
-const facultyOptions = computed(() => {
-  const seen = new Set<string>();
-  const unique = centralFinanceStore.transactions
-    .map((tx) => tx.faculty)
-    .filter((name): name is string => !!name && !seen.has(name) && seen.add(name) !== undefined);
-  return [
-    { label: t('centralFinance.receiptSummary.allFaculties'), value: '' },
-    ...unique.map((name) => ({ label: name, value: name })),
-  ];
-});
+const facultyOptions = computed(() => [
+  { label: t('centralFinance.receiptSummary.allFaculties'), value: '' },
+  ...apiFacultyOptions.value.map((f) => ({ label: f.name, value: f.name })),
+]);
 
 const statusOptions = computed(() => [
   { label: t('centralFinance.receiptUsage.filters.statusAll'), value: '' },
-  { label: t('finance.receiptSummary.statusActive'), value: 'ใช้งาน' },
-  { label: t('finance.receiptSummary.statusCancelled'), value: 'ยกเลิก' },
+  { label: t('finance.receiptSummary.statusActive'), value: 'Y' },
+  { label: t('finance.receiptSummary.statusCancelled'), value: 'C' },
 ]);
 
 const activeFacultyScopeLabel = computed<string>(() => {
@@ -481,36 +465,11 @@ const activeFacultyScopeLabel = computed<string>(() => {
   return option?.label ?? filters.value.faculty;
 });
 
-const filteredRows = computed<ReceiptUsageItem[]>(() => {
-  let rows = mockData;
+const filteredRows = computed(() => items.value);
 
-  if (filters.value.faculty) {
-    rows = rows.filter((r) => r.faculty === filters.value.faculty);
-  }
-  if (filters.value.status) {
-    rows = rows.filter((r) => r.status === filters.value.status);
-  }
-  if (filters.value.receiptNo.trim()) {
-    const q = filters.value.receiptNo.trim().toLowerCase();
-    rows = rows.filter((r) => r.receiptNo.toLowerCase().includes(q));
-  }
-  if (filters.value.customerName.trim()) {
-    const q = filters.value.customerName.trim().toLowerCase();
-    rows = rows.filter((r) => r.customerName.toLowerCase().includes(q));
-  }
-  if (filters.value.courseName.trim()) {
-    const q = filters.value.courseName.trim().toLowerCase();
-    rows = rows.filter((r) => r.courseName.toLowerCase().includes(q));
-  }
-  if (filters.value.collector.trim()) {
-    const q = filters.value.collector.trim().toLowerCase();
-    rows = rows.filter((r) => r.collector.toLowerCase().includes(q));
-  }
-
-  return rows.map((r, idx) => ({ ...r, no: idx + 1 }));
-});
-
-const totalAmount = computed(() => filteredRows.value.reduce((sum, r) => sum + r.amount, 0));
+const totalAmount = computed(() =>
+  filteredRows.value.reduce((sum, r) => sum + (typeof r.amount === 'number' ? r.amount : 0), 0),
+);
 
 const columns = computed<QTableProps['columns']>(() => [
   {
@@ -597,24 +556,17 @@ const columns = computed<QTableProps['columns']>(() => [
   },
 ]);
 
-function onSearch(): void {
+async function onSearch(): Promise<void> {
   hasSearched.value = true;
   pagination.value.page = 1;
+  await fetchData();
 }
 
 function clearFilters(): void {
-  filters.value = {
-    fiscalYear: '',
-    receiptDateStart: '',
-    receiptDateEnd: '',
-    faculty: '',
-    courseName: '',
-    customerName: '',
-    collector: '',
-    receiptNo: '',
-    status: '',
-  };
+  clearComposableFilters();
   hasSearched.value = false;
+  search.value = '';
+  pagination.value.page = 1;
 }
 
 async function loadSarabunFont(): Promise<string> {
@@ -646,14 +598,16 @@ async function exportToPdf(): Promise<void> {
 
   const rows = filteredRows.value.map((row) => [
     row.no,
+    row.departmentCode,
     row.faculty,
     row.receiptNo,
-    row.customerName,
-    row.amount,
+    row.status === 'ยกเลิก' ? `ยกเลิก\n${row.cancelBy ?? ''}\n${row.cancelDate ?? ''}` : '',
     row.effectiveDate,
+    row.fiscalYear,
+    row.amount,
     row.courseName,
+    row.customerName,
     row.collector,
-    row.status === 'ยกเลิก' ? `ยกเลิก\n${row.cancelBy ?? ''}\n${row.cancelDate ?? ''}` : 'ใช้งาน',
   ]);
 
   autoTable(doc, {
@@ -663,15 +617,16 @@ async function exportToPdf(): Promise<void> {
     head: [
       [
         'ลำดับ',
-        'ส่วนงาน',
-        'เลขที่ใบเสร็จรับเงิน',
-        'ชื่อ-สกุล ผู้ชำระเงิน\n(Customer Name)',
+        'รหัส\nหน่วยงาน',
+        'ชื่อหน่วยงาน',
+        'เลขที่ใบเสร็จ\nรับเงิน',
+        'ยกเลิกเอกสาร',
+        'วันที่ใบเสร็จ\nรับเงิน',
+        'ปีเอกสาร',
         'จำนวนเงิน',
-        'วันที่ชำระเงิน\n(effective date)',
-        'ชื่อ-สกุล ผู้เรียน',
-        'ชื่อโครงการ/อบรม/\nหลักสูตร',
-        'ผู้รับเงิน (Collector)\nวันที่ใบเสร็จรับเงิน',
-        'สถานะ',
+        'ชื่อโครงการ/อบรม/หลักสูตร',
+        'ชื่อผู้ชำระเงิน',
+        'ชื่อผู้รับเงิน',
       ],
     ],
     body: rows,
@@ -694,20 +649,21 @@ async function exportToPdf(): Promise<void> {
       valign: 'middle',
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 24 },
-      1: { cellWidth: 80 },
-      2: { halign: 'center', cellWidth: 75 },
-      3: { cellWidth: 90 },
-      4: { halign: 'center', cellWidth: 48 },
-      5: { halign: 'center', cellWidth: 68 },
-      6: { cellWidth: 90 },
-      7: { cellWidth: 130 },
-      8: { halign: 'center', cellWidth: 100 },
-      9: { halign: 'center', cellWidth: 75 },
+      0: { halign: 'center', cellWidth: 22 },
+      1: { halign: 'center', cellWidth: 30 },
+      2: { cellWidth: 75 },
+      3: { halign: 'center', cellWidth: 65 },
+      4: { cellWidth: 70 },
+      5: { halign: 'center', cellWidth: 60 },
+      6: { halign: 'center', cellWidth: 32 },
+      7: { halign: 'center', cellWidth: 45 },
+      8: { cellWidth: 120 },
+      9: { cellWidth: 80 },
+      10: { cellWidth: 80 },
     },
     alternateRowStyles: { fillColor: [255, 255, 255] },
     didParseCell(data: CellHookData) {
-      if (data.section === 'body' && data.column.index === 9) {
+      if (data.section === 'body' && data.column.index === 4) {
         const val = typeof data.cell.raw === 'string' ? data.cell.raw : '';
         if (val.startsWith('ยกเลิก')) {
           data.cell.styles.textColor = [220, 38, 38];
@@ -724,136 +680,55 @@ async function exportToPdf(): Promise<void> {
 function exportToExcel(): void {
   const header = [
     'ลำดับ',
-    'ส่วนงาน',
+    'รหัสหน่วยงาน',
+    'ชื่อหน่วยงาน',
     'เลขที่ใบเสร็จรับเงิน',
-    'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
+    'ยกเลิกเอกสาร',
+    'วันที่ใบเสร็จรับเงิน',
+    'ปีเอกสาร',
     'จำนวนเงิน',
-    'วันที่ชำระเงิน (effective date)',
-    'ชื่อ-สกุล ผู้เรียน',
     'ชื่อโครงการ/อบรม/หลักสูตร',
-    'ผู้รับเงิน (Collector) วันที่ใบเสร็จรับเงิน',
-    'สถานะ',
+    'ชื่อผู้ชำระเงิน',
+    'ชื่อผู้รับเงิน',
   ];
 
   const rows = filteredRows.value.map((row) => [
     row.no,
+    row.departmentCode,
     row.faculty,
     row.receiptNo,
-    row.customerName,
+    row.status === 'ยกเลิก' ? `ยกเลิก | ${row.cancelBy ?? ''} | ${row.cancelDate ?? ''}` : '',
+    row.effectiveDate,
+    row.fiscalYear,
     row.amount,
-    row.effectiveDate.replace('\n', ' '),
-    row.courseName.replace(/\n/g, ' '),
-    row.collector.replace('\n', ' '),
-    row.status === 'ยกเลิก'
-      ? `ยกเลิก ${row.cancelBy ?? ''} ${(row.cancelDate ?? '').replace('\n', ' ')}`
-      : 'ใช้งาน',
+    row.courseName,
+    row.customerName,
+    row.collector,
   ]);
 
   const title = t('centralFinance.receiptUsage.reportTitle');
   const wsData = [[title], [], header, ...rows];
   const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 10 } }];
   ws['!cols'] = [
     { wch: 7 },
-    { wch: 22 },
-    { wch: 18 },
+    { wch: 14 },
     { wch: 25 },
+    { wch: 20 },
+    { wch: 30 },
+    { wch: 20 },
+    { wch: 10 },
     { wch: 12 },
-    { wch: 22 },
+    { wch: 45 },
     { wch: 25 },
-    { wch: 40 },
-    { wch: 30 },
-    { wch: 30 },
+    { wch: 25 },
   ];
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'รายงาน');
   XLSX.writeFile(wb, 'central-finance-receipt-usage.xlsx');
 }
-
-// Mock data — multiple faculties
-function generateMockData(): ReceiptUsageItem[] {
-  const faculties = [
-    'สำนักคอมพิวเตอร์',
-    'คณะวิทยาการสารสนเทศ',
-    'คณะวิทยาศาสตร์',
-    'คณะพยาบาลศาสตร์',
-    'คณะบริหารธุรกิจ',
-    'คณะวิศวกรรมศาสตร์',
-  ];
-
-  const departmentCodeByFaculty: Record<string, number> = {
-    สำนักคอมพิวเตอร์: 51,
-    คณะวิทยาการสารสนเทศ: 52,
-    คณะวิทยาศาสตร์: 53,
-    คณะพยาบาลศาสตร์: 54,
-    คณะบริหารธุรกิจ: 55,
-    คณะวิศวกรรมศาสตร์: 56,
-  };
-
-  const coursesByFaculty: Record<string, string> = {
-    สำนักคอมพิวเตอร์: 'C67052002:การพัฒนาเว็บแอปพลิเคชัน\nสำนักคอมพิวเตอร์',
-    คณะวิทยาการสารสนเทศ: 'C66061004:Digital Product Design\nคณะวิทยาการสารสนเทศ',
-    คณะวิทยาศาสตร์: 'C65091001:วิทยาศาสตร์ข้อมูลเบื้องต้น\nคณะวิทยาศาสตร์',
-    คณะพยาบาลศาสตร์: 'C65082001:การดูแลผู้สูงอายุเบื้องต้น\nคณะพยาบาลศาสตร์',
-    คณะบริหารธุรกิจ: 'C66021005:การตลาดดิจิทัลยุคใหม่\nคณะบริหารธุรกิจ',
-    คณะวิศวกรรมศาสตร์: 'C66031002:ปัญญาประดิษฐ์ในอุตสาหกรรม\nคณะวิศวกรรมศาสตร์',
-  };
-
-  const collectorsByFaculty: Record<string, string> = {
-    สำนักคอมพิวเตอร์: 'นางสาวนัธพร ยะโสวงษ์\n20 มี.ค. 2567',
-    คณะวิทยาการสารสนเทศ: 'นายสมชาย ดีงาม\n21 มี.ค. 2567',
-    คณะวิทยาศาสตร์: 'นางวิมล รัตนาพร\n22 มี.ค. 2567',
-    คณะพยาบาลศาสตร์: 'นายอนันต์ ยอดเยี่ยม\n23 มี.ค. 2567',
-    คณะบริหารธุรกิจ: 'นางสาวเกศรา พูนผล\n24 มี.ค. 2567',
-    คณะวิศวกรรมศาสตร์: 'นายวิทยา มั่นคง\n25 มี.ค. 2567',
-  };
-
-  const names = [
-    'นัธพร ยะโสวงษ์',
-    'วิมลรัตน์ ดีเลิศ',
-    'สมชาย รักเรียน',
-    'อนันต์ ยอดเยี่ยม',
-    'เกศรา พูนผล',
-    'ธนพล สุขสันต์',
-    'พิมพ์ใจ เจริญสุข',
-    'ศิริพร ใจดี',
-    'วีระชัย กล้าหาญ',
-    'มนัสวี บุญช่วย',
-  ];
-
-  const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.'];
-  const data: ReceiptUsageItem[] = [];
-  let id = 1;
-
-  for (const faculty of faculties) {
-    for (let i = 0; i < 14; i++) {
-      const isCancelled = i % 7 === 6;
-      const name = names[(id + i) % names.length] ?? '';
-      data.push({
-        id,
-        no: id,
-        departmentCode: departmentCodeByFaculty[faculty] ?? 0,
-        faculty,
-        receiptNo: '256706' + String(id).padStart(6, '0'),
-        customerName: name,
-        amount: [1500, 2000, 2500, 3000, 3500, 4000][i % 6] ?? 1500,
-        effectiveDate: `${(i % 28) + 1} ${months[Math.floor(i / 5) % 6] ?? 'ม.ค.'} 2566\n${10 + (i % 12)}:${String(20 + (i % 40)).padStart(2, '0')}:00`,
-        fiscalYear: '2566',
-        courseName: coursesByFaculty[faculty] ?? '',
-        collector: collectorsByFaculty[faculty] ?? '',
-        status: isCancelled ? 'ยกเลิก' : 'ใช้งาน',
-        ...(isCancelled ? { cancelBy: name, cancelDate: '15/05/2567\nทดสอบยกเลิก' } : {}),
-      });
-      id++;
-    }
-  }
-
-  return data;
-}
-
-const mockData = generateMockData();
 </script>
 
 <style lang="scss" scoped>

@@ -1416,7 +1416,7 @@ export default {
         departmentCode: 'รหัส\nหน่วยงาน',
         departmentName: 'ชื่อหน่วยงาน',
         cancelDoc: 'ยกเลิก\nเอกสาร',
-        receiptCompletedDate: 'วันที่ใบเสร็จ\nสำเร็จรับเงิน',
+        receiptCompletedDate: 'วันที่ใบเสร็จ\nรับเงิน',
         fiscalYear: 'ปีเอกสาร\n(Fiscal Year)',
         courseName: 'ชื่อโครงการ/อบรม/หลักสูตร',
         customerName: 'ชื่อผู้ชำระเงิน\n(Customer Name)',
