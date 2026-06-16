@@ -1412,6 +1412,17 @@ export default {
         searchBtn: 'ค้นหา',
         clearBtn: 'ล้างค่า',
       },
+      columns: {
+        departmentCode: 'รหัส\nหน่วยงาน',
+        departmentName: 'ชื่อหน่วยงาน',
+        cancelDoc: 'ยกเลิก\nเอกสาร',
+        receiptCompletedDate: 'วันที่ใบเสร็จ\nสำเร็จรับเงิน',
+        fiscalYear: 'ปีเอกสาร\n(Fiscal Year)',
+        courseName: 'ชื่อโครงการ/อบรม/หลักสูตร',
+        customerName: 'ชื่อผู้ชำระเงิน\n(Customer Name)',
+        cashierName: 'ชื่อผู้รับเงิน\n(Cashier Name)',
+        total: 'รวม',
+      },
     },
     receiptSummary: {
       hero: {

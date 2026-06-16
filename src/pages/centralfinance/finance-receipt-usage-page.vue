@@ -278,36 +278,14 @@
           :rows-per-page-options="[10, 25, 50, 100]"
           :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
         >
-          <template v-slot:body-cell-status="slotProps">
+          <template v-slot:body-cell-cancelDoc="slotProps">
             <q-td :props="slotProps">
-              <div v-if="slotProps.value === 'ยกเลิก'" class="text-negative text-center">
+              <div v-if="slotProps.row.status === 'ยกเลิก'" class="text-negative text-center">
                 {{ $t('finance.receiptSummary.statusCancelled') }}<br />
                 <span class="text-caption text-grey-6">
                   {{ slotProps.row.cancelBy }}<br />{{ slotProps.row.cancelDate }}
                 </span>
               </div>
-              <div v-else class="text-center">
-                {{ $t('finance.receiptSummary.statusActive') }}
-              </div>
-            </q-td>
-          </template>
-
-          <template v-slot:body-cell-printReceipt="slotProps">
-            <q-td :props="slotProps" class="text-center">
-              <span v-if="slotProps.row.status === 'ยกเลิก'" class="text-grey-6">
-                {{ $t('finance.receiptSummary.statusCancelled') }}
-              </span>
-              <q-btn
-                v-else
-                flat
-                round
-                dense
-                icon="download"
-                color="warning"
-                @click="downloadReceipt(slotProps.row)"
-              >
-                <q-tooltip>{{ $t('finance.receipts.printReceipt') }}</q-tooltip>
-              </q-btn>
             </q-td>
           </template>
 
@@ -317,6 +295,23 @@
                 {{ slotProps.value }}
               </div>
             </q-td>
+          </template>
+
+          <template v-slot:bottom-row>
+            <tr class="receipt-total-row">
+              <td colspan="7" class="text-right text-weight-bold q-pr-lg">
+                {{ $t('centralFinance.receiptUsage.columns.total') }}
+              </td>
+              <td class="text-center text-weight-bold">
+                {{
+                  totalAmount.toLocaleString('th-TH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                }}
+              </td>
+              <td colspan="3"></td>
+            </tr>
           </template>
 
           <template v-slot:bottom="scope">
@@ -394,33 +389,15 @@
         </q-table>
       </CentralFinanceSurfaceCard>
     </section>
-
-    <ReceiptCard
-      ref="receiptDialogRef"
-      v-model="showReceiptDialog"
-      :receipt-id="receiptId"
-      :issued-at="issuedAt"
-      :customer-name="customerName"
-      :customer-tax-id="customerTaxId"
-      :customer-address="customerAddress"
-      :show-customer="true"
-      :course-title="courseTitle"
-      :course-code="courseCode"
-      :amount="amount"
-      :receipt-filename="selectedReceipt?.receiptFilename ?? ''"
-      :is-copy="selectedReceipt?.receiptType === 'D'"
-    />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { QTableProps } from 'quasar';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
-import ReceiptCard from 'components/receipt/receipt-card.vue';
-import { usePaymentImportApi } from 'src/composables/usePaymentImportApi';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import jsPDF from 'jspdf';
 import { autoTable, type CellHookData } from 'jspdf-autotable';
@@ -430,6 +407,7 @@ import * as XLSX from 'xlsx';
 interface ReceiptUsageItem {
   id: number;
   no: number;
+  departmentCode: number;
   faculty: string;
   receiptNo: string;
   receiptFilename?: string;
@@ -437,7 +415,7 @@ interface ReceiptUsageItem {
   customerName: string;
   amount: number;
   effectiveDate: string;
-  learnerName: string;
+  fiscalYear: string;
   courseName: string;
   collector: string;
   status: string;
@@ -450,9 +428,6 @@ const centralFinanceStore = useCentralFinanceStore();
 
 const search = ref('');
 const hasSearched = ref(false);
-const showReceiptDialog = ref(false);
-const selectedReceipt = ref<ReceiptUsageItem | null>(null);
-const receiptDialogRef = ref<InstanceType<typeof ReceiptCard> | null>(null);
 
 const pagination = ref({
   sortBy: 'no',
@@ -506,27 +481,6 @@ const activeFacultyScopeLabel = computed<string>(() => {
   return option?.label ?? filters.value.faculty;
 });
 
-// Receipt card computed
-const receiptId = computed<string>(() => selectedReceipt.value?.receiptNo ?? '');
-const issuedAt = computed<Date | null>(() =>
-  selectedReceipt.value ? parseThaiDate(selectedReceipt.value.effectiveDate) : null,
-);
-const customerName = computed<string>(() => selectedReceipt.value?.customerName ?? '');
-const customerTaxId = computed<string>(() => '0994000249357');
-const customerAddress = computed<string>(
-  () => '169 ถนนลงหาดบางแสน ตำบลแสนสุข อำเภอเมือง จังหวัดชลบุรี 20131',
-);
-const courseCode = computed<string>(() => {
-  if (!selectedReceipt.value) return '';
-  return selectedReceipt.value.courseName.split(':')[0] ?? '';
-});
-const courseTitle = computed<string>(() => {
-  if (!selectedReceipt.value) return '';
-  const parts = selectedReceipt.value.courseName.split(':');
-  return parts.slice(1).join(':').replace(/\n/g, ' ') || selectedReceipt.value.courseName;
-});
-const amount = computed<number>(() => selectedReceipt.value?.amount ?? 0);
-
 const filteredRows = computed<ReceiptUsageItem[]>(() => {
   let rows = mockData;
 
@@ -556,6 +510,8 @@ const filteredRows = computed<ReceiptUsageItem[]>(() => {
   return rows.map((r, idx) => ({ ...r, no: idx + 1 }));
 });
 
+const totalAmount = computed(() => filteredRows.value.reduce((sum, r) => sum + r.amount, 0));
+
 const columns = computed<QTableProps['columns']>(() => [
   {
     name: 'no',
@@ -565,8 +521,15 @@ const columns = computed<QTableProps['columns']>(() => [
     sortable: true,
   },
   {
+    name: 'departmentCode',
+    label: t('centralFinance.receiptUsage.columns.departmentCode'),
+    field: 'departmentCode',
+    align: 'center',
+    sortable: true,
+  },
+  {
     name: 'faculty',
-    label: t('centralFinance.receiptSummary.columns.faculty'),
+    label: t('centralFinance.receiptUsage.columns.departmentName'),
     field: 'faculty',
     align: 'center',
     sortable: true,
@@ -580,12 +543,25 @@ const columns = computed<QTableProps['columns']>(() => [
     sortable: true,
   },
   {
-    name: 'customerName',
-    label: t('finance.receiptSummary.columns.fullName'),
-    field: 'customerName',
+    name: 'cancelDoc',
+    label: t('centralFinance.receiptUsage.columns.cancelDoc'),
+    field: 'status',
     align: 'center',
     sortable: true,
-    style: 'white-space: nowrap;',
+  },
+  {
+    name: 'effectiveDate',
+    label: t('centralFinance.receiptUsage.columns.receiptCompletedDate'),
+    field: 'effectiveDate',
+    align: 'center',
+    sortable: true,
+  },
+  {
+    name: 'fiscalYear',
+    label: t('centralFinance.receiptUsage.columns.fiscalYear'),
+    field: 'fiscalYear',
+    align: 'center',
+    sortable: true,
   },
   {
     name: 'amount',
@@ -595,23 +571,8 @@ const columns = computed<QTableProps['columns']>(() => [
     sortable: true,
   },
   {
-    name: 'effectiveDate',
-    label: t('finance.receiptSummary.columns.effectiveDate'),
-    field: 'effectiveDate',
-    align: 'center',
-    sortable: true,
-  },
-  {
-    name: 'learnerName',
-    label: t('finance.receiptSummary.columns.learnerName'),
-    field: 'learnerName',
-    align: 'center',
-    sortable: true,
-    style: 'white-space: nowrap;',
-  },
-  {
     name: 'courseName',
-    label: t('finance.receiptSummary.columns.courseName'),
+    label: t('centralFinance.receiptUsage.columns.courseName'),
     field: 'courseName',
     align: 'center',
     sortable: true,
@@ -619,25 +580,20 @@ const columns = computed<QTableProps['columns']>(() => [
     headerStyle: 'white-space: pre-wrap; width: 220px',
   },
   {
+    name: 'customerName',
+    label: t('centralFinance.receiptUsage.columns.customerName'),
+    field: 'customerName',
+    align: 'center',
+    sortable: true,
+    style: 'white-space: nowrap;',
+  },
+  {
     name: 'collector',
-    label: t('finance.receiptSummary.columns.collector'),
+    label: t('centralFinance.receiptUsage.columns.cashierName'),
     field: 'collector',
     align: 'center',
     sortable: true,
     headerStyle: 'white-space: pre-wrap;',
-  },
-  {
-    name: 'status',
-    label: t('finance.receiptSummary.columns.status'),
-    field: 'status',
-    align: 'center',
-    sortable: true,
-  },
-  {
-    name: 'printReceipt',
-    label: t('finance.receiptSummary.columns.actions'),
-    field: 'printReceipt',
-    align: 'center',
   },
 ]);
 
@@ -659,67 +615,6 @@ function clearFilters(): void {
     status: '',
   };
   hasSearched.value = false;
-}
-
-function parseThaiDate(dateStr: string): Date | null {
-  if (!dateStr) return null;
-  try {
-    const cleanStr = dateStr.replace('\n', ' ').trim();
-    const parts = cleanStr.split(' ');
-    if (parts.length < 3) return null;
-    const day = parseInt(parts[0] ?? '0', 10);
-    const monthThai = parts[1] ?? '';
-    const yearThai = parseInt(parts[2] ?? '0', 10);
-    const months = [
-      'ม.ค.',
-      'ก.พ.',
-      'มี.ค.',
-      'เม.ย.',
-      'พ.ค.',
-      'มิ.ย.',
-      'ก.ค.',
-      'ส.ค.',
-      'ก.ย.',
-      'ต.ค.',
-      'พ.ย.',
-      'ธ.ค.',
-    ];
-    const monthIndex = months.indexOf(monthThai);
-    if (monthIndex === -1) return null;
-    const year = yearThai - 543;
-    let hour = 0,
-      minute = 0,
-      second = 0;
-    if (parts[3]) {
-      const timeParts = parts[3].split(':');
-      hour = parseInt(timeParts[0] ?? '0', 10);
-      minute = parseInt(timeParts[1] ?? '0', 10);
-      second = parseInt(timeParts[2] ?? '0', 10);
-    }
-    return new Date(year, monthIndex, day, hour, minute, second);
-  } catch {
-    return null;
-  }
-}
-
-async function downloadReceipt(row: ReceiptUsageItem): Promise<void> {
-  try {
-    const { getReceiptFile } = usePaymentImportApi();
-    const resp = await getReceiptFile(row.id);
-    const file = resp.realReceipt ?? resp.copyReceipt ?? null;
-    selectedReceipt.value = {
-      ...row,
-      receiptFilename: file?.filename ?? row.receiptNo ?? '',
-      receiptType: (file?.receiptType as 'R' | 'D') ?? 'R',
-    };
-    await nextTick();
-    receiptDialogRef.value?.downloadReceiptPdf();
-  } catch (err) {
-    console.error(err);
-    selectedReceipt.value = row;
-    await nextTick();
-    receiptDialogRef.value?.downloadReceiptPdf();
-  }
 }
 
 async function loadSarabunFont(): Promise<string> {
@@ -756,7 +651,6 @@ async function exportToPdf(): Promise<void> {
     row.customerName,
     row.amount,
     row.effectiveDate,
-    row.learnerName,
     row.courseName,
     row.collector,
     row.status === 'ยกเลิก' ? `ยกเลิก\n${row.cancelBy ?? ''}\n${row.cancelDate ?? ''}` : 'ใช้งาน',
@@ -848,7 +742,6 @@ function exportToExcel(): void {
     row.customerName,
     row.amount,
     row.effectiveDate.replace('\n', ' '),
-    row.learnerName,
     row.courseName.replace(/\n/g, ' '),
     row.collector.replace('\n', ' '),
     row.status === 'ยกเลิก'
@@ -889,6 +782,15 @@ function generateMockData(): ReceiptUsageItem[] {
     'คณะบริหารธุรกิจ',
     'คณะวิศวกรรมศาสตร์',
   ];
+
+  const departmentCodeByFaculty: Record<string, number> = {
+    สำนักคอมพิวเตอร์: 51,
+    คณะวิทยาการสารสนเทศ: 52,
+    คณะวิทยาศาสตร์: 53,
+    คณะพยาบาลศาสตร์: 54,
+    คณะบริหารธุรกิจ: 55,
+    คณะวิศวกรรมศาสตร์: 56,
+  };
 
   const coursesByFaculty: Record<string, string> = {
     สำนักคอมพิวเตอร์: 'C67052002:การพัฒนาเว็บแอปพลิเคชัน\nสำนักคอมพิวเตอร์',
@@ -932,12 +834,13 @@ function generateMockData(): ReceiptUsageItem[] {
       data.push({
         id,
         no: id,
+        departmentCode: departmentCodeByFaculty[faculty] ?? 0,
         faculty,
         receiptNo: '256706' + String(id).padStart(6, '0'),
         customerName: name,
         amount: [1500, 2000, 2500, 3000, 3500, 4000][i % 6] ?? 1500,
         effectiveDate: `${(i % 28) + 1} ${months[Math.floor(i / 5) % 6] ?? 'ม.ค.'} 2566\n${10 + (i % 12)}:${String(20 + (i % 40)).padStart(2, '0')}:00`,
-        learnerName: name,
+        fiscalYear: '2566',
         courseName: coursesByFaculty[faculty] ?? '',
         collector: collectorsByFaculty[faculty] ?? '',
         status: isCancelled ? 'ยกเลิก' : 'ใช้งาน',

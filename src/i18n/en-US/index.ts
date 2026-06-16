@@ -1397,6 +1397,17 @@ export default {
         searchBtn: 'Search',
         clearBtn: 'Clear',
       },
+      columns: {
+        departmentCode: 'Dept.\nCode',
+        departmentName: 'Department Name',
+        cancelDoc: 'Document\nCancelled',
+        receiptCompletedDate: 'Receipt\nCompletion Date',
+        fiscalYear: 'Fiscal Year',
+        courseName: 'Course / Program Name',
+        customerName: 'Customer Name',
+        cashierName: 'Cashier Name',
+        total: 'Total',
+      },
     },
     receiptSummary: {
       hero: {
