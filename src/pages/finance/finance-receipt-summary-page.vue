@@ -478,7 +478,6 @@ async function fetchData() {
     const params = Object.fromEntries(
       Object.entries(filters.value).filter(([, value]) => value.trim() !== ''),
     );
-    Object.assign(params, { allFaculties: true });
     const { data } = await api.get<ReceiptSummaryResponse>(
       '/api/lltenrollreceipt/receipt-summary',
       { params },

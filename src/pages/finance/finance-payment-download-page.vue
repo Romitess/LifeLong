@@ -51,9 +51,15 @@
             @update:model-value="fetchData"
           />
 
-          <q-space />
-
-          <q-btn flat dense round icon="refresh" color="grey-7" @click="clearFilters">
+          <q-btn
+            flat
+            dense
+            round
+            icon="filter_alt_off"
+            color="negative"
+            @click="clearFilters"
+            class="q-ml-sm"
+          >
             <q-tooltip>ล้างตัวกรอง</q-tooltip>
           </q-btn>
         </div>
@@ -64,50 +70,22 @@
         >
           <span class="admin-filter-bar__sub-label q-mr-sm">กำหนดช่วงเวลาเอง</span>
           <q-input
-            v-model="filters.dateFrom"
-            @update:model-value="onCustomDateChange"
-            debounce="500"
+            v-model="dateRangeDisplay"
+            readonly
             borderless
             dense
-            placeholder="จาก (วว/ดด/ปปปป)"
-            mask="##/##/####"
-            class="admin-filter-bar__input"
+            placeholder="เลือกช่วงเวลา"
+            class="admin-filter-bar__input admin-filter-bar__input--range"
           >
             <template #append>
               <q-icon name="event" class="cursor-pointer" color="primary">
                 <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <q-date
-                    v-model="filters.dateFrom"
-                    @update:model-value="onCustomDateChange"
-                    mask="DD/MM/YYYY"
-                    color="primary"
-                  />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
-
-          <span class="q-mx-sm text-grey-6">-</span>
-
-          <q-input
-            v-model="filters.dateTo"
-            @update:model-value="onCustomDateChange"
-            debounce="500"
-            borderless
-            dense
-            placeholder="ถึง (วว/ดด/ปปปป)"
-            mask="##/##/####"
-            class="admin-filter-bar__input"
-          >
-            <template #append>
-              <q-icon name="event" class="cursor-pointer" color="primary">
-                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <q-date
-                    v-model="filters.dateTo"
-                    @update:model-value="onCustomDateChange"
-                    mask="DD/MM/YYYY"
-                    color="primary"
-                  />
+                  <q-date v-model="dateRangeModel" range mask="DD/MM/YYYY" color="primary">
+                    <div class="row items-center justify-end q-gutter-sm">
+                      <q-btn label="ยกเลิก" color="primary" flat v-close-popup />
+                      <q-btn label="ตกลง" color="primary" flat v-close-popup />
+                    </div>
+                  </q-date>
                 </q-popup-proxy>
               </q-icon>
             </template>
@@ -359,8 +337,8 @@ function todayFormatted(): string {
 }
 
 const filters = ref({
-  dateFrom: todayFormatted(),
-  dateTo: todayFormatted(),
+  dateFrom: '',
+  dateTo: '',
   receiptStatus: 'All',
 });
 
@@ -370,15 +348,52 @@ const receiptStatusOptions = [
   { label: 'ยังไม่ได้ออกใบเสร็จ (Not Issued)', value: 'NotIssued' },
 ];
 
-const datePreset = ref('today');
-const datePresetOptions = [
-  { label: 'วันนี้', value: 'today' },
-  { label: 'สัปดาห์นี้', value: 'thisWeek' },
-  { label: 'เดือนนี้', value: 'thisMonth' },
-  { label: 'ปีนี้', value: 'thisYear' },
-  { label: 'ทั้งหมด', value: 'all' },
-  { label: 'กำหนดเอง', value: 'custom' },
-];
+const datePreset = ref('allTime');
+const datePresetOptions = computed(() => [
+  { label: t('finance.filters.today'), value: 'today' },
+  { label: t('finance.filters.thisWeek'), value: 'thisWeek' },
+  { label: t('finance.filters.thisMonth'), value: 'thisMonth' },
+  { label: t('finance.filters.thisYear'), value: 'thisYear' },
+  { label: t('finance.filters.allTime'), value: 'allTime' },
+  { label: t('finance.filters.custom'), value: 'custom' },
+]);
+
+const dateRangeModel = computed({
+  get() {
+    if (
+      filters.value.dateFrom &&
+      filters.value.dateTo &&
+      filters.value.dateFrom !== filters.value.dateTo
+    ) {
+      return { from: filters.value.dateFrom, to: filters.value.dateTo };
+    }
+    return filters.value.dateFrom || null;
+  },
+  set(val: { from: string; to: string } | string | null) {
+    if (val !== null && typeof val === 'object' && 'from' in val && 'to' in val) {
+      filters.value.dateFrom = val.from;
+      filters.value.dateTo = val.to;
+    } else if (typeof val === 'string') {
+      filters.value.dateFrom = val;
+      filters.value.dateTo = val;
+    } else {
+      filters.value.dateFrom = '';
+      filters.value.dateTo = '';
+    }
+    onCustomDateChange();
+  },
+});
+
+const dateRangeDisplay = computed(() => {
+  if (
+    filters.value.dateFrom &&
+    filters.value.dateTo &&
+    filters.value.dateFrom !== filters.value.dateTo
+  ) {
+    return `${filters.value.dateFrom} - ${filters.value.dateTo}`;
+  }
+  return filters.value.dateFrom || '';
+});
 
 function applyDatePreset(preset: string) {
   datePreset.value = preset;
@@ -400,7 +415,7 @@ function applyDatePreset(preset: string) {
     const startOfYear = new Date(now.getFullYear(), 0, 1);
     filters.value.dateFrom = formatDateInput(startOfYear);
     filters.value.dateTo = formatDateInput(new Date());
-  } else if (preset === 'all') {
+  } else if (preset === 'allTime') {
     filters.value.dateFrom = '';
     filters.value.dateTo = '';
   }
@@ -532,10 +547,10 @@ function mapItem(item: PaymentNotificationApiItem, index: number): PaymentNotifi
 }
 
 function clearFilters() {
-  filters.value.dateFrom = todayFormatted();
-  filters.value.dateTo = todayFormatted();
+  filters.value.dateFrom = '';
+  filters.value.dateTo = '';
   filters.value.receiptStatus = 'All';
-  datePreset.value = 'today';
+  datePreset.value = 'allTime';
   void fetchData();
 }
 
@@ -545,7 +560,7 @@ async function fetchData() {
     const params: Record<string, string | number | boolean> = {
       page: 1,
       pageSize: 500,
-      notifyOnly: true,
+      status: 'Paid',
     };
 
     if (filters.value.dateFrom.trim()) {
@@ -559,7 +574,11 @@ async function fetchData() {
     }
 
     const { data } = await api.get<PaymentNotificationApiResponse>('/api/lltenroll', { params });
-    tableData.value = data.items.map(mapItem);
+    const mapped = data.items.map(mapItem);
+    tableData.value = mapped.filter((item) => item.amount > 0);
+    tableData.value.forEach((item, index) => {
+      item.no = index + 1;
+    });
     pagination.value.page = 1;
   } catch (error: unknown) {
     console.error('Failed to load payment notifications', error);
@@ -753,19 +772,26 @@ onUnmounted(() => {
   flex: 0 0 auto;
 }
 
+.admin-filter-bar__input {
+  width: 140px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+}
+.admin-filter-bar__input--range {
+  width: 220px;
+}
+.admin-filter-bar__input:focus-within {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
+}
+
 .admin-filter-bar__select {
   width: 220px;
   :deep(.q-field__control) {
     border-radius: 8px !important;
-  }
-}
-
-.admin-filter-bar__input {
-  width: 180px;
-  :deep(.q-field__control) {
-    border-radius: 8px !important;
-    padding: 0 12px;
-    background: #f1f5f9 !important;
   }
 }
 
