@@ -565,11 +565,13 @@ async function onSearch(): Promise<void> {
   await fetchData();
 }
 
-function clearFilters(): void {
+async function clearFilters(): Promise<void> {
   clearComposableFilters();
-  hasSearched.value = false;
   search.value = '';
   pagination.value.page = 1;
+  if (hasSearched.value) {
+    await fetchData();
+  }
 }
 
 async function loadSarabunFont(): Promise<string> {
