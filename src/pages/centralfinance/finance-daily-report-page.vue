@@ -20,7 +20,7 @@
           <div class="col-12 col-md-8 offset-md-2">
             <!-- วันที่ใบเสร็จรับเงิน -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.dailyReport.filters.receiptDate') }}
                 <span class="text-negative">*</span>
               </div>
@@ -51,7 +51,7 @@
 
             <!-- ถึงวันที่ -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.dailyReport.filters.toDate') }}
                 <span class="text-negative">*</span>
               </div>
@@ -82,7 +82,7 @@
 
             <!-- ส่วนงาน -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.dailyReport.filters.department') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -101,7 +101,7 @@
 
             <!-- ชื่อโครงการ/อบรม/หลักสูตร -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.dailyReport.filters.courseName') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -116,8 +116,8 @@
             </div>
 
             <div class="row items-center">
-              <div class="col-12 col-sm-4 text-right q-pr-md"></div>
-              <div class="col-12 col-sm-8 q-gutter-sm">
+              <div class="col-sm-4 gt-xs"></div>
+              <div class="col-12 col-sm-8 filter-section__actions">
                 <q-btn
                   color="warning"
                   text-color="black"
@@ -141,21 +141,22 @@
 
       <CentralFinanceSurfaceCard v-if="hasSearched" class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
-          <q-btn
-            outline
-            color="negative"
-            icon="picture_as_pdf"
-            :label="$t('centralFinance.dailyReport.table.pdfBtn')"
-            class="q-mr-sm"
-            @click="exportToPdf"
-          />
-          <q-btn
-            outline
-            color="positive"
-            icon="table_chart"
-            :label="$t('centralFinance.dailyReport.table.excelBtn')"
-            @click="exportToExcel"
-          />
+          <div class="table-export-actions">
+            <q-btn
+              outline
+              color="negative"
+              icon="picture_as_pdf"
+              :label="$t('centralFinance.dailyReport.table.pdfBtn')"
+              @click="exportToPdf"
+            />
+            <q-btn
+              outline
+              color="positive"
+              icon="table_chart"
+              :label="$t('centralFinance.dailyReport.table.excelBtn')"
+              @click="exportToExcel"
+            />
+          </div>
         </template>
 
         <div class="text-center q-pt-lg q-pb-sm">
@@ -176,7 +177,7 @@
           </div>
         </div>
 
-        <div class="row justify-end items-center q-px-md q-pb-md">
+        <div class="row justify-end items-center q-px-md q-pb-md report-search-bar">
           <q-input
             v-model="search"
             dense
@@ -190,94 +191,99 @@
           </q-input>
         </div>
 
-        <q-table
-          :rows="tableRows"
-          :columns="columns"
-          row-key="id"
-          flat
-          dense
-          :filter="search"
-          class="report-table"
-          v-model:pagination="pagination"
-          :rows-per-page-options="[10, 25, 50, 100]"
-          :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
-        >
-          <template v-slot:body-cell-amount="props">
-            <q-td :props="props" class="text-right">
-              {{ formatCurrency(props.value) }}
-            </q-td>
-          </template>
+        <div class="report-table-wrapper">
+          <q-table
+            :rows="tableRows"
+            :columns="columns"
+            row-key="id"
+            flat
+            dense
+            :filter="search"
+            class="report-table"
+            v-model:pagination="pagination"
+            :rows-per-page-options="[10, 25, 50, 100]"
+            :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
+          >
+            <template v-slot:body-cell-amount="props">
+              <q-td :props="props" class="text-right">
+                {{ formatCurrency(props.value) }}
+              </q-td>
+            </template>
 
-          <template v-slot:bottom="scope">
-            <div class="row full-width justify-between items-center q-py-sm">
-              <div class="row items-center q-gutter-sm">
-                <span class="text-subtitle2 text-grey-8">
-                  {{ $t('centralFinance.dailyReport.table.showLabel') }}
-                </span>
-                <q-select
-                  v-model="pagination.rowsPerPage"
-                  :options="[10, 25, 50, 100]"
-                  outlined
-                  dense
-                  options-dense
-                  style="width: 80px"
-                  class="bg-white report-rows-select"
-                />
-                <span class="text-subtitle2 text-grey-8">
-                  {{ $t('centralFinance.dailyReport.table.entriesLabel') }}
-                </span>
+            <template v-slot:bottom="scope">
+              <div class="report-pagination q-py-sm">
+                <div class="row items-center q-gutter-sm">
+                  <span class="text-subtitle2 text-grey-8">
+                    {{ $t('centralFinance.dailyReport.table.showLabel') }}
+                  </span>
+                  <q-select
+                    v-model="pagination.rowsPerPage"
+                    :options="[10, 25, 50, 100]"
+                    outlined
+                    dense
+                    options-dense
+                    style="width: 80px"
+                    class="bg-white report-rows-select"
+                  />
+                  <span class="text-subtitle2 text-grey-8">
+                    {{ $t('centralFinance.dailyReport.table.entriesLabel') }}
+                  </span>
+                </div>
+                <div class="row items-center q-gutter-sm">
+                  <span class="text-caption text-grey-8 q-mr-sm">
+                    {{
+                      tableRows.length > 0
+                        ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
+                        : 0
+                    }}-{{
+                      Math.min(
+                        scope.pagination.page * scope.pagination.rowsPerPage,
+                        tableRows.length,
+                      )
+                    }}
+                    of {{ tableRows.length }}
+                  </span>
+                  <q-btn
+                    icon="first_page"
+                    color="grey-8"
+                    round
+                    dense
+                    flat
+                    :disable="scope.isFirstPage"
+                    @click="scope.firstPage"
+                  />
+                  <q-btn
+                    icon="chevron_left"
+                    color="grey-8"
+                    round
+                    dense
+                    flat
+                    :disable="scope.isFirstPage"
+                    @click="scope.prevPage"
+                  />
+                  <q-btn
+                    icon="chevron_right"
+                    color="grey-8"
+                    round
+                    dense
+                    flat
+                    :disable="scope.isLastPage"
+                    @click="scope.nextPage"
+                  />
+                  <q-btn
+                    icon="last_page"
+                    color="grey-8"
+                    round
+                    dense
+                    flat
+                    :disable="scope.isLastPage"
+                    @click="scope.lastPage"
+                  />
+                </div>
               </div>
-              <div class="row items-center q-gutter-sm">
-                <span class="text-caption text-grey-8 q-mr-sm">
-                  {{
-                    tableRows.length > 0
-                      ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
-                      : 0
-                  }}-{{
-                    Math.min(scope.pagination.page * scope.pagination.rowsPerPage, tableRows.length)
-                  }}
-                  of {{ tableRows.length }}
-                </span>
-                <q-btn
-                  icon="first_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.firstPage"
-                />
-                <q-btn
-                  icon="chevron_left"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.prevPage"
-                />
-                <q-btn
-                  icon="chevron_right"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.nextPage"
-                />
-                <q-btn
-                  icon="last_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.lastPage"
-                />
-              </div>
-            </div>
-          </template>
-        </q-table>
+            </template>
+          </q-table>
+        </div>
       </CentralFinanceSurfaceCard>
     </section>
   </q-page>
@@ -620,41 +626,6 @@ function exportToExcel(): void {
 </script>
 
 <style lang="scss" scoped>
-.report-search {
-  width: 250px;
-}
-
-.report-table {
-  background: transparent;
-
-  :deep(.q-table__card) {
-    box-shadow: none;
-  }
-  :deep(thead tr) {
-    background: #e2e8f0;
-  }
-  :deep(th) {
-    font-weight: 600;
-    color: #334155;
-    font-size: 0.75rem;
-    white-space: pre-wrap;
-    text-align: center !important;
-    vertical-align: middle;
-    line-height: 1.3;
-    padding: 8px 6px;
-  }
-  :deep(tbody td) {
-    vertical-align: middle;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    white-space: pre-wrap;
-  }
-}
-
-:deep(.q-field__label) {
-  font-weight: 400 !important;
-}
-
 .faculty-scope-card {
   min-width: 260px;
   padding: 16px 18px;
@@ -664,6 +635,12 @@ function exportToExcel(): void {
   backdrop-filter: blur(10px);
   display: grid;
   gap: 6px;
+
+  @media (max-width: 599px) {
+    min-width: 0;
+    width: 100%;
+    padding: 12px 14px;
+  }
 }
 
 .faculty-scope-card__label {
@@ -678,5 +655,104 @@ function exportToExcel(): void {
   color: #fff;
   font-size: 1.05rem;
   font-weight: 900;
+}
+
+.filter-label {
+  @media (min-width: 600px) {
+    text-align: right;
+    padding-right: 16px;
+  }
+
+  @media (max-width: 599px) {
+    margin-bottom: 4px;
+  }
+}
+
+.filter-section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  @media (max-width: 599px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.table-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.report-search-bar {
+  @media (max-width: 599px) {
+    justify-content: stretch;
+    width: 100%;
+  }
+}
+
+.report-search {
+  width: 250px;
+
+  @media (max-width: 599px) {
+    width: 100%;
+  }
+}
+
+.report-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  .report-table {
+    min-width: 600px;
+  }
+}
+
+.report-table {
+  background: transparent;
+
+  :deep(.q-table__card) {
+    box-shadow: none;
+  }
+
+  :deep(thead tr) {
+    background: #e2e8f0;
+  }
+
+  :deep(th) {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.75rem;
+    white-space: pre-wrap;
+    text-align: center !important;
+    vertical-align: middle;
+    line-height: 1.3;
+    padding: 8px 6px;
+  }
+
+  :deep(tbody td) {
+    vertical-align: middle;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    white-space: pre-wrap;
+  }
+}
+
+.report-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+
+  @media (max-width: 599px) {
+    justify-content: center;
+  }
+}
+
+:deep(.q-field__label) {
+  font-weight: 400 !important;
 }
 </style>
