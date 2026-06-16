@@ -36,80 +36,6 @@
               <template #prepend>
                 <q-icon name="search" color="grey-5" />
               </template>
-              <template #append>
-                <q-separator vertical class="q-mx-sm" />
-                <q-btn flat round color="grey-7" icon="filter_list">
-                  <q-menu
-                    padding
-                    class="applicant-filter-menu shadow-10"
-                    style="border-radius: 16px"
-                  >
-                    <div class="q-pa-md" style="min-width: 260px">
-                      <div class="text-subtitle1 text-weight-bold q-mb-md">
-                        {{ $t('additionalFilters') }}
-                      </div>
-
-                      <div class="filter-group q-mb-md">
-                        <div class="text-caption text-grey-7 q-mb-xs">
-                          {{ $t('finance.applicantSearch.columns.status') }}
-                        </div>
-                        <div class="row q-gutter-xs">
-                          <q-btn
-                            unelevated
-                            dense
-                            no-caps
-                            :color="searchForm.status === 'Paid' ? 'positive' : 'grey-2'"
-                            :text-color="searchForm.status === 'Paid' ? 'white' : 'dark'"
-                            :label="$t('finance.applicantSearch.status.paid')"
-                            class="q-px-md text-caption"
-                            @click="
-                              searchForm.status = searchForm.status === 'Paid' ? null : 'Paid';
-                              void handleSearch();
-                            "
-                          />
-                          <q-btn
-                            unelevated
-                            dense
-                            no-caps
-                            :color="searchForm.status === 'Pending' ? 'warning' : 'grey-2'"
-                            :text-color="searchForm.status === 'Pending' ? 'white' : 'dark'"
-                            :label="$t('finance.applicantSearch.status.pending')"
-                            class="q-px-md text-caption"
-                            @click="
-                              searchForm.status =
-                                searchForm.status === 'Pending' ? null : 'Pending';
-                              void handleSearch();
-                            "
-                          />
-                        </div>
-                      </div>
-
-                      <q-separator class="q-my-sm" />
-                      <div class="row q-gutter-sm">
-                        <q-btn
-                          unelevated
-                          :label="$t('clear')"
-                          color="grey-2"
-                          text-color="dark"
-                          dense
-                          no-caps
-                          class="col q-px-md rounded-borders"
-                          @click="resetSearch"
-                        />
-                        <q-btn
-                          unelevated
-                          :label="$t('ok')"
-                          color="primary"
-                          dense
-                          no-caps
-                          class="col q-px-md rounded-borders"
-                          v-close-popup
-                        />
-                      </div>
-                    </div>
-                  </q-menu>
-                </q-btn>
-              </template>
             </q-input>
           </div>
         </div>
@@ -313,14 +239,7 @@ const pagination = ref<TablePagination>({
 
 const searchForm = ref({
   keyword: '',
-  status: null as 'Paid' | 'Pending' | null,
 });
-
-function resetSearch() {
-  searchForm.value.status = null;
-  pagination.value.page = 1;
-  void handleSearch();
-}
 
 const columns = computed<QTableProps['columns']>(() => [
   {
@@ -421,6 +340,7 @@ async function handleSearch() {
     const params: Record<string, string | number> = {
       page: 1,
       pageSize: 500,
+      status: 'Paid',
     };
     const keyword = searchForm.value.keyword.trim();
 
@@ -428,14 +348,10 @@ async function handleSearch() {
       params.keyword = keyword;
     }
 
-    if (searchForm.value.status) {
-      params.status = searchForm.value.status;
-    }
-
     const { data } = await api.get<ApplicantSearchApiResponse>('/api/lltenroll', { params });
 
     if (searchId === latestSearchId) {
-      results.value = data.items.map(normalizeResult);
+      results.value = data.items.map(normalizeResult).filter((item) => item.amount > 0);
     }
   } catch (error) {
     console.error('Failed to load applicant enrollment data', error);

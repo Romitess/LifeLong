@@ -236,18 +236,21 @@
         </div>
       </q-card-section>
 
-      <q-card-actions align="center" class="q-px-lg q-pb-md q-pt-xs">
-        <q-btn
-          unelevated
-          rounded
+      <div class="qr-dialog-actions q-px-lg q-pb-lg q-pt-sm">
+        <BaseButton
+          outline
+          :label="t('enrollment.cancel')"
+          color="grey-7"
+          no-caps
+          @click="showQrDialog = false"
+        />
+        <BaseButton
           :label="t('enrollment.paymentDone')"
           color="positive"
-          class="full-width"
-          padding="md"
           no-caps
           @click="onPaymentDone"
         />
-      </q-card-actions>
+      </div>
     </q-card>
   </q-dialog>
 
@@ -729,6 +732,23 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.qr-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+
+  :deep(.q-btn) {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  :deep(.q-btn__content) {
+    width: 100%;
+    justify-content: center;
+    white-space: nowrap;
+  }
 }
 
 .modern-header {
