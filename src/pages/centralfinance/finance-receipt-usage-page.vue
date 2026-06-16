@@ -23,7 +23,7 @@
           <div class="col-12 col-md-8 offset-md-2">
             <!-- ปีงบประมาณ -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.receiptUsage.filters.fiscalYear') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -41,7 +41,7 @@
 
             <!-- วันที่ใบเสร็จรับเงิน -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.receiptUsage.filters.receiptDate') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -71,7 +71,7 @@
 
             <!-- ถึงวันที่ -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.receiptUsage.filters.toDate') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -101,7 +101,7 @@
 
             <!-- ส่วนงาน -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.receiptSummary.filters.faculty') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -119,7 +119,7 @@
 
             <!-- ชื่อโครงการ/อบรม/หลักสูตร -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.receiptUsage.filters.courseName') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -135,7 +135,7 @@
 
             <!-- ชื่อผู้ชำระเงิน (Customer Name) -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.receiptUsage.filters.customerName') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -151,7 +151,7 @@
 
             <!-- ผู้รับเงิน (Collector) -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.receiptUsage.filters.collector') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -167,7 +167,7 @@
 
             <!-- เลขที่ใบเสร็จรับเงิน -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.receiptUsage.filters.receiptNo') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -183,7 +183,7 @@
 
             <!-- สถานะ -->
             <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
+              <div class="col-12 col-sm-4 text-weight-medium filter-label">
                 {{ $t('centralFinance.receiptUsage.filters.status') }}
               </div>
               <div class="col-12 col-sm-8">
@@ -200,8 +200,8 @@
             </div>
 
             <div class="row items-center">
-              <div class="col-12 col-sm-4 text-right q-pr-md" />
-              <div class="col-12 col-sm-8 q-gutter-sm">
+              <div class="col-sm-4 gt-xs" />
+              <div class="col-12 col-sm-8 filter-section__actions">
                 <q-btn
                   color="warning"
                   text-color="black"
@@ -228,21 +228,22 @@
       <!-- Table Card -->
       <CentralFinanceSurfaceCard v-if="hasSearched" class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
-          <q-btn
-            outline
-            color="negative"
-            icon="picture_as_pdf"
-            :label="$t('finance.receiptSummary.exportPdf')"
-            class="q-mr-sm"
-            @click="exportToPdf"
-          />
-          <q-btn
-            outline
-            color="positive"
-            icon="table_chart"
-            :label="$t('finance.receiptSummary.exportExcel')"
-            @click="exportToExcel"
-          />
+          <div class="table-export-actions">
+            <q-btn
+              outline
+              color="negative"
+              icon="picture_as_pdf"
+              :label="$t('finance.receiptSummary.exportPdf')"
+              @click="exportToPdf"
+            />
+            <q-btn
+              outline
+              color="positive"
+              icon="table_chart"
+              :label="$t('finance.receiptSummary.exportExcel')"
+              @click="exportToExcel"
+            />
+          </div>
         </template>
 
         <div class="text-center q-pt-lg q-pb-sm">
@@ -254,7 +255,7 @@
           </div>
         </div>
 
-        <div class="row justify-end items-center q-px-md q-pb-md">
+        <div class="row justify-end items-center q-px-md q-pb-md receipt-search-bar">
           <q-input
             v-model="search"
             dense
@@ -268,127 +269,129 @@
           </q-input>
         </div>
 
-        <q-table
-          :rows="filteredRows"
-          :columns="columns"
-          row-key="id"
-          flat
-          dense
-          :filter="search"
-          class="receipt-table"
-          v-model:pagination="pagination"
-          :rows-per-page-options="[10, 25, 50, 100]"
-          :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
-        >
-          <template v-slot:body-cell-cancelDoc="slotProps">
-            <q-td :props="slotProps">
-              <div v-if="slotProps.row.status === 'ยกเลิก'" class="text-negative text-center">
-                {{ $t('finance.receiptSummary.statusCancelled') }}<br />
-                <span class="text-caption text-grey-6">
-                  {{ slotProps.row.cancelBy }}<br />{{ slotProps.row.cancelDate }}
-                </span>
-              </div>
-            </q-td>
-          </template>
+        <div class="receipt-table-wrapper">
+          <q-table
+            :rows="filteredRows"
+            :columns="columns"
+            row-key="id"
+            flat
+            dense
+            :filter="search"
+            class="receipt-table"
+            v-model:pagination="pagination"
+            :rows-per-page-options="[10, 25, 50, 100]"
+            :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
+          >
+            <template v-slot:body-cell-cancelDoc="slotProps">
+              <q-td :props="slotProps">
+                <div v-if="slotProps.row.status === 'ยกเลิก'" class="text-negative text-center">
+                  {{ $t('finance.receiptSummary.statusCancelled') }}<br />
+                  <span class="text-caption text-grey-6">
+                    {{ slotProps.row.cancelBy }}<br />{{ slotProps.row.cancelDate }}
+                  </span>
+                </div>
+              </q-td>
+            </template>
 
-          <template v-slot:body-cell-courseName="slotProps">
-            <q-td :props="slotProps">
-              <div style="white-space: pre-wrap; word-break: break-word">
-                {{ slotProps.value }}
-              </div>
-            </q-td>
-          </template>
+            <template v-slot:body-cell-courseName="slotProps">
+              <q-td :props="slotProps">
+                <div style="white-space: pre-wrap; word-break: break-word">
+                  {{ slotProps.value }}
+                </div>
+              </q-td>
+            </template>
 
-          <template v-slot:bottom-row>
-            <tr class="receipt-total-row">
-              <td colspan="7" class="text-right text-weight-bold q-pr-lg">
-                {{ $t('centralFinance.receiptUsage.columns.total') }}
-              </td>
-              <td class="text-center text-weight-bold">
-                {{
-                  totalAmount.toLocaleString('th-TH', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })
-                }}
-              </td>
-              <td colspan="3"></td>
-            </tr>
-          </template>
-
-          <template v-slot:bottom="scope">
-            <div class="row full-width justify-between items-center q-py-sm">
-              <div class="row items-center q-gutter-sm">
-                <span class="text-subtitle2 text-grey-8">
-                  {{ $t('finance.receiptSummary.showEntries') }}
-                </span>
-                <q-select
-                  v-model="pagination.rowsPerPage"
-                  :options="[10, 25, 50, 100]"
-                  outlined
-                  dense
-                  options-dense
-                  style="width: 80px"
-                  class="bg-white receipt-rows-select"
-                />
-                <span class="text-subtitle2 text-grey-8">
-                  {{ $t('finance.receiptSummary.entries') }}
-                </span>
-              </div>
-              <div class="row items-center q-gutter-sm">
-                <span class="text-caption text-grey-8 q-mr-sm">
+            <template v-slot:bottom-row>
+              <tr class="receipt-total-row">
+                <td colspan="7" class="text-right text-weight-bold q-pr-lg">
+                  {{ $t('centralFinance.receiptUsage.columns.total') }}
+                </td>
+                <td class="text-center text-weight-bold">
                   {{
-                    filteredRows.length > 0
-                      ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
-                      : 0
-                  }}-{{
-                    Math.min(
-                      scope.pagination.page * scope.pagination.rowsPerPage,
-                      filteredRows.length,
-                    )
+                    totalAmount.toLocaleString('th-TH', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
                   }}
-                  of {{ filteredRows.length }}
-                </span>
-                <q-btn
-                  icon="first_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.firstPage"
-                />
-                <q-btn
-                  icon="chevron_left"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.prevPage"
-                />
-                <q-btn
-                  icon="chevron_right"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.nextPage"
-                />
-                <q-btn
-                  icon="last_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.lastPage"
-                />
+                </td>
+                <td colspan="3"></td>
+              </tr>
+            </template>
+
+            <template v-slot:bottom="scope">
+              <div class="receipt-pagination q-py-sm">
+                <div class="row items-center q-gutter-sm">
+                  <span class="text-subtitle2 text-grey-8">
+                    {{ $t('finance.receiptSummary.showEntries') }}
+                  </span>
+                  <q-select
+                    v-model="pagination.rowsPerPage"
+                    :options="[10, 25, 50, 100]"
+                    outlined
+                    dense
+                    options-dense
+                    style="width: 80px"
+                    class="bg-white receipt-rows-select"
+                  />
+                  <span class="text-subtitle2 text-grey-8">
+                    {{ $t('finance.receiptSummary.entries') }}
+                  </span>
+                </div>
+                <div class="row items-center q-gutter-sm">
+                  <span class="text-caption text-grey-8 q-mr-sm">
+                    {{
+                      filteredRows.length > 0
+                        ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
+                        : 0
+                    }}-{{
+                      Math.min(
+                        scope.pagination.page * scope.pagination.rowsPerPage,
+                        filteredRows.length,
+                      )
+                    }}
+                    of {{ filteredRows.length }}
+                  </span>
+                  <q-btn
+                    icon="first_page"
+                    color="grey-8"
+                    round
+                    dense
+                    flat
+                    :disable="scope.isFirstPage"
+                    @click="scope.firstPage"
+                  />
+                  <q-btn
+                    icon="chevron_left"
+                    color="grey-8"
+                    round
+                    dense
+                    flat
+                    :disable="scope.isFirstPage"
+                    @click="scope.prevPage"
+                  />
+                  <q-btn
+                    icon="chevron_right"
+                    color="grey-8"
+                    round
+                    dense
+                    flat
+                    :disable="scope.isLastPage"
+                    @click="scope.nextPage"
+                  />
+                  <q-btn
+                    icon="last_page"
+                    color="grey-8"
+                    round
+                    dense
+                    flat
+                    :disable="scope.isLastPage"
+                    @click="scope.lastPage"
+                  />
+                </div>
               </div>
-            </div>
-          </template>
-        </q-table>
+            </template>
+          </q-table>
+        </div>
       </CentralFinanceSurfaceCard>
     </section>
   </q-page>
@@ -438,12 +441,12 @@ const pagination = ref({
   rowsPerPage: 10,
 });
 
-const currentThaiYear = new Date().getFullYear() + 543;
+const currentYear = new Date().getFullYear();
 
 const fiscalYearOptions = computed(() => [
   { label: '---- เลือก ----', value: '' },
   ...Array.from({ length: 5 }, (_, i) => {
-    const year = currentThaiYear - i;
+    const year = currentYear - i;
     return { label: String(year), value: String(year) };
   }),
 ]);
@@ -732,8 +735,87 @@ function exportToExcel(): void {
 </script>
 
 <style lang="scss" scoped>
+.faculty-scope-card {
+  min-width: 260px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  display: grid;
+  gap: 6px;
+
+  @media (max-width: 599px) {
+    min-width: 0;
+    width: 100%;
+    padding: 12px 14px;
+  }
+}
+
+.faculty-scope-card__label {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.faculty-scope-card__faculty {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.filter-label {
+  @media (min-width: 600px) {
+    text-align: right;
+    padding-right: 16px;
+  }
+
+  @media (max-width: 599px) {
+    margin-bottom: 4px;
+  }
+}
+
+.filter-section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  @media (max-width: 599px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.table-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.receipt-search-bar {
+  @media (max-width: 599px) {
+    justify-content: stretch;
+    width: 100%;
+  }
+}
+
 .receipt-search {
   width: 250px;
+
+  @media (max-width: 599px) {
+    width: 100%;
+  }
+}
+
+.receipt-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  .receipt-table {
+    min-width: 900px;
+  }
 }
 
 .receipt-table {
@@ -764,36 +846,24 @@ function exportToExcel(): void {
   }
 }
 
+.receipt-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+
+  @media (max-width: 599px) {
+    justify-content: center;
+  }
+}
+
 :deep(.q-field__label) {
   font-weight: 400 !important;
 }
 
 :deep(.admin-surface-card:not(.admin-surface-card--glass):hover) {
   transform: none !important;
-}
-
-.faculty-scope-card {
-  min-width: 260px;
-  padding: 16px 18px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  display: grid;
-  gap: 6px;
-}
-
-.faculty-scope-card__label {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.68rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-}
-
-.faculty-scope-card__faculty {
-  color: #fff;
-  font-size: 1.05rem;
-  font-weight: 900;
 }
 </style>
