@@ -10,6 +10,68 @@
 
     <!-- ── Content ───────────────────────────────────────────── -->
     <section class="finance-shell finance-content">
+      <!-- Sticky sentinel -->
+      <div ref="sentinelRef" class="admin-filter-sentinel" />
+
+      <!-- Sticky Filter Bar -->
+      <div class="admin-filter-bar" :class="{ 'admin-filter-bar--stuck': filterStuck }">
+        <div class="admin-filter-bar__row1">
+          <span class="admin-filter-bar__label q-mr-sm">
+            <q-icon name="filter_alt" size="14px" class="q-mr-xs" /> ตัวกรอง
+          </span>
+
+          <button
+            v-for="opt in datePresetOptions"
+            :key="opt.value"
+            class="admin-filter-bar__item"
+            :class="{ 'admin-filter-bar__item--active': datePreset === opt.value }"
+            @click="applyDatePreset(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+
+          <q-btn
+            flat
+            dense
+            round
+            icon="filter_alt_off"
+            color="negative"
+            class="q-ml-sm"
+            @click="clearFilters"
+          >
+            <q-tooltip>ล้างตัวกรอง</q-tooltip>
+          </q-btn>
+        </div>
+
+        <div
+          class="admin-filter-bar__row2"
+          :class="{ 'admin-filter-bar__row2--inactive': datePreset !== 'custom' }"
+        >
+          <span class="admin-filter-bar__sub-label q-mr-sm">กำหนดช่วงเวลาเอง</span>
+          <q-input
+            v-model="dateRangeDisplay"
+            readonly
+            borderless
+            dense
+            placeholder="เลือกช่วงเวลา"
+            class="admin-filter-bar__input admin-filter-bar__input--range"
+          >
+            <template #append>
+              <q-icon name="event" class="cursor-pointer" color="primary">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-date v-model="dateRangeModel" range mask="DD/MM/YYYY" color="primary">
+                    <div class="row items-center justify-end q-gutter-sm">
+                      <q-btn label="ยกเลิก" color="primary" flat v-close-popup />
+                      <q-btn label="ตกลง" color="primary" flat v-close-popup />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+        </div>
+      </div>
+
       <!-- ── Row 1: KPI Metric Cards ─────────────────────────── -->
       <div class="finance-stat-grid">
         <CentralFinanceMetricCard
@@ -30,83 +92,48 @@
         </CentralFinanceMetricCard>
       </div>
 
-      <!-- ── Row 2: Revenue Chart + Request Pipeline ─────────── -->
+      <!-- ── Row 2: Trend Charts + Fund Pipeline ───────────────── -->
       <div class="finance-main-grid">
-        <!-- Revenue Chart -->
+        <!-- Operations Trend Charts -->
         <CentralFinanceSurfaceCard
-          :eyebrow="$t('centralFinance.dashboard.revenueChart.eyebrow')"
-          :title="$t('centralFinance.dashboard.revenueChart.title')"
-          card-class="finance-panel"
+          eyebrow="Operations Overview"
+          title="ภาพรวมการดำเนินงาน"
+          :subtitle="dateRangeDisplay || 'ทั้งหมด'"
+          card-class="finance-panel finance-panel--chart"
         >
-          <template #header-actions>
-            <q-btn-toggle
-              v-model="chartPeriod"
-              no-caps
-              rounded
-              unelevated
-              toggle-color="primary"
-              color="white"
-              text-color="grey-7"
-              :options="[
-                { label: `7 ${$t('day')}`, value: '7d' },
-                { label: `30 ${$t('day')}`, value: '30d' },
-              ]"
-              class="finance-period-toggle"
+          <div class="chart-block q-mb-xl">
+            <div class="chart-block__header">
+              <span class="chart-block__title">รายรับรวมทุกคณะ/ส่วนงาน (บาท)</span>
+            </div>
+            <AdminAreaChart
+              :series="revenueChartSeries"
+              :x-labels="trendChartLabels"
+              :height="220"
+              :format-y-tick="formatRevenueTick"
+              aria-label="รายรับรวมทุกคณะ"
             />
-          </template>
+          </div>
 
-          <div class="finance-chart-area">
-            <div class="finance-chart-summary">
-              <div class="finance-chart-summary__item">
-                <span class="finance-chart-summary__label">
-                  {{ $t('centralFinance.dashboard.revenueChart.today') }}
-                </span>
-                <strong class="finance-chart-summary__value text-positive">
-                  {{ todayRevenue }}
-                </strong>
-              </div>
-              <div class="finance-chart-summary__divider" />
-              <div class="finance-chart-summary__item">
-                <span class="finance-chart-summary__label">
-                  {{ $t('centralFinance.dashboard.revenueChart.yesterday') }}
-                </span>
-                <strong class="finance-chart-summary__value">{{ yesterdayRevenue }}</strong>
-              </div>
-              <div class="finance-chart-summary__divider" />
-              <div class="finance-chart-summary__item">
-                <span class="finance-chart-summary__label">
-                  {{ $t('centralFinance.dashboard.revenueChart.change') }}
-                </span>
-                <strong class="finance-chart-summary__value" :class="changeClass">
-                  {{ revenueChange }}
-                </strong>
-              </div>
+          <div class="chart-block">
+            <div class="chart-block__header">
+              <span class="chart-block__title">คำขอแหล่งเงินทุน (รายการ)</span>
             </div>
-
-            <div class="finance-bar-chart">
-              <div v-for="(bar, i) in chartBars" :key="i" class="finance-bar-chart__col">
-                <div class="finance-bar-chart__bar-wrap">
-                  <div
-                    class="finance-bar-chart__bar"
-                    :class="{ 'finance-bar-chart__bar--today': bar.isToday }"
-                    :style="{ height: `${bar.percent}%` }"
-                  >
-                    <q-tooltip>{{ bar.label }}<br />{{ bar.amountLabel }}</q-tooltip>
-                  </div>
-                </div>
-                <span class="finance-bar-chart__day">{{ bar.day }}</span>
-              </div>
-            </div>
+            <AdminAreaChart
+              :series="fundRequestsChartSeries"
+              :x-labels="trendChartLabels"
+              :height="200"
+              :format-y-tick="formatCountTick"
+              aria-label="คำขอแหล่งเงินทุน"
+            />
           </div>
         </CentralFinanceSurfaceCard>
 
-        <!-- Request Pipeline -->
+        <!-- Fund Request Pipeline -->
         <CentralFinanceSurfaceCard
           eyebrow="Fund Requests"
           :title="$t('centralFinance.dashboard.fundSourceStatus.title')"
           card-class="finance-panel"
         >
-          <!-- Completion Rate Header -->
           <div class="pipeline-summary">
             <div class="pipeline-summary__rate">
               <span class="pipeline-summary__percent">{{ completionRate }}%</span>
@@ -118,7 +145,6 @@
             </div>
           </div>
 
-          <!-- Progress Bars per Status -->
           <div class="pipeline-bars">
             <div v-for="item in fundSourceStatus" :key="item.label" class="pipeline-bar-row">
               <div class="pipeline-bar-row__meta">
@@ -139,18 +165,67 @@
           </div>
 
           <q-separator class="q-my-md" />
+
+          <q-btn
+            flat
+            no-caps
+            color="primary"
+            icon-right="arrow_forward"
+            label="จัดการคำขอทั้งหมด"
+            class="full-width pipeline-goto-btn"
+            tag="a"
+            :href="resolveFullUrl('/central-finance/fund-sources')"
+            @click="onManageAllRequestsClick"
+          />
         </CentralFinanceSurfaceCard>
       </div>
 
-      <!-- ── Row 3: Activity Feed + Pending Requests ──────────── -->
+      <!-- ── Row 3: Faculty Breakdown + Recent Activity ─────────── -->
       <div class="finance-bottom-grid">
-        <!-- Activity Feed -->
+        <!-- Faculty Revenue Breakdown -->
+        <CentralFinanceSurfaceCard
+          eyebrow="By Faculty"
+          title="ยอดรายรับตามคณะ/ส่วนงาน"
+          card-class="finance-panel"
+        >
+          <div v-if="topFaculties.length === 0" class="breakdown-empty">
+            <q-icon name="bar_chart" size="42px" color="grey-4" />
+            <p>ไม่มีข้อมูลรายรับ</p>
+          </div>
+          <div v-else class="faculty-breakdown-list">
+            <div
+              v-for="(item, i) in topFaculties"
+              :key="item.faculty"
+              class="faculty-breakdown-item"
+            >
+              <div class="faculty-breakdown-item__rank">#{{ i + 1 }}</div>
+              <div class="faculty-breakdown-item__info">
+                <div class="faculty-breakdown-item__name">{{ item.faculty }}</div>
+                <div class="faculty-breakdown-item__track">
+                  <div
+                    class="faculty-breakdown-item__fill"
+                    :style="{ width: `${item.percent}%` }"
+                  />
+                </div>
+              </div>
+              <div class="faculty-breakdown-item__amount">
+                {{ formatCurrency(item.totalAmount) }}
+              </div>
+            </div>
+          </div>
+        </CentralFinanceSurfaceCard>
+
+        <!-- Recent Activity Feed -->
         <CentralFinanceSurfaceCard
           :eyebrow="$t('centralFinance.dashboard.activities.eyebrow')"
           :title="$t('centralFinance.dashboard.activities.title')"
           card-class="finance-panel"
         >
-          <q-timeline color="primary" layout="dense" class="finance-timeline">
+          <div v-if="recentActivities.length === 0" class="breakdown-empty">
+            <q-icon name="history" size="42px" color="grey-4" />
+            <p>ไม่มีกิจกรรมล่าสุด</p>
+          </div>
+          <q-timeline v-else color="primary" layout="dense" class="finance-timeline">
             <q-timeline-entry
               v-for="activity in recentActivities"
               :key="activity.title + activity.time"
@@ -163,95 +238,203 @@
             </q-timeline-entry>
           </q-timeline>
         </CentralFinanceSurfaceCard>
-
-        <!-- Pending Requests -->
-        <CentralFinanceSurfaceCard
-          eyebrow="Action Required"
-          title="รายการรอดำเนินการ"
-          card-class="finance-panel"
-        >
-          <template #header-actions>
-            <q-badge
-              v-if="pendingRequests.length > 0"
-              rounded
-              color="warning"
-              :label="pendingRequests.length"
-              class="text-weight-bold"
-            />
-          </template>
-
-          <div v-if="pendingRequests.length === 0" class="pending-empty">
-            <q-icon name="check_circle_outline" size="42px" color="positive" />
-            <p>ไม่มีรายการรอดำเนินการ</p>
-          </div>
-
-          <div v-else class="pending-list">
-            <a
-              v-for="req in pendingRequests"
-              :key="req.id"
-              class="pending-item"
-              :href="resolveFullUrl('/central-finance/fund-sources')"
-              @click="onManageAllRequestsClick"
-            >
-              <div class="pending-item__left">
-                <div
-                  class="pending-item__status-dot"
-                  :class="`pending-item__status-dot--${req.status}`"
-                />
-                <div class="pending-item__info">
-                  <div class="pending-item__id">{{ req.requestId }}</div>
-                  <div class="pending-item__faculty">{{ req.faculty }}</div>
-                  <div class="pending-item__project">{{ req.project }}</div>
-                </div>
-              </div>
-              <q-badge
-                :color="req.status === 'new' ? 'warning' : 'blue-7'"
-                :label="req.status === 'new' ? 'รอรับเรื่อง' : 'กำลังตรวจสอบ'"
-              />
-            </a>
-          </div>
-
-          <q-btn
-            v-if="pendingRequests.length > 0"
-            flat
-            no-caps
-            color="primary"
-            icon-right="arrow_forward"
-            label="จัดการคำขอทั้งหมด"
-            class="full-width q-mt-md pipeline-goto-btn"
-            tag="a"
-            :href="resolveFullUrl('/central-finance/fund-sources')"
-            @click="onManageAllRequestsClick"
-          />
-        </CentralFinanceSurfaceCard>
       </div>
     </section>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
+import { api } from 'src/boot/axios';
+import { formatCompactCurrency, formatCount } from 'src/utils/course-format';
 
 const router = useRouter();
 const { t } = useI18n();
 const financeStore = useCentralFinanceStore();
-const chartPeriod = ref<'7d' | '30d'>('7d');
 
+// ── Navigation ───────────────────────────────────────────────
 function onManageAllRequestsClick(event: Event) {
-  if (isNewTabClick(event)) {
-    return;
-  }
+  if (isNewTabClick(event)) return;
   event.preventDefault();
   void router.push('/central-finance/fund-sources');
 }
 
+// ── Sticky Filter Bar ────────────────────────────────────────
+const sentinelRef = ref<HTMLElement | null>(null);
+const filterStuck = ref(false);
+let stickyObserver: IntersectionObserver | null = null;
+
+const filters = ref({ dateFrom: '', dateTo: '' });
+const datePreset = ref('allTime');
+const datePresetOptions = [
+  { label: 'วันนี้', value: 'today' },
+  { label: 'สัปดาห์นี้', value: 'thisWeek' },
+  { label: 'เดือนนี้', value: 'thisMonth' },
+  { label: 'ปีนี้', value: 'thisYear' },
+  { label: 'ทั้งหมด', value: 'allTime' },
+  { label: 'กำหนดเอง', value: 'custom' },
+];
+
+function formatDateInput(date: Date): string {
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
+}
+
+function applyDatePreset(preset: string) {
+  datePreset.value = preset;
+  const now = new Date();
+  if (preset === 'today') {
+    filters.value.dateFrom = formatDateInput(now);
+    filters.value.dateTo = formatDateInput(now);
+  } else if (preset === 'thisWeek') {
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const start = new Date(now.getFullYear(), now.getMonth(), diff);
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+    filters.value.dateFrom = formatDateInput(start);
+    filters.value.dateTo = formatDateInput(end);
+  } else if (preset === 'thisMonth') {
+    filters.value.dateFrom = formatDateInput(new Date(now.getFullYear(), now.getMonth(), 1));
+    filters.value.dateTo = formatDateInput(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+  } else if (preset === 'thisYear') {
+    filters.value.dateFrom = formatDateInput(new Date(now.getFullYear(), 0, 1));
+    filters.value.dateTo = formatDateInput(new Date(now.getFullYear(), 11, 31));
+  } else if (preset === 'allTime') {
+    filters.value.dateFrom = '';
+    filters.value.dateTo = '';
+  }
+  if (preset !== 'custom') void fetchDashboardData();
+}
+
+function clearFilters() {
+  filters.value.dateFrom = '';
+  filters.value.dateTo = '';
+  datePreset.value = 'allTime';
+  void fetchDashboardData();
+}
+
+const dateRangeModel = computed({
+  get() {
+    if (
+      filters.value.dateFrom &&
+      filters.value.dateTo &&
+      filters.value.dateFrom !== filters.value.dateTo
+    ) {
+      return { from: filters.value.dateFrom, to: filters.value.dateTo };
+    }
+    return filters.value.dateFrom || null;
+  },
+  set(val: { from: string; to: string } | string | null) {
+    if (val !== null && typeof val === 'object' && 'from' in val && 'to' in val) {
+      filters.value.dateFrom = val.from;
+      filters.value.dateTo = val.to;
+    } else if (typeof val === 'string') {
+      filters.value.dateFrom = val;
+      filters.value.dateTo = val;
+    } else {
+      filters.value.dateFrom = '';
+      filters.value.dateTo = '';
+    }
+    datePreset.value = 'custom';
+    void fetchDashboardData();
+  },
+});
+
+const dateRangeDisplay = computed(() => {
+  if (
+    filters.value.dateFrom &&
+    filters.value.dateTo &&
+    filters.value.dateFrom !== filters.value.dateTo
+  ) {
+    return `${filters.value.dateFrom} - ${filters.value.dateTo}`;
+  }
+  return filters.value.dateFrom || '';
+});
+
+// ── Dashboard API Data ───────────────────────────────────────
+const dashboardStats = ref({
+  totalRevenue: 0,
+  totalTransactions: 0,
+  pendingReceipts: 0,
+  issuedReceipts: 0,
+});
+
+const trendData = ref<{
+  months: string[];
+  revenue: number[];
+  fundRequests: number[];
+}>({ months: [], revenue: [], fundRequests: [] });
+
+const facultyBreakdownData = ref<{ faculty: string; totalAmount: number }[]>([]);
+
+async function fetchDashboardData() {
+  try {
+    const params: Record<string, string> =
+      datePreset.value === 'allTime'
+        ? { period: 'allTime' }
+        : { period: 'custom', dateFrom: filters.value.dateFrom, dateTo: filters.value.dateTo };
+
+    const [statsRes, trendRes, facultyRes] = await Promise.all([
+      api.get('/api/centralfinance/dashboard-stats', { params }),
+      api.get('/api/centralfinance/dashboard-trend', { params }),
+      api.get<{ faculty: string; totalAmount: number }[]>(
+        '/api/centralfinance/dashboard-faculty-breakdown',
+        { params },
+      ),
+    ]);
+
+    const stats = statsRes.data;
+    dashboardStats.value.totalRevenue = stats.totalRevenue ?? 0;
+    dashboardStats.value.totalTransactions = stats.totalTransactions ?? 0;
+    dashboardStats.value.pendingReceipts = stats.pendingReceipts ?? 0;
+    dashboardStats.value.issuedReceipts = stats.issuedReceipts ?? 0;
+
+    const trend = trendRes.data;
+    trendData.value.months = trend.months ?? [];
+    trendData.value.revenue = trend.revenue ?? [];
+    trendData.value.fundRequests = trend.fundRequests ?? [];
+
+    facultyBreakdownData.value = facultyRes.data ?? [];
+  } catch {
+    // API not yet implemented — fall back to store-derived totals
+    const validTx = financeStore.transactions.filter((t) => t.status === 'valid');
+    dashboardStats.value.totalRevenue = validTx.reduce((s, t) => s + t.amount, 0);
+    dashboardStats.value.totalTransactions = validTx.length;
+    dashboardStats.value.pendingReceipts = financeStore.transactions.filter(
+      (t) => t.status === 'flagged',
+    ).length;
+    dashboardStats.value.issuedReceipts = financeStore.transactions.filter(
+      (t) => t.status === 'valid',
+    ).length;
+  }
+}
+
+// ── Lifecycle ────────────────────────────────────────────────
+onMounted(() => {
+  if (sentinelRef.value) {
+    stickyObserver = new IntersectionObserver(
+      ([entry]) => {
+        filterStuck.value = !(entry?.isIntersecting ?? true);
+      },
+      { threshold: 0, rootMargin: '-73px 0px 0px 0px' },
+    );
+    stickyObserver.observe(sentinelRef.value);
+  }
+  void fetchDashboardData();
+});
+
+onUnmounted(() => {
+  stickyObserver?.disconnect();
+});
+
+// ── KPI Metric Cards ─────────────────────────────────────────
 interface MetricCard {
   label: string;
   value: string;
@@ -263,64 +446,38 @@ interface MetricCard {
   trendText: string;
 }
 
-interface FundSourceStatusItem {
-  label: string;
-  count: number;
-  icon: string;
-  color: string;
-  bg: string;
-  badge: string;
-  badgeColor: string;
-}
-
-interface ActivityItem {
-  title: string;
-  time: string;
-  detail: string;
-  icon: string;
-  color: string;
-}
-
-interface ChartBarItem {
-  day: string;
-  label: string;
-  amount: number;
-  amountLabel: string;
-  percent: number;
-  isToday?: boolean;
-}
-
-// ── Metric Cards ────────────────────────────────────────────
 const metricCards = computed<MetricCard[]>(() => [
   {
-    label: t('centralFinance.dashboard.metrics.pending'),
-    value: financeStore.requests.filter((r) => r.status === 'new').length.toString(),
-    icon: 'pending_actions',
-    color: '#b45309',
-    tint: 'rgba(180, 83, 9, 0.12)',
-    trendIcon: 'trending_up',
-    trendColor: 'negative',
-    trendText: t('centralFinance.dashboard.metrics.trendUp', { value: '3' }),
-  },
-  {
-    label: t('centralFinance.dashboard.metrics.monthlyRevenue'),
-    value: '฿38,742,000',
+    label: 'รายรับรวมทั้งหมด',
+    value: formatCurrency(dashboardStats.value.totalRevenue),
     icon: 'account_balance_wallet',
     color: '#047857',
     tint: 'rgba(4, 120, 87, 0.12)',
-    trendIcon: 'trending_up',
-    trendColor: 'positive',
-    trendText: t('centralFinance.dashboard.metrics.trendUp', { value: '8.2%' }),
+    trendIcon: 'domain',
+    trendColor: 'grey-7',
+    trendText: 'รวมทุกคณะ/ส่วนงาน',
   },
   {
-    label: t('centralFinance.dashboard.metrics.todayRevenue'),
-    value: '฿1,248,500',
-    icon: 'payments',
+    label: t('centralFinance.dashboard.metrics.pending'),
+    value: financeStore.requests
+      .filter((r) => r.status === 'new' || r.status === 'processing')
+      .length.toString(),
+    icon: 'pending_actions',
+    color: '#b45309',
+    tint: 'rgba(180, 83, 9, 0.12)',
+    trendIcon: 'pending_actions',
+    trendColor: 'negative',
+    trendText: `รอรับเรื่อง ${financeStore.requests.filter((r) => r.status === 'new').length} รายการ`,
+  },
+  {
+    label: 'รายการธุรกรรมทั้งหมด',
+    value: `${dashboardStats.value.totalTransactions.toLocaleString('th-TH')} รายการ`,
+    icon: 'receipt_long',
     color: '#1d4ed8',
     tint: 'rgba(29, 78, 216, 0.12)',
-    trendIcon: 'trending_up',
+    trendIcon: 'check_circle',
     trendColor: 'positive',
-    trendText: t('centralFinance.dashboard.metrics.trendUp', { value: '8.4%' }),
+    trendText: `ออกใบเสร็จแล้ว ${dashboardStats.value.issuedReceipts} ใบ`,
   },
   {
     label: t('centralFinance.dashboard.metrics.activeFaculties'),
@@ -334,33 +491,78 @@ const metricCards = computed<MetricCard[]>(() => [
   },
 ]);
 
-// ── Revenue Chart ───────────────────────────────────────────
-const todayRevenue = ref<string>('฿1,248,500');
-const yesterdayRevenue = ref<string>('฿1,152,300');
-const revenueChange = ref<string>('+8.4%');
-const changeClass = ref<string>('text-positive');
+// ── Trend Charts ─────────────────────────────────────────────
+const THAI_MONTH_ABBR: Record<string, string> = {
+  '01': 'ม.ค.',
+  '02': 'ก.พ.',
+  '03': 'มี.ค.',
+  '04': 'เม.ย.',
+  '05': 'พ.ค.',
+  '06': 'มิ.ย.',
+  '07': 'ก.ค.',
+  '08': 'ส.ค.',
+  '09': 'ก.ย.',
+  '10': 'ต.ค.',
+  '11': 'พ.ย.',
+  '12': 'ธ.ค.',
+};
 
-const rawBars = [
-  { day: t('centralFinance.dashboard.revenueChart.days.mon'), amount: 980000, isToday: false },
-  { day: t('centralFinance.dashboard.revenueChart.days.tue'), amount: 1152300, isToday: false },
-  { day: t('centralFinance.dashboard.revenueChart.days.wed'), amount: 870000, isToday: false },
-  { day: t('centralFinance.dashboard.revenueChart.days.thu'), amount: 1340000, isToday: false },
-  { day: t('centralFinance.dashboard.revenueChart.days.fri'), amount: 1100000, isToday: false },
-  { day: t('centralFinance.dashboard.revenueChart.days.sat'), amount: 430000, isToday: false },
-  { day: t('centralFinance.dashboard.revenueChart.days.today'), amount: 1248500, isToday: true },
-];
+function formatYmLabel(ym: string): string {
+  if (ym.includes(' ')) return ym.split(' ')[1] ?? ym;
+  const parts = ym.split('-');
+  if (parts.length === 3) {
+    return `${Number(parts[2])} ${THAI_MONTH_ABBR[parts[1] ?? '01'] ?? parts[1]}`;
+  }
+  const mm = parts[1] ?? '01';
+  const buddhistYear = Number(parts[0] ?? 0) + 543;
+  return `${THAI_MONTH_ABBR[mm] ?? mm} ${String(buddhistYear).slice(-2)}`;
+}
 
-const chartBars = computed<ChartBarItem[]>(() => {
-  const max = Math.max(...rawBars.map((b) => b.amount));
-  return rawBars.map((b) => ({
-    ...b,
-    percent: Math.max(8, Math.round((b.amount / max) * 100)),
-    amountLabel: `฿${b.amount.toLocaleString('th-TH')}`,
-    label: b.day,
-  }));
-});
+const trendChartLabels = computed(() => trendData.value.months.map(formatYmLabel));
 
-// ── Request Pipeline ────────────────────────────────────────
+const revenueChartSeries = computed<AreaChartSeries[]>(() => [
+  {
+    id: 'revenue',
+    label: 'รายรับรวมทั้งหมด',
+    color: '#047857',
+    values: trendData.value.revenue,
+    totalLabel: formatCompactCurrency(trendData.value.revenue.reduce((s, v) => s + v, 0)),
+    formatValue: (v) => formatCurrency(Math.round(v)),
+  },
+]);
+
+const fundRequestsChartSeries = computed<AreaChartSeries[]>(() => [
+  {
+    id: 'fundRequests',
+    label: 'คำขอแหล่งเงินทุน',
+    color: '#7c3aed',
+    values: trendData.value.fundRequests,
+    totalLabel: `${formatCount(trendData.value.fundRequests.reduce((s: number, v: number) => s + v, 0))} รายการ`,
+    formatValue: (v: number) => `${formatCount(Math.round(v))} รายการ`,
+  },
+]);
+
+function formatRevenueTick(value: number): string {
+  return formatCompactCurrency(Math.round(value));
+}
+
+function formatCountTick(value: number): string {
+  return formatCount(Math.round(value));
+}
+
+function formatCurrency(value: number | string | undefined | null): string {
+  if (typeof value === 'string') return value;
+  if (typeof value !== 'number' || Number.isNaN(value)) return '฿0';
+  return `฿${value.toLocaleString('th-TH')}`;
+}
+
+// ── Fund Request Pipeline ────────────────────────────────────
+interface FundSourceStatusItem {
+  label: string;
+  count: number;
+  color: string;
+}
+
 const totalRequests = computed<number>(() => financeStore.requests.length);
 
 const completionRate = computed<number>(() => {
@@ -375,52 +577,57 @@ const fundSourceStatus = computed<FundSourceStatusItem[]>(() => [
   {
     label: t('centralFinance.dashboard.fundSourceStatus.pending'),
     count: financeStore.requests.filter((r) => r.status === 'new').length,
-    icon: 'hourglass_top',
-    bg: 'rgba(217, 119, 6, 0.12)',
     color: '#b45309',
-    badge: t('centralFinance.dashboard.fundSourceStatus.badges.pending'),
-    badgeColor: 'warning',
   },
   {
     label: t('centralFinance.dashboard.fundSourceStatus.processing'),
     count: financeStore.requests.filter((r) => r.status === 'processing').length,
-    icon: 'find_in_page',
-    bg: 'rgba(29, 78, 216, 0.12)',
     color: '#1d4ed8',
-    badge: t('centralFinance.dashboard.fundSourceStatus.badges.processing'),
-    badgeColor: 'blue-7',
   },
   {
     label: t('centralFinance.dashboard.fundSourceStatus.completed'),
     count: financeStore.requests.filter((r) => r.status === 'completed').length,
-    icon: 'check_circle',
-    bg: 'rgba(4, 120, 87, 0.12)',
     color: '#047857',
-    badge: t('centralFinance.dashboard.fundSourceStatus.badges.completed'),
-    badgeColor: 'positive',
   },
   {
     label: t('centralFinance.dashboard.fundSourceStatus.rejected'),
     count: financeStore.requests.filter((r) => r.status === 'rejected').length,
-    icon: 'reply',
-    bg: 'rgba(220, 38, 38, 0.1)',
     color: '#b91c1c',
-    badge: t('centralFinance.dashboard.fundSourceStatus.badges.rejected'),
-    badgeColor: 'negative',
   },
 ]);
 
-// ── Pending Requests ────────────────────────────────────────
-const pendingRequests = computed(() =>
-  financeStore.requests.filter((r) => r.status === 'new' || r.status === 'processing').slice(0, 5),
-);
+// ── Faculty Revenue Breakdown ─────────────────────────────────
+interface FacultyBreakdownItem {
+  faculty: string;
+  totalAmount: number;
+  percent: number;
+}
 
-// ── Recent Activities ───────────────────────────────────────
+const topFaculties = computed<FacultyBreakdownItem[]>(() => {
+  const data = facultyBreakdownData.value;
+  if (data.length === 0) return [];
+  const max = data[0]?.totalAmount ?? 1;
+  return data.map((item) => ({
+    faculty: item.faculty,
+    totalAmount: item.totalAmount,
+    percent: Math.max(4, Math.round((item.totalAmount / max) * 100)),
+  }));
+});
+
+// ── Recent Activities ─────────────────────────────────────────
+interface ActivityItem {
+  title: string;
+  time: string;
+  detail: string;
+  icon: string;
+  color: string;
+}
+
 const recentActivities = computed<ActivityItem[]>(() =>
   financeStore.requests
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5)
+    .slice(0, 6)
     .map((req) => {
       const map: Record<string, { title: string; icon: string; color: string }> = {
         new: {
@@ -484,119 +691,27 @@ const recentActivities = computed<ActivityItem[]>(() =>
   margin-bottom: 18px;
 }
 
-// ── Revenue Chart ────────────────────────────────────────────
-.finance-chart-area {
+// ── Bottom Grid ──────────────────────────────────────────────
+.finance-bottom-grid {
   display: grid;
-  gap: 20px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: 18px;
+  margin-bottom: 20px;
 }
 
-.finance-chart-summary {
-  display: flex;
-  align-items: center;
-  padding: 16px 20px;
-  border-radius: 14px;
-  background: #f8fafc;
-  border: 1px solid rgba(16, 35, 63, 0.07);
-}
-
-.finance-chart-summary__item {
-  flex: 1;
-  display: grid;
-  gap: 4px;
-  padding: 0 20px;
-
-  &:first-child {
-    padding-left: 0;
+// ── Chart Blocks ─────────────────────────────────────────────
+.chart-block {
+  &__header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
   }
-  &:last-child {
-    padding-right: 0;
+
+  &__title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--finance-navy, #10223f);
   }
-}
-
-.finance-chart-summary__label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--finance-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.finance-chart-summary__value {
-  display: block;
-  font-size: 1.15rem;
-  font-weight: 950;
-  color: var(--finance-navy);
-  line-height: 1.2;
-}
-
-.finance-chart-summary__divider {
-  width: 1px;
-  height: 40px;
-  background: rgba(16, 35, 63, 0.1);
-  flex-shrink: 0;
-}
-
-.finance-bar-chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  height: 160px;
-  padding: 0 4px 28px;
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 28px 0;
-    border-bottom: 2px solid rgba(16, 35, 63, 0.08);
-    pointer-events: none;
-  }
-}
-
-.finance-bar-chart__col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  height: 100%;
-}
-
-.finance-bar-chart__bar-wrap {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-}
-
-.finance-bar-chart__bar {
-  width: 100%;
-  border-radius: 6px 6px 0 0;
-  background: rgba(29, 78, 216, 0.22);
-  transition: height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  cursor: pointer;
-
-  &:hover {
-    background: rgba(29, 78, 216, 0.38);
-  }
-  &--today {
-    background: linear-gradient(180deg, #1d4ed8, #3b82f6);
-    box-shadow: 0 4px 16px rgba(29, 78, 216, 0.3);
-  }
-}
-
-.finance-bar-chart__day {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--finance-muted);
-  white-space: nowrap;
-}
-
-.finance-period-toggle {
-  border: 1px solid rgba(16, 35, 63, 0.12);
-  border-radius: 10px;
-  overflow: hidden;
 }
 
 // ── Request Pipeline ─────────────────────────────────────────
@@ -639,14 +754,14 @@ const recentActivities = computed<ActivityItem[]>(() =>
 .pipeline-summary__number {
   font-size: 2rem;
   font-weight: 950;
-  color: var(--finance-navy);
+  color: var(--finance-navy, #10223f);
   line-height: 1;
 }
 
 .pipeline-summary__label {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--finance-muted);
+  color: var(--finance-muted, #64748b);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   text-align: center;
@@ -679,13 +794,13 @@ const recentActivities = computed<ActivityItem[]>(() =>
   flex: 1;
   font-size: 0.82rem;
   font-weight: 700;
-  color: var(--finance-muted);
+  color: var(--finance-muted, #64748b);
 }
 
 .pipeline-bar-row__count {
   font-size: 0.9rem;
   font-weight: 900;
-  color: var(--finance-navy);
+  color: var(--finance-navy, #10223f);
 }
 
 .pipeline-bar-row__track {
@@ -712,28 +827,14 @@ const recentActivities = computed<ActivityItem[]>(() =>
   }
 }
 
-// ── Bottom Grid ──────────────────────────────────────────────
-.finance-bottom-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-  gap: 18px;
-  margin-bottom: 20px;
-}
-
-.finance-timeline__detail {
-  font-size: 0.88rem;
-  color: var(--finance-muted);
-  margin-top: 3px;
-}
-
-// ── Pending Requests ─────────────────────────────────────────
-.pending-empty {
+// ── Faculty Breakdown ────────────────────────────────────────
+.breakdown-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   padding: 32px 0;
-  color: var(--finance-muted);
+  color: var(--finance-muted, #64748b);
 
   p {
     margin: 0;
@@ -742,111 +843,202 @@ const recentActivities = computed<ActivityItem[]>(() =>
   }
 }
 
-.pending-list {
+.faculty-breakdown-list {
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
-.pending-item {
-  display: flex;
+.faculty-breakdown-item {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(16, 35, 63, 0.08);
-  background: #fbfcfd;
-  cursor: pointer;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.18s ease;
-
-  &:hover {
-    background: #f0f7ff;
-    border-color: rgba(29, 78, 216, 0.2);
-    transform: translateX(2px);
-  }
 }
 
-.pending-item__left {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-}
-
-.pending-item__status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 5px;
-
-  &--new {
-    background: #b45309;
-  }
-  &--processing {
-    background: #1d4ed8;
-  }
-}
-
-.pending-item__info {
-  min-width: 0;
-}
-
-.pending-item__id {
+.faculty-breakdown-item__rank {
   font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--finance-muted);
-  letter-spacing: 0.04em;
+  font-weight: 900;
+  color: var(--finance-muted, #64748b);
+  text-align: center;
 }
 
-.pending-item__faculty {
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: var(--finance-navy);
-  margin-top: 1px;
+.faculty-breakdown-item__info {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
 }
 
-.pending-item__project {
-  font-size: 0.78rem;
-  color: var(--finance-muted);
-  margin-top: 2px;
+.faculty-breakdown-item__name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--finance-navy, #10223f);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 180px;
 }
 
-.pending-item__badge {
-  flex-shrink: 0;
-  font-size: 0.7rem;
+.faculty-breakdown-item__track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(16, 35, 63, 0.07);
+  overflow: hidden;
+}
+
+.faculty-breakdown-item__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  min-width: 4px;
+}
+
+.faculty-breakdown-item__amount {
+  font-size: 0.85rem;
   font-weight: 800;
+  color: var(--finance-navy, #10223f);
+  white-space: nowrap;
+}
+
+// ── Timeline ─────────────────────────────────────────────────
+.finance-timeline__detail {
+  font-size: 0.88rem;
+  color: var(--finance-muted, #64748b);
+  margin-top: 3px;
+}
+
+// ── Sticky Filter Bar ────────────────────────────────────────
+.admin-filter-sentinel {
+  height: 1px;
+}
+
+.admin-filter-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 9;
+  margin-bottom: 16px;
+  border-radius: var(--admin-radius-lg, 16px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  transition: box-shadow 0.2s ease;
+  overflow: clip;
+
+  &--stuck {
+    box-shadow:
+      0 6px 28px rgba(17, 24, 39, 0.1),
+      0 1px 4px rgba(17, 24, 39, 0.05);
+  }
+}
+
+.admin-filter-bar__row1,
+.admin-filter-bar__row2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.admin-filter-bar__row1 {
+  padding: 8px 8px 4px;
+  min-height: 52px;
+}
+
+.admin-filter-bar__row2 {
+  padding: 4px 8px 8px;
+  border-top: 1px solid rgba(17, 24, 39, 0.06);
+  transition: opacity 0.18s ease;
+
+  &--inactive {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+}
+
+.admin-filter-bar__label,
+.admin-filter-bar__sub-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--admin-navy, #10233f);
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+.admin-filter-bar__sub-label {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.admin-filter-bar__item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--admin-muted, #64748b);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba($primary, 0.04);
+    color: var(--admin-navy, #10233f);
+  }
+
+  &--active {
+    background: rgba($primary, 0.08) !important;
+    box-shadow: inset 4px 0 0 $primary;
+    color: var(--admin-navy, #10233f);
+  }
+}
+
+.admin-filter-bar__input {
+  width: 140px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+
+  &--range {
+    width: 220px;
+  }
+
+  &:focus-within {
+    border-color: $primary;
+    box-shadow: 0 0 0 2px rgba($primary, 0.1);
+  }
 }
 
 // ── Responsive ───────────────────────────────────────────────
 @media (max-width: 1100px) {
-  .finance-stat-grid,
+  .finance-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .finance-main-grid,
   .finance-bottom-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 760px) {
-  .finance-chart-summary {
-    flex-direction: column;
-    gap: 12px;
-
-    &__divider {
-      width: 100%;
-      height: 1px;
-    }
-
-    &__item {
-      padding: 0;
-    }
+@media (max-width: 599px) {
+  .finance-stat-grid {
+    grid-template-columns: 1fr;
   }
 
   .pipeline-summary {
