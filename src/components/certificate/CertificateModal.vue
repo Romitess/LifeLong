@@ -70,6 +70,7 @@ import jsPDF from 'jspdf';
 import type { Course } from 'src/types/course';
 import type { ActiveCertTemplate, CertLayout } from 'src/types/admin-cert-templates';
 import { DEFAULT_LAYOUT } from 'src/types/admin-cert-templates';
+import { api } from 'src/boot/axios';
 
 type CertificateCourse = Pick<Course, 'title' | 'faculty'>;
 
@@ -82,6 +83,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
+  downloaded: [];
 }>();
 
 const isVisible = computed({
@@ -136,6 +138,9 @@ async function downloadCertificate(): Promise<void> {
     pdf.addImage(imgData, 'PNG', 0, 0, pageW, pageH);
     const filename = `certificate-${(props.course?.title ?? 'course').replace(/\s+/g, '_')}.pdf`;
     pdf.save(filename);
+
+    void api.post('/api/lltcertificatelog', { cldevice: navigator.userAgent }).catch(() => {});
+    emit('downloaded');
   } finally {
     downloading.value = false;
   }
