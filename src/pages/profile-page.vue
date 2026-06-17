@@ -78,8 +78,6 @@
                 :registered-course-entries="myRegisteredCourseEntries"
               />
 
-              <ProfileCertificateLogTab v-else-if="activeMenu === 'cert-log'" />
-
               <!-- Enrollment Dialog for Saved Courses -->
               <CourseEnrollmentDialog
                 :course="savedEnrollmentDialogCourse"
@@ -268,7 +266,6 @@ import ProfilePersonalInfoTab from 'components/profile/ProfilePersonalInfoTab.vu
 import ProfileBenefitsTab from 'components/profile/ProfileBenefitsTab.vue';
 import ProfileChatTab from 'components/profile/ProfileChatTab.vue';
 import ProfileMyCertificatesTab from 'components/profile/ProfileMyCertificatesTab.vue';
-import ProfileCertificateLogTab from 'components/profile/ProfileCertificateLogTab.vue';
 import {
   useMyRegisteredCourses,
   type RegisteredCourseEntry,
@@ -508,12 +505,6 @@ const menuItems = computed<MenuItem[]>(() => [
     slug: 'certificates',
     icon: 'workspace_premium',
   },
-  {
-    label: 'ประวัติดาวน์โหลดเกียรติบัตร',
-    value: 'cert-log',
-    slug: 'cert-log',
-    icon: 'history',
-  },
 ]);
 
 // Nested routing for profile tabs: /profile/<slug> ↔ activeMenu (no query params).
@@ -525,7 +516,6 @@ const TAB_TO_SLUG: Record<string, string> = {
   benefits: 'benefits',
   chat: 'chat',
   'my-certificates': 'certificates',
-  'cert-log': 'cert-log',
 };
 const SLUG_TO_TAB: Record<string, string> = Object.fromEntries(
   Object.entries(TAB_TO_SLUG).map(([tab, slug]) => [slug, tab]),

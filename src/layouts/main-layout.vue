@@ -881,12 +881,12 @@ const navItems = computed<NavItem[]>(() => {
         icon: 'analytics',
         to: '/central-finance/dashboard',
       },
-      {
-        name: 'central-finance-fund-sources',
-        label: 'รายการคำขอแหล่งเงิน',
-        icon: 'description',
-        to: '/central-finance/fund-sources',
-      },
+      // {
+      //   name: 'central-finance-fund-sources',
+      //   label: 'รายการคำขอแหล่งเงิน',
+      //   icon: 'description',
+      //   to: '/central-finance/fund-sources',
+      // },
       {
         name: 'central-finance-reports',
         label: 'รายงาน',

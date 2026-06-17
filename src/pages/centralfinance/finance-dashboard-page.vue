@@ -82,106 +82,30 @@
           :label="stat.label"
           :icon-color="stat.color"
           :icon-tint="stat.tint"
-        >
-          <template #footer>
-            <div class="finance-metric-footer">
-              <q-icon :name="stat.trendIcon" size="16px" :color="stat.trendColor" />
-              <span :class="`text-${stat.trendColor}`">{{ stat.trendText }}</span>
-            </div>
-          </template>
-        </CentralFinanceMetricCard>
+        />
       </div>
 
-      <!-- ── Row 2: Trend Charts + Fund Pipeline ───────────────── -->
+      <!-- ── Row 2: Revenue Chart + Faculty Breakdown ──────────── -->
       <div class="finance-main-grid">
-        <!-- Operations Trend Charts -->
+        <!-- Revenue Trend -->
         <CentralFinanceSurfaceCard
-          eyebrow="Operations Overview"
-          title="ภาพรวมการดำเนินงาน"
+          eyebrow="Revenue Trend"
+          title="แนวโน้มรายรับรวม"
           :subtitle="dateRangeDisplay || 'ทั้งหมด'"
-          card-class="finance-panel finance-panel--chart"
-        >
-          <div class="chart-block q-mb-xl">
-            <div class="chart-block__header">
-              <span class="chart-block__title">รายรับรวมทุกคณะ/ส่วนงาน (บาท)</span>
-            </div>
-            <AdminAreaChart
-              :series="revenueChartSeries"
-              :x-labels="trendChartLabels"
-              :height="220"
-              :format-y-tick="formatRevenueTick"
-              aria-label="รายรับรวมทุกคณะ"
-            />
-          </div>
-
-          <div class="chart-block">
-            <div class="chart-block__header">
-              <span class="chart-block__title">คำขอแหล่งเงินทุน (รายการ)</span>
-            </div>
-            <AdminAreaChart
-              :series="fundRequestsChartSeries"
-              :x-labels="trendChartLabels"
-              :height="200"
-              :format-y-tick="formatCountTick"
-              aria-label="คำขอแหล่งเงินทุน"
-            />
-          </div>
-        </CentralFinanceSurfaceCard>
-
-        <!-- Fund Request Pipeline -->
-        <CentralFinanceSurfaceCard
-          eyebrow="Fund Requests"
-          :title="$t('centralFinance.dashboard.fundSourceStatus.title')"
           card-class="finance-panel"
         >
-          <div class="pipeline-summary">
-            <div class="pipeline-summary__rate">
-              <span class="pipeline-summary__percent">{{ completionRate }}%</span>
-              <span class="pipeline-summary__label">อัตราการดำเนินการ</span>
-            </div>
-            <div class="pipeline-summary__total">
-              <span class="pipeline-summary__number">{{ totalRequests }}</span>
-              <span class="pipeline-summary__label">คำขอทั้งหมด</span>
-            </div>
+          <div class="chart-block__header">
+            <span class="chart-block__title">รายรับรวมทุกคณะ/ส่วนงาน (บาท)</span>
           </div>
-
-          <div class="pipeline-bars">
-            <div v-for="item in fundSourceStatus" :key="item.label" class="pipeline-bar-row">
-              <div class="pipeline-bar-row__meta">
-                <div class="pipeline-bar-row__dot" :style="{ background: item.color }" />
-                <span class="pipeline-bar-row__label">{{ item.label }}</span>
-                <strong class="pipeline-bar-row__count">{{ item.count }}</strong>
-              </div>
-              <div class="pipeline-bar-row__track">
-                <div
-                  class="pipeline-bar-row__fill"
-                  :style="{
-                    width: totalRequests > 0 ? `${(item.count / totalRequests) * 100}%` : '0%',
-                    background: item.color,
-                  }"
-                />
-              </div>
-            </div>
-          </div>
-
-          <q-separator class="q-my-md" />
-
-          <q-btn
-            flat
-            no-caps
-            color="primary"
-            icon-right="arrow_forward"
-            label="จัดการคำขอทั้งหมด"
-            class="full-width pipeline-goto-btn"
-            tag="a"
-            :href="resolveFullUrl('/central-finance/fund-sources')"
-            @click="onManageAllRequestsClick"
+          <AdminAreaChart
+            :series="revenueChartSeries"
+            :x-labels="trendChartLabels"
+            :height="280"
+            :format-y-tick="formatRevenueTick"
+            aria-label="รายรับรวมทุกคณะ"
           />
         </CentralFinanceSurfaceCard>
-      </div>
 
-      <!-- ── Row 3: Faculty Breakdown + Recent Activity ─────────── -->
-      <div class="finance-bottom-grid">
         <!-- Faculty Revenue Breakdown -->
         <CentralFinanceSurfaceCard
           eyebrow="By Faculty"
@@ -214,30 +138,6 @@
             </div>
           </div>
         </CentralFinanceSurfaceCard>
-
-        <!-- Recent Activity Feed -->
-        <CentralFinanceSurfaceCard
-          :eyebrow="$t('centralFinance.dashboard.activities.eyebrow')"
-          :title="$t('centralFinance.dashboard.activities.title')"
-          card-class="finance-panel"
-        >
-          <div v-if="recentActivities.length === 0" class="breakdown-empty">
-            <q-icon name="history" size="42px" color="grey-4" />
-            <p>ไม่มีกิจกรรมล่าสุด</p>
-          </div>
-          <q-timeline v-else color="primary" layout="dense" class="finance-timeline">
-            <q-timeline-entry
-              v-for="activity in recentActivities"
-              :key="activity.title + activity.time"
-              :icon="activity.icon"
-              :color="activity.color"
-            >
-              <template #title>{{ activity.title }}</template>
-              <template #subtitle>{{ activity.time }}</template>
-              <div class="finance-timeline__detail">{{ activity.detail }}</div>
-            </q-timeline-entry>
-          </q-timeline>
-        </CentralFinanceSurfaceCard>
       </div>
     </section>
   </q-page>
@@ -245,27 +145,16 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
 import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
-import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import { api } from 'src/boot/axios';
-import { formatCompactCurrency, formatCount } from 'src/utils/course-format';
+import { formatCompactCurrency } from 'src/utils/course-format';
+import type { ReceiptUsageResponse } from 'src/types/receipt-usage-report';
 
-const router = useRouter();
-const { t } = useI18n();
 const financeStore = useCentralFinanceStore();
-
-// ── Navigation ───────────────────────────────────────────────
-function onManageAllRequestsClick(event: Event) {
-  if (isNewTabClick(event)) return;
-  event.preventDefault();
-  void router.push('/central-finance/fund-sources');
-}
 
 // ── Sticky Filter Bar ────────────────────────────────────────
 const sentinelRef = ref<HTMLElement | null>(null);
@@ -361,58 +250,62 @@ const dateRangeDisplay = computed(() => {
 // ── Dashboard API Data ───────────────────────────────────────
 const dashboardStats = ref({
   totalRevenue: 0,
-  totalTransactions: 0,
-  pendingReceipts: 0,
-  issuedReceipts: 0,
+  totalReceipts: 0,
+  onlinePayments: 0,
+  voidReceipts: 0,
 });
 
-const trendData = ref<{
-  months: string[];
-  revenue: number[];
-  fundRequests: number[];
-}>({ months: [], revenue: [], fundRequests: [] });
-
-const facultyBreakdownData = ref<{ faculty: string; totalAmount: number }[]>([]);
+const trendData = ref<{ months: string[]; revenue: number[] }>({
+  months: [],
+  revenue: [],
+});
 
 async function fetchDashboardData() {
-  try {
-    const params: Record<string, string> =
-      datePreset.value === 'allTime'
-        ? { period: 'allTime' }
-        : { period: 'custom', dateFrom: filters.value.dateFrom, dateTo: filters.value.dateTo };
+  const params: Record<string, string> =
+    datePreset.value === 'allTime'
+      ? { period: 'allTime' }
+      : { period: 'custom', dateFrom: filters.value.dateFrom, dateTo: filters.value.dateTo };
 
-    const [statsRes, trendRes, facultyRes] = await Promise.all([
-      api.get('/api/centralfinance/dashboard-stats', { params }),
-      api.get('/api/centralfinance/dashboard-trend', { params }),
-      api.get<{ faculty: string; totalAmount: number }[]>(
-        '/api/centralfinance/dashboard-faculty-breakdown',
-        { params },
-      ),
-    ]);
+  const receiptParams: Record<string, string> = {};
+  if (datePreset.value !== 'allTime' && filters.value.dateFrom) {
+    receiptParams.receiptDateStart = filters.value.dateFrom;
+    receiptParams.receiptDateEnd = filters.value.dateTo;
+  }
 
-    const stats = statsRes.data;
+  const [statsResult, trendResult, receiptResult] = await Promise.allSettled([
+    api.get('/api/centralfinance/dashboard-stats', { params }),
+    api.get('/api/centralfinance/dashboard-trend', { params }),
+    api.get<ReceiptUsageResponse>('/api/centralfinance/receipt-usage', { params: receiptParams }),
+  ]);
+
+  const validTx = financeStore.transactions.filter((t) => t.status === 'valid');
+
+  if (statsResult.status === 'fulfilled') {
+    const stats = statsResult.value.data;
     dashboardStats.value.totalRevenue = stats.totalRevenue ?? 0;
-    dashboardStats.value.totalTransactions = stats.totalTransactions ?? 0;
-    dashboardStats.value.pendingReceipts = stats.pendingReceipts ?? 0;
-    dashboardStats.value.issuedReceipts = stats.issuedReceipts ?? 0;
+    dashboardStats.value.onlinePayments = stats.onlinePayments ?? 0;
+    dashboardStats.value.voidReceipts = stats.voidReceipts ?? 0;
+  } else {
+    dashboardStats.value.totalRevenue = validTx.reduce((s, t) => s + t.amount, 0);
+    dashboardStats.value.onlinePayments = validTx.filter(
+      (t) => t.paymentChannel === 'transfer' || t.paymentChannel === 'qrcode',
+    ).length;
+    dashboardStats.value.voidReceipts = financeStore.transactions.filter(
+      (t) => t.status === 'void',
+    ).length;
+  }
 
-    const trend = trendRes.data;
+  if (trendResult.status === 'fulfilled') {
+    const trend = trendResult.value.data;
     trendData.value.months = trend.months ?? [];
     trendData.value.revenue = trend.revenue ?? [];
-    trendData.value.fundRequests = trend.fundRequests ?? [];
+  }
 
-    facultyBreakdownData.value = facultyRes.data ?? [];
-  } catch {
-    // API not yet implemented — fall back to store-derived totals
-    const validTx = financeStore.transactions.filter((t) => t.status === 'valid');
-    dashboardStats.value.totalRevenue = validTx.reduce((s, t) => s + t.amount, 0);
-    dashboardStats.value.totalTransactions = validTx.length;
-    dashboardStats.value.pendingReceipts = financeStore.transactions.filter(
-      (t) => t.status === 'flagged',
-    ).length;
-    dashboardStats.value.issuedReceipts = financeStore.transactions.filter(
-      (t) => t.status === 'valid',
-    ).length;
+  if (receiptResult.status === 'fulfilled') {
+    const receiptData = receiptResult.value.data;
+    dashboardStats.value.totalReceipts = receiptData.total ?? receiptData.data.length;
+  } else {
+    dashboardStats.value.totalReceipts = validTx.length;
   }
 }
 
@@ -441,9 +334,6 @@ interface MetricCard {
   icon: string;
   color: string;
   tint: string;
-  trendIcon: string;
-  trendColor: string;
-  trendText: string;
 }
 
 const metricCards = computed<MetricCard[]>(() => [
@@ -453,45 +343,35 @@ const metricCards = computed<MetricCard[]>(() => [
     icon: 'account_balance_wallet',
     color: '#047857',
     tint: 'rgba(4, 120, 87, 0.12)',
-    trendIcon: 'domain',
-    trendColor: 'grey-7',
-    trendText: 'รวมทุกคณะ/ส่วนงาน',
   },
   {
-    label: t('centralFinance.dashboard.metrics.pending'),
-    value: financeStore.requests
-      .filter((r) => r.status === 'new' || r.status === 'processing')
-      .length.toString(),
-    icon: 'pending_actions',
-    color: '#b45309',
-    tint: 'rgba(180, 83, 9, 0.12)',
-    trendIcon: 'pending_actions',
-    trendColor: 'negative',
-    trendText: `รอรับเรื่อง ${financeStore.requests.filter((r) => r.status === 'new').length} รายการ`,
-  },
-  {
-    label: 'รายการธุรกรรมทั้งหมด',
-    value: `${dashboardStats.value.totalTransactions.toLocaleString('th-TH')} รายการ`,
-    icon: 'receipt_long',
+    label: 'ใบเสร็จรับเงินทั้งหมด',
+    value: `${dashboardStats.value.totalReceipts.toLocaleString('th-TH')} ใบ`,
+    icon: 'receipt',
     color: '#1d4ed8',
     tint: 'rgba(29, 78, 216, 0.12)',
-    trendIcon: 'check_circle',
-    trendColor: 'positive',
-    trendText: `ออกใบเสร็จแล้ว ${dashboardStats.value.issuedReceipts} ใบ`,
   },
   {
-    label: t('centralFinance.dashboard.metrics.activeFaculties'),
-    value: new Set(financeStore.requests.map((r) => r.faculty)).size.toString(),
-    icon: 'domain',
+    label: 'รายการชำระออนไลน์',
+    value: `${dashboardStats.value.onlinePayments.toLocaleString('th-TH')} รายการ`,
+    icon: 'payment',
+    color: '#0891b2',
+    tint: 'rgba(8, 145, 178, 0.12)',
+  },
+  {
+    label: 'ค่าเฉลี่ยต่อรายการ',
+    value: formatCurrency(
+      dashboardStats.value.onlinePayments > 0
+        ? Math.round(dashboardStats.value.totalRevenue / dashboardStats.value.onlinePayments)
+        : 0,
+    ),
+    icon: 'analytics',
     color: '#7c3aed',
     tint: 'rgba(124, 58, 237, 0.12)',
-    trendIcon: 'trending_flat',
-    trendColor: 'grey-6',
-    trendText: t('centralFinance.dashboard.metrics.trendNeutral'),
   },
 ]);
 
-// ── Trend Charts ─────────────────────────────────────────────
+// ── Revenue Trend Chart ──────────────────────────────────────
 const THAI_MONTH_ABBR: Record<string, string> = {
   '01': 'ม.ค.',
   '02': 'ก.พ.',
@@ -531,23 +411,8 @@ const revenueChartSeries = computed<AreaChartSeries[]>(() => [
   },
 ]);
 
-const fundRequestsChartSeries = computed<AreaChartSeries[]>(() => [
-  {
-    id: 'fundRequests',
-    label: 'คำขอแหล่งเงินทุน',
-    color: '#7c3aed',
-    values: trendData.value.fundRequests,
-    totalLabel: `${formatCount(trendData.value.fundRequests.reduce((s: number, v: number) => s + v, 0))} รายการ`,
-    formatValue: (v: number) => `${formatCount(Math.round(v))} รายการ`,
-  },
-]);
-
 function formatRevenueTick(value: number): string {
   return formatCompactCurrency(Math.round(value));
-}
-
-function formatCountTick(value: number): string {
-  return formatCount(Math.round(value));
 }
 
 function formatCurrency(value: number | string | undefined | null): string {
@@ -555,46 +420,6 @@ function formatCurrency(value: number | string | undefined | null): string {
   if (typeof value !== 'number' || Number.isNaN(value)) return '฿0';
   return `฿${value.toLocaleString('th-TH')}`;
 }
-
-// ── Fund Request Pipeline ────────────────────────────────────
-interface FundSourceStatusItem {
-  label: string;
-  count: number;
-  color: string;
-}
-
-const totalRequests = computed<number>(() => financeStore.requests.length);
-
-const completionRate = computed<number>(() => {
-  if (totalRequests.value === 0) return 0;
-  const done = financeStore.requests.filter(
-    (r) => r.status === 'completed' || r.status === 'rejected',
-  ).length;
-  return Math.round((done / totalRequests.value) * 100);
-});
-
-const fundSourceStatus = computed<FundSourceStatusItem[]>(() => [
-  {
-    label: t('centralFinance.dashboard.fundSourceStatus.pending'),
-    count: financeStore.requests.filter((r) => r.status === 'new').length,
-    color: '#b45309',
-  },
-  {
-    label: t('centralFinance.dashboard.fundSourceStatus.processing'),
-    count: financeStore.requests.filter((r) => r.status === 'processing').length,
-    color: '#1d4ed8',
-  },
-  {
-    label: t('centralFinance.dashboard.fundSourceStatus.completed'),
-    count: financeStore.requests.filter((r) => r.status === 'completed').length,
-    color: '#047857',
-  },
-  {
-    label: t('centralFinance.dashboard.fundSourceStatus.rejected'),
-    count: financeStore.requests.filter((r) => r.status === 'rejected').length,
-    color: '#b91c1c',
-  },
-]);
 
 // ── Faculty Revenue Breakdown ─────────────────────────────────
 interface FacultyBreakdownItem {
@@ -604,65 +429,22 @@ interface FacultyBreakdownItem {
 }
 
 const topFaculties = computed<FacultyBreakdownItem[]>(() => {
-  const data = facultyBreakdownData.value;
-  if (data.length === 0) return [];
-  const max = data[0]?.totalAmount ?? 1;
-  return data.map((item) => ({
-    faculty: item.faculty,
-    totalAmount: item.totalAmount,
-    percent: Math.max(4, Math.round((item.totalAmount / max) * 100)),
+  const map = new Map<string, number>();
+  for (const tx of financeStore.transactions) {
+    if (tx.status === 'valid') {
+      map.set(tx.faculty, (map.get(tx.faculty) ?? 0) + tx.amount);
+    }
+  }
+  const sorted = Array.from(map.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6);
+  const max = sorted[0]?.[1] ?? 1;
+  return sorted.map(([faculty, totalAmount]) => ({
+    faculty,
+    totalAmount,
+    percent: Math.max(4, Math.round((totalAmount / max) * 100)),
   }));
 });
-
-// ── Recent Activities ─────────────────────────────────────────
-interface ActivityItem {
-  title: string;
-  time: string;
-  detail: string;
-  icon: string;
-  color: string;
-}
-
-const recentActivities = computed<ActivityItem[]>(() =>
-  financeStore.requests
-    .slice()
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 6)
-    .map((req) => {
-      const map: Record<string, { title: string; icon: string; color: string }> = {
-        new: {
-          title: t('centralFinance.dashboard.activities.items.dynamic.new', {
-            faculty: req.faculty,
-          }),
-          icon: 'add_circle',
-          color: 'teal',
-        },
-        processing: {
-          title: t('centralFinance.dashboard.activities.items.dynamic.processing', {
-            id: req.requestId,
-          }),
-          icon: 'hourglass_empty',
-          color: 'orange',
-        },
-        completed: {
-          title: t('centralFinance.dashboard.activities.items.dynamic.completed', {
-            faculty: req.faculty,
-          }),
-          icon: 'check_circle',
-          color: 'positive',
-        },
-        rejected: {
-          title: t('centralFinance.dashboard.activities.items.dynamic.rejected', {
-            id: req.requestId,
-          }),
-          icon: 'error',
-          color: 'negative',
-        },
-      };
-      const meta = map[req.status] ?? { title: req.requestId, icon: 'info', color: 'grey' };
-      return { ...meta, time: req.date, detail: req.project };
-    }),
-);
 </script>
 
 <style lang="scss" scoped>
@@ -671,16 +453,11 @@ const recentActivities = computed<ActivityItem[]>(() =>
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
-  margin-bottom: 20px;
-}
+  margin-bottom: 18px;
 
-.finance-metric-footer {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  margin-top: 2px;
+  :deep(.cf-metric-card__copy) {
+    margin-top: 16px !important;
+  }
 }
 
 // ── Main Grid ────────────────────────────────────────────────
@@ -688,146 +465,23 @@ const recentActivities = computed<ActivityItem[]>(() =>
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
   gap: 18px;
-  margin-bottom: 18px;
-}
-
-// ── Bottom Grid ──────────────────────────────────────────────
-.finance-bottom-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-  gap: 18px;
   margin-bottom: 20px;
 }
 
-// ── Chart Blocks ─────────────────────────────────────────────
-.chart-block {
-  &__header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-
-  &__title {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--finance-navy, #10223f);
-  }
-}
-
-// ── Request Pipeline ─────────────────────────────────────────
-.pipeline-summary {
+// ── Revenue Chart ─────────────────────────────────────────────
+.chart-block__header {
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 16px 20px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #f0f7ff, #f8fafc);
-  border: 1px solid rgba(29, 78, 216, 0.1);
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
-.pipeline-summary__rate {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex: 1;
-  border-right: 1px solid rgba(16, 35, 63, 0.1);
-  padding-right: 24px;
-}
-
-.pipeline-summary__percent {
-  font-size: 2rem;
-  font-weight: 950;
-  color: #1d4ed8;
-  line-height: 1;
-}
-
-.pipeline-summary__total {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex: 1;
-}
-
-.pipeline-summary__number {
-  font-size: 2rem;
-  font-weight: 950;
-  color: var(--finance-navy, #10223f);
-  line-height: 1;
-}
-
-.pipeline-summary__label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--finance-muted, #64748b);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  text-align: center;
-}
-
-.pipeline-bars {
-  display: grid;
-  gap: 14px;
-}
-
-.pipeline-bar-row {
-  display: grid;
-  gap: 6px;
-}
-
-.pipeline-bar-row__meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pipeline-bar-row__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.pipeline-bar-row__label {
-  flex: 1;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--finance-muted, #64748b);
-}
-
-.pipeline-bar-row__count {
+.chart-block__title {
   font-size: 0.9rem;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--finance-navy, #10223f);
 }
 
-.pipeline-bar-row__track {
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(16, 35, 63, 0.07);
-  overflow: hidden;
-}
-
-.pipeline-bar-row__fill {
-  height: 100%;
-  border-radius: inherit;
-  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  min-width: 4px;
-}
-
-.pipeline-goto-btn {
-  border-radius: 10px;
-  border: 1px dashed rgba(29, 78, 216, 0.2);
-
-  &:hover {
-    background: rgba(29, 78, 216, 0.04);
-    border-color: rgba(29, 78, 216, 0.4);
-  }
-}
-
-// ── Faculty Breakdown ────────────────────────────────────────
+// ── Faculty Breakdown ─────────────────────────────────────────
 .breakdown-empty {
   display: flex;
   flex-direction: column;
@@ -845,7 +499,7 @@ const recentActivities = computed<ActivityItem[]>(() =>
 
 .faculty-breakdown-list {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .faculty-breakdown-item {
@@ -864,7 +518,7 @@ const recentActivities = computed<ActivityItem[]>(() =>
 
 .faculty-breakdown-item__info {
   display: grid;
-  gap: 6px;
+  gap: 7px;
   min-width: 0;
 }
 
@@ -897,13 +551,6 @@ const recentActivities = computed<ActivityItem[]>(() =>
   font-weight: 800;
   color: var(--finance-navy, #10223f);
   white-space: nowrap;
-}
-
-// ── Timeline ─────────────────────────────────────────────────
-.finance-timeline__detail {
-  font-size: 0.88rem;
-  color: var(--finance-muted, #64748b);
-  margin-top: 3px;
 }
 
 // ── Sticky Filter Bar ────────────────────────────────────────
@@ -1030,8 +677,7 @@ const recentActivities = computed<ActivityItem[]>(() =>
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .finance-main-grid,
-  .finance-bottom-grid {
+  .finance-main-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1039,10 +685,6 @@ const recentActivities = computed<ActivityItem[]>(() =>
 @media (max-width: 599px) {
   .finance-stat-grid {
     grid-template-columns: 1fr;
-  }
-
-  .pipeline-summary {
-    gap: 16px;
   }
 }
 </style>
