@@ -643,6 +643,7 @@ export default {
       admin: 'System Administrator',
       instructor: 'Instructor',
       finance: 'Faculty Financial Officer',
+      central_finance: 'Central Financial Officer',
       student: 'Learner',
     },
     menu: {
