@@ -410,6 +410,18 @@ const amount = computed(() => {
   return Number.isNaN(numericAmount) ? 0 : numericAmount;
 });
 
+function formatEffectiveDate(value: string | undefined): string {
+  if (!value) return '';
+  const cleanStr = String(value).replace(/"/g, '').trim();
+  if (!cleanStr) return '';
+  const d = new Date(cleanStr);
+  if (isNaN(d.getTime())) return cleanStr;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
 function formatCollectorDate(value: string | undefined): string {
   if (!value) return '';
   const lines = value
@@ -533,7 +545,7 @@ async function exportToPdf() {
     row.receiptNo,
     row.customerName,
     row.amount,
-    row.effectiveDate,
+    formatEffectiveDate(row.effectiveDate),
     row.learnerName,
     row.courseName,
     formatCollectorDate(row.collector),
@@ -648,6 +660,7 @@ const columns = computed<QTableProps['columns']>(() => [
     field: 'effectiveDate',
     align: 'center',
     sortable: true,
+    format: (val: string) => formatEffectiveDate(val),
     style: 'width: 120px; min-width: 100px; white-space: normal;',
     headerStyle: 'white-space: normal; width: 120px;',
   },
@@ -744,7 +757,7 @@ function exportToExcel() {
     row.receiptNo,
     row.customerName,
     row.amount,
-    row.effectiveDate.replace('\n', ' '),
+    formatEffectiveDate(row.effectiveDate),
     row.learnerName,
     row.courseName.replace(/\n/g, ' '),
     formatCollectorDate(row.collector).replace(/\n/g, ' '),
