@@ -49,7 +49,7 @@
           <div class="course-table-view__toolbar">
             <div>
               <h2>{{ courseTableTitle }}</h2>
-              <span>{{ filteredCourses.length }} รายวิชา</span>
+              <span>{{ filteredCourses.length }} {{ t('instructor.table.coursesUnit') }}</span>
             </div>
 
             <div class="course-table-view__actions">
@@ -58,7 +58,7 @@
                 dense
                 outlined
                 rounded
-                placeholder="ค้นหารายวิชา..."
+                :placeholder="t('instructor.course.searchPlaceholder')"
                 class="course-table-search"
               >
                 <template #prepend>
@@ -70,7 +70,7 @@
                 outline
                 color="primary"
                 icon="filter_alt"
-                label="ตัวกรอง"
+                :label="t('instructor.table.filterBtn')"
                 no-caps
                 class="course-table-filter-btn"
                 @click="goToActiveInstructorCoursesTable"
@@ -251,22 +251,22 @@
               </colgroup>
               <thead>
                 <tr>
-                  <th>รายวิชา</th>
-                  <th>ค่าเรียน</th>
-                  <th>วันที่</th>
-                  <th>รับ</th>
+                  <th>{{ t('instructor.table.colCourse') }}</th>
+                  <th>{{ t('instructor.table.colFee') }}</th>
+                  <th>{{ t('instructor.table.colDate') }}</th>
+                  <th>{{ t('instructor.table.colSeats') }}</th>
                   <th>
-                    <span class="table-head-label">ชำระแล้ว</span>
+                    <span class="table-head-label">{{ t('instructor.table.colPaid') }}</span>
                   </th>
-                  <th>ค้าง</th>
-                  <th>เหลือ</th>
+                  <th>{{ t('instructor.table.colUnpaid') }}</th>
+                  <th>{{ t('instructor.table.colRemain') }}</th>
                   <th>
-                    <span class="table-head-label">เผยแพร่</span>
+                    <span class="table-head-label">{{ t('instructor.table.colPublish') }}</span>
                   </th>
                   <th>
                     <span class="table-head-label">Moodle</span>
                   </th>
-                  <th>จัดการ</th>
+                  <th>{{ t('instructor.table.colManage') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -290,11 +290,15 @@
                     </div>
                   </td>
                   <td class="text-center">
-                    {{ course.isFree ? 'ไม่มีค่าใช้จ่าย' : formatCurrency(course.price) }}
+                    {{
+                      course.isFree
+                        ? t('instructor.course.freeLabel')
+                        : formatCurrency(course.price)
+                    }}
                   </td>
                   <td class="schedule-cell">
                     <div class="schedule-cell__content">
-                      <span>ลงทะเบียน</span>
+                      <span>{{ t('instructor.table.regDate') }}</span>
                       <strong>
                         {{
                           formatCompactDateRange(course.registrationStart, course.registrationEnd)
@@ -326,7 +330,11 @@
                         rounded
                         :color="course.isActive ? 'positive' : 'grey-5'"
                         text-color="white"
-                        :label="course.isActive ? 'ส่งข้อมูลแล้ว' : 'ยังไม่ส่ง'"
+                        :label="
+                          course.isActive
+                            ? t('instructor.table.moodleSent')
+                            : t('instructor.table.moodleNotSent')
+                        "
                       />
                       <div v-if="course.isActive" class="moodle-status__meta">
                         <span>sukanya</span>
@@ -336,7 +344,7 @@
                     <q-btn
                       unelevated
                       color="positive"
-                      label="เข้าระบบ Moodle"
+                      :label="t('instructor.table.openMoodle')"
                       no-caps
                       size="sm"
                       class="moodle-link-btn"
@@ -353,12 +361,12 @@
                         color="primary"
                         icon="list_alt"
                         class="table-action-btn table-action-btn--list"
-                        aria-label="รายละเอียด"
+                        :aria-label="t('instructor.table.tooltipDetails')"
                         tag="a"
                         :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
                         @click="openCourseWorkspace(course.id, $event)"
                       >
-                        <q-tooltip>รายละเอียด</q-tooltip>
+                        <q-tooltip>{{ t('instructor.table.tooltipDetails') }}</q-tooltip>
                       </q-btn>
                       <q-btn
                         dense
@@ -366,12 +374,12 @@
                         color="primary"
                         icon="edit"
                         class="table-action-btn table-action-btn--edit"
-                        aria-label="แก้ไข"
+                        :aria-label="t('instructor.table.tooltipEdit')"
                         tag="a"
                         :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
                         @click="openCourseWorkspace(course.id, $event)"
                       >
-                        <q-tooltip>แก้ไข</q-tooltip>
+                        <q-tooltip>{{ t('instructor.table.tooltipEdit') }}</q-tooltip>
                       </q-btn>
                       <q-btn
                         dense
@@ -379,16 +387,18 @@
                         color="negative"
                         icon="close"
                         class="table-action-btn table-action-btn--delete"
-                        aria-label="ลบ"
+                        :aria-label="t('instructor.table.tooltipDelete')"
                         @click="queueDeleteCourse(course)"
                       >
-                        <q-tooltip>ลบ</q-tooltip>
+                        <q-tooltip>{{ t('instructor.table.tooltipDelete') }}</q-tooltip>
                       </q-btn>
                     </div>
                   </td>
                 </tr>
                 <tr v-if="paginatedCourses.length === 0">
-                  <td colspan="10" class="empty-table-cell">ไม่พบรายวิชา</td>
+                  <td colspan="10" class="empty-table-cell">
+                    {{ t('instructor.table.noCourseFound') }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -403,7 +413,14 @@
               :disable="courseTablePage === 1"
               @click="courseTablePage -= 1"
             />
-            <span> หน้า {{ courseTablePage }} / {{ courseTablePageCount }} </span>
+            <span>
+              {{
+                t('instructor.table.page', {
+                  current: courseTablePage,
+                  total: courseTablePageCount,
+                })
+              }}
+            </span>
             <q-btn
               flat
               dense
@@ -420,8 +437,10 @@
         <aside class="course-sidebar">
           <div class="toolbar-row">
             <div>
-              <h2>รายวิชาของฉัน</h2>
-              <span>{{ instructorCourses.length }} รายวิชา</span>
+              <h2>{{ t('instructor.course.sidebarTitle') }}</h2>
+              <span
+                >{{ instructorCourses.length }} {{ locale === 'th' ? 'รายวิชา' : 'courses' }}</span
+              >
             </div>
           </div>
 
@@ -429,7 +448,7 @@
             v-model="courseSearch"
             dense
             outlined
-            placeholder="ค้นหารหัสหรือชื่อรายวิชา"
+            :placeholder="t('instructor.course.searchPlaceholder')"
             class="course-search"
           >
             <template #prepend>
@@ -453,7 +472,8 @@
                 <div class="course-list-item__meta">
                   <q-icon name="group" size="15px" />
                   <span class="learner-count-link" @click.stop="openLearnerRoster(course.id)">
-                    {{ course.enrolledCount }}/{{ course.maxSeats }} ผู้เรียน
+                    {{ course.enrolledCount }}/{{ course.maxSeats }}
+                    {{ t('instructor.course.learnersLabel') }}
                   </span>
                   <span>{{ getCourseHealth(course.id).completion }}% complete</span>
                 </div>
@@ -476,7 +496,11 @@
                 <q-badge
                   rounded
                   :color="selectedCourse.isActive ? 'positive' : 'grey-7'"
-                  :label="selectedCourse.isActive ? 'เผยแพร่แล้ว' : 'ฉบับร่าง'"
+                  :label="
+                    selectedCourse.isActive
+                      ? t('instructor.course.publishedBadge')
+                      : t('instructor.course.draftBadge')
+                  "
                 />
                 <q-badge
                   rounded
@@ -487,16 +511,21 @@
               </div>
               <h2>{{ selectedCourse.titleEn || selectedCourse.title }}</h2>
               <div class="course-summary__meta">
-                <span><q-icon name="event" /> เปิดรับถึง {{ selectedCourse.registrationEnd }}</span>
+                <span
+                  ><q-icon name="event" /> {{ t('instructor.course.openUntil') }}
+                  {{ selectedCourse.registrationEnd }}</span
+                >
                 <span
                   ><q-icon name="payments" />
                   {{
-                    selectedCourse.isFree ? 'ไม่มีค่าใช้จ่าย' : formatCurrency(selectedCourse.price)
+                    selectedCourse.isFree
+                      ? t('instructor.course.freeLabel')
+                      : formatCurrency(selectedCourse.price)
                   }}</span
                 >
                 <span
-                  ><q-icon name="visibility" />
-                  {{ selectedCourse.views.toLocaleString() }} views</span
+                  ><q-icon name="visibility" /> {{ selectedCourse.views.toLocaleString() }}
+                  {{ $t('views') }}</span
                 >
                 <button
                   type="button"
@@ -507,7 +536,7 @@
                   }}{{
                     selectedCourse.maxSeats ? ` / ${selectedCourse.maxSeats.toLocaleString()}` : ''
                   }}
-                  ผู้เรียน
+                  {{ t('instructor.course.learnersLabel') }}
                 </button>
               </div>
             </div>
@@ -516,7 +545,7 @@
                 outline
                 color="primary"
                 icon="preview"
-                label="ดูหน้าผู้เรียน"
+                :label="t('instructor.course.viewStudentPage')"
                 no-caps
                 @click="previewCourse"
               />
@@ -524,21 +553,21 @@
                 unelevated
                 color="positive"
                 icon="school"
-                label="จัดการใน Moodle"
+                :label="t('instructor.common.moodleManage')"
                 no-caps
                 :disable="!selectedCourse?.moodleId"
                 :loading="moodleOpenLoading === selectedCourse?.id"
                 @click="selectedCourse && openInMoodle(selectedCourse)"
               >
-                <q-tooltip v-if="!selectedCourse?.moodleId"
-                  >รายวิชานี้ยังไม่ได้ sync กับ Moodle</q-tooltip
-                >
+                <q-tooltip v-if="!selectedCourse?.moodleId">{{
+                  t('instructor.common.moodleNotSynced')
+                }}</q-tooltip>
               </q-btn>
               <q-btn
                 unelevated
                 color="primary"
                 icon="save"
-                label="บันทึกการเปลี่ยนแปลง"
+                :label="t('instructor.course.saveChanges')"
                 no-caps
                 :disable="!hasCourseChanges"
                 @click="confirmSaveCourseChanges"
@@ -547,7 +576,7 @@
                 outline
                 color="negative"
                 icon="delete"
-                label="ลบรายวิชา"
+                :label="t('instructor.course.deleteCourse')"
                 no-caps
                 @click="confirmDeleteSelectedCourse"
               />
@@ -578,8 +607,8 @@
                 <div class="panel-block">
                   <div class="panel-heading">
                     <div>
-                      <h3>สถานะรายวิชา</h3>
-                      <p>สิ่งที่ต้องตรวจเพื่อให้รายวิชาพร้อมเรียน</p>
+                      <h3>{{ t('instructor.overview.courseStatusTitle') }}</h3>
+                      <p>{{ t('instructor.overview.courseStatusSub') }}</p>
                     </div>
                     <q-circular-progress
                       show-value
@@ -616,8 +645,8 @@
                 <div class="panel-block">
                   <div class="panel-heading">
                     <div>
-                      <h3>จัดการรูปรายวิชา</h3>
-                      <p>ปรับรูปปกและภาพตัวอย่างที่ผู้เรียนเห็น</p>
+                      <h3>{{ t('instructor.overview.coverTitle') }}</h3>
+                      <p>{{ t('instructor.overview.coverSub') }}</p>
                     </div>
                   </div>
                   <div class="cover-editor q-mt-md">
@@ -629,14 +658,14 @@
                       v-model="courseSettings.coverImageUrl"
                       dense
                       outlined
-                      label="URL รูปปก"
+                      :label="t('instructor.overview.coverUrlLabel')"
                     />
                     <div class="row q-gutter-sm">
                       <q-btn
                         outline
                         color="primary"
                         icon="image"
-                        label="ใช้รูปตัวอย่าง"
+                        :label="t('instructor.overview.useSampleCover')"
                         no-caps
                         @click="useSampleCover"
                       />
@@ -644,7 +673,7 @@
                         flat
                         color="grey-7"
                         icon="restart_alt"
-                        label="คืนค่ารูปเดิม"
+                        :label="t('instructor.overview.resetCover')"
                         no-caps
                         @click="resetCoverImage"
                       />
@@ -655,8 +684,8 @@
                 <div class="panel-block">
                   <div class="panel-heading">
                     <div>
-                      <h3>ตั้งค่ารายวิชาที่เปิดสอน</h3>
-                      <p>กำหนดรอบเรียน วันรับสมัคร และรูปแบบการเรียน</p>
+                      <h3>{{ t('instructor.overview.settingsTitle') }}</h3>
+                      <p>{{ t('instructor.overview.settingsSub') }}</p>
                     </div>
                   </div>
                   <div class="form-grid course-settings-form q-mt-md">
@@ -664,7 +693,7 @@
                       v-model="courseSettings.termName"
                       dense
                       outlined
-                      label="รอบ/รุ่นที่เปิดสอน"
+                      :label="t('instructor.overview.termLabel')"
                       class="course-settings-field"
                     />
                     <q-select
@@ -672,7 +701,7 @@
                       :options="deliveryModeOptions"
                       dense
                       outlined
-                      label="รูปแบบการเรียน"
+                      :label="t('instructor.overview.deliveryModeLabel')"
                       dropdown-icon="keyboard_arrow_down"
                       popup-content-class="course-settings-select-menu"
                       class="course-settings-field"
@@ -680,13 +709,13 @@
                     <BaseDateInput
                       v-model="courseSettings.registrationStartDate"
                       value-format="YYYY-MM-DD"
-                      label="วันเปิดรับสมัคร"
+                      :label="t('instructor.overview.regStartLabel')"
                       class="course-settings-field"
                     />
                     <BaseDateInput
                       v-model="courseSettings.registrationEndDate"
                       value-format="YYYY-MM-DD"
-                      label="วันปิดรับสมัคร"
+                      :label="t('instructor.overview.regEndLabel')"
                       class="course-settings-field"
                     />
                   </div>
@@ -695,7 +724,7 @@
                       unelevated
                       color="primary"
                       icon="save"
-                      label="บันทึกวันที่"
+                      :label="t('instructor.overview.saveDatesBtn')"
                       no-caps
                       :loading="savingDates"
                       @click="saveRegistrationDates"
@@ -706,14 +735,16 @@
                 <div class="panel-block">
                   <div class="panel-heading">
                     <div>
-                      <h3>การคิดเงินผู้เรียนแต่ละประเภท</h3>
-                      <p>กำหนดค่าลงทะเบียนแยกตามกลุ่มผู้เรียน</p>
+                      <h3>{{ t('instructor.overview.pricingTitle') }}</h3>
+                      <p>{{ t('instructor.overview.pricingSub') }}</p>
                     </div>
                   </div>
                   <div class="pricing-list q-mt-md">
                     <div v-for="price in learnerPricing" :key="price.stutypeId" class="pricing-row">
                       <div>
-                        <strong>{{ price.label }}</strong>
+                        <strong>{{
+                          translateStutypeName(price.stutypeName || price.label)
+                        }}</strong>
                       </div>
                       <q-toggle v-model="price.enabled" color="primary" />
                       <q-input
@@ -721,7 +752,7 @@
                         dense
                         outlined
                         type="number"
-                        suffix="บาท"
+                        :suffix="t('instructor.overview.currencySuffix')"
                         :disable="!price.enabled"
                         class="price-input"
                       />
@@ -732,14 +763,14 @@
                 <div class="panel-block">
                   <div class="panel-heading">
                     <div>
-                      <h3>เจ้าหน้าที่คณะ</h3>
-                      <p>เพิ่มผู้ช่วยจัดการข้อมูลรายวิชาแทนผู้สอน</p>
+                      <h3>{{ t('instructor.overview.staffTitle') }}</h3>
+                      <p>{{ t('instructor.overview.staffSub') }}</p>
                     </div>
                     <q-btn
                       outline
                       color="primary"
                       icon="person_add"
-                      label="เพิ่มเจ้าหน้าที่"
+                      :label="t('instructor.overview.addStaffBtn')"
                       no-caps
                       @click="openFacultyStaffDialog"
                     />
@@ -766,8 +797,8 @@
                 <div class="panel-block">
                   <div class="panel-heading">
                     <div>
-                      <h3>งานเร่งด่วน</h3>
-                      <p>คิวงานที่อาจารย์ควรจัดการก่อน</p>
+                      <h3>{{ t('instructor.overview.urgentTitle') }}</h3>
+                      <p>{{ t('instructor.overview.urgentSub') }}</p>
                     </div>
                     <q-btn flat round dense icon="more_horiz" color="grey-7" />
                   </div>
@@ -775,21 +806,21 @@
                     <div v-if="priorityTasks.length === 0" class="task-row task-row--empty">
                       <q-icon name="check_circle" color="positive" size="22px" />
                       <div>
-                        <strong>ไม่มีงานเร่งด่วน</strong>
-                        <span>ข้อมูลจาก backend ยังไม่พบรายการที่ต้องจัดการตอนนี้</span>
+                        <strong>{{ t('instructor.overview.noUrgentTask') }}</strong>
+                        <span>{{ t('instructor.overview.noUrgentTaskSub') }}</span>
                       </div>
                     </div>
                     <div v-for="task in priorityTasks" :key="task.id" class="task-row">
                       <q-icon :name="task.icon" :color="task.color" size="22px" />
                       <div>
-                        <strong>{{ task.title }}</strong>
-                        <span>{{ task.detail }}</span>
+                        <strong>{{ localizedTaskTitle(task) }}</strong>
+                        <span>{{ localizedTaskDetail(task) }}</span>
                       </div>
                       <q-btn
                         flat
                         dense
                         color="primary"
-                        label="จัดการ"
+                        :label="t('instructor.overview.manageBtn')"
                         no-caps
                         @click="openPriorityTask(task)"
                       />
@@ -802,14 +833,14 @@
             <q-tab-panel name="content">
               <div class="panel-heading q-mb-md">
                 <div>
-                  <h3>กิจกรรมใน Moodle</h3>
-                  <p>กิจกรรมและสื่อการเรียนรู้จากระบบ Moodle LMS</p>
+                  <h3>{{ t('instructor.content.title') }}</h3>
+                  <p>{{ t('instructor.content.subtitle') }}</p>
                 </div>
                 <q-btn
                   unelevated
                   color="positive"
                   icon="school"
-                  label="จัดการใน Moodle"
+                  :label="t('instructor.common.moodleManage')"
                   no-caps
                   :disable="!selectedCourse?.moodleId"
                   :loading="moodleOpenLoading === selectedCourse?.id"
@@ -832,7 +863,10 @@
                       <q-avatar rounded color="primary" text-color="white" icon="folder" />
                       <div>
                         <h4>{{ section.name }}</h4>
-                        <span>{{ section.modules.length }} รายการ</span>
+                        <span
+                          >{{ section.modules.length }}
+                          {{ t('instructor.content.itemsUnit') }}</span
+                        >
                       </div>
                     </div>
                     <div class="lesson-list">
@@ -863,9 +897,11 @@
                 </template>
                 <div v-else class="empty-tab-state text-center q-pa-xl">
                   <q-icon name="school" size="56px" color="grey-4" />
-                  <div class="text-h6 text-grey-6 q-mt-md">ยังไม่มีกิจกรรมใน Moodle</div>
+                  <div class="text-h6 text-grey-6 q-mt-md">
+                    {{ t('instructor.content.noActivities') }}
+                  </div>
                   <div class="text-body2 text-grey-5 q-mt-sm">
-                    เพิ่มกิจกรรมในระบบ Moodle เพื่อให้ปรากฏที่นี่
+                    {{ t('instructor.content.noActivitiesSub') }}
                   </div>
                 </div>
               </template>
@@ -873,10 +909,10 @@
               <div v-else class="empty-tab-state text-center q-pa-xl">
                 <q-icon name="link_off" size="56px" color="grey-4" />
                 <div class="text-h6 text-grey-6 q-mt-md">
-                  รายวิชานี้ยังไม่ได้เชื่อมต่อกับ Moodle
+                  {{ t('instructor.content.notConnected') }}
                 </div>
                 <div class="text-body2 text-grey-5 q-mt-sm">
-                  ติดต่อผู้ดูแลระบบเพื่อเชื่อมรายวิชากับ Moodle
+                  {{ t('instructor.content.notConnectedSub') }}
                 </div>
               </div>
             </q-tab-panel>
@@ -884,11 +920,13 @@
             <q-tab-panel name="learners">
               <div class="panel-heading q-mb-md">
                 <div>
-                  <h3>ผู้เรียนและความก้าวหน้า</h3>
+                  <h3>{{ t('instructor.learners.title') }}</h3>
                   <p>
-                    ลงทะเบียนแล้ว {{ selectedCourse?.enrolledCount.toLocaleString() ?? 0 }} คน{{
+                    {{ t('instructor.learners.enrolled') }}
+                    {{ selectedCourse?.enrolledCount.toLocaleString() ?? 0
+                    }}{{
                       selectedCourse?.maxSeats
-                        ? ` จาก ${selectedCourse.maxSeats.toLocaleString()} ที่นั่ง`
+                        ? ` ${t('instructor.learners.fromSeats', { n: selectedCourse.maxSeats.toLocaleString() })}`
                         : ''
                     }}
                   </p>
@@ -897,7 +935,7 @@
                   outline
                   color="primary"
                   icon="download"
-                  label="ส่งออก CSV"
+                  :label="t('instructor.learners.exportCsvBtn')"
                   no-caps
                   @click="openQuickDialog('ส่งออกข้อมูลผู้เรียน')"
                 />
@@ -967,9 +1005,11 @@
               </q-table>
               <div v-else class="empty-tab-state text-center q-pa-xl">
                 <q-icon name="groups" size="56px" color="grey-4" />
-                <div class="text-h6 text-grey-6 q-mt-md">ยังไม่มีผู้เรียนลงทะเบียน</div>
+                <div class="text-h6 text-grey-6 q-mt-md">
+                  {{ t('instructor.learners.noLearners') }}
+                </div>
                 <div class="text-body2 text-grey-5 q-mt-sm">
-                  เมื่อมีผู้เรียนลงทะเบียนแล้ว รายชื่อจะแสดงที่นี่
+                  {{ t('instructor.learners.noLearnersSub') }}
                 </div>
               </div>
             </q-tab-panel>
@@ -977,14 +1017,14 @@
             <q-tab-panel name="grading">
               <div class="panel-heading q-mb-md">
                 <div>
-                  <h3>งาน แบบทดสอบ และคะแนน</h3>
-                  <p>ดูรายการที่ต้องตรวจ กำหนดคะแนนผ่าน และประกาศผลให้ผู้เรียน</p>
+                  <h3>{{ t('instructor.grading.title') }}</h3>
+                  <p>{{ t('instructor.grading.subtitle') }}</p>
                 </div>
                 <q-btn
                   unelevated
                   color="primary"
                   icon="assignment_add"
-                  label="สร้างงาน"
+                  :label="t('instructor.grading.createBtn')"
                   no-caps
                   @click="openQuickDialog('สร้างงานใหม่')"
                 />
@@ -999,13 +1039,13 @@
                   <h4>{{ assignment.title }}</h4>
                   <p>{{ assignment.detail }}</p>
                   <div class="assignment-card__stats">
-                    <span>{{ assignment.submitted }} ส่งแล้ว</span>
-                    <span>{{ assignment.pending }} รอตรวจ</span>
+                    <span>{{ assignment.submitted }} {{ t('instructor.grading.submitted') }}</span>
+                    <span>{{ assignment.pending }} {{ t('instructor.grading.pending') }}</span>
                   </div>
                   <q-btn
                     outline
                     color="primary"
-                    label="ตรวจงาน"
+                    :label="t('instructor.grading.gradeBtn')"
                     no-caps
                     class="full-width"
                     tag="a"
@@ -1016,9 +1056,11 @@
               </div>
               <div v-else class="empty-tab-state text-center q-pa-xl">
                 <q-icon name="assignment" size="56px" color="grey-4" />
-                <div class="text-h6 text-grey-6 q-mt-md">ยังไม่มีงานหรือแบบทดสอบ</div>
+                <div class="text-h6 text-grey-6 q-mt-md">
+                  {{ t('instructor.grading.noAssignments') }}
+                </div>
                 <div class="text-body2 text-grey-5 q-mt-sm">
-                  กดปุ่ม "สร้างงาน" เพื่อเพิ่มงานใหม่
+                  {{ t('instructor.grading.noAssignmentsSub') }}
                 </div>
               </div>
             </q-tab-panel>
@@ -1026,14 +1068,14 @@
             <q-tab-panel name="announcements">
               <div class="panel-heading q-mb-md">
                 <div>
-                  <h3>ประกาศและการสื่อสาร</h3>
-                  <p>แจ้งข่าว ส่งข้อความ และปักหมุดประกาศสำคัญของรายวิชา</p>
+                  <h3>{{ t('instructor.announcements.title') }}</h3>
+                  <p>{{ t('instructor.announcements.subtitle') }}</p>
                 </div>
                 <q-btn
                   unelevated
                   color="primary"
                   icon="campaign"
-                  label="เขียนประกาศ"
+                  :label="t('instructor.announcements.writeButton')"
                   no-caps
                   @click="openAnnouncementDialog()"
                 />
@@ -1064,7 +1106,7 @@
                       color="primary"
                       @click="openEditAnnouncementDialog(announcement)"
                     >
-                      <q-tooltip>แก้ไข</q-tooltip>
+                      <q-tooltip>{{ t('instructor.announcements.tooltipEdit') }}</q-tooltip>
                     </q-btn>
                     <q-btn
                       flat
@@ -1074,16 +1116,18 @@
                       color="negative"
                       @click="confirmDeleteAnnouncement(announcement)"
                     >
-                      <q-tooltip>ลบ</q-tooltip>
+                      <q-tooltip>{{ t('instructor.announcements.tooltipDelete') }}</q-tooltip>
                     </q-btn>
                   </template>
                 </div>
               </div>
               <div v-else class="empty-tab-state text-center q-pa-xl">
                 <q-icon name="campaign" size="56px" color="grey-4" />
-                <div class="text-h6 text-grey-6 q-mt-md">ยังไม่มีประกาศ</div>
+                <div class="text-h6 text-grey-6 q-mt-md">
+                  {{ t('instructor.announcements.empty') }}
+                </div>
                 <div class="text-body2 text-grey-5 q-mt-sm">
-                  กดปุ่ม "เขียนประกาศ" เพื่อแจ้งข่าวสารให้ผู้เรียน
+                  {{ t('instructor.announcements.emptySub') }}
                 </div>
               </div>
             </q-tab-panel>
@@ -1093,15 +1137,17 @@
                 <div class="panel-block">
                   <div class="panel-heading">
                     <div>
-                      <h3>การเผยแพร่</h3>
-                      <p>ควบคุมสถานะรายวิชาและการเปิดรับสมัคร</p>
+                      <h3>{{ t('instructor.settings.publishTitle') }}</h3>
+                      <p>{{ t('instructor.settings.publishSub') }}</p>
                     </div>
                   </div>
                   <q-list class="settings-list">
                     <q-item tag="label">
                       <q-item-section>
-                        <q-item-label>เผยแพร่รายวิชา</q-item-label>
-                        <q-item-label caption>ผู้เรียนสามารถเห็นรายวิชาบนหน้าเว็บไซต์</q-item-label>
+                        <q-item-label>{{ t('instructor.settings.publishCourse') }}</q-item-label>
+                        <q-item-label caption>{{
+                          t('instructor.settings.publishCourseCaption')
+                        }}</q-item-label>
                       </q-item-section>
                       <q-item-section side>
                         <q-toggle v-model="courseSettings.published" color="primary" />
@@ -1109,8 +1155,10 @@
                     </q-item>
                     <q-item tag="label">
                       <q-item-section>
-                        <q-item-label>เปิดรับสมัคร</q-item-label>
-                        <q-item-label caption>อนุญาตให้ผู้เรียนลงทะเบียนรายวิชานี้</q-item-label>
+                        <q-item-label>{{ t('instructor.settings.openEnrollment') }}</q-item-label>
+                        <q-item-label caption>{{
+                          t('instructor.settings.openEnrollmentCaption')
+                        }}</q-item-label>
                       </q-item-section>
                       <q-item-section side>
                         <q-toggle v-model="courseSettings.registrationOpen" color="primary" />
@@ -1118,8 +1166,10 @@
                     </q-item>
                     <q-item>
                       <q-item-section>
-                        <q-item-label>จำนวนที่นั่งสูงสุด</q-item-label>
-                        <q-item-label caption>กำหนดจำนวนผู้เรียนที่รับได้</q-item-label>
+                        <q-item-label>{{ t('instructor.settings.maxSeats') }}</q-item-label>
+                        <q-item-label caption>{{
+                          t('instructor.settings.maxSeatsCaption')
+                        }}</q-item-label>
                       </q-item-section>
                       <q-item-section side>
                         <q-input
@@ -1137,8 +1187,8 @@
                 <div class="panel-block">
                   <div class="panel-heading">
                     <div>
-                      <h3>คุณภาพก่อนเผยแพร่</h3>
-                      <p>รายการตรวจสอบเชิงระบบ</p>
+                      <h3>{{ t('instructor.settings.qualityTitle') }}</h3>
+                      <p>{{ t('instructor.settings.qualitySub') }}</p>
                     </div>
                   </div>
                   <div class="quality-grid">
@@ -1158,14 +1208,14 @@
             <q-tab-panel name="reports">
               <div class="panel-heading q-mb-md">
                 <div>
-                  <h3>รายงานรวมรายวิชา</h3>
-                  <p>ข้อมูลสำหรับติดตามผลและตัดสินใจปรับปรุงรายวิชา</p>
+                  <h3>{{ t('instructor.reports.title') }}</h3>
+                  <p>{{ t('instructor.reports.subtitle') }}</p>
                 </div>
                 <q-btn
                   outline
                   color="primary"
                   icon="picture_as_pdf"
-                  label="ส่งออกรายงาน"
+                  :label="t('instructor.reports.exportBtn')"
                   no-caps
                   @click="openQuickDialog('ส่งออกรายงาน')"
                 />
@@ -1187,8 +1237,8 @@
         </main>
         <main v-else class="course-workspace empty-course-state">
           <q-icon name="library_books" size="52px" color="grey-5" />
-          <h2>ยังไม่มีรายวิชา</h2>
-          <p>ติดต่อผู้ดูแลระบบเพื่อเพิ่มรายวิชา</p>
+          <h2>{{ t('instructor.common.noCourse') }}</h2>
+          <p>{{ t('instructor.common.noCourseSub') }}</p>
         </main>
       </section>
     </div>
@@ -1197,9 +1247,9 @@
       <q-card class="staff-dialog">
         <q-card-section class="row items-center q-pb-sm">
           <div>
-            <div class="text-h6 text-weight-bold">เพิ่มเจ้าหน้าที่คณะ</div>
+            <div class="text-h6 text-weight-bold">{{ t('instructor.dialog.addStaffTitle') }}</div>
             <div class="text-body2 text-grey-7 q-mt-xs">
-              เพิ่มผู้ช่วยจัดการข้อมูลรายวิชาในคอร์สนี้
+              {{ t('instructor.dialog.addStaffSub') }}
             </div>
           </div>
           <q-space />
@@ -1210,14 +1260,13 @@
           <q-input
             v-model="facultyStaffForm.name"
             outlined
-            label="ชื่อเจ้าหน้าที่"
-            placeholder="เช่น นางสาวสมใจ ใจดี"
+            :label="t('instructor.dialog.staffNameLabel')"
           />
           <q-input
             v-model="facultyStaffForm.email"
             outlined
             type="email"
-            label="อีเมล"
+            :label="t('instructor.dialog.emailLabel')"
             placeholder="name@buu.ac.th"
           />
           <q-select
@@ -1225,18 +1274,18 @@
             outlined
             emit-value
             map-options
-            label="สิทธิ์การใช้งาน"
+            :label="t('instructor.dialog.permissionLabel')"
             :options="facultyStaffPermissionOptions"
           />
         </q-card-section>
 
         <q-card-actions align="right" class="q-pa-md q-pt-none">
-          <q-btn flat color="grey-7" label="ยกเลิก" no-caps v-close-popup />
+          <q-btn flat color="grey-7" :label="t('instructor.common.cancel')" no-caps v-close-popup />
           <q-btn
             unelevated
             color="primary"
             icon="person_add"
-            label="เพิ่มเจ้าหน้าที่"
+            :label="t('instructor.dialog.addStaffBtn')"
             no-caps
             @click="addFacultyStaff"
           />
@@ -1249,20 +1298,25 @@
         <q-card-section class="row items-start no-wrap q-gutter-md">
           <q-avatar color="negative" text-color="white" icon="delete" />
           <div>
-            <div class="text-h6 text-weight-bold">ลบรายวิชา</div>
+            <div class="text-h6 text-weight-bold">
+              {{ t('instructor.dialog.deleteCourseTitle') }}
+            </div>
             <div class="text-body2 text-grey-8 q-mt-xs">
-              ต้องการลบรายวิชา "{{ pendingDeleteCourse?.titleEn || pendingDeleteCourse?.title }}"
-              ใช่หรือไม่?
+              {{
+                t('instructor.dialog.deleteCourseConfirm', {
+                  name: pendingDeleteCourse?.titleEn || pendingDeleteCourse?.title,
+                })
+              }}
             </div>
           </div>
         </q-card-section>
         <q-card-actions align="right" class="q-pa-md">
-          <q-btn flat color="grey-7" label="ยกเลิก" no-caps v-close-popup />
+          <q-btn flat color="grey-7" :label="t('instructor.common.cancel')" no-caps v-close-popup />
           <q-btn
             unelevated
             color="negative"
             icon="delete"
-            label="ลบรายวิชา"
+            :label="t('instructor.course.deleteCourse')"
             no-caps
             @click="deletePendingCourse"
           />
@@ -1296,7 +1350,7 @@
 
         <q-card-section class="learner-detail-grid">
           <div class="learner-detail-stat">
-            <span>ความก้าวหน้า</span>
+            <span>{{ t('instructor.learnerDetail.progress') }}</span>
             <strong>{{ selectedLearner.progress }}%</strong>
             <q-linear-progress
               rounded
@@ -1306,11 +1360,11 @@
             />
           </div>
           <div class="learner-detail-stat">
-            <span>คะแนนรวม</span>
+            <span>{{ t('instructor.learnerDetail.totalScore') }}</span>
             <strong>{{ selectedLearner.score }}</strong>
           </div>
           <div class="learner-detail-stat">
-            <span>งานที่เสร็จ</span>
+            <span>{{ t('instructor.learnerDetail.completedWork') }}</span>
             <strong>{{
               selectedLearner.totalLessons > 0
                 ? `${selectedLearner.completedLessons}/${selectedLearner.totalLessons}`
@@ -1318,26 +1372,31 @@
             }}</strong>
           </div>
           <div class="learner-detail-stat">
-            <span>เข้าเรียนล่าสุด</span>
+            <span>{{ t('instructor.learnerDetail.lastActive') }}</span>
             <strong>{{ selectedLearner.lastActive }}</strong>
           </div>
         </q-card-section>
 
         <q-card-section class="learner-detail-info">
           <div>
-            <span>คณะ/หน่วยงาน</span><strong>{{ selectedLearner.faculty }}</strong>
+            <span>{{ t('instructor.learnerDetail.faculty') }}</span
+            ><strong>{{ selectedLearner.faculty }}</strong>
           </div>
           <div>
-            <span>สาขา</span><strong>{{ selectedLearner.department }}</strong>
+            <span>{{ t('instructor.learnerDetail.branch') }}</span
+            ><strong>{{ selectedLearner.department }}</strong>
           </div>
           <div>
-            <span>เบอร์โทร</span><strong>{{ selectedLearner.phone }}</strong>
+            <span>{{ t('instructor.learnerDetail.phone') }}</span
+            ><strong>{{ selectedLearner.phone }}</strong>
           </div>
           <div>
-            <span>วันที่ลงทะเบียน</span><strong>{{ selectedLearner.enrolledAt }}</strong>
+            <span>{{ t('instructor.learnerDetail.enrollDate') }}</span
+            ><strong>{{ selectedLearner.enrolledAt }}</strong>
           </div>
           <div>
-            <span>สถานะชำระเงิน</span><strong>{{ selectedLearner.paymentStatus }}</strong>
+            <span>{{ t('instructor.learnerDetail.paymentStatus') }}</span
+            ><strong>{{ selectedLearner.paymentStatus }}</strong>
           </div>
         </q-card-section>
 
@@ -1346,7 +1405,7 @@
             flat
             color="primary"
             icon="mail"
-            label="ส่งข้อความ"
+            :label="t('instructor.dialog.sendMessage')"
             no-caps
             @click="openQuickDialog(`ส่งข้อความถึง ${selectedLearner.name}`)"
           />
@@ -1354,7 +1413,7 @@
             unelevated
             color="primary"
             icon="assignment"
-            label="ดูงาน/คะแนน"
+            :label="t('instructor.dialog.viewGrades')"
             no-caps
             @click="
               activeWorkspaceTab = 'grading';
@@ -1368,12 +1427,12 @@
     <BaseSystemDialog
       v-model="saveCourseDialogOpen"
       variant="confirm"
-      title="ยืนยันการแก้ไขรายวิชา"
+      :title="t('instructor.course.saveChanges')"
       :message="saveCourseDialogMessage"
       :details="pendingCourseChangeLabels"
-      confirm-label="ยืนยันการบันทึก"
+      :confirm-label="t('instructor.course.saveChanges')"
       confirm-icon="save"
-      cancel-label="ยกเลิก"
+      :cancel-label="t('instructor.common.cancel')"
       @confirm="confirmPendingCourseSave"
       @cancel="clearPendingCourseSave"
     />
@@ -1383,19 +1442,25 @@
         <q-card-section class="row items-start no-wrap q-gutter-md">
           <q-avatar color="negative" text-color="white" icon="delete" />
           <div>
-            <div class="text-h6 text-weight-bold">ลบประกาศ</div>
+            <div class="text-h6 text-weight-bold">
+              {{ t('instructor.announcements.deleteTitle') }}
+            </div>
             <div class="text-body2 text-grey-8 q-mt-xs">
-              ต้องการลบประกาศ "{{ pendingDeleteAnnouncement?.title }}" ใช่หรือไม่?
+              {{
+                t('instructor.announcements.deleteConfirm', {
+                  name: pendingDeleteAnnouncement?.title,
+                })
+              }}
             </div>
           </div>
         </q-card-section>
         <q-card-actions align="right" class="q-pa-md">
-          <q-btn flat color="grey-7" label="ยกเลิก" no-caps v-close-popup />
+          <q-btn flat color="grey-7" :label="t('instructor.common.cancel')" no-caps v-close-popup />
           <q-btn
             unelevated
             color="negative"
             icon="delete"
-            label="ลบประกาศ"
+            :label="t('instructor.announcements.deleteTitle')"
             no-caps
             :loading="announcementSubmitting"
             @click="executeDeleteAnnouncement"
@@ -1409,13 +1474,17 @@
         <q-card-section class="row items-center q-pb-sm">
           <div>
             <div class="text-h6 text-weight-bold">
-              {{ editingAnnouncementId !== null ? 'แก้ไขประกาศ' : 'เขียนประกาศ' }}
+              {{
+                editingAnnouncementId !== null
+                  ? t('instructor.announcements.dialogEdit')
+                  : t('instructor.announcements.dialogWrite')
+              }}
             </div>
             <div class="text-body2 text-grey-7 q-mt-xs">
               {{
                 editingAnnouncementId !== null
-                  ? 'แก้ไขหัวข้อและเนื้อหาประกาศ'
-                  : 'ประกาศจะถูกส่งเมลแจ้งเตือนไปยังผู้เรียนที่ลงทะเบียนทั้งหมด'
+                  ? t('instructor.announcements.dialogEditSub')
+                  : t('instructor.announcements.dialogWriteSub')
               }}
             </div>
           </div>
@@ -1427,8 +1496,7 @@
           <q-input
             v-model="announcementForm.title"
             outlined
-            label="หัวข้อประกาศ"
-            placeholder="เช่น แจ้งเลื่อนการสอบกลางภาค"
+            :label="t('instructor.announcements.fieldTitle')"
             :maxlength="255"
             counter
             :disable="announcementSubmitting"
@@ -1437,8 +1505,7 @@
             v-model="announcementForm.content"
             outlined
             type="textarea"
-            label="เนื้อหาประกาศ"
-            placeholder="รายละเอียดประกาศ..."
+            :label="t('instructor.announcements.fieldContent')"
             rows="6"
             class="q-mt-md"
             :disable="announcementSubmitting"
@@ -1449,7 +1516,7 @@
           <q-btn
             flat
             color="grey-7"
-            label="ยกเลิก"
+            :label="t('instructor.common.cancel')"
             no-caps
             v-close-popup
             :disable="announcementSubmitting"
@@ -1458,7 +1525,11 @@
             unelevated
             color="primary"
             :icon="editingAnnouncementId !== null ? 'save' : 'send'"
-            :label="editingAnnouncementId !== null ? 'บันทึก' : 'ส่งประกาศ'"
+            :label="
+              editingAnnouncementId !== null
+                ? t('instructor.announcements.saveBtn')
+                : t('instructor.announcements.sendBtn')
+            "
             no-caps
             :loading="announcementSubmitting"
             @click="submitAnnouncement"
@@ -1473,6 +1544,7 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { getCourseStructure } from 'src/data/course-structure';
@@ -1518,6 +1590,7 @@ interface LearnerRow {
 
 interface LearnerPriceRule {
   stutypeId: number;
+  stutypeName: string;
   label: string;
   enabled: boolean;
   amount: number;
@@ -1564,6 +1637,7 @@ interface MoodleSection {
 const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
+const { t, locale } = useI18n({ useScope: 'global' });
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
 const instructorBackend = useInstructorBackend();
@@ -1658,10 +1732,12 @@ const isTeachingRole = computed(
 );
 const isCourseTableView = computed(() => route.query.view === 'table');
 const courseTableTitle = computed(() =>
-  courseStatusFilter.value === 'active' ? 'รายวิชาที่เปิดสอน' : 'รายวิชาของฉัน',
+  courseStatusFilter.value === 'active'
+    ? t('instructor.course.activeSidebarTitle')
+    : t('instructor.course.sidebarTitle'),
 );
 const instructorHeroTitle = computed(() =>
-  isCourseTableView.value ? courseTableTitle.value : 'รายวิชาของฉัน',
+  isCourseTableView.value ? courseTableTitle.value : t('instructor.course.sidebarTitle'),
 );
 const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
@@ -1728,7 +1804,7 @@ async function openInMoodle(course: Course): Promise<void> {
   const moodleId = course.moodleId;
   const username = authStore.user?.username || authStore.user?.email;
   if (!moodleId || !username) {
-    $q.notify({ type: 'warning', message: 'ยังไม่มีข้อมูล Moodle สำหรับรายวิชานี้' });
+    $q.notify({ type: 'warning', message: t('instructor.moodleNotification.noMoodleData') });
     return;
   }
   moodleOpenLoading.value = course.id;
@@ -1738,7 +1814,7 @@ async function openInMoodle(course: Course): Promise<void> {
     );
     window.open(data.url, '_blank', 'noopener,noreferrer');
   } catch {
-    $q.notify({ type: 'negative', message: 'ไม่สามารถเชื่อมต่อ Moodle ได้ในขณะนี้' });
+    $q.notify({ type: 'negative', message: t('instructor.moodleNotification.connectionFailed') });
   } finally {
     moodleOpenLoading.value = '';
   }
@@ -1814,28 +1890,28 @@ const dashboardMetrics = computed(() => {
 
   return [
     {
-      label: 'ผู้เรียนทั้งหมด',
+      label: t('instructor.metrics.totalLearners'),
       value: totalLearners.toLocaleString(),
       icon: 'groups',
       color: '#1976d2',
       background: '#e3f2fd',
     },
     {
-      label: 'รายวิชาที่เผยแพร่',
+      label: t('instructor.metrics.publishedCourses'),
       value: String(activeCourses),
       icon: 'menu_book',
       color: '#2e7d32',
       background: '#e8f5e9',
     },
     {
-      label: 'งานรอตรวจ',
+      label: t('instructor.metrics.pendingReview'),
       value: String(pendingReviews),
       icon: 'assignment_late',
       color: '#c77700',
       background: '#fff7df',
     },
     {
-      label: 'ยอดเข้าชม',
+      label: t('instructor.metrics.totalViews'),
       value: totalViews.toLocaleString(),
       icon: 'visibility',
       color: '#6a1b9a',
@@ -1844,28 +1920,30 @@ const dashboardMetrics = computed(() => {
   ];
 });
 
-const workspaceTabs: Array<{ name: WorkspaceTab; label: string; icon: string }> = [
-  { name: 'overview', label: 'ภาพรวม', icon: 'dashboard' },
-  { name: 'content', label: 'เนื้อหา', icon: 'view_list' },
-  { name: 'learners', label: 'ผู้เรียน', icon: 'groups' },
-  { name: 'grading', label: 'งาน/คะแนน', icon: 'grading' },
-  { name: 'announcements', label: 'ประกาศ', icon: 'campaign' },
-  { name: 'settings', label: 'ตั้งค่า', icon: 'settings' },
-  { name: 'reports', label: 'รายงาน', icon: 'analytics' },
-];
+const workspaceTabs = computed<Array<{ name: WorkspaceTab; label: string; icon: string }>>(() => [
+  { name: 'overview', label: t('instructor.tabs.overview'), icon: 'dashboard' },
+  { name: 'content', label: t('instructor.tabs.content'), icon: 'view_list' },
+  { name: 'learners', label: t('instructor.tabs.learners'), icon: 'groups' },
+  { name: 'grading', label: t('instructor.tabs.grading'), icon: 'grading' },
+  { name: 'announcements', label: t('instructor.tabs.announcements'), icon: 'campaign' },
+  { name: 'settings', label: t('instructor.tabs.settings'), icon: 'settings' },
+  { name: 'reports', label: t('instructor.tabs.reports'), icon: 'analytics' },
+]);
 
 function getLearnerStatus(progress: number): Pick<LearnerRow, 'status' | 'statusColor'> {
-  if (progress >= 85) return { status: 'เรียนต่อเนื่อง', statusColor: 'positive' };
-  if (progress >= 60) return { status: 'ปกติ', statusColor: 'primary' };
-  if (progress >= 35) return { status: 'ควรติดตาม', statusColor: 'warning' };
-  return { status: 'รอข้อมูลความคืบหน้า', statusColor: 'grey-7' };
+  if (progress >= 85)
+    return { status: t('instructor.status.activeStudent'), statusColor: 'positive' };
+  if (progress >= 60) return { status: t('instructor.status.normal'), statusColor: 'primary' };
+  if (progress >= 35) return { status: t('instructor.status.watchlist'), statusColor: 'warning' };
+  return { status: t('instructor.status.waitingProgress'), statusColor: 'grey-7' };
 }
 
 function formatBackendDate(value: string | null | undefined): string {
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('th-TH', {
+  const lang = locale.value === 'th' ? 'th-TH' : 'en-US';
+  return new Intl.DateTimeFormat(lang, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -1873,9 +1951,9 @@ function formatBackendDate(value: string | null | undefined): string {
 }
 
 function formatPaymentStatus(value: string | null | undefined, isFree: boolean): string {
-  if (isFree) return 'ไม่มีค่าใช้จ่าย';
-  if (value === 'Y') return 'ชำระแล้ว';
-  if (value === 'N') return 'ยังไม่ชำระ';
+  if (isFree) return t('instructor.course.freeLabel');
+  if (value === 'Y') return t('instructor.status.paid');
+  if (value === 'N') return t('instructor.status.unpaid');
   return value || '-';
 }
 
@@ -1917,7 +1995,7 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
       lastActive: grade?.updatedAt ? formatBackendDate(grade.updatedAt) : '-',
       score:
         completedLessons === 0 || grade?.score === null || grade?.score === undefined
-          ? 'ยังไม่มีคะแนน'
+          ? t('instructor.status.noScore')
           : `${grade.score}/${grade.maxScore ?? 100}`,
       ...status,
       enrolledAt: formatBackendDate(learner.enrolledAt),
@@ -1937,7 +2015,8 @@ function stripHtml(html: string): string {
 
 function formatUnixDate(ts: number): string {
   const d = new Date(ts * 1000);
-  return `ประกาศเมื่อ ${d.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+  const lang = locale.value === 'th' ? 'th-TH' : 'en-US';
+  return `${t('instructor.course.announcedOn')} ${d.toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' })}`;
 }
 
 const isKnownCourse = computed(() => Boolean(selectedCourse.value));
@@ -1946,21 +2025,33 @@ const learners = computed<LearnerRow[]>(() =>
   isKnownCourse.value ? buildLearnersForCourse(selectedCourse.value) : [],
 );
 
-const learnerColumns: QTableColumn<LearnerRow>[] = [
-  { name: 'name', label: 'ผู้เรียน', field: 'name', align: 'left', sortable: true },
-  { name: 'email', label: 'อีเมล', field: 'email', align: 'left' },
-  { name: 'progress', label: 'ความก้าวหน้า', field: 'progress', align: 'left', sortable: true },
-  { name: 'score', label: 'คะแนน', field: 'score', align: 'left' },
+const learnerColumns = computed<QTableColumn<LearnerRow>[]>(() => [
+  {
+    name: 'name',
+    label: t('instructor.learners.colName'),
+    field: 'name',
+    align: 'left',
+    sortable: true,
+  },
+  { name: 'email', label: t('instructor.learners.colEmail'), field: 'email', align: 'left' },
+  {
+    name: 'progress',
+    label: t('instructor.learners.colProgress'),
+    field: 'progress',
+    align: 'left',
+    sortable: true,
+  },
+  { name: 'score', label: t('instructor.learners.colScore'), field: 'score', align: 'left' },
   {
     name: 'lastActive',
-    label: 'เข้าเรียนล่าสุด',
+    label: t('instructor.learners.colLastActive'),
     field: 'lastActive',
     align: 'left',
     sortable: true,
   },
-  { name: 'status', label: 'สถานะ', field: 'status', align: 'left' },
+  { name: 'status', label: t('instructor.learners.colStatus'), field: 'status', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 const assignments = computed(() => {
   if (!isKnownCourse.value) return [];
@@ -1987,7 +2078,10 @@ const assignments = computed(() => {
         detail: section.name,
         submitted,
         pending: 0,
-        status: mod.modname === 'quiz' ? 'แบบทดสอบ' : 'งานส่ง',
+        status:
+          mod.modname === 'quiz'
+            ? t('instructor.assignmentType.quiz')
+            : t('instructor.assignmentType.assignment'),
         statusColor: mod.modname === 'quiz' ? 'primary' : 'orange',
         icon: mod.modname === 'quiz' ? 'quiz' : 'assignment',
         color: mod.modname === 'quiz' ? 'primary' : 'orange',
@@ -2000,7 +2094,8 @@ const assignments = computed(() => {
 function formatDbDate(dateStr: string | Date): string {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return '-';
-  return `ประกาศเมื่อ ${d.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+  const lang = locale.value === 'th' ? 'th-TH' : 'en-US';
+  return `${t('instructor.course.announcedOn')} ${d.toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' })}`;
 }
 
 const announcements = computed(() => {
@@ -2030,9 +2125,24 @@ const announcements = computed(() => {
 const reports = computed(() => {
   if (!isKnownCourse.value) {
     return [
-      { label: 'อัตราเรียนจบ', value: '0%', progress: 0, color: 'positive' },
-      { label: 'คะแนนเฉลี่ย', value: '0/100', progress: 0, color: 'primary' },
-      { label: 'การมีส่วนร่วม', value: '0%', progress: 0, color: 'warning' },
+      {
+        label: t('instructor.reportLabels.completionRate'),
+        value: '0%',
+        progress: 0,
+        color: 'positive',
+      },
+      {
+        label: t('instructor.reportLabels.avgScore'),
+        value: '0/100',
+        progress: 0,
+        color: 'primary',
+      },
+      {
+        label: t('instructor.reportLabels.engagement'),
+        value: '0%',
+        progress: 0,
+        color: 'warning',
+      },
     ];
   }
   const grades = instructorBackend.gradesByCourseId.value[selectedCourse.value!.id] ?? [];
@@ -2051,19 +2161,19 @@ const reports = computed(() => {
 
   return [
     {
-      label: 'อัตราเรียนจบ',
+      label: t('instructor.reportLabels.completionRate'),
       value: `${completionRate}%`,
       progress: completionRate / 100,
       color: 'positive',
     },
     {
-      label: 'คะแนนเฉลี่ย',
+      label: t('instructor.reportLabels.avgScore'),
       value: scoredGrades.length > 0 ? `${avgScore}/${maxScore}` : '-',
       progress: avgScore / maxScore,
       color: 'primary',
     },
     {
-      label: 'การมีส่วนร่วม',
+      label: t('instructor.reportLabels.engagement'),
       value: `${participation}%`,
       progress: participation / 100,
       color: 'warning',
@@ -2081,23 +2191,25 @@ const readinessChecklist = computed(() => {
   const hasAnnouncements = announcements.value.length > 0;
   return [
     {
-      label: 'ข้อมูลรายวิชาครบถ้วน',
-      detail: 'ชื่อ คำอธิบาย ราคา รูปปก และช่องทางติดต่อพร้อมใช้งาน',
+      label: t('instructor.readiness.courseInfoComplete'),
+      detail: t('instructor.readiness.courseInfoCompleteSub'),
       done: Boolean(selectedCourse.value?.title),
     },
     {
-      label: 'มีโครงสร้างบทเรียน',
-      detail: `${selectedStructure.value.length} โมดูลพร้อมเผยแพร่`,
+      label: t('instructor.readiness.hasLessons'),
+      detail: hasStructure
+        ? `${selectedStructure.value.length} ${t('instructor.content.itemsUnit')}`
+        : t('instructor.readiness.noLessons'),
       done: hasStructure,
     },
     {
-      label: 'มีแบบประเมินผล',
-      detail: 'ตั้งค่า quiz หรืองานที่ใช้ตัดสินผลการเรียน',
+      label: t('instructor.readiness.hasAssessment'),
+      detail: t('instructor.readiness.hasAssessmentSub'),
       done: hasQuiz,
     },
     {
-      label: 'ประกาศเริ่มเรียน',
-      detail: 'มีประกาศต้อนรับและแนวทางการเรียน',
+      label: t('instructor.readiness.hasCourseAnnouncement'),
+      detail: t('instructor.readiness.hasAnnouncementSub'),
       done: hasAnnouncements,
     },
   ];
@@ -2111,13 +2223,13 @@ const priorityTasks = computed<InstructorPriorityTask[]>(() => {
 });
 
 const qualityChecks = computed(() => [
-  { label: 'รูปปกแสดงผลถูกต้อง', done: Boolean(selectedCourse.value?.imageUrl) },
+  { label: t('instructor.quality.coverImage'), done: Boolean(selectedCourse.value?.imageUrl) },
   {
-    label: 'มีบทเรียนอย่างน้อย 3 รายการ',
+    label: t('instructor.quality.minLessons'),
     done: selectedStructure.value.reduce((sum, module) => sum + module.lessons.length, 0) >= 3,
   },
-  { label: 'มีเกณฑ์ประเมินผล', done: true },
-  { label: 'กำหนดจำนวนที่นั่งแล้ว', done: (courseSettings.maxSeats ?? 0) > 0 },
+  { label: t('instructor.quality.hasGradingCriteria'), done: true },
+  { label: t('instructor.quality.maxSeatsSet'), done: (courseSettings.maxSeats ?? 0) > 0 },
 ]);
 
 watch(
@@ -2140,6 +2252,7 @@ watch(
         learnerPricing.length,
         ...fees.map((f) => ({
           stutypeId: f.stutypeId,
+          stutypeName: f.stutypeName ?? '',
           label: f.stutypeName ?? `ประเภท ${f.stutypeId}`,
           enabled: true,
           amount: f.amount,
@@ -2223,9 +2336,17 @@ async function executeDeleteAnnouncement(): Promise<void> {
     await instructorBackend.deleteAnnouncement(pendingDeleteAnnouncement.value.id);
     deleteAnnouncementDialogOpen.value = false;
     if (!isNaN(numericId)) await instructorBackend.fetchDbAnnouncements(numericId);
-    $q.notify({ type: 'positive', message: 'ลบประกาศเรียบร้อยแล้ว', position: 'top' });
+    $q.notify({
+      type: 'positive',
+      message: t('instructor.notify.announcementDeleted'),
+      position: 'top',
+    });
   } catch {
-    $q.notify({ type: 'negative', message: 'ไม่สามารถลบประกาศได้', position: 'top' });
+    $q.notify({
+      type: 'negative',
+      message: t('instructor.notify.announcementDeleteFailed'),
+      position: 'top',
+    });
   } finally {
     announcementSubmitting.value = false;
     pendingDeleteAnnouncement.value = null;
@@ -2234,12 +2355,12 @@ async function executeDeleteAnnouncement(): Promise<void> {
 
 async function submitAnnouncement(): Promise<void> {
   if (!announcementForm.title.trim() || !announcementForm.content.trim()) {
-    $q.notify({ type: 'warning', message: 'กรุณากรอกหัวข้อและเนื้อหาประกาศ' });
+    $q.notify({ type: 'warning', message: t('instructor.notify.announcementFieldsRequired') });
     return;
   }
   const numericId = parseInt(String(selectedCourseId.value).replace('db-', ''), 10);
   if (isNaN(numericId)) {
-    $q.notify({ type: 'warning', message: 'ไม่พบรหัสรายวิชา' });
+    $q.notify({ type: 'warning', message: t('instructor.notify.courseIdNotFound') });
     return;
   }
   announcementSubmitting.value = true;
@@ -2254,7 +2375,7 @@ async function submitAnnouncement(): Promise<void> {
       $q.notify({
         type: 'positive',
         icon: 'edit',
-        message: 'แก้ไขประกาศเรียบร้อยแล้ว',
+        message: t('instructor.notify.announcementUpdated'),
         position: 'top',
         timeout: 3000,
       });
@@ -2267,14 +2388,17 @@ async function submitAnnouncement(): Promise<void> {
       announcementDialogOpen.value = false;
       await instructorBackend.fetchDbAnnouncements(numericId);
       const total = result.emailsSent + result.emailsFailed + result.emailsSkipped;
-      const parts: string[] = [];
-      parts.push(`ส่งเมลแล้ว ${result.emailsSent}/${total} คน`);
-      if (result.emailsFailed > 0) parts.push(`ล้มเหลว ${result.emailsFailed} คน`);
-      if (result.emailsSkipped > 0) parts.push(`ไม่มีอีเมล ${result.emailsSkipped} คน`);
+      const parts: string[] = [
+        t('instructor.notify.emailsSent', { sent: result.emailsSent, total }),
+      ];
+      if (result.emailsFailed > 0)
+        parts.push(t('instructor.notify.emailsFailed', { n: result.emailsFailed }));
+      if (result.emailsSkipped > 0)
+        parts.push(t('instructor.notify.emailsSkipped', { n: result.emailsSkipped }));
       $q.notify({
         type: 'positive',
         icon: 'campaign',
-        message: `สร้างประกาศสำเร็จ — ${parts.join(', ')}`,
+        message: `${t('instructor.notify.announcementCreated')} — ${parts.join(', ')}`,
         position: 'top',
         timeout: 5000,
       });
@@ -2284,8 +2408,8 @@ async function submitAnnouncement(): Promise<void> {
       type: 'negative',
       message:
         editingAnnouncementId.value !== null
-          ? 'ไม่สามารถแก้ไขประกาศได้'
-          : 'ไม่สามารถสร้างประกาศได้',
+          ? t('instructor.notify.announcementEditFailed')
+          : t('instructor.notify.announcementSaveFailed'),
       position: 'top',
     });
   } finally {
@@ -2299,22 +2423,22 @@ function addFacultyStaff(): void {
   const permission = facultyStaffForm.permission.trim();
 
   if (!selectedCourseId.value) {
-    $q.notify({ type: 'warning', message: 'ยังไม่พบรายวิชาที่เลือกอยู่ในขณะนี้' });
+    $q.notify({ type: 'warning', message: t('instructor.notify.courseNotSelected') });
     return;
   }
 
   if (!name) {
-    $q.notify({ type: 'warning', message: 'กรุณากรอกชื่อเจ้าหน้าที่' });
+    $q.notify({ type: 'warning', message: t('instructor.notify.staffNameRequired') });
     return;
   }
 
   if (!/.+@.+\..+/.test(email)) {
-    $q.notify({ type: 'warning', message: 'กรุณากรอกอีเมลให้ถูกต้อง' });
+    $q.notify({ type: 'warning', message: t('instructor.notify.emailInvalid') });
     return;
   }
 
   if (facultyStaff.value.some((staff) => staff.email.toLowerCase() === email)) {
-    $q.notify({ type: 'warning', message: 'อีเมลนี้ถูกเพิ่มเป็นเจ้าหน้าที่แล้ว' });
+    $q.notify({ type: 'warning', message: t('instructor.notify.emailAlreadyAdded') });
     return;
   }
 
@@ -2328,7 +2452,7 @@ function addFacultyStaff(): void {
   ];
   facultyStaffDialogOpen.value = false;
   resetFacultyStaffForm();
-  $q.notify({ type: 'positive', message: 'เพิ่มเจ้าหน้าที่เรียบร้อยแล้ว' });
+  $q.notify({ type: 'positive', message: t('instructor.notify.staffAdded') });
 }
 
 function removeFacultyStaff(email: string): void {
@@ -2365,17 +2489,42 @@ function moodleModColor(modname: string): string {
   return 'grey-7';
 }
 
+function translateStutypeName(thaiName: string): string {
+  if (locale.value === 'th') return thaiName || '';
+  const enMap: Record<string, string> = {
+    นิสิต: 'Student',
+    บุคลากร: 'Staff',
+    บุคคลทั่วไป: 'General Public',
+    ศิษย์เก่า: 'Alumni',
+  };
+  return enMap[thaiName] ?? thaiName;
+}
+
+function localizedTaskTitle(task: { id: string; title: string }): string {
+  const key = `instructor.priorityTask.${task.id}.title`;
+  const translated = t(key);
+  return translated !== key ? translated : task.title;
+}
+
+function localizedTaskDetail(task: { id: string; detail: string; count: number }): string {
+  const key = `instructor.priorityTask.${task.id}.detail`;
+  const translated = t(key, { count: task.count });
+  return translated !== key ? translated : task.detail;
+}
+
 function moodleModLabel(modname: string): string {
-  if (modname === 'quiz') return 'แบบทดสอบ';
-  if (modname === 'assign') return 'งาน';
-  if (modname === 'resource') return 'ไฟล์';
-  if (modname === 'url') return 'ลิงก์';
-  if (modname === 'page') return 'หน้าเนื้อหา';
-  if (modname === 'folder') return 'โฟลเดอร์';
-  if (modname === 'lesson') return 'บทเรียน';
-  if (modname === 'forum') return 'กระดานสนทนา';
-  if (modname === 'scorm') return 'SCORM';
-  return modname;
+  const map: Record<string, string> = {
+    quiz: t('instructor.moodleModLabel.quiz'),
+    assign: t('instructor.moodleModLabel.assign'),
+    resource: t('instructor.moodleModLabel.resource'),
+    url: t('instructor.moodleModLabel.url'),
+    page: t('instructor.moodleModLabel.page'),
+    folder: t('instructor.moodleModLabel.folder'),
+    lesson: t('instructor.moodleModLabel.lesson'),
+    forum: t('instructor.moodleModLabel.forum'),
+    scorm: 'SCORM',
+  };
+  return map[modname] ?? modname;
 }
 
 function formatCurrency(value: number): string {
@@ -2507,16 +2656,18 @@ function hasLearnerPricingChanges(): boolean {
 function getCourseChangeLabels(course: Course, changes: Partial<Course>): string[] {
   const labels: string[] = [];
 
-  if (changes.imageUrl !== course.imageUrl) labels.push('รูปปกรายวิชา');
-  if (changes.isActive !== course.isActive) labels.push('สถานะการเผยแพร่');
-  if (changes.deliveryModes?.[0] !== course.deliveryModes[0]) labels.push('รูปแบบการเรียน');
+  if (changes.imageUrl !== course.imageUrl) labels.push(t('instructor.changeLabels.coverImage'));
+  if (changes.isActive !== course.isActive) labels.push(t('instructor.changeLabels.publishStatus'));
+  if (changes.deliveryModes?.[0] !== course.deliveryModes[0])
+    labels.push(t('instructor.changeLabels.deliveryMode'));
   if (changes.registrationStartDate !== course.registrationStartDate)
-    labels.push('วันเปิดรับสมัคร');
-  if (changes.registrationEndDate !== course.registrationEndDate) labels.push('วันปิดรับสมัคร');
-  if (changes.maxSeats !== course.maxSeats) labels.push('จำนวนที่นั่ง');
+    labels.push(t('instructor.changeLabels.regStartDate'));
+  if (changes.registrationEndDate !== course.registrationEndDate)
+    labels.push(t('instructor.changeLabels.regEndDate'));
+  if (changes.maxSeats !== course.maxSeats) labels.push(t('instructor.changeLabels.maxSeats'));
   if (changes.price !== course.price || changes.isFree !== course.isFree)
-    labels.push('ราคา/ค่าใช้จ่าย');
-  if (hasLearnerPricingChanges()) labels.push('การคิดเงินผู้เรียนแต่ละประเภท');
+    labels.push(t('instructor.changeLabels.price'));
+  if (hasLearnerPricingChanges()) labels.push(t('instructor.changeLabels.pricing'));
 
   return labels;
 }
@@ -2545,14 +2696,14 @@ async function saveRegistrationDates(): Promise<void> {
     $q.notify({
       type: 'positive',
       icon: 'check_circle',
-      message: 'บันทึกวันที่เรียบร้อยแล้ว',
+      message: t('instructor.notify.datesSaved'),
       position: 'top',
     });
   } else {
     $q.notify({
       type: 'negative',
       icon: 'error',
-      message: 'บันทึกวันที่ไม่สำเร็จ กรุณาลองใหม่',
+      message: t('instructor.notify.datesSaveFailed'),
       position: 'top',
     });
   }
@@ -2569,7 +2720,7 @@ function confirmSaveCourseChanges(): void {
     $q.notify({
       type: 'info',
       icon: 'info',
-      message: 'ยังไม่มีข้อมูลที่เปลี่ยนแปลง',
+      message: t('instructor.notify.noChanges'),
       position: 'top',
     });
     return;
@@ -2578,7 +2729,7 @@ function confirmSaveCourseChanges(): void {
   pendingCourseSaveId.value = course.id;
   pendingCourseChanges.value = changes;
   pendingCourseChangeLabels.value = changeLabels;
-  saveCourseDialogMessage.value = `คุณต้องการบันทึกการแก้ไข "${course.titleEn || course.title}" ใช่หรือไม่?`;
+  saveCourseDialogMessage.value = `${course.titleEn || course.title}`;
   saveCourseDialogOpen.value = true;
 }
 
@@ -2607,7 +2758,7 @@ async function saveCourseChanges(courseId: string, changes: Partial<Course>): Pr
       $q.notify({
         type: 'negative',
         icon: 'error',
-        message: 'บันทึกวันที่ไม่สำเร็จ กรุณาลองใหม่',
+        message: t('instructor.notify.datesSaveFailed'),
         position: 'top',
       });
       return;
@@ -2636,7 +2787,7 @@ function notifySaved(): void {
   $q.notify({
     type: 'positive',
     icon: 'check_circle',
-    message: 'บันทึกการตั้งค่ารายวิชาแล้ว',
+    message: t('instructor.notify.courseSaved'),
     position: 'top',
   });
 }
@@ -2655,15 +2806,15 @@ function confirmDeleteSelectedCourseWithDialog(): void {
   if (!course) return;
 
   $q.dialog({
-    title: 'ลบรายวิชา',
-    message: `ต้องการลบรายวิชา "${course.titleEn || course.title}" ใช่หรือไม่?`,
+    title: t('instructor.dialog.deleteCourseTitle'),
+    message: t('instructor.dialog.deleteCourseConfirm', { name: course.titleEn || course.title }),
     cancel: {
-      label: 'ยกเลิก',
+      label: t('instructor.common.cancel'),
       flat: true,
       color: 'grey-7',
     },
     ok: {
-      label: 'ลบรายวิชา',
+      label: t('instructor.course.deleteCourse'),
       color: 'negative',
       unelevated: true,
     },
@@ -2693,7 +2844,7 @@ function deleteSelectedCourse(courseId: string): void {
   $q.notify({
     type: 'positive',
     icon: 'delete',
-    message: 'ลบรายวิชาแล้ว',
+    message: t('instructor.notify.courseDeleted'),
     position: 'top',
   });
 }
@@ -2701,10 +2852,9 @@ function deleteSelectedCourse(courseId: string): void {
 function openQuickDialog(title: string): void {
   $q.dialog({
     title,
-    message:
-      'ตัวอย่าง workflow สำหรับอาจารย์: สามารถต่อ API จริงเพื่อบันทึกข้อมูล สร้างงาน ส่งประกาศ หรือจัดการผู้เรียนได้จากจุดนี้',
+    message: t('instructor.quickDialog.message'),
     ok: {
-      label: 'รับทราบ',
+      label: t('instructor.quickDialog.ok'),
       color: 'primary',
       unelevated: true,
     },

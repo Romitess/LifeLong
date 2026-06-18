@@ -590,7 +590,7 @@
                 <q-card-section>
                   <div class="detail-card__header">
                     <q-icon name="person" size="24px" color="primary" />
-                    <h2 class="detail-card__title">{{ $t('instructor') }}</h2>
+                    <h2 class="detail-card__title">{{ $t('instructorLabel') }}</h2>
                   </div>
                   <div class="instructor-card q-mt-md">
                     <q-avatar size="72px" class="instructor-card__avatar">
