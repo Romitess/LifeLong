@@ -150,17 +150,6 @@
         >
           <template #header-actions>
             <div class="payment-table-toolbar q-mb-lg">
-              <q-btn
-                unelevated
-                outline
-                color="primary"
-                icon="preview"
-                label="Load Mock Data"
-                no-caps
-                class="payment-delete-btn"
-                @click="loadMockData"
-              />
-
               <q-input
                 v-model="tableSearch"
                 outlined
@@ -767,7 +756,10 @@
             <div class="text-h4 text-weight-bold text-positive">
               {{ importResult?.summary.totalReceiptGenerated || 0 }}
             </div>
-            <div class="text-subtitle1 text-grey-8">ออกใบเสร็จ (ใบ)</div>
+            <div class="text-subtitle1 text-grey-8">
+              ออกใบเสร็จ (ใบ)<br />
+              <span class="text-caption text-grey-6">ตัวจริงและสำเนา</span>
+            </div>
           </div>
           <div class="col-12 col-sm-3 text-center">
             <div class="text-h4 text-weight-bold text-warning">
@@ -840,6 +832,7 @@ import { useAuthStore } from 'stores/auth-store';
 import { usePaymentImportApi } from 'src/composables/usePaymentImportApi';
 import type { ImportAndGenerateResponse } from 'src/composables/usePaymentImportApi';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
+import { api } from 'src/boot/axios';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -1210,85 +1203,129 @@ function cancelImport() {
   selectedFiles.value = [];
 }
 
-function saveImportedFile() {
+async function saveImportedFile() {
   if (!selectedFiles.value.length) {
     return;
   }
 
-  let processedCount = 0;
-  const newRows: ImportedPaymentRow[] = [];
+  const allNewRows: ImportedPaymentRow[] = [];
 
-  // Process each CSV file
-  selectedFiles.value.forEach((file) => {
-    const reader = new FileReader();
+  // Read all files and collect parsed rows
+  const fileReadPromises = selectedFiles.value.map(
+    (file) =>
+      new Promise<void>((resolve) => {
+        const reader = new FileReader();
 
-    reader.onload = (e) => {
-      const csv = e.target?.result as string;
-      const lines = csv.trim().split('\n');
+        reader.onload = (e) => {
+          const csv = e.target?.result as string;
+          const lines = csv.trim().split('\n');
 
-      // Skip header row (line 0)
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i]?.trim();
-        if (!line) continue;
+          // Skip header row (line 0)
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i]?.trim();
+            if (!line) continue;
 
-        // Simple CSV parsing (handles basic cases without quotes)
-        const columns = line.split(',').map((col) => col.trim());
+            // Simple CSV parsing (handles basic cases without quotes)
+            const columns = line.split(',').map((col) => col.trim());
 
-        if (columns.length >= 6) {
-          const id = `PAY-${String(importedRows.value.length + newRows.length + 1).padStart(3, '0')}`;
-          const now = new Date();
-          const importedAt =
-            now.toLocaleDateString('th-TH', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-            }) +
-            ' ' +
-            now.toLocaleTimeString('th-TH');
+            if (columns.length >= 6) {
+              const id = `PAY-${String(importedRows.value.length + allNewRows.length + 1).padStart(3, '0')}`;
+              const now = new Date();
+              const importedAt =
+                now.toLocaleDateString('th-TH', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                }) +
+                ' ' +
+                now.toLocaleTimeString('th-TH');
 
-          const importedByName = authStore.user
-            ? `${authStore.user.firstNameTh} ${authStore.user.lastNameTh}`.trim() ||
-              `${authStore.user.firstNameEn} ${authStore.user.lastNameEn}`.trim()
-            : 'System';
+              const importedByName = authStore.user
+                ? `${authStore.user.firstNameTh} ${authStore.user.lastNameTh}`.trim() ||
+                  `${authStore.user.firstNameEn} ${authStore.user.lastNameEn}`.trim()
+                : 'System';
 
-          const newRow: ImportedPaymentRow = {
-            id,
-            learnerRef: columns[0] ?? '',
-            applicationRef: columns[1] ?? '',
-            payerName: columns[2] ?? '',
-            paymentDate: columns[3] ?? '',
-            paymentTime: columns[4] ?? '',
-            amount: parseFloat(columns[5] ?? '0') || 0,
-            importedAt,
-            importedBy: importedByName,
-            status: 'pending',
-            dbLearnerRef: columns[0] ?? '',
-            dbAppRef: columns[1] ?? '',
-            dbLearnerName: columns[2] ?? '',
-            dbAmount: parseFloat(columns[5] ?? '0') || 0,
-          };
+              const newRow: ImportedPaymentRow = {
+                id,
+                learnerRef: columns[0] ?? '',
+                applicationRef: columns[1] ?? '',
+                payerName: columns[2] ?? '',
+                paymentDate: columns[3] ?? '',
+                paymentTime: columns[4] ?? '',
+                amount: parseFloat(columns[5] ?? '0') || 0,
+                importedAt,
+                importedBy: importedByName,
+                status: 'pending',
+                // Leave db fields empty — will be populated from API lookup
+                dbLearnerRef: '',
+                dbAppRef: '',
+                dbLearnerName: '',
+                dbAmount: 0,
+              };
 
-          newRows.push(newRow);
-        }
+              allNewRows.push(newRow);
+            }
+          }
+          resolve();
+        };
+
+        reader.readAsText(file);
+      }),
+  );
+
+  await Promise.all(fileReadPromises);
+
+  // Look up actual applicant data from the system for each row
+  try {
+    const { data } = await api.get<{
+      items: {
+        learnerRef: string;
+        appRef: string;
+        learnerName: string;
+        amount: number;
+      }[];
+    }>('/api/lltenroll', {
+      params: { page: 1, pageSize: 500, status: 'Paid' },
+    });
+
+    const dbItems = data.items || [];
+
+    // Match each imported row against the DB data by appRef (Ref2)
+    for (const row of allNewRows) {
+      const match = dbItems.find(
+        (item) => String(item.appRef).trim() === String(row.applicationRef).trim(),
+      );
+
+      if (match) {
+        row.dbLearnerRef = match.learnerRef ?? '';
+        row.dbAppRef = match.appRef ?? '';
+        row.dbLearnerName = match.learnerName ?? '';
+        row.dbAmount = Number(match.amount) || 0;
+
+        // Auto-verify if all key fields match
+        // Store match data but ALWAYS set status to pending initially for manual verification
+        row.status = 'pending';
+      } else {
+        // No match found — leave db fields empty so comparison shows mismatch
+        row.dbLearnerRef = '-';
+        row.dbAppRef = '-';
+        row.dbLearnerName = '-';
+        row.dbAmount = 0;
       }
+    }
+  } catch (error) {
+    console.error('Failed to look up applicant data for verification', error);
+    // If lookup fails, leave db fields empty
+  }
 
-      processedCount++;
+  importedRows.value = [...allNewRows, ...importedRows.value];
+  selectedFiles.value = [];
 
-      // When all files processed, add rows to table
-      if (processedCount === selectedFiles.value.length) {
-        importedRows.value = [...newRows, ...importedRows.value];
-        selectedFiles.value = [];
-
-        $q.notify({
-          type: 'positive',
-          message: t('finance.paymentImport.notifications.fileSaved', {
-            name: newRows.length + ' records imported',
-          }),
-        });
-      }
-    };
-
-    reader.readAsText(file);
+  $q.notify({
+    type: 'positive',
+    message: t('finance.paymentImport.notifications.fileSaved', {
+      name: allNewRows.length + ' records imported',
+    }),
   });
 }
 
@@ -1375,64 +1412,9 @@ function confirmClearAll() {
   }).onOk(() => {
     importedRows.value = [];
     selectedFiles.value = [];
+    isVerifying.value = false;
     $q.notify({ type: 'positive', message: t('finance.paymentImport.notifications.cleared') });
   });
-}
-
-function loadMockData() {
-  const mockData: ImportedPaymentRow[] = [
-    {
-      id: 'PAY-001',
-      learnerRef: '6700017',
-      applicationRef: '6751300100003',
-      payerName: 'น.ส. สุกัญญา ประมงค์กิจ',
-      paymentDate: '10-04-2567',
-      paymentTime: '14:13:19',
-      amount: 1200,
-      importedAt: '13/06/2568 14:14:40',
-      importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
-      status: 'pending',
-      dbLearnerRef: '6700017',
-      dbAppRef: '6751300100003',
-      dbLearnerName: 'น.ส. สุกัญญา ประมงค์กิจ',
-      dbAmount: 1200,
-    },
-    {
-      id: 'PAY-002',
-      learnerRef: '6600005',
-      applicationRef: '6751300100002',
-      payerName: 'น.ส. วันนิสา ข่ายเพชร',
-      paymentDate: '10-04-2567',
-      paymentTime: '14:20:19',
-      amount: 900,
-      importedAt: '13/06/2568 14:14:40',
-      importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
-      status: 'pending',
-      dbLearnerRef: '6600005',
-      dbAppRef: '6751300100002',
-      dbLearnerName: 'น.ส. วันนิสา ข่ายเพชร',
-      dbAmount: 900,
-    },
-    {
-      id: 'PAY-003',
-      learnerRef: '6600005',
-      applicationRef: '6751300100002',
-      payerName: 'NATTAPORN YASOWONG',
-      paymentDate: '10-04-2567',
-      paymentTime: '14:20:38',
-      amount: 900,
-      importedAt: '13/06/2568 14:14:40',
-      importedBy: 'นางสาวสุกัญญา ประมงค์กิจ',
-      status: 'pending',
-      dbLearnerRef: '6600005',
-      dbAppRef: '6751300100002',
-      dbLearnerName: 'น.ส. วันนิสา ข่ายเพชร',
-      dbAmount: 900,
-    },
-  ];
-
-  importedRows.value = mockData;
-  selectedFiles.value = [];
 }
 </script>
 
