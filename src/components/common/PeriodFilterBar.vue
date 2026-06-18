@@ -18,6 +18,7 @@
         {{ opt.label }}
       </button>
 
+      <slot name="append"></slot>
       <q-btn
         flat
         dense
@@ -110,6 +111,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   change: [];
+  clear: [];
 }>();
 
 const resolvedPresets = computed(() => props.presets ?? DEFAULT_PRESETS);
@@ -186,6 +188,7 @@ function clearFilters() {
   period.value.dateFrom = '';
   period.value.dateTo = '';
   period.value.preset = 'allTime';
+  emit('clear');
   emit('change');
 }
 

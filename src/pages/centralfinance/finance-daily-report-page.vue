@@ -5,14 +5,7 @@
       eyebrow-icon="receipt_long"
       :title="$t('centralFinance.dailyReport.hero.title')"
       :description="$t('centralFinance.dailyReport.hero.desc')"
-    >
-      <template #aside v-if="isFinanceRole">
-        <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
-          <div class="faculty-scope-card__faculty">{{ currentUserDepartment || 'ไม่ระบุคณะ' }}</div>
-        </div>
-      </template>
-    </CentralFinancePageHero>
+    />
 
     <section class="finance-shell finance-content">
       <CentralFinanceSurfaceCard>
@@ -94,7 +87,6 @@
                   outlined
                   dense
                   class="bg-white"
-                  :disable="!isCentralFinanceRole"
                 />
               </div>
             </div>
@@ -290,13 +282,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue';
+import { ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
-import { useAuthStore } from 'stores/auth-store';
 import type { Transaction } from 'src/stores/central-finance-store';
 import type { QTableColumn } from 'quasar';
 import jsPDF from 'jspdf';
@@ -306,15 +297,9 @@ import * as XLSX from 'xlsx';
 
 const $q = useQuasar();
 const { t } = useI18n();
-const authStore = useAuthStore();
 const financeStore = useCentralFinanceStore();
 const search = ref('');
 
-const isCentralFinanceRole = computed(() => authStore.user?.role === 'central_finance');
-const isFinanceRole = computed(() => authStore.user?.role === 'finance');
-const currentUserDepartment = computed(
-  () => authStore.user?.facName ?? authStore.user?.faculty ?? '',
-);
 const hasSearched = ref(false);
 
 const pagination = ref({
@@ -328,14 +313,8 @@ const pagination = ref({
 const filters = ref({
   receiptDateStart: '27/05/2569',
   receiptDateEnd: '30/05/2569',
-  department: isCentralFinanceRole.value ? 'สำนักคอมพิวเตอร์' : currentUserDepartment.value,
+  department: 'สำนักคอมพิวเตอร์',
   courseName: '',
-});
-
-watchEffect(() => {
-  if (!isCentralFinanceRole.value && currentUserDepartment.value) {
-    filters.value.department = currentUserDepartment.value;
-  }
 });
 
 // เก็บสถานะฟิลเตอร์หลังจากกดค้นหาเพื่อให้แสดงใน Title ของตารางได้อย่างถูกต้อง
@@ -477,9 +456,7 @@ function onSearch(): void {
 function clearFilters(): void {
   filters.value.receiptDateStart = '';
   filters.value.receiptDateEnd = '';
-  filters.value.department = isCentralFinanceRole.value
-    ? 'สำนักคอมพิวเตอร์'
-    : currentUserDepartment.value;
+  filters.value.department = 'สำนักคอมพิวเตอร์';
   filters.value.courseName = '';
 
   activeFilters.value = {
@@ -626,37 +603,6 @@ function exportToExcel(): void {
 </script>
 
 <style lang="scss" scoped>
-.faculty-scope-card {
-  min-width: 260px;
-  padding: 16px 18px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  display: grid;
-  gap: 6px;
-
-  @media (max-width: 599px) {
-    min-width: 0;
-    width: 100%;
-    padding: 12px 14px;
-  }
-}
-
-.faculty-scope-card__label {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.68rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-}
-
-.faculty-scope-card__faculty {
-  color: #fff;
-  font-size: 1.05rem;
-  font-weight: 900;
-}
-
 .filter-label {
   @media (min-width: 600px) {
     text-align: right;
