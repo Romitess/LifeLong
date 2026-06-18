@@ -3,211 +3,19 @@
     <div class="section-container filter-container">
       <div class="row justify-center">
         <div class="col-12 col-md-8">
-          <q-input
-            v-model="filter.search"
-            outlined
-            rounded
-            icon="search"
-            :placeholder="$t('searchPlaceholder')"
-            bg-color="white"
-            class="search-input-main"
-            clearable
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" color="grey-5" />
-            </template>
-            <template v-slot:append>
-              <q-separator vertical class="q-mx-sm" />
-              <q-btn flat round color="grey-7" icon="filter_list">
-                <q-menu padding class="filter-menu shadow-10" style="border-radius: 16px">
-                  <div class="q-pa-md" style="min-width: 250px">
-                    <div class="text-subtitle1 text-weight-bold q-mb-md">
-                      {{ $t('additionalFilters') }}
-                    </div>
-
-                    <div class="filter-group q-mb-md">
-                      <div class="text-caption text-grey-7 q-mb-xs">{{ $t('courseType') }}</div>
-                      <div class="row q-gutter-xs">
-                        <q-btn
-                          v-for="opt in typeOptions"
-                          :key="opt.label"
-                          unelevated
-                          dense
-                          :color="filter.type === opt.value ? 'primary' : 'grey-2'"
-                          :text-color="filter.type === opt.value ? 'white' : 'dark'"
-                          :label="opt.label"
-                          class="q-px-md text-caption"
-                          no-caps
-                          @click="filter.type = filter.type === opt.value ? null : opt.value"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="filter-group q-mb-md">
-                      <div class="text-caption text-grey-7 q-mb-xs">{{ $t('price') }}</div>
-                      <div class="row q-gutter-xs">
-                        <q-btn
-                          unelevated
-                          dense
-                          :color="filter.price === 'free' ? 'primary' : 'grey-2'"
-                          :text-color="filter.price === 'free' ? 'white' : 'dark'"
-                          :label="$t('free')"
-                          class="q-px-md text-caption"
-                          no-caps
-                          @click="filter.price = filter.price === 'free' ? null : 'free'"
-                        />
-                        <q-btn
-                          unelevated
-                          dense
-                          :color="filter.price === 'paid' ? 'primary' : 'grey-2'"
-                          :text-color="filter.price === 'paid' ? 'white' : 'dark'"
-                          :label="$t('paid')"
-                          class="q-px-md text-caption"
-                          no-caps
-                          @click="filter.price = filter.price === 'paid' ? null : 'paid'"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="filter-group q-mb-md">
-                      <div class="text-caption text-grey-7 q-mb-xs">{{ $t('learningMode') }}</div>
-                      <div class="row q-gutter-xs">
-                        <q-btn
-                          v-for="mode in ['Online', 'Onsite', 'Self-Paced Learning']"
-                          :key="mode"
-                          unelevated
-                          dense
-                          :color="filter.deliveryMode === mode ? 'primary' : 'grey-2'"
-                          :text-color="filter.deliveryMode === mode ? 'white' : 'dark'"
-                          :label="mode"
-                          class="q-px-md text-caption"
-                          no-caps
-                          @click="filter.deliveryMode = filter.deliveryMode === mode ? null : mode"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="filter-group q-mb-md">
-                      <div class="text-caption text-grey-7 q-mb-xs">
-                        {{ $t('registerableCourses') }}
-                      </div>
-                      <div class="row q-gutter-xs">
-                        <q-btn
-                          unelevated
-                          dense
-                          :color="filter.availability === 'open' ? 'primary' : 'grey-2'"
-                          :text-color="filter.availability === 'open' ? 'white' : 'dark'"
-                          :label="$t('openRegistration')"
-                          class="q-px-md text-caption"
-                          no-caps
-                          @click="
-                            filter.availability = filter.availability === 'open' ? null : 'open'
-                          "
-                        />
-                        <q-btn
-                          unelevated
-                          dense
-                          :color="filter.availability === 'closed' ? 'primary' : 'grey-2'"
-                          :text-color="filter.availability === 'closed' ? 'white' : 'dark'"
-                          :label="$t('closedRegistration')"
-                          class="q-px-md text-caption"
-                          no-caps
-                          @click="
-                            filter.availability = filter.availability === 'closed' ? null : 'closed'
-                          "
-                        />
-                      </div>
-                    </div>
-
-                    <div class="filter-group q-mb-md">
-                      <div class="text-caption text-grey-7 q-mb-xs">{{ $t('dateRange') }}</div>
-                      <div class="row q-gutter-sm">
-                        <q-input
-                          class="col"
-                          v-model="filter.startDate"
-                          mask="##/##/####"
-                          outlined
-                          dense
-                          clearable
-                          :hint="$t('fromDate')"
-                        >
-                          <template v-slot:append>
-                            <q-icon name="event" class="cursor-pointer">
-                              <q-popup-proxy
-                                ref="startDateProxy"
-                                cover
-                                transition-show="scale"
-                                transition-hide="scale"
-                              >
-                                <q-date
-                                  v-model="filter.startDate"
-                                  mask="DD/MM/YYYY"
-                                  color="primary"
-                                  :locale="dateLocale"
-                                  @update:model-value="() => startDateProxy?.hide()"
-                                />
-                              </q-popup-proxy>
-                            </q-icon>
-                          </template>
-                        </q-input>
-                        <q-input
-                          class="col"
-                          v-model="filter.endDate"
-                          mask="##/##/####"
-                          outlined
-                          dense
-                          clearable
-                          :hint="$t('toDate')"
-                        >
-                          <template v-slot:append>
-                            <q-icon name="event" class="cursor-pointer">
-                              <q-popup-proxy
-                                ref="endDateProxy"
-                                cover
-                                transition-show="scale"
-                                transition-hide="scale"
-                              >
-                                <q-date
-                                  v-model="filter.endDate"
-                                  mask="DD/MM/YYYY"
-                                  color="primary"
-                                  :locale="dateLocale"
-                                  @update:model-value="() => endDateProxy?.hide()"
-                                />
-                              </q-popup-proxy>
-                            </q-icon>
-                          </template>
-                        </q-input>
-                      </div>
-                    </div>
-
-                    <q-separator class="q-my-sm" />
-                    <div class="row q-gutter-sm">
-                      <q-btn
-                        unelevated
-                        :label="$t('clear')"
-                        color="grey-2"
-                        text-color="dark"
-                        dense
-                        no-caps
-                        class="col q-px-md rounded-borders"
-                        @click="resetFilter"
-                      />
-                      <q-btn
-                        unelevated
-                        :label="$t('ok')"
-                        color="primary"
-                        dense
-                        no-caps
-                        class="col q-px-md rounded-borders"
-                        v-close-popup
-                      />
-                    </div>
-                  </div>
-                </q-menu>
-              </q-btn>
-            </template>
-          </q-input>
+          <div class="row items-center no-wrap q-gutter-sm short-courses-page__search-row">
+            <BaseSearchInput
+              v-model="filter.search"
+              :placeholder="$t('searchPlaceholder')"
+              class="col"
+            />
+            <ShortCourseFilterMenu
+              v-model="filter"
+              :type-options="typeOptions"
+              :date-locale="dateLocale"
+              @reset="resetFilter"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -298,7 +106,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { QPopupProxy } from 'quasar';
 import { useCourseList } from 'src/composables/use-course-list';
 import type { Course, DeliveryMode } from 'src/types/course';
 import { useI18n } from 'vue-i18n';
@@ -306,6 +113,8 @@ import { useCategoryStore } from 'src/stores/category-store';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
+import BaseSearchInput from 'components/base/BaseSearchInput.vue';
+import ShortCourseFilterMenu from 'components/short-courses/ShortCourseFilterMenu.vue';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const router = useRouter();
@@ -316,8 +125,6 @@ categoryStore.init();
 
 const { courses, isLoading, fetchCourses } = useCourseList();
 
-const startDateProxy = ref<QPopupProxy | null>(null);
-const endDateProxy = ref<QPopupProxy | null>(null);
 const dateLocale = computed(() => {
   if (locale.value === 'th') {
     return {
@@ -606,51 +413,6 @@ onMounted(fetchCourses);
 .filter-container {
   padding-top: 64px;
   padding-bottom: 40px;
-}
-
-.search-input-main {
-  :deep(.q-field__control) {
-    height: 60px;
-    padding: 0 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    border: 2px solid #edf2f7;
-    border-radius: 30px !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: white !important;
-
-    &:hover {
-      border-color: rgba($primary, 0.3);
-      transform: translateY(-2px);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-    }
-
-    &.q-field__control--focused {
-      border-color: $primary;
-      box-shadow: 0 15px 35px rgba($primary, 0.15);
-      transform: translateY(-2px);
-    }
-
-    &::before,
-    &::after {
-      display: none;
-    }
-  }
-
-  :deep(.q-field__native) {
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: #000;
-    opacity: 1;
-  }
-
-  :deep(.q-field__native::placeholder) {
-    color: #9e9e9e;
-    opacity: 1;
-  }
-
-  :deep(.q-field__marginal) {
-    height: 60px;
-  }
 }
 
 .skeleton-card {
