@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { fetchHeroConfig, saveHeroConfig } from 'src/services/slideshow-service';
 
 export interface HeroTextSegment {
   id: string;
@@ -59,8 +60,6 @@ export interface HeroTemplateConfig {
   initialDelayMs: number;
   slides: HeroSlideTemplate[];
 }
-
-const SYSTEM_HERO_TEMPLATE_STORAGE_KEY = 'lll-system-hero-template-v4';
 
 const DEFAULT_FONT_STACK = "'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif";
 const BACKEND_PUBLIC_URL = (
@@ -468,26 +467,6 @@ function normalizeHeroConfig(value: unknown): HeroTemplateConfig {
   };
 }
 
-function readStoredHeroConfig(): HeroTemplateConfig | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  const rawValue = window.localStorage.getItem(SYSTEM_HERO_TEMPLATE_STORAGE_KEY);
-
-  if (!rawValue) {
-    return null;
-  }
-
-  try {
-    return normalizeHeroConfig(JSON.parse(rawValue) as unknown);
-  } catch (error) {
-    console.warn('Failed to parse system hero template', error);
-    window.localStorage.removeItem(SYSTEM_HERO_TEMPLATE_STORAGE_KEY);
-    return null;
-  }
-}
-
 export const useSystemImageStore = defineStore('systemImage', {
   state: (): { heroConfig: HeroTemplateConfig; initialized: boolean } => ({
     heroConfig: cloneHeroConfig(DEFAULT_HERO_CONFIG),
@@ -512,87 +491,32 @@ export const useSystemImageStore = defineStore('systemImage', {
   },
 
   actions: {
-    init(): void {
+    async init(): Promise<void> {
       if (this.initialized) {
         return;
       }
 
-      this.heroConfig = readStoredHeroConfig() ?? createDefaultHeroTemplateConfig();
       this.initialized = true;
-      this.persistHeroConfig();
+      await this.reloadFromServer();
     },
 
-    setHeroConfig(config: HeroTemplateConfig): void {
-      this.heroConfig = normalizeHeroConfig(config);
-      this.persistHeroConfig();
-    },
-
-    persistHeroConfig(): void {
-      if (typeof window === 'undefined') {
-        return;
+    // DB is the single source of truth. Falls back to defaults (display only) on
+    // an empty store or a failed request so the hero never renders blank.
+    async reloadFromServer(): Promise<void> {
+      try {
+        const raw = await fetchHeroConfig();
+        this.heroConfig = normalizeHeroConfig(raw);
+      } catch (error) {
+        console.warn('Failed to load hero config from server', error);
+        this.heroConfig = createDefaultHeroTemplateConfig();
       }
-
-      window.localStorage.setItem(
-        SYSTEM_HERO_TEMPLATE_STORAGE_KEY,
-        JSON.stringify(normalizeHeroConfig(this.heroConfig)),
-      );
     },
 
-    resetHeroConfig(): void {
-      this.heroConfig = createDefaultHeroTemplateConfig();
-      this.persistHeroConfig();
-    },
-
-    addHeroSlide(imageUrl: string, name = 'New Hero Image'): HeroSlideTemplate {
-      const nextSlide = createHeroSlideTemplate(imageUrl, name);
-
-      this.heroConfig.slides.push(nextSlide);
-      this.persistHeroConfig();
-      return nextSlide;
-    },
-
-    deleteHeroSlide(slideId: string): void {
-      if (this.heroConfig.slides.length <= 1) {
-        return;
-      }
-
-      this.heroConfig.slides = this.heroConfig.slides.filter((slide) => slide.id !== slideId);
-      this.persistHeroConfig();
-    },
-
-    addHeroTextLine(slideId: string): void {
-      const slide = this.heroConfig.slides.find((item) => item.id === slideId);
-      if (!slide) {
-        return;
-      }
-
-      slide.textBlock.enabled = true;
-      slide.textBlock.lines.push(createHeroTextLine(slide.textBlock.lines.length));
-      this.persistHeroConfig();
-    },
-
-    deleteHeroTextLine(slideId: string, lineId: string): void {
-      const slide = this.heroConfig.slides.find((item) => item.id === slideId);
-      if (!slide) {
-        return;
-      }
-
-      slide.textBlock.lines = slide.textBlock.lines.filter((line) => line.id !== lineId);
-      this.persistHeroConfig();
-    },
-
-    addHeroTextSegment(line: HeroTextLine): void {
-      line.segments.push(createHeroTextSegment(line));
-      this.persistHeroConfig();
-    },
-
-    deleteHeroTextSegment(line: HeroTextLine, segmentId: string): void {
-      if (line.segments.length <= 1) {
-        return;
-      }
-
-      line.segments = line.segments.filter((segment) => segment.id !== segmentId);
-      this.persistHeroConfig();
+    // Persists the full config to the backend, then syncs state from the
+    // normalized server response. Rejects on failure so callers can surface it.
+    async setHeroConfig(config: HeroTemplateConfig): Promise<void> {
+      const saved = await saveHeroConfig(normalizeHeroConfig(config));
+      this.heroConfig = normalizeHeroConfig(saved);
     },
   },
 });

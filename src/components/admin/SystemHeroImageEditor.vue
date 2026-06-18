@@ -249,13 +249,14 @@
                   }"
                   :contenteditable="editingSegmentId === segment.id"
                   @dblclick.stop.prevent="startInlineEdit(segment, $event)"
+                  @input="syncInlineEdit(segment, $event)"
                   @blur="finishInlineEdit(segment, $event)"
                   @keydown.enter.prevent="($event.target as HTMLElement)?.blur()"
                   @keydown.esc="($event.target as HTMLElement)?.blur()"
                   @pointerdown.stop="
                     editingSegmentId === segment.id ? undefined : startTextDrag($event)
                   "
-                  >{{ segment.text }}</span
+                  >{{ getInlineDisplayText(segment) }}</span
                 >
               </div>
             </div>
@@ -707,6 +708,7 @@ import {
   type CSSProperties,
 } from 'vue';
 import { useQuasar } from 'quasar';
+import { AxiosError } from 'axios';
 import AppActionButton from 'components/admin/AppActionButton.vue';
 import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
 import AppSearchInput from 'components/admin/AppSearchInput.vue';
@@ -729,6 +731,7 @@ import {
   type HeroTextLine,
   type HeroTextSegment,
 } from 'src/stores/system-image-store';
+import { uploadHeroImage } from 'src/services/slideshow-service';
 import ColorPickerInput from 'src/components/common/ColorPickerInput.vue';
 import HeroEditorInput from 'src/components/common/HeroEditorInput.vue';
 import HeroEditorSelect from 'src/components/common/HeroEditorSelect.vue';
@@ -759,7 +762,7 @@ interface IntlSegmenterConstructor {
 
 const $q = useQuasar();
 const heroStore = useSystemImageStore();
-heroStore.init();
+void heroStore.init();
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const replacementFileInput = ref<HTMLInputElement | null>(null);
@@ -880,6 +883,9 @@ const isYInputFocused = ref(false);
 
 const pendingConfirmAction = ref<ConfirmAction | null>(null);
 const editingSegmentId = ref<string | null>(null);
+// Frozen text shown in the preview node while it is being inline-edited, so live
+// model updates don't re-render the element under the caret (prevents caret jump).
+const inlineEditSnapshot = ref('');
 let previewResizeObserver: ResizeObserver | null = null;
 
 const confirmDialog = reactive<ConfirmDialogState>({
@@ -1072,6 +1078,9 @@ watch(
     });
   },
   () => {
+    // Don't churn the typewriter preview while the user is inline-editing — restarting
+    // re-slices the segments under the caret and drops keystrokes.
+    if (editingSegmentId.value !== null) return;
     restartPreviewAnimation();
   },
 );
@@ -1190,6 +1199,9 @@ function getHeroTextSegments(text: string): string[] {
 }
 
 function getVisibleHeroSegments(line: HeroTextLine, lineIndex: number): HeroTextSegment[] {
+  // While inline-editing, render the real (full) segment objects so edits bind to
+  // the actual config — not the typewriter-sliced clones returned below.
+  if (editingSegmentId.value !== null) return line.segments;
   if (!isHeroLineVisible(lineIndex)) return [];
   if (line.effect !== 'typewriter') return line.segments;
 
@@ -1260,13 +1272,17 @@ function requestAddImageFile(file: File): void {
     return;
   }
 
-  void readFileAsDataUrl(file).then((imageUrl) => {
-    addSlideDraft.value = {
-      imageUrl,
-      name: getImageName(file),
-    };
-    addSlideDialogOpen.value = true;
-  });
+  void uploadHeroImage(file)
+    .then((result) => {
+      addSlideDraft.value = {
+        imageUrl: result.url,
+        name: getImageName(file),
+      };
+      addSlideDialogOpen.value = true;
+    })
+    .catch((error: unknown) => {
+      notifyImageUploadError(error);
+    });
 }
 
 function requestReplaceImageFile(file: File): void {
@@ -1295,14 +1311,15 @@ function requestReplaceImageFile(file: File): void {
   );
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      resolve(typeof reader.result === 'string' ? reader.result : '');
-    };
-    reader.readAsDataURL(file);
-  });
+function notifyImageUploadError(error: unknown): void {
+  let message = 'อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as { message?: unknown } | undefined;
+    if (typeof data?.message === 'string') {
+      message = data.message;
+    }
+  }
+  $q.notify({ type: 'negative', message, position: 'top' });
 }
 
 function onAddSlideSubmit(payload: HeroSlideFormPayload): void {
@@ -1323,22 +1340,18 @@ function resetAddSlideDraft(): void {
   addSlideDraft.value = { imageUrl: '', name: '' };
 }
 
-function replaceSlideImageFile(slideId: string, file: File): Promise<void> {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const imageUrl = typeof reader.result === 'string' ? reader.result : '';
-      const slide = draftHeroConfig.value.slides.find((item) => item.id === slideId);
+async function replaceSlideImageFile(slideId: string, file: File): Promise<void> {
+  try {
+    const result = await uploadHeroImage(file);
+    const slide = draftHeroConfig.value.slides.find((item) => item.id === slideId);
 
-      if (slide) {
-        slide.imageUrl = imageUrl;
-        notifyDraftChanged('เปลี่ยนรูปใน draft แล้ว กดยืนยันการบันทึกเพื่อใช้จริง');
-      }
-
-      resolve();
-    };
-    reader.readAsDataURL(file);
-  });
+    if (slide) {
+      slide.imageUrl = result.url;
+      notifyDraftChanged('เปลี่ยนรูปใน draft แล้ว กดยืนยันการบันทึกเพื่อใช้จริง');
+    }
+  } catch (error: unknown) {
+    notifyImageUploadError(error);
+  }
 }
 
 function requestDeleteSelectedSlide(): void {
@@ -1439,15 +1452,34 @@ function requestSaveTemplate(): void {
       icon: 'save',
       confirmIcon: 'save',
     },
-    saveDraftTemplate,
+    () => void saveDraftTemplate(),
   );
 }
 
-function saveDraftTemplate(): void {
-  heroStore.setHeroConfig(draftHeroConfig.value);
+async function saveDraftTemplate(): Promise<void> {
+  // Keep the user on the slide they were editing instead of snapping to the
+  // first one. Slide ids are reassigned on save, so restore by position.
+  const selectedIndex = draftHeroConfig.value.slides.findIndex(
+    (slide) => slide.id === selectedSlideId.value,
+  );
+
+  try {
+    await heroStore.setHeroConfig(draftHeroConfig.value);
+  } catch (error: unknown) {
+    const message =
+      error instanceof AxiosError &&
+      typeof (error.response?.data as { message?: unknown } | undefined)?.message === 'string'
+        ? (error.response?.data as { message: string }).message
+        : 'บันทึก Hero template ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+    $q.notify({ type: 'negative', message, position: 'top' });
+    return;
+  }
+
   draftHeroConfig.value = cloneHeroTemplateConfig(heroStore.heroConfig);
   savedSnapshot.value = serializeHeroConfig(draftHeroConfig.value);
-  selectedSlideId.value = draftHeroConfig.value.slides[0]?.id ?? '';
+  const slides = draftHeroConfig.value.slides;
+  const restoreIndex = selectedIndex >= 0 && selectedIndex < slides.length ? selectedIndex : 0;
+  selectedSlideId.value = slides[restoreIndex]?.id ?? '';
   $q.notify({ type: 'positive', message: 'บันทึก Hero template แล้ว', position: 'top' });
 }
 
@@ -1561,7 +1593,24 @@ function clearPendingConfirmAction(): void {
 
 import { nextTick } from 'vue';
 
+function getInlineDisplayText(segment: HeroTextSegment): string {
+  // While editing, render the snapshot (constant) so reactive model updates from
+  // @input don't overwrite the DOM the user is typing into.
+  return editingSegmentId.value === segment.id ? inlineEditSnapshot.value : segment.text;
+}
+
+function syncInlineEdit(segment: HeroTextSegment, event: Event): void {
+  if (editingSegmentId.value !== segment.id) return;
+  const element = event.target as HTMLElement | null;
+  const targetSegment = findDraftSegmentById(segment.id);
+  if (element && targetSegment) {
+    // Live two-way link: typing on the hero updates the config editor below at once.
+    targetSegment.text = element.textContent ?? '';
+  }
+}
+
 function startInlineEdit(segment: HeroTextSegment, event: MouseEvent): void {
+  inlineEditSnapshot.value = findDraftSegmentById(segment.id)?.text ?? segment.text;
   editingSegmentId.value = segment.id;
 
   void nextTick(() => {
@@ -1590,10 +1639,26 @@ function finishInlineEdit(segment: HeroTextSegment, event: FocusEvent): void {
 
   if (element && editingSegmentId.value === segment.id) {
     const newText = element.textContent ?? '';
-    segment.text = newText;
+    // Write back to the real segment in the draft config (resolve by id in case a
+    // cloned/sliced segment object reached this handler).
+    const targetSegment = findDraftSegmentById(segment.id) ?? segment;
+    targetSegment.text = newText;
   }
 
   editingSegmentId.value = null;
+  // Re-run the preview animation now that editing is done (the restart was skipped
+  // while typing) so the final text renders cleanly.
+  restartPreviewAnimation();
+}
+
+function findDraftSegmentById(segmentId: string): HeroTextSegment | null {
+  const slide = selectedSlide.value;
+  if (!slide) return null;
+  for (const line of slide.textBlock.lines) {
+    const found = line.segments.find((item) => item.id === segmentId);
+    if (found) return found;
+  }
+  return null;
 }
 
 function startTextDrag(event: PointerEvent): void {
@@ -1911,6 +1976,12 @@ onBeforeUnmount(() => {
 .hero-template-workspace,
 .hero-control-card {
   min-width: 0;
+}
+
+/* Allow the pinned preview's position:sticky to work: AppSurfaceCard's root
+   has overflow:hidden which would otherwise clip/disable sticky on the stage. */
+.hero-template-workspace {
+  overflow: visible !important;
 }
 
 :deep(.hero-template-sidebar__body),

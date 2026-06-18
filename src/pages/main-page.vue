@@ -546,7 +546,7 @@ const systemImageStore = useSystemImageStore();
 const $q = useQuasar();
 const { t, locale } = useI18n({ useScope: 'global' });
 categoryStore.init();
-systemImageStore.init();
+void systemImageStore.init();
 
 const heroSlide = ref(systemImageStore.activeHeroSlides[0]?.id ?? '');
 
