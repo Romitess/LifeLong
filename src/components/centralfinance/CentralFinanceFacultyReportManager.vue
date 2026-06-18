@@ -61,9 +61,9 @@
           <colgroup>
             <col class="centralfinance-faculty-report-table__col-index" />
             <col class="centralfinance-faculty-report-table__col-course" />
-            <col class="centralfinance-faculty-report-table__col-owner" />
             <col class="centralfinance-faculty-report-table__col-dates" />
             <col class="centralfinance-faculty-report-table__col-learners" />
+            <col class="centralfinance-faculty-report-table__col-price" />
             <col class="centralfinance-faculty-report-table__col-fee" />
           </colgroup>
           <thead>
@@ -72,12 +72,14 @@
                 {{ t('finance.registrationStatistics.table.index') }}
               </th>
               <th>{{ t('finance.registrationStatistics.table.courseName') }}</th>
-              <th>{{ t('finance.registrationStatistics.table.courseOwner') }}</th>
               <th>{{ t('finance.registrationStatistics.table.dates') }}</th>
               <th class="text-right">
                 {{ t('finance.registrationStatistics.table.learnersCount') }}
               </th>
-              <th class="text-right">{{ t('finance.registrationStatistics.table.totalFee') }}</th>
+              <th class="text-right">{{ t('finance.registrationStatistics.table.unitPrice') }}</th>
+              <th class="text-right">
+                {{ t('finance.registrationStatistics.table.totalRevenue') }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -101,7 +103,20 @@
                     </div>
                   </div>
                 </td>
-                <td><q-skeleton type="QChip" width="90%" /></td>
+                <td class="text-right">
+                  <div class="centralfinance-faculty-report__metric-cell">
+                    <q-skeleton
+                      type="text"
+                      width="60px"
+                      class="centralfinance-faculty-report__metric-skeleton"
+                    />
+                    <q-skeleton
+                      type="text"
+                      width="28px"
+                      class="centralfinance-faculty-report__metric-skeleton"
+                    />
+                  </div>
+                </td>
                 <td>
                   <div class="centralfinance-faculty-report__date-cell">
                     <q-skeleton type="text" width="78%" />
@@ -148,6 +163,10 @@
                         <span>{{ t('finance.registrationStatistics.table.faculty') }}</span>
                         <strong>{{ overrideFacultyLabel ?? group.facultyName }}</strong>
                       </div>
+                      <div class="centralfinance-faculty-report__group-course-count">
+                        {{ formatCount(group.totalCourses) }}
+                        {{ t('finance.registrationStatistics.table.coursesSuffix') }}
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -168,17 +187,14 @@
                       <div class="centralfinance-faculty-report__course-copy">
                         <strong>{{ item.courseName }}</strong>
                         <span>{{ item.courseCode || `COURSE-${item.courseId}` }}</span>
+                        <span class="centralfinance-faculty-report__course-owner">
+                          <q-icon name="badge" size="13px" />
+                          {{
+                            item.responsibleName ||
+                            t('finance.registrationStatistics.table.noOwner')
+                          }}
+                        </span>
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="centralfinance-faculty-report__owner-cell">
-                      <span class="centralfinance-faculty-report__owner-chip">
-                        <q-icon name="badge" size="15px" />
-                        {{
-                          item.responsibleName || t('finance.registrationStatistics.table.noOwner')
-                        }}
-                      </span>
                     </div>
                   </td>
                   <td>
@@ -196,19 +212,37 @@
                   <td class="text-right">
                     <div class="centralfinance-faculty-report__metric-cell">
                       <strong>{{
+                        getEffectiveUnitPrice(
+                          item.unitPrice,
+                          item.registrationFee,
+                          item.learnerCount,
+                        ) === 0
+                          ? t('finance.registrationStatistics.table.unitPriceFree')
+                          : formatCurrency(
+                              getEffectiveUnitPrice(
+                                item.unitPrice,
+                                item.registrationFee,
+                                item.learnerCount,
+                              ),
+                            )
+                      }}</strong>
+                      <span>{{ t('finance.registrationStatistics.table.unitPriceSuffix') }}</span>
+                    </div>
+                  </td>
+                  <td class="text-right">
+                    <div class="centralfinance-faculty-report__metric-cell">
+                      <strong>{{
                         getSafeAmount(item.registrationFee) === 0
                           ? '฿0'
                           : formatCurrency(getSafeAmount(item.registrationFee))
                       }}</strong>
-                      <span>{{
-                        getUnitPriceLabel(item.unitPrice, item.registrationFee, item.learnerCount)
-                      }}</span>
+                      <span>{{ t('finance.registrationStatistics.table.totalRevenue') }}</span>
                     </div>
                   </td>
                 </tr>
 
                 <tr class="centralfinance-faculty-report-table__group-total-row">
-                  <td colspan="4" class="centralfinance-faculty-report-table__group-total-label">
+                  <td colspan="3" class="centralfinance-faculty-report-table__group-total-label">
                     {{ t('finance.registrationStatistics.table.groupTotalPrefix') }}
                   </td>
                   <td class="text-right">
@@ -217,6 +251,7 @@
                       <span>{{ t('finance.registrationStatistics.table.learnersSuffix') }}</span>
                     </div>
                   </td>
+                  <td></td>
                   <td class="text-right">
                     <div class="centralfinance-faculty-report__metric-cell">
                       <strong>{{ formatCurrency(group.totalRegistrationFees) }}</strong>
@@ -408,24 +443,15 @@ function getSafeAmount(value: number): number {
   return Number.isFinite(value) ? value : 0;
 }
 
-function getUnitPriceLabel(
+function getEffectiveUnitPrice(
   unitPrice: number,
   registrationFee: number,
   learnerCount: number,
-): string {
-  const safeUnitPrice = Number.isFinite(unitPrice) ? unitPrice : 0;
-  const safeRegistrationFee = getSafeAmount(registrationFee);
-  const safeLearnerCount = Number.isFinite(learnerCount) ? learnerCount : 0;
-  const fallbackUnitPrice =
-    safeUnitPrice > 0
-      ? safeUnitPrice
-      : safeLearnerCount > 0
-        ? Math.round(safeRegistrationFee / safeLearnerCount)
-        : 0;
-
-  return fallbackUnitPrice === 0
-    ? t('finance.registrationStatistics.table.priceSetFree')
-    : `${t('finance.registrationStatistics.table.priceSetPrefix')} ${formatCurrency(fallbackUnitPrice)}`;
+): number {
+  const safe = Number.isFinite(unitPrice) ? unitPrice : 0;
+  const safeFee = getSafeAmount(registrationFee);
+  const safeCount = Number.isFinite(learnerCount) ? learnerCount : 0;
+  return safe > 0 ? safe : safeCount > 0 ? Math.round(safeFee / safeCount) : 0;
 }
 
 function loadReport(): Promise<void> {
@@ -575,17 +601,14 @@ onMounted(() => {
   width: 88px;
 }
 
-.centralfinance-faculty-report-table__col-owner {
-  width: 260px;
-}
-
 .centralfinance-faculty-report-table__col-dates {
-  width: 250px;
+  width: 220px;
 }
 
 .centralfinance-faculty-report-table__col-learners,
+.centralfinance-faculty-report-table__col-price,
 .centralfinance-faculty-report-table__col-fee {
-  width: 160px;
+  width: 150px;
 }
 
 .centralfinance-faculty-report-table__index {
@@ -706,30 +729,20 @@ onMounted(() => {
   width: 100%;
 }
 
-.centralfinance-faculty-report__owner-cell {
-  display: flex;
-}
-
-.centralfinance-faculty-report__owner-chip {
+.centralfinance-faculty-report__course-owner {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
+  gap: 4px;
   color: #0f766e;
-  background: rgba(20, 184, 166, 0.1);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  line-height: 1.4;
-  max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
-.centralfinance-faculty-report__owner-chip :deep(.q-icon) {
-  flex-shrink: 0;
-  color: currentColor;
+.centralfinance-faculty-report__group-course-count {
+  color: #b7791f;
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 tbody tr.centralfinance-faculty-report-table__group-row td {
