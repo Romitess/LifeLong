@@ -56,7 +56,7 @@
               :key="index"
               v-model="courseModules[index]!.expanded"
               class="module-item-modern q-mb-md"
-              header-class="module-header-modern q-pa-lg"
+              :header-class="`module-header-modern ${$q.screen.lt.sm ? 'q-pa-sm' : 'q-pa-lg'}`"
               expand-icon-class="text-primary"
             >
               <template v-slot:header>
@@ -164,7 +164,7 @@
                           "
                           color="positive"
                           icon="check_circle"
-                          label="เสร็จแล้ว"
+                          :label="$q.screen.lt.sm ? '' : 'เสร็จแล้ว'"
                           no-caps
                           dense
                           disable
@@ -178,7 +178,13 @@
                           :outline="!lesson.isCompleted"
                           :color="lesson.isCompleted ? 'positive' : 'grey-7'"
                           :icon="lesson.isCompleted ? 'check_circle' : 'check_circle_outline'"
-                          :label="lesson.isCompleted ? 'เสร็จแล้ว' : 'ทำเครื่องหมายว่าเสร็จแล้ว'"
+                          :label="
+                            $q.screen.lt.sm
+                              ? ''
+                              : lesson.isCompleted
+                                ? 'เสร็จแล้ว'
+                                : 'ทำเครื่องหมายว่าเสร็จแล้ว'
+                          "
                           no-caps
                           dense
                           class="mark-done-btn"
@@ -232,7 +238,7 @@
                         "
                         color="positive"
                         icon="check_circle"
-                        label="เสร็จแล้ว"
+                        :label="$q.screen.lt.sm ? '' : 'เสร็จแล้ว'"
                         no-caps
                         dense
                         disable
@@ -246,7 +252,13 @@
                         :outline="!lesson.isCompleted"
                         :color="lesson.isCompleted ? 'positive' : 'grey-7'"
                         :icon="lesson.isCompleted ? 'check_circle' : 'check_circle_outline'"
-                        :label="lesson.isCompleted ? 'เสร็จแล้ว' : 'ทำเครื่องหมายว่าเสร็จแล้ว'"
+                        :label="
+                          $q.screen.lt.sm
+                            ? ''
+                            : lesson.isCompleted
+                              ? 'เสร็จแล้ว'
+                              : 'ทำเครื่องหมายว่าเสร็จแล้ว'
+                        "
                         no-caps
                         dense
                         class="mark-done-btn"
@@ -752,5 +764,61 @@ $sidebar-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+// ── Mobile responsive ───────────────────────────────────────
+@media (max-width: 599px) {
+  .section-container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .content-area {
+    padding-top: 24px;
+    padding-bottom: 32px;
+  }
+
+  .module-item-modern {
+    border-radius: 14px;
+
+    &:hover {
+      transform: none;
+      box-shadow: none;
+      border-color: rgba(0, 0, 0, 0.05);
+    }
+  }
+
+  .module-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .lesson-row {
+    padding-left: 12px !important;
+    padding-right: 8px !important;
+
+    &:hover {
+      padding-left: 12px !important;
+    }
+  }
+
+  .subsection-item {
+    margin: 4px 4px 4px 8px;
+
+    .lesson-row--nested {
+      padding-left: 12px !important;
+    }
+  }
+
+  .chapter-summary {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .mark-done-btn {
+    padding: 4px 8px !important;
+    min-width: 36px !important;
+  }
 }
 </style>
