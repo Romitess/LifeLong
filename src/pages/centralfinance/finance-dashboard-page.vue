@@ -121,6 +121,8 @@ const trendData = ref<{ months: string[]; revenue: number[] }>({
   revenue: [],
 });
 
+const facultyData = ref<{ faculty: string; totalAmount: number }[]>([]);
+
 async function fetchDashboardData() {
   const params: Record<string, string> =
     period.value.preset === 'allTime'
@@ -133,10 +135,14 @@ async function fetchDashboardData() {
     receiptParams.receiptDateEnd = period.value.dateTo;
   }
 
-  const [statsResult, trendResult, receiptResult] = await Promise.allSettled([
+  const [statsResult, trendResult, receiptResult, facultyResult] = await Promise.allSettled([
     api.get('/api/centralfinance/dashboard-stats', { params }),
     api.get('/api/centralfinance/dashboard-trend', { params }),
     api.get<ReceiptUsageResponse>('/api/centralfinance/receipt-usage', { params: receiptParams }),
+    api.get<{ faculty: string; totalAmount: number }[]>(
+      '/api/centralfinance/dashboard-faculty-breakdown',
+      { params },
+    ),
   ]);
 
   const validTx = financeStore.transactions.filter((t) => t.status === 'valid');
@@ -167,6 +173,10 @@ async function fetchDashboardData() {
     dashboardStats.value.totalReceipts = receiptData.total ?? receiptData.data.length;
   } else {
     dashboardStats.value.totalReceipts = validTx.length;
+  }
+
+  if (facultyResult.status === 'fulfilled') {
+    facultyData.value = facultyResult.value.data ?? [];
   }
 }
 
@@ -277,20 +287,11 @@ interface FacultyBreakdownItem {
 }
 
 const topFaculties = computed<FacultyBreakdownItem[]>(() => {
-  const map = new Map<string, number>();
-  for (const tx of financeStore.transactions) {
-    if (tx.status === 'valid') {
-      map.set(tx.faculty, (map.get(tx.faculty) ?? 0) + tx.amount);
-    }
-  }
-  const sorted = Array.from(map.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6);
-  const max = sorted[0]?.[1] ?? 1;
-  return sorted.map(([faculty, totalAmount]) => ({
-    faculty,
-    totalAmount,
-    percent: Math.max(4, Math.round((totalAmount / max) * 100)),
+  const max = facultyData.value[0]?.totalAmount ?? 1;
+  return facultyData.value.map((item) => ({
+    faculty: item.faculty,
+    totalAmount: item.totalAmount,
+    percent: Math.max(4, Math.round((item.totalAmount / max) * 100)),
   }));
 });
 </script>
