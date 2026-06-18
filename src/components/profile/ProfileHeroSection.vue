@@ -1,7 +1,5 @@
 <template>
   <section class="profile-hero">
-    <div class="profile-hero__particles" />
-    <div class="profile-hero__overlay" />
     <GoldenUnderline />
     <div class="section-container profile-hero__content">
       <div class="row items-center justify-between q-col-gutter-lg">
@@ -163,48 +161,28 @@ function onCropDialogSave(): void {
 <style lang="scss" scoped>
 .profile-hero {
   position: relative;
-  // พื้นเข้ม navy-teal ให้ตรงกับ admin hero (AppPageHero)
+  // พื้นเข้ม navy-teal + ความสูงให้ตรงกับ admin hero (AppPageHero): gradient ล้วน, ไม่มี overlay
   background:
     linear-gradient(135deg, rgba(16, 35, 63, 0.98), rgba(20, 84, 106, 0.92)),
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
-  padding: 0;
+  padding: 56px 0 36px;
   overflow: hidden;
-
-  &__particles {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(circle at 15% 25%, rgba($primary, 0.18), transparent 40%),
-      radial-gradient(circle at 85% 78%, rgba(20, 84, 106, 0.5), transparent 42%),
-      radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.04), transparent 60%);
-    z-index: 0;
-  }
-
-  &__overlay {
-    position: absolute;
-    inset: 0;
-    background:
-      repeating-linear-gradient(
-        0deg,
-        rgba(255, 255, 255, 0.02) 0px,
-        rgba(255, 255, 255, 0.02) 1px,
-        transparent 1px,
-        transparent 48px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.02) 0px,
-        rgba(255, 255, 255, 0.02) 1px,
-        transparent 1px,
-        transparent 48px
-      );
-    z-index: 0;
-  }
 
   &__content {
     position: relative;
     z-index: 2;
-    padding: 52px 24px 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 168px;
+  }
+
+  @media (max-width: 900px) {
+    padding: 44px 0 28px;
+
+    .profile-hero__content {
+      min-height: auto;
+    }
   }
 
   &__avatar-wrap {
