@@ -21,110 +21,7 @@
         {{ errorMessage }}
       </q-banner>
 
-      <!-- Sticky sentinel — 1px div สำหรับ IntersectionObserver detect "stuck" -->
-      <div ref="sentinelRef" class="admin-filter-sentinel" />
-
-      <!-- Sticky Filter Bar -->
-      <div class="admin-filter-bar" :class="{ 'admin-filter-bar--stuck': filterStuck }">
-        <!-- Row 1: Mode selector + presets -->
-        <div class="admin-filter-bar__row1">
-          <button
-            class="admin-filter-bar__item"
-            :class="{ 'admin-filter-bar__item--active': isMonthMode }"
-            @click="period = 'month'"
-          >
-            เดือน
-          </button>
-          <button
-            class="admin-filter-bar__item"
-            :class="{ 'admin-filter-bar__item--active': isQuarterMode }"
-            @click="period = 'q1'"
-          >
-            ไตรมาส
-          </button>
-          <button
-            class="admin-filter-bar__item"
-            :class="{ 'admin-filter-bar__item--active': isHalfMode }"
-            @click="period = 'year'"
-          >
-            ช่วงปี
-          </button>
-
-          <div class="admin-filter-bar__divider" />
-
-          <button
-            v-for="opt in specialOptions"
-            :key="opt.value"
-            class="admin-filter-bar__item"
-            :class="{ 'admin-filter-bar__item--active': period === opt.value }"
-            @click="period = opt.value"
-          >
-            {{ opt.label }}
-          </button>
-
-          <span class="admin-filter-bar__label">
-            <q-icon name="calendar_today" size="13px" class="q-mr-xs" />
-            {{ periodLabel }}
-          </span>
-        </div>
-
-        <!-- Row 2: Sub-picker — always visible; dimmed when no year-based mode active -->
-        <div
-          class="admin-filter-bar__row2"
-          :class="{ 'admin-filter-bar__row2--inactive': !isYearBased }"
-        >
-          <span class="admin-filter-bar__sub-label">ปี</span>
-
-          <button
-            v-for="y in availableYears"
-            :key="y"
-            class="admin-filter-bar__item admin-filter-bar__item--sm"
-            :class="{ 'admin-filter-bar__item--active': isYearBased && selectedYear === y }"
-            :disabled="!isYearBased"
-            @click="selectedYear = y"
-          >
-            {{ y + 543 }}
-          </button>
-
-          <template v-if="isYearBased">
-            <div class="admin-filter-bar__divider" />
-
-            <template v-if="isMonthMode">
-              <button
-                v-for="m in monthOptions"
-                :key="m.value"
-                class="admin-filter-bar__item admin-filter-bar__item--sm"
-                :class="{ 'admin-filter-bar__item--active': selectedMonth === m.value }"
-                @click="selectedMonth = m.value"
-              >
-                {{ m.label }}
-              </button>
-            </template>
-            <template v-else-if="isQuarterMode">
-              <button
-                v-for="opt in quarterOptions"
-                :key="opt.value"
-                class="admin-filter-bar__item admin-filter-bar__item--sm"
-                :class="{ 'admin-filter-bar__item--active': period === opt.value }"
-                @click="period = opt.value"
-              >
-                {{ opt.label }}
-              </button>
-            </template>
-            <template v-else>
-              <button
-                v-for="opt in halfOptions"
-                :key="opt.value"
-                class="admin-filter-bar__item admin-filter-bar__item--sm"
-                :class="{ 'admin-filter-bar__item--active': period === opt.value }"
-                @click="period = opt.value"
-              >
-                {{ opt.label }}
-              </button>
-            </template>
-          </template>
-        </div>
-      </div>
+      <PeriodFilterBar v-model="periodModel" @change="onPeriodChange" />
 
       <div class="row q-col-gutter-md admin-dashboard__pulse">
         <div v-for="item in systemPulse" :key="item.label" class="col-12 col-sm-6 col-md-3">
@@ -385,18 +282,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
 import AdminBarChart, { type BarChartItem } from 'components/admin/AdminBarChart.vue';
 import AdminDonutChart from 'components/admin/AdminDonutChart.vue';
 import AppPageHero from 'components/admin/AppPageHero.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
+import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { useAdminDashboardMetrics } from 'src/composables/use-admin-dashboard-metrics';
-import type {
-  DashboardPeriod,
-  RecentRegistration,
-} from 'src/composables/use-admin-dashboard-metrics';
+import type { RecentRegistration } from 'src/composables/use-admin-dashboard-metrics';
 import { formatCompactCurrency, formatCount, formatCurrency } from 'src/utils/course-format';
 
 type ChartMetric = 'pipeline' | 'learners' | 'revenue';
@@ -406,10 +301,9 @@ const {
   errorMessage,
   generatedAt,
   period,
-  selectedYear,
-  selectedMonth,
+  dateFrom,
+  dateTo,
   periodLabel,
-  availableYears,
   kpis,
   monthlySeries: dashboardSeries,
   categoryUsage,
@@ -420,63 +314,14 @@ const {
   totals,
 } = useAdminDashboardMetrics();
 
-// ─── Period presets ──────────────────────────────────────────
-type PeriodGroup = { label: string; value: DashboardPeriod; needsYear: boolean };
+// ─── Date-range filter (shared PeriodFilterBar) ──────────────
+const periodModel = ref<PeriodFilterValue>({ preset: 'allTime', dateFrom: '', dateTo: '' });
 
-const monthOptions = [
-  { label: 'ม.ค.', value: 1 },
-  { label: 'ก.พ.', value: 2 },
-  { label: 'มี.ค.', value: 3 },
-  { label: 'เม.ย.', value: 4 },
-  { label: 'พ.ค.', value: 5 },
-  { label: 'มิ.ย.', value: 6 },
-  { label: 'ก.ค.', value: 7 },
-  { label: 'ส.ค.', value: 8 },
-  { label: 'ก.ย.', value: 9 },
-  { label: 'ต.ค.', value: 10 },
-  { label: 'พ.ย.', value: 11 },
-  { label: 'ธ.ค.', value: 12 },
-];
-
-const quarterOptions: PeriodGroup[] = [
-  { label: 'ไตรมาส 1', value: 'q1', needsYear: true },
-  { label: 'ไตรมาส 2', value: 'q2', needsYear: true },
-  { label: 'ไตรมาส 3', value: 'q3', needsYear: true },
-  { label: 'ไตรมาส 4', value: 'q4', needsYear: true },
-];
-const halfOptions: PeriodGroup[] = [
-  { label: 'ครึ่งปีแรก', value: 'h1', needsYear: true },
-  { label: 'ครึ่งปีหลัง', value: 'h2', needsYear: true },
-  { label: 'ทั้งปี', value: 'year', needsYear: true },
-];
-const specialOptions: PeriodGroup[] = [
-  { label: '12 เดือนล่าสุด', value: 'rolling12', needsYear: false },
-  { label: 'ทั้งหมด', value: 'allTime', needsYear: false },
-];
-
-const isMonthMode = computed(() => period.value === 'month');
-const isQuarterMode = computed(() => ['q1', 'q2', 'q3', 'q4'].includes(period.value));
-const isHalfMode = computed(() => ['h1', 'h2', 'year'].includes(period.value));
-const isYearBased = computed(() => isMonthMode.value || isQuarterMode.value || isHalfMode.value);
-
-// ─── Sticky sentinel ──────────────────────────────────────────
-const sentinelRef = ref<HTMLElement | null>(null);
-const filterStuck = ref(false);
-let stickyObserver: IntersectionObserver | null = null;
-
-onMounted(() => {
-  if (!sentinelRef.value) return;
-  stickyObserver = new IntersectionObserver(
-    ([entry]) => {
-      filterStuck.value = !(entry?.isIntersecting ?? true);
-    },
-    { threshold: 0, rootMargin: '-73px 0px 0px 0px' },
-  );
-  stickyObserver.observe(sentinelRef.value);
-});
-onUnmounted(() => {
-  stickyObserver?.disconnect();
-});
+function onPeriodChange() {
+  period.value = periodModel.value.preset === 'allTime' ? 'allTime' : 'custom';
+  dateFrom.value = periodModel.value.dateFrom;
+  dateTo.value = periodModel.value.dateTo;
+}
 
 // ─── Chart key — re-triggers chart animations on data reload ──
 const chartKey = ref(0);
@@ -765,138 +610,6 @@ function formatRelativeTime(iso: string | null): string {
 </script>
 
 <style lang="scss" scoped>
-// ─── Sticky Filter Bar ───────────────────────────────────────
-.admin-filter-sentinel {
-  height: 1px;
-}
-
-.admin-filter-bar {
-  position: sticky;
-  top: 80px;
-  z-index: 9;
-  margin-bottom: 16px;
-  border-radius: var(--admin-radius-lg);
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px) saturate(1.8);
-  -webkit-backdrop-filter: blur(16px) saturate(1.8);
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  transition: box-shadow 0.2s ease;
-  overflow: clip; // clip visual overflow (border-radius) without blocking child scroll containers
-
-  &--stuck {
-    box-shadow:
-      0 6px 28px rgba(17, 24, 39, 0.1),
-      0 1px 4px rgba(17, 24, 39, 0.05);
-  }
-}
-
-// ─── Rows shared layout ───────────────────────────────────────
-.admin-filter-bar__row1,
-.admin-filter-bar__row2 {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 2px; // same as admin-section-nav__list gap
-  overflow-x: auto;
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.admin-filter-bar__row1 {
-  padding: 8px 8px 4px;
-  min-height: 52px;
-}
-
-.admin-filter-bar__row2 {
-  padding: 4px 8px 8px;
-  border-top: 1px solid rgba(17, 24, 39, 0.06);
-  transition: opacity 0.18s ease;
-
-  &--inactive {
-    opacity: 0.35;
-    pointer-events: none;
-  }
-}
-
-// ─── Item — matches admin-section-nav__item exactly ──────────
-.admin-filter-bar__item {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  border: none;
-  border-radius: 10px;
-  min-height: 40px;
-  padding: 0 14px;
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.83rem;
-  font-weight: 700;
-  color: var(--admin-muted);
-  white-space: nowrap;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba($primary, 0.04);
-    color: var(--admin-navy);
-  }
-
-  &--active {
-    background: rgba($primary, 0.08) !important;
-    box-shadow: inset 4px 0 0 $primary;
-    color: var(--admin-navy);
-  }
-
-  // compact size for row-2 year/month/quarter chips
-  &--sm {
-    min-height: 34px;
-    padding: 0 10px;
-    font-size: 0.78rem;
-  }
-}
-
-// ─── Divider between groups ───────────────────────────────────
-.admin-filter-bar__divider {
-  width: 1px;
-  height: 20px;
-  background: rgba(17, 24, 39, 0.1);
-  flex-shrink: 0;
-  margin: 0 8px;
-}
-
-// ─── Sub-label (ปี) ───────────────────────────────────────────
-.admin-filter-bar__sub-label {
-  flex-shrink: 0;
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: var(--admin-muted);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  padding: 0 6px;
-}
-
-// ─── Period label (right side of row 1) ──────────────────────
-.admin-filter-bar__label {
-  margin-left: auto;
-  flex-shrink: 0;
-  font-size: 0.73rem;
-  font-weight: 600;
-  color: var(--admin-muted);
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  padding: 0 6px;
-}
-
-@media (max-width: 900px) {
-  .admin-filter-bar__label {
-    display: none;
-  }
-}
-
 .admin-dashboard__hero-badge {
   padding: 10px 18px;
   font-size: 0.85rem;

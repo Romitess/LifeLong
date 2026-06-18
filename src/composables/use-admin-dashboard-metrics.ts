@@ -194,7 +194,8 @@ export type DashboardPeriod =
   | 'year'
   | 'rolling12'
   | 'yearly'
-  | 'allTime';
+  | 'allTime'
+  | 'custom';
 
 export interface DashboardMetrics {
   isLoading: Ref<boolean>;
@@ -203,6 +204,8 @@ export interface DashboardMetrics {
   period: Ref<DashboardPeriod>;
   selectedYear: Ref<number>;
   selectedMonth: Ref<number>;
+  dateFrom: Ref<string>;
+  dateTo: Ref<string>;
   periodLabel: ComputedRef<string>;
   availableYears: ComputedRef<number[]>;
   kpis: ComputedRef<DashboardKpi[]>;
@@ -314,6 +317,9 @@ export function useAdminDashboardMetrics(): DashboardMetrics {
   const period = ref<DashboardPeriod>('rolling12');
   const selectedYear = ref<number>(new Date().getFullYear());
   const selectedMonth = ref<number>(new Date().getMonth() + 1);
+  // Custom date range (DD/MM/YYYY) used when period === 'custom'.
+  const dateFrom = ref<string>('');
+  const dateTo = ref<string>('');
   const response = ref<DashboardApiResponse>(createEmptyResponse());
 
   async function refresh(): Promise<void> {
@@ -326,6 +332,7 @@ export function useAdminDashboardMetrics(): DashboardMetrics {
           period: period.value,
           year: selectedYear.value,
           ...(period.value === 'month' ? { month: selectedMonth.value } : {}),
+          ...(period.value === 'custom' ? { dateFrom: dateFrom.value, dateTo: dateTo.value } : {}),
         },
       });
       response.value = data;
@@ -337,7 +344,7 @@ export function useAdminDashboardMetrics(): DashboardMetrics {
     }
   }
 
-  watch([period, selectedYear, selectedMonth], () => void refresh());
+  watch([period, selectedYear, selectedMonth, dateFrom, dateTo], () => void refresh());
 
   onMounted(() => {
     void refresh();
@@ -507,6 +514,8 @@ export function useAdminDashboardMetrics(): DashboardMetrics {
     period,
     selectedYear,
     selectedMonth,
+    dateFrom,
+    dateTo,
     periodLabel,
     availableYears,
     kpis,
