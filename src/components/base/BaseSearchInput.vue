@@ -43,5 +43,35 @@ function onClear(): void {
 }
 </script>
 
-<!-- Plain `outlined` q-input: border, radius, font and focus all come from the
-     global .q-field--outlined styles so search matches every other field. -->
+<style scoped lang="scss">
+.base-search-input {
+  :deep(.q-field__control) {
+    background: #ffffff !important;
+  }
+
+  :deep(.q-field__control::before) {
+    border-color: rgba(17, 24, 39, 0.14) !important;
+  }
+
+  :deep(.q-field__control:hover::before) {
+    border-color: rgba(17, 24, 39, 0.22) !important;
+  }
+
+  &.q-field--focused :deep(.q-field__control::after) {
+    border-color: var(--q-primary) !important;
+  }
+
+  :deep(.q-field__native),
+  :deep(.q-field__input) {
+    color: #1f2937;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  :deep(.q-field__native::placeholder),
+  :deep(.q-field__input::placeholder) {
+    color: #8a94a6;
+    opacity: 1;
+  }
+}
+</style>
