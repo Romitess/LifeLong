@@ -73,9 +73,7 @@
         class="full-width profile-sidebar-link-btn"
         align="left"
         padding="8px 12px"
-        href="https://myid.buu.ac.th"
-        target="_blank"
-        rel="noopener noreferrer"
+        @click="handleChangePassword"
       />
       <q-btn
         flat
@@ -95,6 +93,8 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
+import { useAuthStore } from 'src/stores/auth-store';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 interface MenuItem {
@@ -117,6 +117,18 @@ const emit = defineEmits<{
   'update:modelValue': [value: string];
   'show-student-card': [];
 }>();
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+function handleChangePassword(): void {
+  const email = authStore.user?.email ?? '';
+  if (email.endsWith('@go.buu.ac.th')) {
+    window.open('https://myid.buu.ac.th', '_blank', 'noopener,noreferrer');
+  } else {
+    void router.push('/login-forget');
+  }
+}
 
 function onMenuClick(value: string, event: Event): void {
   if (isNewTabClick(event)) {
