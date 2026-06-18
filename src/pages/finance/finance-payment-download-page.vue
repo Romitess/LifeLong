@@ -635,8 +635,9 @@ function downloadCsv() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   const stamp = todayFormatted().replace(/\//g, '');
+  const facName = userFacName.value.replace(/\s+/g, '_');
   link.href = url;
-  link.download = `payment-notifications-${stamp}.csv`;
+  link.download = `payment_${facName}_${stamp}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 
