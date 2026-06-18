@@ -245,16 +245,10 @@ const endDateProxy = ref<QPopupProxy | null>(null);
   height: 44px;
   min-width: 44px;
   min-height: 44px;
-  /* !important is required to beat the global `body .q-btn { ... !important }`
-     rules in app.scss (radius 12px + 1px border) — otherwise this stays a square. */
-  border-radius: 50% !important; /* perfect circle */
-  /* match BaseSearchInput's border exactly so it sits beside the search cohesively */
-  border: 2px solid rgba(0, 0, 0, 0.14) !important;
+  /* Keep the round shape (beats the global 12px), but let the border weight/color
+     come from the global `body .q-btn` (1px) so it matches every other button. */
+  border-radius: 50% !important;
   background: #ffffff;
-
-  &:hover {
-    border-color: var(--q-primary) !important;
-  }
 
   :deep(.q-btn__content) {
     border-radius: inherit;
