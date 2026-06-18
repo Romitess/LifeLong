@@ -20,73 +20,57 @@
 
       <div class="courses-manager__filters">
         <div class="courses-manager__filter-row">
-          <div class="courses-manager__field">
-            <div class="courses-manager__field-label">ชื่อรายวิชา</div>
-            <q-input
-              v-model="filterCourseName"
-              outlined
-              dense
-              clearable
-              placeholder="ระบุชื่อรายวิชา"
-              hint=" "
-              class="courses-manager__input"
-              @keyup.enter="applyFilters"
-            />
-          </div>
+          <BaseInput
+            v-model="filterCourseName"
+            label="ชื่อรายวิชา"
+            clearable
+            placeholder="ระบุชื่อรายวิชา"
+            hint=" "
+            class="courses-manager__field"
+            @keyup.enter="applyFilters"
+          />
 
-          <div class="courses-manager__field">
-            <div class="courses-manager__field-label">คณะ/ส่วนงาน</div>
-            <q-select
-              v-model="filterFacultyId"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              :options="filterOptions.faculties"
-              option-label="label"
-              option-value="id"
-              placeholder="เลือกคณะ/ส่วนงาน"
-              hint=" "
-              class="courses-manager__select"
-            />
-          </div>
+          <BaseSelect
+            v-model="filterFacultyId"
+            label="คณะ/ส่วนงาน"
+            clearable
+            emit-value
+            map-options
+            :options="filterOptions.faculties"
+            option-label="label"
+            option-value="id"
+            placeholder="เลือกคณะ/ส่วนงาน"
+            hint=" "
+            class="courses-manager__field"
+          />
 
-          <div class="courses-manager__field">
-            <div class="courses-manager__field-label">ประเภท</div>
-            <q-select
-              v-model="filterTypeCourseId"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              :options="filterOptions.courseTypes"
-              option-label="label"
-              option-value="id"
-              placeholder="เลือกประเภท"
-              hint=" "
-              class="courses-manager__select"
-            />
-          </div>
+          <BaseSelect
+            v-model="filterTypeCourseId"
+            label="ประเภท"
+            clearable
+            emit-value
+            map-options
+            :options="filterOptions.courseTypes"
+            option-label="label"
+            option-value="id"
+            placeholder="เลือกประเภท"
+            hint=" "
+            class="courses-manager__field"
+          />
 
-          <div class="courses-manager__field">
-            <div class="courses-manager__field-label">ค่าใช้จ่าย</div>
-            <q-select
-              v-model="filterFeeType"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              :options="feeTypeOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="ทั้งหมด"
-              hint=" "
-              class="courses-manager__select"
-            />
-          </div>
+          <BaseSelect
+            v-model="filterFeeType"
+            label="ค่าใช้จ่าย"
+            clearable
+            emit-value
+            map-options
+            :options="feeTypeOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="ทั้งหมด"
+            hint=" "
+            class="courses-manager__field"
+          />
 
           <div class="courses-manager__field courses-manager__field--actions">
             <div class="courses-manager__filter-actions">
@@ -338,6 +322,8 @@ import AppActionButton from 'components/admin/AppActionButton.vue';
 import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
 import AppSearchInput from 'components/admin/AppSearchInput.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import BaseInput from 'components/base/BaseInput.vue';
+import BaseSelect from 'components/base/BaseSelect.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
