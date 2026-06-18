@@ -10,67 +10,7 @@
 
     <!-- ── Content ───────────────────────────────────────────── -->
     <section class="finance-shell finance-content">
-      <!-- Sticky sentinel -->
-      <div ref="sentinelRef" class="admin-filter-sentinel" />
-
-      <!-- Sticky Filter Bar -->
-      <div class="admin-filter-bar" :class="{ 'admin-filter-bar--stuck': filterStuck }">
-        <div class="admin-filter-bar__row1">
-          <span class="admin-filter-bar__label q-mr-sm">
-            <q-icon name="filter_alt" size="14px" class="q-mr-xs" /> ตัวกรอง
-          </span>
-
-          <button
-            v-for="opt in datePresetOptions"
-            :key="opt.value"
-            class="admin-filter-bar__item"
-            :class="{ 'admin-filter-bar__item--active': datePreset === opt.value }"
-            @click="applyDatePreset(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-
-          <q-btn
-            flat
-            dense
-            round
-            icon="filter_alt_off"
-            color="negative"
-            class="q-ml-sm"
-            @click="clearFilters"
-          >
-            <q-tooltip>ล้างตัวกรอง</q-tooltip>
-          </q-btn>
-        </div>
-
-        <div
-          class="admin-filter-bar__row2"
-          :class="{ 'admin-filter-bar__row2--inactive': datePreset !== 'custom' }"
-        >
-          <span class="admin-filter-bar__sub-label q-mr-sm">กำหนดช่วงเวลาเอง</span>
-          <q-input
-            v-model="dateRangeDisplay"
-            readonly
-            borderless
-            dense
-            placeholder="เลือกช่วงเวลา"
-            class="admin-filter-bar__input admin-filter-bar__input--range"
-          >
-            <template #append>
-              <q-icon name="event" class="cursor-pointer" color="primary">
-                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <q-date v-model="dateRangeModel" range mask="DD/MM/YYYY" color="primary">
-                    <div class="row items-center justify-end q-gutter-sm">
-                      <q-btn label="ยกเลิก" color="primary" flat v-close-popup />
-                      <q-btn label="ตกลง" color="primary" flat v-close-popup />
-                    </div>
-                  </q-date>
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
-        </div>
-      </div>
+      <PeriodFilterBar v-model="period" @change="fetchDashboardData" />
 
       <!-- ── Row 1: KPI Metric Cards ─────────────────────────── -->
       <div class="finance-stat-grid">
@@ -91,7 +31,7 @@
         <CentralFinanceSurfaceCard
           eyebrow="Revenue Trend"
           title="แนวโน้มรายรับรวม"
-          :subtitle="dateRangeDisplay || 'ทั้งหมด'"
+          :subtitle="dateRangeLabel || 'ทั้งหมด'"
           card-class="finance-panel"
         >
           <div class="chart-block__header">
@@ -144,11 +84,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
+import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import { api } from 'src/boot/axios';
 import { formatCompactCurrency } from 'src/utils/course-format';
@@ -157,94 +98,14 @@ import type { ReceiptUsageResponse } from 'src/types/receipt-usage-report';
 const financeStore = useCentralFinanceStore();
 
 // ── Sticky Filter Bar ────────────────────────────────────────
-const sentinelRef = ref<HTMLElement | null>(null);
-const filterStuck = ref(false);
-let stickyObserver: IntersectionObserver | null = null;
+const period = ref<PeriodFilterValue>({ preset: 'allTime', dateFrom: '', dateTo: '' });
 
-const filters = ref({ dateFrom: '', dateTo: '' });
-const datePreset = ref('allTime');
-const datePresetOptions = [
-  { label: 'วันนี้', value: 'today' },
-  { label: 'สัปดาห์นี้', value: 'thisWeek' },
-  { label: 'เดือนนี้', value: 'thisMonth' },
-  { label: 'ปีนี้', value: 'thisYear' },
-  { label: 'ทั้งหมด', value: 'allTime' },
-  { label: 'กำหนดเอง', value: 'custom' },
-];
-
-function formatDateInput(date: Date): string {
-  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
-}
-
-function applyDatePreset(preset: string) {
-  datePreset.value = preset;
-  const now = new Date();
-  if (preset === 'today') {
-    filters.value.dateFrom = formatDateInput(now);
-    filters.value.dateTo = formatDateInput(now);
-  } else if (preset === 'thisWeek') {
-    const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-    const start = new Date(now.getFullYear(), now.getMonth(), diff);
-    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
-    filters.value.dateFrom = formatDateInput(start);
-    filters.value.dateTo = formatDateInput(end);
-  } else if (preset === 'thisMonth') {
-    filters.value.dateFrom = formatDateInput(new Date(now.getFullYear(), now.getMonth(), 1));
-    filters.value.dateTo = formatDateInput(new Date(now.getFullYear(), now.getMonth() + 1, 0));
-  } else if (preset === 'thisYear') {
-    filters.value.dateFrom = formatDateInput(new Date(now.getFullYear(), 0, 1));
-    filters.value.dateTo = formatDateInput(new Date(now.getFullYear(), 11, 31));
-  } else if (preset === 'allTime') {
-    filters.value.dateFrom = '';
-    filters.value.dateTo = '';
+const dateRangeLabel = computed(() => {
+  const { dateFrom, dateTo } = period.value;
+  if (dateFrom && dateTo && dateFrom !== dateTo) {
+    return `${dateFrom} - ${dateTo}`;
   }
-  if (preset !== 'custom') void fetchDashboardData();
-}
-
-function clearFilters() {
-  filters.value.dateFrom = '';
-  filters.value.dateTo = '';
-  datePreset.value = 'allTime';
-  void fetchDashboardData();
-}
-
-const dateRangeModel = computed({
-  get() {
-    if (
-      filters.value.dateFrom &&
-      filters.value.dateTo &&
-      filters.value.dateFrom !== filters.value.dateTo
-    ) {
-      return { from: filters.value.dateFrom, to: filters.value.dateTo };
-    }
-    return filters.value.dateFrom || null;
-  },
-  set(val: { from: string; to: string } | string | null) {
-    if (val !== null && typeof val === 'object' && 'from' in val && 'to' in val) {
-      filters.value.dateFrom = val.from;
-      filters.value.dateTo = val.to;
-    } else if (typeof val === 'string') {
-      filters.value.dateFrom = val;
-      filters.value.dateTo = val;
-    } else {
-      filters.value.dateFrom = '';
-      filters.value.dateTo = '';
-    }
-    datePreset.value = 'custom';
-    void fetchDashboardData();
-  },
-});
-
-const dateRangeDisplay = computed(() => {
-  if (
-    filters.value.dateFrom &&
-    filters.value.dateTo &&
-    filters.value.dateFrom !== filters.value.dateTo
-  ) {
-    return `${filters.value.dateFrom} - ${filters.value.dateTo}`;
-  }
-  return filters.value.dateFrom || '';
+  return dateFrom || '';
 });
 
 // ── Dashboard API Data ───────────────────────────────────────
@@ -262,14 +123,14 @@ const trendData = ref<{ months: string[]; revenue: number[] }>({
 
 async function fetchDashboardData() {
   const params: Record<string, string> =
-    datePreset.value === 'allTime'
+    period.value.preset === 'allTime'
       ? { period: 'allTime' }
-      : { period: 'custom', dateFrom: filters.value.dateFrom, dateTo: filters.value.dateTo };
+      : { period: 'custom', dateFrom: period.value.dateFrom, dateTo: period.value.dateTo };
 
   const receiptParams: Record<string, string> = {};
-  if (datePreset.value !== 'allTime' && filters.value.dateFrom) {
-    receiptParams.receiptDateStart = filters.value.dateFrom;
-    receiptParams.receiptDateEnd = filters.value.dateTo;
+  if (period.value.preset !== 'allTime' && period.value.dateFrom) {
+    receiptParams.receiptDateStart = period.value.dateFrom;
+    receiptParams.receiptDateEnd = period.value.dateTo;
   }
 
   const [statsResult, trendResult, receiptResult] = await Promise.allSettled([
@@ -311,20 +172,7 @@ async function fetchDashboardData() {
 
 // ── Lifecycle ────────────────────────────────────────────────
 onMounted(() => {
-  if (sentinelRef.value) {
-    stickyObserver = new IntersectionObserver(
-      ([entry]) => {
-        filterStuck.value = !(entry?.isIntersecting ?? true);
-      },
-      { threshold: 0, rootMargin: '-73px 0px 0px 0px' },
-    );
-    stickyObserver.observe(sentinelRef.value);
-  }
   void fetchDashboardData();
-});
-
-onUnmounted(() => {
-  stickyObserver?.disconnect();
 });
 
 // ── KPI Metric Cards ─────────────────────────────────────────
@@ -554,123 +402,6 @@ const topFaculties = computed<FacultyBreakdownItem[]>(() => {
 }
 
 // ── Sticky Filter Bar ────────────────────────────────────────
-.admin-filter-sentinel {
-  height: 1px;
-}
-
-.admin-filter-bar {
-  position: sticky;
-  top: 80px;
-  z-index: 9;
-  margin-bottom: 16px;
-  border-radius: var(--admin-radius-lg, 16px);
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px) saturate(1.8);
-  -webkit-backdrop-filter: blur(16px) saturate(1.8);
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  transition: box-shadow 0.2s ease;
-  overflow: clip;
-
-  &--stuck {
-    box-shadow:
-      0 6px 28px rgba(17, 24, 39, 0.1),
-      0 1px 4px rgba(17, 24, 39, 0.05);
-  }
-}
-
-.admin-filter-bar__row1,
-.admin-filter-bar__row2 {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 2px;
-  overflow-x: auto;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.admin-filter-bar__row1 {
-  padding: 8px 8px 4px;
-  min-height: 52px;
-}
-
-.admin-filter-bar__row2 {
-  padding: 4px 8px 8px;
-  border-top: 1px solid rgba(17, 24, 39, 0.06);
-  transition: opacity 0.18s ease;
-
-  &--inactive {
-    opacity: 0.35;
-    pointer-events: none;
-  }
-}
-
-.admin-filter-bar__label,
-.admin-filter-bar__sub-label {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: var(--admin-navy, #10233f);
-  padding-left: 8px;
-  white-space: nowrap;
-}
-
-.admin-filter-bar__sub-label {
-  font-size: 0.76rem;
-  color: #64748b;
-}
-
-.admin-filter-bar__item {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  border: none;
-  border-radius: 10px;
-  min-height: 40px;
-  padding: 0 14px;
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.83rem;
-  font-weight: 700;
-  color: var(--admin-muted, #64748b);
-  white-space: nowrap;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba($primary, 0.04);
-    color: var(--admin-navy, #10233f);
-  }
-
-  &--active {
-    background: rgba($primary, 0.08) !important;
-    box-shadow: inset 4px 0 0 $primary;
-    color: var(--admin-navy, #10233f);
-  }
-}
-
-.admin-filter-bar__input {
-  width: 140px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 0 12px;
-  transition: all 0.2s ease;
-
-  &--range {
-    width: 220px;
-  }
-
-  &:focus-within {
-    border-color: $primary;
-    box-shadow: 0 0 0 2px rgba($primary, 0.1);
-  }
-}
-
 // ── Responsive ───────────────────────────────────────────────
 @media (max-width: 1100px) {
   .finance-stat-grid {
