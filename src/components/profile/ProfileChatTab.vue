@@ -455,6 +455,21 @@ function formatDate(isoDate: string): string {
     min-height: 44px;
     background: #fff;
   }
+
+  // Use a SINGLE border (the :before outline) at a constant 2px, and disable the
+  // :after focus overlay entirely — that overlay was drawing a second line and the
+  // 1px → 2px shift. Focus just recolors the one border to primary.
+  :deep(.q-field__control:before) {
+    border: 2px solid rgba(0, 0, 0, 0.14);
+  }
+
+  :deep(.q-field__control:after) {
+    display: none;
+  }
+
+  &.q-field--focused :deep(.q-field__control:before) {
+    border-color: var(--q-primary);
+  }
 }
 
 .course-list-header {
