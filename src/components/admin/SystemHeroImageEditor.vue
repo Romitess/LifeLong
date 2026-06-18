@@ -158,7 +158,7 @@
               icon="edit"
               label="ยังไม่บันทึก"
             />
-            <q-toggle v-model="selectedSlide.enabled" color="positive" label="แสดงผล" />
+            <BaseToggle v-model="selectedSlide.enabled" color="positive" label="แสดงผล" />
             <div class="hero-template-toolbar__save-actions">
               <AppActionButton
                 variant="secondary"
@@ -385,13 +385,13 @@
               <div class="q-pa-md">
                 <div class="hero-form-grid">
                   <div class="hero-form-toggle-row hero-form-span-full">
-                    <q-toggle
+                    <BaseToggle
                       v-model="selectedSlide.textBlock.enabled"
                       color="primary"
                       label="เปิดข้อความ"
                       @click.stop
                     />
-                    <q-toggle
+                    <BaseToggle
                       v-model="selectedSlide.textBlock.backgroundEnabled"
                       color="primary"
                       label="พื้นหลังกล่องข้อความ"
@@ -548,7 +548,7 @@
                 </q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle v-model="line.enabled" color="positive" dense label="แสดง" />
+                <BaseToggle v-model="line.enabled" color="positive" dense label="แสดง" />
               </q-item-section>
             </template>
 
@@ -718,6 +718,7 @@ import HeroSlideFormDialog, {
 } from 'components/admin/HeroSlideFormDialog.vue';
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseDateRangeFilter, { type DateRangeValue } from 'components/base/BaseDateRangeFilter.vue';
+import BaseToggle from 'components/base/BaseToggle.vue';
 import {
   cloneHeroTemplateConfig,
   createDefaultHeroTemplateConfig,

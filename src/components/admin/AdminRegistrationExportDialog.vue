@@ -34,7 +34,7 @@
             ]"
             @click="localFormat = fmt.value"
           >
-            <q-radio
+            <BaseRadio
               v-model="localFormat"
               :val="fmt.value"
               color="primary"
@@ -75,6 +75,7 @@ import { computed, ref, watch } from 'vue';
 import ExcelJS from 'exceljs';
 import { api } from 'src/boot/axios';
 import AppActionButton from 'components/admin/AppActionButton.vue';
+import BaseRadio from 'components/base/BaseRadio.vue';
 import type { DateRangeValue } from 'components/base/BaseDateRangeFilter.vue';
 import type { AdminRegistrationStatisticsReportFilterOption } from 'src/types/admin-registration-statistics-report';
 

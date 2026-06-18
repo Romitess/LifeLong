@@ -202,7 +202,7 @@
             <div class="cert-manager-dialog__label">
               ชื่อรูปแบบ Certificate <span class="text-negative">*</span>
             </div>
-            <q-input
+            <BaseInput
               v-model="form.name"
               outlined
               dense
@@ -370,7 +370,7 @@
                     field.label
                   }}</span>
                   <div class="position-editor__field-controls">
-                    <q-input
+                    <BaseInput
                       v-model.number="form.layout[field.key].fontSize"
                       type="number"
                       outlined
@@ -399,7 +399,7 @@
                       toggle-color="primary"
                       class="position-editor__align-toggle"
                     />
-                    <q-toggle v-model="form.layout[field.key].bold" dense size="sm" label="B" />
+                    <BaseToggle v-model="form.layout[field.key].bold" dense size="sm" label="B" />
                   </div>
                 </div>
               </div>
@@ -410,7 +410,7 @@
           <div class="cert-manager-dialog__field cert-manager-dialog__field--status">
             <div class="cert-manager-dialog__label">สถานะ</div>
             <div class="cert-manager-dialog__status-row">
-              <q-toggle v-model="form.statusOn" color="positive" keep-color />
+              <BaseToggle v-model="form.statusOn" color="positive" keep-color />
               <span
                 :class="form.statusOn ? 'text-positive' : 'text-grey-6'"
                 class="cert-manager-dialog__status-label"
@@ -481,7 +481,9 @@ import AppActionButton from 'components/admin/AppActionButton.vue';
 import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
 import AppSearchInput from 'components/admin/AppSearchInput.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import BaseInput from 'components/base/BaseInput.vue';
 import BasePagination from 'components/base/BasePagination.vue';
+import BaseToggle from 'components/base/BaseToggle.vue';
 import { useAdminCertTemplates } from 'src/composables/use-admin-cert-templates';
 import { api } from 'src/boot/axios';
 import type {

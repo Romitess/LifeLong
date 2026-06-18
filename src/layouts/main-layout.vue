@@ -1074,6 +1074,16 @@ let pageSwitchLoadingTimer: ReturnType<typeof setTimeout> | null = null;
 
 const PAGE_SWITCH_LOADING_MS = 450;
 const pageSwitchLoadingPaths = new Set(['/main', '/profile']);
+const adminTabRouteSlugs = new Set([
+  'categories',
+  'cert-template',
+  'cert-signer',
+  'slides',
+  'interested-courses',
+  'registration-statistics',
+  'info',
+  'chapters',
+]);
 
 const announcementNotifications = computed(() =>
   isTeachingRole.value
@@ -1166,7 +1176,30 @@ function scheduleNotificationAttention(): void {
 
 type AuthPath = '/login' | '/register';
 
-function shouldShowPageSwitchLoading(path: string): boolean {
+function getPathWithoutQuery(fullPath: string): string {
+  return fullPath.split(/[?#]/)[0] || '/';
+}
+
+function getAdminTabBasePath(path: string): string {
+  const segments = path.split('/').filter(Boolean);
+  const lastSegment = segments.at(-1);
+  if (lastSegment && adminTabRouteSlugs.has(lastSegment)) {
+    segments.pop();
+  }
+  return `/${segments.join('/')}`;
+}
+
+function isSameAdminTabRouteChange(path: string, previousPath?: string): boolean {
+  if (!previousPath || !path.startsWith('/admin') || !previousPath.startsWith('/admin')) {
+    return false;
+  }
+  return getAdminTabBasePath(path) === getAdminTabBasePath(previousPath);
+}
+
+function shouldShowPageSwitchLoading(path: string, previousPath?: string): boolean {
+  if (isSameAdminTabRouteChange(path, previousPath)) {
+    return false;
+  }
   return pageSwitchLoadingPaths.has(path) || path.startsWith('/admin');
 }
 
@@ -1183,7 +1216,10 @@ function showPageSwitchLoading(): void {
 }
 
 async function navigateWithPageLoading(path: string): Promise<void> {
-  if (router.currentRoute.value.path !== path && shouldShowPageSwitchLoading(path)) {
+  if (
+    router.currentRoute.value.path !== path &&
+    shouldShowPageSwitchLoading(path, router.currentRoute.value.path)
+  ) {
     showPageSwitchLoading();
   }
 
@@ -1270,7 +1306,12 @@ watch(
     const path = route.path;
     syncActiveNavWithRoute(path);
 
-    if (!previousFullPath || fullPath === previousFullPath || !shouldShowPageSwitchLoading(path)) {
+    if (!previousFullPath || fullPath === previousFullPath) {
+      return;
+    }
+
+    const previousPath = getPathWithoutQuery(previousFullPath);
+    if (!shouldShowPageSwitchLoading(path, previousPath)) {
       return;
     }
 

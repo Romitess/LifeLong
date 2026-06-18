@@ -526,6 +526,22 @@ function getTypeColor(typeCourseId: number): string {
   min-width: 160px;
 }
 
+.courses-manager__filter-row > .courses-manager__field:nth-child(1) {
+  flex: 1 1 360px;
+  min-width: 320px;
+}
+
+.courses-manager__filter-row > .courses-manager__field:nth-child(2) {
+  flex: 0 1 220px;
+  min-width: 220px;
+}
+
+.courses-manager__filter-row > .courses-manager__field:nth-child(3),
+.courses-manager__filter-row > .courses-manager__field:nth-child(4) {
+  flex: 0 1 150px;
+  min-width: 150px;
+}
+
 .courses-manager__field--actions {
   flex: 0 0 auto;
   justify-content: flex-end;

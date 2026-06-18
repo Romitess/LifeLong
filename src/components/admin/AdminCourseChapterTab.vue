@@ -62,7 +62,7 @@
                 <div class="chapter-tab__label">
                   ชื่อบทเรียน <span class="chapter-tab__required">*</span>
                 </div>
-                <q-input
+                <BaseInput
                   v-model="chapter.subject"
                   outlined
                   dense
@@ -78,7 +78,7 @@
                   จำนวนชั่วโมง <span class="chapter-tab__optional">(ไม่บังคับ)</span>
                 </div>
                 <div class="chapter-tab__hour-wrap">
-                  <q-input
+                  <BaseInput
                     v-model.number="chapter.hour"
                     outlined
                     dense
@@ -96,7 +96,7 @@
                 <div class="chapter-tab__label">
                   รูปแบบการเรียน <span class="chapter-tab__optional">(ไม่บังคับ)</span>
                 </div>
-                <q-select
+                <BaseSelect
                   v-model="chapter.chapterTypeId"
                   :options="chapterTypeOptions"
                   option-value="id"
@@ -117,7 +117,7 @@
                 class="chapter-tab__field chapter-tab__field--full"
               >
                 <div class="chapter-tab__label">ระบุรูปแบบการเรียน</div>
-                <q-input
+                <BaseInput
                   v-model="chapter.chapterTypeOther"
                   outlined
                   dense
@@ -152,7 +152,7 @@
                 class="chapter-tab__sub-row"
               >
                 <span class="chapter-tab__sub-seq">{{ idx + 1 }}.{{ sIdx + 1 }}</span>
-                <q-input
+                <BaseInput
                   v-model="sub.subject"
                   outlined
                   dense
@@ -184,6 +184,8 @@
 import { computed } from 'vue';
 import type { ChapterTypeFormOption, CourseChapterPayload } from 'src/types/admin-courses';
 import BaseButton from 'components/base/BaseButton.vue';
+import BaseInput from 'components/base/BaseInput.vue';
+import BaseSelect from 'components/base/BaseSelect.vue';
 import AppSurfaceCard from './AppSurfaceCard.vue';
 import AppActionButton from './AppActionButton.vue';
 

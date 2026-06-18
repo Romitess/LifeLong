@@ -31,6 +31,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import AdminCourseInterestReportManager from 'components/admin/AdminCourseInterestReportManager.vue';
 import AdminRegistrationStatisticsReportManager from 'components/admin/AdminRegistrationStatisticsReportManager.vue';
 import AppPageHero from 'components/admin/AppPageHero.vue';
@@ -51,12 +52,29 @@ const menuItems: AdminSectionNavItem[] = [
   },
 ];
 
+const route = useRoute();
+const router = useRouter();
 const activeMenu = ref<ReportsMenu>('interested-courses');
 const reportsContentRef = ref<HTMLElement | null>(null);
 
 const activeMenuLabel = computed(
   () => menuItems.find((item) => item.value === activeMenu.value)?.label ?? '',
 );
+
+const TAB_TO_SLUG: Record<ReportsMenu, string> = {
+  'interested-courses': 'interested-courses',
+  'registration-statistics': 'registration-statistics',
+};
+
+const SLUG_TO_TAB: Record<string, ReportsMenu> = {
+  'interested-courses': 'interested-courses',
+  'registration-statistics': 'registration-statistics',
+};
+
+function getRouteSlug(): string {
+  const raw = route.params.tab;
+  return Array.isArray(raw) ? (raw[0] ?? '') : (raw ?? '');
+}
 
 function getHeaderHeight(): number {
   if (typeof window === 'undefined') {
@@ -84,7 +102,23 @@ function scrollToReportsContentTop(): void {
   });
 }
 
+watch(
+  () => route.params.tab,
+  () => {
+    const tab = SLUG_TO_TAB[getRouteSlug()] ?? 'interested-courses';
+    if (tab !== activeMenu.value) {
+      activeMenu.value = tab;
+    }
+  },
+  { immediate: true },
+);
+
 watch(activeMenu, () => {
+  const slug = TAB_TO_SLUG[activeMenu.value];
+  if (slug && slug !== getRouteSlug()) {
+    void router.replace({ path: `/admin/reports/${slug}` });
+  }
+
   scrollToReportsContentTop();
 });
 </script>

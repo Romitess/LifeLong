@@ -26,7 +26,7 @@
       </div>
 
       <template v-else>
-        <AdminCourseForm :readonly="true" :initial-data="course" />
+        <AdminCourseForm v-model:active-tab="activeTab" :readonly="true" :initial-data="course" />
 
         <div class="admin-course-copy-page__remark">
           <div class="admin-course-copy-page__remark-title">
@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
@@ -97,6 +97,43 @@ import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
 const router = useRouter();
 const route = useRoute();
 const $q = useQuasar();
+
+type CourseFormTab = 'info' | 'chapters';
+
+const activeTab = ref<CourseFormTab>('info');
+
+const TAB_TO_SLUG: Record<CourseFormTab, string> = {
+  info: 'info',
+  chapters: 'chapters',
+};
+
+const SLUG_TO_TAB: Record<string, CourseFormTab> = {
+  info: 'info',
+  chapters: 'chapters',
+};
+
+function getRouteSlug(): string {
+  const raw = route.params.tab;
+  return Array.isArray(raw) ? (raw[0] ?? '') : (raw ?? '');
+}
+
+watch(
+  () => route.params.tab,
+  () => {
+    const tab = SLUG_TO_TAB[getRouteSlug()] ?? 'info';
+    if (tab !== activeTab.value) {
+      activeTab.value = tab;
+    }
+  },
+  { immediate: true },
+);
+
+watch(activeTab, (tab) => {
+  const slug = TAB_TO_SLUG[tab];
+  if (slug && slug !== getRouteSlug()) {
+    void router.replace({ path: `/admin/courses/${route.params.id as string}/copy/${slug}` });
+  }
+});
 
 function onBackClick(event: Event) {
   if (isNewTabClick(event)) {

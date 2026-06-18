@@ -210,7 +210,7 @@
                 </td>
                 <td class="text-center">
                   <div class="category-cell__status">
-                    <q-toggle
+                    <BaseToggle
                       :model-value="
                         row.kind === 'category'
                           ? row.category.activeFlag === 'Y'
@@ -221,8 +221,8 @@
                       @update:model-value="
                         (value) =>
                           row.kind === 'category'
-                            ? toggleCategoryStatus(row.category, value)
-                            : toggleSubcategoryStatus(row.subcategory, value)
+                            ? toggleCategoryStatus(row.category, Boolean(value))
+                            : toggleSubcategoryStatus(row.subcategory, Boolean(value))
                       "
                     />
                     <q-badge
@@ -378,7 +378,7 @@
 
         <q-form ref="formRef" greedy @submit.prevent="submitForm">
           <q-card-section class="taxonomy-dialog__body">
-            <q-input
+            <BaseInput
               v-model="form.name"
               outlined
               dense
@@ -410,7 +410,7 @@
               <ColorPickerInput v-model="form.color" label="สี" class="q-mt-md" />
             </template>
 
-            <q-toggle
+            <BaseToggle
               v-model="form.isActive"
               color="positive"
               :label="form.isActive ? 'เผยแพร่' : 'ซ่อน'"
@@ -462,7 +462,9 @@ import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
 import AppSearchInput from 'components/admin/AppSearchInput.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
+import BaseInput from 'components/base/BaseInput.vue';
 import BasePagination from 'components/base/BasePagination.vue';
+import BaseToggle from 'components/base/BaseToggle.vue';
 import { useAdminCourseTaxonomy } from 'src/composables/use-admin-course-taxonomy';
 import ColorPickerInput from 'src/components/common/ColorPickerInput.vue';
 import type { AdminCourseCategory, AdminCourseSubcategory } from 'src/types/admin-course-taxonomy';

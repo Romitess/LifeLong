@@ -79,7 +79,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'admin/categories', redirect: '/admin/basics', meta: { role: 'admin' } },
       { path: 'admin/images', redirect: '/admin/basics', meta: { role: 'admin' } },
       {
-        path: 'admin/basics',
+        path: 'admin/basics/:tab?',
         component: () => import('pages/admin/admin-basics-page.vue'),
         meta: { role: 'admin' },
       },
@@ -89,27 +89,27 @@ const routes: RouteRecordRaw[] = [
         meta: { role: 'admin' },
       },
       {
-        path: 'admin/courses/new',
+        path: 'admin/courses/new/:tab?',
         component: () => import('pages/admin/admin-course-form-page.vue'),
         meta: { role: 'admin' },
       },
       {
-        path: 'admin/courses/:id',
+        path: 'admin/courses/:id/:tab?',
         component: () => import('pages/admin/admin-course-detail-page.vue'),
         meta: { role: 'admin' },
       },
       {
-        path: 'admin/courses/:id/copy',
+        path: 'admin/courses/:id/copy/:tab?',
         component: () => import('pages/admin/admin-course-copy-page.vue'),
         meta: { role: 'admin' },
       },
       {
-        path: 'admin/courses/:id/edit',
+        path: 'admin/courses/:id/edit/:tab?',
         component: () => import('pages/admin/admin-course-edit-page.vue'),
         meta: { role: 'admin' },
       },
       {
-        path: 'admin/reports',
+        path: 'admin/reports/:tab?',
         component: () => import('pages/admin/admin-reports-page.vue'),
         meta: { role: 'admin' },
       },

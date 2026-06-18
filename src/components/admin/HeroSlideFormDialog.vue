@@ -15,7 +15,7 @@
             <img :src="previewUrl" alt="" />
           </div>
 
-          <q-input
+          <BaseInput
             v-model="form.name"
             outlined
             dense
@@ -58,6 +58,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import type { QForm } from 'quasar';
 import AppActionButton from 'components/admin/AppActionButton.vue';
 import BaseDateRangeFilter, { type DateRangeValue } from 'components/base/BaseDateRangeFilter.vue';
+import BaseInput from 'components/base/BaseInput.vue';
 
 export interface HeroSlideFormPayload {
   name: string;

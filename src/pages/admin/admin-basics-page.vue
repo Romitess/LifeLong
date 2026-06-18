@@ -31,6 +31,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import AppPageHero from 'components/admin/AppPageHero.vue';
 import CategoriesManager from 'components/admin/CategoriesManager.vue';
 import CertificateSignerManager from 'components/admin/CertificateSignerManager.vue';
@@ -67,12 +68,33 @@ const menuItems: AdminSectionNavItem[] = [
   },
 ];
 
+const route = useRoute();
+const router = useRouter();
 const activeMenu = ref<BasicsMenu>('categories');
 const basicsContentRef = ref<HTMLElement | null>(null);
 
 const activeMenuLabel = computed(
   () => menuItems.find((item) => item.value === activeMenu.value)?.label ?? '',
 );
+
+const TAB_TO_SLUG: Record<BasicsMenu, string> = {
+  categories: 'categories',
+  'cert-template': 'cert-template',
+  'cert-signer': 'cert-signer',
+  slides: 'slides',
+};
+
+const SLUG_TO_TAB: Record<string, BasicsMenu> = {
+  categories: 'categories',
+  'cert-template': 'cert-template',
+  'cert-signer': 'cert-signer',
+  slides: 'slides',
+};
+
+function getRouteSlug(): string {
+  const raw = route.params.tab;
+  return Array.isArray(raw) ? (raw[0] ?? '') : (raw ?? '');
+}
 
 function getHeaderHeight(): number {
   if (typeof window === 'undefined') {
@@ -98,7 +120,23 @@ function scrollToBasicsContentTop(): void {
   });
 }
 
+watch(
+  () => route.params.tab,
+  () => {
+    const tab = SLUG_TO_TAB[getRouteSlug()] ?? 'categories';
+    if (tab !== activeMenu.value) {
+      activeMenu.value = tab;
+    }
+  },
+  { immediate: true },
+);
+
 watch(activeMenu, () => {
+  const slug = TAB_TO_SLUG[activeMenu.value];
+  if (slug && slug !== getRouteSlug()) {
+    void router.replace({ path: `/admin/basics/${slug}` });
+  }
+
   scrollToBasicsContentTop();
 });
 </script>

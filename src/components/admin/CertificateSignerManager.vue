@@ -208,7 +208,7 @@
             <div class="signer-manager-dialog__label">
               ชื่อผู้เซ็น <span class="text-negative">*</span>
             </div>
-            <q-input
+            <BaseInput
               v-model="form.name"
               outlined
               dense
@@ -223,7 +223,7 @@
             <div class="signer-manager-dialog__label">
               ตำแหน่ง <span class="text-negative">*</span>
             </div>
-            <q-input
+            <BaseInput
               v-model="form.position"
               outlined
               dense
@@ -336,7 +336,7 @@
           <div class="signer-manager-dialog__field signer-manager-dialog__field--status">
             <div class="signer-manager-dialog__label">สถานะ</div>
             <div class="signer-manager-dialog__status-row">
-              <q-toggle v-model="form.statusOn" color="positive" keep-color />
+              <BaseToggle v-model="form.statusOn" color="positive" keep-color />
               <span
                 :class="form.statusOn ? 'text-positive' : 'text-grey-6'"
                 class="signer-manager-dialog__status-label"
@@ -411,7 +411,9 @@ import AppActionButton from 'components/admin/AppActionButton.vue';
 import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
 import AppSearchInput from 'components/admin/AppSearchInput.vue';
 import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import BaseInput from 'components/base/BaseInput.vue';
 import BasePagination from 'components/base/BasePagination.vue';
+import BaseToggle from 'components/base/BaseToggle.vue';
 import { useAdminCertSigners } from 'src/composables/use-admin-cert-signers';
 import type { AdminCertSignerItem } from 'src/types/admin-cert-signers';
 

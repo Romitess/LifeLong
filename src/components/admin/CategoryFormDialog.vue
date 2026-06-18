@@ -29,7 +29,7 @@
       <q-form ref="formRef" greedy class="category-form-dialog__form" @submit.prevent="onSubmit">
         <q-card-section class="category-form-dialog__body">
           <div class="category-form-dialog__grid">
-            <q-input
+            <BaseInput
               v-model="form.name"
               outlined
               dense
@@ -41,7 +41,7 @@
               @blur="autofillSlug"
             />
 
-            <q-input
+            <BaseInput
               v-model="form.nameEn"
               outlined
               dense
@@ -50,7 +50,7 @@
               hide-bottom-space
             />
 
-            <q-input
+            <BaseInput
               v-model="form.slug"
               outlined
               dense
@@ -61,7 +61,7 @@
               hide-bottom-space
             />
 
-            <q-input
+            <BaseInput
               v-model="form.description"
               outlined
               dense
@@ -72,7 +72,7 @@
               class="category-form-dialog__field--full"
             />
 
-            <q-input
+            <BaseInput
               v-model="form.descriptionEn"
               outlined
               dense
@@ -106,7 +106,7 @@
             <div class="category-form-dialog__icon-section-body">
               <div class="category-form-dialog__icon-section-header">
                 <span>ระบุชื่อ icon</span>
-                <q-input
+                <BaseInput
                   v-model="form.icon"
                   outlined
                   dense
@@ -135,7 +135,7 @@
             </div>
           </q-expansion-item>
 
-          <q-toggle
+          <BaseToggle
             v-model="form.isActive"
             color="positive"
             :label="form.isActive ? 'เผยแพร่หมวดหมู่นี้' : 'ซ่อนหมวดหมู่นี้'"
@@ -167,6 +167,8 @@
 import { computed, reactive, ref, watch } from 'vue';
 import type { QForm, ValidationRule } from 'quasar';
 import AppActionButton from 'components/admin/AppActionButton.vue';
+import BaseInput from 'components/base/BaseInput.vue';
+import BaseToggle from 'components/base/BaseToggle.vue';
 import ColorPickerInput from 'src/components/common/ColorPickerInput.vue';
 import type { Category, CategoryFormPayload } from 'src/types/category';
 

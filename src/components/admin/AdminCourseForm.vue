@@ -31,7 +31,7 @@
               <div class="course-form__label">
                 ชื่อรายวิชา (ภาษาไทย) <span class="course-form__required">*</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.nameTh"
                 outlined
                 dense
@@ -48,7 +48,7 @@
               <div class="course-form__label">
                 ชื่อรายวิชา (ภาษาอังกฤษ) <span class="course-form__required">*</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.nameEn"
                 outlined
                 dense
@@ -65,7 +65,7 @@
               <div class="course-form__label">
                 คณะ/ส่วนงานที่รับผิดชอบ <span class="course-form__required">*</span>
               </div>
-              <q-select
+              <BaseSelect
                 v-model="form.facultyId"
                 outlined
                 dense
@@ -86,7 +86,7 @@
               <div class="course-form__label">
                 หมวดวิชา <span class="course-form__required">*</span>
               </div>
-              <q-select
+              <BaseSelect
                 v-model="form.categoryId"
                 outlined
                 dense
@@ -108,7 +108,7 @@
               <div class="course-form__label">
                 หมู่วิชา <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <q-select
+              <BaseSelect
                 v-model="form.subcategoryId"
                 outlined
                 dense
@@ -147,7 +147,7 @@
                 </q-chip>
               </div>
               <!-- Search dropdown เพื่อเพิ่มผู้สอน -->
-              <q-select
+              <BaseSelect
                 v-if="!props.readonly"
                 v-model="instructorSearchModel"
                 outlined
@@ -183,7 +183,7 @@
                   </q-item>
                 </template>
                 <template #selected-item />
-              </q-select>
+              </BaseSelect>
             </div>
 
             <!-- ประเภทของรายวิชา -->
@@ -200,7 +200,7 @@
               >
                 <template #control>
                   <div class="course-form__options-list">
-                    <q-radio
+                    <BaseRadio
                       v-for="opt in formOptions.courseTypes"
                       :key="opt.id"
                       v-model="form.typeCourseId"
@@ -221,7 +221,7 @@
                 หน่วยกิตสะสม <span class="course-form__required">*</span>
               </div>
               <div class="course-form__fee-input-wrap">
-                <q-input
+                <BaseInput
                   ref="creditBankInputRef"
                   v-model="form.creditBank"
                   outlined
@@ -254,7 +254,7 @@
               >
                 <template #control>
                   <div class="course-form__options-row">
-                    <q-radio
+                    <BaseRadio
                       v-for="opt in formOptions.studyTypes"
                       :key="opt.id"
                       v-model="form.studyTypeId"
@@ -275,7 +275,7 @@
                 ทักษะที่ผู้เรียนจะได้รับ <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
               <div class="course-form__options-row">
-                <q-checkbox
+                <BaseCheckbox
                   v-for="opt in formOptions.skills"
                   :key="opt.id"
                   v-model="form.skillIds"
@@ -295,7 +295,7 @@
               </div>
               <div class="course-form__hours-row">
                 <div class="course-form__hours-item">
-                  <q-input
+                  <BaseInput
                     v-model.number="form.theoryHours"
                     outlined
                     dense
@@ -309,7 +309,7 @@
                   <span class="course-form__hours-label">ชั่วโมง ทฤษฎี</span>
                 </div>
                 <div class="course-form__hours-item">
-                  <q-input
+                  <BaseInput
                     v-model.number="form.practiceHours"
                     outlined
                     dense
@@ -335,7 +335,7 @@
                 เกี่ยวกับรายวิชา
                 <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.description"
                 outlined
                 dense
@@ -378,7 +378,7 @@
                 class="course-form__summary-row"
               >
                 <span class="course-form__summary-seq">{{ idx + 1 }}.</span>
-                <q-input
+                <BaseInput
                   v-model="form.summaryItems[idx]"
                   outlined
                   dense
@@ -404,7 +404,7 @@
               <div class="course-form__label">
                 คุณสมบัติเบื้องต้นของผู้เรียน <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.precondition"
                 outlined
                 dense
@@ -421,7 +421,7 @@
               <div class="course-form__label">
                 คุณสมบัติผู้สมัคร <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.property"
                 outlined
                 dense
@@ -438,7 +438,7 @@
               <div class="course-form__label">
                 เกณฑ์การวัดและประเมินผล <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.evaluation"
                 outlined
                 dense
@@ -455,7 +455,7 @@
               <div class="course-form__label">
                 สมรรถนะเด่น <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.competency"
                 outlined
                 dense
@@ -493,7 +493,7 @@
               </div>
               <div v-for="(_, idx) in form.loItems" :key="idx" class="course-form__summary-row">
                 <span class="course-form__summary-seq">{{ idx + 1 }}.</span>
-                <q-input
+                <BaseInput
                   v-model="form.loItems[idx]"
                   outlined
                   dense
@@ -520,7 +520,7 @@
                 สิทธิประโยชน์ผู้สำเร็จหลักสูตร
                 <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.privilege"
                 outlined
                 dense
@@ -537,7 +537,7 @@
               <div class="course-form__label">
                 คำค้นหา (Keyword) <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.keyword"
                 outlined
                 dense
@@ -554,14 +554,14 @@
                 วุฒิบัตร/ประกาศนียบัตร <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
               <div class="row items-center q-gutter-md">
-                <q-checkbox
+                <BaseCheckbox
                   v-model="form.hasCertificate"
                   label="มีวุฒิบัตร/ประกาศนียบัตร"
                   dense
                   color="primary"
                   :disable="props.readonly"
                 />
-                <q-input
+                <BaseInput
                   v-if="form.hasCertificate"
                   v-model="form.certificateName"
                   outlined
@@ -597,7 +597,7 @@
                 />
               </div>
               <!-- ไม่มีรูปเดิม หรือถูกลบแล้ว หรืออัปโหลดใหม่แล้ว -->
-              <q-file
+              <BaseFileUpload
                 v-else
                 v-model="form.image"
                 outlined
@@ -626,7 +626,7 @@
                     "
                   />
                 </template>
-              </q-file>
+              </BaseFileUpload>
               <div v-if="!props.readonly || form.image" class="text-caption text-grey-6 q-mt-xs">
                 แนะนำขนาด 1280×720px (สัดส่วน 16:9) · ไฟล์ jpg / png / webp · ขนาดไม่เกิน 2MB
               </div>
@@ -762,7 +762,7 @@
               <div class="course-form__label">
                 จำนวนที่นั่งสูงสุด <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model.number="form.maxSeats"
                 outlined
                 dense
@@ -831,7 +831,7 @@
               </div>
 
               <!-- ปุ่มเพิ่มไฟล์ -->
-              <q-file
+              <BaseFileUpload
                 v-if="!props.readonly"
                 v-model="cbsPickerModel"
                 outlined
@@ -848,7 +848,7 @@
                 <template #prepend>
                   <q-icon name="upload_file" />
                 </template>
-              </q-file>
+              </BaseFileUpload>
 
               <div v-if="!props.readonly" class="text-caption text-grey-6 q-mt-xs">
                 เฉพาะไฟล์ .pdf ขนาดไม่เกิน 2MB ต่อไฟล์ (สูงสุด 5 ไฟล์)
@@ -868,7 +868,7 @@
                   :key="target.id"
                   class="course-form__target-item"
                 >
-                  <q-checkbox
+                  <BaseCheckbox
                     v-model="selectedTargetIds"
                     :val="target.id"
                     :label="target.label"
@@ -881,7 +881,7 @@
                   >
                     <div class="course-form__subtargets">
                       <template v-for="sub in target.subtargets" :key="sub.id">
-                        <q-checkbox
+                        <BaseCheckbox
                           v-model="selectedSubtargetIds"
                           :val="sub.id"
                           :label="sub.label"
@@ -890,7 +890,7 @@
                           :disable="props.readonly"
                           class="course-form__subtarget-checkbox"
                         />
-                        <q-input
+                        <BaseInput
                           v-if="sub.isOther && selectedSubtargetIds.includes(sub.id)"
                           v-model="subtargetOtherText[sub.id]"
                           outlined
@@ -903,7 +903,7 @@
                     </div>
                   </template>
                   <template v-if="target.isOther && selectedTargetIds.includes(target.id)">
-                    <q-input
+                    <BaseInput
                       v-model="targetOtherText[target.id]"
                       outlined
                       dense
@@ -935,7 +935,7 @@
                       :key="classType.id"
                       class="course-form__mgmt-option"
                     >
-                      <q-radio
+                      <BaseRadio
                         v-model="form.classTypeId"
                         :val="classType.id"
                         :label="classType.label"
@@ -952,7 +952,7 @@
                             ค่าธรรมเนียม <span class="course-form__required">*</span>
                           </div>
                           <div class="course-form__fee-input-wrap">
-                            <q-input
+                            <BaseInput
                               v-model.number="form.classFee"
                               outlined
                               dense
@@ -976,7 +976,7 @@
                             หมายเหตุค่าธรรมเนียม
                             <span class="course-form__optional">(ไม่บังคับ)</span>
                           </div>
-                          <q-input
+                          <BaseInput
                             v-model="form.classFeeRemark"
                             outlined
                             dense
@@ -1001,11 +1001,11 @@
               <div class="text-caption text-grey-6 q-mb-sm">
                 <q-icon name="info" size="14px" /> กรุณาระบุเฉพาะรายวิชาที่มีค่าธรรมเนียมเท่านั้น
               </div>
-              <q-select
+              <BaseSelect
                 v-model="form.costplanId"
                 :options="filteredCostplans"
                 option-value="id"
-                :option-label="(opt) => `${opt.code} - ${opt.label}`"
+                :option-label="(opt: CostplanFormOption) => `${opt.code} - ${opt.label}`"
                 emit-value
                 map-options
                 outlined
@@ -1026,7 +1026,7 @@
                     <q-item-section class="text-grey"> ไม่พบข้อมูล </q-item-section>
                   </q-item>
                 </template>
-              </q-select>
+              </BaseSelect>
             </div>
 
             <!-- ราคาต่อประเภทผู้เรียน -->
@@ -1049,7 +1049,7 @@
                 >
                   <span class="course-form__stutype-name">{{ st.label }}</span>
                   <div class="course-form__fee-input-wrap">
-                    <q-input
+                    <BaseInput
                       v-model.number="form.stutypeFeeAmounts[st.id]"
                       outlined
                       dense
@@ -1085,7 +1085,7 @@
               <div class="course-form__label">
                 ชื่อ-สกุลผู้ติดต่อ <span class="course-form__required">*</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.contactName"
                 outlined
                 dense
@@ -1101,7 +1101,7 @@
               <div class="course-form__label">
                 เบอร์โทรศัพท์ <span class="course-form__required">*</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.contactTel"
                 outlined
                 dense
@@ -1118,7 +1118,7 @@
               <div class="course-form__label">
                 อีเมล <span class="course-form__required">*</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.contactEmail"
                 outlined
                 dense
@@ -1135,7 +1135,7 @@
               <div class="course-form__label">
                 เว็บไซต์ <span class="course-form__optional">(ไม่บังคับ)</span>
               </div>
-              <q-input
+              <BaseInput
                 v-model="form.contactUrl"
                 outlined
                 dense
@@ -1148,7 +1148,7 @@
             </div>
             <div class="course-form__field-group">
               <label class="course-form__label">ลิงก์วิดีโอตัวอย่าง</label>
-              <q-input
+              <BaseInput
                 v-model="form.vdo"
                 outlined
                 dense
@@ -1184,7 +1184,7 @@
           <div class="course-form__label">
             หมายเหตุเพิ่มเติมเกี่ยวกับบทเรียน <span class="course-form__optional">(ไม่บังคับ)</span>
           </div>
-          <q-input
+          <BaseInput
             v-model="form.remarkChapter"
             outlined
             dense
@@ -1266,7 +1266,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { AxiosError } from 'axios';
-import { QForm, QInput } from 'quasar';
+import { QForm } from 'quasar';
 import { api } from 'src/boot/axios';
 import { useAdminCourseForm } from 'src/composables/use-admin-course-form';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -1277,14 +1277,21 @@ import type {
   CreateCoursePayload,
   CostplanFormOption,
 } from 'src/types/admin-courses';
+import BaseCheckbox from 'components/base/BaseCheckbox.vue';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
+import BaseFileUpload from 'components/base/BaseFileUpload.vue';
 import BaseImageCropperDialog from 'components/base/BaseImageCropperDialog.vue';
 import BaseCroppedImage from 'components/base/BaseCroppedImage.vue';
+import BaseInput from 'components/base/BaseInput.vue';
+import BaseRadio from 'components/base/BaseRadio.vue';
+import BaseSelect from 'components/base/BaseSelect.vue';
 import type { CropBox } from 'src/composables/use-image-cropper';
 import AppSurfaceCard from './AppSurfaceCard.vue';
 import AppActionButton from './AppActionButton.vue';
 import AdminCourseChapterTab from './AdminCourseChapterTab.vue';
 import AdminSectionNav, { type AdminSectionNavItem } from './AdminSectionNav.vue';
+
+export type CourseFormTab = 'info' | 'chapters';
 
 const props = defineProps<{
   submitOverride?: (payload: CreateCoursePayload) => Promise<{ courseId: number }>;
@@ -1321,7 +1328,7 @@ const authStore = useAuthStore();
 const { formOptions, isLoadingOptions, isSaving, error, fetchFormOptions, createCourse } =
   useAdminCourseForm();
 const qFormRef = ref<InstanceType<typeof QForm> | null>(null);
-const activeTab = ref<'info' | 'chapters'>('info');
+const activeTab = defineModel<CourseFormTab>('activeTab', { default: 'info' });
 const chapters = ref<CourseChapterPayload[]>([]);
 const filteredCostplans = ref<CostplanFormOption[]>([]);
 const sectionNavItems: AdminSectionNavItem[] = [
@@ -1570,8 +1577,20 @@ watch(
   { immediate: true },
 );
 
-function addInstructor(inst: InstructorOption | null) {
-  if (!inst) return;
+function isInstructorOption(value: unknown): value is InstructorOption {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const candidate = value as Partial<InstructorOption>;
+  return (
+    typeof candidate.username === 'string' &&
+    typeof candidate.email === 'string' &&
+    typeof candidate.fullName === 'string'
+  );
+}
+
+function addInstructor(inst: unknown): void {
+  if (!isInstructorOption(inst)) return;
   const key = inst.email || inst.username;
   if (!selectedInstructors.value.some((i) => (i.email || i.username) === key)) {
     selectedInstructors.value.push(inst);
@@ -1631,7 +1650,7 @@ const fileError = ref<string | null>(null);
 const imageError = ref<string | null>(null);
 
 const creditBankFieldRef = ref<HTMLElement | null>(null);
-const creditBankInputRef = ref<InstanceType<typeof QInput> | null>(null);
+const creditBankInputRef = ref<InstanceType<typeof BaseInput> | null>(null);
 const endDateInputRef = ref<InstanceType<typeof BaseDateInput> | null>(null);
 const regEndDateInputRef = ref<InstanceType<typeof BaseDateInput> | null>(null);
 const infoSectionRef = ref<HTMLElement | null>(null);
@@ -1751,10 +1770,11 @@ function onNumberKeypress(e: KeyboardEvent) {
   if (!/[\d.]/.test(e.key)) e.preventDefault();
 }
 
-function onCbsPicked(picked: File | File[] | null) {
+function onCbsPicked(picked: File | File[] | FileList | null | undefined): void {
   if (!picked) return;
   fileError.value = null;
-  const arr = Array.isArray(picked) ? picked : [picked];
+  const arr =
+    picked instanceof FileList ? Array.from(picked) : Array.isArray(picked) ? picked : [picked];
   form.newFiles.push(...arr);
   void nextTick(() => {
     cbsPickerModel.value = null;
@@ -1778,15 +1798,16 @@ function onImageRejected(entries: { failedPropValidation: string }[]) {
       : 'ไฟล์รูปต้องเป็น jpg, png หรือ webp และไม่เกิน 2MB';
 }
 
-function onImageSelected(file: File | null | undefined): void {
+function onImageSelected(file: File | File[] | FileList | null | undefined): void {
   imageError.value = null;
-  if (!file) return;
+  const selectedFile = file instanceof FileList ? file[0] : Array.isArray(file) ? file[0] : file;
+  if (!selectedFile) return;
   const reader = new FileReader();
   reader.onload = (e) => {
     cropperSrc.value = e.target?.result as string;
     cropperOpen.value = true;
   };
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(selectedFile);
 }
 
 function onCropSaved(box: CropBox): void {
@@ -2261,13 +2282,31 @@ async function submitAndPublish() {
 .course-form__radio-group {
   padding: 0;
 
-  > :deep(.q-field__control) {
+  :deep(.q-field__inner),
+  :deep(.q-field__control) {
+    background: transparent !important;
     min-height: unset;
     height: auto;
     padding: 0;
   }
 
-  > :deep(.q-field__bottom) {
+  :deep(.q-field__inner),
+  :deep(.q-field__control),
+  :deep(.q-field__control::before),
+  :deep(.q-field__control::after),
+  :deep(.q-field__control-container),
+  :deep(.q-field__native) {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  :deep(.q-field__control::before),
+  :deep(.q-field__control::after) {
+    content: none !important;
+    display: none !important;
+  }
+
+  :deep(.q-field__bottom) {
     padding-top: 4px;
   }
 }

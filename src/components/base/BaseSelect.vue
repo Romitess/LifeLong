@@ -1,12 +1,12 @@
 <template>
-  <div class="base-field">
+  <div class="base-field" :class="attrs.class">
     <label v-if="label" class="base-field__label">
       <span>{{ label }}</span>
       <span v-if="required" class="base-field__required">*</span>
       <span v-else-if="optional" class="base-field__optional">{{ optionalText }}</span>
     </label>
 
-    <q-select v-model="model" outlined dense v-bind="$attrs">
+    <q-select v-model="model" outlined dense v-bind="fieldAttrs">
       <template v-for="(_, name) in $slots" #[name]="slotProps">
         <slot :name="name" v-bind="slotProps ?? {}" />
       </template>
@@ -15,12 +15,20 @@
 </template>
 
 <script setup lang="ts">
+import { computed, useAttrs } from 'vue';
+
 // Shared dropdown: same label + outlined+dense look as BaseInput. All q-select
 // props (options, emit-value, map-options, option-label/value, rules, clearable,
 // multiple, disable, …) pass through via $attrs so it stays a drop-in.
 defineOptions({ inheritAttrs: false });
 
 const model = defineModel<unknown>();
+const attrs = useAttrs();
+const fieldAttrs = computed(() => {
+  const rest = { ...attrs };
+  delete rest.class;
+  return rest;
+});
 
 withDefaults(
   defineProps<{
@@ -43,6 +51,10 @@ withDefaults(
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.base-field :deep(.q-field) {
+  width: 100%;
 }
 
 .base-field__label {
