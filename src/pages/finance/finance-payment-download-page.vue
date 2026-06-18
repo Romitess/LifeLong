@@ -96,14 +96,15 @@
       <AppSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
           <div class="row items-center">
-            <span class="text-caption text-orange-8 text-weight-medium q-mr-md gt-xs">
-              * ข้อมูลที่ดาวน์โหลดจะเป็นไปตามตัวกรองที่เลือกอยู่
-            </span>
             <q-btn
               unelevated
               color="positive"
               icon="download"
-              :label="$t('finance.paymentDownload.downloadCsv')"
+              :label="
+                selectedRows.length > 0
+                  ? `${$t('finance.paymentDownload.downloadCsv')} (${selectedRows.length})`
+                  : $t('finance.paymentDownload.downloadCsv')
+              "
               :disable="tableData.length === 0"
               @click="downloadCsv"
             />
@@ -140,6 +141,8 @@
           :rows="tableData"
           :columns="columns"
           row-key="id"
+          selection="multiple"
+          v-model:selected="selectedRows"
           flat
           dense
           wrap-cells
@@ -316,6 +319,7 @@ interface PaymentNotificationApiResponse {
 
 const search = ref('');
 const tableData = ref<PaymentNotificationItem[]>([]);
+const selectedRows = ref<PaymentNotificationItem[]>([]);
 const isLoading = ref(false);
 
 const pagination = ref({
@@ -580,6 +584,7 @@ async function fetchData() {
       item.no = index + 1;
     });
     pagination.value.page = 1;
+    selectedRows.value = [];
   } catch (error: unknown) {
     console.error('Failed to load payment notifications', error);
     tableData.value = [];
@@ -602,7 +607,8 @@ function escapeCsvValue(value: string | number): string {
 }
 
 function downloadCsv() {
-  if (tableData.value.length === 0) return;
+  const dataToDownload = selectedRows.value.length > 0 ? selectedRows.value : tableData.value;
+  if (dataToDownload.length === 0) return;
 
   const header = [
     t('finance.paymentDownload.layoutColumns.learnerRef'),
@@ -613,7 +619,7 @@ function downloadCsv() {
     t('finance.paymentDownload.layoutColumns.amount'),
   ].join(',');
 
-  const rows = tableData.value.map((row) =>
+  const rows = dataToDownload.map((row) =>
     [
       escapeCsvValue(row.learnerRef),
       escapeCsvValue(row.appRef),
@@ -636,7 +642,7 @@ function downloadCsv() {
 
   Notify.create({
     type: 'positive',
-    message: t('finance.paymentDownload.downloadSuccess', { count: tableData.value.length }),
+    message: t('finance.paymentDownload.downloadSuccess', { count: dataToDownload.length }),
     position: 'top',
   });
 }
@@ -904,6 +910,7 @@ onUnmounted(() => {
     font-size: 0.8125rem;
     color: #475569;
     letter-spacing: 0.02em;
+    vertical-align: middle;
   }
 
   :deep(.q-table tbody tr:nth-child(even)) {

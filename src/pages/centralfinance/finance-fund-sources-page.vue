@@ -1066,7 +1066,7 @@ function onSaveEdit(): void {
 
 .truncate-1-line {
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
