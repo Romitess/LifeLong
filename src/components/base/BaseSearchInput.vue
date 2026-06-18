@@ -47,13 +47,14 @@ function onClear(): void {
 
 <style scoped lang="scss">
 .base-search-input {
-  --base-search-height: 52px;
-  --base-search-padding-x: 18px;
-  --base-search-font-size: 1rem;
+  --base-search-height: 40px; /* + 2px border top/bottom = 44px total, matches admin buttons */
+  --base-search-padding-x: 16px;
+  --base-search-font-size: 0.95rem;
+  --base-search-radius: var(--radius-full);
 
   overflow: hidden;
   border: 2px solid rgba(0, 0, 0, 0.14);
-  border-radius: 999px;
+  border-radius: var(--base-search-radius);
   background: #ffffff;
   transition: border-color 0.2s ease;
 
