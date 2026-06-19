@@ -50,22 +50,12 @@
 
       <AppSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
-          <div class="table-export-actions">
-            <q-btn
-              outline
-              color="negative"
-              icon="picture_as_pdf"
-              :label="$t('centralFinance.dailyReport.table.pdfBtn')"
-              @click="exportToPdf"
-            />
-            <q-btn
-              outline
-              color="positive"
-              icon="table_chart"
-              :label="$t('centralFinance.dailyReport.table.excelBtn')"
-              @click="exportToExcel"
-            />
-          </div>
+          <ReportExportActions
+            :pdf-label="$t('centralFinance.dailyReport.table.pdfBtn')"
+            :excel-label="$t('centralFinance.dailyReport.table.excelBtn')"
+            @export-pdf="exportToPdf"
+            @export-excel="exportToExcel"
+          />
         </template>
 
         <div class="text-center q-pt-lg q-pb-sm">
@@ -188,8 +178,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import AppPageHero from 'components/admin/AppPageHero.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import ReportExportActions from 'components/common/ReportExportActions.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { useAuthStore } from 'stores/auth-store';
 import { api } from 'src/boot/axios';

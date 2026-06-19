@@ -167,20 +167,11 @@
 
       <AppSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
-          <q-btn
-            outline
-            color="negative"
-            icon="picture_as_pdf"
-            :label="$t('finance.receiptSummary.exportPdf')"
-            class="q-mr-sm"
-            @click="exportToPdf"
-          />
-          <q-btn
-            outline
-            color="positive"
-            icon="table_chart"
-            :label="$t('finance.receiptSummary.exportExcel')"
-            @click="exportToExcel"
+          <ReportExportActions
+            :pdf-label="$t('finance.receiptSummary.exportPdf')"
+            :excel-label="$t('finance.receiptSummary.exportExcel')"
+            @export-pdf="exportToPdf"
+            @export-excel="exportToExcel"
           />
         </template>
 
@@ -361,6 +352,7 @@
 <script setup lang="ts">
 import AppPageHero from 'components/common/AppPageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import ReportExportActions from 'components/common/ReportExportActions.vue';
 import { ref, computed, nextTick, onMounted } from 'vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
 import { Notify, type QTableProps } from 'quasar';

@@ -131,22 +131,12 @@
 
       <CentralFinanceSurfaceCard v-if="hasSearched" class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
-          <div class="table-export-actions">
-            <q-btn
-              outline
-              color="negative"
-              icon="picture_as_pdf"
-              :label="$t('centralFinance.dailyReport.table.pdfBtn')"
-              @click="exportToPdf"
-            />
-            <q-btn
-              outline
-              color="positive"
-              icon="table_chart"
-              :label="$t('centralFinance.dailyReport.table.excelBtn')"
-              @click="exportToExcel"
-            />
-          </div>
+          <ReportExportActions
+            :pdf-label="$t('centralFinance.dailyReport.table.pdfBtn')"
+            :excel-label="$t('centralFinance.dailyReport.table.excelBtn')"
+            @export-pdf="exportToPdf"
+            @export-excel="exportToExcel"
+          />
         </template>
 
         <div class="text-center q-pt-lg q-pb-sm">
@@ -296,6 +286,7 @@ import { useI18n } from 'vue-i18n';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import AppActionButton from 'components/common/AppActionButton.vue';
+import ReportExportActions from 'components/common/ReportExportActions.vue';
 import { api } from 'src/boot/axios';
 import type { QTableColumn } from 'quasar';
 import jsPDF from 'jspdf';

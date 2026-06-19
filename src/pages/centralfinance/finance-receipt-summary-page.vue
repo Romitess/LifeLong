@@ -181,22 +181,12 @@
       <!-- Table Card -->
       <CentralFinanceSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
-          <div class="table-export-actions">
-            <q-btn
-              outline
-              color="negative"
-              icon="picture_as_pdf"
-              :label="$t('finance.receiptSummary.exportPdf')"
-              @click="handleExportToPdf"
-            />
-            <q-btn
-              outline
-              color="positive"
-              icon="table_chart"
-              :label="$t('finance.receiptSummary.exportExcel')"
-              @click="handleExportToExcel"
-            />
-          </div>
+          <ReportExportActions
+            :pdf-label="$t('finance.receiptSummary.exportPdf')"
+            :excel-label="$t('finance.receiptSummary.exportExcel')"
+            @export-pdf="handleExportToPdf"
+            @export-excel="handleExportToExcel"
+          />
         </template>
 
         <div class="text-center q-pt-lg q-pb-sm">
@@ -381,6 +371,7 @@ import type { ReceiptSummaryItem } from 'src/types/receipt-summary-report';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import AppActionButton from 'components/common/AppActionButton.vue';
+import ReportExportActions from 'components/common/ReportExportActions.vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
 
 const { t } = useI18n();
