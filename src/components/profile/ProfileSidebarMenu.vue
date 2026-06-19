@@ -143,7 +143,7 @@ function onMenuClick(value: string, event: Event): void {
   border-radius: 14px !important;
   overflow: hidden;
   position: sticky;
-  top: 140px;
+  top: 84px;
   background: #ffffff;
   border: 1px solid rgba(17, 24, 39, 0.12) !important;
   box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06) !important;
