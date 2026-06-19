@@ -728,8 +728,4 @@ function exportToExcel(): void {
 :deep(.q-field__label) {
   font-weight: 400 !important;
 }
-
-:deep(.admin-surface-card:not(.admin-surface-card--glass):hover) {
-  transform: none !important;
-}
 </style>

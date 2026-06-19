@@ -74,6 +74,13 @@ const showHeader = computed(() =>
   box-shadow:
     0 1px 3px rgba($primary, 0.06),
     0 8px 24px rgba(17, 24, 39, 0.04);
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba($primary, 0.6) !important;
+    box-shadow: 0 16px 32px rgba(17, 24, 39, 0.12) !important;
+  }
 }
 
 .cf-surface-card--glass {
