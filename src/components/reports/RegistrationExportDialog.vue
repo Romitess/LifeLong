@@ -1,80 +1,70 @@
 <template>
-  <q-dialog
+  <AppDialog
     v-model="dialogModel"
-    class="admin-dialog"
-    transition-show="scale"
-    transition-hide="scale"
+    eyebrow="Export Report"
+    title="ส่งออกสถิติการลงทะเบียน"
+    subtitle="เลือกตัวกรองและรูปแบบไฟล์ที่ต้องการ"
+    icon="download"
+    card-class="registration-export-dialog"
+    body-class="registration-export-dialog__body"
+    actions-class="registration-export-dialog__actions"
   >
-    <q-card class="registration-export-dialog">
-      <q-card-section class="registration-export-dialog__header">
-        <div class="registration-export-dialog__icon-wrap">
-          <q-icon name="download" size="32px" color="primary" />
-        </div>
-        <div class="registration-export-dialog__heading">
-          <p class="registration-export-dialog__eyebrow">Export Report</p>
-          <h2>ส่งออกสถิติการลงทะเบียน</h2>
-          <p class="registration-export-dialog__subtitle">เลือกตัวกรองและรูปแบบไฟล์ที่ต้องการ</p>
-        </div>
-      </q-card-section>
+    <div
+      class="registration-export-dialog__section-label registration-export-dialog__section-label--top"
+    >
+      รูปแบบไฟล์
+    </div>
 
-      <q-card-section class="registration-export-dialog__body">
-        <div
-          class="registration-export-dialog__section-label registration-export-dialog__section-label--top"
-        >
-          รูปแบบไฟล์
-        </div>
-
-        <div class="registration-export-dialog__format-row">
-          <label
-            v-for="fmt in formatOptions"
-            :key="fmt.value"
-            :class="[
-              'registration-export-dialog__format-card',
-              { 'registration-export-dialog__format-card--active': localFormat === fmt.value },
-            ]"
-            @click="localFormat = fmt.value"
-          >
-            <BaseRadio
-              v-model="localFormat"
-              :val="fmt.value"
-              color="primary"
-              class="registration-export-dialog__format-radio"
-            />
-            <div class="registration-export-dialog__format-info">
-              <span class="registration-export-dialog__format-name">{{ fmt.label }}</span>
-              <span class="registration-export-dialog__format-desc">{{ fmt.description }}</span>
-            </div>
-            <q-icon :name="fmt.icon" size="22px" class="registration-export-dialog__format-icon" />
-          </label>
-        </div>
-      </q-card-section>
-
-      <q-card-actions class="registration-export-dialog__actions">
-        <AppActionButton
-          variant="secondary"
-          label="ยกเลิก"
-          no-caps
-          :disable="isExporting"
-          @click="onCancel"
+    <div class="registration-export-dialog__format-row">
+      <label
+        v-for="fmt in formatOptions"
+        :key="fmt.value"
+        :class="[
+          'registration-export-dialog__format-card',
+          { 'registration-export-dialog__format-card--active': localFormat === fmt.value },
+        ]"
+        @click="localFormat = fmt.value"
+      >
+        <BaseRadio
+          v-model="localFormat"
+          :val="fmt.value"
+          color="primary"
+          class="registration-export-dialog__format-radio"
         />
-        <AppActionButton
-          variant="primary"
-          :label="isExporting ? 'กำลังส่งออก...' : 'ส่งออกไฟล์'"
-          icon="download"
-          no-caps
-          :loading="isExporting"
-          @click="onExport"
-        />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+        <div class="registration-export-dialog__format-info">
+          <span class="registration-export-dialog__format-name">{{ fmt.label }}</span>
+          <span class="registration-export-dialog__format-desc">{{ fmt.description }}</span>
+        </div>
+        <q-icon :name="fmt.icon" size="22px" class="registration-export-dialog__format-icon" />
+      </label>
+    </div>
+
+    <template #actions>
+      <AppActionButton
+        variant="secondary"
+        label="ยกเลิก"
+        no-caps
+        :disable="isExporting"
+        @click="onCancel"
+      />
+      <AppActionButton
+        variant="primary"
+        :label="isExporting ? 'กำลังส่งออก...' : 'ส่งออกไฟล์'"
+        icon="download"
+        no-caps
+        :loading="isExporting"
+        @click="onExport"
+      />
+    </template>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import ExcelJS from 'exceljs';
 import { api } from 'src/boot/axios';
-import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppDialog from 'components/common/AppDialog.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 import BaseRadio from 'components/base/BaseRadio.vue';
 import type { DateRangeValue } from 'components/base/BaseDateRangeFilter.vue';
 import type { AdminRegistrationStatisticsReportFilterOption } from 'src/types/admin-registration-statistics-report';

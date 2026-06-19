@@ -15,7 +15,7 @@
     </AppPageHero>
 
     <section class="admin-shell admin-content">
-      <AdminRegistrationStatisticsReportManager
+      <RegistrationStatisticsReportManager
         :initial-faculty-id="currentFacultyId"
         :show-faculty-filter="false"
       />
@@ -24,8 +24,8 @@
 </template>
 
 <script setup lang="ts">
-import AppPageHero from 'components/admin/AppPageHero.vue';
-import AdminRegistrationStatisticsReportManager from 'components/admin/AdminRegistrationStatisticsReportManager.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
+import RegistrationStatisticsReportManager from 'components/reports/RegistrationStatisticsReportManager.vue';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';

@@ -4,7 +4,7 @@
     :outline="variant === 'outline'"
     :flat="variant === 'ghost'"
     :hover-lift="variant !== 'ghost'"
-    :class="['admin-action-button', `admin-action-button--${variant}`]"
+    :class="['app-action-button', `app-action-button--${variant}`]"
   >
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps || {}" />
@@ -27,8 +27,9 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <style scoped lang="scss">
-.admin-action-button {
+.app-action-button {
   min-height: 44px;
+  padding-inline: 22px !important;
   border-radius: 12px !important;
   font-weight: 600 !important;
 
@@ -37,53 +38,58 @@ withDefaults(defineProps<Props>(), {
     flex-direction: row;
     gap: 8px;
     letter-spacing: 0;
+    white-space: nowrap;
+  }
+
+  :deep(.block) {
+    white-space: nowrap;
   }
 }
 
-.admin-action-button--primary {
+.app-action-button--primary {
   color: #ffffff !important;
-  background: var(--admin-gold) !important;
+  background: var(--admin-gold, #f5a623) !important;
   border-color: rgba(245, 166, 35, 0.7) !important;
   box-shadow: none !important;
 }
 
-.admin-action-button--outline {
+.app-action-button--outline {
   color: #ffffff !important;
   background: rgba(255, 255, 255, 0.03) !important;
   border-color: rgba(255, 255, 255, 0.42) !important;
 }
 
-.admin-action-button--secondary {
+.app-action-button--secondary {
   color: #374151 !important;
   background: #ffffff !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
   box-shadow: none !important;
 }
 
-.admin-action-button--danger {
+.app-action-button--danger {
   color: #ffffff !important;
   background: #ff4031 !important;
   border-color: rgba(255, 64, 49, 0.7) !important;
   box-shadow: none !important;
 }
 
-.admin-action-button--ghost {
-  color: var(--admin-navy) !important;
+.app-action-button--ghost {
+  color: var(--admin-navy, #10233f) !important;
   border-color: transparent !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 
-.admin-action-button--primary:hover {
+.app-action-button--primary:hover {
   box-shadow: 0 12px 24px rgba(245, 166, 35, 0.2) !important;
 }
 
-.admin-action-button--secondary:hover {
+.app-action-button--secondary:hover {
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08) !important;
   border-color: rgba(16, 35, 63, 0.16) !important;
 }
 
-.admin-action-button--danger:hover {
+.app-action-button--danger:hover {
   box-shadow: 0 12px 24px rgba(255, 64, 49, 0.18) !important;
 }
 </style>

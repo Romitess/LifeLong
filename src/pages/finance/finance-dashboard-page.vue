@@ -44,7 +44,7 @@
             <div class="text-subtitle1 text-weight-bold q-mb-md text-grey-8">
               รายรับรวมทั้งหมด (บาท)
             </div>
-            <AdminAreaChart
+            <AppAreaChart
               :series="revenueChartSeries"
               :x-labels="trendChartLabels"
               :height="240"
@@ -57,7 +57,7 @@
             <div class="text-subtitle1 text-weight-bold q-mb-md text-grey-8">
               รายการชำระเงินใหม่ (รายการ)
             </div>
-            <AdminAreaChart
+            <AppAreaChart
               :series="transactionsChartSeries"
               :x-labels="trendChartLabels"
               :height="240"
@@ -98,7 +98,7 @@ import { api } from 'src/boot/axios';
 import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
-import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
+import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { formatCompactCurrency, formatCount } from 'src/utils/course-format';
 

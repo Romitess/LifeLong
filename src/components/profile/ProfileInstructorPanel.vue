@@ -54,7 +54,7 @@
           <q-icon name="insights" size="30px" color="primary" />
         </div>
 
-        <AdminAreaChart
+        <AppAreaChart
           :series="instructorTrendSeries"
           :x-labels="reportMonthLabels"
           :height="248"
@@ -72,7 +72,7 @@
           <q-icon name="donut_large" size="30px" color="teal-5" />
         </div>
 
-        <AdminDonutChart
+        <AppDonutChart
           :data="deliveryModeSegments"
           :center-label="'รวม'"
           :center-value="scopedInstructorCourses.length.toLocaleString('th-TH')"
@@ -91,7 +91,7 @@
           <q-icon name="bar_chart" size="30px" color="indigo-5" />
         </div>
 
-        <AdminBarChart :items="topCourseLearnerBars" />
+        <AppBarChart :items="topCourseLearnerBars" />
       </q-card>
 
       <q-card flat bordered class="instructor-report-card">
@@ -180,9 +180,9 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
-import AdminBarChart, { type BarChartItem } from 'components/admin/AdminBarChart.vue';
-import AdminDonutChart, { type DonutChartSegment } from 'components/admin/AdminDonutChart.vue';
+import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
+import AppBarChart, { type BarChartItem } from 'components/common/AppBarChart.vue';
+import AppDonutChart, { type DonutChartSegment } from 'components/common/AppDonutChart.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { useProfileNavigation } from 'src/composables/use-profile-navigation';

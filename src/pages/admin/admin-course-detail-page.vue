@@ -41,9 +41,9 @@ import { useRouter, useRoute } from 'vue-router';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import type { AdminCourseDetail } from 'src/types/admin-courses';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
-import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
 import AdminCourseForm from 'components/admin/AdminCourseForm.vue';
-import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 
 const router = useRouter();
 const route = useRoute();

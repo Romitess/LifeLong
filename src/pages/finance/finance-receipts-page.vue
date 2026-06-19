@@ -66,8 +66,8 @@
 </template>
 
 <script setup lang="ts">
-import AppPageHero from 'components/admin/AppPageHero.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import { ref, computed } from 'vue';
 import type { QTableProps } from 'quasar';
 import { useI18n } from 'vue-i18n';

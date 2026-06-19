@@ -270,8 +270,8 @@
 </template>
 
 <script setup lang="ts">
-import AppPageHero from 'components/admin/AppPageHero.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import { api } from 'src/boot/axios';
 import { computed, onMounted, ref, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';

@@ -37,7 +37,7 @@
         </div>
       </template>
 
-      <AdminRegistrationExportDialog
+      <RegistrationExportDialog
         v-model="exportDialogOpen"
         :date-range="dateRange"
         :faculty-id="selectedFacultyId"
@@ -250,10 +250,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import AppActionButton from 'components/admin/AppActionButton.vue';
-import AdminRegistrationExportDialog from 'components/admin/AdminRegistrationExportDialog.vue';
-import AppSearchInput from 'components/admin/AppSearchInput.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
+import RegistrationExportDialog from 'components/reports/RegistrationExportDialog.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminRegistrationStatisticsReport } from 'src/composables/use-admin-registration-statistics-report';
 import type { AdminRegistrationStatisticsReportResponse } from 'src/types/admin-registration-statistics-report';

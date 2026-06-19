@@ -146,7 +146,7 @@
             </div>
 
             <q-card-section class="q-pt-md">
-              <AdminAreaChart
+              <AppAreaChart
                 :series="areaChartSeries"
                 :x-labels="dashboardSeries.months"
                 :height="290"
@@ -169,7 +169,7 @@
             </q-card-section>
 
             <q-card-section class="flex flex-center q-pb-lg">
-              <AdminDonutChart
+              <AppDonutChart
                 :data="deliveryBreakdown"
                 center-label="รายวิชา LLL"
                 :center-value="formatCount(totals.courses)"
@@ -314,9 +314,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useQuasar } from 'quasar';
-import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
-import AdminDonutChart from 'components/admin/AdminDonutChart.vue';
-import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
+import AppDonutChart from 'components/common/AppDonutChart.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
 import { useAdminDashboardMetrics } from 'src/composables/use-admin-dashboard-metrics';
 import { formatCount } from 'src/utils/course-format';
 

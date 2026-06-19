@@ -114,19 +114,14 @@
           card-class="admin-dashboard__panel admin-dashboard__panel--chart"
         >
           <template #header-actions>
-            <q-btn-toggle
+            <AppSegmentedControl
               v-model="chartMetric"
-              no-caps
-              dense
-              unelevated
               :options="chartMetricOptions"
-              toggle-color="primary"
-              text-color="grey-8"
               class="admin-chart-toggle"
             />
           </template>
 
-          <AdminAreaChart
+          <AppAreaChart
             :key="chartKey"
             :series="areaChartSeries"
             :x-labels="dashboardSeries.months"
@@ -142,7 +137,7 @@
           :subtitle="periodLabel"
           card-class="admin-dashboard__panel admin-dashboard__panel--donut"
         >
-          <AdminDonutChart
+          <AppDonutChart
             :key="chartKey"
             :data="deliveryBreakdown"
             center-label="ผู้ลงทะเบียน"
@@ -159,7 +154,7 @@
           :subtitle="periodLabel"
           card-class="admin-dashboard__panel"
         >
-          <AdminBarChart
+          <AppBarChart
             :key="chartKey"
             :items="categoryBarItems"
             :format-value="(value) => `${formatCount(value)} คน`"
@@ -268,7 +263,7 @@
           :subtitle="periodLabel"
           card-class="admin-dashboard__panel"
         >
-          <AdminBarChart
+          <AppBarChart
             :key="chartKey"
             :items="facultyBarItems"
             :format-value="(value) => `${formatCount(value)} คน`"
@@ -283,11 +278,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
-import AdminBarChart, { type BarChartItem } from 'components/admin/AdminBarChart.vue';
-import AdminDonutChart from 'components/admin/AdminDonutChart.vue';
-import AppPageHero from 'components/admin/AppPageHero.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
+import AppBarChart, { type BarChartItem } from 'components/common/AppBarChart.vue';
+import AppDonutChart from 'components/common/AppDonutChart.vue';
+import AppSegmentedControl from 'components/common/AppSegmentedControl.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { useAdminDashboardMetrics } from 'src/composables/use-admin-dashboard-metrics';
@@ -770,27 +766,6 @@ function formatRelativeTime(iso: string | null): string {
 
 .admin-dashboard__panel {
   height: 100%;
-}
-
-.admin-chart-toggle {
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.04);
-  padding: 4px;
-
-  :deep(.q-btn) {
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-    border-radius: 8px !important;
-    font-size: 0.78rem;
-    font-weight: 800;
-    padding: 0 14px;
-    min-height: 32px;
-  }
-
-  :deep(.q-btn::before) {
-    box-shadow: none !important;
-  }
 }
 
 .admin-dashboard__leaderboard {

@@ -359,8 +359,8 @@
 </template>
 
 <script setup lang="ts">
-import AppPageHero from 'components/admin/AppPageHero.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import { ref, computed, nextTick, onMounted } from 'vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
 import { Notify, type QTableProps } from 'quasar';

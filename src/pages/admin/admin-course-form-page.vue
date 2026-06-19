@@ -36,8 +36,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import AdminCourseForm from 'components/admin/AdminCourseForm.vue';
-import AppActionButton from 'components/admin/AppActionButton.vue';
-import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
 
 const router = useRouter();
 const route = useRoute();

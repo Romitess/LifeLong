@@ -89,10 +89,10 @@ import { useQuasar } from 'quasar';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import type { AdminCourseDetail } from 'src/types/admin-courses';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
-import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
 import AdminCourseForm from 'components/admin/AdminCourseForm.vue';
-import AppActionButton from 'components/admin/AppActionButton.vue';
-import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
+import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
 
 const router = useRouter();
 const route = useRoute();

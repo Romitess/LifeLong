@@ -21,9 +21,7 @@
 
       <div class="admin-reports-page__content">
         <AdminCourseInterestReportManager v-if="activeMenu === 'interested-courses'" />
-        <AdminRegistrationStatisticsReportManager
-          v-else-if="activeMenu === 'registration-statistics'"
-        />
+        <RegistrationStatisticsReportManager v-else-if="activeMenu === 'registration-statistics'" />
       </div>
     </section>
   </q-page>
@@ -33,8 +31,8 @@
 import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AdminCourseInterestReportManager from 'components/admin/AdminCourseInterestReportManager.vue';
-import AdminRegistrationStatisticsReportManager from 'components/admin/AdminRegistrationStatisticsReportManager.vue';
-import AppPageHero from 'components/admin/AppPageHero.vue';
+import RegistrationStatisticsReportManager from 'components/reports/RegistrationStatisticsReportManager.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
 import AdminSectionNav, { type AdminSectionNavItem } from 'components/admin/AdminSectionNav.vue';
 
 type ReportsMenu = 'interested-courses' | 'registration-statistics';

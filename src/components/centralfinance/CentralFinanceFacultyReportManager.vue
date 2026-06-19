@@ -42,7 +42,7 @@
         </div>
       </template>
 
-      <AdminRegistrationExportDialog
+      <RegistrationExportDialog
         v-model="exportDialogOpen"
         :date-range="dateRange"
         :faculty-id="selectedFacultyId"
@@ -292,8 +292,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import AdminRegistrationExportDialog from 'components/admin/AdminRegistrationExportDialog.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import RegistrationExportDialog from 'components/reports/RegistrationExportDialog.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import { useCentralFinanceFacultyReport } from 'src/composables/use-centralfinance-faculty-report';

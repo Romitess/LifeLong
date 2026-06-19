@@ -37,7 +37,7 @@
           <div class="chart-block__header">
             <span class="chart-block__title">รายรับรวมทุกคณะ/ส่วนงาน (บาท)</span>
           </div>
-          <AdminAreaChart
+          <AppAreaChart
             :series="revenueChartSeries"
             :x-labels="trendChartLabels"
             :height="280"
@@ -88,7 +88,7 @@ import { computed, ref, onMounted } from 'vue';
 import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
-import AdminAreaChart, { type AreaChartSeries } from 'components/admin/AdminAreaChart.vue';
+import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import { api } from 'src/boot/axios';

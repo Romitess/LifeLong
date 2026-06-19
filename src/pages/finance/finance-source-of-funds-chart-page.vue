@@ -378,9 +378,9 @@
 </template>
 
 <script setup lang="ts">
-import AppPageHero from 'components/admin/AppPageHero.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
-import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
 import { useQuasar, type QTableProps, type QInput } from 'quasar';
 import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
