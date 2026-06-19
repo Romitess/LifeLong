@@ -23,242 +23,84 @@
         <div class="row items-center q-gutter-x-sm">
           <AppSearchInput
             v-model="searchQuery"
-            :placeholder="t('finance.registrationStatistics.searchPlaceholder')"
+            placeholder="ค้นหา..."
             class="registration-statistics-report__search"
             @update:model-value="handleSearch"
           />
-          <AppActionButton
-            variant="primary"
-            icon="download"
-            :label="t('finance.registrationStatistics.exportBtn')"
-            class="registration-statistics-report__export-btn"
-            @click="exportDialogOpen = true"
+          <TableExportActions
+            :pdf-config="pdfConfig"
+            :csv-config="csvConfig"
+            pdf-label="ส่งออก PDF"
+            csv-label="ส่งออก CSV"
           />
         </div>
       </template>
-
-      <RegistrationExportDialog
-        v-model="exportDialogOpen"
-        :date-range="dateRange"
-        :faculty-id="selectedFacultyId"
-        :type-course-id="selectedTypeCourseId"
-        :faculty-options="facultyOptions"
-        :course-type-options="courseTypeOptions"
-      />
 
       <q-banner v-if="error" rounded dense class="bg-negative text-white q-ma-md">
         {{ error }}
       </q-banner>
 
-      <div class="registration-statistics-report__table-wrap">
-        <table class="registration-statistics-report-table">
-          <colgroup>
-            <col class="registration-statistics-report-table__col-index" />
-            <col class="registration-statistics-report-table__col-course" />
-            <col class="registration-statistics-report-table__col-owner" />
-            <col class="registration-statistics-report-table__col-dates" />
-            <col class="registration-statistics-report-table__col-learners" />
-            <col class="registration-statistics-report-table__col-fee" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="registration-statistics-report-table__index">
-                {{ t('finance.registrationStatistics.table.index') }}
-              </th>
-              <th>{{ t('finance.registrationStatistics.table.courseName') }}</th>
-              <th>{{ t('finance.registrationStatistics.table.courseOwner') }}</th>
-              <th>{{ t('finance.registrationStatistics.table.dates') }}</th>
-              <th class="text-right">
-                {{ t('finance.registrationStatistics.table.learnersCount') }}
-              </th>
-              <th class="text-right">{{ t('finance.registrationStatistics.table.totalFee') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="isLoading">
-              <tr
-                v-for="skeletonIndex in rowsPerPage"
-                :key="`registration-skeleton-${skeletonIndex}`"
-                class="registration-statistics-report-table__skeleton-row"
-              >
-                <td class="registration-statistics-report-table__index">
-                  <q-skeleton type="text" width="24px" class="q-mx-auto" />
-                </td>
-                <td>
-                  <div class="registration-statistics-report__course-cell">
-                    <q-skeleton type="QAvatar" size="42px" />
-                    <div
-                      class="registration-statistics-report__course-copy registration-statistics-report__course-copy--skeleton"
-                    >
-                      <q-skeleton type="text" width="85%" />
-                      <q-skeleton type="text" width="38%" />
-                    </div>
-                  </div>
-                </td>
-                <td><q-skeleton type="QChip" width="90%" /></td>
-                <td>
-                  <div class="registration-statistics-report__date-cell">
-                    <q-skeleton type="text" width="78%" />
-                    <q-skeleton type="text" width="44%" />
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="registration-statistics-report__metric-cell">
-                    <q-skeleton
-                      type="text"
-                      width="40px"
-                      class="registration-statistics-report__metric-skeleton"
-                    />
-                    <q-skeleton
-                      type="text"
-                      width="24px"
-                      class="registration-statistics-report__metric-skeleton"
-                    />
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="registration-statistics-report__metric-cell">
-                    <q-skeleton
-                      type="text"
-                      width="72px"
-                      class="registration-statistics-report__metric-skeleton"
-                    />
-                    <q-skeleton
-                      type="text"
-                      width="36px"
-                      class="registration-statistics-report__metric-skeleton"
-                    />
-                  </div>
-                </td>
-              </tr>
-            </template>
-
-            <template v-else-if="groups.length > 0">
-              <template v-for="group in groups" :key="group.facultyId">
-                <tr class="registration-statistics-report-table__group-row">
-                  <td colspan="6">
-                    <div class="registration-statistics-report__group-header">
-                      <div class="registration-statistics-report__group-heading">
-                        <span>{{ t('finance.registrationStatistics.table.faculty') }}</span>
-                        <strong>{{ group.facultyName }}</strong>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr
-                  v-for="item in group.items"
-                  :key="`${group.facultyId}-${item.courseId}`"
-                  class="registration-statistics-report-table__data-row"
-                >
-                  <td class="registration-statistics-report-table__index">
-                    {{ item.rowNumber }}
-                  </td>
-                  <td>
-                    <div class="registration-statistics-report__course-cell">
-                      <span class="registration-statistics-report__course-icon">
-                        <q-icon name="school" />
-                      </span>
-                      <div class="registration-statistics-report__course-copy">
-                        <strong>{{ item.courseName }}</strong>
-                        <span>{{ item.courseCode || `COURSE-${item.courseId}` }}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="registration-statistics-report__owner-cell">
-                      <span class="registration-statistics-report__owner-chip">
-                        <q-icon name="badge" size="15px" />
-                        {{
-                          item.responsibleName || t('finance.registrationStatistics.table.noOwner')
-                        }}
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="registration-statistics-report__date-cell">
-                      <strong>{{ formatDateRange(item.startDate, item.endDate) }}</strong>
-                      <span>{{ getDateHint(item.startDate) }}</span>
-                    </div>
-                  </td>
-                  <td class="text-right">
-                    <div class="registration-statistics-report__metric-cell">
-                      <strong>{{ formatCount(item.learnerCount) }}</strong>
-                      <span>{{ t('finance.registrationStatistics.table.learnersSuffix') }}</span>
-                    </div>
-                  </td>
-                  <td class="text-right">
-                    <div class="registration-statistics-report__metric-cell">
-                      <strong>{{
-                        getSafeAmount(item.registrationFee) === 0
-                          ? '฿0'
-                          : formatCurrency(getSafeAmount(item.registrationFee))
-                      }}</strong>
-                      <span>{{
-                        getUnitPriceLabel(item.unitPrice, item.registrationFee, item.learnerCount)
-                      }}</span>
-                    </div>
-                  </td>
-                </tr>
-
-                <tr class="registration-statistics-report-table__group-total-row">
-                  <td colspan="4" class="registration-statistics-report-table__group-total-label">
-                    {{ t('finance.registrationStatistics.table.groupTotalPrefix') }}
-                  </td>
-                  <td class="text-right">
-                    <div class="registration-statistics-report__metric-cell">
-                      <strong>{{ formatCount(group.totalLearners) }}</strong>
-                      <span>{{ t('finance.registrationStatistics.table.learnersSuffix') }}</span>
-                    </div>
-                  </td>
-                  <td class="text-right">
-                    <div class="registration-statistics-report__metric-cell">
-                      <strong>{{ formatCurrency(group.totalRegistrationFees) }}</strong>
-                      <span>{{ t('finance.registrationStatistics.table.totalFee') }}</span>
-                    </div>
-                  </td>
-                </tr>
-              </template>
-            </template>
-
-            <tr v-else>
-              <td colspan="6" class="registration-statistics-report-table__empty">
-                {{ t('finance.registrationStatistics.table.noData') }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div
-        v-if="pagination.totalPages > 1"
-        ref="paginationRef"
-        class="registration-statistics-report__pagination"
+      <BaseTable
+        :columns="flatColumns"
+        :rows="flatRows"
+        :page="currentPage"
+        :total-pages="pagination.totalPages"
+        :rows-per-page="rowsPerPage"
+        :loading="isLoading"
+        show-index
+        show-rows-per-page
+        height-mode="auto"
+        @page-change="handlePageChange"
+        @rows-per-page-change="handleRowsPerPageChange"
       >
-        <BasePagination
-          :model-value="currentPage"
-          :max="pagination.totalPages"
-          :max-pages="7"
-          gutter="md"
-          :disable="isLoading"
-          @update:model-value="handlePageChange"
-        />
-      </div>
+        <template #cell-courseName="{ row }">
+          <div style="white-space: pre-wrap; word-break: break-word">
+            {{ row.courseName }}
+            <div style="color: #94a3b8; font-size: 0.78rem">{{ row.courseCode || '' }}</div>
+          </div>
+        </template>
+
+        <template #cell-courseOwner="{ row }">
+          {{ row.responsibleName || t('finance.registrationStatistics.table.noOwner') }}
+        </template>
+
+        <template #cell-facultyName="{ row }">
+          {{ row.facultyName }}
+        </template>
+
+        <template #cell-dates="{ row }">
+          {{ formatDateRange(row.startDate, row.endDate) }}
+        </template>
+
+        <template #cell-learnerCount="{ row }">
+          {{ formatCount(row.learnerCount) }}
+        </template>
+
+        <template #cell-totalFee="{ row }">
+          {{
+            getSafeAmount(row.registrationFee) === 0
+              ? '฿0'
+              : formatCurrency(getSafeAmount(row.registrationFee))
+          }}
+        </template>
+      </BaseTable>
     </AppSurfaceCard>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import AppActionButton from 'components/common/AppActionButton.vue';
-import RegistrationExportDialog from 'components/reports/RegistrationExportDialog.vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
-import BasePagination from 'components/base/BasePagination.vue';
+import BaseTable from 'components/base/BaseTable.vue';
+import type { BaseTableColumn } from 'components/base/BaseTable.vue';
+import TableExportActions from 'components/common/TableExportActions.vue';
+import type { PdfExportConfig, CsvExportConfig } from 'src/types/export-types';
 import { useAdminRegistrationStatisticsReport } from 'src/composables/use-admin-registration-statistics-report';
 import type { AdminRegistrationStatisticsReportResponse } from 'src/types/admin-registration-statistics-report';
 import { formatCount, formatCurrency } from 'src/utils/course-format';
 import { useI18n } from 'vue-i18n';
+import { date } from 'quasar';
 
 interface DateRangeValue {
   start: string | null;
@@ -271,10 +113,8 @@ const props = defineProps<{
   mockData?: AdminRegistrationStatisticsReportResponse;
 }>();
 
-const rowsPerPage = 10;
+const rowsPerPage = ref(10);
 const currentPage = ref(1);
-const paginationRef = ref<HTMLElement | null>(null);
-const exportDialogOpen = ref(false);
 const searchQuery = ref('');
 const dateRange = ref<DateRangeValue>({
   start: null,
@@ -320,8 +160,166 @@ const stats = computed<
   },
 ]);
 
-const facultyOptions = computed(() => filterOptions.value.faculties);
-const courseTypeOptions = computed(() => filterOptions.value.courseTypes);
+interface FlatCourseRow {
+  courseId: number;
+  courseCode: string | null;
+  courseName: string;
+  responsibleName: string | null;
+  facultyName: string;
+  startDate: string | null;
+  endDate: string | null;
+  learnerCount: number;
+  unitPrice: number;
+  registrationFee: number;
+}
+
+const flatRows = computed<FlatCourseRow[]>(() => {
+  const rows: FlatCourseRow[] = [];
+  for (const group of groups.value) {
+    for (const item of group.items) {
+      rows.push({
+        courseId: item.courseId,
+        courseCode: item.courseCode,
+        courseName: item.courseName,
+        responsibleName: item.responsibleName,
+        facultyName: group.facultyName,
+        startDate: item.startDate,
+        endDate: item.endDate,
+        learnerCount: item.learnerCount,
+        unitPrice: item.unitPrice,
+        registrationFee: item.registrationFee,
+      });
+    }
+  }
+  return rows;
+});
+
+const flatColumns = computed<BaseTableColumn[]>(() => [
+  {
+    key: 'courseName',
+    label: t('finance.registrationStatistics.table.courseName'),
+    sortable: true,
+  },
+  {
+    key: 'courseOwner',
+    label: t('finance.registrationStatistics.table.courseOwner'),
+    sortable: true,
+    width: '220px',
+  },
+  {
+    key: 'facultyName',
+    label: t('finance.registrationStatistics.table.faculty'),
+    sortable: true,
+    width: '200px',
+  },
+  {
+    key: 'dates',
+    label: t('finance.registrationStatistics.table.dates'),
+    sortable: true,
+    width: '220px',
+  },
+  {
+    key: 'learnerCount',
+    label: t('finance.registrationStatistics.table.learnersCount'),
+    align: 'right',
+    sortable: true,
+    width: '140px',
+  },
+  {
+    key: 'totalFee',
+    label: t('finance.registrationStatistics.table.totalFee'),
+    align: 'right',
+    sortable: true,
+    width: '160px',
+  },
+]);
+
+const pdfConfig = computed<PdfExportConfig | null>(() => {
+  if (flatRows.value.length === 0) return null;
+
+  const rows = flatRows.value.map((row, index) => [
+    index + 1,
+    row.courseCode ? `${row.courseCode} : ${row.courseName}` : row.courseName,
+    row.facultyName,
+    row.responsibleName || '-',
+    formatDateRange(row.startDate, row.endDate),
+    row.learnerCount,
+    formatCurrency(getSafeAmount(row.registrationFee)),
+  ]);
+
+  const todayStr = date.formatDate(new Date(), 'DDMMYYYY');
+  const filename = `registration_statistics_${todayStr}`;
+
+  return {
+    filename,
+    titles: ['รายงานสถิติการลงทะเบียน'],
+    titleStartY: 40,
+    startY: 55,
+    head: [
+      [
+        'ลำดับ',
+        'ชื่อรายวิชา',
+        'คณะ/ส่วนงาน',
+        'ผู้รับผิดชอบรายวิชา',
+        'วันที่เปิด-ปิดการเรียนการสอน',
+        'จำนวนผู้เรียน (คน)',
+        'ค่าลงทะเบียนรวม (บาท)',
+      ],
+    ],
+    body: rows,
+    styles: {
+      fontSize: 8,
+      cellPadding: 4,
+      valign: 'top',
+    },
+    headStyles: {
+      fontSize: 8,
+    },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 28 },
+      1: { cellWidth: 150 },
+      2: { cellWidth: 90 },
+      3: { cellWidth: 90 },
+      4: { halign: 'center', cellWidth: 80 },
+      5: { halign: 'center', cellWidth: 50 },
+      6: { halign: 'right', cellWidth: 60 },
+    },
+  };
+});
+
+const csvConfig = computed<CsvExportConfig | null>(() => {
+  if (flatRows.value.length === 0) return null;
+
+  return {
+    filename: `registration_statistics_${date.formatDate(new Date(), 'DDMMYYYY')}.csv`,
+    headers: [
+      'ลำดับ',
+      'ชื่อรายวิชา',
+      'รหัสวิชา',
+      'คณะ/ส่วนงาน',
+      'ผู้รับผิดชอบรายวิชา',
+      'วันที่เปิด-ปิดการเรียนการสอน',
+      'จำนวนผู้เรียน (คน)',
+      'ค่าลงทะเบียนรวม (บาท)',
+    ],
+    data: flatRows.value.map((row, index) => [
+      index + 1,
+      row.courseName,
+      row.courseCode || '',
+      row.facultyName,
+      row.responsibleName || '-',
+      formatDateRange(row.startDate, row.endDate),
+      row.learnerCount,
+      getSafeAmount(row.registrationFee),
+    ]),
+  };
+});
+
+function handleRowsPerPageChange(val: number) {
+  rowsPerPage.value = val;
+  currentPage.value = 1;
+  void loadReport(1);
+}
 
 watch(
   () => props.initialFacultyId,
@@ -370,26 +368,6 @@ function normalizeDateForApi(value: string | null): string | null {
 
 function getSafeAmount(value: number): number {
   return Number.isFinite(value) ? value : 0;
-}
-
-function getUnitPriceLabel(
-  unitPrice: number,
-  registrationFee: number,
-  learnerCount: number,
-): string {
-  const safeUnitPrice = Number.isFinite(unitPrice) ? unitPrice : 0;
-  const safeRegistrationFee = getSafeAmount(registrationFee);
-  const safeLearnerCount = Number.isFinite(learnerCount) ? learnerCount : 0;
-  const fallbackUnitPrice =
-    safeUnitPrice > 0
-      ? safeUnitPrice
-      : safeLearnerCount > 0
-        ? Math.round(safeRegistrationFee / safeLearnerCount)
-        : 0;
-
-  return fallbackUnitPrice === 0
-    ? t('finance.registrationStatistics.table.priceSetFree')
-    : `${t('finance.registrationStatistics.table.priceSetPrefix')} ${formatCurrency(fallbackUnitPrice)}`;
 }
 
 function applyMockFilters(page = 1): void {
@@ -443,7 +421,10 @@ function applyMockFilters(page = 1): void {
     })
     .filter((group) => group.items.length > 0);
 
-  const paginatedGroups = filteredGroups.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const paginatedGroups = filteredGroups.slice(
+    (page - 1) * rowsPerPage.value,
+    page * rowsPerPage.value,
+  );
 
   groups.value = paginatedGroups;
   summary.value = {
@@ -456,9 +437,9 @@ function applyMockFilters(page = 1): void {
   };
   pagination.value = {
     page,
-    pageSize: rowsPerPage,
+    pageSize: rowsPerPage.value,
     total: filteredGroups.length,
-    totalPages: Math.max(1, Math.ceil(filteredGroups.length / rowsPerPage)),
+    totalPages: Math.max(1, Math.ceil(filteredGroups.length / rowsPerPage.value)),
   };
   generatedAt.value = props.mockData.generatedAt;
   isLoading.value = false;
@@ -473,32 +454,13 @@ function loadReport(page = 1): Promise<void> {
 
   return fetchData({
     page,
-    pageSize: rowsPerPage,
+    pageSize: rowsPerPage.value,
     startDate: normalizeDateForApi(dateRange.value.start),
     endDate: normalizeDateForApi(dateRange.value.end),
     facultyId: selectedFacultyId.value,
     typeCourseId: selectedTypeCourseId.value,
     search: searchQuery.value || null,
   });
-}
-
-async function preservePaginationPosition(update: () => Promise<void> | void): Promise<void> {
-  const anchorTop =
-    typeof window !== 'undefined' ? paginationRef.value?.getBoundingClientRect().top : undefined;
-
-  await update();
-  await nextTick();
-
-  if (typeof window === 'undefined' || anchorTop === undefined || !paginationRef.value) {
-    return;
-  }
-
-  const nextTop = paginationRef.value.getBoundingClientRect().top;
-  if (Math.abs(nextTop - anchorTop) < 1) {
-    return;
-  }
-
-  window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
 }
 
 async function handleSearch(): Promise<void> {
@@ -511,10 +473,8 @@ async function handlePageChange(page: number): Promise<void> {
     return;
   }
 
-  await preservePaginationPosition(async () => {
-    currentPage.value = page;
-    await loadReport(page);
-  });
+  currentPage.value = page;
+  await loadReport(page);
 }
 
 function formatDate(value: string | null): string {
@@ -544,14 +504,6 @@ function formatDateRange(startDate: string | null, endDate: string | null): stri
   return startDate
     ? `${t('finance.registrationStatistics.table.startPrefix')} ${formatDate(startDate)}`
     : `${t('finance.registrationStatistics.table.endPrefix')} ${formatDate(endDate)}`;
-}
-
-function getDateHint(startDate: string | null): string {
-  if (!startDate) {
-    return t('finance.registrationStatistics.table.noStartDate');
-  }
-
-  return `${t('finance.registrationStatistics.table.startHint')} ${formatDate(startDate)}`;
 }
 
 onMounted(() => {
@@ -648,262 +600,6 @@ onMounted(() => {
   }
 }
 
-.registration-statistics-report__table-wrap {
-  overflow-x: auto;
-  min-height: 0;
-}
-
-.registration-statistics-report-table {
-  width: 100%;
-  min-width: 1080px;
-  border-collapse: collapse;
-
-  th,
-  td {
-    padding: 16px 18px;
-    border-bottom: 1px solid var(--admin-line);
-    vertical-align: middle;
-  }
-
-  thead th {
-    border-bottom: none;
-  }
-
-  thead th {
-    color: #475467;
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: #f8fafc;
-  }
-
-  tbody tr.registration-statistics-report-table__group-row:hover,
-  tbody tr.registration-statistics-report-table__group-total-row:hover,
-  tbody tr.registration-statistics-report-table__skeleton-row:hover {
-    background: transparent;
-  }
-
-  tbody tr:nth-child(even) {
-    background: rgba(248, 250, 252, 0.58);
-  }
-
-  tbody tr:hover {
-    background: rgba(245, 166, 35, 0.05);
-  }
-}
-
-.registration-statistics-report-table__col-index {
-  width: 88px;
-}
-
-.registration-statistics-report-table__col-owner {
-  width: 260px;
-}
-
-.registration-statistics-report-table__col-dates {
-  width: 250px;
-}
-
-.registration-statistics-report-table__col-learners,
-.registration-statistics-report-table__col-fee {
-  width: 160px;
-}
-
-.registration-statistics-report-table__index {
-  text-align: center;
-  color: #1d4ed8;
-  font-weight: 800;
-}
-
-.registration-statistics-report-table__group-row td {
-  padding: 0;
-  background: #ffffff !important;
-  border-bottom: none;
-  border-top: none;
-}
-
-.registration-statistics-report__group-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: center;
-  padding: 18px 22px 14px;
-  margin-top: 0;
-  border-top: 1px solid rgba(245, 166, 35, 0.18);
-  background: linear-gradient(90deg, rgba(245, 166, 35, 0.1), rgba(255, 255, 255, 0.98));
-}
-
-.registration-statistics-report__group-heading {
-  display: grid;
-  gap: 4px;
-
-  span {
-    color: #b7791f;
-    font-size: 0.72rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  strong {
-    color: var(--admin-navy);
-    font-size: 1rem;
-    font-weight: 900;
-    line-height: 1.35;
-  }
-}
-
-.registration-statistics-report-table__group-total-row td {
-  background: rgba(248, 250, 252, 0.88) !important;
-}
-
-.registration-statistics-report-table__group-total-label {
-  color: var(--admin-navy);
-  font-size: 0.86rem;
-  font-weight: 850;
-}
-
-.registration-statistics-report-table__empty {
-  min-height: 220px;
-  padding: 38px 18px !important;
-  color: #64748b;
-  text-align: center;
-  vertical-align: middle !important;
-}
-
-.registration-statistics-report-table__skeleton-row td {
-  background: #ffffff;
-}
-
-.registration-statistics-report__course-cell {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.registration-statistics-report__course-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  color: #ffffff;
-  background: linear-gradient(135deg, $primary, #d88b0a);
-  box-shadow: 0 10px 18px rgba($primary, 0.22);
-  flex: 0 0 42px;
-}
-
-.registration-statistics-report__course-copy {
-  display: flex;
-  min-width: 0;
-  min-height: 50px;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-
-  strong {
-    display: -webkit-box;
-    color: var(--admin-navy);
-    font-size: 0.95rem;
-    font-weight: 850;
-    line-height: 1.42;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    text-wrap: pretty;
-  }
-
-  span {
-    color: var(--admin-muted);
-    font-size: 0.75rem;
-    font-weight: 700;
-    white-space: nowrap;
-  }
-}
-
-.registration-statistics-report__course-copy--skeleton {
-  width: 100%;
-}
-
-.registration-statistics-report__owner-cell {
-  display: flex;
-}
-
-.registration-statistics-report__owner-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  color: #0f766e;
-  background: rgba(20, 184, 166, 0.1);
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1.4;
-  max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.registration-statistics-report__owner-chip :deep(.q-icon) {
-  flex-shrink: 0;
-  color: currentColor;
-}
-
-thead th {
-  border-bottom: none;
-}
-
-/* Remove top border for group header row so it sticks to thead */
-tbody tr.registration-statistics-report-table__group-row td {
-  border-top: none !important;
-}
-
-.registration-statistics-report__date-cell,
-.registration-statistics-report__metric-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  strong {
-    display: -webkit-box;
-    color: var(--admin-navy);
-    font-size: 0.95rem;
-    font-weight: 850;
-    line-height: 1.42;
-    overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-
-  span {
-    color: var(--admin-muted);
-    font-size: 0.75rem;
-    font-weight: 700;
-  }
-}
-
-.registration-statistics-report__metric-cell {
-  align-items: flex-end;
-}
-
-.registration-statistics-report__metric-skeleton {
-  margin-left: auto;
-}
-
-.registration-statistics-report__pagination {
-  display: flex;
-  justify-content: center;
-  min-height: 72px;
-  padding: 22px 24px 24px;
-}
-
 @media (max-width: 1200px) {
   .registration-statistics-report__filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -925,21 +621,6 @@ tbody tr.registration-statistics-report-table__group-row td {
 @media (max-width: 900px) {
   .registration-statistics-report__filters {
     grid-template-columns: 1fr;
-  }
-
-  .registration-statistics-report__group-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .registration-statistics-report__group-metrics {
-    justify-content: flex-start;
-  }
-
-  .registration-statistics-report__table-wrap,
-  .registration-statistics-report-table__empty {
-    min-height: 680px;
-    height: 680px;
   }
 }
 </style>

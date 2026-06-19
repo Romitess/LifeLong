@@ -1036,16 +1036,20 @@ async function openNotificationPreview(notification: { action?: string }): Promi
   font-weight: 800;
 }
 
-.profile-action-menu {
-  border-radius: 14px;
-  box-shadow: 0 16px 38px rgba(17, 24, 39, 0.16);
+:global(.profile-action-menu) {
+  overflow: hidden !important;
+  border-radius: 18px !important;
+  background: transparent !important;
+  clip-path: inset(0 round 18px);
+  box-shadow: none !important;
+  filter: drop-shadow(0 16px 38px rgba(17, 24, 39, 0.16));
 }
 
 .profile-action-card {
   width: 238px;
   overflow: hidden;
   border: 1px solid rgba(17, 24, 39, 0.08);
-  border-radius: 14px;
+  border-radius: 18px;
   background: #ffffff;
 }
 

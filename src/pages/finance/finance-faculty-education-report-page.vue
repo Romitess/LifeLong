@@ -8,7 +8,9 @@
     >
       <template #aside>
         <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
+          <div class="faculty-scope-card__label">
+            {{ $t('finance.educationReport.scopeLabel') }}
+          </div>
           <div class="faculty-scope-card__faculty">{{ currentFacultyName }}</div>
         </div>
       </template>

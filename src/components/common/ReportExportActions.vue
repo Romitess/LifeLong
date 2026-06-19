@@ -7,30 +7,20 @@
       :label="pdfLabel"
       @click="$emit('export-pdf')"
     />
-    <q-btn
-      outline
-      color="positive"
-      icon="table_chart"
-      :label="excelLabel"
-      @click="$emit('export-excel')"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 interface Props {
   pdfLabel?: string;
-  excelLabel?: string;
 }
 
 withDefaults(defineProps<Props>(), {
   pdfLabel: 'PDF',
-  excelLabel: 'Excel',
 });
 
 defineEmits<{
   'export-pdf': [];
-  'export-excel': [];
 }>();
 </script>
 

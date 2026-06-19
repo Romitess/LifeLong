@@ -8,8 +8,12 @@
     >
       <template #aside>
         <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
-          <div class="faculty-scope-card__faculty">{{ userFacName || 'ไม่ระบุคณะ' }}</div>
+          <div class="faculty-scope-card__label">
+            {{ $t('finance.educationReport.scopeLabel') }}
+          </div>
+          <div class="faculty-scope-card__faculty">
+            {{ userFacName || $t('finance.educationReport.unknownFaculty') }}
+          </div>
         </div>
       </template>
     </AppPageHero>
@@ -126,142 +130,67 @@
           </div>
         </div>
 
-        <q-table
-          v-model:pagination="pagination"
-          flat
-          :rows="filteredRows"
+        <BaseTable
           :columns="columns"
-          row-key="id"
-          :rows-per-page-options="[10, 25, 50, 100]"
-          class="sof-table"
+          :rows="paginatedRows"
+          :page="pagination.page"
+          :total-pages="Math.max(1, Math.ceil(filteredRows.length / pagination.rowsPerPage))"
+          :rows-per-page="pagination.rowsPerPage"
+          show-index
+          show-rows-per-page
+          height-mode="auto"
+          @page-change="pagination.page = $event"
+          @rows-per-page-change="
+            pagination.rowsPerPage = $event;
+            pagination.page = 1;
+          "
         >
-          <template #body-cell-index="props">
-            <q-td :props="props">
-              {{ props.rowIndex + 1 + (pagination.page - 1) * pagination.rowsPerPage }}
-            </q-td>
+          <template #cell-active="{ row }">
+            <q-badge
+              rounded
+              class="sof-status-badge"
+              :color="row.active ? 'positive' : 'grey-6'"
+              :label="
+                row.active
+                  ? $t('finance.sourceOfFunds.active')
+                  : $t('finance.sourceOfFunds.inactive')
+              "
+            />
           </template>
 
-          <template #body-cell-active="props">
-            <q-td :props="props">
-              <q-badge
-                rounded
-                class="sof-status-badge"
-                :color="props.row.active ? 'positive' : 'grey-6'"
-                :label="
-                  props.row.active
-                    ? $t('finance.sourceOfFunds.active')
-                    : $t('finance.sourceOfFunds.inactive')
-                "
-              />
-            </q-td>
-          </template>
-
-          <template #body-cell-actions="props">
-            <q-td :props="props">
-              <div class="row no-wrap items-center q-gutter-xs justify-center">
-                <q-btn
-                  flat
-                  round
-                  dense
-                  color="primary"
-                  icon="edit"
-                  :disable="props.row.referencedInCourse"
-                  @click="onEdit(props.row)"
-                >
-                  <q-tooltip v-if="props.row.referencedInCourse">
-                    {{ $t('finance.sourceOfFunds.cannotEdit') }}
-                  </q-tooltip>
-                  <q-tooltip v-else>{{ $t('finance.sourceOfFunds.edit') }}</q-tooltip>
-                </q-btn>
-                <q-btn
-                  flat
-                  round
-                  dense
-                  color="negative"
-                  icon="delete"
-                  :disable="props.row.referencedInCourse"
-                  @click="onDelete(props.row)"
-                >
-                  <q-tooltip v-if="props.row.referencedInCourse">
-                    {{ $t('finance.sourceOfFunds.cannotDelete') }}
-                  </q-tooltip>
-                  <q-tooltip v-else>{{ $t('finance.sourceOfFunds.delete') }}</q-tooltip>
-                </q-btn>
-              </div>
-            </q-td>
-          </template>
-
-          <template #no-data>
-            <div class="full-width column flex-center q-pa-xl text-grey-7">
-              <q-icon name="inventory_2" size="48px" class="q-mb-md" />
-              <span>{{ $t('finance.sourceOfFunds.noData') }}</span>
+          <template #cell-actions="{ row }">
+            <div class="row no-wrap items-center q-gutter-xs justify-center">
+              <q-btn
+                flat
+                round
+                dense
+                color="primary"
+                icon="edit"
+                :disable="row.referencedInCourse"
+                @click="onEdit(row)"
+              >
+                <q-tooltip v-if="row.referencedInCourse">
+                  {{ $t('finance.sourceOfFunds.cannotEdit') }}
+                </q-tooltip>
+                <q-tooltip v-else>{{ $t('finance.sourceOfFunds.edit') }}</q-tooltip>
+              </q-btn>
+              <q-btn
+                flat
+                round
+                dense
+                color="negative"
+                icon="delete"
+                :disable="row.referencedInCourse"
+                @click="onDelete(row)"
+              >
+                <q-tooltip v-if="row.referencedInCourse">
+                  {{ $t('finance.sourceOfFunds.cannotDelete') }}
+                </q-tooltip>
+                <q-tooltip v-else>{{ $t('finance.sourceOfFunds.delete') }}</q-tooltip>
+              </q-btn>
             </div>
           </template>
-
-          <template #bottom="scope">
-            <div class="row full-width justify-between items-center q-py-sm">
-              <div class="row items-center q-gutter-sm">
-                <span class="text-subtitle2 text-grey-8">{{
-                  $t('finance.receiptSummary.showEntries')
-                }}</span>
-                <q-select
-                  v-model="pagination.rowsPerPage"
-                  :options="[10, 25, 50, 100]"
-                  outlined
-                  dense
-                  options-dense
-                  style="width: 80px"
-                  class="bg-white sof-rows-select"
-                />
-                <span class="text-subtitle2 text-grey-8">{{
-                  $t('finance.receiptSummary.entries')
-                }}</span>
-              </div>
-              <div class="row items-center q-gutter-sm">
-                <span class="text-caption text-grey-8 q-mr-sm">
-                  {{ pageStart(scope.pagination) }}-{{ pageEnd(scope.pagination) }} of
-                  {{ filteredRows.length }}
-                </span>
-                <q-btn
-                  icon="first_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.firstPage"
-                />
-                <q-btn
-                  icon="chevron_left"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.prevPage"
-                />
-                <q-btn
-                  icon="chevron_right"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.nextPage"
-                />
-                <q-btn
-                  icon="last_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.lastPage"
-                />
-              </div>
-            </div>
-          </template>
-        </q-table>
+        </BaseTable>
 
         <div class="sof-footnote q-mt-md">
           <q-icon name="info" size="18px" class="q-mr-sm" />
@@ -272,14 +201,17 @@
 
     <AppConfirmDialog
       v-model="confirmDeleteOpen"
-      title="ลบผังแหล่งเงิน"
+      :title="$t('finance.sourceOfFunds.deleteConfirmTitle', 'ลบผังแหล่งเงิน')"
       :message="
         pendingDeleteRow
-          ? `ต้องการลบผังแหล่งเงิน '${pendingDeleteRow.code} - ${pendingDeleteRow.name}' ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้`
-          : 'ต้องการลบรายการนี้ใช่หรือไม่?'
+          ? $t('finance.sourceOfFunds.deleteConfirmMessage', {
+              code: pendingDeleteRow.code,
+              name: pendingDeleteRow.name,
+            })
+          : $t('finance.sourceOfFunds.deleteConfirmDefaultMessage', 'ต้องการลบรายการนี้ใช่หรือไม่?')
       "
-      confirm-label="ลบ"
-      cancel-label="ยกเลิก"
+      :confirm-label="$t('finance.sourceOfFunds.delete')"
+      :cancel-label="$t('finance.sourceOfFunds.cancelEdit', 'ยกเลิก')"
       confirm-color="negative"
       icon-color="negative"
       @confirm="confirmDelete"
@@ -292,8 +224,10 @@
 import AppPageHero from 'components/common/AppPageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
+import BaseTable from 'components/base/BaseTable.vue';
+import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
-import { useQuasar, type QTableProps, type QInput } from 'quasar';
+import { useQuasar, type QInput } from 'quasar';
 import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from 'boot/axios';
@@ -304,9 +238,7 @@ const { t } = useI18n();
 
 const authStore = useAuthStore();
 const currentUser = computed(() => authStore.user);
-const userFacName = computed(
-  () => currentUser.value?.facName || currentUser.value?.faculty || 'ไม่ระบุ',
-);
+const userFacName = computed(() => currentUser.value?.facName || currentUser.value?.faculty || '');
 
 const codeInputRef = ref<InstanceType<typeof QInput> | null>(null);
 const nameInputRef = ref<InstanceType<typeof QInput> | null>(null);
@@ -447,16 +379,11 @@ const filteredRows = computed(() => {
   });
 });
 
-function pageStart(tablePagination: { page: number; rowsPerPage: number }): number {
-  if (filteredRows.value.length === 0) {
-    return 0;
-  }
-  return (tablePagination.page - 1) * tablePagination.rowsPerPage + 1;
-}
-
-function pageEnd(tablePagination: { page: number; rowsPerPage: number }): number {
-  return Math.min(tablePagination.page * tablePagination.rowsPerPage, filteredRows.value.length);
-}
+const paginatedRows = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.rowsPerPage;
+  const end = start + pagination.value.rowsPerPage;
+  return filteredRows.value.slice(start, end);
+});
 
 watch(tableSearch, () => {
   pagination.value.page = 1;
@@ -475,51 +402,37 @@ watch(
   },
 );
 
-const columns = computed<QTableProps['columns']>(() => [
+const columns = computed<BaseTableColumn[]>(() => [
   {
-    name: 'index',
-    label: t('finance.sourceOfFunds.columnNo'),
-    field: 'index',
-    align: 'center',
-    sortable: false,
-    style: 'width: 72px',
-  },
-  {
-    name: 'division',
+    key: 'division',
     label: t('finance.sourceOfFunds.faculty'),
-    field: (row: FundChartRow) => facIdToLabel(row.facId),
     align: 'left',
     sortable: true,
   },
   {
-    name: 'code',
+    key: 'code',
     label: t('finance.sourceOfFunds.code'),
-    field: 'code',
     align: 'left',
     sortable: true,
-    sort: (a: string, b: string) => Number(a) - Number(b),
   },
   {
-    name: 'name',
+    key: 'name',
     label: t('finance.sourceOfFunds.name'),
-    field: 'name',
     align: 'left',
     sortable: true,
   },
   {
-    name: 'active',
+    key: 'active',
     label: t('finance.sourceOfFunds.activeStatus'),
-    field: 'active',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'actions',
+    key: 'actions',
     label: t('finance.sourceOfFunds.columnActions'),
-    field: 'actions',
     align: 'center',
     sortable: false,
-    style: 'width: 120px',
+    width: '120px',
   },
 ]);
 

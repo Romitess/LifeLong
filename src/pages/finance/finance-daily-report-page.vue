@@ -8,8 +8,12 @@
     >
       <template #aside>
         <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
-          <div class="faculty-scope-card__faculty">{{ currentUserDepartment || 'ไม่ระบุคณะ' }}</div>
+          <div class="faculty-scope-card__label">
+            {{ $t('finance.educationReport.scopeLabel') }}
+          </div>
+          <div class="faculty-scope-card__faculty">
+            {{ currentUserDepartment || $t('finance.educationReport.unknownFaculty') }}
+          </div>
         </div>
       </template>
     </AppPageHero>
@@ -53,9 +57,9 @@
           <div class="table-export-actions">
             <TableExportActions
               :pdf-config="pdfExportConfig"
-              :excel-config="excelExportConfig"
+              :csv-config="csvExportConfig"
               :pdf-label="$t('centralFinance.dailyReport.table.pdfBtn')"
-              :excel-label="$t('centralFinance.dailyReport.table.excelBtn')"
+              csv-label="ส่งออก CSV"
             />
           </div>
         </template>
@@ -79,95 +83,36 @@
         </div>
 
         <div class="report-table-wrapper">
-          <q-table
-            :rows="tableRows"
+          <BaseTable
             :columns="columns"
-            row-key="id"
-            flat
+            :rows="paginatedRows"
+            :page="pagination.page"
+            :total-pages="Math.max(1, Math.ceil(tableRows.length / pagination.rowsPerPage))"
+            :rows-per-page="pagination.rowsPerPage"
             :loading="isLoading"
-            class="report-table"
-            v-model:pagination="pagination"
-            :rows-per-page-options="[10, 25, 50, 100]"
+            show-index
+            show-rows-per-page
+            height-mode="auto"
+            @page-change="pagination.page = $event"
+            @rows-per-page-change="
+              pagination.rowsPerPage = $event;
+              pagination.page = 1;
+            "
           >
-            <template v-slot:body-cell-amount="props">
-              <q-td :props="props" class="text-right">
-                {{ formatCurrency(props.value) }}
-              </q-td>
-            </template>
-
-            <template v-slot:bottom="scope">
-              <div class="report-pagination q-py-sm">
-                <div class="row items-center q-gutter-sm">
-                  <span class="text-subtitle2 text-grey-8">
-                    {{ $t('centralFinance.dailyReport.table.showLabel') }}
-                  </span>
-                  <q-select
-                    v-model="pagination.rowsPerPage"
-                    :options="[10, 25, 50, 100]"
-                    outlined
-                    dense
-                    options-dense
-                    style="width: 80px"
-                    class="bg-white report-rows-select"
-                  />
-                  <span class="text-subtitle2 text-grey-8">
-                    {{ $t('centralFinance.dailyReport.table.entriesLabel') }}
-                  </span>
-                </div>
-                <div class="row items-center q-gutter-sm">
-                  <span class="text-caption text-grey-8 q-mr-sm">
-                    {{
-                      tableRows.length > 0
-                        ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
-                        : 0
-                    }}-{{
-                      Math.min(
-                        scope.pagination.page * scope.pagination.rowsPerPage,
-                        tableRows.length,
-                      )
-                    }}
-                    of {{ tableRows.length }}
-                  </span>
-                  <q-btn
-                    icon="first_page"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isFirstPage"
-                    @click="scope.firstPage"
-                  />
-                  <q-btn
-                    icon="chevron_left"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isFirstPage"
-                    @click="scope.prevPage"
-                  />
-                  <q-btn
-                    icon="chevron_right"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isLastPage"
-                    @click="scope.nextPage"
-                  />
-                  <q-btn
-                    icon="last_page"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isLastPage"
-                    @click="scope.lastPage"
-                  />
-                </div>
+            <template #cell-amount="{ row }">
+              <div class="text-right">
+                {{ formatCurrency(row.amount) }}
               </div>
             </template>
-          </q-table>
+
+            <template #cell-courseName="{ row }">
+              <div style="white-space: pre-wrap; word-break: break-word">{{ row.courseName }}</div>
+            </template>
+
+            <template #cell-fundCode="{ row }">
+              <div style="white-space: pre-wrap; word-break: break-word">{{ row.fundCode }}</div>
+            </template>
+          </BaseTable>
         </div>
       </AppSurfaceCard>
     </section>
@@ -184,9 +129,10 @@ import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { useAuthStore } from 'stores/auth-store';
 import { api } from 'src/boot/axios';
-import type { QTableColumn } from 'quasar';
+import BaseTable from 'components/base/BaseTable.vue';
+import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 import TableExportActions from 'components/common/TableExportActions.vue';
-import type { PdfExportConfig, ExcelExportConfig } from 'src/types/export-types';
+import type { PdfExportConfig, CsvExportConfig } from 'src/types/export-types';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -255,34 +201,28 @@ interface DailyReportItem {
 
 const tableRows = ref<DailyReportItem[]>([]);
 
-const columns = computed<QTableColumn[]>(() => [
+const paginatedRows = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.rowsPerPage;
+  const end = start + pagination.value.rowsPerPage;
+  return tableRows.value.slice(start, end);
+});
+
+const columns = computed<BaseTableColumn[]>(() => [
   {
-    name: 'no',
-    label: t('centralFinance.dailyReport.table.no'),
-    field: 'no',
-    align: 'center',
-    sortable: true,
-  },
-  {
-    name: 'courseName',
+    key: 'courseName',
     label: t('centralFinance.dailyReport.table.courseName'),
-    field: 'courseName',
     align: 'center',
     sortable: true,
-    style: 'white-space: pre-wrap; word-break: break-word;',
   },
   {
-    name: 'fundCode',
+    key: 'fundCode',
     label: t('centralFinance.dailyReport.table.fundCode'),
-    field: 'fundCode',
     align: 'center',
     sortable: true,
-    style: 'white-space: pre-wrap; word-break: break-word;',
   },
   {
-    name: 'amount',
+    key: 'amount',
     label: t('centralFinance.dailyReport.table.amount'),
-    field: 'amount',
     align: 'right',
     sortable: true,
   },
@@ -406,10 +346,10 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
   };
 });
 
-const excelExportConfig = computed<ExcelExportConfig | null>(() => {
+const csvExportConfig = computed<CsvExportConfig | null>(() => {
   if (tableRows.value.length === 0) return null;
 
-  const header = [
+  const headers = [
     t('centralFinance.dailyReport.table.no'),
     t('centralFinance.dailyReport.table.courseName'),
     t('centralFinance.dailyReport.table.fundCode'),
@@ -423,30 +363,14 @@ const excelExportConfig = computed<ExcelExportConfig | null>(() => {
     row.amount,
   ]);
 
-  const title1 = t('centralFinance.dailyReport.table.reportTitle');
-  const title2 = `${t('centralFinance.dailyReport.table.departmentLabel')} ${currentUserDepartment.value}`;
-  const title3 = t('centralFinance.dailyReport.table.dateLabel', {
-    start: period.value.dateFrom || '-',
-    end: period.value.dateTo || '-',
-  });
-
-  const wsData = [[title1], [title2], [title3], [], header, ...rows];
-  const merges = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
-    { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } },
-  ];
-
   const todayStr = date.formatDate(new Date(), 'DDMMYYYY');
   const facName = currentUserDepartment.value.replace(/\s+/g, '_') || 'All';
-  const filename = `dailyreport_${facName}_${todayStr}`;
+  const filename = `dailyreport_${facName}_${todayStr}.csv`;
 
   return {
     filename,
-    sheetName: 'Daily Report',
-    rawWsData: wsData,
-    merges,
-    cols: [{ wch: 8 }, { wch: 60 }, { wch: 45 }, { wch: 15 }],
+    headers,
+    data: rows,
   };
 });
 </script>

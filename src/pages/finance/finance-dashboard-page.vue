@@ -1,15 +1,19 @@
 <template>
   <q-page class="finance-page finance-dashboard-page">
     <CentralFinancePageHero
-      eyebrow="Finance Operations"
+      :eyebrow="$t('finance.dashboard.console', 'Finance Operations')"
       eyebrow-icon="account_balance"
       :title="$t('finance.dashboard.title')"
       :description="$t('finance.dashboard.subtitle')"
     >
       <template #aside>
         <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
-          <div class="faculty-scope-card__faculty">{{ currentUserFaculty || 'ไม่ระบุคณะ' }}</div>
+          <div class="faculty-scope-card__label">
+            {{ $t('finance.educationReport.scopeLabel') }}
+          </div>
+          <div class="faculty-scope-card__faculty">
+            {{ currentUserFaculty || $t('finance.educationReport.unknownFaculty') }}
+          </div>
         </div>
       </template>
     </CentralFinancePageHero>
@@ -36,40 +40,40 @@
       <div class="finance-main-grid">
         <CentralFinanceSurfaceCard
           eyebrow="Financial Trends"
-          title="ภาพรวมทางการเงิน"
-          :subtitle="dateRangeLabel || 'ทั้งหมด'"
+          :title="$t('finance.dashboard.financialOverview', 'ภาพรวมทางการเงิน')"
+          :subtitle="dateRangeLabel || $t('finance.filters.allTime')"
           card-class="finance-panel finance-panel--chart"
         >
           <div class="q-mb-xl">
             <div class="text-subtitle1 text-weight-bold q-mb-md text-grey-8">
-              รายรับรวมทั้งหมด (บาท)
+              {{ $t('finance.dashboard.totalRevenueLabel', 'รายรับรวมทั้งหมด (บาท)') }}
             </div>
             <AppAreaChart
               :series="revenueChartSeries"
               :x-labels="trendChartLabels"
               :height="240"
               :format-y-tick="formatRevenueTick"
-              aria-label="รายรับรวมทั้งหมด"
+              :aria-label="$t('finance.dashboard.totalRevenueLabel', 'รายรับรวมทั้งหมด')"
             />
           </div>
 
           <div>
             <div class="text-subtitle1 text-weight-bold q-mb-md text-grey-8">
-              รายการชำระเงินใหม่ (รายการ)
+              {{ $t('finance.dashboard.newTransactionsLabel', 'รายการชำระเงินใหม่ (รายการ)') }}
             </div>
             <AppAreaChart
               :series="transactionsChartSeries"
               :x-labels="trendChartLabels"
               :height="240"
               :format-y-tick="formatTransactionsTick"
-              aria-label="รายการชำระเงินใหม่"
+              :aria-label="$t('finance.dashboard.newTransactionsLabel', 'รายการชำระเงินใหม่')"
             />
           </div>
         </CentralFinanceSurfaceCard>
 
         <CentralFinanceSurfaceCard
           eyebrow="Recent Activity"
-          title="กิจกรรมล่าสุดของคณะ"
+          :title="$t('finance.dashboard.recentFacultyActivity', 'กิจกรรมล่าสุดของคณะ')"
           card-class="finance-panel finance-panel--activity"
         >
           <q-timeline color="primary" layout="dense" class="finance-timeline">
@@ -102,7 +106,7 @@ import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaCha
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { formatCompactCurrency, formatCount } from 'src/utils/course-format';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const authStore = useAuthStore();
 
 const period = ref<PeriodFilterValue>({ preset: 'allTime', dateFrom: '', dateTo: '' });
@@ -176,32 +180,32 @@ const mockDashboardStats = computed(() => [
   {
     label:
       period.value.preset === 'allTime'
-        ? 'รายรับรวมทั้งหมด'
+        ? t('finance.dashboard.totalRevenueLabel', 'รายรับรวมทั้งหมด')
         : period.value.preset === 'today'
           ? t('finance.dashboard.totalRevenueToday')
-          : 'รายรับตามช่วงเวลา',
+          : t('finance.dashboard.revenueByPeriod', 'รายรับตามช่วงเวลา'),
     value: dashboardStats.value.todayRevenue,
     icon: 'payments',
     color: '#0d9488',
     tint: '#ccfbf1',
   },
   {
-    label: 'รายการชำระเงินใหม่',
-    value: `${dashboardStats.value.totalTransactions} รายการ`,
+    label: t('finance.dashboard.newTransactionsLabel', 'รายการชำระเงินใหม่'),
+    value: `${dashboardStats.value.totalTransactions} ${t('finance.receiptSummary.entries', 'รายการ')}`,
     icon: 'credit_card',
     color: '#2563eb',
     tint: '#dbeafe',
   },
   {
-    label: 'รายการที่รอออกใบเสร็จ',
-    value: `${dashboardStats.value.pendingReceipts} รายการ`,
+    label: t('finance.dashboard.pendingReceiptsLabel', 'รายการที่รอออกใบเสร็จ'),
+    value: `${dashboardStats.value.pendingReceipts} ${t('finance.receiptSummary.entries', 'รายการ')}`,
     icon: 'hourglass_empty',
     color: '#d97706',
     tint: '#fef3c7',
   },
   {
-    label: 'ออกใบเสร็จไปแล้ว (สำเนา+ฉบับจริง)',
-    value: `${dashboardStats.value.issuedReceipts} ใบ`,
+    label: t('finance.dashboard.receiptsIssuedDetail', 'ออกใบเสร็จไปแล้ว (สำเนา+ฉบับจริง)'),
+    value: `${dashboardStats.value.issuedReceipts} ${t('finance.dashboard.receiptCountSuffix', 'ใบ')}`,
     icon: 'task_alt',
     color: '#059669',
     tint: '#d1fae5',
@@ -233,19 +237,21 @@ function formatRelativeTime(isoStr: string): string {
   if (Number.isNaN(then)) return isoStr;
   const diffMs = now - then;
   const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 60) return 'เมื่อสักครู่';
+  if (diffSec < 60) return t('finance.dashboard.timeJustNow', 'เมื่อสักครู่');
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} นาทีที่แล้ว`;
+  if (diffMin < 60) return `${diffMin} ${t('finance.dashboard.timeMinutesAgo', 'นาทีที่แล้ว')}`;
   const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr} ชั่วโมงที่แล้ว`;
+  if (diffHr < 24) return `${diffHr} ${t('finance.dashboard.timeHoursAgo', 'ชั่วโมงที่แล้ว')}`;
   const diffDay = Math.floor(diffHr / 24);
-  if (diffDay === 1) return 'เมื่อวาน';
-  if (diffDay < 30) return `${diffDay} วันที่แล้ว`;
+  if (diffDay === 1) return t('finance.dashboard.timeYesterday', 'เมื่อวาน');
+  if (diffDay < 30) return `${diffDay} ${t('finance.dashboard.timeDaysAgo', 'วันที่แล้ว')}`;
   const d = new Date(isoStr);
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear() + 543;
-  return `${dd}/${mm}/${yyyy}`;
+  const locales = locale.value === 'th' ? 'th-TH' : 'en-US';
+  return new Intl.DateTimeFormat(locales, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(d);
 }
 
 const metricCards = computed(() =>
@@ -270,35 +276,20 @@ const trendData = ref<{
   revenue: [],
 });
 
-const THAI_MONTH_ABBR: Record<string, string> = {
-  '01': 'ม.ค.',
-  '02': 'ก.พ.',
-  '03': 'มี.ค.',
-  '04': 'เม.ย.',
-  '05': 'พ.ค.',
-  '06': 'มิ.ย.',
-  '07': 'ก.ค.',
-  '08': 'ส.ค.',
-  '09': 'ก.ย.',
-  '10': 'ต.ค.',
-  '11': 'พ.ย.',
-  '12': 'ธ.ค.',
-};
-
 function formatYmLabel(ym: string): string {
   if (ym.includes(' ')) {
     return ym.split(' ')[1] ?? ym;
   }
   const parts = ym.split('-');
+  const locales = locale.value === 'th' ? 'th-TH' : 'en-US';
+
   if (parts.length === 3) {
-    const d = Number(parts[2]);
-    const mm = parts[1] ?? '01';
-    return `${d} ${THAI_MONTH_ABBR[mm] ?? mm}`;
+    const dObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return new Intl.DateTimeFormat(locales, { day: 'numeric', month: 'short' }).format(dObj);
   }
-  const mm = parts[1] ?? '01';
-  const yyyy = Number(parts[0] ?? 0);
-  const buddhistYear = yyyy + 543;
-  return `${THAI_MONTH_ABBR[mm] ?? mm} ${String(buddhistYear).slice(-2)}`;
+
+  const dObj = new Date(Number(parts[0]), Number(parts[1]) - 1);
+  return new Intl.DateTimeFormat(locales, { month: 'short', year: '2-digit' }).format(dObj);
 }
 
 const trendChartLabels = computed(() => trendData.value.months.map(formatYmLabel));
@@ -308,7 +299,7 @@ const revenueChartSeries = computed<AreaChartSeries[]>(() => {
   return [
     {
       id: 'revenue',
-      label: 'รายรับรวมทั้งหมด',
+      label: t('finance.dashboard.totalRevenueLabel', 'รายรับรวมทั้งหมด'),
       color: '#0F766E',
       values: d.revenue,
       totalLabel: formatCompactCurrency(d.revenue.reduce((sum, v) => sum + v, 0)),
@@ -322,11 +313,12 @@ const transactionsChartSeries = computed<AreaChartSeries[]>(() => {
   return [
     {
       id: 'transactions',
-      label: 'รายการชำระเงินใหม่',
+      label: t('finance.dashboard.newTransactionsLabel', 'รายการชำระเงินใหม่'),
       color: '#F5A623',
       values: d.paidEnrollments,
-      totalLabel: `${formatCount(d.paidEnrollments.reduce((sum, v) => sum + v, 0))} รายการ`,
-      formatValue: (value) => `${formatCount(Math.round(value))} รายการ`,
+      totalLabel: `${formatCount(d.paidEnrollments.reduce((sum, v) => sum + v, 0))} ${t('finance.receiptSummary.entries', 'รายการ')}`,
+      formatValue: (value) =>
+        `${formatCount(Math.round(value))} ${t('finance.receiptSummary.entries', 'รายการ')}`,
     },
   ];
 });
