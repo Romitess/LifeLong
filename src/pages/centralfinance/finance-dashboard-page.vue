@@ -46,37 +46,23 @@
           />
         </CentralFinanceSurfaceCard>
 
-        <!-- Faculty Revenue Breakdown -->
+        <!-- Faculty Revenue Pie Chart -->
         <CentralFinanceSurfaceCard
           eyebrow="By Faculty"
-          title="ยอดรายรับตามคณะ/ส่วนงาน"
+          title="สัดส่วนรายรับตามคณะ/ส่วนงาน"
           card-class="finance-panel"
         >
-          <div v-if="topFaculties.length === 0" class="breakdown-empty">
-            <q-icon name="bar_chart" size="42px" color="grey-4" />
+          <div v-if="facultyDonutData.length === 0" class="breakdown-empty">
+            <q-icon name="pie_chart" size="42px" color="grey-4" />
             <p>ไม่มีข้อมูลรายรับ</p>
           </div>
-          <div v-else class="faculty-breakdown-list">
-            <div
-              v-for="(item, i) in topFaculties"
-              :key="item.faculty"
-              class="faculty-breakdown-item"
-            >
-              <div class="faculty-breakdown-item__rank">#{{ i + 1 }}</div>
-              <div class="faculty-breakdown-item__info">
-                <div class="faculty-breakdown-item__name">{{ item.faculty }}</div>
-                <div class="faculty-breakdown-item__track">
-                  <div
-                    class="faculty-breakdown-item__fill"
-                    :style="{ width: `${item.percent}%` }"
-                  />
-                </div>
-              </div>
-              <div class="faculty-breakdown-item__amount">
-                {{ formatCurrency(item.totalAmount) }}
-              </div>
-            </div>
-          </div>
+          <AppDonutChart
+            v-else
+            :data="facultyDonutData"
+            center-label="รายรับรวม"
+            :center-value="formatCompactCurrency(dashboardStats.totalRevenue)"
+            :format-value="(v) => formatCurrency(Math.round(v))"
+          />
         </CentralFinanceSurfaceCard>
       </div>
     </section>
@@ -89,6 +75,7 @@ import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMe
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
+import AppDonutChart, { type DonutChartSegment } from 'components/common/AppDonutChart.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import { api } from 'src/boot/axios';
@@ -112,6 +99,7 @@ const dateRangeLabel = computed(() => {
 const dashboardStats = ref({
   totalRevenue: 0,
   totalReceipts: 0,
+  issuedReceipts: 0,
   onlinePayments: 0,
   voidReceipts: 0,
 });
@@ -150,6 +138,7 @@ async function fetchDashboardData() {
   if (statsResult.status === 'fulfilled') {
     const stats = statsResult.value.data;
     dashboardStats.value.totalRevenue = stats.totalRevenue ?? 0;
+    dashboardStats.value.issuedReceipts = stats.issuedReceipts ?? 0;
     dashboardStats.value.onlinePayments = stats.onlinePayments ?? 0;
     dashboardStats.value.voidReceipts = stats.voidReceipts ?? 0;
   } else {
@@ -219,8 +208,8 @@ const metricCards = computed<MetricCard[]>(() => [
   {
     label: 'ค่าเฉลี่ยต่อรายการ',
     value: formatCurrency(
-      dashboardStats.value.onlinePayments > 0
-        ? Math.round(dashboardStats.value.totalRevenue / dashboardStats.value.onlinePayments)
+      dashboardStats.value.issuedReceipts > 0
+        ? Math.round(dashboardStats.value.totalRevenue / dashboardStats.value.issuedReceipts)
         : 0,
     ),
     icon: 'analytics',
@@ -279,21 +268,17 @@ function formatCurrency(value: number | string | undefined | null): string {
   return `฿${value.toLocaleString('th-TH')}`;
 }
 
-// ── Faculty Revenue Breakdown ─────────────────────────────────
-interface FacultyBreakdownItem {
-  faculty: string;
-  totalAmount: number;
-  percent: number;
-}
+// ── Faculty Revenue Pie Chart ─────────────────────────────────
+const FACULTY_COLORS = ['#1d4ed8', '#047857', '#7c3aed', '#0891b2', '#b45309', '#dc2626'];
 
-const topFaculties = computed<FacultyBreakdownItem[]>(() => {
-  const max = facultyData.value[0]?.totalAmount ?? 1;
-  return facultyData.value.map((item) => ({
-    faculty: item.faculty,
-    totalAmount: item.totalAmount,
-    percent: Math.max(4, Math.round((item.totalAmount / max) * 100)),
-  }));
-});
+const facultyDonutData = computed<DonutChartSegment[]>(() =>
+  facultyData.value.map((item, i) => ({
+    id: item.faculty,
+    label: item.faculty,
+    value: item.totalAmount,
+    color: FACULTY_COLORS[i % FACULTY_COLORS.length] ?? '#1d4ed8',
+  })),
+);
 </script>
 
 <style lang="scss" scoped>
@@ -344,62 +329,6 @@ const topFaculties = computed<FacultyBreakdownItem[]>(() => {
     font-size: 0.9rem;
     font-weight: 700;
   }
-}
-
-.faculty-breakdown-list {
-  display: grid;
-  gap: 16px;
-}
-
-.faculty-breakdown-item {
-  display: grid;
-  grid-template-columns: 28px 1fr auto;
-  align-items: center;
-  gap: 12px;
-}
-
-.faculty-breakdown-item__rank {
-  font-size: 0.72rem;
-  font-weight: 900;
-  color: var(--finance-muted, #64748b);
-  text-align: center;
-}
-
-.faculty-breakdown-item__info {
-  display: grid;
-  gap: 7px;
-  min-width: 0;
-}
-
-.faculty-breakdown-item__name {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--finance-navy, #10223f);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.faculty-breakdown-item__track {
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(16, 35, 63, 0.07);
-  overflow: hidden;
-}
-
-.faculty-breakdown-item__fill {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #1d4ed8, #3b82f6);
-  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  min-width: 4px;
-}
-
-.faculty-breakdown-item__amount {
-  font-size: 0.85rem;
-  font-weight: 800;
-  color: var(--finance-navy, #10223f);
-  white-space: nowrap;
 }
 
 // ── Sticky Filter Bar ────────────────────────────────────────
