@@ -87,6 +87,7 @@
                   outlined
                   dense
                   class="bg-white"
+                  :loading="isFacultyLoading"
                 />
               </div>
             </div>
@@ -187,6 +188,7 @@
             row-key="id"
             flat
             dense
+            :loading="isLoading"
             :filter="search"
             class="report-table"
             v-model:pagination="pagination"
@@ -196,6 +198,15 @@
             <template v-slot:body-cell-amount="props">
               <q-td :props="props" class="text-right">
                 {{ formatCurrency(props.value) }}
+              </q-td>
+            </template>
+
+            <template v-slot:body-cell-receiptStatus="props">
+              <q-td :props="props">
+                <q-badge
+                  :color="props.value === 'ยกเลิก' ? 'negative' : 'positive'"
+                  :label="props.value"
+                />
               </q-td>
             </template>
 
@@ -279,14 +290,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import AppActionButton from 'components/common/AppActionButton.vue';
-import { useCentralFinanceStore } from 'src/stores/central-finance-store';
-import type { Transaction } from 'src/stores/central-finance-store';
+import { api } from 'src/boot/axios';
 import type { QTableColumn } from 'quasar';
 import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
@@ -295,10 +305,10 @@ import * as XLSX from 'xlsx';
 
 const $q = useQuasar();
 const { t } = useI18n();
-const financeStore = useCentralFinanceStore();
 const search = ref('');
-
 const hasSearched = ref(false);
+const isLoading = ref(false);
+const isFacultyLoading = ref(false);
 
 const pagination = ref({
   sortBy: 'no',
@@ -307,96 +317,61 @@ const pagination = ref({
   rowsPerPage: 25,
 });
 
-// ตัวกรองข้อมูล
+interface DailyReportItem {
+  id: number;
+  no: number;
+  faculty: string;
+  courseName: string;
+  fundCode: string | null;
+  amount: number;
+  receiptDate: string | null;
+  receiptStatus: string;
+}
+
+const tableRows = ref<DailyReportItem[]>([]);
+
 const filters = ref({
-  receiptDateStart: '27/05/2569',
-  receiptDateEnd: '30/05/2569',
-  department: 'สำนักคอมพิวเตอร์',
+  receiptDateStart: '',
+  receiptDateEnd: '',
+  department: '',
   courseName: '',
 });
 
-// เก็บสถานะฟิลเตอร์หลังจากกดค้นหาเพื่อให้แสดงใน Title ของตารางได้อย่างถูกต้อง
 const activeFilters = ref({
-  receiptDateStart: '27/05/2569',
-  receiptDateEnd: '30/05/2569',
-  department: filters.value.department,
+  receiptDateStart: '',
+  receiptDateEnd: '',
+  department: '',
   courseName: '',
 });
 
-// รายการส่วนงานทั้งหมดแบบแปลภาษาได้
-const departmentOptions = computed(() => [
-  { label: t('centralFinance.dailyReport.departments.computerCenter'), value: 'สำนักคอมพิวเตอร์' },
-  { label: t('centralFinance.dailyReport.departments.informatics'), value: 'คณะวิทยาการสารสนเทศ' },
-  { label: t('centralFinance.dailyReport.departments.science'), value: 'คณะวิทยาศาสตร์' },
-  { label: t('centralFinance.dailyReport.departments.nursing'), value: 'คณะพยาบาลศาสตร์' },
-  { label: t('centralFinance.dailyReport.departments.business'), value: 'คณะบริหารธุรกิจ' },
-  { label: t('centralFinance.dailyReport.departments.engineering'), value: 'คณะวิศวกรรมศาสตร์' },
+// ── Faculty Options ──────────────────────────────────────────
+const departmentOptions = ref<{ label: string; value: string }[]>([
+  { label: 'ทั้งหมด', value: '' },
 ]);
 
-// ดึงฉลากส่วนงานที่เลือกตามภาษาปัจจุบัน
+async function fetchFacultyOptions(): Promise<void> {
+  isFacultyLoading.value = true;
+  try {
+    const { data } = await api.get<{ id: number; name: string }[]>(
+      '/api/centralfinance/daily-report/faculty-options',
+    );
+    departmentOptions.value = [
+      { label: 'ทั้งหมด', value: '' },
+      ...data.map((f) => ({ label: f.name, value: f.name })),
+    ];
+  } catch {
+    // ใช้ค่า default "ทั้งหมด" เมื่อโหลดไม่ได้
+  } finally {
+    isFacultyLoading.value = false;
+  }
+}
+
 function getDepartmentLabel(val: string): string {
-  if (!val) return '-';
-  const option = departmentOptions.value.find((opt) => opt.value === val);
-  return option ? option.label : val;
+  if (!val) return 'ทั้งหมด';
+  return val;
 }
 
-function getCourseNameForTx(tx: Transaction): string {
-  if (tx.faculty === 'สำนักคอมพิวเตอร์')
-    return 'C67052002: การพัฒนาเว็บแอปพลิเคชัน สำนักคอมพิวเตอร์';
-  else if (tx.faculty === 'คณะวิทยาการสารสนเทศ')
-    return 'C66061004: Digital Product Design คณะวิทยาการสารสนเทศ';
-  else if (tx.faculty === 'คณะวิทยาศาสตร์')
-    return 'C65091001: วิทยาศาสตร์ข้อมูลเบื้องต้น คณะวิทยาศาสตร์';
-  else if (tx.faculty === 'คณะพยาบาลศาสตร์')
-    return 'C65082001: การดูแลผู้สูงอายุเบื้องต้น คณะพยาบาลศาสตร์';
-  else if (tx.faculty === 'คณะบริหารธุรกิจ')
-    return 'C66021005: การตลาดดิจิทัลยุคใหม่ คณะบริหารธุรกิจ';
-  else if (tx.faculty === 'คณะวิศวกรรมศาสตร์')
-    return 'C66031002: ปัญญาประดิษฐ์ในอุตสาหกรรม คณะวิศวกรรมศาสตร์';
-  return 'C66099999: หลักสูตรระยะสั้นเพื่อการเรียนรู้ตลอดชีวิต';
-}
-
-function getFundName(fundCode: string): string {
-  const source = financeStore.fundSources.find((s) => s.fundCode === fundCode);
-  if (source) return `${fundCode}: ${source.nameTh}`;
-  if (fundCode.startsWith('BG')) return `${fundCode}: เงินงบประมาณแดิน`;
-  else if (fundCode.startsWith('RV')) return `${fundCode}: เงินรายได้มหาวิทยาลัย`;
-  else if (fundCode.startsWith('DN')) return `${fundCode}: เงินบริจาคเพื่อการศึกษา`;
-  else if (fundCode.startsWith('OT')) return `${fundCode}: เงินกองทุนพัฒนาวิชาการ`;
-  return fundCode;
-}
-
-const filteredTransactions = computed(() => {
-  return financeStore.transactions.filter((tx) => {
-    // 1. กรองตามส่วนงาน
-    if (activeFilters.value.department) {
-      if (tx.faculty !== activeFilters.value.department) {
-        return false;
-      }
-    }
-
-    // 2. กรองตามชื่อหลักสูตร/อบรม
-    if (activeFilters.value.courseName) {
-      const course = getCourseNameForTx(tx);
-      if (!course.toLowerCase().includes(activeFilters.value.courseName.toLowerCase())) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-});
-
-const tableRows = computed(() => {
-  return filteredTransactions.value.map((tx, index) => ({
-    id: tx.id,
-    no: index + 1,
-    courseName: getCourseNameForTx(tx),
-    fundCode: getFundName(tx.fundCode),
-    amount: tx.amount,
-  }));
-});
-
+// ── Columns ──────────────────────────────────────────────────
 const columns = computed<QTableColumn[]>(() => [
   {
     name: 'no',
@@ -404,6 +379,14 @@ const columns = computed<QTableColumn[]>(() => [
     field: 'no',
     align: 'center',
     sortable: true,
+  },
+  {
+    name: 'faculty',
+    label: 'คณะ/ส่วนงาน',
+    field: 'faculty',
+    align: 'left',
+    sortable: true,
+    style: 'white-space: pre-wrap; word-break: break-word;',
   },
   {
     name: 'courseName',
@@ -430,6 +413,34 @@ const columns = computed<QTableColumn[]>(() => [
   },
 ]);
 
+// ── Fetch Data ───────────────────────────────────────────────
+async function fetchData(): Promise<void> {
+  isLoading.value = true;
+  try {
+    const params: Record<string, string> = {
+      receiptDateStart: activeFilters.value.receiptDateStart,
+      receiptDateEnd: activeFilters.value.receiptDateEnd,
+    };
+    if (activeFilters.value.department) params.facName = activeFilters.value.department;
+    if (activeFilters.value.courseName) params.courseName = activeFilters.value.courseName;
+
+    const { data } = await api.get<{ success: boolean; data: DailyReportItem[] }>(
+      '/api/centralfinance/daily-report',
+      { params },
+    );
+    tableRows.value = data.success ? data.data : [];
+  } catch {
+    tableRows.value = [];
+    $q.notify({
+      type: 'negative',
+      message: 'ไม่สามารถดึงข้อมูลรายงานประจำวันได้',
+      position: 'top',
+    });
+  } finally {
+    isLoading.value = false;
+  }
+}
+
 function onSearch(): void {
   if (!filters.value.receiptDateStart || !filters.value.receiptDateEnd) {
     $q.notify({
@@ -440,33 +451,28 @@ function onSearch(): void {
     });
     return;
   }
-
-  activeFilters.value = {
-    receiptDateStart: filters.value.receiptDateStart,
-    receiptDateEnd: filters.value.receiptDateEnd,
-    department: filters.value.department,
-    courseName: filters.value.courseName,
-  };
-
+  activeFilters.value = { ...filters.value };
   hasSearched.value = true;
+  void fetchData();
 }
 
 function clearFilters(): void {
-  filters.value.receiptDateStart = '';
-  filters.value.receiptDateEnd = '';
-  filters.value.department = 'สำนักคอมพิวเตอร์';
-  filters.value.courseName = '';
-
+  filters.value = { receiptDateStart: '', receiptDateEnd: '', department: '', courseName: '' };
   activeFilters.value = {
     receiptDateStart: '',
     receiptDateEnd: '',
-    department: filters.value.department,
+    department: '',
     courseName: '',
   };
-
+  tableRows.value = [];
   hasSearched.value = false;
 }
 
+onMounted(() => {
+  void fetchFacultyOptions();
+});
+
+// ── Helpers ──────────────────────────────────────────────────
 function formatCurrency(val: number): string {
   if (val === undefined || val === null) return '-';
   return new Intl.NumberFormat('th-TH', {
@@ -475,44 +481,56 @@ function formatCurrency(val: number): string {
   }).format(val);
 }
 
-async function exportToPdf(): Promise<void> {
-  const doc = new jsPDF({
-    orientation: 'landscape',
-    unit: 'pt',
-    format: 'a4',
-  });
-
+// ── Export ───────────────────────────────────────────────────
+async function loadSarabunFont(): Promise<string> {
   const response = await fetch(SarabunFontUrl);
   const blob = await response.blob();
-  const base64Font = await new Promise<string>((resolve) => {
+  return new Promise<string>((resolve) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       const dataUrl = reader.result as string;
-      resolve(dataUrl.split(',')[1] || '');
+      resolve(dataUrl.split(',')[1] ?? '');
     };
     reader.readAsDataURL(blob);
   });
+}
 
+async function exportToPdf(): Promise<void> {
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+  const base64Font = await loadSarabunFont();
   doc.addFileToVFS('THSarabunPSK.ttf', base64Font);
   doc.addFont('THSarabunPSK.ttf', 'Sarabun', 'normal');
   doc.setFont('Sarabun');
-
   doc.setFontSize(13);
-  const title1 = t('centralFinance.dailyReport.table.reportTitle');
-  const title2 = `${t('centralFinance.dailyReport.table.departmentLabel')}: ${getDepartmentLabel(activeFilters.value.department)}`;
-  const title3 = t('centralFinance.dailyReport.table.dateLabel', {
-    start: activeFilters.value.receiptDateStart,
-    end: activeFilters.value.receiptDateEnd,
-  });
 
-  doc.text(title1, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
-  doc.text(title2, doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
-  doc.text(title3, doc.internal.pageSize.getWidth() / 2, 65, { align: 'center' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  doc.text(t('centralFinance.dailyReport.table.reportTitle'), pageWidth / 2, 35, {
+    align: 'center',
+  });
+  doc.text(
+    `${t('centralFinance.dailyReport.table.departmentLabel')}: ${getDepartmentLabel(activeFilters.value.department)}`,
+    pageWidth / 2,
+    50,
+    { align: 'center' },
+  );
+  doc.text(
+    t('centralFinance.dailyReport.table.dateLabel', {
+      start: activeFilters.value.receiptDateStart,
+      end: activeFilters.value.receiptDateEnd,
+    }),
+    pageWidth / 2,
+    65,
+    { align: 'center' },
+  );
 
   const rows = tableRows.value.map((row) => [
     row.no,
+    row.faculty,
     row.courseName,
-    row.fundCode,
+    row.fundCode ?? '-',
+    row.receiptDate ?? '-',
+    row.receiptStatus,
     formatCurrency(row.amount),
   ]);
 
@@ -522,17 +540,20 @@ async function exportToPdf(): Promise<void> {
     showHead: 'everyPage',
     head: [
       [
-        t('centralFinance.dailyReport.table.no'),
-        t('centralFinance.dailyReport.table.courseName'),
-        t('centralFinance.dailyReport.table.fundCode'),
-        t('centralFinance.dailyReport.table.amount'),
+        'ลำดับ',
+        'คณะ/ส่วนงาน',
+        'ชื่อโครงการ/หลักสูตร',
+        'แหล่งเงิน',
+        'วันที่รับเงิน',
+        'สถานะ',
+        'จำนวนเงิน',
       ],
     ],
     body: rows,
     styles: {
       font: 'Sarabun',
-      fontSize: 9,
-      cellPadding: 5,
+      fontSize: 8,
+      cellPadding: 4,
       valign: 'middle',
       lineColor: [180, 180, 180],
       lineWidth: 0.5,
@@ -543,36 +564,45 @@ async function exportToPdf(): Promise<void> {
       fillColor: [226, 232, 240],
       textColor: [51, 65, 85],
       fontStyle: 'normal',
-      fontSize: 9,
+      fontSize: 8,
       halign: 'center',
       valign: 'middle',
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 40 },
-      1: { cellWidth: 350 },
-      2: { cellWidth: 250 },
-      3: { halign: 'right', cellWidth: 100 },
+      0: { halign: 'center', cellWidth: 30 },
+      1: { cellWidth: 100 },
+      2: { cellWidth: 240 },
+      3: { cellWidth: 140 },
+      4: { halign: 'center', cellWidth: 70 },
+      5: { halign: 'center', cellWidth: 55 },
+      6: { halign: 'right', cellWidth: 70 },
     },
     alternateRowStyles: { fillColor: [255, 255, 255] },
-    margin: { top: 20, left: 20, right: 20 },
+    margin: { top: 20, left: 15, right: 15 },
     tableWidth: 'auto',
   });
 
-  doc.save('daily-report.pdf');
+  doc.save('central-finance-daily-report.pdf');
 }
 
 function exportToExcel(): void {
   const header = [
-    t('centralFinance.dailyReport.table.no'),
-    t('centralFinance.dailyReport.table.courseName'),
-    t('centralFinance.dailyReport.table.fundCode'),
-    t('centralFinance.dailyReport.table.amount'),
+    'ลำดับ',
+    'คณะ/ส่วนงาน',
+    'ชื่อโครงการ/หลักสูตร',
+    'แหล่งเงิน',
+    'วันที่รับเงิน',
+    'สถานะ',
+    'จำนวนเงิน',
   ];
 
   const rows = tableRows.value.map((row) => [
     row.no,
+    row.faculty,
     row.courseName.replace(/\n/g, ' '),
-    row.fundCode.replace(/\n/g, ' '),
+    (row.fundCode ?? '-').replace(/\n/g, ' '),
+    row.receiptDate ?? '-',
+    row.receiptStatus,
     row.amount,
   ]);
 
@@ -587,16 +617,23 @@ function exportToExcel(): void {
   const ws = XLSX.utils.aoa_to_sheet(wsData);
 
   ws['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
-    { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } },
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } },
+    { s: { r: 2, c: 0 }, e: { r: 2, c: 6 } },
+  ];
+  ws['!cols'] = [
+    { wch: 7 },
+    { wch: 22 },
+    { wch: 50 },
+    { wch: 35 },
+    { wch: 14 },
+    { wch: 10 },
+    { wch: 14 },
   ];
 
-  ws['!cols'] = [{ wch: 8 }, { wch: 60 }, { wch: 45 }, { wch: 15 }];
-
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Report');
-  XLSX.writeFile(wb, 'daily-report.xlsx');
+  XLSX.utils.book_append_sheet(wb, ws, 'รายงาน');
+  XLSX.writeFile(wb, 'central-finance-daily-report.xlsx');
 }
 </script>
 
@@ -649,7 +686,7 @@ function exportToExcel(): void {
   -webkit-overflow-scrolling: touch;
 
   .report-table {
-    min-width: 600px;
+    min-width: 800px;
   }
 }
 
@@ -677,8 +714,8 @@ function exportToExcel(): void {
 
   :deep(tbody td) {
     vertical-align: middle;
-    padding-top: 12px;
-    padding-bottom: 12px;
+    padding-top: 10px;
+    padding-bottom: 10px;
     white-space: pre-wrap;
   }
 }
