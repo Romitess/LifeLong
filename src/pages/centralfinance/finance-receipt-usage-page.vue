@@ -202,20 +202,17 @@
             <div class="row items-center">
               <div class="col-sm-4 gt-xs" />
               <div class="col-12 col-sm-8 filter-section__actions">
-                <q-btn
-                  color="warning"
-                  text-color="black"
+                <AppActionButton
+                  variant="primary"
+                  icon="search"
                   :label="$t('centralFinance.receiptUsage.filters.searchBtn')"
-                  unelevated
-                  class="q-px-xl"
                   :loading="isLoading"
                   @click="onSearch"
                 />
-                <q-btn
-                  outline
-                  color="grey-7"
+                <AppActionButton
+                  variant="secondary"
+                  icon="restart_alt"
                   :label="$t('centralFinance.receiptUsage.filters.clearBtn')"
-                  class="q-px-lg bg-white"
                   :disable="isLoading"
                   @click="clearFilters"
                 />
@@ -404,6 +401,7 @@ import { useQuasar } from 'quasar';
 import type { QTableProps } from 'quasar';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 import { useReceiptUsageReport } from 'src/composables/use-receipt-usage-report';
 import jsPDF from 'jspdf';
 import { autoTable, type CellHookData } from 'jspdf-autotable';

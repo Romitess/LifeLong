@@ -47,19 +47,16 @@
             <div class="row items-center">
               <div class="col-sm-4 gt-xs" />
               <div class="col-12 col-sm-8 filter-section__actions">
-                <q-btn
-                  color="warning"
-                  text-color="black"
+                <AppActionButton
+                  variant="primary"
+                  icon="search"
                   :label="$t('centralFinance.facultyRevenue.filters.searchBtn')"
-                  unelevated
-                  class="q-px-xl"
                   @click="onSearch"
                 />
-                <q-btn
-                  outline
-                  color="grey-7"
+                <AppActionButton
+                  variant="secondary"
+                  icon="restart_alt"
                   :label="$t('centralFinance.facultyRevenue.filters.clearBtn')"
-                  class="q-px-lg bg-white"
                   @click="clearFilters"
                 />
               </div>
@@ -89,6 +86,7 @@ import { useFacultyList } from 'src/composables/use-faculty-list';
 import type { ApiFaculty } from 'src/types/faculty';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 import CentralFinanceFacultyReportManager from 'components/centralfinance/CentralFinanceFacultyReportManager.vue';
 
 const { t } = useI18n();

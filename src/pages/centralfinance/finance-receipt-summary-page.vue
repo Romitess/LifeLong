@@ -159,20 +159,17 @@
             <div class="row items-center">
               <div class="col-sm-4 gt-xs" />
               <div class="col-12 col-sm-8 filter-section__actions">
-                <q-btn
-                  color="warning"
-                  text-color="black"
+                <AppActionButton
+                  variant="primary"
+                  icon="search"
                   :label="$t('finance.receiptSummary.filters.searchBtn')"
-                  unelevated
-                  class="q-px-xl"
                   :loading="isLoading"
                   @click="fetchData"
                 />
-                <q-btn
-                  outline
-                  color="grey-7"
+                <AppActionButton
+                  variant="secondary"
+                  icon="restart_alt"
                   :label="$t('finance.receiptSummary.filters.clearBtn')"
-                  class="q-px-lg bg-white"
                   @click="clearFilters"
                 />
               </div>
@@ -383,6 +380,7 @@ import type { ApiFaculty } from 'src/types/faculty';
 import type { ReceiptSummaryItem } from 'src/types/receipt-summary-report';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
 
 const { t } = useI18n();

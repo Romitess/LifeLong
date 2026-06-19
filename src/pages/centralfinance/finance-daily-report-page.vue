@@ -110,19 +110,16 @@
             <div class="row items-center">
               <div class="col-sm-4 gt-xs"></div>
               <div class="col-12 col-sm-8 filter-section__actions">
-                <q-btn
-                  color="warning"
-                  text-color="black"
+                <AppActionButton
+                  variant="primary"
+                  icon="search"
                   :label="$t('centralFinance.dailyReport.filters.searchBtn')"
-                  unelevated
-                  class="q-px-xl"
                   @click="onSearch"
                 />
-                <q-btn
-                  outline
-                  color="grey-7"
+                <AppActionButton
+                  variant="secondary"
+                  icon="restart_alt"
                   :label="$t('centralFinance.dailyReport.filters.clearBtn')"
-                  class="q-px-lg bg-white"
                   @click="clearFilters"
                 />
               </div>
@@ -287,6 +284,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import type { Transaction } from 'src/stores/central-finance-store';
 import type { QTableColumn } from 'quasar';

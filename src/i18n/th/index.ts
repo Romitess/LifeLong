@@ -598,7 +598,7 @@ export default {
         start: 'เริ่มต้น',
         end: 'สิ้นสุด',
         searchBtn: 'ค้นหา',
-        clearBtn: 'ล้าง',
+        clearBtn: 'ล้างค่า',
       },
       columns: {
         no: 'ลำดับ',
