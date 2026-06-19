@@ -2,77 +2,73 @@
   <section class="profile-hero">
     <GoldenUnderline />
     <div class="section-container profile-hero__content">
-      <div class="row items-center justify-between q-col-gutter-lg">
+      <div class="profile-hero__layout">
         <!-- Avatar and Name Info -->
-        <div class="col-12 col-lg-auto">
-          <div class="row items-center no-wrap q-gutter-lg">
-            <div class="profile-hero__avatar-wrap">
-              <q-avatar
-                size="100px"
-                class="profile-hero__avatar cursor-pointer"
+        <div class="profile-hero__identity-row">
+          <div class="profile-hero__avatar-wrap">
+            <q-avatar
+              size="100px"
+              class="profile-hero__avatar cursor-pointer"
+              @click.stop.prevent="showFullAvatar = true"
+              @mousedown.stop.prevent
+            >
+              <img
+                v-if="currentAvatarUrl"
+                :src="currentAvatarUrl"
+                class="profile-hero__avatar-image"
+                alt="Profile avatar"
+                loading="eager"
+                decoding="sync"
                 @click.stop.prevent="showFullAvatar = true"
                 @mousedown.stop.prevent
-              >
-                <img
-                  v-if="currentAvatarUrl"
-                  :src="currentAvatarUrl"
-                  class="profile-hero__avatar-image"
-                  alt="Profile avatar"
-                  loading="eager"
-                  decoding="sync"
-                  @click.stop.prevent="showFullAvatar = true"
-                  @mousedown.stop.prevent
-                />
-                <q-icon v-else name="person" size="56px" color="white" />
-              </q-avatar>
-              <div
-                class="profile-hero__camera cursor-pointer"
-                @click.stop.prevent="triggerAvatarUpload"
-                @mousedown.stop.prevent
-              >
-                <q-icon name="photo_camera" size="16px" color="white" />
-              </div>
-              <input
-                ref="avatarInput"
-                type="file"
-                accept="image/*"
-                style="display: none"
-                @change="onAvatarSelected"
               />
+              <q-icon v-else name="person" size="56px" color="white" />
+            </q-avatar>
+            <div
+              class="profile-hero__camera cursor-pointer"
+              @click.stop.prevent="triggerAvatarUpload"
+              @mousedown.stop.prevent
+            >
+              <q-icon name="photo_camera" size="16px" color="white" />
             </div>
-            <div class="column">
-              <div class="text-overline text-white" style="opacity: 0.7; letter-spacing: 0.12em">
-                {{ heroRoleLabel }}
-              </div>
-              <div class="text-h4 text-weight-bolder text-white q-mt-xs">
-                {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
-              </div>
-              <div class="row items-center q-gutter-sm q-mt-xs">
-                <q-badge rounded color="primary" label="Active" class="text-weight-bold" />
-                <span class="text-body2 text-white" style="opacity: 0.75">
-                  {{ idLabel }} : {{ authStore.user?.studentId }}
-                </span>
-              </div>
+            <input
+              ref="avatarInput"
+              type="file"
+              accept="image/*"
+              style="display: none"
+              @change="onAvatarSelected"
+            />
+          </div>
+          <div class="profile-hero__identity-copy">
+            <div class="text-overline text-white" style="opacity: 0.7; letter-spacing: 0.12em">
+              {{ heroRoleLabel }}
+            </div>
+            <div class="text-h4 text-weight-bolder text-white q-mt-xs">
+              {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
+            </div>
+            <div class="row items-center q-gutter-sm q-mt-xs">
+              <q-badge rounded color="primary" label="Active" class="text-weight-bold" />
+              <span class="text-body2 text-white" style="opacity: 0.75">
+                {{ idLabel }} : {{ authStore.user?.studentId }}
+              </span>
             </div>
           </div>
         </div>
 
         <!-- Stats Cards -->
-        <div v-if="profileStats.length > 0" class="col-12 col-lg-auto">
-          <div class="row q-gutter-md justify-center">
-            <div
-              v-for="stat in profileStats"
-              :key="stat.label"
-              class="profile-stat-card"
-              :style="stat.tone"
-            >
-              <div class="profile-stat-card__icon-wrap">
-                <q-icon :name="stat.icon" size="24px" color="white" />
-              </div>
-              <div class="profile-stat-card__info">
-                <div class="profile-stat-card__value">{{ stat.value }}</div>
-                <div class="profile-stat-card__label">{{ stat.label }}</div>
-              </div>
+        <div v-if="profileStats.length > 0" class="profile-hero__stats">
+          <div
+            v-for="stat in profileStats"
+            :key="stat.label"
+            class="profile-stat-card"
+            :style="stat.tone"
+          >
+            <div class="profile-stat-card__icon-wrap">
+              <q-icon :name="stat.icon" size="24px" color="white" />
+            </div>
+            <div class="profile-stat-card__info">
+              <div class="profile-stat-card__value">{{ stat.value }}</div>
+              <div class="profile-stat-card__label">{{ stat.label }}</div>
             </div>
           </div>
         </div>
@@ -177,11 +173,58 @@ function onCropDialogSave(): void {
     min-height: 168px;
   }
 
+  &__layout {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    gap: 28px;
+    align-items: center;
+  }
+
+  &__identity-row {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 28px;
+  }
+
+  &__identity-copy {
+    min-width: 0;
+  }
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
   @media (max-width: 900px) {
     padding: 44px 0 28px;
 
     .profile-hero__content {
       min-height: auto;
+    }
+
+    .profile-hero__layout {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .profile-hero__identity-row {
+      align-items: flex-start;
+      gap: 18px;
+    }
+
+    .profile-hero__stats {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .profile-hero__identity-row {
+      flex-wrap: wrap;
     }
   }
 
