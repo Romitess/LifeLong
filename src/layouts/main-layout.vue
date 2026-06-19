@@ -313,25 +313,6 @@
       @mouseleave="onDrawerMouseLeave"
     >
       <q-list padding class="sidebar-list">
-        <!-- Full logo: hidden in admin mini mode -->
-        <q-item-label
-          header
-          class="drawer-logo-container"
-          v-show="!isLifelong2Role || !sidebarMini"
-        >
-          <img src="~assets/brand/buu-lll-logo.png" class="drawer-logo__image" alt="BUU LLL" />
-        </q-item-label>
-        <!-- Mini logo: shown only in admin mini mode -->
-        <div v-if="isLifelong2Role && sidebarMini" class="drawer-mini-logo">
-          <q-icon name="school" size="28px" />
-        </div>
-        <q-separator class="q-mb-md" />
-
-        <div class="drawer-language-wrapper" v-show="!isLifelong2Role || !sidebarMini">
-          <LanguageToggle wide />
-        </div>
-        <q-separator class="q-my-md" v-show="!isLifelong2Role || !sidebarMini" />
-
         <!-- Navigation Items -->
         <template v-for="nav in navItems" :key="nav.name">
           <!-- Special case for Category with Menu (Expansion) -->
@@ -460,18 +441,7 @@
             </q-item-section>
           </q-item>
         </template>
-        <template v-else>
-          <q-item clickable v-ripple class="drawer-item drawer-item--danger" @click="onLogout">
-            <q-item-section avatar class="drawer-item-icon-section text-negative">
-              <q-icon name="logout" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label class="drawer-item-label text-negative">{{
-                $t('logout')
-              }}</q-item-label>
-            </q-item-section>
-          </q-item>
-        </template>
+        <template v-else> </template>
       </q-list>
     </q-drawer>
 
