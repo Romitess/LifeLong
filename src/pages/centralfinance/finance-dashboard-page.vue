@@ -57,7 +57,7 @@
             <q-icon name="pie_chart" size="42px" color="grey-4" />
             <p>ไม่มีข้อมูลรายรับ</p>
           </div>
-          <AppDonutChart
+          <CentralFinanceDonutChart
             v-else
             :data="facultyDonutData"
             center-label="รายรับรวม"
@@ -76,7 +76,9 @@ import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
-import AppDonutChart, { type DonutChartSegment } from 'components/common/AppDonutChart.vue';
+import CentralFinanceDonutChart, {
+  type DonutChartSegment,
+} from 'components/centralfinance/CentralFinanceDonutChart.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { useCentralFinanceStore } from 'src/stores/central-finance-store';
 import { api } from 'src/boot/axios';
