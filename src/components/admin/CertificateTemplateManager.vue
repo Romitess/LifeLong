@@ -44,6 +44,8 @@
         :page="pagination.page"
         :total-pages="pagination.totalPages"
         :on-page-change="load"
+        show-rows-per-page
+        :on-rows-per-page-change="onRowsPerPageChange"
         :empty-text="
           globalSearch ? 'ไม่พบรูปแบบที่ตรงกับการค้นหา' : 'ยังไม่มีรูปแบบ Certificate ในระบบ'
         "
@@ -409,11 +411,11 @@ const {
 const globalSearch = ref('');
 const itemBlobUrls = ref<Record<number, string>>({});
 
-const rowsPerPage = 10;
+const rowsPerPage = ref(10);
 
 const tableColumns: BaseTableColumn[] = [
-  { key: 'name', label: 'ชื่อรูปแบบ', width: 'auto' },
-  { key: 'status', label: 'สถานะ', align: 'center', width: '90px' },
+  { key: 'name', label: 'ชื่อรูปแบบ', width: 'auto', sortable: true },
+  { key: 'status', label: 'สถานะ', align: 'center', width: '90px', sortable: true },
   { key: 'preview', label: 'ตัวอย่าง', align: 'center', width: '160px' },
   { key: 'actions', label: 'ดำเนินการ', align: 'center', width: '110px' },
 ];
@@ -552,11 +554,16 @@ onUnmounted(() => {
 
 async function load(page = 1): Promise<void> {
   try {
-    await fetchData({ page, pageSize: rowsPerPage, search: globalSearch.value || null });
+    await fetchData({ page, pageSize: rowsPerPage.value, search: globalSearch.value || null });
     await replaceItemBlobUrls(items.value);
   } catch {
     $q.notify({ type: 'negative', message: 'ไม่สามารถโหลดข้อมูลได้', position: 'top' });
   }
+}
+
+async function onRowsPerPageChange(newSize: number): Promise<void> {
+  rowsPerPage.value = newSize;
+  await load(1);
 }
 
 async function onSearchChange(): Promise<void> {

@@ -48,6 +48,8 @@
         :page="currentPage"
         :total-pages="totalPages"
         :on-page-change="goToPage"
+        show-rows-per-page
+        :on-rows-per-page-change="onRowsPerPageChange"
         :empty-text="search ? 'ไม่พบหมวด/หมู่ที่ตรงกับคำค้นหา' : 'ยังไม่มีหมวด/หมู่ในระบบ'"
       >
         <template #cell-index="{ row }">
@@ -419,7 +421,7 @@ const $q = useQuasar();
 const formRef = ref<QForm | null>(null);
 const search = ref('');
 const currentPage = ref(1);
-const rowsPerPage = 10;
+const rowsPerPage = ref(10);
 const formDialogOpen = ref(false);
 const confirmDeleteOpen = ref(false);
 const dialogMode = ref<DialogMode>('category');
@@ -528,19 +530,28 @@ const flattenedRows = computed<CategoryTableRow[]>(() => {
   });
 });
 
-const totalPages = computed(() => Math.max(1, Math.ceil(flattenedRows.value.length / rowsPerPage)));
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(flattenedRows.value.length / rowsPerPage.value)),
+);
 
 const paginatedRows = computed<CategoryTableRow[]>(() => {
-  const start = (currentPage.value - 1) * rowsPerPage;
-  return flattenedRows.value.slice(start, start + rowsPerPage);
+  const start = (currentPage.value - 1) * rowsPerPage.value;
+  return flattenedRows.value.slice(start, start + rowsPerPage.value);
 });
 
 const tableColumns: BaseTableColumn[] = [
-  { key: 'index', label: 'ลำดับ', align: 'center', width: '88px' },
-  { key: 'name', label: 'หมวด/หมู่วิชา', width: 'auto' },
-  { key: 'courses', label: 'รายวิชา', align: 'right', width: '132px' },
-  { key: 'trend', label: 'อัตราเปิดรับ', width: '160px' },
-  { key: 'status', label: 'สถานะ', align: 'center', width: '144px' },
+  {
+    key: 'index',
+    label: 'ลำดับ',
+    align: 'center',
+    width: '88px',
+    sortable: true,
+    sortKey: 'displayIndex',
+  },
+  { key: 'name', label: 'หมวด/หมู่วิชา', width: 'auto', sortable: true },
+  { key: 'courses', label: 'รายวิชา', align: 'right', width: '132px', sortable: true },
+  { key: 'trend', label: 'อัตราเปิดรับ', width: '160px', sortable: true },
+  { key: 'status', label: 'สถานะ', align: 'center', width: '144px', sortable: true },
   { key: 'actions', label: 'จัดการ', align: 'right', width: '214px' },
 ];
 
@@ -550,6 +561,11 @@ function rowVariant(row: CategoryTableRow): string {
 
 function goToPage(page: number): void {
   currentPage.value = page;
+}
+
+function onRowsPerPageChange(newSize: number): void {
+  rowsPerPage.value = newSize;
+  currentPage.value = 1;
 }
 
 const categoryStats = computed<CategoryStat[]>(() => [

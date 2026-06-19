@@ -44,6 +44,8 @@
         :page="pagination.page"
         :total-pages="pagination.totalPages"
         :on-page-change="load"
+        show-rows-per-page
+        :on-rows-per-page-change="onRowsPerPageChange"
         :empty-text="
           globalSearch ? 'ไม่พบผู้เซ็นที่ตรงกับการค้นหา' : 'ยังไม่มีผู้เซ็น Certificate ในระบบ'
         "
@@ -333,12 +335,12 @@ const { items, pagination, isLoading, error, fetchData, createSigner, updateSign
 
 const globalSearch = ref('');
 
-const rowsPerPage = 10;
+const rowsPerPage = ref(10);
 
 const tableColumns: BaseTableColumn[] = [
-  { key: 'name', label: 'ชื่อผู้เซ็น', width: 'auto' },
-  { key: 'position', label: 'ตำแหน่ง', width: '200px' },
-  { key: 'status', label: 'สถานะ', align: 'center', width: '90px' },
+  { key: 'name', label: 'ชื่อผู้เซ็น', width: 'auto', sortable: true },
+  { key: 'position', label: 'ตำแหน่ง', width: '200px', sortable: true },
+  { key: 'status', label: 'สถานะ', align: 'center', width: '90px', sortable: true },
   { key: 'preview', label: 'ลายเซ็น', align: 'center', width: '160px' },
   { key: 'actions', label: 'ดำเนินการ', align: 'center', width: '110px' },
 ];
@@ -386,10 +388,15 @@ onMounted(() => {
 
 async function load(page = 1): Promise<void> {
   try {
-    await fetchData({ page, pageSize: rowsPerPage, search: globalSearch.value || null });
+    await fetchData({ page, pageSize: rowsPerPage.value, search: globalSearch.value || null });
   } catch {
     $q.notify({ type: 'negative', message: 'ไม่สามารถโหลดข้อมูลได้', position: 'top' });
   }
+}
+
+async function onRowsPerPageChange(newSize: number): Promise<void> {
+  rowsPerPage.value = newSize;
+  await load(1);
 }
 
 async function onSearchChange(): Promise<void> {

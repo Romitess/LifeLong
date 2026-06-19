@@ -122,6 +122,8 @@
         :page="pagination.page"
         :total-pages="pagination.totalPages"
         :on-page-change="load"
+        show-rows-per-page
+        :on-rows-per-page-change="onRowsPerPageChange"
         :empty-text="
           hasActiveFilters ? 'ไม่พบรายวิชาที่ตรงกับเงื่อนไขการค้นหา' : 'ยังไม่มีรายวิชาในระบบ'
         "
@@ -274,14 +276,33 @@ const confirmDeleteOpen = ref(false);
 const pendingDeleteId = ref<number | null>(null);
 const pendingDeleteTitle = ref<string>('');
 
-const rowsPerPage = 10;
+const rowsPerPage = ref(10);
 
 const tableColumns: BaseTableColumn[] = [
-  { key: 'faculty', label: 'คณะ/ส่วนงาน', width: '180px' },
-  { key: 'name', label: 'ชื่อรายวิชา', width: 'auto' },
-  { key: 'duration', label: 'ระยะเวลาที่อนุมัติให้หลักสูตรดำเนินการได้', width: '190px' },
-  { key: 'responsible', label: 'ผู้รับผิดชอบรายวิชา', width: '160px' },
-  { key: 'type', label: 'ประเภท', align: 'center', width: '130px' },
+  { key: 'faculty', label: 'คณะ/ส่วนงาน', width: '180px', sortable: true, sortKey: 'facultyName' },
+  { key: 'name', label: 'ชื่อรายวิชา', width: 'auto', sortable: true, sortKey: 'titleTh' },
+  {
+    key: 'duration',
+    label: 'ระยะเวลาที่อนุมัติให้หลักสูตรดำเนินการได้',
+    width: '190px',
+    sortable: true,
+    sortKey: 'startDate',
+  },
+  {
+    key: 'responsible',
+    label: 'ผู้รับผิดชอบรายวิชา',
+    width: '160px',
+    sortable: true,
+    sortKey: 'responsibleName',
+  },
+  {
+    key: 'type',
+    label: 'ประเภท',
+    align: 'center',
+    width: '130px',
+    sortable: true,
+    sortKey: 'typeCourseName',
+  },
   { key: 'copy', label: 'คัดลอก', align: 'center', width: '80px' },
   { key: 'actions', label: 'ดำเนินการ', align: 'center', width: '130px' },
 ];
@@ -309,7 +330,7 @@ async function load(page = 1): Promise<void> {
   try {
     await fetchData({
       page,
-      pageSize: rowsPerPage,
+      pageSize: rowsPerPage.value,
       courseName: filterCourseName.value || null,
       facultyId: filterFacultyId.value,
       typeCourseId: filterTypeCourseId.value,
@@ -319,6 +340,11 @@ async function load(page = 1): Promise<void> {
   } catch {
     $q.notify({ type: 'negative', message: 'ไม่สามารถโหลดข้อมูลรายวิชาได้', position: 'top' });
   }
+}
+
+async function onRowsPerPageChange(newSize: number): Promise<void> {
+  rowsPerPage.value = newSize;
+  await load(1);
 }
 
 async function applyFilters(): Promise<void> {
