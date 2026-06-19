@@ -64,8 +64,8 @@
                           <q-date
                             v-model="filters.receiptDateStart"
                             mask="DD/MM/YYYY"
-                            color="warning"
-                            text-color="black"
+                            color="primary"
+                            text-color="white"
                           />
                         </q-popup-proxy>
                       </q-icon>
@@ -88,8 +88,8 @@
                           <q-date
                             v-model="filters.receiptDateEnd"
                             mask="DD/MM/YYYY"
-                            color="warning"
-                            text-color="black"
+                            color="primary"
+                            text-color="white"
                           />
                         </q-popup-proxy>
                       </q-icon>
@@ -121,8 +121,8 @@
                           <q-date
                             v-model="filters.effectiveDateStart"
                             mask="DD/MM/YYYY"
-                            color="warning"
-                            text-color="black"
+                            color="primary"
+                            text-color="white"
                           />
                         </q-popup-proxy>
                       </q-icon>
@@ -145,8 +145,8 @@
                           <q-date
                             v-model="filters.effectiveDateEnd"
                             mask="DD/MM/YYYY"
-                            color="warning"
-                            text-color="black"
+                            color="primary"
+                            text-color="white"
                           />
                         </q-popup-proxy>
                       </q-icon>
@@ -213,132 +213,51 @@
           </q-input>
         </div>
 
-        <div class="receipt-table-wrapper">
-          <q-table
-            :rows="items"
-            :columns="columns"
-            row-key="id"
-            flat
-            dense
-            :filter="search"
-            :loading="isLoading"
-            class="receipt-table"
-            v-model:pagination="pagination"
-            :rows-per-page-options="[10, 25, 50, 100]"
-            :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
-          >
-            <template v-slot:body-cell-status="slotProps">
-              <q-td :props="slotProps">
-                <div v-if="slotProps.value === 'ยกเลิก'" class="text-negative text-center">
-                  {{ $t('finance.receiptSummary.statusCancelled') }}<br />
-                  <span class="text-caption text-grey-6">
-                    {{ slotProps.row.cancelBy }}<br />{{ slotProps.row.cancelDate }}
-                  </span>
-                </div>
-                <div v-else class="text-center">
-                  {{ $t('finance.receiptSummary.statusActive') }}
-                </div>
-              </q-td>
-            </template>
-
-            <template v-slot:body-cell-printReceipt="slotProps">
-              <q-td :props="slotProps" class="text-center">
-                <span v-if="slotProps.row.status === 'ยกเลิก'" class="text-grey-6">
-                  {{ $t('finance.receiptSummary.statusCancelled') }}
-                </span>
-                <q-btn
-                  v-else
-                  flat
-                  round
-                  dense
-                  icon="download"
-                  color="warning"
-                  @click="downloadReceipt(slotProps.row)"
-                >
-                  <q-tooltip>{{ $t('finance.receipts.printReceipt') }}</q-tooltip>
-                </q-btn>
-              </q-td>
-            </template>
-
-            <template v-slot:body-cell-courseName="slotProps">
-              <q-td :props="slotProps">
-                <div style="white-space: pre-wrap; word-break: break-word">
-                  {{ slotProps.value }}
-                </div>
-              </q-td>
-            </template>
-
-            <template v-slot:bottom="scope">
-              <div class="receipt-pagination q-py-sm">
-                <div class="row items-center q-gutter-sm">
-                  <span class="text-subtitle2 text-grey-8">
-                    {{ $t('finance.receiptSummary.showEntries') }}
-                  </span>
-                  <q-select
-                    v-model="pagination.rowsPerPage"
-                    :options="[10, 25, 50, 100]"
-                    outlined
-                    dense
-                    options-dense
-                    style="width: 80px"
-                    class="bg-white receipt-rows-select"
-                  />
-                  <span class="text-subtitle2 text-grey-8">
-                    {{ $t('finance.receiptSummary.entries') }}
-                  </span>
-                </div>
-                <div class="row items-center q-gutter-sm">
-                  <span class="text-caption text-grey-8 q-mr-sm">
-                    {{
-                      items.length > 0
-                        ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
-                        : 0
-                    }}-{{
-                      Math.min(scope.pagination.page * scope.pagination.rowsPerPage, items.length)
-                    }}
-                    of {{ items.length }}
-                  </span>
-                  <q-btn
-                    icon="first_page"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isFirstPage"
-                    @click="scope.firstPage"
-                  />
-                  <q-btn
-                    icon="chevron_left"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isFirstPage"
-                    @click="scope.prevPage"
-                  />
-                  <q-btn
-                    icon="chevron_right"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isLastPage"
-                    @click="scope.nextPage"
-                  />
-                  <q-btn
-                    icon="last_page"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isLastPage"
-                    @click="scope.lastPage"
-                  />
-                </div>
+        <BaseTable
+          :columns="columns"
+          :rows="pagedItems"
+          :loading="isLoading"
+          :page="currentPage"
+          :total-pages="totalPages"
+          :rows-per-page="rowsPerPage"
+          show-rows-per-page
+          :rows-per-page-options="[10, 25, 50, 100]"
+          :on-page-change="onPageChange"
+          :on-rows-per-page-change="onRowsPerPageChange"
+          min-width="900px"
+        >
+          <template #cell-status="{ value, row }">
+            <div v-if="value === 'ยกเลิก'" class="text-negative">
+              {{ $t('finance.receiptSummary.statusCancelled') }}
+              <div class="text-caption text-grey-6">
+                <div>{{ (row as ReceiptSummaryItem).cancelBy }}</div>
+                <div>{{ (row as ReceiptSummaryItem).cancelDate }}</div>
               </div>
-            </template>
-          </q-table>
-        </div>
+            </div>
+            <div v-else>{{ $t('finance.receiptSummary.statusActive') }}</div>
+          </template>
+
+          <template #cell-printReceipt="{ row }">
+            <span v-if="(row as ReceiptSummaryItem).status === 'ยกเลิก'" class="text-grey-6">
+              {{ $t('finance.receiptSummary.statusCancelled') }}
+            </span>
+            <q-btn
+              v-else
+              flat
+              round
+              dense
+              icon="download"
+              color="warning"
+              @click="downloadReceipt(row as ReceiptSummaryItem)"
+            >
+              <q-tooltip>{{ $t('finance.receipts.printReceipt') }}</q-tooltip>
+            </q-btn>
+          </template>
+
+          <template #cell-courseName="{ value }">
+            <div style="white-space: pre-wrap; word-break: break-word">{{ value }}</div>
+          </template>
+        </BaseTable>
       </CentralFinanceSurfaceCard>
     </section>
 
@@ -360,10 +279,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { QTableProps } from 'quasar';
 import { useFacultyList } from 'src/composables/use-faculty-list';
+import BaseTable from 'components/base/BaseTable.vue';
+import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 import { useReceiptSummaryReport } from 'src/composables/use-receipt-summary-report';
 import { useReceiptSummaryExport } from 'src/composables/use-receipt-summary-export';
 import type { ApiFaculty } from 'src/types/faculty';
@@ -386,12 +306,8 @@ const showReceiptDialog = ref(false);
 const selectedReceipt = ref<ReceiptSummaryItem | null>(null);
 const receiptDialogRef = ref<InstanceType<typeof ReceiptCard> | null>(null);
 
-const pagination = ref({
-  sortBy: 'no',
-  descending: false,
-  page: 1,
-  rowsPerPage: 10,
-});
+const currentPage = ref(1);
+const rowsPerPage = ref(10);
 
 const facultyOptions = computed(() => [
   { label: t('centralFinance.receiptSummary.allFaculties'), value: '' },
@@ -428,90 +344,101 @@ const amount = computed<number>(() => {
   return typeof val === 'number' ? val : 0;
 });
 
-const columns = computed<QTableProps['columns']>(() => [
+const columns = computed<BaseTableColumn[]>(() => [
+  { key: 'no', label: t('finance.receiptSummary.columns.no'), align: 'center', sortable: true },
   {
-    name: 'no',
-    label: t('finance.receiptSummary.columns.no'),
-    field: 'no',
-    align: 'center',
-    sortable: true,
-  },
-  {
-    name: 'faculty',
+    key: 'faculty',
     label: t('centralFinance.receiptSummary.columns.faculty'),
-    field: 'faculty',
     align: 'center',
     sortable: true,
-    style: 'white-space: pre-wrap; min-width: 120px;',
   },
   {
-    name: 'receiptNo',
+    key: 'receiptNo',
     label: t('finance.receiptSummary.columns.receiptNo'),
-    field: 'receiptNo',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'customerName',
+    key: 'customerName',
     label: t('finance.receiptSummary.columns.fullName'),
-    field: 'customerName',
     align: 'center',
     sortable: true,
-    style: 'white-space: nowrap;',
   },
   {
-    name: 'amount',
+    key: 'amount',
     label: t('finance.receiptSummary.columns.amount'),
-    field: 'amount',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'effectiveDate',
+    key: 'effectiveDate',
     label: t('finance.receiptSummary.columns.effectiveDate'),
-    field: 'effectiveDate',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'learnerName',
+    key: 'learnerName',
     label: t('finance.receiptSummary.columns.learnerName'),
-    field: 'learnerName',
     align: 'center',
     sortable: true,
-    style: 'white-space: nowrap;',
   },
   {
-    name: 'courseName',
+    key: 'courseName',
     label: t('finance.receiptSummary.columns.courseName'),
-    field: 'courseName',
     align: 'center',
     sortable: true,
-    style: 'width: 220px',
-    headerStyle: 'white-space: pre-wrap; width: 220px',
+    width: '220px',
   },
   {
-    name: 'collector',
+    key: 'collector',
     label: t('finance.receiptSummary.columns.collector'),
-    field: 'collector',
     align: 'center',
     sortable: true,
-    headerStyle: 'white-space: pre-wrap;',
   },
   {
-    name: 'status',
+    key: 'status',
     label: t('finance.receiptSummary.columns.status'),
-    field: 'status',
     align: 'center',
     sortable: true,
   },
-  {
-    name: 'printReceipt',
-    label: t('finance.receiptSummary.columns.actions'),
-    field: 'printReceipt',
-    align: 'center',
-  },
+  { key: 'printReceipt', label: t('finance.receiptSummary.columns.actions'), align: 'center' },
 ]);
+
+const filteredItems = computed(() => {
+  if (!search.value) return items.value;
+  const q = search.value.toLowerCase();
+  return items.value.filter((row) =>
+    [
+      row.faculty ?? '',
+      row.receiptNo,
+      row.customerName ?? '',
+      row.learnerName ?? '',
+      row.courseName ?? '',
+    ].some((v) => v.toLowerCase().includes(q)),
+  );
+});
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredItems.value.length / rowsPerPage.value)),
+);
+
+const pagedItems = computed(() => {
+  const start = (currentPage.value - 1) * rowsPerPage.value;
+  return filteredItems.value.slice(start, start + rowsPerPage.value);
+});
+
+watch(search, () => {
+  currentPage.value = 1;
+});
+
+function onPageChange(page: number): void {
+  currentPage.value = page;
+}
+
+function onRowsPerPageChange(rpp: number): void {
+  rowsPerPage.value = rpp;
+  currentPage.value = 1;
+}
 
 async function downloadReceipt(row: ReceiptSummaryItem): Promise<void> {
   selectedReceipt.value = row;
@@ -592,12 +519,6 @@ onMounted(async () => {
   }
 }
 
-.table-export-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .receipt-search-bar {
   @media (max-width: 599px) {
     justify-content: stretch;
@@ -613,61 +534,7 @@ onMounted(async () => {
   }
 }
 
-.receipt-table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-
-  .receipt-table {
-    min-width: 900px;
-  }
-}
-
-.receipt-table {
-  :deep(.q-table__card) {
-    box-shadow: none;
-  }
-
-  :deep(thead tr) {
-    background: #e2e8f0;
-  }
-
-  :deep(th) {
-    font-weight: 600;
-    color: #334155;
-    font-size: 0.75rem;
-    white-space: pre-wrap;
-    text-align: center !important;
-    vertical-align: middle;
-    line-height: 1.3;
-    padding: 8px 6px;
-  }
-
-  :deep(tbody td) {
-    vertical-align: middle;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    white-space: pre-wrap;
-  }
-}
-
-.receipt-pagination {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 8px;
-
-  @media (max-width: 599px) {
-    justify-content: center;
-  }
-}
-
 :deep(.q-field__label) {
   font-weight: 400 !important;
-}
-
-:deep(.admin-surface-card:not(.admin-surface-card--glass):hover) {
-  transform: none !important;
 }
 </style>

@@ -32,8 +32,8 @@
                         <q-date
                           v-model="filters.receiptDateStart"
                           mask="DD/MM/YYYY"
-                          color="warning"
-                          text-color="black"
+                          color="primary"
+                          text-color="white"
                         />
                       </q-popup-proxy>
                     </q-icon>
@@ -63,8 +63,8 @@
                         <q-date
                           v-model="filters.receiptDateEnd"
                           mask="DD/MM/YYYY"
-                          color="warning"
-                          text-color="black"
+                          color="primary"
+                          text-color="white"
                         />
                       </q-popup-proxy>
                     </q-icon>
@@ -171,124 +171,39 @@
           </q-input>
         </div>
 
-        <div class="report-table-wrapper">
-          <q-table
-            :rows="tableRows"
-            :columns="columns"
-            row-key="id"
-            flat
-            dense
-            :loading="isLoading"
-            :filter="search"
-            class="report-table"
-            v-model:pagination="pagination"
-            :rows-per-page-options="[10, 25, 50, 100]"
-            :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
-          >
-            <template v-slot:body-cell-amount="props">
-              <q-td :props="props" class="text-right">
-                {{ formatCurrency(props.value) }}
-              </q-td>
-            </template>
-
-            <template v-slot:body-cell-receiptStatus="props">
-              <q-td :props="props">
-                <q-badge
-                  :color="props.value === 'ยกเลิก' ? 'negative' : 'positive'"
-                  :label="props.value"
-                />
-              </q-td>
-            </template>
-
-            <template v-slot:bottom="scope">
-              <div class="report-pagination q-py-sm">
-                <div class="row items-center q-gutter-sm">
-                  <span class="text-subtitle2 text-grey-8">
-                    {{ $t('centralFinance.dailyReport.table.showLabel') }}
-                  </span>
-                  <q-select
-                    v-model="pagination.rowsPerPage"
-                    :options="[10, 25, 50, 100]"
-                    outlined
-                    dense
-                    options-dense
-                    style="width: 80px"
-                    class="bg-white report-rows-select"
-                  />
-                  <span class="text-subtitle2 text-grey-8">
-                    {{ $t('centralFinance.dailyReport.table.entriesLabel') }}
-                  </span>
-                </div>
-                <div class="row items-center q-gutter-sm">
-                  <span class="text-caption text-grey-8 q-mr-sm">
-                    {{
-                      tableRows.length > 0
-                        ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
-                        : 0
-                    }}-{{
-                      Math.min(
-                        scope.pagination.page * scope.pagination.rowsPerPage,
-                        tableRows.length,
-                      )
-                    }}
-                    of {{ tableRows.length }}
-                  </span>
-                  <q-btn
-                    icon="first_page"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isFirstPage"
-                    @click="scope.firstPage"
-                  />
-                  <q-btn
-                    icon="chevron_left"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isFirstPage"
-                    @click="scope.prevPage"
-                  />
-                  <q-btn
-                    icon="chevron_right"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isLastPage"
-                    @click="scope.nextPage"
-                  />
-                  <q-btn
-                    icon="last_page"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isLastPage"
-                    @click="scope.lastPage"
-                  />
-                </div>
-              </div>
-            </template>
-          </q-table>
-        </div>
+        <BaseTable
+          :columns="columns"
+          :rows="pagedRows"
+          :loading="isLoading"
+          :page="currentPage"
+          :total-pages="totalPages"
+          :rows-per-page="rowsPerPage"
+          show-rows-per-page
+          :rows-per-page-options="[10, 25, 50, 100]"
+          :on-page-change="onPageChange"
+          :on-rows-per-page-change="onRowsPerPageChange"
+          min-width="800px"
+        >
+          <template #cell-amount="{ value }">
+            {{ formatCurrency(value as number) }}
+          </template>
+        </BaseTable>
       </CentralFinanceSurfaceCard>
     </section>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import AppActionButton from 'components/common/AppActionButton.vue';
 import ReportExportActions from 'components/common/ReportExportActions.vue';
+import BaseTable from 'components/base/BaseTable.vue';
+import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 import { api } from 'src/boot/axios';
-import type { QTableColumn } from 'quasar';
 import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
@@ -301,12 +216,8 @@ const hasSearched = ref(false);
 const isLoading = ref(false);
 const isFacultyLoading = ref(false);
 
-const pagination = ref({
-  sortBy: 'no',
-  descending: false,
-  page: 1,
-  rowsPerPage: 25,
-});
+const currentPage = ref(1);
+const rowsPerPage = ref(25);
 
 interface DailyReportItem {
   id: number;
@@ -363,46 +274,60 @@ function getDepartmentLabel(val: string): string {
 }
 
 // ── Columns ──────────────────────────────────────────────────
-const columns = computed<QTableColumn[]>(() => [
+const columns = computed<BaseTableColumn[]>(() => [
+  { key: 'no', label: t('centralFinance.dailyReport.table.no'), align: 'center', sortable: true },
+  { key: 'faculty', label: 'คณะ/ส่วนงาน', align: 'left', sortable: true },
   {
-    name: 'no',
-    label: t('centralFinance.dailyReport.table.no'),
-    field: 'no',
-    align: 'center',
-    sortable: true,
-  },
-  {
-    name: 'faculty',
-    label: 'คณะ/ส่วนงาน',
-    field: 'faculty',
-    align: 'left',
-    sortable: true,
-    style: 'white-space: pre-wrap; word-break: break-word;',
-  },
-  {
-    name: 'courseName',
+    key: 'courseName',
     label: t('centralFinance.dailyReport.table.courseName'),
-    field: 'courseName',
     align: 'left',
     sortable: true,
-    style: 'white-space: pre-wrap; word-break: break-word;',
   },
   {
-    name: 'fundCode',
+    key: 'fundCode',
     label: t('centralFinance.dailyReport.table.fundCode'),
-    field: 'fundCode',
     align: 'left',
     sortable: true,
-    style: 'white-space: pre-wrap; word-break: break-word;',
   },
   {
-    name: 'amount',
+    key: 'amount',
     label: t('centralFinance.dailyReport.table.amount'),
-    field: 'amount',
     align: 'right',
     sortable: true,
   },
 ]);
+
+const filteredTableRows = computed(() => {
+  if (!search.value) return tableRows.value;
+  const q = search.value.toLowerCase();
+  return tableRows.value.filter((row) =>
+    [row.faculty, row.courseName, row.fundCode ?? '', String(row.no)].some((v) =>
+      v.toLowerCase().includes(q),
+    ),
+  );
+});
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredTableRows.value.length / rowsPerPage.value)),
+);
+
+const pagedRows = computed(() => {
+  const start = (currentPage.value - 1) * rowsPerPage.value;
+  return filteredTableRows.value.slice(start, start + rowsPerPage.value);
+});
+
+watch(search, () => {
+  currentPage.value = 1;
+});
+
+function onPageChange(page: number): void {
+  currentPage.value = page;
+}
+
+function onRowsPerPageChange(rpp: number): void {
+  rowsPerPage.value = rpp;
+  currentPage.value = 1;
+}
 
 // ── Fetch Data ───────────────────────────────────────────────
 async function fetchData(): Promise<void> {
@@ -444,6 +369,7 @@ function onSearch(): void {
   }
   activeFilters.value = { ...filters.value };
   hasSearched.value = true;
+  currentPage.value = 1;
   void fetchData();
 }
 
@@ -457,6 +383,8 @@ function clearFilters(): void {
   };
   tableRows.value = [];
   hasSearched.value = false;
+  search.value = '';
+  currentPage.value = 1;
 }
 
 onMounted(() => {
@@ -651,12 +579,6 @@ function exportToExcel(): void {
   }
 }
 
-.table-export-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .report-search-bar {
   @media (max-width: 599px) {
     justify-content: stretch;
@@ -669,58 +591,6 @@ function exportToExcel(): void {
 
   @media (max-width: 599px) {
     width: 100%;
-  }
-}
-
-.report-table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-
-  .report-table {
-    min-width: 800px;
-  }
-}
-
-.report-table {
-  background: transparent;
-
-  :deep(.q-table__card) {
-    box-shadow: none;
-  }
-
-  :deep(thead tr) {
-    background: #e2e8f0;
-  }
-
-  :deep(th) {
-    font-weight: 600;
-    color: #334155;
-    font-size: 0.75rem;
-    white-space: pre-wrap;
-    text-align: center !important;
-    vertical-align: middle;
-    line-height: 1.3;
-    padding: 8px 6px;
-  }
-
-  :deep(tbody td) {
-    vertical-align: middle;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    white-space: pre-wrap;
-  }
-}
-
-.report-pagination {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 8px;
-
-  @media (max-width: 599px) {
-    justify-content: center;
   }
 }
 
