@@ -223,7 +223,7 @@ const segmentsWithPercent = computed(() => {
   gap: 10px;
   padding: 8px 12px;
   border-radius: 10px;
-  background: rgba(16, 35, 63, 0.03);
+  // background: rgba(16, 35, 63, 0.03);
   transition: background 0.15s ease;
 
   &:hover {

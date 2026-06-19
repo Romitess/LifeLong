@@ -21,20 +21,14 @@
     >
       <template #header-actions>
         <div class="centralfinance-faculty-report__header-actions">
-          <q-input
+          <AppSearchInput
             v-model="searchQuery"
             :placeholder="t('finance.registrationStatistics.searchPlaceholder')"
-            outlined
-            dense
-            class="bg-white centralfinance-faculty-report__search"
+            class="centralfinance-faculty-report__search"
             @update:model-value="handleSearch"
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" color="grey-6" />
-            </template>
-          </q-input>
-          <q-btn
-            color="primary"
+          />
+          <AppActionButton
+            variant="primary"
             icon="download"
             :label="t('finance.registrationStatistics.exportBtn')"
             @click="exportDialogOpen = true"
@@ -294,6 +288,8 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import RegistrationExportDialog from 'components/reports/RegistrationExportDialog.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import { useCentralFinanceFacultyReport } from 'src/composables/use-centralfinance-faculty-report';
