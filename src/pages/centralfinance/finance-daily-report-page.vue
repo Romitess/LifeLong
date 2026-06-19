@@ -346,7 +346,7 @@ const activeFilters = ref({
 
 // ── Faculty Options ──────────────────────────────────────────
 const departmentOptions = ref<{ label: string; value: string }[]>([
-  { label: 'ทั้งหมด', value: '' },
+  { label: 'ทุกคณะ/ส่วนงาน', value: '' },
 ]);
 
 async function fetchFacultyOptions(): Promise<void> {
@@ -356,7 +356,7 @@ async function fetchFacultyOptions(): Promise<void> {
       '/api/centralfinance/daily-report/faculty-options',
     );
     departmentOptions.value = [
-      { label: 'ทั้งหมด', value: '' },
+      { label: 'ทุกคณะ/ส่วนงาน', value: '' },
       ...data.map((f) => ({ label: f.name, value: f.name })),
     ];
   } catch {
@@ -367,7 +367,7 @@ async function fetchFacultyOptions(): Promise<void> {
 }
 
 function getDepartmentLabel(val: string): string {
-  if (!val) return 'ทั้งหมด';
+  if (!val) return 'ทุกคณะ/ส่วนงาน';
   return val;
 }
 
