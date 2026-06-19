@@ -59,8 +59,8 @@
                         <q-date
                           v-model="filters.receiptDateStart"
                           mask="DD/MM/YYYY"
-                          color="warning"
-                          text-color="black"
+                          color="primary"
+                          text-color="white"
                         />
                       </q-popup-proxy>
                     </q-icon>
@@ -89,8 +89,8 @@
                         <q-date
                           v-model="filters.receiptDateEnd"
                           mask="DD/MM/YYYY"
-                          color="warning"
-                          text-color="black"
+                          color="primary"
+                          text-color="white"
                         />
                       </q-popup-proxy>
                     </q-icon>
@@ -256,128 +256,48 @@
           </q-input>
         </div>
 
-        <div class="receipt-table-wrapper">
-          <q-table
-            :rows="filteredRows"
-            :columns="columns"
-            row-key="id"
-            flat
-            dense
-            :filter="search"
-            class="receipt-table"
-            v-model:pagination="pagination"
-            :rows-per-page-options="[10, 25, 50, 100]"
-            :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
-          >
-            <template v-slot:body-cell-cancelDoc="slotProps">
-              <q-td :props="slotProps">
-                <div v-if="slotProps.row.status === 'ยกเลิก'" class="text-negative text-center">
-                  {{ $t('finance.receiptSummary.statusCancelled') }}<br />
-                  <span class="text-caption text-grey-6">
-                    {{ slotProps.row.cancelBy }}<br />{{ slotProps.row.cancelDate }}
-                  </span>
-                </div>
-              </q-td>
-            </template>
-
-            <template v-slot:body-cell-courseName="slotProps">
-              <q-td :props="slotProps">
-                <div style="white-space: pre-wrap; word-break: break-word">
-                  {{ slotProps.value }}
-                </div>
-              </q-td>
-            </template>
-
-            <template v-slot:bottom-row>
-              <tr class="receipt-total-row">
-                <td colspan="7" class="text-right text-weight-bold q-pr-lg">
-                  {{ $t('centralFinance.receiptUsage.columns.total') }}
-                </td>
-                <td class="text-center text-weight-bold">
-                  {{
-                    totalAmount.toLocaleString('th-TH', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
-                  }}
-                </td>
-                <td colspan="3"></td>
-              </tr>
-            </template>
-
-            <template v-slot:bottom="scope">
-              <div class="receipt-pagination q-py-sm">
-                <div class="row items-center q-gutter-sm">
-                  <span class="text-subtitle2 text-grey-8">
-                    {{ $t('finance.receiptSummary.showEntries') }}
-                  </span>
-                  <q-select
-                    v-model="pagination.rowsPerPage"
-                    :options="[10, 25, 50, 100]"
-                    outlined
-                    dense
-                    options-dense
-                    style="width: 80px"
-                    class="bg-white receipt-rows-select"
-                  />
-                  <span class="text-subtitle2 text-grey-8">
-                    {{ $t('finance.receiptSummary.entries') }}
-                  </span>
-                </div>
-                <div class="row items-center q-gutter-sm">
-                  <span class="text-caption text-grey-8 q-mr-sm">
-                    {{
-                      filteredRows.length > 0
-                        ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
-                        : 0
-                    }}-{{
-                      Math.min(
-                        scope.pagination.page * scope.pagination.rowsPerPage,
-                        filteredRows.length,
-                      )
-                    }}
-                    of {{ filteredRows.length }}
-                  </span>
-                  <q-btn
-                    icon="first_page"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isFirstPage"
-                    @click="scope.firstPage"
-                  />
-                  <q-btn
-                    icon="chevron_left"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isFirstPage"
-                    @click="scope.prevPage"
-                  />
-                  <q-btn
-                    icon="chevron_right"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isLastPage"
-                    @click="scope.nextPage"
-                  />
-                  <q-btn
-                    icon="last_page"
-                    color="grey-8"
-                    round
-                    dense
-                    flat
-                    :disable="scope.isLastPage"
-                    @click="scope.lastPage"
-                  />
-                </div>
+        <BaseTable
+          :columns="columns"
+          :rows="pagedRows"
+          :page="currentPage"
+          :total-pages="totalPages"
+          :rows-per-page="rowsPerPage"
+          show-rows-per-page
+          :rows-per-page-options="[10, 25, 50, 100]"
+          :on-page-change="onPageChange"
+          :on-rows-per-page-change="onRowsPerPageChange"
+          min-width="900px"
+        >
+          <template #cell-cancelDoc="{ row }">
+            <div v-if="(row as ReceiptUsageItem).status === 'ยกเลิก'" class="text-negative">
+              {{ $t('finance.receiptSummary.statusCancelled') }}
+              <div class="text-caption text-grey-6">
+                <div>{{ (row as ReceiptUsageItem).cancelBy }}</div>
+                <div>{{ (row as ReceiptUsageItem).cancelDate }}</div>
               </div>
-            </template>
-          </q-table>
+            </div>
+          </template>
+
+          <template #cell-courseName="{ value }">
+            <div style="white-space: pre-wrap; word-break: break-word">{{ value }}</div>
+          </template>
+        </BaseTable>
+
+        <div
+          v-if="filteredRows.length > 0"
+          class="row justify-end items-center q-px-lg q-py-md receipt-total-bar"
+        >
+          <span class="text-weight-medium text-grey-8"
+            >{{ $t('centralFinance.receiptUsage.columns.total') }}:</span
+          >
+          <span class="text-weight-bold q-ml-sm">
+            {{
+              totalAmount.toLocaleString('th-TH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </span>
         </div>
       </CentralFinanceSurfaceCard>
     </section>
@@ -388,12 +308,14 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import type { QTableProps } from 'quasar';
+import BaseTable from 'components/base/BaseTable.vue';
+import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import AppActionButton from 'components/common/AppActionButton.vue';
 import ReportExportActions from 'components/common/ReportExportActions.vue';
 import { useReceiptUsageReport } from 'src/composables/use-receipt-usage-report';
+import type { ReceiptUsageItem } from 'src/types/receipt-usage-report';
 import jsPDF from 'jspdf';
 import { autoTable, type CellHookData } from 'jspdf-autotable';
 import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
@@ -423,12 +345,8 @@ onMounted(() => {
 const search = ref('');
 const hasSearched = ref(false);
 
-const pagination = ref({
-  sortBy: 'no',
-  descending: false,
-  page: 1,
-  rowsPerPage: 10,
-});
+const currentPage = ref(1);
+const rowsPerPage = ref(10);
 
 const currentYear = new Date().getFullYear();
 
@@ -457,107 +375,120 @@ const activeFacultyScopeLabel = computed<string>(() => {
   return option?.label ?? filters.value.faculty;
 });
 
-const filteredRows = computed(() => items.value);
+const filteredRows = computed(() => {
+  if (!search.value) return items.value;
+  const q = search.value.toLowerCase();
+  return items.value.filter((row) =>
+    [row.faculty, row.receiptNo, row.customerName, row.courseName, row.departmentCode].some((v) =>
+      String(v ?? '')
+        .toLowerCase()
+        .includes(q),
+    ),
+  );
+});
 
 const totalAmount = computed(() =>
   filteredRows.value.reduce((sum, r) => sum + (typeof r.amount === 'number' ? r.amount : 0), 0),
 );
 
-const columns = computed<QTableProps['columns']>(() => [
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredRows.value.length / rowsPerPage.value)),
+);
+
+const pagedRows = computed(() => {
+  const start = (currentPage.value - 1) * rowsPerPage.value;
+  return filteredRows.value.slice(start, start + rowsPerPage.value);
+});
+
+watch(search, () => {
+  currentPage.value = 1;
+});
+
+function onPageChange(page: number): void {
+  currentPage.value = page;
+}
+
+function onRowsPerPageChange(rpp: number): void {
+  rowsPerPage.value = rpp;
+  currentPage.value = 1;
+}
+
+const columns = computed<BaseTableColumn[]>(() => [
+  { key: 'no', label: t('finance.receiptSummary.columns.no'), align: 'center', sortable: true },
   {
-    name: 'no',
-    label: t('finance.receiptSummary.columns.no'),
-    field: 'no',
-    align: 'center',
-    sortable: true,
-  },
-  {
-    name: 'departmentCode',
+    key: 'departmentCode',
     label: t('centralFinance.receiptUsage.columns.departmentCode'),
-    field: 'departmentCode',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'faculty',
+    key: 'faculty',
     label: t('centralFinance.receiptUsage.columns.departmentName'),
-    field: 'faculty',
     align: 'center',
     sortable: true,
-    style: 'white-space: pre-wrap; min-width: 120px;',
   },
   {
-    name: 'receiptNo',
+    key: 'receiptNo',
     label: t('finance.receiptSummary.columns.receiptNo'),
-    field: 'receiptNo',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'cancelDoc',
+    key: 'cancelDoc',
     label: t('centralFinance.receiptUsage.columns.cancelDoc'),
-    field: 'status',
     align: 'center',
     sortable: true,
+    sortKey: 'status',
   },
   {
-    name: 'effectiveDate',
+    key: 'effectiveDate',
     label: t('centralFinance.receiptUsage.columns.receiptCompletedDate'),
-    field: 'effectiveDate',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'fiscalYear',
+    key: 'fiscalYear',
     label: t('centralFinance.receiptUsage.columns.fiscalYear'),
-    field: 'fiscalYear',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'amount',
+    key: 'amount',
     label: t('finance.receiptSummary.columns.amount'),
-    field: 'amount',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'courseName',
+    key: 'courseName',
     label: t('centralFinance.receiptUsage.columns.courseName'),
-    field: 'courseName',
     align: 'center',
     sortable: true,
-    style: 'width: 220px',
-    headerStyle: 'white-space: pre-wrap; width: 220px',
+    width: '220px',
   },
   {
-    name: 'customerName',
+    key: 'customerName',
     label: t('centralFinance.receiptUsage.columns.customerName'),
-    field: 'customerName',
     align: 'center',
     sortable: true,
-    style: 'white-space: nowrap;',
   },
   {
-    name: 'collector',
+    key: 'collector',
     label: t('centralFinance.receiptUsage.columns.cashierName'),
-    field: 'collector',
     align: 'center',
     sortable: true,
-    headerStyle: 'white-space: pre-wrap;',
   },
 ]);
 
 async function onSearch(): Promise<void> {
   hasSearched.value = true;
-  pagination.value.page = 1;
+  currentPage.value = 1;
   await fetchData();
 }
 
 async function clearFilters(): Promise<void> {
   clearComposableFilters();
   search.value = '';
-  pagination.value.page = 1;
+  currentPage.value = 1;
   if (hasSearched.value) {
     await fetchData();
   }
@@ -779,12 +710,6 @@ function exportToExcel(): void {
   }
 }
 
-.table-export-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .receipt-search-bar {
   @media (max-width: 599px) {
     justify-content: stretch;
@@ -797,56 +722,6 @@ function exportToExcel(): void {
 
   @media (max-width: 599px) {
     width: 100%;
-  }
-}
-
-.receipt-table-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-
-  .receipt-table {
-    min-width: 900px;
-  }
-}
-
-.receipt-table {
-  :deep(.q-table__card) {
-    box-shadow: none;
-  }
-
-  :deep(thead tr) {
-    background: #e2e8f0;
-  }
-
-  :deep(th) {
-    font-weight: 600;
-    color: #334155;
-    font-size: 0.75rem;
-    white-space: pre-wrap;
-    text-align: center !important;
-    vertical-align: middle;
-    line-height: 1.3;
-    padding: 8px 6px;
-  }
-
-  :deep(tbody td) {
-    vertical-align: middle;
-    padding-top: 12px;
-    padding-bottom: 12px;
-    white-space: pre-wrap;
-  }
-}
-
-.receipt-pagination {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 8px;
-
-  @media (max-width: 599px) {
-    justify-content: center;
   }
 }
 
