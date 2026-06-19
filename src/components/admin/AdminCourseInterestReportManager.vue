@@ -33,159 +33,120 @@
       </q-banner>
 
       <div class="course-interest-report__table-wrap">
-        <table class="course-interest-report-table">
-          <colgroup>
-            <col class="course-interest-report-table__col-index" />
-            <col class="course-interest-report-table__col-course" />
-            <col class="course-interest-report-table__col-owner" />
-            <col class="course-interest-report-table__col-dates" />
-            <col class="course-interest-report-table__col-views" />
-            <col class="course-interest-report-table__col-enrollments" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="course-interest-report-table__index">ลำดับ</th>
-              <th>ชื่อรายวิชา</th>
-              <th>ผู้รับผิดชอบรายวิชา</th>
-              <th>วันที่เปิด-ปิดการเรียนการสอน</th>
-              <th class="text-right">จำนวนการเข้าชมรายวิชา</th>
-              <th class="text-right">จำนวนผู้ลงทะเบียน</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="isLoading">
-              <tr
-                v-for="skeletonIndex in rowsPerPage"
-                :key="`skeleton-${skeletonIndex}`"
-                class="course-interest-report-table__skeleton-row"
+        <BaseTable
+          :columns="tableColumns"
+          :rows="items"
+          row-key="courseId"
+          :loading="isLoading"
+          :rows-per-page="rowsPerPage"
+          :row-height="76"
+          :header-height="57"
+          min-width="1080px"
+          height-mode="stable"
+          show-index
+          :index-offset="(pagination.page - 1) * pagination.pageSize"
+          :page="currentPage"
+          :total-pages="pagination.totalPages"
+          :on-page-change="loadReport"
+          show-rows-per-page
+          :on-rows-per-page-change="onRowsPerPageChange"
+          :empty-text="search ? 'ไม่พบรายวิชาที่ตรงกับคำค้นหา' : 'ยังไม่มีข้อมูลรายงานในระบบ'"
+        >
+          <!-- COURSE -->
+          <template #cell-course="{ row }">
+            <div class="course-interest-report__course-cell">
+              <span class="course-interest-report__course-icon">
+                <q-icon name="menu_book" />
+              </span>
+              <div class="course-interest-report__course-copy">
+                <strong>{{ row.courseName }}</strong>
+                <span>{{ row.courseCode || `COURSE-${row.courseId}` }}</span>
+              </div>
+            </div>
+          </template>
+          <template #skeleton-course>
+            <div class="course-interest-report__course-cell">
+              <q-skeleton type="QAvatar" size="42px" />
+              <div
+                class="course-interest-report__course-copy course-interest-report__course-copy--skeleton"
               >
-                <td class="course-interest-report-table__index">
-                  <q-skeleton type="text" width="24px" class="q-mx-auto" />
-                </td>
-                <td>
-                  <div class="course-interest-report__course-cell">
-                    <q-skeleton type="QAvatar" size="42px" />
-                    <div
-                      class="course-interest-report__course-copy course-interest-report__course-copy--skeleton"
-                    >
-                      <q-skeleton type="text" width="85%" />
-                      <q-skeleton type="text" width="38%" />
-                    </div>
-                  </div>
-                </td>
-                <td><q-skeleton type="QChip" width="90%" /></td>
-                <td>
-                  <div class="course-interest-report__date-cell">
-                    <q-skeleton type="text" width="78%" />
-                    <q-skeleton type="text" width="46%" />
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="course-interest-report__metric-cell">
-                    <q-skeleton
-                      type="text"
-                      width="40px"
-                      class="course-interest-report__metric-skeleton"
-                    />
-                    <q-skeleton
-                      type="text"
-                      width="24px"
-                      class="course-interest-report__metric-skeleton"
-                    />
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="course-interest-report__metric-cell">
-                    <q-skeleton
-                      type="text"
-                      width="40px"
-                      class="course-interest-report__metric-skeleton"
-                    />
-                    <q-skeleton
-                      type="text"
-                      width="24px"
-                      class="course-interest-report__metric-skeleton"
-                    />
-                  </div>
-                </td>
-              </tr>
-            </template>
+                <q-skeleton type="text" width="85%" />
+                <q-skeleton type="text" width="38%" />
+              </div>
+            </div>
+          </template>
 
-            <template v-else-if="items.length > 0">
-              <tr
-                v-for="(item, index) in items"
-                :key="item.courseId"
-                class="course-interest-report-table__data-row"
-              >
-                <td class="course-interest-report-table__index">
-                  {{ getRowNumber(index) }}
-                </td>
-                <td>
-                  <div class="course-interest-report__course-cell">
-                    <span class="course-interest-report__course-icon">
-                      <q-icon name="menu_book" />
-                    </span>
-                    <div class="course-interest-report__course-copy">
-                      <strong>{{ item.courseName }}</strong>
-                      <span>{{ item.courseCode || `COURSE-${item.courseId}` }}</span>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="course-interest-report__owner-cell">
-                    <span class="course-interest-report__owner-chip">
-                      <q-icon name="badge" size="15px" />
-                      {{ item.responsibleName || 'ไม่ระบุผู้รับผิดชอบ' }}
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <div class="course-interest-report__date-cell">
-                    <strong>{{ formatDateRange(item.startDate, item.endDate) }}</strong>
-                    <span>{{ getDateStatus(item.startDate, item.endDate) }}</span>
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="course-interest-report__metric-cell">
-                    <strong>{{ formatCount(item.viewCount) }}</strong>
-                    <span>ครั้ง</span>
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="course-interest-report__metric-cell">
-                    <strong>{{ formatCount(item.enrollmentCount) }}</strong>
-                    <span>คน</span>
-                  </div>
-                </td>
-              </tr>
+          <!-- OWNER -->
+          <template #cell-owner="{ row }">
+            <div class="course-interest-report__owner-cell">
+              <span class="course-interest-report__owner-chip">
+                <q-icon name="badge" size="15px" />
+                {{ row.responsibleName || 'ไม่ระบุผู้รับผิดชอบ' }}
+              </span>
+            </div>
+          </template>
+          <template #skeleton-owner>
+            <q-skeleton type="QChip" width="90%" />
+          </template>
 
-              <tr v-if="fillerRowHeight > 0" class="course-interest-report-table__filler-row">
-                <td colspan="6" :style="{ height: `${fillerRowHeight}px` }"></td>
-              </tr>
-            </template>
+          <!-- DATES -->
+          <template #cell-dates="{ row }">
+            <div class="course-interest-report__date-cell">
+              <strong>{{ formatDateRange(row.startDate, row.endDate) }}</strong>
+              <span>{{ getDateStatus(row.startDate, row.endDate) }}</span>
+            </div>
+          </template>
+          <template #skeleton-dates>
+            <div class="course-interest-report__date-cell">
+              <q-skeleton type="text" width="78%" />
+              <q-skeleton type="text" width="46%" />
+            </div>
+          </template>
 
-            <tr v-else>
-              <td colspan="6" class="course-interest-report-table__empty">
-                {{ search ? 'ไม่พบรายวิชาที่ตรงกับคำค้นหา' : 'ยังไม่มีข้อมูลรายงานในระบบ' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+          <!-- VIEWS -->
+          <template #cell-views="{ row }">
+            <div class="course-interest-report__metric-cell">
+              <strong>{{ formatCount(row.viewCount) }}</strong>
+              <span>ครั้ง</span>
+            </div>
+          </template>
+          <template #skeleton-views>
+            <div class="course-interest-report__metric-cell">
+              <q-skeleton
+                type="text"
+                width="40px"
+                class="course-interest-report__metric-skeleton"
+              />
+              <q-skeleton
+                type="text"
+                width="24px"
+                class="course-interest-report__metric-skeleton"
+              />
+            </div>
+          </template>
 
-      <div
-        v-if="pagination.totalPages > 1"
-        ref="paginationRef"
-        class="course-interest-report__pagination"
-      >
-        <BasePagination
-          :model-value="currentPage"
-          :max="pagination.totalPages"
-          :max-pages="7"
-          gutter="md"
-          :disable="isLoading"
-          @update:model-value="handlePageChange"
-        />
+          <!-- ENROLLMENTS -->
+          <template #cell-enrollments="{ row }">
+            <div class="course-interest-report__metric-cell">
+              <strong>{{ formatCount(row.enrollmentCount) }}</strong>
+              <span>คน</span>
+            </div>
+          </template>
+          <template #skeleton-enrollments>
+            <div class="course-interest-report__metric-cell">
+              <q-skeleton
+                type="text"
+                width="40px"
+                class="course-interest-report__metric-skeleton"
+              />
+              <q-skeleton
+                type="text"
+                width="24px"
+                class="course-interest-report__metric-skeleton"
+              />
+            </div>
+          </template>
+        </BaseTable>
       </div>
     </AppSurfaceCard>
   </div>
@@ -196,22 +157,60 @@ import { computed, onMounted, ref, watch } from 'vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
-import BasePagination from 'components/base/BasePagination.vue';
+import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
 import { useAdminCourseInterestReport } from 'src/composables/use-admin-course-interest-report';
 import { useTablePagination } from 'src/composables/use-table-pagination';
 import { formatCount } from 'src/utils/course-format';
 
-const rowsPerPage = 10;
-const tableRowHeight = 76;
-const tableHeaderHeight = 57;
+const rowsPerPage = ref(10);
 const search = ref('');
 
 const { items, summary, pagination, isLoading, error, fetchData } = useAdminCourseInterestReport();
 
-const { currentPage, paginationRef, handlePageChange } = useTablePagination({
+const { currentPage } = useTablePagination({
   onPageChange: (page) => loadReport(page),
   isSamePage: (page) => page === pagination.value.page,
 });
+
+const tableColumns: BaseTableColumn[] = [
+  { key: 'course', label: 'ชื่อรายวิชา', width: 'auto', sortable: true, sortKey: 'courseName' },
+  {
+    key: 'owner',
+    label: 'ผู้รับผิดชอบรายวิชา',
+    width: '260px',
+    sortable: true,
+    sortKey: 'responsibleName',
+  },
+  {
+    key: 'dates',
+    label: 'วันที่เปิด-ปิดการเรียนการสอน',
+    width: '250px',
+    sortable: true,
+    sortKey: 'startDate',
+  },
+  {
+    key: 'views',
+    label: 'จำนวนการเข้าชมรายวิชา',
+    align: 'right',
+    width: '150px',
+    sortable: true,
+    sortKey: 'viewCount',
+  },
+  {
+    key: 'enrollments',
+    label: 'จำนวนผู้ลงทะเบียน',
+    align: 'right',
+    width: '150px',
+    sortable: true,
+    sortKey: 'enrollmentCount',
+  },
+];
+
+async function onRowsPerPageChange(value: number): Promise<void> {
+  rowsPerPage.value = value;
+  currentPage.value = 1;
+  await loadReport(1);
+}
 
 const stats = computed<
   {
@@ -248,19 +247,10 @@ const stats = computed<
 function loadReport(page = 1): Promise<void> {
   return fetchData({
     page,
-    pageSize: rowsPerPage,
+    pageSize: rowsPerPage.value,
     search: search.value,
   });
 }
-
-function getRowNumber(index: number): number {
-  return index + 1 + (pagination.value.page - 1) * pagination.value.pageSize;
-}
-
-const fillerRowHeight = computed(() =>
-  Math.max(0, (rowsPerPage - items.value.length) * tableRowHeight),
-);
-const tableViewportHeight = `${rowsPerPage * tableRowHeight + tableHeaderHeight}px`;
 
 function formatDate(value: string | null): string {
   if (!value) {
@@ -332,8 +322,6 @@ watch(
 }
 
 .course-interest-report {
-  --course-interest-report-row-height: v-bind('`${tableRowHeight}px`');
-  --course-interest-report-table-height: v-bind('tableViewportHeight');
 }
 
 .course-interest-report__search {
@@ -342,87 +330,6 @@ watch(
 
 .course-interest-report__table-wrap {
   overflow-x: auto;
-  min-height: var(--course-interest-report-table-height);
-}
-
-.course-interest-report-table {
-  width: 100%;
-  min-width: 1080px;
-  border-collapse: collapse;
-
-  th,
-  td {
-    padding: 16px 18px;
-    border-bottom: 1px solid var(--admin-line);
-    vertical-align: middle;
-  }
-
-  thead th {
-    color: #475467;
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: #f8fafc;
-  }
-
-  tbody tr:nth-child(even) {
-    background: rgba(248, 250, 252, 0.7);
-  }
-
-  tbody tr:hover {
-    background: rgba(245, 166, 35, 0.06);
-  }
-
-  tbody tr.course-interest-report-table__filler-row:hover,
-  tbody tr.course-interest-report-table__skeleton-row:hover {
-    background: transparent;
-  }
-
-  tbody td {
-    height: var(--course-interest-report-row-height);
-  }
-}
-
-.course-interest-report-table__col-index {
-  width: 88px;
-}
-
-.course-interest-report-table__col-owner {
-  width: 260px;
-}
-
-.course-interest-report-table__col-dates {
-  width: 250px;
-}
-
-.course-interest-report-table__col-views,
-.course-interest-report-table__col-enrollments {
-  width: 150px;
-}
-
-.course-interest-report-table__index {
-  text-align: center;
-  color: #1d4ed8;
-  font-weight: 800;
-}
-
-.course-interest-report-table__empty {
-  height: calc(var(--course-interest-report-table-height) - 1px);
-  padding: 38px 18px !important;
-  color: #64748b;
-  text-align: center;
-  vertical-align: middle !important;
-}
-
-.course-interest-report-table__skeleton-row td {
-  background: #ffffff;
-}
-
-.course-interest-report-table__filler-row td {
-  padding: 0 !important;
-  border-bottom: 0 !important;
-  background: transparent !important;
 }
 
 .course-interest-report__course-cell {
@@ -541,10 +448,6 @@ watch(
 @media (max-width: 900px) {
   .course-interest-report__search {
     width: 100%;
-  }
-
-  .course-interest-report-table__empty {
-    height: calc(var(--course-interest-report-table-height) - 1px);
   }
 }
 </style>
