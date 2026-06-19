@@ -108,188 +108,120 @@
         {{ error }}
       </q-banner>
 
-      <div
-        :class="[
-          'courses-manager__table-wrap',
-          { 'courses-manager__table-wrap--loading': isLoading && items.length > 0 },
-        ]"
+      <BaseTable
+        :columns="tableColumns"
+        :rows="items"
+        row-key="courseId"
+        :loading="isLoading"
+        :rows-per-page="rowsPerPage"
+        :row-height="72"
+        :header-height="57"
+        min-width="1100px"
+        show-index
+        :index-offset="(pagination.page - 1) * pagination.pageSize"
+        :page="pagination.page"
+        :total-pages="pagination.totalPages"
+        :on-page-change="load"
+        :empty-text="
+          hasActiveFilters ? 'ไม่พบรายวิชาที่ตรงกับเงื่อนไขการค้นหา' : 'ยังไม่มีรายวิชาในระบบ'
+        "
       >
-        <table class="courses-manager-table">
-          <colgroup>
-            <col class="courses-manager-table__col-index" />
-            <col class="courses-manager-table__col-faculty" />
-            <col class="courses-manager-table__col-name" />
-            <col class="courses-manager-table__col-duration" />
-            <col class="courses-manager-table__col-responsible" />
-            <col class="courses-manager-table__col-type" />
-            <col class="courses-manager-table__col-copy" />
-            <col class="courses-manager-table__col-actions" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="courses-manager-table__index">ลำดับ</th>
-              <th>คณะ/ส่วนงาน</th>
-              <th>ชื่อรายวิชา</th>
-              <th>ระยะเวลาที่อนุมัติให้หลักสูตรดำเนินการได้</th>
-              <th>ผู้รับผิดชอบรายวิชา</th>
-              <th class="text-center">ประเภท</th>
-              <th class="text-center">คัดลอก</th>
-              <th class="text-center">ดำเนินการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="isLoading && items.length === 0">
-              <tr
-                v-for="n in rowsPerPage"
-                :key="`sk-${n}`"
-                class="courses-manager-table__skeleton-row"
-              >
-                <td class="courses-manager-table__index">
-                  <q-skeleton type="text" width="24px" class="q-mx-auto" />
-                </td>
-                <td><q-skeleton type="text" width="80%" /></td>
-                <td>
-                  <q-skeleton type="text" width="90%" />
-                  <q-skeleton type="text" width="60%" class="q-mt-xs" />
-                </td>
-                <td><q-skeleton type="text" width="76%" /></td>
-                <td><q-skeleton type="text" width="70%" /></td>
-                <td class="text-center">
-                  <q-skeleton type="QChip" width="72px" class="q-mx-auto" />
-                </td>
-                <td class="text-center">
-                  <q-skeleton type="QBtn" width="34px" height="34px" class="q-mx-auto" />
-                </td>
-                <td class="text-center">
-                  <div class="courses-manager-table__actions-cell">
-                    <q-skeleton type="QBtn" width="34px" height="34px" />
-                    <q-skeleton type="QBtn" width="34px" height="34px" />
-                    <q-skeleton type="QBtn" width="34px" height="34px" />
-                  </div>
-                </td>
-              </tr>
-            </template>
+        <template #cell-faculty="{ row }">
+          <span class="courses-cell__faculty">{{ row.facultyName }}</span>
+        </template>
 
-            <template v-else-if="items.length > 0 || isLoading">
-              <tr
-                v-for="(item, index) in items"
-                :key="item.courseId"
-                class="courses-manager-table__row"
-              >
-                <td class="courses-manager-table__index">
-                  {{ (pagination.page - 1) * pagination.pageSize + index + 1 }}
-                </td>
-                <td>
-                  <span class="courses-manager-table__faculty">{{ item.facultyName }}</span>
-                </td>
-                <td>
-                  <div class="courses-manager-table__name-cell">
-                    <span class="courses-manager-table__title">{{ item.titleTh ?? '-' }}</span>
-                    <span v-if="item.courseCode" class="courses-manager-table__code">
-                      {{ item.courseCode }}
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <span class="courses-manager-table__duration">
-                    {{ formatDateRange(item.startDate, item.endDate) }}
-                  </span>
-                </td>
-                <td>
-                  <span class="courses-manager-table__responsible">
-                    {{ item.responsibleName ?? '-' }}
-                  </span>
-                </td>
-                <td class="text-center">
-                  <q-badge
-                    rounded
-                    :color="getTypeColor(item.typeCourseId)"
-                    :label="item.typeCourseName"
-                    class="courses-manager-table__type-badge"
-                  />
-                </td>
-                <td class="text-center">
-                  <AppIconButton
-                    icon="content_copy"
-                    size="sm"
-                    tone="copy"
-                    class="courses-manager-action-btn courses-manager-action-btn--copy"
-                    aria-label="คัดลอก"
-                    tag="a"
-                    :href="resolveFullUrl(`/admin/courses/${item.courseId}/copy`)"
-                    @click="navClick(`/admin/courses/${item.courseId}/copy`, $event)"
-                  >
-                    <q-tooltip>คัดลอก</q-tooltip>
-                  </AppIconButton>
-                </td>
-                <td class="text-center">
-                  <div class="courses-manager-table__actions-cell">
-                    <AppIconButton
-                      icon="visibility"
-                      size="sm"
-                      tone="view"
-                      class="courses-manager-action-btn courses-manager-action-btn--view"
-                      aria-label="ดูรายละเอียด"
-                      tag="a"
-                      :href="resolveFullUrl(`/admin/courses/${item.courseId}`)"
-                      @click="navClick(`/admin/courses/${item.courseId}`, $event)"
-                    >
-                      <q-tooltip>ดูรายละเอียด</q-tooltip>
-                    </AppIconButton>
-                    <AppIconButton
-                      icon="edit"
-                      size="sm"
-                      tone="edit"
-                      class="courses-manager-action-btn courses-manager-action-btn--edit"
-                      aria-label="แก้ไข"
-                      tag="a"
-                      :href="resolveFullUrl(`/admin/courses/${item.courseId}/edit`)"
-                      @click="navClick(`/admin/courses/${item.courseId}/edit`, $event)"
-                    >
-                      <q-tooltip>แก้ไข</q-tooltip>
-                    </AppIconButton>
-                    <AppIconButton
-                      icon="delete"
-                      size="sm"
-                      tone="delete"
-                      class="courses-manager-action-btn courses-manager-action-btn--delete"
-                      aria-label="ลบ"
-                      @click="askDelete(item)"
-                    >
-                      <q-tooltip>ลบ</q-tooltip>
-                    </AppIconButton>
-                  </div>
-                </td>
-              </tr>
+        <template #cell-name="{ row }">
+          <div class="courses-cell__name">
+            <span class="courses-cell__title">{{ row.titleTh ?? '-' }}</span>
+            <span v-if="row.courseCode" class="courses-cell__code">{{ row.courseCode }}</span>
+          </div>
+        </template>
+        <template #skeleton-name>
+          <q-skeleton type="text" width="90%" />
+          <q-skeleton type="text" width="60%" class="q-mt-xs" />
+        </template>
 
-              <tr v-if="fillerRowHeight > 0" class="courses-manager-table__filler-row">
-                <td colspan="8" :style="{ height: `${fillerRowHeight}px` }" />
-              </tr>
-            </template>
+        <template #cell-duration="{ row }">
+          <span class="courses-cell__duration">
+            {{ formatDateRange(row.startDate, row.endDate) }}
+          </span>
+        </template>
 
-            <tr v-else>
-              <td colspan="8" class="courses-manager-table__empty">
-                {{
-                  hasActiveFilters
-                    ? 'ไม่พบรายวิชาที่ตรงกับเงื่อนไขการค้นหา'
-                    : 'ยังไม่มีรายวิชาในระบบ'
-                }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <template #cell-responsible="{ row }">
+          <span class="courses-cell__responsible">{{ row.responsibleName ?? '-' }}</span>
+        </template>
 
-      <div v-if="pagination.totalPages > 1" ref="paginationRef" class="courses-manager__pagination">
-        <BasePagination
-          :model-value="currentPage"
-          :max="pagination.totalPages"
-          :max-pages="7"
-          :disable="isLoading"
-          gutter="md"
-          @update:model-value="handlePageChange"
-        />
-      </div>
+        <template #cell-type="{ row }">
+          <BaseStatusBadge :color="getTypeColor(row.typeCourseId)" :label="row.typeCourseName" />
+        </template>
+        <template #skeleton-type>
+          <q-skeleton type="QChip" width="72px" class="q-mx-auto" />
+        </template>
+
+        <template #cell-copy="{ row }">
+          <AppIconButton
+            icon="content_copy"
+            size="sm"
+            tone="copy"
+            class="courses-action-btn courses-action-btn--copy"
+            aria-label="คัดลอก"
+            tag="a"
+            :href="resolveFullUrl(`/admin/courses/${row.courseId}/copy`)"
+            @click="navClick(`/admin/courses/${row.courseId}/copy`, $event)"
+          >
+            <q-tooltip>คัดลอก</q-tooltip>
+          </AppIconButton>
+        </template>
+        <template #skeleton-copy>
+          <q-skeleton type="QBtn" width="34px" height="34px" class="q-mx-auto" />
+        </template>
+
+        <template #cell-actions="{ row }">
+          <div class="courses-cell__actions">
+            <AppIconButton
+              icon="visibility"
+              size="sm"
+              tone="view"
+              class="courses-action-btn courses-action-btn--view"
+              aria-label="ดูรายละเอียด"
+              tag="a"
+              :href="resolveFullUrl(`/admin/courses/${row.courseId}`)"
+              @click="navClick(`/admin/courses/${row.courseId}`, $event)"
+            >
+              <q-tooltip>ดูรายละเอียด</q-tooltip>
+            </AppIconButton>
+            <AppIconButton
+              icon="edit"
+              size="sm"
+              tone="edit"
+              class="courses-action-btn courses-action-btn--edit"
+              aria-label="แก้ไข"
+              tag="a"
+              :href="resolveFullUrl(`/admin/courses/${row.courseId}/edit`)"
+              @click="navClick(`/admin/courses/${row.courseId}/edit`, $event)"
+            >
+              <q-tooltip>แก้ไข</q-tooltip>
+            </AppIconButton>
+            <AppIconButton
+              icon="delete"
+              size="sm"
+              tone="delete"
+              class="courses-action-btn courses-action-btn--delete"
+              aria-label="ลบ"
+              @click="askDelete(row)"
+            >
+              <q-tooltip>ลบ</q-tooltip>
+            </AppIconButton>
+          </div>
+        </template>
+        <template #skeleton-actions>
+          <div class="courses-cell__actions">
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+          </div>
+        </template>
+      </BaseTable>
     </AppSurfaceCard>
 
     <AppConfirmDialog
@@ -307,7 +239,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import AppIconButton from 'components/common/AppIconButton.vue';
@@ -317,7 +249,8 @@ import AppSearchInput from 'components/common/AppSearchInput.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInput from 'components/base/BaseInput.vue';
 import BaseSelect from 'components/base/BaseSelect.vue';
-import BasePagination from 'components/base/BasePagination.vue';
+import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
+import BaseStatusBadge from 'components/base/BaseStatusBadge.vue';
 import { useAdminCourses } from 'src/composables/use-admin-courses';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import type { AdminCourseItem } from 'src/types/admin-courses';
@@ -337,30 +270,21 @@ const feeTypeOptions = [
   { label: 'ฟรี', value: 'free' },
   { label: 'เสียเงิน', value: 'paid' },
 ];
-const currentPage = ref(1);
-const paginationRef = ref<HTMLElement | null>(null);
 const confirmDeleteOpen = ref(false);
 const pendingDeleteId = ref<number | null>(null);
 const pendingDeleteTitle = ref<string>('');
 
 const rowsPerPage = 10;
-const tableRowHeight = 72;
-const tableHeaderHeight = 57;
 
-const fillerRowHeight = computed(() =>
-  Math.max(0, (rowsPerPage - items.value.length) * tableRowHeight),
-);
-
-async function preservePaginationPosition(update: () => Promise<void> | void): Promise<void> {
-  const anchorTop =
-    typeof window !== 'undefined' ? paginationRef.value?.getBoundingClientRect().top : undefined;
-  await update();
-  await nextTick();
-  if (typeof window === 'undefined' || anchorTop === undefined || !paginationRef.value) return;
-  const nextTop = paginationRef.value.getBoundingClientRect().top;
-  if (Math.abs(nextTop - anchorTop) < 1) return;
-  window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
-}
+const tableColumns: BaseTableColumn[] = [
+  { key: 'faculty', label: 'คณะ/ส่วนงาน', width: '180px' },
+  { key: 'name', label: 'ชื่อรายวิชา', width: 'auto' },
+  { key: 'duration', label: 'ระยะเวลาที่อนุมัติให้หลักสูตรดำเนินการได้', width: '190px' },
+  { key: 'responsible', label: 'ผู้รับผิดชอบรายวิชา', width: '160px' },
+  { key: 'type', label: 'ประเภท', align: 'center', width: '130px' },
+  { key: 'copy', label: 'คัดลอก', align: 'center', width: '80px' },
+  { key: 'actions', label: 'ดำเนินการ', align: 'center', width: '130px' },
+];
 
 const hasActiveFilters = computed(
   () =>
@@ -377,8 +301,6 @@ const deleteMessage = computed(() =>
     : 'ต้องการลบรายวิชานี้ใช่หรือไม่',
 );
 
-const tableViewportHeight = `${rowsPerPage * tableRowHeight + tableHeaderHeight}px`;
-
 onMounted(() => {
   void load();
 });
@@ -394,7 +316,6 @@ async function load(page = 1): Promise<void> {
       feeType: filterFeeType.value,
       search: globalSearch.value || null,
     });
-    currentPage.value = pagination.value.page;
   } catch {
     $q.notify({ type: 'negative', message: 'ไม่สามารถโหลดข้อมูลรายวิชาได้', position: 'top' });
   }
@@ -420,14 +341,6 @@ async function onSearchChange(): Promise<void> {
 function clearSearch(): void {
   globalSearch.value = '';
   void load(1);
-}
-
-async function handlePageChange(page: number): Promise<void> {
-  if (page === currentPage.value && page === pagination.value.page) return;
-  await preservePaginationPosition(async () => {
-    currentPage.value = page;
-    await load(page);
-  });
 }
 
 function navClick(path: string, event: Event): void {
@@ -481,11 +394,6 @@ function getTypeColor(typeCourseId: number): string {
 </script>
 
 <style lang="scss" scoped>
-.courses-manager {
-  --courses-manager-row-height: v-bind('`${tableRowHeight}px`');
-  --courses-manager-table-height: v-bind('tableViewportHeight');
-}
-
 .courses-manager__add-btn {
   border-radius: 10px;
   font-weight: 700;
@@ -576,109 +484,7 @@ function getTypeColor(typeCourseId: number): string {
   box-shadow: 0 10px 22px rgba($primary, 0.2);
 }
 
-.courses-manager__table-wrap {
-  overflow-x: auto;
-  min-height: var(--courses-manager-table-height);
-  position: relative;
-}
-
-.courses-manager__table-wrap--loading tbody {
-  opacity: 0.45;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
-
-.courses-manager-table {
-  width: 100%;
-  min-width: 1100px;
-  border-collapse: collapse;
-
-  th,
-  td {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--admin-line);
-    vertical-align: middle;
-  }
-
-  thead th {
-    background: #f8fafc;
-    color: #475467;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  tbody tr.courses-manager-table__skeleton-row:hover,
-  tbody tr.courses-manager-table__filler-row:hover {
-    background: transparent;
-  }
-
-  tbody td {
-    height: var(--courses-manager-row-height);
-  }
-}
-
-.courses-manager-table__col-index {
-  width: 64px;
-}
-.courses-manager-table__col-faculty {
-  width: 180px;
-}
-.courses-manager-table__col-name {
-  width: auto;
-}
-.courses-manager-table__col-duration {
-  width: 190px;
-}
-.courses-manager-table__col-responsible {
-  width: 160px;
-}
-.courses-manager-table__col-type {
-  width: 130px;
-}
-.courses-manager-table__col-copy {
-  width: 80px;
-}
-.courses-manager-table__col-actions {
-  width: 130px;
-}
-
-.courses-manager-table__index {
-  color: #1d4ed8;
-  font-weight: 800;
-  text-align: center;
-  width: 64px;
-}
-
-.courses-manager-table__row {
-  background: #ffffff;
-
-  &:hover {
-    background: rgba(37, 99, 235, 0.03);
-  }
-}
-
-.courses-manager-table__skeleton-row td {
-  background: #ffffff;
-}
-
-.courses-manager-table__filler-row td {
-  padding: 0 !important;
-  border-bottom: 0 !important;
-  background: transparent !important;
-}
-
-.courses-manager-table__empty {
-  height: calc(var(--courses-manager-table-height) - 1px) !important;
-  padding: 38px 18px !important;
-  color: #64748b;
-  text-align: center;
-  vertical-align: middle !important;
-}
-
-.courses-manager-table__faculty {
+.courses-cell__faculty {
   display: -webkit-box;
   overflow: hidden;
   color: var(--admin-muted);
@@ -689,13 +495,13 @@ function getTypeColor(typeCourseId: number): string {
   line-clamp: 2;
 }
 
-.courses-manager-table__name-cell {
+.courses-cell__name {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-.courses-manager-table__title {
+.courses-cell__title {
   display: -webkit-box;
   overflow: hidden;
   color: var(--admin-navy);
@@ -708,20 +514,20 @@ function getTypeColor(typeCourseId: number): string {
   line-clamp: 2;
 }
 
-.courses-manager-table__code {
+.courses-cell__code {
   color: var(--admin-muted);
   font-size: 0.75rem;
   font-weight: 700;
 }
 
-.courses-manager-table__duration {
+.courses-cell__duration {
   color: var(--admin-ink);
   font-size: 0.82rem;
   font-weight: 700;
   white-space: nowrap;
 }
 
-.courses-manager-table__responsible {
+.courses-cell__responsible {
   display: -webkit-box;
   overflow: hidden;
   color: var(--admin-ink);
@@ -732,27 +538,14 @@ function getTypeColor(typeCourseId: number): string {
   line-clamp: 2;
 }
 
-.courses-manager-table__type-badge {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 4px 10px;
-}
-
-.courses-manager-table__actions-cell {
+.courses-cell__actions {
   display: inline-flex;
   gap: 6px;
   align-items: center;
   justify-content: center;
 }
 
-.courses-manager__pagination {
-  display: flex;
-  justify-content: center;
-  min-height: 72px;
-  padding: 22px 24px 24px;
-}
-
-.courses-manager-action-btn {
+.courses-action-btn {
   --action-color: var(--admin-info-ink);
   --action-border: rgba(16, 35, 63, 0.12);
   --action-ring: rgba(16, 35, 63, 0.08);
@@ -779,25 +572,25 @@ function getTypeColor(typeCourseId: number): string {
   }
 }
 
-.courses-manager-action-btn--copy {
+.courses-action-btn--copy {
   --action-color: #0f766e;
   --action-border: rgba(20, 184, 166, 0.28);
   --action-ring: rgba(20, 184, 166, 0.12);
 }
 
-.courses-manager-action-btn--view {
+.courses-action-btn--view {
   --action-color: #1d4ed8;
   --action-border: rgba(37, 99, 235, 0.22);
   --action-ring: rgba(37, 99, 235, 0.1);
 }
 
-.courses-manager-action-btn--edit {
+.courses-action-btn--edit {
   --action-color: var(--admin-gold);
   --action-border: rgba(245, 166, 35, 0.28);
   --action-ring: rgba(245, 166, 35, 0.1);
 }
 
-.courses-manager-action-btn--delete {
+.courses-action-btn--delete {
   --action-color: var(--admin-danger-ink);
   --action-border: rgba(225, 29, 72, 0.18);
   --action-ring: rgba(225, 29, 72, 0.08);

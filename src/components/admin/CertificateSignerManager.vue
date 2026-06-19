@@ -30,151 +30,97 @@
         {{ error }}
       </q-banner>
 
-      <div
-        :class="[
-          'signer-manager__table-wrap',
-          { 'signer-manager__table-wrap--loading': isLoading && items.length > 0 },
-        ]"
+      <BaseTable
+        :columns="tableColumns"
+        :rows="items"
+        row-key="id"
+        :loading="isLoading"
+        :rows-per-page="rowsPerPage"
+        :row-height="96"
+        :header-height="57"
+        min-width="780px"
+        show-index
+        :index-offset="(pagination.page - 1) * pagination.pageSize"
+        :page="pagination.page"
+        :total-pages="pagination.totalPages"
+        :on-page-change="load"
+        :empty-text="
+          globalSearch ? 'ไม่พบผู้เซ็นที่ตรงกับการค้นหา' : 'ยังไม่มีผู้เซ็น Certificate ในระบบ'
+        "
       >
-        <table class="signer-manager-table">
-          <colgroup>
-            <col class="signer-manager-table__col-index" />
-            <col class="signer-manager-table__col-name" />
-            <col class="signer-manager-table__col-position" />
-            <col class="signer-manager-table__col-status" />
-            <col class="signer-manager-table__col-preview" />
-            <col class="signer-manager-table__col-actions" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="signer-manager-table__index">ลำดับ</th>
-              <th>ชื่อผู้เซ็น</th>
-              <th>ตำแหน่ง</th>
-              <th class="text-center">สถานะ</th>
-              <th class="text-center">ลายเซ็น</th>
-              <th class="text-center">ดำเนินการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="isLoading && items.length === 0">
-              <tr
-                v-for="n in rowsPerPage"
-                :key="`sk-${n}`"
-                class="signer-manager-table__skeleton-row"
-              >
-                <td class="signer-manager-table__index">
-                  <q-skeleton type="text" width="24px" class="q-mx-auto" />
-                </td>
-                <td><q-skeleton type="text" width="70%" /></td>
-                <td><q-skeleton type="text" width="60%" /></td>
-                <td class="text-center">
-                  <q-skeleton type="QChip" width="60px" class="q-mx-auto" />
-                </td>
-                <td class="text-center">
-                  <q-skeleton
-                    type="rect"
-                    width="100px"
-                    height="60px"
-                    class="q-mx-auto signer-manager-table__thumb-skeleton"
-                  />
-                </td>
-                <td class="text-center">
-                  <div class="signer-manager-table__actions-cell">
-                    <q-skeleton type="QBtn" width="34px" height="34px" />
-                    <q-skeleton type="QBtn" width="34px" height="34px" />
-                  </div>
-                </td>
-              </tr>
-            </template>
+        <template #cell-name="{ row }">
+          <span class="signer-cell__name">{{ row.name }}</span>
+        </template>
 
-            <template v-else-if="items.length > 0 || isLoading">
-              <tr v-for="(item, index) in items" :key="item.id" class="signer-manager-table__row">
-                <td class="signer-manager-table__index">
-                  {{ (pagination.page - 1) * pagination.pageSize + index + 1 }}
-                </td>
-                <td>
-                  <span class="signer-manager-table__name">{{ item.name }}</span>
-                </td>
-                <td>
-                  <span class="signer-manager-table__position">{{ item.position }}</span>
-                </td>
-                <td class="text-center">
-                  <q-badge
-                    rounded
-                    :color="item.status === 'Y' ? 'positive' : 'grey-5'"
-                    :label="item.status === 'Y' ? 'เปิด' : 'ปิด'"
-                    class="signer-manager-table__status-badge"
-                  />
-                </td>
-                <td class="text-center">
-                  <div v-if="item.url" class="signer-manager-table__thumb-wrap">
-                    <img
-                      :src="item.url"
-                      :alt="item.name"
-                      class="signer-manager-table__thumb"
-                      width="100"
-                      height="60"
-                      loading="lazy"
-                      decoding="async"
-                      @click="openPreview(item)"
-                    />
-                  </div>
-                  <span v-else class="signer-manager-table__no-file">-</span>
-                </td>
-                <td class="text-center">
-                  <div class="signer-manager-table__actions-cell">
-                    <AppIconButton
-                      icon="edit"
-                      size="sm"
-                      tone="edit"
-                      class="signer-manager-action-btn signer-manager-action-btn--edit"
-                      aria-label="แก้ไข"
-                      @click="openEditDialog(item)"
-                    >
-                      <q-tooltip>แก้ไข</q-tooltip>
-                    </AppIconButton>
-                    <AppIconButton
-                      icon="delete"
-                      size="sm"
-                      tone="delete"
-                      class="signer-manager-action-btn signer-manager-action-btn--delete"
-                      aria-label="ลบ"
-                      @click="askDelete(item)"
-                    >
-                      <q-tooltip>ลบ</q-tooltip>
-                    </AppIconButton>
-                  </div>
-                </td>
-              </tr>
+        <template #cell-position="{ row }">
+          <span class="signer-cell__position">{{ row.position }}</span>
+        </template>
 
-              <tr v-if="fillerRowHeight > 0" class="signer-manager-table__filler-row">
-                <td colspan="6" :style="{ height: `${fillerRowHeight}px` }" />
-              </tr>
-            </template>
+        <template #cell-status="{ row }">
+          <BaseStatusBadge :active="row.status === 'Y'" />
+        </template>
 
-            <tr v-else>
-              <td colspan="6" class="signer-manager-table__empty">
-                {{
-                  globalSearch
-                    ? 'ไม่พบผู้เซ็นที่ตรงกับการค้นหา'
-                    : 'ยังไม่มีผู้เซ็น Certificate ในระบบ'
-                }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <template #skeleton-status>
+          <q-skeleton type="QChip" width="60px" class="q-mx-auto" />
+        </template>
 
-      <div v-if="pagination.totalPages > 1" ref="paginationRef" class="signer-manager__pagination">
-        <BasePagination
-          :model-value="currentPage"
-          :max="pagination.totalPages"
-          :max-pages="7"
-          :disable="isLoading"
-          gutter="md"
-          @update:model-value="handlePageChange"
-        />
-      </div>
+        <template #cell-preview="{ row }">
+          <div v-if="row.url" class="signer-cell__thumb-wrap">
+            <img
+              :src="row.url"
+              :alt="row.name"
+              class="signer-cell__thumb"
+              width="100"
+              height="60"
+              loading="lazy"
+              decoding="async"
+              @click="openPreview(row)"
+            />
+          </div>
+          <span v-else class="signer-cell__no-file">-</span>
+        </template>
+
+        <template #skeleton-preview>
+          <q-skeleton
+            type="rect"
+            width="100px"
+            height="60px"
+            class="q-mx-auto signer-cell__thumb"
+          />
+        </template>
+
+        <template #cell-actions="{ row }">
+          <div class="signer-cell__actions">
+            <AppIconButton
+              icon="edit"
+              size="sm"
+              tone="edit"
+              class="signer-action-btn signer-action-btn--edit"
+              aria-label="แก้ไข"
+              @click="openEditDialog(row)"
+            >
+              <q-tooltip>แก้ไข</q-tooltip>
+            </AppIconButton>
+            <AppIconButton
+              icon="delete"
+              size="sm"
+              tone="delete"
+              class="signer-action-btn signer-action-btn--delete"
+              aria-label="ลบ"
+              @click="askDelete(row)"
+            >
+              <q-tooltip>ลบ</q-tooltip>
+            </AppIconButton>
+          </div>
+        </template>
+
+        <template #skeleton-actions>
+          <div class="signer-cell__actions">
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+          </div>
+        </template>
+      </BaseTable>
     </AppSurfaceCard>
 
     <!-- Add / Edit Dialog -->
@@ -366,7 +312,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import AppIconButton from 'components/common/AppIconButton.vue';
 import AppDialog from 'components/common/AppDialog.vue';
@@ -375,7 +321,8 @@ import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInput from 'components/base/BaseInput.vue';
-import BasePagination from 'components/base/BasePagination.vue';
+import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
+import BaseStatusBadge from 'components/base/BaseStatusBadge.vue';
 import BaseToggle from 'components/base/BaseToggle.vue';
 import { useAdminCertSigners } from 'src/composables/use-admin-cert-signers';
 import type { AdminCertSignerItem } from 'src/types/admin-cert-signers';
@@ -385,17 +332,16 @@ const { items, pagination, isLoading, error, fetchData, createSigner, updateSign
   useAdminCertSigners();
 
 const globalSearch = ref('');
-const currentPage = ref(1);
-const paginationRef = ref<HTMLElement | null>(null);
 
 const rowsPerPage = 10;
-const tableRowHeight = 96;
-const tableHeaderHeight = 57;
-const tableViewportHeight = `${rowsPerPage * tableRowHeight + tableHeaderHeight}px`;
 
-const fillerRowHeight = computed(() =>
-  Math.max(0, (rowsPerPage - items.value.length) * tableRowHeight),
-);
+const tableColumns: BaseTableColumn[] = [
+  { key: 'name', label: 'ชื่อผู้เซ็น', width: 'auto' },
+  { key: 'position', label: 'ตำแหน่ง', width: '200px' },
+  { key: 'status', label: 'สถานะ', align: 'center', width: '90px' },
+  { key: 'preview', label: 'ลายเซ็น', align: 'center', width: '160px' },
+  { key: 'actions', label: 'ดำเนินการ', align: 'center', width: '110px' },
+];
 
 // ——— Dialog state ———
 const dialogOpen = ref(false);
@@ -434,17 +380,6 @@ const confirmDeleteOpen = ref(false);
 const pendingDeleteId = ref<number | null>(null);
 const pendingDeleteName = ref('');
 
-async function preservePaginationPosition(update: () => Promise<void> | void): Promise<void> {
-  const anchorTop =
-    typeof window !== 'undefined' ? paginationRef.value?.getBoundingClientRect().top : undefined;
-  await update();
-  await nextTick();
-  if (typeof window === 'undefined' || anchorTop === undefined || !paginationRef.value) return;
-  const nextTop = paginationRef.value.getBoundingClientRect().top;
-  if (Math.abs(nextTop - anchorTop) < 1) return;
-  window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
-}
-
 onMounted(() => {
   void load();
 });
@@ -452,7 +387,6 @@ onMounted(() => {
 async function load(page = 1): Promise<void> {
   try {
     await fetchData({ page, pageSize: rowsPerPage, search: globalSearch.value || null });
-    currentPage.value = pagination.value.page;
   } catch {
     $q.notify({ type: 'negative', message: 'ไม่สามารถโหลดข้อมูลได้', position: 'top' });
   }
@@ -465,14 +399,6 @@ async function onSearchChange(): Promise<void> {
 function clearSearch(): void {
   globalSearch.value = '';
   void load(1);
-}
-
-async function handlePageChange(page: number): Promise<void> {
-  if (page === currentPage.value && page === pagination.value.page) return;
-  await preservePaginationPosition(async () => {
-    currentPage.value = page;
-    await load(page);
-  });
 }
 
 function openAddDialog(): void {
@@ -618,7 +544,7 @@ async function saveDialog(): Promise<void> {
     }
 
     closeDialog();
-    await load(currentPage.value);
+    await load(pagination.value.page);
   } catch {
     $q.notify({ type: 'negative', message: 'บันทึกไม่สำเร็จ กรุณาลองใหม่', position: 'top' });
   } finally {
@@ -660,11 +586,6 @@ function formatFileSize(bytes: number): string {
 </script>
 
 <style lang="scss" scoped>
-.signer-manager {
-  --signer-manager-row-height: v-bind('`${tableRowHeight}px`');
-  --signer-manager-table-height: v-bind('tableViewportHeight');
-}
-
 .signer-manager__add-btn {
   min-width: 210px;
   border-radius: 10px;
@@ -681,100 +602,7 @@ function formatFileSize(bytes: number): string {
   width: min(380px, 100%);
 }
 
-.signer-manager__table-wrap {
-  overflow-x: auto;
-  min-height: var(--signer-manager-table-height);
-}
-
-.signer-manager__table-wrap--loading tbody {
-  opacity: 0.45;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
-
-.signer-manager-table {
-  width: 100%;
-  min-width: 780px;
-  border-collapse: collapse;
-
-  th,
-  td {
-    padding: 14px 16px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-    vertical-align: middle;
-  }
-
-  thead th {
-    background: #f8fafc;
-    color: #475467;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  tbody tr.signer-manager-table__skeleton-row:hover,
-  tbody tr.signer-manager-table__filler-row:hover {
-    background: transparent;
-  }
-
-  tbody td {
-    height: var(--signer-manager-row-height);
-  }
-}
-
-.signer-manager-table__col-index {
-  width: 64px;
-}
-.signer-manager-table__col-name {
-  width: auto;
-}
-.signer-manager-table__col-position {
-  width: 200px;
-}
-.signer-manager-table__col-status {
-  width: 90px;
-}
-.signer-manager-table__col-preview {
-  width: 160px;
-}
-.signer-manager-table__col-actions {
-  width: 110px;
-}
-
-.signer-manager-table__index {
-  color: #1d4ed8;
-  font-weight: 800;
-  text-align: center;
-}
-
-.signer-manager-table__row {
-  background: #ffffff;
-  &:hover {
-    background: rgba(37, 99, 235, 0.03);
-  }
-}
-
-.signer-manager-table__skeleton-row td {
-  background: #ffffff;
-}
-
-.signer-manager-table__filler-row td {
-  padding: 0 !important;
-  border-bottom: 0 !important;
-  background: transparent !important;
-}
-
-.signer-manager-table__empty {
-  height: calc(var(--signer-manager-table-height) - 1px) !important;
-  padding: 38px 18px !important;
-  color: #64748b;
-  text-align: center;
-  vertical-align: middle !important;
-}
-
-.signer-manager-table__name {
+.signer-cell__name {
   display: -webkit-box;
   overflow: hidden;
   color: var(--admin-navy);
@@ -788,18 +616,12 @@ function formatFileSize(bytes: number): string {
   line-clamp: 2;
 }
 
-.signer-manager-table__position {
+.signer-cell__position {
   color: #475467;
   font-size: 0.85rem;
 }
 
-.signer-manager-table__status-badge {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 4px 10px;
-}
-
-.signer-manager-table__thumb-wrap {
+.signer-cell__thumb-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -808,7 +630,7 @@ function formatFileSize(bytes: number): string {
   margin: 0 auto;
 }
 
-.signer-manager-table__thumb {
+.signer-cell__thumb {
   width: 100%;
   height: 100%;
   border-radius: 6px;
@@ -822,30 +644,19 @@ function formatFileSize(bytes: number): string {
   }
 }
 
-.signer-manager-table__thumb-skeleton {
-  border-radius: 6px;
-}
-
-.signer-manager-table__no-file {
+.signer-cell__no-file {
   color: #94a3b8;
   font-size: 0.88rem;
 }
 
-.signer-manager-table__actions-cell {
+.signer-cell__actions {
   display: inline-flex;
   gap: 6px;
   align-items: center;
   justify-content: center;
 }
 
-.signer-manager__pagination {
-  display: flex;
-  justify-content: center;
-  min-height: 72px;
-  padding: 22px 24px 24px;
-}
-
-.signer-manager-action-btn {
+.signer-action-btn {
   --action-color: var(--admin-info-ink);
   --action-border: rgba(16, 35, 63, 0.12);
   --action-ring: rgba(16, 35, 63, 0.08);
@@ -872,13 +683,13 @@ function formatFileSize(bytes: number): string {
   }
 }
 
-.signer-manager-action-btn--edit {
+.signer-action-btn--edit {
   --action-color: var(--admin-gold);
   --action-border: rgba(245, 166, 35, 0.28);
   --action-ring: rgba(245, 166, 35, 0.1);
 }
 
-.signer-manager-action-btn--delete {
+.signer-action-btn--delete {
   --action-color: var(--admin-danger-ink);
   --action-border: rgba(225, 29, 72, 0.18);
   --action-ring: rgba(225, 29, 72, 0.08);

@@ -192,22 +192,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCourseInterestReport } from 'src/composables/use-admin-course-interest-report';
+import { useTablePagination } from 'src/composables/use-table-pagination';
 import { formatCount } from 'src/utils/course-format';
 
 const rowsPerPage = 10;
 const tableRowHeight = 76;
 const tableHeaderHeight = 57;
 const search = ref('');
-const currentPage = ref(1);
-const paginationRef = ref<HTMLElement | null>(null);
 
 const { items, summary, pagination, isLoading, error, fetchData } = useAdminCourseInterestReport();
+
+const { currentPage, paginationRef, handlePageChange } = useTablePagination({
+  onPageChange: (page) => loadReport(page),
+  isSamePage: (page) => page === pagination.value.page,
+});
 
 const stats = computed<
   {
@@ -246,36 +250,6 @@ function loadReport(page = 1): Promise<void> {
     page,
     pageSize: rowsPerPage,
     search: search.value,
-  });
-}
-
-async function preservePaginationPosition(update: () => Promise<void> | void): Promise<void> {
-  const anchorTop =
-    typeof window !== 'undefined' ? paginationRef.value?.getBoundingClientRect().top : undefined;
-
-  await update();
-  await nextTick();
-
-  if (typeof window === 'undefined' || anchorTop === undefined || !paginationRef.value) {
-    return;
-  }
-
-  const nextTop = paginationRef.value.getBoundingClientRect().top;
-  if (Math.abs(nextTop - anchorTop) < 1) {
-    return;
-  }
-
-  window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
-}
-
-async function handlePageChange(page: number): Promise<void> {
-  if (page === currentPage.value && page === pagination.value.page) {
-    return;
-  }
-
-  await preservePaginationPosition(async () => {
-    currentPage.value = page;
-    await loadReport(page);
   });
 }
 

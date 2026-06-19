@@ -35,297 +35,229 @@
         />
       </template>
 
-      <div class="categories-manager__table">
-        <table class="categories-manager-table">
-          <colgroup>
-            <col class="categories-manager-table__col-index" />
-            <col class="categories-manager-table__col-name" />
-            <col class="categories-manager-table__col-courses" />
-            <col class="categories-manager-table__col-trend" />
-            <col class="categories-manager-table__col-status" />
-            <col class="categories-manager-table__col-actions" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="categories-manager-table__index">ลำดับ</th>
-              <th>หมวด/หมู่วิชา</th>
-              <th class="text-right">รายวิชา</th>
-              <th>อัตราเปิดรับ</th>
-              <th class="text-center">สถานะ</th>
-              <th class="text-right">จัดการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="isLoading">
-              <tr
-                v-for="skeletonIndex in rowsPerPage"
-                :key="`skeleton-${skeletonIndex}`"
-                class="categories-manager-table__skeleton-row"
-              >
-                <td class="categories-manager-table__index">
-                  <q-skeleton type="text" width="28px" class="q-mx-auto" />
-                </td>
-                <td>
-                  <div class="category-cell">
-                    <q-skeleton type="QAvatar" size="36px" />
-                    <div class="category-cell__copy category-cell__copy--skeleton">
-                      <q-skeleton type="text" width="82%" />
-                      <q-skeleton type="text" width="44%" />
-                    </div>
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="category-cell__courses">
-                    <q-skeleton
-                      type="text"
-                      width="34px"
-                      class="categories-manager__metric-skeleton"
-                    />
-                    <q-skeleton
-                      type="text"
-                      width="74px"
-                      class="categories-manager__metric-skeleton"
-                    />
-                  </div>
-                </td>
-                <td>
-                  <div class="categories-manager__progress">
-                    <q-skeleton type="rect" height="7px" />
-                    <q-skeleton type="text" width="28px" />
-                  </div>
-                </td>
-                <td class="text-center">
-                  <div class="category-cell__status">
-                    <q-skeleton type="QToggle" width="42px" />
-                    <q-skeleton type="QChip" width="64px" />
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="category-cell__actions">
-                    <q-skeleton type="QBtn" width="82px" height="34px" />
-                    <q-skeleton type="QBtn" width="34px" height="34px" />
-                    <q-skeleton type="QBtn" width="34px" height="34px" />
-                  </div>
-                </td>
-              </tr>
-            </template>
+      <BaseTable
+        :columns="tableColumns"
+        :rows="paginatedRows"
+        row-key="key"
+        :row-class="rowVariant"
+        :loading="isLoading"
+        :rows-per-page="rowsPerPage"
+        :row-height="76"
+        :header-height="57"
+        min-width="960px"
+        :page="currentPage"
+        :total-pages="totalPages"
+        :on-page-change="goToPage"
+        :empty-text="search ? 'ไม่พบหมวด/หมู่ที่ตรงกับคำค้นหา' : 'ยังไม่มีหมวด/หมู่ในระบบ'"
+      >
+        <template #cell-index="{ row }">
+          <span class="categories-index">{{ row.displayIndex }}</span>
+        </template>
+        <template #skeleton-index>
+          <q-skeleton type="text" width="28px" class="q-mx-auto" />
+        </template>
 
-            <template v-else-if="paginatedRows.length > 0">
-              <tr
-                v-for="row in paginatedRows"
-                :key="row.key"
-                :class="
+        <template #cell-name="{ row }">
+          <div
+            :class="['category-cell', { 'category-cell--subcategory': row.kind === 'subcategory' }]"
+          >
+            <span
+              :class="[
+                'category-cell__icon',
+                row.kind === 'category'
+                  ? 'category-cell__icon--category'
+                  : 'category-cell__icon--subcategory',
+              ]"
+              :style="
+                row.kind === 'category' && row.category.color
+                  ? { background: `${row.category.color}1a`, color: row.category.color }
+                  : {}
+              "
+            >
+              <q-icon
+                :name="
                   row.kind === 'category'
-                    ? 'categories-manager-table__category-row'
-                    : 'categories-manager-table__subcategory-row'
+                    ? row.category.icon || 'category'
+                    : 'subdirectory_arrow_right'
                 "
+              />
+            </span>
+            <div class="category-cell__copy">
+              <span class="category-cell__name">
+                {{
+                  row.kind === 'category' ? row.category.name || '-' : row.subcategory.name || '-'
+                }}
+              </span>
+              <span v-if="row.kind === 'category'" class="category-cell__meta">
+                หมวด {{ row.displayIndex }} · {{ row.category.subcategories.length }} หมู่
+              </span>
+            </div>
+          </div>
+        </template>
+        <template #skeleton-name>
+          <div class="category-cell">
+            <q-skeleton type="QAvatar" size="36px" />
+            <div class="category-cell__copy category-cell__copy--skeleton">
+              <q-skeleton type="text" width="82%" />
+              <q-skeleton type="text" width="44%" />
+            </div>
+          </div>
+        </template>
+
+        <template #cell-courses="{ row }">
+          <div class="category-cell__courses">
+            <strong>{{
+              row.kind === 'category' ? row.category.courseCount : row.subcategory.courseCount
+            }}</strong>
+            <span>
+              เปิดรับ
+              {{
+                row.kind === 'category'
+                  ? `${row.category.activeCourseCount}/${row.category.courseCount}`
+                  : `${row.subcategory.activeCourseCount}/${row.subcategory.courseCount}`
+              }}
+            </span>
+          </div>
+        </template>
+        <template #skeleton-courses>
+          <div class="category-cell__courses">
+            <q-skeleton type="text" width="34px" class="categories-manager__metric-skeleton" />
+            <q-skeleton type="text" width="74px" class="categories-manager__metric-skeleton" />
+          </div>
+        </template>
+
+        <template #cell-trend="{ row }">
+          <div class="categories-manager__progress">
+            <q-linear-progress
+              rounded
+              size="7px"
+              :value="getTrendValue(row.kind === 'category' ? row.category : row.subcategory)"
+              :color="
+                (row.kind === 'category'
+                  ? row.category.activeCourseCount
+                  : row.subcategory.activeCourseCount) > 0
+                  ? 'primary'
+                  : 'grey-5'
+              "
+            />
+            <span>
+              {{
+                Math.round(
+                  getTrendValue(row.kind === 'category' ? row.category : row.subcategory) * 100,
+                )
+              }}%
+            </span>
+          </div>
+        </template>
+        <template #skeleton-trend>
+          <div class="categories-manager__progress">
+            <q-skeleton type="rect" height="7px" />
+            <q-skeleton type="text" width="28px" />
+          </div>
+        </template>
+
+        <template #cell-status="{ row }">
+          <div class="category-cell__status">
+            <BaseToggle
+              :model-value="
+                row.kind === 'category'
+                  ? row.category.activeFlag === 'Y'
+                  : row.subcategory.activeFlag === 'Y'
+              "
+              color="positive"
+              dense
+              @update:model-value="
+                (value) =>
+                  row.kind === 'category'
+                    ? toggleCategoryStatus(row.category, Boolean(value))
+                    : toggleSubcategoryStatus(row.subcategory, Boolean(value))
+              "
+            />
+            <BaseStatusBadge
+              :active="
+                (row.kind === 'category' ? row.category.activeFlag : row.subcategory.activeFlag) ===
+                'Y'
+              "
+              active-label="เผยแพร่"
+              inactive-label="ซ่อน"
+              active-color="positive"
+              inactive-color="grey-6"
+              class="category-cell__status-badge"
+            />
+          </div>
+        </template>
+        <template #skeleton-status>
+          <div class="category-cell__status">
+            <q-skeleton type="QToggle" width="42px" />
+            <q-skeleton type="QChip" width="64px" />
+          </div>
+        </template>
+
+        <template #cell-actions="{ row }">
+          <div class="category-cell__actions">
+            <template v-if="row.kind === 'category'">
+              <AppActionButton
+                variant="primary"
+                icon="add"
+                label="เพิ่มหมู่"
+                class="categories-manager__sub-add-btn"
+                @click="openCreateSubcategoryDialog(row.category)"
+              />
+              <AppIconButton
+                icon="edit"
+                size="sm"
+                tone="edit"
+                class="categories-manager-action-btn categories-manager-action-btn--edit"
+                aria-label="แก้ไขหมวด"
+                @click="openEditCategoryDialog(row.category)"
               >
-                <td class="categories-manager-table__index">
-                  {{ row.displayIndex }}
-                </td>
-                <td>
-                  <div
-                    :class="[
-                      'category-cell',
-                      { 'category-cell--subcategory': row.kind === 'subcategory' },
-                    ]"
-                  >
-                    <span
-                      :class="[
-                        'category-cell__icon',
-                        row.kind === 'category'
-                          ? 'category-cell__icon--category'
-                          : 'category-cell__icon--subcategory',
-                      ]"
-                      :style="
-                        row.kind === 'category' && row.category.color
-                          ? { background: `${row.category.color}1a`, color: row.category.color }
-                          : {}
-                      "
-                    >
-                      <q-icon
-                        :name="
-                          row.kind === 'category'
-                            ? row.category.icon || 'category'
-                            : 'subdirectory_arrow_right'
-                        "
-                      />
-                    </span>
-                    <div class="category-cell__copy">
-                      <span class="category-cell__name">
-                        {{
-                          row.kind === 'category'
-                            ? row.category.name || '-'
-                            : row.subcategory.name || '-'
-                        }}
-                      </span>
-                      <span v-if="row.kind === 'category'" class="category-cell__meta">
-                        หมวด {{ row.displayIndex }} · {{ row.category.subcategories.length }} หมู่
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="category-cell__courses">
-                    <strong>{{
-                      row.kind === 'category'
-                        ? row.category.courseCount
-                        : row.subcategory.courseCount
-                    }}</strong>
-                    <span>
-                      เปิดรับ
-                      {{
-                        row.kind === 'category'
-                          ? `${row.category.activeCourseCount}/${row.category.courseCount}`
-                          : `${row.subcategory.activeCourseCount}/${row.subcategory.courseCount}`
-                      }}
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <div class="categories-manager__progress">
-                    <q-linear-progress
-                      rounded
-                      size="7px"
-                      :value="
-                        getTrendValue(row.kind === 'category' ? row.category : row.subcategory)
-                      "
-                      :color="
-                        (row.kind === 'category'
-                          ? row.category.activeCourseCount
-                          : row.subcategory.activeCourseCount) > 0
-                          ? 'primary'
-                          : 'grey-5'
-                      "
-                    />
-                    <span>
-                      {{
-                        Math.round(
-                          getTrendValue(row.kind === 'category' ? row.category : row.subcategory) *
-                            100,
-                        )
-                      }}%
-                    </span>
-                  </div>
-                </td>
-                <td class="text-center">
-                  <div class="category-cell__status">
-                    <BaseToggle
-                      :model-value="
-                        row.kind === 'category'
-                          ? row.category.activeFlag === 'Y'
-                          : row.subcategory.activeFlag === 'Y'
-                      "
-                      color="positive"
-                      dense
-                      @update:model-value="
-                        (value) =>
-                          row.kind === 'category'
-                            ? toggleCategoryStatus(row.category, Boolean(value))
-                            : toggleSubcategoryStatus(row.subcategory, Boolean(value))
-                      "
-                    />
-                    <q-badge
-                      rounded
-                      :color="
-                        (row.kind === 'category'
-                          ? row.category.activeFlag
-                          : row.subcategory.activeFlag) === 'Y'
-                          ? 'positive'
-                          : 'grey-6'
-                      "
-                      :label="
-                        (row.kind === 'category'
-                          ? row.category.activeFlag
-                          : row.subcategory.activeFlag) === 'Y'
-                          ? 'เผยแพร่'
-                          : 'ซ่อน'
-                      "
-                      class="category-cell__status-badge"
-                    />
-                  </div>
-                </td>
-                <td class="text-right">
-                  <div class="category-cell__actions">
-                    <template v-if="row.kind === 'category'">
-                      <AppActionButton
-                        variant="primary"
-                        icon="add"
-                        label="เพิ่มหมู่"
-                        class="categories-manager__sub-add-btn"
-                        @click="openCreateSubcategoryDialog(row.category)"
-                      />
-                      <AppIconButton
-                        icon="edit"
-                        size="sm"
-                        tone="edit"
-                        class="categories-manager-action-btn categories-manager-action-btn--edit"
-                        aria-label="แก้ไขหมวด"
-                        @click="openEditCategoryDialog(row.category)"
-                      >
-                        <q-tooltip>แก้ไขหมวด</q-tooltip>
-                      </AppIconButton>
-                      <AppIconButton
-                        icon="delete"
-                        size="sm"
-                        tone="delete"
-                        class="categories-manager-action-btn categories-manager-action-btn--delete"
-                        :disable="!canDeleteCategory(row.category)"
-                        aria-label="ลบหมวด"
-                        @click="askDeleteCategory(row.category)"
-                      >
-                        <q-tooltip>ลบหมวด</q-tooltip>
-                      </AppIconButton>
-                    </template>
-                    <template v-else>
-                      <AppIconButton
-                        icon="edit"
-                        size="sm"
-                        tone="edit"
-                        class="categories-manager-action-btn categories-manager-action-btn--edit"
-                        aria-label="แก้ไขหมู่"
-                        @click="openEditSubcategoryDialog(row.subcategory)"
-                      >
-                        <q-tooltip>แก้ไขหมู่</q-tooltip>
-                      </AppIconButton>
-                      <AppIconButton
-                        icon="delete"
-                        size="sm"
-                        tone="delete"
-                        class="categories-manager-action-btn categories-manager-action-btn--delete"
-                        :disable="row.subcategory.courseCount > 0"
-                        aria-label="ลบหมู่"
-                        @click="askDeleteSubcategory(row.subcategory)"
-                      >
-                        <q-tooltip>ลบหมู่</q-tooltip>
-                      </AppIconButton>
-                    </template>
-                  </div>
-                </td>
-              </tr>
-
-              <tr v-if="fillerRowHeight > 0" class="categories-manager-table__filler-row">
-                <td colspan="6" :style="{ height: `${fillerRowHeight}px` }"></td>
-              </tr>
+                <q-tooltip>แก้ไขหมวด</q-tooltip>
+              </AppIconButton>
+              <AppIconButton
+                icon="delete"
+                size="sm"
+                tone="delete"
+                class="categories-manager-action-btn categories-manager-action-btn--delete"
+                :disable="!canDeleteCategory(row.category)"
+                aria-label="ลบหมวด"
+                @click="askDeleteCategory(row.category)"
+              >
+                <q-tooltip>ลบหมวด</q-tooltip>
+              </AppIconButton>
             </template>
-
-            <tr v-else>
-              <td colspan="6" class="categories-manager-table__empty">
-                {{ search ? 'ไม่พบหมวด/หมู่ที่ตรงกับคำค้นหา' : 'ยังไม่มีหมวด/หมู่ในระบบ' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div v-if="totalPages > 1" ref="paginationRef" class="categories-manager__pagination">
-        <BasePagination
-          :model-value="currentPage"
-          :max="totalPages"
-          :max-pages="7"
-          gutter="md"
-          @update:model-value="handlePageChange"
-        />
-      </div>
+            <template v-else>
+              <AppIconButton
+                icon="edit"
+                size="sm"
+                tone="edit"
+                class="categories-manager-action-btn categories-manager-action-btn--edit"
+                aria-label="แก้ไขหมู่"
+                @click="openEditSubcategoryDialog(row.subcategory)"
+              >
+                <q-tooltip>แก้ไขหมู่</q-tooltip>
+              </AppIconButton>
+              <AppIconButton
+                icon="delete"
+                size="sm"
+                tone="delete"
+                class="categories-manager-action-btn categories-manager-action-btn--delete"
+                :disable="row.subcategory.courseCount > 0"
+                aria-label="ลบหมู่"
+                @click="askDeleteSubcategory(row.subcategory)"
+              >
+                <q-tooltip>ลบหมู่</q-tooltip>
+              </AppIconButton>
+            </template>
+          </div>
+        </template>
+        <template #skeleton-actions>
+          <div class="category-cell__actions">
+            <q-skeleton type="QBtn" width="82px" height="34px" />
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+          </div>
+        </template>
+      </BaseTable>
     </AppSurfaceCard>
 
     <AppDialog
@@ -424,7 +356,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import type { QForm, ValidationRule } from 'quasar';
 import { useQuasar } from 'quasar';
 import AppIconButton from 'components/common/AppIconButton.vue';
@@ -435,7 +367,8 @@ import AppSearchInput from 'components/common/AppSearchInput.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BaseInput from 'components/base/BaseInput.vue';
-import BasePagination from 'components/base/BasePagination.vue';
+import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
+import BaseStatusBadge from 'components/base/BaseStatusBadge.vue';
 import BaseToggle from 'components/base/BaseToggle.vue';
 import { useAdminCourseTaxonomy } from 'src/composables/use-admin-course-taxonomy';
 import ColorPickerInput from 'src/components/common/ColorPickerInput.vue';
@@ -487,9 +420,6 @@ const formRef = ref<QForm | null>(null);
 const search = ref('');
 const currentPage = ref(1);
 const rowsPerPage = 10;
-const tableRowHeight = 76;
-const tableHeaderHeight = 57;
-const paginationRef = ref<HTMLElement | null>(null);
 const formDialogOpen = ref(false);
 const confirmDeleteOpen = ref(false);
 const dialogMode = ref<DialogMode>('category');
@@ -605,6 +535,23 @@ const paginatedRows = computed<CategoryTableRow[]>(() => {
   return flattenedRows.value.slice(start, start + rowsPerPage);
 });
 
+const tableColumns: BaseTableColumn[] = [
+  { key: 'index', label: 'ลำดับ', align: 'center', width: '88px' },
+  { key: 'name', label: 'หมวด/หมู่วิชา', width: 'auto' },
+  { key: 'courses', label: 'รายวิชา', align: 'right', width: '132px' },
+  { key: 'trend', label: 'อัตราเปิดรับ', width: '160px' },
+  { key: 'status', label: 'สถานะ', align: 'center', width: '144px' },
+  { key: 'actions', label: 'จัดการ', align: 'right', width: '214px' },
+];
+
+function rowVariant(row: CategoryTableRow): string {
+  return row.kind === 'category' ? 'categories-row--category' : 'categories-row--subcategory';
+}
+
+function goToPage(page: number): void {
+  currentPage.value = page;
+}
+
 const categoryStats = computed<CategoryStat[]>(() => [
   {
     icon: 'category',
@@ -695,41 +642,6 @@ function canDeleteCategory(category: AdminCourseCategory): boolean {
   );
 
   return category.courseCount + subcategoryCourseCount === 0;
-}
-
-const fillerRowHeight = computed(() =>
-  Math.max(0, (rowsPerPage - paginatedRows.value.length) * tableRowHeight),
-);
-
-const tableViewportHeight = `${rowsPerPage * tableRowHeight + tableHeaderHeight}px`;
-
-async function preservePaginationPosition(update: () => Promise<void> | void): Promise<void> {
-  const anchorTop =
-    typeof window !== 'undefined' ? paginationRef.value?.getBoundingClientRect().top : undefined;
-
-  await update();
-  await nextTick();
-
-  if (typeof window === 'undefined' || anchorTop === undefined || !paginationRef.value) {
-    return;
-  }
-
-  const nextTop = paginationRef.value.getBoundingClientRect().top;
-  if (Math.abs(nextTop - anchorTop) < 1) {
-    return;
-  }
-
-  window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
-}
-
-async function handlePageChange(page: number): Promise<void> {
-  if (page === currentPage.value) {
-    return;
-  }
-
-  await preservePaginationPosition(() => {
-    currentPage.value = page;
-  });
 }
 
 async function loadCategories(): Promise<void> {
@@ -959,11 +871,6 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   align-items: stretch;
 }
 
-.categories-manager {
-  --categories-manager-row-height: v-bind('`${tableRowHeight}px`');
-  --categories-manager-table-height: v-bind('tableViewportHeight');
-}
-
 .categories-manager__stats > [class*='col-'] {
   display: flex;
 }
@@ -1000,105 +907,19 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   font-weight: 800;
 }
 
-.categories-manager__table {
-  overflow-x: auto;
-  min-height: var(--categories-manager-table-height);
+// Hierarchy row variants — drive BaseTable's row colour tokens per level.
+.categories-manager :deep(.categories-row--category) {
+  --base-table-row-hover: rgba(245, 166, 35, 0.05);
 }
 
-.categories-manager-table {
-  width: 100%;
-  min-width: 960px;
-  border-collapse: collapse;
-
-  th,
-  td {
-    padding: 16px 18px;
-    border-bottom: 1px solid var(--admin-line); // token admin (เดิม rogue ink rgba(15,23,42,.08))
-    vertical-align: middle;
-  }
-
-  thead th {
-    color: #475467;
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: #f8fafc;
-  }
-
-  tbody tr.categories-manager-table__filler-row:hover,
-  tbody tr.categories-manager-table__skeleton-row:hover {
-    background: transparent;
-  }
-
-  tbody td {
-    height: var(--categories-manager-row-height);
-  }
+.categories-manager :deep(.categories-row--subcategory) {
+  --base-table-row-bg: #f8fafc;
+  --base-table-row-hover: #f1f5f9;
 }
 
-.categories-manager-table__category-row {
-  background: #ffffff;
-
-  &:hover {
-    background: rgba(245, 166, 35, 0.05);
-  }
-}
-
-.categories-manager-table__subcategory-row {
-  background: #f8fafc;
-
-  &:hover {
-    background: #f1f5f9;
-  }
-}
-
-.categories-manager-table__index {
-  width: 88px;
-  color: #1d4ed8;
+.categories-index {
+  color: var(--q-primary);
   font-weight: 800;
-  text-align: center;
-}
-
-.categories-manager-table__col-index {
-  width: 88px;
-}
-
-.categories-manager-table__col-name {
-  width: auto;
-}
-
-.categories-manager-table__col-courses {
-  width: 132px;
-}
-
-.categories-manager-table__col-trend {
-  width: 160px;
-}
-
-.categories-manager-table__col-status {
-  width: 144px;
-}
-
-.categories-manager-table__col-actions {
-  width: 214px;
-}
-
-.categories-manager-table__empty {
-  height: calc(var(--categories-manager-table-height) - 1px);
-  padding: 38px 18px !important;
-  color: #64748b;
-  text-align: center;
-  vertical-align: middle !important;
-}
-
-.categories-manager-table__skeleton-row td {
-  background: #ffffff;
-}
-
-.categories-manager-table__filler-row td {
-  padding: 0 !important;
-  border-bottom: 0 !important;
-  background: transparent !important;
 }
 
 .category-cell {
@@ -1212,19 +1033,6 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   align-items: center;
   gap: 8px;
   justify-content: flex-end;
-}
-
-.categories-manager__pagination {
-  display: flex;
-  justify-content: center;
-  min-height: 72px;
-  padding: 22px 24px 24px;
-}
-
-@media (max-width: 900px) {
-  .categories-manager-table__empty {
-    height: calc(var(--categories-manager-table-height) - 1px);
-  }
 }
 
 .categories-manager-action-btn {

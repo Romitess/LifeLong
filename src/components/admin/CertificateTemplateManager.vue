@@ -30,146 +30,84 @@
         {{ error }}
       </q-banner>
 
-      <div
-        :class="[
-          'cert-manager__table-wrap',
-          { 'cert-manager__table-wrap--loading': isLoading && items.length > 0 },
-        ]"
+      <BaseTable
+        :columns="tableColumns"
+        :rows="items"
+        row-key="id"
+        :loading="isLoading"
+        :rows-per-page="rowsPerPage"
+        :row-height="96"
+        :header-height="57"
+        min-width="600px"
+        show-index
+        :index-offset="(pagination.page - 1) * pagination.pageSize"
+        :page="pagination.page"
+        :total-pages="pagination.totalPages"
+        :on-page-change="load"
+        :empty-text="
+          globalSearch ? 'ไม่พบรูปแบบที่ตรงกับการค้นหา' : 'ยังไม่มีรูปแบบ Certificate ในระบบ'
+        "
       >
-        <table class="cert-manager-table">
-          <colgroup>
-            <col class="cert-manager-table__col-index" />
-            <col class="cert-manager-table__col-name" />
-            <col class="cert-manager-table__col-status" />
-            <col class="cert-manager-table__col-preview" />
-            <col class="cert-manager-table__col-actions" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="cert-manager-table__index">ลำดับ</th>
-              <th>ชื่อรูปแบบ</th>
-              <th class="text-center">สถานะ</th>
-              <th class="text-center">ตัวอย่าง</th>
-              <th class="text-center">ดำเนินการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="isLoading && items.length === 0">
-              <tr
-                v-for="n in rowsPerPage"
-                :key="`sk-${n}`"
-                class="cert-manager-table__skeleton-row"
-              >
-                <td class="cert-manager-table__index">
-                  <q-skeleton type="text" width="24px" class="q-mx-auto" />
-                </td>
-                <td><q-skeleton type="text" width="70%" /></td>
-                <td class="text-center">
-                  <q-skeleton type="QChip" width="60px" class="q-mx-auto" />
-                </td>
-                <td class="text-center">
-                  <q-skeleton
-                    type="rect"
-                    width="100px"
-                    height="60px"
-                    class="q-mx-auto cert-manager-table__thumb-skeleton"
-                  />
-                </td>
-                <td class="text-center">
-                  <div class="cert-manager-table__actions-cell">
-                    <q-skeleton type="QBtn" width="34px" height="34px" /><q-skeleton
-                      type="QBtn"
-                      width="34px"
-                      height="34px"
-                    />
-                  </div>
-                </td>
-              </tr>
-            </template>
+        <template #cell-name="{ row }">
+          <span class="cert-cell__name">{{ row.name }}</span>
+        </template>
 
-            <template v-else-if="items.length > 0 || isLoading">
-              <tr v-for="(item, index) in items" :key="item.id" class="cert-manager-table__row">
-                <td class="cert-manager-table__index">
-                  {{ (pagination.page - 1) * pagination.pageSize + index + 1 }}
-                </td>
-                <td>
-                  <span class="cert-manager-table__name">{{ item.name }}</span>
-                </td>
-                <td class="text-center">
-                  <q-badge
-                    rounded
-                    :color="item.status === 'Y' ? 'positive' : 'grey-5'"
-                    :label="item.status === 'Y' ? 'เปิด' : 'ปิด'"
-                    class="cert-manager-table__status-badge"
-                  />
-                </td>
-                <td class="text-center">
-                  <div v-if="itemBlobUrls[item.id]" class="cert-manager-table__thumb-wrap">
-                    <img
-                      :src="itemBlobUrls[item.id]"
-                      :alt="item.name"
-                      class="cert-manager-table__thumb"
-                      width="100"
-                      height="60"
-                      decoding="async"
-                      @click="openPreview(item)"
-                    />
-                  </div>
-                  <span v-else class="cert-manager-table__no-file">-</span>
-                </td>
-                <td class="text-center">
-                  <div class="cert-manager-table__actions-cell">
-                    <AppIconButton
-                      icon="edit"
-                      size="sm"
-                      tone="edit"
-                      class="cert-manager-action-btn cert-manager-action-btn--edit"
-                      aria-label="แก้ไข"
-                      @click="openEditDialog(item)"
-                    >
-                      <q-tooltip>แก้ไข</q-tooltip>
-                    </AppIconButton>
-                    <AppIconButton
-                      icon="delete"
-                      size="sm"
-                      tone="delete"
-                      class="cert-manager-action-btn cert-manager-action-btn--delete"
-                      aria-label="ลบ"
-                      @click="askDelete(item)"
-                    >
-                      <q-tooltip>ลบ</q-tooltip>
-                    </AppIconButton>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="fillerRowHeight > 0" class="cert-manager-table__filler-row">
-                <td colspan="5" :style="{ height: `${fillerRowHeight}px` }" />
-              </tr>
-            </template>
+        <template #cell-status="{ row }">
+          <BaseStatusBadge :active="row.status === 'Y'" />
+        </template>
+        <template #skeleton-status>
+          <q-skeleton type="QChip" width="60px" class="q-mx-auto" />
+        </template>
 
-            <tr v-else>
-              <td colspan="5" class="cert-manager-table__empty">
-                {{
-                  globalSearch
-                    ? 'ไม่พบรูปแบบที่ตรงกับการค้นหา'
-                    : 'ยังไม่มีรูปแบบ Certificate ในระบบ'
-                }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <template #cell-preview="{ row }">
+          <div v-if="itemBlobUrls[row.id]" class="cert-cell__thumb-wrap">
+            <img
+              :src="itemBlobUrls[row.id]"
+              :alt="row.name"
+              class="cert-cell__thumb"
+              width="100"
+              height="60"
+              decoding="async"
+              @click="openPreview(row)"
+            />
+          </div>
+          <span v-else class="cert-cell__no-file">-</span>
+        </template>
+        <template #skeleton-preview>
+          <q-skeleton type="rect" width="100px" height="60px" class="q-mx-auto cert-cell__thumb" />
+        </template>
 
-      <div v-if="pagination.totalPages > 1" ref="paginationRef" class="cert-manager__pagination">
-        <BasePagination
-          :model-value="currentPage"
-          :max="pagination.totalPages"
-          :max-pages="7"
-          :disable="isLoading"
-          gutter="md"
-          @update:model-value="handlePageChange"
-        />
-      </div>
+        <template #cell-actions="{ row }">
+          <div class="cert-cell__actions">
+            <AppIconButton
+              icon="edit"
+              size="sm"
+              tone="edit"
+              class="cert-action-btn cert-action-btn--edit"
+              aria-label="แก้ไข"
+              @click="openEditDialog(row)"
+            >
+              <q-tooltip>แก้ไข</q-tooltip>
+            </AppIconButton>
+            <AppIconButton
+              icon="delete"
+              size="sm"
+              tone="delete"
+              class="cert-action-btn cert-action-btn--delete"
+              aria-label="ลบ"
+              @click="askDelete(row)"
+            >
+              <q-tooltip>ลบ</q-tooltip>
+            </AppIconButton>
+          </div>
+        </template>
+        <template #skeleton-actions>
+          <div class="cert-cell__actions">
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+          </div>
+        </template>
+      </BaseTable>
     </AppSurfaceCard>
 
     <!-- Add / Edit Dialog -->
@@ -434,7 +372,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import AppIconButton from 'components/common/AppIconButton.vue';
 import AppDialog from 'components/common/AppDialog.vue';
@@ -444,7 +382,8 @@ import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInput from 'components/base/BaseInput.vue';
-import BasePagination from 'components/base/BasePagination.vue';
+import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
+import BaseStatusBadge from 'components/base/BaseStatusBadge.vue';
 import BaseToggle from 'components/base/BaseToggle.vue';
 import { useAdminCertTemplates } from 'src/composables/use-admin-cert-templates';
 import { api } from 'src/boot/axios';
@@ -468,18 +407,16 @@ const {
 } = useAdminCertTemplates();
 
 const globalSearch = ref('');
-const currentPage = ref(1);
-const paginationRef = ref<HTMLElement | null>(null);
 const itemBlobUrls = ref<Record<number, string>>({});
 
 const rowsPerPage = 10;
-const tableRowHeight = 96;
-const tableHeaderHeight = 57;
-const tableViewportHeight = `${rowsPerPage * tableRowHeight + tableHeaderHeight}px`;
 
-const fillerRowHeight = computed(() =>
-  Math.max(0, (rowsPerPage - items.value.length) * tableRowHeight),
-);
+const tableColumns: BaseTableColumn[] = [
+  { key: 'name', label: 'ชื่อรูปแบบ', width: 'auto' },
+  { key: 'status', label: 'สถานะ', align: 'center', width: '90px' },
+  { key: 'preview', label: 'ตัวอย่าง', align: 'center', width: '160px' },
+  { key: 'actions', label: 'ดำเนินการ', align: 'center', width: '110px' },
+];
 
 // ——— Dialog state ———
 const dialogOpen = ref(false);
@@ -587,17 +524,6 @@ const confirmDeleteOpen = ref(false);
 const pendingDeleteId = ref<number | null>(null);
 const pendingDeleteName = ref('');
 
-async function preservePaginationPosition(update: () => Promise<void> | void): Promise<void> {
-  const anchorTop =
-    typeof window !== 'undefined' ? paginationRef.value?.getBoundingClientRect().top : undefined;
-  await update();
-  await nextTick();
-  if (typeof window === 'undefined' || anchorTop === undefined || !paginationRef.value) return;
-  const nextTop = paginationRef.value.getBoundingClientRect().top;
-  if (Math.abs(nextTop - anchorTop) < 1) return;
-  window.scrollBy({ top: nextTop - anchorTop, behavior: 'auto' });
-}
-
 async function replaceItemBlobUrls(templateItems: AdminCertTemplateItem[]): Promise<void> {
   const newUrls: Record<number, string> = {};
   await Promise.all(
@@ -627,7 +553,6 @@ onUnmounted(() => {
 async function load(page = 1): Promise<void> {
   try {
     await fetchData({ page, pageSize: rowsPerPage, search: globalSearch.value || null });
-    currentPage.value = pagination.value.page;
     await replaceItemBlobUrls(items.value);
   } catch {
     $q.notify({ type: 'negative', message: 'ไม่สามารถโหลดข้อมูลได้', position: 'top' });
@@ -640,14 +565,6 @@ async function onSearchChange(): Promise<void> {
 function clearSearch(): void {
   globalSearch.value = '';
   void load(1);
-}
-
-async function handlePageChange(page: number): Promise<void> {
-  if (page === currentPage.value && page === pagination.value.page) return;
-  await preservePaginationPosition(async () => {
-    currentPage.value = page;
-    await load(page);
-  });
 }
 
 function openAddDialog(): void {
@@ -785,7 +702,7 @@ async function saveDialog(): Promise<void> {
     }
 
     closeDialog();
-    await load(currentPage.value);
+    await load(pagination.value.page);
   } catch {
     $q.notify({ type: 'negative', message: 'บันทึกไม่สำเร็จ กรุณาลองใหม่', position: 'top' });
   } finally {
@@ -826,11 +743,6 @@ function formatFileSize(bytes: number): string {
 </script>
 
 <style lang="scss" scoped>
-.cert-manager {
-  --cert-manager-row-height: v-bind('`${tableRowHeight}px`');
-  --cert-manager-table-height: v-bind('tableViewportHeight');
-}
-
 .cert-manager__add-btn {
   min-width: 210px;
   border-radius: 10px;
@@ -844,86 +756,8 @@ function formatFileSize(bytes: number): string {
 .cert-manager__search {
   width: min(380px, 100%);
 }
-.cert-manager__table-wrap {
-  overflow-x: auto;
-  min-height: var(--cert-manager-table-height);
-}
-.cert-manager__table-wrap--loading tbody {
-  opacity: 0.45;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
 
-.cert-manager-table {
-  width: 100%;
-  min-width: 600px;
-  border-collapse: collapse;
-  th,
-  td {
-    padding: 14px 16px;
-    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-    vertical-align: middle;
-  }
-  thead th {
-    background: #f8fafc;
-    color: #475467;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  tbody tr.cert-manager-table__skeleton-row:hover,
-  tbody tr.cert-manager-table__filler-row:hover {
-    background: transparent;
-  }
-  tbody td {
-    height: var(--cert-manager-row-height);
-  }
-}
-
-.cert-manager-table__col-index {
-  width: 64px;
-}
-.cert-manager-table__col-name {
-  width: auto;
-}
-.cert-manager-table__col-status {
-  width: 90px;
-}
-.cert-manager-table__col-preview {
-  width: 160px;
-}
-.cert-manager-table__col-actions {
-  width: 110px;
-}
-.cert-manager-table__index {
-  color: #1d4ed8;
-  font-weight: 800;
-  text-align: center;
-}
-.cert-manager-table__row {
-  background: #fff;
-  &:hover {
-    background: rgba(37, 99, 235, 0.03);
-  }
-}
-.cert-manager-table__skeleton-row td {
-  background: #fff;
-}
-.cert-manager-table__filler-row td {
-  padding: 0 !important;
-  border-bottom: 0 !important;
-  background: transparent !important;
-}
-.cert-manager-table__empty {
-  height: calc(var(--cert-manager-table-height) - 1px) !important;
-  padding: 38px 18px !important;
-  color: #64748b;
-  text-align: center;
-  vertical-align: middle !important;
-}
-.cert-manager-table__name {
+.cert-cell__name {
   display: -webkit-box;
   overflow: hidden;
   color: var(--admin-navy);
@@ -936,12 +770,8 @@ function formatFileSize(bytes: number): string {
   -webkit-line-clamp: 2;
   line-clamp: 2;
 }
-.cert-manager-table__status-badge {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 4px 10px;
-}
-.cert-manager-table__thumb-wrap {
+
+.cert-cell__thumb-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -949,7 +779,8 @@ function formatFileSize(bytes: number): string {
   height: 60px;
   margin: 0 auto;
 }
-.cert-manager-table__thumb {
+
+.cert-cell__thumb {
   width: 100%;
   height: 100%;
   border-radius: 6px;
@@ -961,27 +792,20 @@ function formatFileSize(bytes: number): string {
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
   }
 }
-.cert-manager-table__thumb-skeleton {
-  border-radius: 6px;
-}
-.cert-manager-table__no-file {
+
+.cert-cell__no-file {
   color: #94a3b8;
   font-size: 0.88rem;
 }
-.cert-manager-table__actions-cell {
+
+.cert-cell__actions {
   display: inline-flex;
   gap: 6px;
   align-items: center;
   justify-content: center;
 }
-.cert-manager__pagination {
-  display: flex;
-  justify-content: center;
-  min-height: 72px;
-  padding: 22px 24px 24px;
-}
 
-.cert-manager-action-btn {
+.cert-action-btn {
   --action-color: var(--admin-info-ink);
   --action-border: rgba(16, 35, 63, 0.12);
   --action-ring: rgba(16, 35, 63, 0.08);
@@ -1005,12 +829,14 @@ function formatFileSize(bytes: number): string {
       0 0 0 1px var(--action-ring) !important;
   }
 }
-.cert-manager-action-btn--edit {
+
+.cert-action-btn--edit {
   --action-color: var(--admin-gold);
   --action-border: rgba(245, 166, 35, 0.28);
   --action-ring: rgba(245, 166, 35, 0.1);
 }
-.cert-manager-action-btn--delete {
+
+.cert-action-btn--delete {
   --action-color: var(--admin-danger-ink);
   --action-border: rgba(225, 29, 72, 0.18);
   --action-ring: rgba(225, 29, 72, 0.08);
