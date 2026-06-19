@@ -91,6 +91,17 @@ export default {
   recommendedEyebrow: 'Recommended courses',
   recommendedTitle: 'Recommended for you',
   loading: 'Loading...',
+  topCourses: {
+    heading: 'Top Enrolled Courses',
+    rank: 'Rank',
+    viewMore: 'View Details',
+    backToList: 'Back to Top 10',
+    enrolled: 'enrolled',
+    hours: 'hours',
+    until: 'Until',
+    loadError: 'Failed to load top enrolled courses',
+    noData: 'No enrollment data yet',
+  },
   loginRequiredDialog: {
     title: 'Login Required',
     message: 'You can browse course details first. Please log in to enroll or save this course.',

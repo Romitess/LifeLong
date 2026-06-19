@@ -18,6 +18,7 @@ export type CategoryFormPayload = Omit<Category, 'id' | 'createdAt' | 'updatedAt
 export interface ApiCategory {
   id: number;
   name: string;
+  nameEn: string | null;
   icon: string | null;
   color: string | null;
 }

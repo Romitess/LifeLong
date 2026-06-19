@@ -353,6 +353,13 @@
         />
 
         <template v-if="dialogMode === 'category'">
+          <BaseInput
+            v-model="form.nameEn"
+            label="ชื่อภาษาอังกฤษ (English name)"
+            class="admin-editor-field q-mt-sm"
+            hide-bottom-space
+          />
+
           <!-- Icon picker -->
           <div class="taxonomy-field-label q-mt-md q-mb-xs">Icon</div>
           <div class="taxonomy-icon-grid">
@@ -455,6 +462,7 @@ interface CountableNode {
 
 interface TaxonomyFormState {
   name: string;
+  nameEn: string;
   isActive: boolean;
   icon: string;
   color: string;
@@ -514,6 +522,7 @@ const PRESET_ICONS = [
 
 const form = reactive<TaxonomyFormState>({
   name: '',
+  nameEn: '',
   isActive: true,
   icon: 'category',
   color: '#6B7280',
@@ -733,6 +742,7 @@ async function loadCategories(): Promise<void> {
 
 function resetForm(): void {
   form.name = '';
+  form.nameEn = '';
   form.isActive = true;
   form.icon = 'category';
   form.color = '#6B7280';
@@ -743,8 +753,10 @@ function fillForm(
   activeFlag: string,
   icon?: string | null,
   color?: string | null,
+  nameEn?: string | null,
 ): void {
   form.name = name;
+  form.nameEn = nameEn ?? '';
   form.isActive = activeFlag === 'Y';
   form.icon = icon ?? 'category';
   form.color = color ?? '#6B7280';
@@ -762,7 +774,7 @@ function openEditCategoryDialog(category: AdminCourseCategory): void {
   dialogMode.value = 'category';
   editingNode.value = category;
   selectedParentCategory.value = null;
-  fillForm(category.name, category.activeFlag, category.icon, category.color);
+  fillForm(category.name, category.activeFlag, category.icon, category.color, category.nameEn);
   formDialogOpen.value = true;
 }
 
@@ -794,6 +806,7 @@ async function submitForm(): Promise<void> {
       if (editingNode.value) {
         await updateCategory(editingNode.value.id, {
           name: form.name.trim(),
+          nameEn: form.nameEn.trim() || undefined,
           activeFlag,
           icon: form.icon.trim() || undefined,
           color: form.color.trim() || undefined,
@@ -801,6 +814,7 @@ async function submitForm(): Promise<void> {
       } else {
         await createCategory({
           name: form.name.trim(),
+          nameEn: form.nameEn.trim() || undefined,
           activeFlag,
           icon: form.icon.trim() || undefined,
           color: form.color.trim() || undefined,

@@ -91,6 +91,17 @@ export default {
   recommendedEyebrow: 'รายวิชาแนะนำ',
   recommendedTitle: 'รายวิชาอื่นๆ ที่แนะนำ',
   loading: 'กำลังโหลดข้อมูล...',
+  topCourses: {
+    heading: 'วิชายอดฮิตจากยอดสมัครเรียน',
+    rank: 'อันดับ',
+    viewMore: 'ดูรายละเอียดเพิ่มเติม',
+    backToList: 'กลับไปดู 10 อันดับ',
+    enrolled: 'สมัคร',
+    hours: 'ชั่วโมง',
+    until: 'ถึง',
+    loadError: 'ไม่สามารถโหลดอันดับวิชายอดฮิตได้',
+    noData: 'ยังไม่มีข้อมูลการสมัครเรียน',
+  },
   loginRequiredDialog: {
     title: 'กรุณาเข้าสู่ระบบ',
     message:

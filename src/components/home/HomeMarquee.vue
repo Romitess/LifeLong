@@ -21,7 +21,7 @@
         <span class="marquee__icon-bubble">
           <q-icon :name="item.icon" size="13px" />
         </span>
-        {{ item.name }}
+        {{ locale === 'th' ? item.name : item.nameEn || item.name }}
       </a>
     </div>
   </div>
@@ -30,20 +30,22 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useCategoryStore } from 'src/stores/category-store';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const router = useRouter();
+const { locale } = useI18n({ useScope: 'global' });
 const categoryStore = useCategoryStore();
 
 const items = computed(() => categoryStore.activeCategories);
 
 const allItem = {
   name: 'ทั้งหมด',
+  nameEn: 'All',
   icon: 'apps',
   color: '#1a237e',
   id: '__all__',
-  nameEn: 'All',
   slug: '',
   description: '',
   descriptionEn: '',

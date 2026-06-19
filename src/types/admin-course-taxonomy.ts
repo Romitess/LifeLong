@@ -11,6 +11,7 @@ export interface AdminCourseSubcategory {
 export interface AdminCourseCategory {
   id: number;
   name: string;
+  nameEn: string | null;
   activeFlag: string;
   url: string | null;
   icon: string | null;
@@ -22,6 +23,7 @@ export interface AdminCourseCategory {
 
 export interface AdminCategoryPayload {
   name: string;
+  nameEn?: string | undefined;
   activeFlag: string;
   url?: string | undefined;
   icon?: string | undefined;

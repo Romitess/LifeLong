@@ -16,6 +16,7 @@ export const useCategoryStore = defineStore('category', {
       return state.apiCategories.map((cat, index) => ({
         id: String(cat.id),
         name: cat.name,
+        ...(cat.nameEn ? { nameEn: cat.nameEn } : {}),
         slug: cat.name.toLowerCase().replace(/\s+/g, '-'),
         icon: cat.icon ?? 'school',
         color: cat.color ?? '#1565C0',

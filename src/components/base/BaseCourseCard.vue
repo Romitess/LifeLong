@@ -90,7 +90,7 @@ const categoryColor = computed<string>(() => {
 });
 
 function getTranslatedTitle(course: Course): string {
-  if (locale.value === 'th') return course.title;
+  if (locale.value === 'th') return course.title || course.titleEn || '';
   return course.titleEn || course.title;
 }
 
@@ -114,14 +114,14 @@ function formatRegistrationDateByLocale(dateText: string | null | undefined): st
 
 function getTranslatedRegStart(course: Course): string {
   if (locale.value === 'th') {
-    return course.registrationStart;
+    return course.registrationStart || formatRegistrationDateByLocale(course.registrationStartDate);
   }
   return course.registrationStartEn || formatRegistrationDateByLocale(course.registrationStartDate);
 }
 
 function getTranslatedRegEnd(course: Course): string {
   if (locale.value === 'th') {
-    return course.registrationEnd;
+    return course.registrationEnd || formatRegistrationDateByLocale(course.registrationEndDate);
   }
   return course.registrationEndEn || formatRegistrationDateByLocale(course.registrationEndDate);
 }

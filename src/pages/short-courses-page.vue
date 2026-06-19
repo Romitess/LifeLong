@@ -25,41 +25,29 @@
       <div class="course-section-panel">
         <!-- Category Header -->
         <div v-if="activeFilter.category" class="course-section-panel__header q-mb-lg">
-          <h1 class="section-title-underline section-title-with-icon">
-            <span class="section-title-icon">
-              <q-icon name="category" />
-            </span>
-            <span>{{ getTranslatedCategory(activeFilter.category) }}</span>
+          <h1 class="section-title-underline">
+            {{ getTranslatedCategory(activeFilter.category) }}
           </h1>
         </div>
 
         <!-- Search Header -->
         <div v-else-if="activeFilter.search" class="course-section-panel__header q-mb-lg">
-          <h1 class="section-title-underline section-title-with-icon">
-            <span class="section-title-icon section-title-icon--secondary">
-              <q-icon name="search" />
-            </span>
-            <span>{{ $t('searchResult') }}: "{{ activeFilter.search }}"</span>
+          <h1 class="section-title-underline">
+            {{ $t('searchResult') }}: "{{ activeFilter.search }}"
           </h1>
         </div>
 
         <!-- Active Courses Header -->
         <div v-else-if="filter.onlyActive" class="course-section-panel__header q-mb-lg">
-          <h2 class="section-title-underline section-title-with-icon">
-            <span class="section-title-icon">
-              <q-icon name="local_fire_department" />
-            </span>
-            <span>{{ $t('activeCoursesTitle') }}</span>
+          <h2 class="section-title-underline">
+            {{ $t('activeCoursesTitle') }}
           </h2>
         </div>
 
         <!-- Default Header -->
         <div v-else class="course-section-panel__header q-mb-lg">
-          <h2 class="section-title-underline section-title-with-icon">
-            <span class="section-title-icon section-title-icon--secondary">
-              <q-icon name="library_books" />
-            </span>
-            <span>{{ $t('allCoursesTitle') }}</span>
+          <h2 class="section-title-underline">
+            {{ $t('allCoursesTitle') }}
           </h2>
         </div>
 

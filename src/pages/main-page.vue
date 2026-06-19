@@ -229,7 +229,7 @@
               <q-icon name="leaderboard" size="18px" />
               Top 10
             </span>
-            <h2 id="top-courses-heading">วิชายอดฮิตจากยอดสมัครเรียน</h2>
+            <h2 id="top-courses-heading">{{ t('topCourses.heading') }}</h2>
           </div>
         </div>
 
@@ -244,7 +244,7 @@
             flat
             no-caps
             color="primary"
-            label="ลองใหม่"
+            :label="t('retry')"
             icon="refresh"
             @click="fetchTopEnrolledCourses"
           />
@@ -263,11 +263,23 @@
           <div class="top-course-preview__content">
             <div class="top-course-preview__eyebrow">
               <q-icon name="leaderboard" size="18px" />
-              อันดับ
+              {{ t('topCourses.rank') }}
               {{ selectedTopCourse.topEnrollmentRank ?? getTopCourseRank(selectedTopCourse) }}
             </div>
-            <h3>{{ selectedTopCourse.title }}</h3>
-            <p>{{ selectedTopCourse.faculty }}</p>
+            <h3>
+              {{
+                locale === 'th'
+                  ? selectedTopCourse.title
+                  : selectedTopCourse.titleEn || selectedTopCourse.title
+              }}
+            </h3>
+            <p>
+              {{
+                locale === 'th'
+                  ? selectedTopCourse.faculty
+                  : selectedTopCourse.facultyEn || selectedTopCourse.faculty
+              }}
+            </p>
             <div class="top-course-preview__facts">
               <span>
                 <q-icon name="groups" size="17px" />
@@ -279,11 +291,16 @@
               </span>
               <span v-if="selectedTopCourse.totalHours">
                 <q-icon name="schedule" size="17px" />
-                {{ selectedTopCourse.totalHours }} ชั่วโมง
+                {{ selectedTopCourse.totalHours }} {{ t('topCourses.hours') }}
               </span>
               <span>
                 <q-icon name="event_available" size="17px" />
-                ถึง {{ selectedTopCourse.registrationEnd }}
+                {{ t('topCourses.until') }}
+                {{
+                  locale === 'th'
+                    ? selectedTopCourse.registrationEnd
+                    : selectedTopCourse.registrationEndEn || selectedTopCourse.registrationEnd
+                }}
               </span>
             </div>
             <div class="top-course-preview__modes">
@@ -297,7 +314,7 @@
                 no-caps
                 color="primary"
                 icon-right="chevron_right"
-                label="ดูรายละเอียดเพิ่มเติม"
+                :label="t('topCourses.viewMore')"
                 :href="resolveFullUrl(`/course/${selectedTopCourse.id}`)"
                 @click.prevent="onCourseClick(selectedTopCourse, $event)"
               />
@@ -306,7 +323,7 @@
                 no-caps
                 color="secondary"
                 icon="apps"
-                label="กลับไปดู 10 อันดับ"
+                :label="t('topCourses.backToList')"
                 @click="showTopCourseList"
               />
             </div>
@@ -319,21 +336,13 @@
           @wheel="onTopCoursesWheel"
         >
           <a
-            v-for="(course, index) in topEnrolledCourses"
+            v-for="course in topEnrolledCourses"
             :key="course.id"
             :href="resolveFullUrl(`/course/${course.id}`)"
             class="top-course-card"
             style="text-decoration: none"
             @click.prevent="selectTopCourse(course, $event)"
           >
-            <span
-              class="top-course-card__rank"
-              :class="{
-                'top-course-card__rank--double': (course.topEnrollmentRank ?? index + 1) >= 10,
-              }"
-            >
-              {{ course.topEnrollmentRank ?? index + 1 }}
-            </span>
             <span class="top-course-card__poster">
               <img :src="getPreferredCourseImageUrl(course.imageUrl)" :alt="course.title" />
               <span class="top-course-card__shade" />
@@ -343,15 +352,19 @@
               </span>
             </span>
             <span class="top-course-card__body">
-              <span class="top-course-card__title">{{ course.title }}</span>
-              <span class="top-course-card__meta">{{ course.faculty }}</span>
+              <span class="top-course-card__title">{{
+                locale === 'th' ? course.title : course.titleEn || course.title
+              }}</span>
+              <span class="top-course-card__meta">{{
+                locale === 'th' ? course.faculty : course.facultyEn || course.faculty
+              }}</span>
             </span>
           </a>
         </div>
 
         <div v-else class="top-courses-empty">
           <q-icon name="leaderboard" size="2.4rem" />
-          <span>ยังไม่มีข้อมูลการสมัครเรียน</span>
+          <span>{{ t('topCourses.noData') }}</span>
         </div>
       </div>
     </section>
@@ -365,11 +378,8 @@
             v-if="courseStore.selectedCategory"
             class="course-section-panel__header row items-center justify-between q-mb-lg"
           >
-            <h2 class="section-title-underline section-title-with-icon">
-              <span class="section-title-icon">
-                <q-icon name="category" />
-              </span>
-              <span>{{ getTranslatedCategory(courseStore.selectedCategory) }}</span>
+            <h2 class="section-title-underline">
+              {{ getTranslatedCategory(courseStore.selectedCategory) }}
             </h2>
           </div>
 
@@ -381,11 +391,8 @@
             :visible-once="headingRevealVariant().visibleOnce"
             class="course-section-panel__header row items-center justify-between q-mb-lg"
           >
-            <h2 class="section-title-underline section-title-with-icon">
-              <span class="section-title-icon">
-                <q-icon name="local_fire_department" />
-              </span>
-              <span>{{ $t('activeCoursesTitle') }}</span>
+            <h2 class="section-title-underline">
+              {{ $t('activeCoursesTitle') }}
             </h2>
             <q-btn
               flat
@@ -465,11 +472,8 @@
             :visible-once="headingRevealVariant().visibleOnce"
             class="course-section-panel__header row items-center justify-between q-mb-lg"
           >
-            <h2 class="section-title-underline section-title-with-icon">
-              <span class="section-title-icon section-title-icon--secondary">
-                <q-icon name="library_books" />
-              </span>
-              <span>{{ $t('allCoursesTitle') }}</span>
+            <h2 class="section-title-underline">
+              {{ $t('allCoursesTitle') }}
             </h2>
             <q-btn
               flat
@@ -623,7 +627,8 @@ function getPreferredCourseImageUrl(imageUrl?: string | null): string {
 }
 
 function formatLearnerCount(value?: number | null): string {
-  return `${new Intl.NumberFormat('th-TH').format(value ?? 0)} สมัคร`;
+  const num = new Intl.NumberFormat(locale.value === 'th' ? 'th-TH' : 'en-US').format(value ?? 0);
+  return `${num} ${t('topCourses.enrolled')}`;
 }
 
 function formatTopCoursePrice(course: Course): string {
@@ -671,7 +676,7 @@ async function fetchTopEnrolledCourses(): Promise<void> {
   try {
     await courseStore.fetchTopEnrolledCourses();
   } catch {
-    topCoursesError.value = 'ไม่สามารถโหลดอันดับวิชายอดฮิตได้';
+    topCoursesError.value = t('topCourses.loadError');
   } finally {
     isTopCoursesLoading.value = false;
   }
@@ -2273,7 +2278,7 @@ onBeforeUnmount(() => {
 .top-course-card {
   position: relative;
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(168px, 1fr) auto;
   gap: 0;
   min-height: 248px;
@@ -2298,30 +2303,9 @@ onBeforeUnmount(() => {
   outline: none;
 }
 
-.top-course-card__rank {
-  position: absolute;
-  z-index: 0;
-  right: calc(100% - 108px);
-  bottom: 48px;
-  color: rgba($primary, 0.1);
-  -webkit-text-stroke: 2.4px rgba($primary, 0.64);
-  font-size: clamp(7rem, 9.6vw, 9.4rem);
-  font-weight: 1000;
-  line-height: 0.78;
-  letter-spacing: 0;
-  opacity: 1;
-  pointer-events: none;
-  text-shadow: 0 10px 26px rgba($primary, 0.1);
-}
-
-.top-course-card__rank--double {
-  right: calc(100% - 156px);
-}
-
 .top-course-card__poster {
   position: relative;
   z-index: 1;
-  grid-column: 2;
   display: block;
   min-width: 0;
   min-height: 168px;
@@ -2371,7 +2355,6 @@ onBeforeUnmount(() => {
 }
 
 .top-course-card__body {
-  grid-column: 2;
   display: grid;
   gap: 5px;
   padding-top: 11px;
@@ -2925,19 +2908,7 @@ onBeforeUnmount(() => {
   }
 
   .top-course-card {
-    grid-template-columns: 54px minmax(0, 1fr);
     min-height: 218px;
-  }
-
-  .top-course-card__rank {
-    -webkit-text-stroke-width: 1.8px;
-    right: calc(100% - 82px);
-    bottom: 46px;
-    font-size: 6rem;
-  }
-
-  .top-course-card__rank--double {
-    right: calc(100% - 120px);
   }
 
   .top-course-card__poster {
