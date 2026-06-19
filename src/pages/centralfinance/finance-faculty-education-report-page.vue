@@ -20,74 +20,57 @@
     </CentralFinancePageHero>
 
     <section class="finance-shell finance-content">
-      <!-- ── Filter Card ─────────────────────────────────────── -->
-      <CentralFinanceSurfaceCard>
-        <div class="row q-col-gutter-md q-mb-md">
-          <div class="col-12 col-md-8 offset-md-2">
-            <!-- คณะ/ส่วนงาน -->
-            <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-weight-medium filter-section__label">
-                {{ $t('centralFinance.receiptSummary.filters.faculty') }}
-              </div>
-              <div class="col-12 col-sm-8">
-                <q-select
-                  v-model="selectedFacultyValue"
-                  :options="facultyOptions"
-                  :loading="isFacultyLoading"
-                  emit-value
-                  map-options
-                  outlined
-                  dense
-                  class="bg-white"
-                />
-              </div>
-            </div>
+      <!-- ── Filter Bar ─────────────────────────────────────── -->
+      <div ref="sentinelRef" class="faculty-filter-sentinel" />
+      <div class="faculty-filter-bar" :class="{ 'faculty-filter-bar--stuck': stuck }">
+        <span class="faculty-filter-bar__label">
+          <q-icon name="filter_alt" size="14px" class="q-mr-xs" />
+          {{ $t('centralFinance.receiptSummary.filters.faculty') }}
+        </span>
 
-            <!-- ปุ่มค้นหา / ล้างค่า -->
-            <div class="row items-center">
-              <div class="col-sm-4 gt-xs" />
-              <div class="col-12 col-sm-8 filter-section__actions">
-                <AppActionButton
-                  variant="primary"
-                  icon="search"
-                  :label="$t('centralFinance.facultyRevenue.filters.searchBtn')"
-                  @click="onSearch"
-                />
-                <AppActionButton
-                  variant="secondary"
-                  icon="restart_alt"
-                  :label="$t('centralFinance.facultyRevenue.filters.clearBtn')"
-                  @click="clearFilters"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </CentralFinanceSurfaceCard>
+        <q-select
+          v-model="selectedFacultyValue"
+          :options="facultyOptions"
+          :loading="isFacultyLoading"
+          emit-value
+          map-options
+          outlined
+          dense
+          bg-color="white"
+          class="faculty-filter-bar__select"
+          @update:model-value="applyFaculty"
+        />
+
+        <q-btn
+          flat
+          dense
+          round
+          icon="filter_alt_off"
+          color="negative"
+          class="q-ml-sm"
+          @click="clearFilters"
+        >
+          <q-tooltip>{{ $t('centralFinance.facultyRevenue.filters.clearBtn') }}</q-tooltip>
+        </q-btn>
+      </div>
 
       <!-- ── Report ──────────────────────────────────────────── -->
-      <div class="q-mt-md">
-        <CentralFinanceFacultyReportManager
-          :key="`faculty-${appliedFacultyId}`"
-          :initial-faculty-id="appliedFacultyId"
-          :override-faculty-label="
-            appliedFacultyId === null ? t('centralFinance.receiptSummary.allFaculties') : undefined
-          "
-        />
-      </div>
+      <RegistrationStatisticsReportManager
+        :key="`faculty-${appliedFacultyId}`"
+        :initial-faculty-id="appliedFacultyId"
+        :show-faculty-filter="false"
+      />
     </section>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useFacultyList } from 'src/composables/use-faculty-list';
 import type { ApiFaculty } from 'src/types/faculty';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
-import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
-import AppActionButton from 'components/common/AppActionButton.vue';
-import CentralFinanceFacultyReportManager from 'components/centralfinance/CentralFinanceFacultyReportManager.vue';
+import RegistrationStatisticsReportManager from 'components/reports/RegistrationStatisticsReportManager.vue';
 
 const { t } = useI18n();
 const { isLoading: isFacultyLoading, fetchFaculties } = useFacultyList();
@@ -107,7 +90,7 @@ const activeFacultyLabel = computed<string>(() => {
   return option?.label ?? t('centralFinance.receiptSummary.allFaculties');
 });
 
-function onSearch(): void {
+function applyFaculty(): void {
   appliedFacultyId.value = selectedFacultyValue.value === '' ? null : selectedFacultyValue.value;
 }
 
@@ -116,8 +99,27 @@ function clearFilters(): void {
   appliedFacultyId.value = null;
 }
 
+// ── Sticky stuck detection ───────────────────────────────────
+const sentinelRef = ref<HTMLElement | null>(null);
+const stuck = ref(false);
+let stickyObserver: IntersectionObserver | null = null;
+
 onMounted(async () => {
   faculties.value = await fetchFaculties();
+
+  if (sentinelRef.value) {
+    stickyObserver = new IntersectionObserver(
+      ([entry]) => {
+        stuck.value = !(entry?.isIntersecting ?? true);
+      },
+      { threshold: 0, rootMargin: '-73px 0px 0px 0px' },
+    );
+    stickyObserver.observe(sentinelRef.value);
+  }
+});
+
+onUnmounted(() => {
+  stickyObserver?.disconnect();
 });
 </script>
 
@@ -153,29 +155,48 @@ onMounted(async () => {
   font-weight: 900;
 }
 
-.filter-section__label {
-  @media (min-width: 600px) {
-    text-align: right;
-    padding-right: 16px;
-  }
-
-  @media (max-width: 599px) {
-    margin-bottom: 4px;
-  }
+// ── Sticky filter bar ────────────────────────────────────────
+.faculty-filter-sentinel {
+  height: 1px;
 }
 
-.filter-section__actions {
+.faculty-filter-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 9;
+  margin-bottom: 16px;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+  padding: 8px 16px;
+  min-height: 52px;
+  border-radius: var(--finance-radius-lg, 16px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  transition: box-shadow 0.2s ease;
+  overflow: hidden;
 
-  @media (max-width: 599px) {
-    flex-direction: column;
-    align-items: stretch;
+  &--stuck {
+    box-shadow:
+      0 6px 28px rgba(17, 24, 39, 0.1),
+      0 1px 4px rgba(17, 24, 39, 0.05);
   }
 }
 
-:deep(.q-field__label) {
-  font-weight: 400 !important;
+.faculty-filter-bar__label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--finance-navy, #10233f);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.faculty-filter-bar__select {
+  min-width: 220px;
+  flex-shrink: 0;
 }
 </style>

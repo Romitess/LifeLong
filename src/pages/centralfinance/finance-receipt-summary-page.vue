@@ -19,173 +19,40 @@
     </CentralFinancePageHero>
 
     <section class="finance-shell finance-content">
-      <!-- Filter Card -->
-      <CentralFinanceSurfaceCard>
-        <div class="row q-col-gutter-md q-mb-md">
-          <div class="col-12 col-md-8 offset-md-2">
-            <!-- ส่วนงาน -->
-            <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-weight-medium filter-label">
-                {{ $t('centralFinance.receiptSummary.filters.faculty') }}
-              </div>
-              <div class="col-12 col-sm-8">
-                <q-select
-                  v-model="filters.faculty"
-                  :options="facultyOptions"
-                  :loading="isFacultyLoading"
-                  emit-value
-                  map-options
-                  outlined
-                  dense
-                  class="bg-white"
-                />
-              </div>
-            </div>
-
-            <!-- วันที่ใบเสร็จรับเงิน -->
-            <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-weight-medium filter-label">
-                {{ $t('finance.receiptSummary.filters.receiptDate') }}
-              </div>
-              <div class="col-12 col-sm-8 row q-col-gutter-sm">
-                <div class="col-6">
-                  <q-input
-                    v-model="filters.receiptDateStart"
-                    outlined
-                    dense
-                    :label="$t('finance.receiptSummary.filters.start')"
-                    placeholder="วว/ดด/ปปปป"
-                    mask="##/##/####"
-                    class="bg-white"
-                  >
-                    <template v-slot:append>
-                      <q-icon name="event" class="cursor-pointer" color="grey-7">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                          <q-date
-                            v-model="filters.receiptDateStart"
-                            mask="DD/MM/YYYY"
-                            color="primary"
-                            text-color="white"
-                          />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-                <div class="col-6">
-                  <q-input
-                    v-model="filters.receiptDateEnd"
-                    outlined
-                    dense
-                    :label="$t('finance.receiptSummary.filters.end')"
-                    placeholder="วว/ดด/ปปปป"
-                    mask="##/##/####"
-                    class="bg-white"
-                  >
-                    <template v-slot:append>
-                      <q-icon name="event" class="cursor-pointer" color="grey-7">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                          <q-date
-                            v-model="filters.receiptDateEnd"
-                            mask="DD/MM/YYYY"
-                            color="primary"
-                            text-color="white"
-                          />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-              </div>
-            </div>
-
-            <!-- วันที่ชำระเงินค่าลงทะเบียน (Effective Date) -->
-            <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-weight-medium filter-label">
-                {{ $t('finance.receiptSummary.filters.effectiveDate') }}
-              </div>
-              <div class="col-12 col-sm-8 row q-col-gutter-sm">
-                <div class="col-6">
-                  <q-input
-                    v-model="filters.effectiveDateStart"
-                    outlined
-                    dense
-                    :label="$t('finance.receiptSummary.filters.start')"
-                    placeholder="วว/ดด/ปปปป"
-                    mask="##/##/####"
-                    class="bg-white"
-                  >
-                    <template v-slot:append>
-                      <q-icon name="event" class="cursor-pointer" color="grey-7">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                          <q-date
-                            v-model="filters.effectiveDateStart"
-                            mask="DD/MM/YYYY"
-                            color="primary"
-                            text-color="white"
-                          />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-                <div class="col-6">
-                  <q-input
-                    v-model="filters.effectiveDateEnd"
-                    outlined
-                    dense
-                    :label="$t('finance.receiptSummary.filters.end')"
-                    placeholder="วว/ดด/ปปปป"
-                    mask="##/##/####"
-                    class="bg-white"
-                  >
-                    <template v-slot:append>
-                      <q-icon name="event" class="cursor-pointer" color="grey-7">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                          <q-date
-                            v-model="filters.effectiveDateEnd"
-                            mask="DD/MM/YYYY"
-                            color="primary"
-                            text-color="white"
-                          />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-              </div>
-            </div>
-
-            <div class="row items-center">
-              <div class="col-sm-4 gt-xs" />
-              <div class="col-12 col-sm-8 filter-section__actions">
-                <AppActionButton
-                  variant="primary"
-                  icon="search"
-                  :label="$t('finance.receiptSummary.filters.searchBtn')"
-                  :loading="isLoading"
-                  @click="fetchData"
-                />
-                <AppActionButton
-                  variant="secondary"
-                  icon="restart_alt"
-                  :label="$t('finance.receiptSummary.filters.clearBtn')"
-                  @click="clearFilters"
-                />
-              </div>
-            </div>
+      <!-- Filter Bar -->
+      <PeriodFilterBar
+        v-model="receiptPeriod"
+        :presets="datePresetOptions"
+        :custom-label="$t('finance.receiptSummary.filters.receiptDate')"
+        @change="onPeriodChange"
+        @clear="onClear"
+      >
+        <template #append>
+          <div class="filter-faculty-wrap">
+            <q-select
+              v-model="filters.faculty"
+              :options="facultyOptions"
+              :loading="isFacultyLoading"
+              emit-value
+              map-options
+              outlined
+              dense
+              bg-color="white"
+              style="min-width: 200px"
+              @update:model-value="onFacultyChange"
+            />
           </div>
-        </div>
-      </CentralFinanceSurfaceCard>
+        </template>
+      </PeriodFilterBar>
 
       <!-- Table Card -->
       <CentralFinanceSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
-          <ReportExportActions
+          <TableExportActions
+            :pdf-config="pdfExportConfig"
+            :csv-config="csvExportConfig"
             :pdf-label="$t('finance.receiptSummary.exportPdf')"
-            :excel-label="$t('finance.receiptSummary.exportExcel')"
-            @export-pdf="handleExportToPdf"
-            @export-excel="handleExportToExcel"
+            :csv-label="$t('finance.receiptSummary.exportExcel')"
           />
         </template>
 
@@ -200,17 +67,11 @@
         </div>
 
         <div class="row justify-end items-center q-px-md q-pb-md receipt-search-bar">
-          <q-input
+          <AppSearchInput
             v-model="search"
-            dense
-            outlined
             :placeholder="$t('finance.receiptSummary.searchLabel')"
             class="receipt-search"
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" />
-            </template>
-          </q-input>
+          />
         </div>
 
         <BaseTable
@@ -281,24 +142,148 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { date } from 'quasar';
 import { useFacultyList } from 'src/composables/use-faculty-list';
 import BaseTable from 'components/base/BaseTable.vue';
 import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 import { useReceiptSummaryReport } from 'src/composables/use-receipt-summary-report';
-import { useReceiptSummaryExport } from 'src/composables/use-receipt-summary-export';
 import type { ApiFaculty } from 'src/types/faculty';
 import type { ReceiptSummaryItem } from 'src/types/receipt-summary-report';
+import type { PdfExportConfig, CsvExportConfig } from 'src/types/export-types';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
-import AppActionButton from 'components/common/AppActionButton.vue';
-import ReportExportActions from 'components/common/ReportExportActions.vue';
+import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import TableExportActions from 'components/common/TableExportActions.vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
 
 const { t } = useI18n();
 
 const { isLoading: isFacultyLoading, fetchFaculties } = useFacultyList();
 const { items, isLoading, filters, fetchData, clearFilters } = useReceiptSummaryReport();
-const { exportToPdf, exportToExcel } = useReceiptSummaryExport();
+
+const receiptPeriod = ref<PeriodFilterValue>({ preset: 'allTime', dateFrom: '', dateTo: '' });
+
+const datePresetOptions = computed(() => [
+  { label: t('finance.filters.today'), value: 'today' },
+  { label: t('finance.filters.thisWeek'), value: 'thisWeek' },
+  { label: t('finance.filters.thisMonth'), value: 'thisMonth' },
+  { label: t('finance.filters.thisYear'), value: 'thisYear' },
+  { label: t('finance.filters.allTime'), value: 'allTime' },
+  { label: t('finance.filters.custom'), value: 'custom' },
+]);
+
+function onPeriodChange(): void {
+  filters.value.receiptDateStart = receiptPeriod.value.dateFrom;
+  filters.value.receiptDateEnd = receiptPeriod.value.dateTo;
+  currentPage.value = 1;
+  void fetchData();
+}
+
+function onFacultyChange(): void {
+  currentPage.value = 1;
+  void fetchData();
+}
+
+function onClear(): void {
+  clearFilters();
+  receiptPeriod.value = { preset: 'allTime', dateFrom: '', dateTo: '' };
+  search.value = '';
+  currentPage.value = 1;
+  void fetchData();
+}
+
+const todayStr = date.formatDate(new Date(), 'DDMMYYYY');
+
+const pdfExportConfig = computed<PdfExportConfig | null>(() => {
+  if (items.value.length === 0) return null;
+  return {
+    filename: `central-finance-receipt-summary_${todayStr}`,
+    orientation: 'landscape',
+    titles: [
+      t('centralFinance.receiptSummary.reportTitle'),
+      `${t('centralFinance.receiptSummary.filters.faculty')}: ${activeFacultyScopeLabel.value}`,
+    ],
+    titleStartY: 35,
+    titleLineHeight: 15,
+    startY: 65,
+    head: [
+      [
+        'ลำดับ',
+        'ส่วนงาน',
+        'เลขที่ใบเสร็จรับเงิน',
+        'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
+        'จำนวนเงิน',
+        'วันที่ชำระเงิน (effective date)',
+        'ชื่อ-สกุล ผู้เรียน',
+        'ชื่อโครงการ/อบรม/หลักสูตร',
+        'ผู้รับเงิน (Collector)',
+        'สถานะ',
+      ],
+    ],
+    body: items.value.map((row) => [
+      row.no,
+      row.faculty,
+      row.receiptNo,
+      row.customerName ?? '',
+      row.amount,
+      row.effectiveDate,
+      row.learnerName ?? '',
+      row.courseName.replace(/\n/g, ' '),
+      row.collector,
+      row.status === 'ยกเลิก'
+        ? `ยกเลิก ${row.cancelBy ?? ''} ${(row.cancelDate ?? '').replace('\n', ' ')}`
+        : 'ใช้งาน',
+    ]),
+    styles: { fontSize: 7, cellPadding: 3, valign: 'top' },
+    headStyles: { fontSize: 7 },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 24 },
+      1: { cellWidth: 80 },
+      2: { halign: 'center', cellWidth: 75 },
+      3: { cellWidth: 90 },
+      4: { halign: 'center', cellWidth: 48 },
+      5: { halign: 'center', cellWidth: 68 },
+      6: { cellWidth: 90 },
+      7: { cellWidth: 130 },
+      8: { halign: 'center', cellWidth: 100 },
+      9: { halign: 'center', cellWidth: 75 },
+    },
+  };
+});
+
+const csvExportConfig = computed<CsvExportConfig | null>(() => {
+  if (items.value.length === 0) return null;
+  return {
+    filename: `central-finance-receipt-summary_${todayStr}.csv`,
+    headers: [
+      'ลำดับ',
+      'ส่วนงาน',
+      'เลขที่ใบเสร็จรับเงิน',
+      'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
+      'จำนวนเงิน',
+      'วันที่ชำระเงิน (effective date)',
+      'ชื่อ-สกุล ผู้เรียน',
+      'ชื่อโครงการ/อบรม/หลักสูตร',
+      'ผู้รับเงิน (Collector)',
+      'สถานะ',
+    ],
+    data: items.value.map((row) => [
+      row.no,
+      row.faculty,
+      row.receiptNo,
+      row.customerName ?? '',
+      row.amount,
+      row.effectiveDate,
+      row.learnerName ?? '',
+      row.courseName.replace(/\n/g, ' '),
+      row.collector.replace('\n', ' '),
+      row.status === 'ยกเลิก'
+        ? `ยกเลิก ${row.cancelBy ?? ''} ${(row.cancelDate ?? '').replace('\n', ' ')}`
+        : 'ใช้งาน',
+    ]),
+  };
+});
 
 const faculties = ref<ApiFaculty[]>([]);
 const search = ref('');
@@ -363,6 +348,7 @@ const columns = computed<BaseTableColumn[]>(() => [
     label: t('finance.receiptSummary.columns.fullName'),
     align: 'center',
     sortable: true,
+    width: '220px',
   },
   {
     key: 'amount',
@@ -387,7 +373,6 @@ const columns = computed<BaseTableColumn[]>(() => [
     label: t('finance.receiptSummary.columns.courseName'),
     align: 'center',
     sortable: true,
-    width: '220px',
   },
   {
     key: 'collector',
@@ -446,19 +431,6 @@ async function downloadReceipt(row: ReceiptSummaryItem): Promise<void> {
   receiptDialogRef.value?.downloadReceiptPdf();
 }
 
-async function handleExportToPdf(): Promise<void> {
-  await exportToPdf(
-    items.value,
-    t('centralFinance.receiptSummary.reportTitle'),
-    t('centralFinance.receiptSummary.filters.faculty'),
-    activeFacultyScopeLabel.value,
-  );
-}
-
-function handleExportToExcel(): void {
-  exportToExcel(items.value, t('centralFinance.receiptSummary.reportTitle'));
-}
-
 onMounted(async () => {
   faculties.value = await fetchFaculties();
   await fetchData();
@@ -497,26 +469,9 @@ onMounted(async () => {
   font-weight: 900;
 }
 
-.filter-label {
-  @media (min-width: 600px) {
-    text-align: right;
-    padding-right: 16px;
-  }
-
-  @media (max-width: 599px) {
-    margin-bottom: 4px;
-  }
-}
-
-.filter-section__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  @media (max-width: 599px) {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.filter-faculty-wrap {
+  margin-left: 12px;
+  flex-shrink: 0;
 }
 
 .receipt-search-bar {
