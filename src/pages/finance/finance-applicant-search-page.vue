@@ -10,8 +10,12 @@
     >
       <template #aside>
         <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
-          <div class="faculty-scope-card__faculty">{{ userFacName || 'ไม่ระบุคณะ' }}</div>
+          <div class="faculty-scope-card__label">
+            {{ $t('finance.educationReport.scopeLabel') }}
+          </div>
+          <div class="faculty-scope-card__faculty">
+            {{ userFacName || $t('finance.educationReport.unknownFaculty') }}
+          </div>
         </div>
       </template>
     </AppPageHero>
@@ -32,131 +36,52 @@
           </div>
         </div>
 
-        <q-table
-          v-model:pagination="pagination"
-          :rows="results"
+        <BaseTable
           :columns="columns"
-          row-key="id"
-          flat
-          class="applicant-table"
+          :rows="paginatedRows"
+          :page="pagination.page"
+          :total-pages="Math.max(1, Math.ceil(results.length / pagination.rowsPerPage))"
+          :rows-per-page="pagination.rowsPerPage"
           :loading="loading"
-          :rows-per-page-options="[10, 25, 50, 100]"
+          show-index
+          show-rows-per-page
+          height-mode="auto"
+          @page-change="pagination.page = $event"
+          @rows-per-page-change="
+            pagination.rowsPerPage = $event;
+            pagination.page = 1;
+          "
         >
-          <template #body-cell-index="props">
-            <q-td :props="props">
-              {{ props.rowIndex + 1 + (pagination.page - 1) * pagination.rowsPerPage }}
-            </q-td>
+          <template #cell-amount="{ row }"> &#3647;{{ row.amount.toLocaleString() }} </template>
+
+          <template #cell-courseInfo="{ row }">
+            <div style="white-space: pre-wrap; word-break: break-word">{{ row.courseInfo }}</div>
           </template>
 
-          <template #body-cell-amount="props">
-            <q-td :props="props"> &#3647;{{ props.value.toLocaleString() }} </q-td>
+          <template #cell-status="{ row }">
+            <q-badge
+              rounded
+              class="applicant-status-badge"
+              :color="row.status === 'Paid' ? 'positive' : 'grey-6'"
+              :label="
+                row.status === 'Paid'
+                  ? $t('finance.applicantSearch.status.paid')
+                  : $t('finance.applicantSearch.status.pending')
+              "
+            />
           </template>
 
-          <template #body-cell-courseInfo="props">
-            <q-td :props="props">
-              <div style="white-space: pre-wrap; word-break: break-word">{{ props.value }}</div>
-            </q-td>
-          </template>
-
-          <template #body-cell-status="props">
-            <q-td :props="props" class="text-center">
-              <q-badge
-                rounded
-                class="applicant-status-badge"
-                :color="props.value === 'Paid' ? 'positive' : 'grey-6'"
-                :label="
-                  props.value === 'Paid'
-                    ? $t('finance.applicantSearch.status.paid')
-                    : $t('finance.applicantSearch.status.pending')
-                "
-              />
-            </q-td>
-          </template>
-
-          <template #body-cell-contact="props">
-            <q-td :props="props" class="text-center">
-              <div
-                v-if="props.value"
-                class="row items-center justify-center text-primary cursor-pointer"
-              >
-                <q-icon name="phone" size="14px" class="q-mr-xs" />
-                {{ props.value }}
-              </div>
-              <span v-else class="text-grey-5">-</span>
-            </q-td>
-          </template>
-
-          <template #no-data>
-            <div class="full-width column flex-center q-pa-xl text-grey-7">
-              <q-icon name="search_off" size="48px" class="q-mb-md opacity-20" />
-              <span>{{ $t('finance.applicantSearch.noData') }}</span>
+          <template #cell-contact="{ row }">
+            <div
+              v-if="row.contact"
+              class="row items-center justify-center text-primary cursor-pointer"
+            >
+              <q-icon name="phone" size="14px" class="q-mr-xs" />
+              {{ row.contact }}
             </div>
+            <span v-else class="text-grey-5">-</span>
           </template>
-
-          <template #bottom="scope">
-            <div class="row full-width justify-between items-center q-py-sm">
-              <div class="row items-center q-gutter-sm">
-                <span class="text-subtitle2 text-grey-8">{{
-                  $t('finance.receiptSummary.showEntries')
-                }}</span>
-                <q-select
-                  v-model="pagination.rowsPerPage"
-                  :options="[10, 25, 50, 100]"
-                  outlined
-                  dense
-                  options-dense
-                  style="width: 80px"
-                  class="bg-white applicant-rows-select"
-                />
-                <span class="text-subtitle2 text-grey-8">{{
-                  $t('finance.receiptSummary.entries')
-                }}</span>
-              </div>
-              <div class="row items-center q-gutter-sm">
-                <span class="text-caption text-grey-8 q-mr-sm">
-                  {{ pageStart(scope.pagination) }}-{{ pageEnd(scope.pagination) }} of
-                  {{ results.length }}
-                </span>
-                <q-btn
-                  icon="first_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.firstPage"
-                />
-                <q-btn
-                  icon="chevron_left"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.prevPage"
-                />
-                <q-btn
-                  icon="chevron_right"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.nextPage"
-                />
-                <q-btn
-                  icon="last_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.lastPage"
-                />
-              </div>
-            </div>
-          </template>
-        </q-table>
+        </BaseTable>
       </AppSurfaceCard>
     </section>
   </q-page>
@@ -169,12 +94,13 @@ import AppSearchInput from 'components/common/AppSearchInput.vue';
 import { api } from 'src/boot/axios';
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import type { QTableProps } from 'quasar';
+import BaseTable from 'components/base/BaseTable.vue';
+import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 import { useAuthStore } from 'stores/auth-store';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
-const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุ');
+const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || '');
 
 interface ApplicantSearchResult {
   id: number;
@@ -234,65 +160,54 @@ const searchForm = ref({
   keyword: '',
 });
 
-const columns = computed<QTableProps['columns']>(() => [
+const paginatedRows = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.rowsPerPage;
+  const end = start + pagination.value.rowsPerPage;
+  return results.value.slice(start, end);
+});
+
+const columns = computed<BaseTableColumn[]>(() => [
   {
-    name: 'index',
-    label: t('finance.applicantSearch.columns.no'),
-    align: 'center',
-    field: 'index',
-    sortable: true,
-    style: 'width: 50px',
-  },
-  {
-    name: 'learnerRef',
+    key: 'learnerRef',
     label: t('finance.applicantSearch.columns.learnerRef'),
     align: 'center',
-    field: 'learnerRef',
     sortable: true,
   },
   {
-    name: 'appRef',
+    key: 'appRef',
     label: t('finance.applicantSearch.columns.appRef'),
     align: 'center',
-    field: 'appRef',
     sortable: true,
   },
   {
-    name: 'learnerName',
+    key: 'learnerName',
     label: t('finance.applicantSearch.columns.learnerName'),
     align: 'center',
-    field: 'learnerName',
     sortable: true,
-    style: 'white-space: nowrap;',
   },
   {
-    name: 'amount',
+    key: 'amount',
     label: t('finance.applicantSearch.columns.amount'),
     align: 'center',
-    field: 'amount',
     sortable: true,
   },
   {
-    name: 'courseInfo',
+    key: 'courseInfo',
     label: t('finance.applicantSearch.columns.courseInfo'),
     align: 'center',
-    field: 'courseInfo',
     sortable: true,
-    style: 'width: 320px',
-    headerStyle: 'white-space: pre-wrap; width: 320px',
+    width: '320px',
   },
   {
-    name: 'status',
+    key: 'status',
     label: t('finance.applicantSearch.columns.status'),
     align: 'center',
-    field: 'status',
     sortable: true,
   },
   {
-    name: 'contact',
+    key: 'contact',
     label: t('finance.applicantSearch.columns.contact'),
     align: 'center',
-    field: 'contact',
   },
 ]);
 
@@ -310,18 +225,6 @@ function normalizeResult(item: ApplicantSearchApiItem): ApplicantSearchResult {
     status: item.status,
     contact: item.contact ?? '',
   };
-}
-
-function pageStart(tablePagination: { page: number; rowsPerPage: number }): number {
-  if (results.value.length === 0) {
-    return 0;
-  }
-
-  return (tablePagination.page - 1) * tablePagination.rowsPerPage + 1;
-}
-
-function pageEnd(tablePagination: { page: number; rowsPerPage: number }): number {
-  return Math.min(tablePagination.page * tablePagination.rowsPerPage, results.value.length);
 }
 
 async function handleSearch() {
@@ -424,44 +327,6 @@ onMounted(() => {
 
   :deep(.q-field__native) {
     font-size: 1rem;
-  }
-}
-
-.applicant-table {
-  :deep(.q-table__top) {
-    padding: 0;
-  }
-
-  :deep(.q-table thead tr th) {
-    background: linear-gradient(180deg, #f1f5f9 0%, #e8eef5 100%);
-    font-weight: 800;
-    font-size: 0.8125rem;
-    color: #475569;
-    letter-spacing: 0.02em;
-  }
-
-  :deep(.q-table tbody tr:nth-child(even)) {
-    background: rgba(248, 246, 241, 0.55);
-  }
-
-  :deep(.q-table tbody td) {
-    font-size: 0.9rem;
-  }
-
-  :deep(.q-table__bottom) {
-    border-top: 1px solid var(--admin-line, #e2e8f0);
-  }
-}
-
-.applicant-status-badge {
-  font-weight: 700;
-  padding: 6px 12px;
-  text-transform: none;
-}
-
-.applicant-rows-select {
-  :deep(.q-field__control) {
-    min-height: 40px;
   }
 }
 

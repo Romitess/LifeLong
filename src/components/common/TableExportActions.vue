@@ -1,21 +1,14 @@
 <template>
   <div class="row q-gutter-sm">
-    <ReportExportActions
-      v-if="pdfConfig || excelConfig"
-      :pdf-label="pdfLabel"
-      :excel-label="excelLabel"
-      @export-pdf="exportPdf"
-      @export-excel="exportExcel"
-    />
+    <ReportExportActions v-if="pdfConfig" :pdf-label="pdfLabel" @export-pdf="exportPdf" />
     <q-btn
       v-if="csvConfig"
-      unelevated
+      outline
       color="positive"
-      icon="download"
+      icon="table_chart"
       :label="csvLabel"
       @click="exportCsv"
       :loading="isExportingCsv"
-      class="q-px-md"
     />
   </div>
 </template>
@@ -25,33 +18,28 @@ import { ref } from 'vue';
 import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
-import * as XLSX from 'xlsx';
 import { Notify } from 'quasar';
 import ReportExportActions from 'components/common/ReportExportActions.vue';
-import type { PdfExportConfig, ExcelExportConfig, CsvExportConfig } from 'src/types/export-types';
+import type { PdfExportConfig, CsvExportConfig } from 'src/types/export-types';
 
 const props = withDefaults(
   defineProps<{
     pdfConfig?: PdfExportConfig | null;
-    excelConfig?: ExcelExportConfig | null;
     csvConfig?: CsvExportConfig | null;
     pdfLabel?: string;
-    excelLabel?: string;
     csvLabel?: string;
   }>(),
   {
     pdfLabel: 'Export PDF',
-    excelLabel: 'Export Excel',
     csvLabel: 'Export CSV',
   },
 );
 
 const emit = defineEmits<{
-  (e: 'exported', type: 'pdf' | 'excel' | 'csv'): void;
+  (e: 'exported', type: 'pdf' | 'csv'): void;
 }>();
 
 const isExportingPdf = ref(false);
-const isExportingExcel = ref(false);
 const isExportingCsv = ref(false);
 
 async function exportPdf() {
@@ -142,38 +130,6 @@ async function exportPdf() {
     });
   } finally {
     isExportingPdf.value = false;
-  }
-}
-
-function exportExcel() {
-  if (!props.excelConfig) return;
-  isExportingExcel.value = true;
-  try {
-    const config = props.excelConfig;
-    const wsData = config.rawWsData || [config.header || [], ...(config.data || [])];
-    const worksheet = XLSX.utils.aoa_to_sheet(wsData);
-    if (config.merges) {
-      worksheet['!merges'] = config.merges;
-    }
-    if (config.cols) {
-      worksheet['!cols'] = config.cols;
-    }
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, config.sheetName || 'Sheet1');
-    XLSX.writeFile(
-      workbook,
-      config.filename.endsWith('.xlsx') ? config.filename : `${config.filename}.xlsx`,
-    );
-    emit('exported', 'excel');
-  } catch (error) {
-    console.error('Failed to export Excel:', error);
-    Notify.create({
-      type: 'negative',
-      message: 'เกิดข้อผิดพลาดในการส่งออก Excel',
-      position: 'top',
-    });
-  } finally {
-    isExportingExcel.value = false;
   }
 }
 

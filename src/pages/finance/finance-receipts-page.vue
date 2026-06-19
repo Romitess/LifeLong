@@ -8,8 +8,12 @@
     >
       <template #aside>
         <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
-          <div class="faculty-scope-card__faculty">{{ currentUserFaculty || 'ไม่ระบุคณะ' }}</div>
+          <div class="faculty-scope-card__label">
+            {{ $t('finance.educationReport.scopeLabel') }}
+          </div>
+          <div class="faculty-scope-card__faculty">
+            {{ currentUserFaculty || $t('finance.educationReport.unknownFaculty') }}
+          </div>
         </div>
       </template>
     </AppPageHero>
@@ -76,9 +80,7 @@ import { useAuthStore } from 'stores/auth-store';
 const { t } = useI18n();
 const authStore = useAuthStore();
 
-const currentUserFaculty = computed(
-  () => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุคณะ',
-);
+const currentUserFaculty = computed(() => authStore.user?.facName || authStore.user?.faculty || '');
 
 const search = ref('');
 

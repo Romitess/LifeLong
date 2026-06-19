@@ -8,8 +8,12 @@
     >
       <template #aside>
         <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
-          <div class="faculty-scope-card__faculty">{{ userFacName || 'ไม่ระบุคณะ' }}</div>
+          <div class="faculty-scope-card__label">
+            {{ $t('finance.educationReport.scopeLabel') }}
+          </div>
+          <div class="faculty-scope-card__faculty">
+            {{ userFacName || $t('finance.educationReport.unknownFaculty') }}
+          </div>
         </div>
       </template>
     </AppPageHero>
@@ -102,9 +106,9 @@
           <div class="row items-center">
             <TableExportActions
               :pdf-config="pdfExportConfig"
-              :excel-config="excelExportConfig"
+              :csv-config="csvExportConfig"
               :pdf-label="$t('finance.receiptSummary.exportPdf')"
-              :excel-label="$t('finance.receiptSummary.exportExcel')"
+              csv-label="ส่งออก CSV"
             />
           </div>
         </template>
@@ -122,37 +126,37 @@
           </div>
         </div>
 
-        <q-table
-          :rows="tableData"
+        <BaseTable
           :columns="columns"
-          row-key="id"
-          flat
-          dense
-          wrap-cells
-          :filter="search"
+          :rows="paginatedRows"
+          :page="pagination.page"
+          :total-pages="Math.max(1, Math.ceil(tableData.length / pagination.rowsPerPage))"
+          :rows-per-page="pagination.rowsPerPage"
           :loading="isLoading"
-          class="receipt-table"
-          v-model:pagination="pagination"
-          :rows-per-page-options="[10, 25, 50, 100]"
-          :header-style="{ fontSize: '0.72rem', whiteSpace: 'normal', lineHeight: '1.3' }"
+          show-index
+          show-rows-per-page
+          height-mode="auto"
+          @page-change="pagination.page = $event"
+          @rows-per-page-change="
+            pagination.rowsPerPage = $event;
+            pagination.page = 1;
+          "
         >
-          <template v-slot:body-cell-status="props">
-            <q-td :props="props">
-              <div v-if="props.value === 'ยกเลิก'" class="text-negative text-center">
-                {{ $t('finance.receiptSummary.statusCancelled') }}<br />
-                <span class="text-caption text-grey-6"
-                  >{{ props.row.cancelBy }}<br />{{ props.row.cancelDate }}</span
-                >
-              </div>
-              <div v-else class="text-center">
-                {{ $t('finance.receiptSummary.statusActive') }}
-              </div>
-            </q-td>
+          <template #cell-status="{ row }">
+            <div v-if="row.status === 'ยกเลิก'" class="text-negative text-center">
+              {{ $t('finance.receiptSummary.statusCancelled') }}<br />
+              <span class="text-caption text-grey-6"
+                >{{ row.cancelBy }}<br />{{ row.cancelDate }}</span
+              >
+            </div>
+            <div v-else class="text-center">
+              {{ $t('finance.receiptSummary.statusActive') }}
+            </div>
           </template>
 
-          <template v-slot:body-cell-printReceipt="props">
-            <q-td :props="props" class="text-center">
-              <span v-if="props.row.status === 'ยกเลิก'" class="text-grey-6">
+          <template #cell-printReceipt="{ row }">
+            <div class="text-center">
+              <span v-if="row.status === 'ยกเลิก'" class="text-grey-6">
                 {{ $t('finance.receiptSummary.statusCancelled') }}
               </span>
               <q-btn
@@ -162,97 +166,27 @@
                 dense
                 icon="download"
                 color="warning"
-                @click="downloadReceipt(props.row)"
+                @click="downloadReceipt(row)"
               >
                 <q-tooltip>{{ $t('finance.receipts.printReceipt') }}</q-tooltip>
               </q-btn>
-            </q-td>
-          </template>
-
-          <template v-slot:body-cell-courseName="props">
-            <q-td :props="props">
-              <div style="white-space: pre-wrap; word-break: break-word">{{ props.value }}</div>
-            </q-td>
-          </template>
-
-          <template v-slot:body-cell-collector="props">
-            <q-td :props="props">
-              <div style="white-space: pre-wrap; word-break: break-word">
-                {{ formatCollectorDate(props.value) }}
-              </div>
-            </q-td>
-          </template>
-
-          <template v-slot:bottom="scope">
-            <div class="row full-width justify-between items-center q-py-sm">
-              <div class="row items-center q-gutter-sm">
-                <span class="text-subtitle2 text-grey-8">{{
-                  $t('finance.receiptSummary.showEntries')
-                }}</span>
-                <q-select
-                  v-model="pagination.rowsPerPage"
-                  :options="[10, 25, 50, 100]"
-                  outlined
-                  dense
-                  options-dense
-                  style="width: 80px"
-                  class="bg-white receipt-rows-select"
-                />
-                <span class="text-subtitle2 text-grey-8">{{
-                  $t('finance.receiptSummary.entries')
-                }}</span>
-              </div>
-              <div class="row items-center q-gutter-sm">
-                <span class="text-caption text-grey-8 q-mr-sm">
-                  {{
-                    tableData.length > 0
-                      ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
-                      : 0
-                  }}-{{
-                    Math.min(scope.pagination.page * scope.pagination.rowsPerPage, tableData.length)
-                  }}
-                  of {{ tableData.length }}
-                </span>
-                <q-btn
-                  icon="first_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.firstPage"
-                />
-                <q-btn
-                  icon="chevron_left"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.prevPage"
-                />
-                <q-btn
-                  icon="chevron_right"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.nextPage"
-                />
-                <q-btn
-                  icon="last_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.lastPage"
-                />
-              </div>
             </div>
           </template>
-        </q-table>
+
+          <template #cell-courseName="{ row }">
+            <div style="white-space: pre-wrap; word-break: break-word">{{ row.courseName }}</div>
+          </template>
+
+          <template #cell-effectiveDate="{ row }">
+            {{ formatEffectiveDate(row.effectiveDate) }}
+          </template>
+
+          <template #cell-collector="{ row }">
+            <div style="white-space: pre-wrap; word-break: break-word">
+              {{ formatCollectorDate(row.collector) }}
+            </div>
+          </template>
+        </BaseTable>
       </AppSurfaceCard>
     </section>
 
@@ -280,14 +214,16 @@ import AppPageHero from 'components/common/AppPageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
 import TableExportActions from 'components/common/TableExportActions.vue';
-import type { PdfExportConfig, ExcelExportConfig } from 'src/types/export-types';
+import type { PdfExportConfig, CsvExportConfig } from 'src/types/export-types';
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
-import { Notify, date, type QTableProps } from 'quasar';
+import { Notify, date } from 'quasar';
 import { type CellHookData } from 'jspdf-autotable';
 import { useAuthStore } from 'stores/auth-store';
 import { api } from 'src/boot/axios';
+import BaseTable from 'components/base/BaseTable.vue';
+import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 
 const authStore = useAuthStore();
 const { t } = useI18n();
@@ -481,10 +417,22 @@ function formatCollectorDate(value: string | undefined): string {
   if (lines.length === 0) return '';
 
   const name = lines[0];
-  const dateLine = lines.slice(1).join(' ');
-  const dateOnly = dateLine.replace(/\s*\d{1,2}:\d{2}(:\d{2})?\s*$/, '').trim();
+  if (lines.length > 1) {
+    const dateLine = lines.slice(1).join(' ').trim();
+    // Try to parse the date part
+    const d = new Date(dateLine);
+    if (!isNaN(d.getTime())) {
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${name}\n${dd}/${mm}/${yyyy}`;
+    }
+    // Fallback if it's not a parsable date
+    const dateOnly = dateLine.replace(/\s*\d{1,2}:\d{2}(:\d{2})?\s*$/, '').trim();
+    return [name, dateOnly].filter(Boolean).join('\n');
+  }
 
-  return [name, dateOnly].filter(Boolean).join('\n');
+  return name || '';
 }
 
 async function downloadReceipt(row: ReceiptSummaryItem) {
@@ -633,10 +581,10 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
   };
 });
 
-const excelExportConfig = computed<ExcelExportConfig | null>(() => {
+const csvExportConfig = computed<CsvExportConfig | null>(() => {
   if (tableData.value.length === 0) return null;
 
-  const header = [
+  const headers = [
     'ลำดับ',
     'เลขที่ใบเสร็จรับเงิน',
     'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
@@ -664,106 +612,94 @@ const excelExportConfig = computed<ExcelExportConfig | null>(() => {
 
   const todayStr = date.formatDate(new Date(), 'DDMMYYYY');
   const facName = userFacName.value === 'ไม่ระบุ' ? 'All' : userFacName.value.replace(/\s+/g, '_');
-  const filename = `reportpayment_${facName}_${todayStr}`;
+  const filename = `reportpayment_${facName}_${todayStr}.csv`;
 
   return {
     filename,
-    sheetName: 'Receipt Summary',
-    header,
+    headers,
     data,
   };
 });
 
-const columns = computed<QTableProps['columns']>(() => [
+const paginatedRows = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.rowsPerPage;
+  const end = start + pagination.value.rowsPerPage;
+  return tableData.value
+    .filter((row) => {
+      if (!search.value) return true;
+      const q = search.value.toLowerCase();
+      return (
+        (row.receiptNo?.toLowerCase().includes(q) ?? false) ||
+        (row.customerName?.toLowerCase().includes(q) ?? false) ||
+        (row.learnerName?.toLowerCase().includes(q) ?? false) ||
+        (row.courseName?.toLowerCase().includes(q) ?? false)
+      );
+    })
+    .slice(start, end);
+});
+
+const columns = computed<BaseTableColumn[]>(() => [
   {
-    name: 'no',
-    label: 'ลำดับ',
-    field: 'no',
-    align: 'center',
-    sortable: true,
-    style: 'width: 60px; min-width: 60px;',
-    headerStyle: 'white-space: nowrap; width: 60px;',
-  },
-  {
-    name: 'receiptNo',
+    key: 'receiptNo',
     label: 'เลขที่ใบเสร็จรับเงิน',
-    field: 'receiptNo',
     align: 'center',
     sortable: true,
-    style: 'width: 110px; min-width: 110px;',
-    headerStyle: 'white-space: normal; width: 110px;',
+    width: '110px',
   },
   {
-    name: 'customerName',
+    key: 'customerName',
     label: 'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
-    field: 'customerName',
     align: 'center',
     sortable: true,
-    style: 'width: 150px; min-width: 120px; white-space: normal;',
-    headerStyle: 'white-space: normal; width: 150px;',
+    width: '150px',
   },
   {
-    name: 'amount',
+    key: 'amount',
     label: 'จำนวนเงิน',
-    field: 'amount',
     align: 'center',
     sortable: true,
-    style: 'width: 90px; min-width: 90px;',
-    headerStyle: 'white-space: nowrap; width: 90px;',
+    width: '90px',
   },
   {
-    name: 'effectiveDate',
+    key: 'effectiveDate',
     label: 'วันที่ชำระเงิน (effective date)',
-    field: 'effectiveDate',
     align: 'center',
     sortable: true,
-    format: (val: string) => formatEffectiveDate(val),
-    style: 'width: 120px; min-width: 100px; white-space: normal;',
-    headerStyle: 'white-space: normal; width: 120px;',
+    width: '120px',
   },
   {
-    name: 'learnerName',
+    key: 'learnerName',
     label: 'ชื่อ-สกุล ผู้เรียน',
-    field: 'learnerName',
     align: 'center',
     sortable: true,
-    style: 'width: 120px; min-width: 100px; white-space: normal;',
-    headerStyle: 'white-space: normal; width: 120px;',
+    width: '120px',
   },
   {
-    name: 'courseName',
+    key: 'courseName',
     label: 'ชื่อโครงการ/อบรม/หลักสูตร',
-    field: 'courseName',
     align: 'center',
     sortable: true,
-    style: 'width: 180px; min-width: 140px; white-space: normal;',
-    headerStyle: 'white-space: normal; width: 180px;',
+    width: '180px',
   },
   {
-    name: 'collector',
+    key: 'collector',
     label: 'ผู้รับเงิน (Collector)\nวันที่ใบเสร็จรับเงิน',
-    field: 'collector',
     align: 'center',
     sortable: true,
-    style: 'width: 200px; min-width: 150px; white-space: normal;',
-    headerStyle: 'white-space: normal; width: 200px;',
+    width: '200px',
   },
   {
-    name: 'status',
+    key: 'status',
     label: 'สถานะ',
-    field: 'status',
     align: 'center',
     sortable: true,
-    style: 'width: 90px; min-width: 90px;',
-    headerStyle: 'white-space: nowrap; width: 90px;',
+    width: '90px',
   },
   {
-    name: 'printReceipt',
+    key: 'printReceipt',
     label: 'พิมพ์สำเนาใบเสร็จรับเงิน',
-    field: 'printReceipt',
     align: 'center',
-    style: 'width: 90px; min-width: 90px;',
-    headerStyle: 'white-space: normal; width: 90px;',
+    width: '90px',
   },
 ]);
 
@@ -979,41 +915,6 @@ onUnmounted(() => {
 .receipt-filter-button {
   min-width: 40px;
   height: 40px;
-}
-
-.receipt-table {
-  :deep(.q-table__top) {
-    padding: 0;
-  }
-
-  :deep(.q-table thead tr th) {
-    background: linear-gradient(180deg, #f1f5f9 0%, #e8eef5 100%);
-    font-weight: 800;
-    font-size: 0.78rem;
-    color: #475569;
-    letter-spacing: 0.02em;
-    padding: 8px 10px;
-  }
-
-  :deep(.q-table tbody tr:nth-child(even)) {
-    background: rgba(248, 246, 241, 0.55);
-  }
-
-  :deep(.q-table tbody td) {
-    font-size: 0.86rem;
-    vertical-align: middle;
-    padding: 6px 8px;
-    line-height: 1.3;
-    word-break: break-word;
-  }
-
-  :deep(.q-table tbody tr) {
-    min-height: 34px;
-  }
-
-  :deep(.q-table__bottom) {
-    border-top: 1px solid var(--admin-line, #e2e8f0);
-  }
 }
 
 :deep(.q-field__label) {

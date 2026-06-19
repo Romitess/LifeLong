@@ -60,29 +60,31 @@
               :class="[`text-${col.align ?? 'left'}`, col.headerClass]"
               :aria-sort="getAriaSortValue(col)"
             >
-              <button
-                v-if="col.sortable"
-                type="button"
-                class="base-table__sort-btn"
-                :class="{ 'base-table__sort-btn--active': sortBy === (col.sortKey ?? col.key) }"
-                :aria-label="`เรียงตาม ${col.label}`"
-                @click="toggleSort(col)"
-              >
-                <span>{{ col.label }}</span>
-                <q-icon
-                  :name="getSortIcon(col)"
-                  size="16px"
-                  class="base-table__sort-icon"
-                  :class="{
-                    'base-table__sort-icon--active': sortBy === (col.sortKey ?? col.key),
-                    'base-table__sort-icon--asc':
-                      sortBy === (col.sortKey ?? col.key) && sortDirection === 'asc',
-                    'base-table__sort-icon--desc':
-                      sortBy === (col.sortKey ?? col.key) && sortDirection === 'desc',
-                  }"
-                />
-              </button>
-              <template v-else>{{ col.label }}</template>
+              <slot :name="`header-${col.key}`" :col="col">
+                <button
+                  v-if="col.sortable"
+                  type="button"
+                  class="base-table__sort-btn"
+                  :class="{ 'base-table__sort-btn--active': sortBy === (col.sortKey ?? col.key) }"
+                  :aria-label="`เรียงตาม ${col.label}`"
+                  @click="toggleSort(col)"
+                >
+                  <span>{{ col.label }}</span>
+                  <q-icon
+                    :name="getSortIcon(col)"
+                    size="16px"
+                    class="base-table__sort-icon"
+                    :class="{
+                      'base-table__sort-icon--active': sortBy === (col.sortKey ?? col.key),
+                      'base-table__sort-icon--asc':
+                        sortBy === (col.sortKey ?? col.key) && sortDirection === 'asc',
+                      'base-table__sort-icon--desc':
+                        sortBy === (col.sortKey ?? col.key) && sortDirection === 'desc',
+                    }"
+                  />
+                </button>
+                <template v-else>{{ col.label }}</template>
+              </slot>
             </th>
           </tr>
         </thead>

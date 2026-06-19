@@ -10,8 +10,12 @@
     >
       <template #aside>
         <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
-          <div class="faculty-scope-card__faculty">{{ userFacName || 'ไม่ระบุคณะ' }}</div>
+          <div class="faculty-scope-card__label">
+            {{ $t('finance.educationReport.scopeLabel') }}
+          </div>
+          <div class="faculty-scope-card__faculty">
+            {{ userFacName || $t('finance.educationReport.unknownFaculty') }}
+          </div>
         </div>
       </template>
     </AppPageHero>
@@ -123,122 +127,61 @@
           </div>
         </div>
 
-        <q-table
-          :rows="tableData"
+        <BaseTable
           :columns="columns"
-          row-key="id"
-          selection="multiple"
-          v-model:selected="selectedRows"
-          flat
-          dense
-          wrap-cells
-          :filter="search"
+          :rows="paginatedRows"
+          :page="pagination.page"
+          :total-pages="Math.max(1, Math.ceil(tableData.length / pagination.rowsPerPage))"
+          :rows-per-page="pagination.rowsPerPage"
           :loading="isLoading"
-          class="payment-table"
-          v-model:pagination="pagination"
-          :rows-per-page-options="[10, 25, 50, 100]"
+          show-index
+          show-rows-per-page
+          height-mode="auto"
+          @page-change="pagination.page = $event"
+          @rows-per-page-change="
+            pagination.rowsPerPage = $event;
+            pagination.page = 1;
+          "
         >
-          <template #body-cell-receiptStatus="props">
-            <q-td :props="props">
-              <q-chip
-                v-if="props.row.receiptIssued"
-                color="positive"
-                text-color="white"
-                dense
-                size="sm"
-                class="q-ma-none text-weight-medium"
-              >
-                ออกใบเสร็จแล้ว
-              </q-chip>
-              <q-chip
-                v-else
-                color="negative"
-                text-color="white"
-                dense
-                size="sm"
-                class="q-ma-none text-weight-medium"
-              >
-                ยังไม่ได้ออก
-              </q-chip>
-            </q-td>
+          <template #header-selection>
+            <q-checkbox v-model="allSelected" dense />
           </template>
 
-          <template #bottom="scope">
-            <div class="row full-width justify-between items-center q-py-sm">
-              <div class="row items-center q-gutter-sm">
-                <span class="text-subtitle2 text-grey-8">{{
-                  $t('finance.paymentDownload.showEntries')
-                }}</span>
-                <q-select
-                  v-model="pagination.rowsPerPage"
-                  :options="[10, 25, 50, 100]"
-                  outlined
-                  dense
-                  options-dense
-                  style="width: 80px"
-                  class="bg-white"
-                />
-                <span class="text-subtitle2 text-grey-8">{{
-                  $t('finance.paymentDownload.entries')
-                }}</span>
-              </div>
-              <div class="row items-center q-gutter-sm">
-                <span class="text-caption text-grey-8 q-mr-sm">
-                  {{
-                    tableData.length > 0
-                      ? (scope.pagination.page - 1) * scope.pagination.rowsPerPage + 1
-                      : 0
-                  }}-{{
-                    Math.min(scope.pagination.page * scope.pagination.rowsPerPage, tableData.length)
-                  }}
-                  of {{ tableData.length }}
-                </span>
-                <q-btn
-                  icon="first_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.firstPage"
-                />
-                <q-btn
-                  icon="chevron_left"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isFirstPage"
-                  @click="scope.prevPage"
-                />
-                <q-btn
-                  icon="chevron_right"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.nextPage"
-                />
-                <q-btn
-                  icon="last_page"
-                  color="grey-8"
-                  round
-                  dense
-                  flat
-                  :disable="scope.isLastPage"
-                  @click="scope.lastPage"
-                />
-              </div>
-            </div>
+          <template #cell-selection="{ row }">
+            <q-checkbox v-model="selectedRows" :val="row" dense />
           </template>
 
-          <template #no-data>
-            <div class="full-width text-center q-pa-lg text-grey-7">
-              {{ $t('finance.paymentDownload.noData') }}
-            </div>
+          <template #cell-paymentDate="{ row }">
+            <div style="white-space: nowrap">{{ row.paymentDate }}</div>
           </template>
-        </q-table>
+
+          <template #cell-paymentTime="{ row }">
+            <div style="white-space: nowrap">{{ row.paymentTime }}</div>
+          </template>
+
+          <template #cell-receiptStatus="{ row }">
+            <q-chip
+              v-if="row.receiptIssued"
+              color="positive"
+              text-color="white"
+              dense
+              size="sm"
+              class="q-ma-none text-weight-medium"
+            >
+              {{ $t('finance.paymentDownload.receiptIssued', 'ออกใบเสร็จแล้ว') }}
+            </q-chip>
+            <q-chip
+              v-else
+              color="negative"
+              text-color="white"
+              dense
+              size="sm"
+              class="q-ma-none text-weight-medium"
+            >
+              {{ $t('finance.paymentDownload.receiptNotIssued', 'ยังไม่ได้ออก') }}
+            </q-chip>
+          </template>
+        </BaseTable>
       </AppSurfaceCard>
 
       <div class="row justify-center q-mt-md">
@@ -259,17 +202,19 @@
 import AppPageHero from 'components/common/AppPageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
+import BaseTable from 'components/base/BaseTable.vue';
+import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 import TableExportActions from 'components/common/TableExportActions.vue';
 import { api } from 'src/boot/axios';
 import { computed, onMounted, ref, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Notify, type QTableProps } from 'quasar';
+import { Notify } from 'quasar';
 import { useAuthStore } from 'stores/auth-store';
 import type { CsvExportConfig } from 'src/types/export-types';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
-const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุ');
+const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || '');
 
 interface PaymentNotificationItem {
   id: number;
@@ -377,6 +322,11 @@ const dateRangeModel = computed({
   },
 });
 
+function onCustomDateChange() {
+  datePreset.value = 'custom';
+  void fetchData();
+}
+
 const dateRangeDisplay = computed(() => {
   if (
     filters.value.dateFrom &&
@@ -417,85 +367,84 @@ function applyDatePreset(preset: string) {
   }
 }
 
-function onCustomDateChange() {
-  datePreset.value = 'custom';
-  void fetchData();
-}
+const paginatedRows = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.rowsPerPage;
+  const end = start + pagination.value.rowsPerPage;
+  return tableData.value.slice(start, end);
+});
 
-const columns = computed<QTableProps['columns']>(() => [
+const allSelected = computed({
+  get() {
+    return tableData.value.length > 0 && selectedRows.value.length === tableData.value.length;
+  },
+  set(val: boolean) {
+    if (val) {
+      selectedRows.value = [...tableData.value];
+    } else {
+      selectedRows.value = [];
+    }
+  },
+});
+
+const columns = computed<BaseTableColumn[]>(() => [
   {
-    name: 'no',
-    label: t('finance.paymentDownload.columns.no'),
-    field: 'no',
+    key: 'selection',
+    label: '',
     align: 'center',
-    sortable: true,
-    style: 'width: 60px',
+    sortable: false,
+    width: '40px',
   },
   {
-    name: 'paymentDate',
+    key: 'paymentDate',
     label: t('finance.paymentDownload.columns.paymentDate'),
-    field: 'paymentDate',
     align: 'center',
     sortable: true,
-    style: 'width: 100px',
   },
   {
-    name: 'paymentTime',
+    key: 'paymentTime',
     label: t('finance.paymentDownload.columns.paymentTime'),
-    field: 'paymentTime',
     align: 'center',
     sortable: true,
-    style: 'width: 80px',
   },
   {
-    name: 'learnerRef',
+    key: 'learnerRef',
     label: t('finance.paymentDownload.columns.learnerRef'),
-    field: 'learnerRef',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'appRef',
+    key: 'appRef',
     label: t('finance.paymentDownload.columns.appRef'),
-    field: 'appRef',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'payerName',
+    key: 'payerName',
     label: t('finance.paymentDownload.columns.payerName'),
-    field: 'payerName',
     align: 'center',
     sortable: true,
-    style: 'min-width: 160px',
   },
   {
-    name: 'learnerName',
+    key: 'learnerName',
     label: t('finance.paymentDownload.columns.learnerName'),
-    field: 'learnerName',
     align: 'center',
     sortable: true,
   },
   {
-    name: 'amount',
+    key: 'amount',
     label: t('finance.paymentDownload.columns.amount'),
-    field: 'amount',
     align: 'center',
     sortable: true,
-    style: 'width: 90px',
   },
   {
-    name: 'courseInfo',
+    key: 'courseInfo',
     label: t('finance.paymentDownload.columns.courseInfo'),
-    field: 'courseInfo',
     align: 'center',
     sortable: true,
-    style: 'min-width: 180px',
   },
   {
-    name: 'receiptStatus',
+    key: 'receiptStatus',
     label: 'สถานะ',
-    field: 'receiptIssued',
     align: 'center',
     sortable: true,
   },
@@ -847,29 +796,16 @@ onUnmounted(() => {
 }
 
 .payment-table {
-  :deep(.q-table__top) {
-    padding: 0;
-  }
-
-  :deep(.q-table thead tr th) {
+  :deep(.base-table__header-cell) {
     background: linear-gradient(180deg, #f1f5f9 0%, #e8eef5 100%);
     font-weight: 800;
     font-size: 0.8125rem;
     color: #475569;
     letter-spacing: 0.02em;
-    vertical-align: middle;
   }
 
-  :deep(.q-table tbody tr:nth-child(even)) {
+  :deep(.base-table__row:nth-child(even)) {
     background: rgba(248, 246, 241, 0.55);
-  }
-
-  :deep(.q-table tbody td) {
-    font-size: 0.9rem;
-  }
-
-  :deep(.q-table__bottom) {
-    border-top: 1px solid var(--admin-line, #e2e8f0);
   }
 }
 

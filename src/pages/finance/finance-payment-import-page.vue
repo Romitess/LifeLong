@@ -8,8 +8,12 @@
     >
       <template #aside>
         <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">ข้อมูลที่แสดง</div>
-          <div class="faculty-scope-card__faculty">{{ defaultDivision || 'ไม่ระบุคณะ' }}</div>
+          <div class="faculty-scope-card__label">
+            {{ $t('finance.educationReport.scopeLabel') }}
+          </div>
+          <div class="faculty-scope-card__faculty">
+            {{ defaultDivision || $t('finance.educationReport.unknownFaculty') }}
+          </div>
         </div>
       </template>
     </AppPageHero>
@@ -169,34 +173,27 @@
             </div>
           </template>
 
-          <q-table
-            v-model:pagination="pagination"
-            flat
-            :rows="filteredRows"
+          <BaseTable
             :columns="columns"
-            row-key="id"
-            :rows-per-page-options="[10, 25, 50]"
-            class="payment-import-table"
+            :rows="paginatedRows"
+            :page="pagination.page"
+            :total-pages="Math.max(1, Math.ceil(filteredRows.length / pagination.rowsPerPage))"
+            :rows-per-page="pagination.rowsPerPage"
+            show-index
+            show-rows-per-page
+            height-mode="auto"
+            @page-change="pagination.page = $event"
+            @rows-per-page-change="
+              pagination.rowsPerPage = $event;
+              pagination.page = 1;
+            "
           >
-            <template #body-cell-index="props">
-              <q-td :props="props">
-                {{ props.rowIndex + 1 + (pagination.page - 1) * pagination.rowsPerPage }}
-              </q-td>
-            </template>
-
-            <template #body-cell-amount="props">
-              <q-td :props="props" class="text-weight-bold">
-                {{ formatCurrency(props.row.amount) }}
-              </q-td>
-            </template>
-
-            <template #no-data>
-              <div class="full-width column flex-center q-pa-xl text-grey-7">
-                <q-icon name="upload_file" size="52px" class="q-mb-md" />
-                <span>{{ $t('finance.paymentImport.noData') }}</span>
+            <template #cell-amount="{ row }">
+              <div class="text-weight-bold">
+                {{ formatCurrency(row.amount) }}
               </div>
             </template>
-          </q-table>
+          </BaseTable>
 
           <div class="payment-table-footer" v-if="!isVerifying">
             <div>
@@ -827,6 +824,8 @@ import { usePaymentImportApi } from 'src/composables/usePaymentImportApi';
 import type { ImportAndGenerateResponse } from 'src/composables/usePaymentImportApi';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import { api } from 'src/boot/axios';
+import BaseTable from 'components/base/BaseTable.vue';
+import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -1057,68 +1056,52 @@ const pagination = ref({
   rowsPerPage: 10,
 });
 
-const columns = computed<QTableProps['columns']>(() => [
+const columns = computed<BaseTableColumn[]>(() => [
   {
-    name: 'index',
-    label: t('finance.paymentImport.columns.no'),
-    field: 'index',
-    align: 'center',
-    sortable: false,
-    style: 'width: 76px',
-  },
-  {
-    name: 'learnerRef',
+    key: 'learnerRef',
     label: t('finance.paymentImport.columns.importLearnerRef'),
-    field: 'learnerRef',
     align: 'left',
     sortable: true,
   },
   {
-    name: 'applicationRef',
+    key: 'applicationRef',
     label: t('finance.paymentImport.columns.importAppRef'),
-    field: 'applicationRef',
     align: 'left',
     sortable: true,
   },
   {
-    name: 'payerName',
+    key: 'payerName',
     label: t('finance.paymentImport.columns.payerName'),
-    field: 'payerName',
     align: 'left',
     sortable: true,
   },
   {
-    name: 'paymentDate',
+    key: 'paymentDate',
     label: t('finance.paymentImport.columns.paymentDate'),
-    field: 'paymentDate',
     align: 'left',
     sortable: true,
   },
   {
-    name: 'paymentTime',
+    key: 'paymentTime',
     label: t('finance.paymentImport.columns.paymentTime'),
-    field: 'paymentTime',
     align: 'left',
     sortable: true,
   },
   {
-    name: 'amount',
+    key: 'amount',
     label: t('finance.paymentImport.columns.amount'),
-    field: 'amount',
     align: 'right',
     sortable: true,
   },
   {
-    name: 'importedAt',
+    key: 'importedAt',
     label: t('finance.paymentImport.columns.importedAt'),
-    field: 'importedAt',
     align: 'left',
     sortable: true,
   },
   {
-    name: 'importedBy',
+    key: 'importedBy',
     label: t('finance.paymentImport.columns.importedBy'),
-    field: 'importedBy',
     align: 'left',
     sortable: true,
   },
@@ -1188,6 +1171,12 @@ function onFileSelected(files: File[] | null) {
   // Reset temp so q-file doesn't hold stale state
   tempPickedFiles.value = [];
 }
+
+const paginatedRows = computed(() => {
+  const start = (pagination.value.page - 1) * pagination.value.rowsPerPage;
+  const end = start + pagination.value.rowsPerPage;
+  return filteredRows.value.slice(start, end);
+});
 
 function removeFile(index: number) {
   selectedFiles.value = selectedFiles.value.filter((_, i) => i !== index);
@@ -1865,35 +1854,6 @@ function confirmClearAll() {
 
 .text-navy {
   color: var(--admin-navy, #0f233f);
-}
-
-.payment-import-table {
-  :deep(.q-table__top) {
-    padding: 0;
-  }
-
-  :deep(.q-table thead tr th) {
-    background: linear-gradient(180deg, #f1f5f9 0%, #e8eef5 100%);
-    color: #475569;
-    font-size: 0.8rem;
-    font-weight: 900;
-    letter-spacing: 0.01em;
-    white-space: normal;
-  }
-
-  :deep(.q-table tbody tr:nth-child(even)) {
-    background: rgba(248, 246, 241, 0.55);
-  }
-
-  :deep(.q-table tbody td) {
-    color: #334155;
-    font-size: 0.88rem;
-    vertical-align: top;
-  }
-
-  :deep(.q-table__bottom) {
-    border-top: 1px solid var(--admin-line);
-  }
 }
 
 .payment-import-notice {
