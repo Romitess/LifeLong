@@ -216,7 +216,7 @@
                     <q-btn
                       outline
                       color="negative"
-                      icon="close"
+                      icon="delete"
                       label="ลบ"
                       no-caps
                       class="course-action-btn"
@@ -235,201 +235,135 @@
             ไม่พบรายวิชา
           </div>
 
-          <div class="course-table-scroll">
-            <table class="course-admin-table">
-              <colgroup>
-                <col class="course-col-title" />
-                <col class="course-col-fee" />
-                <col class="course-col-schedule" />
-                <col class="course-col-seat" />
-                <col class="course-col-paid" />
-                <col class="course-col-unpaid" />
-                <col class="course-col-remain" />
-                <col class="course-col-publish" />
-                <col class="course-col-moodle" />
-                <col class="course-col-actions" />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>{{ t('instructor.table.colCourse') }}</th>
-                  <th>{{ t('instructor.table.colFee') }}</th>
-                  <th>{{ t('instructor.table.colDate') }}</th>
-                  <th>{{ t('instructor.table.colSeats') }}</th>
-                  <th>
-                    <span class="table-head-label">{{ t('instructor.table.colPaid') }}</span>
-                  </th>
-                  <th>{{ t('instructor.table.colUnpaid') }}</th>
-                  <th>{{ t('instructor.table.colRemain') }}</th>
-                  <th>
-                    <span class="table-head-label">{{ t('instructor.table.colPublish') }}</span>
-                  </th>
-                  <th>
-                    <span class="table-head-label">Moodle</span>
-                  </th>
-                  <th>{{ t('instructor.table.colManage') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="course in paginatedCourses" :key="course.id">
-                  <td class="course-title-cell">
-                    <div class="course-title-cell__layout">
-                      <img
-                        :src="course.imageUrl"
-                        :alt="course.titleEn || course.title"
-                        class="course-title-cell__image"
-                      />
-                      <div class="course-title-cell__copy">
-                        <q-badge outline color="primary" class="course-title-cell__code">
-                          {{ course.code }}
-                        </q-badge>
-                        <button type="button" @click="openCourseWorkspace(course.id)">
-                          {{ course.title }}
-                        </button>
-                        <span v-if="course.titleEn">{{ course.titleEn }}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="text-center">
-                    {{
-                      course.isFree
-                        ? t('instructor.course.freeLabel')
-                        : formatCurrency(course.price)
-                    }}
-                  </td>
-                  <td class="schedule-cell">
-                    <div class="schedule-cell__content">
-                      <span>{{ t('instructor.table.regDate') }}</span>
-                      <strong>
-                        {{
-                          formatCompactDateRange(course.registrationStart, course.registrationEnd)
-                        }}
-                      </strong>
-                    </div>
-                  </td>
-                  <td class="text-center">{{ course.maxSeats }}</td>
-                  <td class="text-center text-positive">
-                    {{ getPaidLearnerCount(course) }}
-                  </td>
-                  <td class="text-center text-negative">
-                    {{ getUnpaidLearnerCount(course) }}
-                  </td>
-                  <td class="text-center">
-                    {{ getRemainingSeats(course) }}
-                  </td>
-                  <td class="text-center">
-                    <q-toggle
-                      :model-value="course.isActive"
-                      color="positive"
-                      dense
-                      @update:model-value="setCoursePublished(course.id, $event)"
-                    />
-                  </td>
-                  <td class="moodle-cell">
-                    <div class="moodle-status">
-                      <q-badge
-                        rounded
-                        :color="course.isActive ? 'positive' : 'grey-5'"
-                        text-color="white"
-                        :label="
-                          course.isActive
-                            ? t('instructor.table.moodleSent')
-                            : t('instructor.table.moodleNotSent')
-                        "
-                      />
-                      <div v-if="course.isActive" class="moodle-status__meta">
-                        <span>sukanya</span>
-                        <span>{{ course.registrationEnd }}</span>
-                      </div>
-                    </div>
-                    <q-btn
-                      unelevated
-                      color="positive"
-                      :label="t('instructor.table.openMoodle')"
-                      no-caps
-                      size="sm"
-                      class="moodle-link-btn"
-                      :disable="!course.moodleId"
-                      :loading="moodleOpenLoading === course.id"
-                      @click="openInMoodle(course)"
-                    />
-                  </td>
-                  <td class="actions-cell">
-                    <div class="actions-cell__group">
-                      <q-btn
-                        dense
-                        round
-                        color="primary"
-                        icon="list_alt"
-                        class="table-action-btn table-action-btn--list"
-                        :aria-label="t('instructor.table.tooltipDetails')"
-                        tag="a"
-                        :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
-                        @click="openCourseWorkspace(course.id, $event)"
-                      >
-                        <q-tooltip>{{ t('instructor.table.tooltipDetails') }}</q-tooltip>
-                      </q-btn>
-                      <q-btn
-                        dense
-                        round
-                        color="primary"
-                        icon="edit"
-                        class="table-action-btn table-action-btn--edit"
-                        :aria-label="t('instructor.table.tooltipEdit')"
-                        tag="a"
-                        :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
-                        @click="openCourseWorkspace(course.id, $event)"
-                      >
-                        <q-tooltip>{{ t('instructor.table.tooltipEdit') }}</q-tooltip>
-                      </q-btn>
-                      <q-btn
-                        dense
-                        round
-                        color="negative"
-                        icon="close"
-                        class="table-action-btn table-action-btn--delete"
-                        :aria-label="t('instructor.table.tooltipDelete')"
-                        @click="queueDeleteCourse(course)"
-                      >
-                        <q-tooltip>{{ t('instructor.table.tooltipDelete') }}</q-tooltip>
-                      </q-btn>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="paginatedCourses.length === 0">
-                  <td colspan="10" class="empty-table-cell">
-                    {{ t('instructor.table.noCourseFound') }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div v-if="filteredCourses.length > courseRowsPerPage" class="course-table-pagination">
-            <q-btn
-              flat
-              dense
-              round
-              icon="chevron_left"
-              :disable="courseTablePage === 1"
-              @click="courseTablePage -= 1"
-            />
-            <span>
-              {{
-                t('instructor.table.page', {
-                  current: courseTablePage,
-                  total: courseTablePageCount,
-                })
-              }}
-            </span>
-            <q-btn
-              flat
-              dense
-              round
-              icon="chevron_right"
-              :disable="courseTablePage === courseTablePageCount"
-              @click="courseTablePage += 1"
-            />
-          </div>
+          <BaseTable
+            :columns="courseAdminColumns"
+            :rows="paginatedCourses"
+            row-key="id"
+            :rows-per-page="courseRowsPerPage"
+            :page="courseTablePage"
+            :total-pages="courseTablePageCount"
+            min-width="1180px"
+            empty-text="ไม่พบรายวิชา"
+            height-mode="stable"
+            :on-page-change="setCourseTablePage"
+          >
+            <template #cell-title="{ row: course }">
+              <div class="course-title-cell__layout">
+                <img
+                  :src="course.imageUrl"
+                  :alt="course.titleEn || course.title"
+                  class="course-title-cell__image"
+                />
+                <div class="course-title-cell__copy">
+                  <q-badge outline color="primary" class="course-title-cell__code">
+                    {{ course.code }}
+                  </q-badge>
+                  <button type="button" @click="openCourseWorkspace(course.id)">
+                    {{ course.title }}
+                  </button>
+                  <span v-if="course.titleEn">{{ course.titleEn }}</span>
+                </div>
+              </div>
+            </template>
+            <template #cell-price="{ row: course }">
+              {{ course.isFree ? t('instructor.course.freeLabel') : formatCurrency(course.price) }}
+            </template>
+            <template #cell-schedule="{ row: course }">
+              <div class="schedule-cell__content">
+                <span>{{ t('instructor.table.regDate') }}</span>
+                <strong>{{
+                  formatCompactDateRange(course.registrationStart, course.registrationEnd)
+                }}</strong>
+              </div>
+            </template>
+            <template #cell-paid="{ row: course }">
+              <span class="text-positive">{{ getPaidLearnerCount(course) }}</span>
+            </template>
+            <template #cell-unpaid="{ row: course }">
+              <span class="text-negative">{{ getUnpaidLearnerCount(course) }}</span>
+            </template>
+            <template #cell-remain="{ row: course }">
+              {{ getRemainingSeats(course) }}
+            </template>
+            <template #cell-publish="{ row: course }">
+              <q-toggle
+                :model-value="course.isActive"
+                color="positive"
+                dense
+                @update:model-value="setCoursePublished(course.id, $event)"
+              />
+            </template>
+            <template #cell-moodle="{ row: course }">
+              <div class="moodle-status">
+                <q-badge
+                  rounded
+                  :color="course.isActive ? 'positive' : 'grey-5'"
+                  text-color="white"
+                  :label="
+                    course.isActive
+                      ? t('instructor.table.moodleSent')
+                      : t('instructor.table.moodleNotSent')
+                  "
+                />
+                <div v-if="course.isActive" class="moodle-status__meta">
+                  <span>sukanya</span>
+                  <span>{{ course.registrationEnd }}</span>
+                </div>
+              </div>
+              <q-btn
+                unelevated
+                color="positive"
+                :label="t('instructor.table.openMoodle')"
+                no-caps
+                size="sm"
+                class="moodle-link-btn"
+                :disable="!course.moodleId"
+                :loading="moodleOpenLoading === course.id"
+                @click="openInMoodle(course)"
+              />
+            </template>
+            <template #cell-actions="{ row: course }">
+              <div class="actions-cell__group">
+                <q-btn
+                  dense
+                  round
+                  color="primary"
+                  icon="list_alt"
+                  class="table-action-btn table-action-btn--list"
+                  :aria-label="t('instructor.table.tooltipDetails')"
+                  tag="a"
+                  :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
+                  @click="openCourseWorkspace(course.id, $event)"
+                >
+                  <q-tooltip>{{ t('instructor.table.tooltipDetails') }}</q-tooltip>
+                </q-btn>
+                <q-btn
+                  dense
+                  round
+                  color="primary"
+                  icon="edit"
+                  class="table-action-btn table-action-btn--edit"
+                  :aria-label="t('instructor.table.tooltipEdit')"
+                  tag="a"
+                  :href="resolveFullUrl(`/instructor/courses?courseId=${course.id}`)"
+                  @click="openCourseWorkspace(course.id, $event)"
+                >
+                  <q-tooltip>{{ t('instructor.table.tooltipEdit') }}</q-tooltip>
+                </q-btn>
+                <q-btn
+                  dense
+                  round
+                  color="negative"
+                  icon="delete"
+                  class="table-action-btn table-action-btn--delete"
+                  :aria-label="t('instructor.table.tooltipDelete')"
+                  @click="queueDeleteCourse(course)"
+                >
+                  <q-tooltip>{{ t('instructor.table.tooltipDelete') }}</q-tooltip>
+                </q-btn>
+              </div>
+            </template>
+          </BaseTable>
         </div>
       </section>
 
@@ -941,68 +875,64 @@
                 />
               </div>
 
-              <q-table
+              <BaseTable
                 v-if="learners.length > 0"
-                flat
-                :rows="learners"
-                :columns="learnerColumns"
+                :rows="paginatedManagementLearners"
+                :columns="managementLearnerColumns"
                 row-key="id"
-                :pagination="{ rowsPerPage: 8 }"
+                :rows-per-page="managementLearnerRowsPerPage"
+                :page="managementLearnerTablePage"
+                :total-pages="managementLearnerPageCount"
+                min-width="900px"
+                empty-text="ไม่พบผู้เรียน"
+                height-mode="stable"
                 class="management-table"
-                @row-click="openLearnerDetail"
+                :on-page-change="setManagementLearnerTablePage"
               >
-                <template #body-cell-name="props">
-                  <q-td :props="props">
-                    <div class="learner-name-cell">
-                      <q-avatar size="34px">
-                        <img :src="props.row.avatarUrl" :alt="props.row.name" />
-                      </q-avatar>
-                      <div>
-                        <strong>{{ props.row.name }}</strong>
-                        <span>{{ props.row.studentId }}</span>
-                      </div>
+                <template #cell-name="{ row }">
+                  <div class="learner-name-cell">
+                    <q-avatar size="34px">
+                      <img :src="row.avatarUrl" :alt="row.name" />
+                    </q-avatar>
+                    <div>
+                      <strong>{{ row.name }}</strong>
+                      <span>{{ row.studentId }}</span>
                     </div>
-                  </q-td>
+                  </div>
                 </template>
-                <template #body-cell-progress="props">
-                  <q-td :props="props">
-                    <div class="progress-cell">
-                      <q-linear-progress
-                        rounded
-                        size="8px"
-                        :value="props.row.progress / 100"
-                        color="primary"
-                      />
-                      <span>{{ props.row.progress }}%</span>
-                    </div>
-                  </q-td>
-                </template>
-                <template #body-cell-status="props">
-                  <q-td :props="props">
-                    <q-badge rounded :color="props.row.statusColor" :label="props.row.status" />
-                  </q-td>
-                </template>
-                <template #body-cell-actions="props">
-                  <q-td :props="props" class="text-right">
-                    <q-btn
-                      flat
-                      round
-                      dense
-                      icon="mail"
+                <template #cell-progress="{ row }">
+                  <div class="progress-cell">
+                    <q-linear-progress
+                      rounded
+                      size="8px"
+                      :value="row.progress / 100"
                       color="primary"
-                      @click.stop="openQuickDialog(`ส่งข้อความถึง ${props.row.name}`)"
                     />
-                    <q-btn
-                      flat
-                      round
-                      dense
-                      icon="visibility"
-                      color="grey-7"
-                      @click.stop="openLearnerDetail(null, props.row)"
-                    />
-                  </q-td>
+                    <span>{{ row.progress }}%</span>
+                  </div>
                 </template>
-              </q-table>
+                <template #cell-status="{ row }">
+                  <q-badge rounded :color="row.statusColor" :label="row.status" />
+                </template>
+                <template #cell-actions="{ row }">
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    icon="mail"
+                    color="primary"
+                    @click.stop="openQuickDialog(`ส่งข้อความถึง ${row.name}`)"
+                  />
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    icon="visibility"
+                    color="grey-7"
+                    @click.stop="openLearnerDetail(null, row)"
+                  />
+                </template>
+              </BaseTable>
               <div v-else class="empty-tab-state text-center q-pa-xl">
                 <q-icon name="groups" size="56px" color="grey-4" />
                 <div class="text-h6 text-grey-6 q-mt-md">
@@ -1104,6 +1034,7 @@
                       round
                       icon="edit"
                       color="primary"
+                      class="table-action-btn table-action-btn--edit"
                       @click="openEditAnnouncementDialog(announcement)"
                     >
                       <q-tooltip>{{ t('instructor.announcements.tooltipEdit') }}</q-tooltip>
@@ -1114,6 +1045,7 @@
                       round
                       icon="delete"
                       color="negative"
+                      class="table-action-btn table-action-btn--delete"
                       @click="confirmDeleteAnnouncement(announcement)"
                     >
                       <q-tooltip>{{ t('instructor.announcements.tooltipDelete') }}</q-tooltip>
@@ -1542,7 +1474,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
-import { useQuasar, type QTableColumn } from 'quasar';
+import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -1556,6 +1488,7 @@ import {
 import type { Course, DeliveryMode } from 'src/types/course';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
+import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
 import { api } from 'src/boot/axios';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
@@ -1656,6 +1589,8 @@ const courseSearch = ref('');
 const activeWorkspaceTab = ref<WorkspaceTab>('overview');
 const courseRowsPerPage = 10;
 const courseTablePage = ref(1);
+const managementLearnerRowsPerPage = 8;
+const managementLearnerTablePage = ref(1);
 const deleteCourseDialogOpen = ref(false);
 const pendingDeleteCourse = ref<Course | null>(null);
 const saveCourseDialogOpen = ref(false);
@@ -1845,6 +1780,29 @@ const paginatedCourses = computed(() =>
   ),
 );
 
+const courseAdminColumns = computed<BaseTableColumn[]>(() => [
+  { key: 'title', label: t('instructor.table.colCourse'), width: '30%', sortable: true },
+  { key: 'price', label: t('instructor.table.colFee'), align: 'center', width: '110px' },
+  { key: 'schedule', label: t('instructor.table.colDate'), align: 'center', width: '150px' },
+  {
+    key: 'maxSeats',
+    label: t('instructor.table.colSeats'),
+    align: 'center',
+    width: '86px',
+    sortable: true,
+  },
+  { key: 'paid', label: t('instructor.table.colPaid'), align: 'center', width: '86px' },
+  { key: 'unpaid', label: t('instructor.table.colUnpaid'), align: 'center', width: '92px' },
+  { key: 'remain', label: t('instructor.table.colRemain'), align: 'center', width: '92px' },
+  { key: 'publish', label: t('instructor.table.colPublish'), align: 'center', width: '96px' },
+  { key: 'moodle', label: 'Moodle', align: 'center', width: '150px' },
+  { key: 'actions', label: t('instructor.table.colManage'), align: 'center', width: '126px' },
+]);
+
+function setCourseTablePage(page: number): void {
+  courseTablePage.value = page;
+}
+
 watch([filteredCourses, courseStatusFilter], () => {
   courseTablePage.value = 1;
 });
@@ -2025,33 +1983,32 @@ const learners = computed<LearnerRow[]>(() =>
   isKnownCourse.value ? buildLearnersForCourse(selectedCourse.value) : [],
 );
 
-const learnerColumns = computed<QTableColumn<LearnerRow>[]>(() => [
-  {
-    name: 'name',
-    label: t('instructor.learners.colName'),
-    field: 'name',
-    align: 'left',
-    sortable: true,
-  },
-  { name: 'email', label: t('instructor.learners.colEmail'), field: 'email', align: 'left' },
-  {
-    name: 'progress',
-    label: t('instructor.learners.colProgress'),
-    field: 'progress',
-    align: 'left',
-    sortable: true,
-  },
-  { name: 'score', label: t('instructor.learners.colScore'), field: 'score', align: 'left' },
-  {
-    name: 'lastActive',
-    label: t('instructor.learners.colLastActive'),
-    field: 'lastActive',
-    align: 'left',
-    sortable: true,
-  },
-  { name: 'status', label: t('instructor.learners.colStatus'), field: 'status', align: 'left' },
-  { name: 'actions', label: '', field: 'id', align: 'right' },
+const managementLearnerPageCount = computed(() =>
+  Math.max(1, Math.ceil(learners.value.length / managementLearnerRowsPerPage)),
+);
+const paginatedManagementLearners = computed(() =>
+  learners.value.slice(
+    (managementLearnerTablePage.value - 1) * managementLearnerRowsPerPage,
+    managementLearnerTablePage.value * managementLearnerRowsPerPage,
+  ),
+);
+const managementLearnerColumns = computed<BaseTableColumn[]>(() => [
+  { key: 'name', label: t('instructor.learners.colName'), sortable: true },
+  { key: 'email', label: t('instructor.learners.colEmail'), width: '220px' },
+  { key: 'progress', label: t('instructor.learners.colProgress'), width: '190px', sortable: true },
+  { key: 'score', label: t('instructor.learners.colScore'), width: '140px' },
+  { key: 'lastActive', label: t('instructor.learners.colLastActive'), width: '150px' },
+  { key: 'status', label: t('instructor.learners.colStatus'), width: '140px' },
+  { key: 'actions', label: '', align: 'right', width: '92px' },
 ]);
+
+function setManagementLearnerTablePage(page: number): void {
+  managementLearnerTablePage.value = page;
+}
+
+watch(managementLearnerPageCount, (pageCount) => {
+  managementLearnerTablePage.value = Math.min(managementLearnerTablePage.value, pageCount);
+});
 
 const assignments = computed(() => {
   if (!isKnownCourse.value) return [];
@@ -3455,65 +3412,64 @@ function openQuickDialog(title: string): void {
   word-break: keep-all;
 }
 
-.course-title-cell {
-  padding: 14px 16px !important;
+.course-title-cell__layout {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  min-width: 320px;
+}
 
-  .course-title-cell__layout {
-    display: grid;
-    grid-template-columns: 108px minmax(0, 1fr);
-    gap: 16px;
-    align-items: center;
+.course-title-cell__image {
+  display: block;
+  width: 108px;
+  max-width: 108px;
+  height: 76px;
+  aspect-ratio: 108 / 76;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.09);
+}
+
+.course-title-cell__copy {
+  min-width: 0;
+}
+
+.course-title-cell__code {
+  width: fit-content;
+  margin-bottom: 5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 900;
+}
+
+.course-title-cell__copy button {
+  display: block;
+  padding: 0;
+  border: 0;
+  color: #172033;
+  background: transparent;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 900;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.18s ease;
+
+  &:hover {
+    color: #d97706;
   }
+}
 
-  .course-title-cell__image {
-    display: block;
-    width: 108px;
-    height: 76px;
-    border-radius: 8px;
-    object-fit: cover;
-    box-shadow: 0 7px 18px rgba(15, 23, 42, 0.09);
-  }
-
-  .course-title-cell__copy {
-    min-width: 0;
-  }
-
-  .course-title-cell__code {
-    width: fit-content;
-    margin-bottom: 5px;
-    padding: 2px 7px;
-    border-radius: 999px;
-    font-size: 0.64rem;
-    font-weight: 900;
-  }
-
-  button {
-    display: block;
-    padding: 0;
-    border: 0;
-    color: #172033;
-    background: transparent;
-    font: inherit;
-    font-size: 0.88rem;
-    font-weight: 900;
-    line-height: 1.45;
-    text-align: left;
-    cursor: pointer;
-    transition: color 0.18s ease;
-
-    &:hover {
-      color: #d97706;
-    }
-  }
-
-  span {
-    display: block;
-    margin-top: 5px;
-    color: #64748b;
-    font-size: 0.74rem;
-    font-weight: 700;
-    line-height: 1.45;
-  }
+.course-title-cell__copy > span {
+  display: block;
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.45;
 }
 
 .schedule-cell {
@@ -3598,31 +3554,49 @@ function openQuickDialog(title: string): void {
 }
 
 .table-action-btn {
-  width: 32px;
-  height: 32px;
-  min-height: 32px;
+  --action-color: var(--admin-info-ink, #1d4ed8);
+  --action-border: rgba(16, 35, 63, 0.12);
+  --action-ring: rgba(16, 35, 63, 0.08);
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
   margin: 0;
   background: #ffffff !important;
-  border: 1px solid #dce4ee !important;
+  color: var(--action-color) !important;
+  border: 1px solid var(--action-border) !important;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
   transition:
     transform 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease;
+    box-shadow 0.18s ease;
+
+  :deep(.q-icon) {
+    font-size: 17px;
+  }
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12) !important;
+    box-shadow:
+      0 8px 18px rgba(15, 23, 42, 0.12),
+      0 0 0 1px var(--action-ring) !important;
   }
 }
 
-.table-action-btn--list,
+.table-action-btn--list {
+  --action-color: #1d4ed8;
+  --action-border: rgba(37, 99, 235, 0.22);
+  --action-ring: rgba(37, 99, 235, 0.1);
+}
+
 .table-action-btn--edit {
-  color: #f59e0b !important;
+  --action-color: var(--admin-gold, #f5a623);
+  --action-border: rgba(245, 166, 35, 0.28);
+  --action-ring: rgba(245, 166, 35, 0.1);
 }
 
 .table-action-btn--delete {
-  color: #dc2626 !important;
+  --action-color: var(--admin-danger-ink, #dc2626);
+  --action-border: rgba(225, 29, 72, 0.18);
+  --action-ring: rgba(225, 29, 72, 0.08);
 }
 
 .empty-table-cell {

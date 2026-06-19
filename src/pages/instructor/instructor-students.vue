@@ -61,90 +61,75 @@
           </div>
         </div>
 
-        <div v-if="activeStudentTab === 'results'" class="learning-result-table-scroll">
-          <table class="learning-result-course-table">
-            <colgroup>
-              <col class="learning-result-col-index" />
-              <col class="learning-result-col-title" />
-              <col class="learning-result-col-fee" />
-              <col class="learning-result-col-schedule" />
-              <col class="learning-result-col-seat" />
-              <col class="learning-result-col-enrolled" />
-              <col class="learning-result-col-pass" />
-              <col class="learning-result-col-fail" />
-              <col class="learning-result-col-actions" />
-              <col class="learning-result-col-download" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th>ลำดับ</th>
-                <th>ชื่อรายวิชา</th>
-                <th>ค่าเรียน</th>
-                <th>กำหนดการ</th>
-                <th>รับ</th>
-                <th>ลง</th>
-                <th>ผ่าน</th>
-                <th>ไม่ผ่าน</th>
-                <th>ดำเนินการ</th>
-                <th>ดาวน์โหลด</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(course, index) in instructorCourses" :key="course.id">
-                <td class="text-center">{{ index + 1 }}</td>
-                <td class="learning-result-title-cell">
-                  <button type="button" @click="selectCourse(course.id)">
-                    {{ course.code }} : {{ course.title }}
-                  </button>
-                  <span v-if="course.titleEn">{{ course.titleEn }}</span>
-                </td>
-                <td class="text-center">
-                  {{ course.isFree ? 'ไม่มีค่าใช้จ่าย' : formatCurrency(course.price) }}
-                </td>
-                <td class="learning-result-schedule-cell">
-                  <span>ลงทะเบียน</span>
-                  <strong>{{ formatCourseDateRange(course) }}</strong>
-                </td>
-                <td class="text-center">{{ course.maxSeats?.toLocaleString() ?? '-' }}</td>
-                <td class="text-center">{{ course.enrolledCount.toLocaleString() }}</td>
-                <td class="text-center text-positive">
-                  {{ getCoursePassedCount(course).toLocaleString() }}
-                </td>
-                <td class="text-center text-negative">
-                  {{ getCourseFailedCount(course).toLocaleString() }}
-                </td>
-                <td class="text-center">
-                  <q-btn
-                    dense
-                    round
-                    flat
-                    color="primary"
-                    icon="edit"
-                    class="learning-result-icon-btn"
-                    tag="a"
-                    :href="resolveFullUrl(`/instructor/results?courseId=${course.id}`)"
-                    @click="onSelectCourseClick(course.id, $event)"
-                  >
-                    <q-tooltip>บันทึกผลการเรียน</q-tooltip>
-                  </q-btn>
-                </td>
-                <td class="text-center">
-                  <button
-                    type="button"
-                    class="learning-result-download-link"
-                    @click.stop="printCbs003(course)"
-                  >
-                    {{ getLearningResultDownloadCode() }}
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="instructorCourses.length === 0">
-                <td colspan="10" class="learning-result-empty-cell">ไม่พบรายวิชา</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
+        <BaseTable
+          v-if="activeStudentTab === 'results'"
+          :columns="resultCourseColumns"
+          :rows="paginatedResultCourses"
+          row-key="id"
+          show-index
+          :index-offset="(resultCourseTablePage - 1) * instructorTableRowsPerPage"
+          :rows-per-page="instructorTableRowsPerPage"
+          :page="resultCourseTablePage"
+          :total-pages="resultCoursePageCount"
+          min-width="1080px"
+          empty-text="ไม่พบรายวิชา"
+          height-mode="stable"
+          :on-page-change="setResultCourseTablePage"
+        >
+          <template #cell-title="{ row: course }">
+            <div class="learning-result-title-cell">
+              <button type="button" @click="selectCourse(course.id)">
+                {{ course.code }} : {{ course.title }}
+              </button>
+              <span v-if="course.titleEn">{{ course.titleEn }}</span>
+            </div>
+          </template>
+          <template #cell-price="{ row: course }">
+            {{ course.isFree ? 'ไม่มีค่าใช้จ่าย' : formatCurrency(course.price) }}
+          </template>
+          <template #cell-schedule="{ row: course }">
+            <div class="learning-result-schedule-cell">
+              <span>ลงทะเบียน</span>
+              <strong>{{ formatCourseDateRange(course) }}</strong>
+            </div>
+          </template>
+          <template #cell-maxSeats="{ row: course }">
+            {{ course.maxSeats?.toLocaleString() ?? '-' }}
+          </template>
+          <template #cell-enrolledCount="{ row: course }">
+            {{ course.enrolledCount.toLocaleString() }}
+          </template>
+          <template #cell-passed="{ row: course }">
+            <span class="text-positive">{{ getCoursePassedCount(course).toLocaleString() }}</span>
+          </template>
+          <template #cell-failed="{ row: course }">
+            <span class="text-negative">{{ getCourseFailedCount(course).toLocaleString() }}</span>
+          </template>
+          <template #cell-actions="{ row: course }">
+            <q-btn
+              dense
+              round
+              flat
+              color="primary"
+              icon="edit"
+              class="learning-result-icon-btn"
+              tag="a"
+              :href="resolveFullUrl(`/instructor/results?courseId=${course.id}`)"
+              @click="onSelectCourseClick(course.id, $event)"
+            >
+              <q-tooltip>บันทึกผลการเรียน</q-tooltip>
+            </q-btn>
+          </template>
+          <template #cell-download="{ row: course }">
+            <button
+              type="button"
+              class="learning-result-download-link"
+              @click.stop="printCbs003(course)"
+            >
+              {{ getLearningResultDownloadCode() }}
+            </button>
+          </template>
+        </BaseTable>
         <div v-else class="student-course-list">
           <button
             v-for="course in instructorCourses"
@@ -468,68 +453,61 @@
                 </div>
               </div>
 
-              <div class="learning-result-table-scroll">
-                <table class="learning-result-entry-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 52px">ลำดับ</th>
-                      <th style="width: 120px">รหัสผู้เรียน</th>
-                      <th>ชื่อ-สกุล</th>
-                      <th style="width: 110px">คะแนน LMS</th>
-                      <th style="width: 100px">ค่าเดิม</th>
-                      <th style="width: 200px">ผลการเรียน</th>
-                      <th style="width: 80px">สถานะ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="(row, index) in detailPreviewRows"
-                      :key="row.studentId + index"
-                      :class="{ 'detail-row--unmatched': !row.matched }"
-                    >
-                      <td class="text-center">{{ index + 1 }}</td>
-                      <td class="text-center">{{ row.studentId }}</td>
-                      <td>{{ row.learnerName ?? '-' }}</td>
-                      <td class="text-center">
-                        {{ row.lmsFinalscore !== null ? row.lmsFinalscore.toFixed(2) : '—' }}
-                      </td>
-                      <td class="text-center">
-                        <span v-if="row.currentGradeName" class="detail-grade-badge">
-                          {{ row.currentGradeName }}
-                        </span>
-                        <span v-else class="detail-grade-dash">—</span>
-                      </td>
-                      <td>
-                        <q-select
-                          v-if="row.matched"
-                          v-model="row.gradeItemId"
-                          :options="gradeItemOptions"
-                          option-value="id"
-                          option-label="name"
-                          emit-value
-                          map-options
-                          dense
-                          outlined
-                          placeholder="เลือกผลการเรียน"
-                          class="detail-grade-select"
-                        />
-                        <span v-else class="detail-unmatched-label">ไม่พบในระบบ</span>
-                      </td>
-                      <td class="text-center">
-                        <span
-                          v-if="row.matched && row.gradeItemId"
-                          class="detail-status detail-status--ready"
-                          >พร้อม</span
-                        >
-                        <span v-else-if="row.matched" class="detail-status detail-status--pending"
-                          >รอเกรด</span
-                        >
-                        <span v-else class="detail-status detail-status--error">ไม่พบ</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <BaseTable
+                :columns="detailPreviewColumns"
+                :rows="paginatedDetailPreviewRows"
+                :row-key="(row, index) => `${row.studentId}-${index}`"
+                show-index
+                :index-offset="(detailPreviewTablePage - 1) * instructorTableRowsPerPage"
+                :rows-per-page="instructorTableRowsPerPage"
+                :page="detailPreviewTablePage"
+                :total-pages="detailPreviewPageCount"
+                min-width="900px"
+                empty-text="ไม่พบข้อมูลตัวอย่าง"
+                height-mode="stable"
+                :row-class="(row) => (!row.matched ? 'detail-row--unmatched' : undefined)"
+                :on-page-change="setDetailPreviewTablePage"
+              >
+                <template #cell-learnerName="{ row }">
+                  {{ row.learnerName ?? '-' }}
+                </template>
+                <template #cell-lmsFinalscore="{ row }">
+                  {{ row.lmsFinalscore !== null ? row.lmsFinalscore.toFixed(2) : '-' }}
+                </template>
+                <template #cell-currentGradeName="{ row }">
+                  <span v-if="row.currentGradeName" class="detail-grade-badge">
+                    {{ row.currentGradeName }}
+                  </span>
+                  <span v-else class="detail-grade-dash">-</span>
+                </template>
+                <template #cell-gradeItemId="{ row }">
+                  <q-select
+                    v-if="row.matched"
+                    v-model="row.gradeItemId"
+                    :options="gradeItemOptions"
+                    option-value="id"
+                    option-label="name"
+                    emit-value
+                    map-options
+                    dense
+                    outlined
+                    placeholder="เลือกผลการเรียน"
+                    class="detail-grade-select"
+                  />
+                  <span v-else class="detail-unmatched-label">ไม่พบในระบบ</span>
+                </template>
+                <template #cell-status="{ row }">
+                  <span
+                    v-if="row.matched && row.gradeItemId"
+                    class="detail-status detail-status--ready"
+                    >พร้อม</span
+                  >
+                  <span v-else-if="row.matched" class="detail-status detail-status--pending"
+                    >รอเกรด</span
+                  >
+                  <span v-else class="detail-status detail-status--error">ไม่พบ</span>
+                </template>
+              </BaseTable>
               <BaseButton
                 unelevated
                 color="primary"
@@ -600,46 +578,40 @@
               </div>
             </div>
 
-            <div class="learning-result-table-scroll">
-              <table class="learning-result-entry-table">
-                <thead>
-                  <tr>
-                    <th>ลำดับ</th>
-                    <th>รหัสผู้เรียน</th>
-                    <th>ชื่อ-สกุล</th>
-                    <th>คะแนนจาก LMS</th>
-                    <th>ผลการเรียน</th>
-                    <th>วันที่อัปเดต</th>
-                    <th>รายละเอียด</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(learner, index) in learners" :key="learner.id">
-                    <td class="text-center">{{ index + 1 }}</td>
-                    <td class="text-center">{{ learner.studentId }}</td>
-                    <td>{{ learner.name }}</td>
-                    <td class="text-center">{{ getLearnerLmsScore(learner) }}</td>
-                    <td class="text-center">{{ learner.importedGradeName ?? '' }}</td>
-                    <td class="text-center">{{ getLearnerLmsUpdatedAt(learner) }}</td>
-                    <td class="text-center">
-                      <button
-                        type="button"
-                        class="learning-result-breakdown-btn"
-                        @click="openGradePanel(learner)"
-                      >
-                        <q-icon name="assignment" size="13px" />
-                        ดูรายละเอียด
-                      </button>
-                    </td>
-                  </tr>
-                  <tr v-if="learners.length === 0">
-                    <td colspan="7" class="learning-result-empty-cell">
-                      {{ emptyLearnerStateMessage }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <BaseTable
+              :columns="resultEntryColumns"
+              :rows="paginatedResultEntryLearners"
+              row-key="id"
+              show-index
+              :index-offset="(resultEntryTablePage - 1) * instructorTableRowsPerPage"
+              :rows-per-page="instructorTableRowsPerPage"
+              :page="resultEntryTablePage"
+              :total-pages="resultEntryPageCount"
+              min-width="900px"
+              :empty-text="emptyLearnerStateMessage"
+              height-mode="stable"
+              :on-page-change="setResultEntryTablePage"
+            >
+              <template #cell-lmsFinalscore="{ row: learner }">
+                {{ getLearnerLmsScore(learner) }}
+              </template>
+              <template #cell-importedGradeName="{ row: learner }">
+                {{ learner.importedGradeName ?? '' }}
+              </template>
+              <template #cell-lmsSyncedAt="{ row: learner }">
+                {{ getLearnerLmsUpdatedAt(learner) }}
+              </template>
+              <template #cell-details="{ row: learner }">
+                <button
+                  type="button"
+                  class="learning-result-breakdown-btn"
+                  @click="openGradePanel(learner)"
+                >
+                  <q-icon name="assignment" size="13px" />
+                  ดูรายละเอียด
+                </button>
+              </template>
+            </BaseTable>
           </div>
         </template>
 
@@ -725,119 +697,118 @@
           </div>
 
           <template v-if="activeStudentTab === 'roster'">
-            <q-table
+            <BaseTable
               v-if="filteredLearners.length > 0"
-              flat
-              :rows="filteredLearners"
+              :rows="paginatedRosterLearners"
               :columns="learnerColumns"
               row-key="id"
-              :pagination="{ rowsPerPage: 10 }"
+              show-index
+              :index-offset="(rosterTablePage - 1) * instructorTableRowsPerPage"
+              :rows-per-page="instructorTableRowsPerPage"
+              :page="rosterTablePage"
+              :total-pages="rosterPageCount"
+              min-width="1040px"
+              empty-text="ไม่พบรายชื่อผู้เรียน"
+              height-mode="stable"
               class="student-roster-table"
-              @row-click="openLearnerDetail"
+              :on-page-change="setRosterTablePage"
             >
-              <template #body-cell-name="props">
-                <q-td :props="props">
-                  <div class="student-name-cell">
-                    <q-avatar size="36px">
-                      <img :src="props.row.avatarUrl" :alt="props.row.name" />
-                    </q-avatar>
-                    <div>
-                      <strong>{{ props.row.name }}</strong>
-                      <span>{{ props.row.studentId }}</span>
-                    </div>
-                  </div>
-                </q-td>
-              </template>
-              <template #body-cell-progress="props">
-                <q-td :props="props">
-                  <div class="student-progress-cell">
-                    <q-linear-progress
-                      rounded
-                      size="8px"
-                      :value="props.row.progress / 100"
-                      color="primary"
-                    />
-                    <span>{{ props.row.progress }}%</span>
-                  </div>
-                </q-td>
-              </template>
-              <template #body-cell-status="props">
-                <q-td :props="props">
-                  <q-badge rounded :color="props.row.statusColor" :label="props.row.status" />
-                </q-td>
-              </template>
-              <template #body-cell-actions="props">
-                <q-td :props="props" class="text-right">
-                  <q-btn
-                    flat
-                    round
-                    dense
-                    icon="visibility"
-                    color="primary"
-                    @click.stop="openLearnerDetail(null, props.row)"
-                  />
-                </q-td>
-              </template>
-            </q-table>
-          </template>
-
-          <q-table
-            v-else-if="filteredLearners.length > 0"
-            flat
-            :rows="filteredLearners"
-            :columns="learningResultColumns"
-            row-key="id"
-            :pagination="{ rowsPerPage: 10 }"
-            class="student-roster-table"
-          >
-            <template #body-cell-name="props">
-              <q-td :props="props">
+              <template #cell-name="{ row }">
                 <div class="student-name-cell">
                   <q-avatar size="36px">
-                    <img :src="props.row.avatarUrl" :alt="props.row.name" />
+                    <img :src="row.avatarUrl" :alt="row.name" />
                   </q-avatar>
                   <div>
-                    <strong>{{ props.row.name }}</strong>
-                    <span>{{ props.row.studentId }}</span>
+                    <strong>{{ row.name }}</strong>
+                    <span>{{ row.studentId }}</span>
                   </div>
                 </div>
-              </q-td>
-            </template>
-            <template #body-cell-finalScore="props">
-              <q-td :props="props">
-                <q-input
-                  v-model.number="props.row.finalScore"
-                  type="number"
+              </template>
+              <template #cell-progress="{ row }">
+                <div class="student-progress-cell">
+                  <q-linear-progress
+                    rounded
+                    size="8px"
+                    :value="row.progress / 100"
+                    color="primary"
+                  />
+                  <span>{{ row.progress }}%</span>
+                </div>
+              </template>
+              <template #cell-status="{ row }">
+                <q-badge rounded :color="row.statusColor" :label="row.status" />
+              </template>
+              <template #cell-actions="{ row }">
+                <q-btn
+                  flat
+                  round
                   dense
-                  outlined
-                  min="0"
-                  max="100"
-                  suffix="/100"
-                  class="student-result-score"
-                />
-              </q-td>
+                  icon="visibility"
+                  color="primary"
+                  class="student-roster-action-btn"
+                  @click.stop="openLearnerDetail(null, row)"
+                >
+                  <q-tooltip>ดูรายละเอียด</q-tooltip>
+                </q-btn>
+              </template>
+            </BaseTable>
+          </template>
+
+          <BaseTable
+            v-else-if="filteredLearners.length > 0"
+            :rows="paginatedLearningResultLearners"
+            :columns="learningResultColumns"
+            row-key="id"
+            :rows-per-page="instructorTableRowsPerPage"
+            :page="learningResultTablePage"
+            :total-pages="learningResultPageCount"
+            min-width="980px"
+            empty-text="ไม่พบรายชื่อผู้เรียน"
+            height-mode="stable"
+            class="student-roster-table"
+            :on-page-change="setLearningResultTablePage"
+          >
+            <template #cell-name="{ row }">
+              <div class="student-name-cell">
+                <q-avatar size="36px">
+                  <img :src="row.avatarUrl" :alt="row.name" />
+                </q-avatar>
+                <div>
+                  <strong>{{ row.name }}</strong>
+                  <span>{{ row.studentId }}</span>
+                </div>
+              </div>
             </template>
-            <template #body-cell-resultStatus="props">
-              <q-td :props="props">
-                <q-select
-                  v-model="props.row.resultStatus"
-                  :options="gradeItemOptions"
-                  option-value="name"
-                  option-label="name"
-                  dense
-                  outlined
-                  emit-value
-                  map-options
-                  class="student-result-status"
-                />
-              </q-td>
+            <template #cell-progress="{ row }"> {{ row.progress }}% </template>
+            <template #cell-finalScore="{ row }">
+              <q-input
+                v-model.number="row.finalScore"
+                type="number"
+                dense
+                outlined
+                min="0"
+                max="100"
+                suffix="/100"
+                class="student-result-score"
+              />
             </template>
-            <template #body-cell-note="props">
-              <q-td :props="props">
-                <q-input v-model="props.row.resultNote" dense outlined placeholder="หมายเหตุ" />
-              </q-td>
+            <template #cell-resultStatus="{ row }">
+              <q-select
+                v-model="row.resultStatus"
+                :options="gradeItemOptions"
+                option-value="name"
+                option-label="name"
+                dense
+                outlined
+                emit-value
+                map-options
+                class="student-result-status"
+              />
             </template>
-          </q-table>
+            <template #cell-note="{ row }">
+              <q-input v-model="row.resultNote" dense outlined placeholder="หมายเหตุ" />
+            </template>
+          </BaseTable>
 
           <div
             v-if="filteredLearners.length === 0"
@@ -1062,7 +1033,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { useQuasar, type QTableColumn } from 'quasar';
+import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
@@ -1075,6 +1046,7 @@ import type { Course } from 'src/types/course';
 import buuLogoUrl from 'src/assets/buu-logo-receipt.png';
 import BaseDateInput from 'src/components/base/BaseDateInput.vue';
 import BaseButton from 'src/components/base/BaseButton.vue';
+import BaseTable, { type BaseTableColumn } from 'src/components/base/BaseTable.vue';
 import InstructorPageHero from 'src/components/instructor/InstructorPageHero.vue';
 
 interface LearnerRow {
@@ -1156,6 +1128,12 @@ const learnerDetailDialogOpen = ref(false);
 const selectedLearner = ref<LearnerRow | null>(null);
 const searchQuery = ref('');
 const statusFilter = ref('ทั้งหมด');
+const instructorTableRowsPerPage = 10;
+const resultCourseTablePage = ref(1);
+const detailPreviewTablePage = ref(1);
+const resultEntryTablePage = ref(1);
+const rosterTablePage = ref(1);
+const learningResultTablePage = ref(1);
 const resultImportText = ref('');
 const gradeImportFileInput = ref<HTMLInputElement | null>(null);
 const importedLearningResults = ref<Record<string, ImportedLearningResult>>({});
@@ -1227,6 +1205,16 @@ const instructorCourses = computed<Course[]>(() =>
 );
 const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
+);
+
+const resultCoursePageCount = computed(() =>
+  Math.max(1, Math.ceil(instructorCourses.value.length / instructorTableRowsPerPage)),
+);
+const paginatedResultCourses = computed(() =>
+  instructorCourses.value.slice(
+    (resultCourseTablePage.value - 1) * instructorTableRowsPerPage,
+    resultCourseTablePage.value * instructorTableRowsPerPage,
+  ),
 );
 
 function clearAllGrades(): void {
@@ -1652,6 +1640,43 @@ const filteredLearners = computed(() => {
   return result;
 });
 
+const rosterPageCount = computed(() =>
+  Math.max(1, Math.ceil(filteredLearners.value.length / instructorTableRowsPerPage)),
+);
+const paginatedRosterLearners = computed(() =>
+  filteredLearners.value.slice(
+    (rosterTablePage.value - 1) * instructorTableRowsPerPage,
+    rosterTablePage.value * instructorTableRowsPerPage,
+  ),
+);
+const learningResultPageCount = computed(() =>
+  Math.max(1, Math.ceil(filteredLearners.value.length / instructorTableRowsPerPage)),
+);
+const paginatedLearningResultLearners = computed(() =>
+  filteredLearners.value.slice(
+    (learningResultTablePage.value - 1) * instructorTableRowsPerPage,
+    learningResultTablePage.value * instructorTableRowsPerPage,
+  ),
+);
+const detailPreviewPageCount = computed(() =>
+  Math.max(1, Math.ceil(detailPreviewRows.value.length / instructorTableRowsPerPage)),
+);
+const paginatedDetailPreviewRows = computed(() =>
+  detailPreviewRows.value.slice(
+    (detailPreviewTablePage.value - 1) * instructorTableRowsPerPage,
+    detailPreviewTablePage.value * instructorTableRowsPerPage,
+  ),
+);
+const resultEntryPageCount = computed(() =>
+  Math.max(1, Math.ceil(learners.value.length / instructorTableRowsPerPage)),
+);
+const paginatedResultEntryLearners = computed(() =>
+  learners.value.slice(
+    (resultEntryTablePage.value - 1) * instructorTableRowsPerPage,
+    resultEntryTablePage.value * instructorTableRowsPerPage,
+  ),
+);
+
 const emptyLearnerStateMessage = computed(() => {
   if (searchQuery.value || statusFilter.value !== 'ทั้งหมด') {
     return 'ไม่พบรายชื่อนิสิตที่ตรงกับการค้นหา';
@@ -1690,37 +1715,111 @@ function getLearningResultDownloadCode(): string {
   return 'CBS 003';
 }
 
-const learnerColumns: QTableColumn<LearnerRow>[] = [
-  { name: 'name', label: 'นิสิต', field: 'name', align: 'left', sortable: true },
-  { name: 'email', label: 'อีเมล', field: 'email', align: 'left' },
-  { name: 'progress', label: 'ความก้าวหน้า', field: 'progress', align: 'left', sortable: true },
-  { name: 'score', label: 'คะแนน', field: 'score', align: 'left' },
-  { name: 'lastActive', label: 'เข้าเรียนล่าสุด', field: 'lastActive', align: 'left' },
-  { name: 'status', label: 'สถานะ', field: 'status', align: 'left' },
-  { name: 'actions', label: '', field: 'id', align: 'right' },
+const resultCourseColumns: BaseTableColumn[] = [
+  { key: 'title', label: 'ชื่อรายวิชา', width: '32%', sortable: true },
+  { key: 'price', label: 'ค่าเรียน', align: 'center', width: '120px' },
+  { key: 'schedule', label: 'กำหนดการ', width: '170px' },
+  { key: 'maxSeats', label: 'รับ', align: 'center', width: '78px', sortable: true },
+  { key: 'enrolledCount', label: 'ลง', align: 'center', width: '78px', sortable: true },
+  { key: 'passed', label: 'ผ่าน', align: 'center', width: '78px' },
+  { key: 'failed', label: 'ไม่ผ่าน', align: 'center', width: '86px' },
+  { key: 'actions', label: 'ดำเนินการ', align: 'center', width: '110px' },
+  { key: 'download', label: 'ดาวน์โหลด', align: 'center', width: '120px' },
 ];
 
-const learningResultColumns: QTableColumn<LearnerRow>[] = [
-  { name: 'name', label: 'ผู้เรียน', field: 'name', align: 'left', sortable: true },
-  {
-    name: 'progress',
-    label: 'ความก้าวหน้า',
-    field: 'progress',
-    align: 'left',
-    sortable: true,
-    format: (value) => `${value}%`,
-  },
-  { name: 'score', label: 'คะแนนปัจจุบัน', field: 'score', align: 'left' },
-  {
-    name: 'finalScore',
-    label: 'คะแนนผลการเรียน',
-    field: 'finalScore',
-    align: 'left',
-    sortable: true,
-  },
-  { name: 'resultStatus', label: 'ผลการเรียน', field: 'resultStatus', align: 'left' },
-  { name: 'note', label: 'หมายเหตุ', field: 'resultNote', align: 'left' },
+const detailPreviewColumns: BaseTableColumn[] = [
+  { key: 'studentId', label: 'รหัสผู้เรียน', align: 'center', width: '130px', sortable: true },
+  { key: 'learnerName', label: 'ชื่อ-สกุล', sortable: true },
+  { key: 'lmsFinalscore', label: 'คะแนน LMS', align: 'center', width: '120px', sortable: true },
+  { key: 'currentGradeName', label: 'ค่าเดิม', align: 'center', width: '110px' },
+  { key: 'gradeItemId', label: 'ผลการเรียน', width: '210px' },
+  { key: 'status', label: 'สถานะ', align: 'center', width: '100px' },
 ];
+
+const resultEntryColumns: BaseTableColumn[] = [
+  { key: 'studentId', label: 'รหัสผู้เรียน', align: 'center', width: '130px', sortable: true },
+  { key: 'name', label: 'ชื่อ-สกุล', sortable: true },
+  { key: 'lmsFinalscore', label: 'คะแนนจาก LMS', align: 'center', width: '140px', sortable: true },
+  { key: 'importedGradeName', label: 'ผลการเรียน', align: 'center', width: '130px' },
+  { key: 'lmsSyncedAt', label: 'วันที่อัปเดต', align: 'center', width: '150px' },
+  { key: 'details', label: 'รายละเอียด', align: 'center', width: '130px' },
+];
+
+const learnerColumns: BaseTableColumn[] = [
+  { key: 'name', label: 'นิสิต', width: '280px', sortable: true },
+  { key: 'email', label: 'อีเมล', width: '240px' },
+  { key: 'progress', label: 'ความก้าวหน้า', width: '190px', sortable: true },
+  { key: 'score', label: 'คะแนน', align: 'center', width: '140px' },
+  { key: 'lastActive', label: 'เข้าเรียนล่าสุด', align: 'center', width: '150px' },
+  { key: 'status', label: 'สถานะ', align: 'center', width: '150px' },
+  { key: 'actions', label: 'จัดการ', align: 'center', width: '92px' },
+];
+
+const learningResultColumns: BaseTableColumn[] = [
+  { key: 'name', label: 'ผู้เรียน', sortable: true },
+  { key: 'progress', label: 'ความก้าวหน้า', width: '180px', sortable: true },
+  { key: 'score', label: 'คะแนนปัจจุบัน', width: '140px' },
+  { key: 'finalScore', label: 'คะแนนผลการเรียน', width: '170px', sortable: true },
+  { key: 'resultStatus', label: 'ผลการเรียน', width: '150px' },
+  { key: 'note', label: 'หมายเหตุ', width: '220px' },
+];
+
+function setResultCourseTablePage(page: number): void {
+  resultCourseTablePage.value = page;
+}
+
+function setDetailPreviewTablePage(page: number): void {
+  detailPreviewTablePage.value = page;
+}
+
+function setResultEntryTablePage(page: number): void {
+  resultEntryTablePage.value = page;
+}
+
+function setRosterTablePage(page: number): void {
+  rosterTablePage.value = page;
+}
+
+function setLearningResultTablePage(page: number): void {
+  learningResultTablePage.value = page;
+}
+
+watch(instructorCourses, () => {
+  resultCourseTablePage.value = 1;
+});
+
+watch(resultCoursePageCount, (pageCount) => {
+  resultCourseTablePage.value = Math.min(resultCourseTablePage.value, pageCount);
+});
+
+watch(detailPreviewRows, () => {
+  detailPreviewTablePage.value = 1;
+});
+
+watch(detailPreviewPageCount, (pageCount) => {
+  detailPreviewTablePage.value = Math.min(detailPreviewTablePage.value, pageCount);
+});
+
+watch(learners, () => {
+  resultEntryTablePage.value = 1;
+});
+
+watch(resultEntryPageCount, (pageCount) => {
+  resultEntryTablePage.value = Math.min(resultEntryTablePage.value, pageCount);
+});
+
+watch(filteredLearners, () => {
+  rosterTablePage.value = 1;
+  learningResultTablePage.value = 1;
+});
+
+watch(rosterPageCount, (pageCount) => {
+  rosterTablePage.value = Math.min(rosterTablePage.value, pageCount);
+});
+
+watch(learningResultPageCount, (pageCount) => {
+  learningResultTablePage.value = Math.min(learningResultTablePage.value, pageCount);
+});
 
 function switchTab(tab: string): void {
   const base = tab === 'results' ? '/instructor/results' : '/instructor/students';
@@ -2821,12 +2920,30 @@ function exportLearnersPdf(): void {
 }
 
 .learning-result-icon-btn {
-  width: 32px;
-  height: 32px;
-  min-height: 32px;
+  --action-color: var(--admin-gold, #f5a623);
+  --action-border: rgba(245, 166, 35, 0.28);
+  --action-ring: rgba(245, 166, 35, 0.1);
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
   background: #ffffff !important;
-  border: 1px solid #dce4ee !important;
+  color: var(--action-color) !important;
+  border: 1px solid var(--action-border) !important;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+
+  :deep(.q-icon) {
+    font-size: 17px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 18px rgba(15, 23, 42, 0.12),
+      0 0 0 1px var(--action-ring) !important;
+  }
 }
 
 .learning-result-download-link {
@@ -3666,7 +3783,11 @@ function exportLearnersPdf(): void {
   overflow: hidden;
 
   :deep(tbody tr) {
-    cursor: pointer;
+    cursor: default;
+  }
+
+  :deep(td) {
+    vertical-align: middle;
   }
 }
 
@@ -3693,6 +3814,15 @@ function exportLearnersPdf(): void {
     font-size: 0.78rem;
     font-weight: 700;
   }
+}
+
+.student-roster-action-btn {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  background: #ffffff !important;
+  border: 1px solid #dce4ee !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
 }
 
 .student-progress-cell {
