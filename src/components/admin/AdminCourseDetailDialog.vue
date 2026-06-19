@@ -1,167 +1,148 @@
 <template>
-  <q-dialog
+  <AppDialog
     v-model="dialogModel"
-    class="admin-dialog"
-    transition-show="scale"
-    transition-hide="scale"
     maximized
+    :title="course?.nameTh ?? 'รายละเอียดรายวิชา'"
+    :subtitle="course?.nameEn ?? ''"
+    :eyebrow="course?.courseCode ?? ''"
+    card-class="course-detail-dialog"
+    body-class="course-detail-dialog__body"
+    actions-class="course-detail-dialog__footer"
   >
-    <q-card class="course-detail-dialog">
-      <q-card-section class="course-detail-dialog__header">
-        <div class="course-detail-dialog__title-row">
-          <div>
-            <div class="course-detail-dialog__code">{{ course?.courseCode }}</div>
-            <h2 class="course-detail-dialog__title">{{ course?.nameTh }}</h2>
-            <div class="course-detail-dialog__title-en">{{ course?.nameEn }}</div>
-          </div>
-          <q-btn flat round dense icon="close" @click="dialogModel = false" />
+    <div v-if="loading" class="course-detail-dialog__loading">
+      <q-spinner size="40px" color="primary" />
+    </div>
+
+    <template v-else-if="course">
+      <!-- ข้อมูลหลัก -->
+      <div class="detail-section">
+        <div class="detail-section__title">ข้อมูลทั่วไป</div>
+        <div class="detail-grid">
+          <DetailField label="คณะ/ส่วนงาน" :value="labelOf(options?.faculties, course.facultyId)" />
+          <DetailField
+            label="ประเภทหลักสูตร"
+            :value="labelOf(options?.courseTypes, course.typeCourseId)"
+          />
+          <DetailField
+            label="รูปแบบการเรียน"
+            :value="labelOf(options?.studyTypes, course.studyTypeId)"
+          />
+          <DetailField label="หมวดหมู่" :value="labelOf(options?.categories, course.categoryId)" />
+          <DetailField
+            label="หมวดหมู่ย่อย"
+            :value="labelOf(options?.subcategories, course.subcategoryId)"
+          />
+          <DetailField label="ทักษะ" :value="skillLabels" />
+          <DetailField label="วันเริ่ม" :value="course.startDate" />
+          <DetailField label="วันสิ้นสุด" :value="course.endDate" />
+          <DetailField label="เปิดรับสมัคร" :value="course.registrationStart" />
+          <DetailField label="ปิดรับสมัคร" :value="course.registrationEnd" />
+          <DetailField label="จำนวนที่นั่ง" :value="course.maxSeats" />
+          <DetailField label="จำนวนชั่วโมง (ทฤษฎี)" :value="course.theoryHours" />
+          <DetailField label="จำนวนชั่วโมง (ปฏิบัติ)" :value="course.practiceHours" />
+          <DetailField
+            v-if="course.typeCourseId === 2"
+            label="Credit Bank"
+            :value="course.creditBank"
+          />
         </div>
-      </q-card-section>
-
-      <q-card-section class="course-detail-dialog__body">
-        <div v-if="loading" class="course-detail-dialog__loading">
-          <q-spinner size="40px" color="primary" />
+        <div v-if="course.description" class="detail-field detail-field--full">
+          <div class="detail-field__label">เกี่ยวกับรายวิชา</div>
+          <div class="detail-field__value detail-field__value--multiline">
+            {{ course.description }}
+          </div>
         </div>
+        <div v-if="course.summary" class="detail-field detail-field--full">
+          <div class="detail-field__label">วัตถุประสงค์รายวิชา</div>
+          <ol class="detail-objective-list">
+            <li v-for="(line, i) in course.summary.split('\n').filter(Boolean)" :key="i">
+              {{ line }}
+            </li>
+          </ol>
+        </div>
+        <DetailField label="คุณสมบัติเบื้องต้น" :value="course.precondition" full />
+      </div>
 
-        <template v-else-if="course">
-          <!-- ข้อมูลหลัก -->
-          <div class="detail-section">
-            <div class="detail-section__title">ข้อมูลทั่วไป</div>
-            <div class="detail-grid">
-              <DetailField
-                label="คณะ/ส่วนงาน"
-                :value="labelOf(options?.faculties, course.facultyId)"
-              />
-              <DetailField
-                label="ประเภทหลักสูตร"
-                :value="labelOf(options?.courseTypes, course.typeCourseId)"
-              />
-              <DetailField
-                label="รูปแบบการเรียน"
-                :value="labelOf(options?.studyTypes, course.studyTypeId)"
-              />
-              <DetailField
-                label="หมวดหมู่"
-                :value="labelOf(options?.categories, course.categoryId)"
-              />
-              <DetailField
-                label="หมวดหมู่ย่อย"
-                :value="labelOf(options?.subcategories, course.subcategoryId)"
-              />
-              <DetailField label="ทักษะ" :value="skillLabels" />
-              <DetailField label="วันเริ่ม" :value="course.startDate" />
-              <DetailField label="วันสิ้นสุด" :value="course.endDate" />
-              <DetailField label="เปิดรับสมัคร" :value="course.registrationStart" />
-              <DetailField label="ปิดรับสมัคร" :value="course.registrationEnd" />
-              <DetailField label="จำนวนที่นั่ง" :value="course.maxSeats" />
-              <DetailField label="จำนวนชั่วโมง (ทฤษฎี)" :value="course.theoryHours" />
-              <DetailField label="จำนวนชั่วโมง (ปฏิบัติ)" :value="course.practiceHours" />
-              <DetailField
-                v-if="course.typeCourseId === 2"
-                label="Credit Bank"
-                :value="course.creditBank"
-              />
-            </div>
-            <div v-if="course.description" class="detail-field detail-field--full">
-              <div class="detail-field__label">เกี่ยวกับรายวิชา</div>
-              <div class="detail-field__value detail-field__value--multiline">
-                {{ course.description }}
-              </div>
-            </div>
-            <div v-if="course.summary" class="detail-field detail-field--full">
-              <div class="detail-field__label">วัตถุประสงค์รายวิชา</div>
-              <ol class="detail-objective-list">
-                <li v-for="(line, i) in course.summary.split('\n').filter(Boolean)" :key="i">
-                  {{ line }}
-                </li>
-              </ol>
-            </div>
-            <DetailField label="คุณสมบัติเบื้องต้น" :value="course.precondition" full />
+      <!-- วุฒิบัตร -->
+      <div v-if="course.certificate === 'Y'" class="detail-section">
+        <div class="detail-section__title">วุฒิบัตร</div>
+        <div class="detail-grid">
+          <DetailField label="มีวุฒิบัตร" value="มี" />
+          <DetailField label="ชื่อวุฒิบัตร" :value="course.certificateName" />
+        </div>
+      </div>
+
+      <!-- ค่าธรรมเนียม -->
+      <div v-if="course.classTypeId" class="detail-section">
+        <div class="detail-section__title">ค่าธรรมเนียม</div>
+        <div class="detail-grid">
+          <DetailField
+            label="ประเภทชั้นเรียน"
+            :value="labelOf(options?.classTypes, course.classTypeId)"
+          />
+          <DetailField
+            label="ค่าธรรมเนียม"
+            :value="course.classFee != null ? `${course.classFee} บาท` : null"
+          />
+          <DetailField label="หมายเหตุ" :value="course.classFeeRemark" />
+        </div>
+      </div>
+
+      <!-- ผู้ติดต่อ -->
+      <div class="detail-section">
+        <div class="detail-section__title">ผู้ติดต่อ</div>
+        <div class="detail-grid">
+          <DetailField label="ชื่อ" :value="course.contactName" />
+          <DetailField label="เบอร์โทร" :value="course.contactTel" />
+          <DetailField label="อีเมล" :value="course.contactEmail" />
+          <DetailField label="URL" :value="course.contactUrl" />
+        </div>
+      </div>
+
+      <!-- ผู้สอน -->
+      <div v-if="course.instructors.length" class="detail-section">
+        <div class="detail-section__title">ผู้สอน</div>
+        <div class="detail-list">
+          <div v-for="(ins, i) in course.instructors" :key="i" class="detail-list__item">
+            {{ ins.email }}
           </div>
+        </div>
+      </div>
 
-          <!-- วุฒิบัตร -->
-          <div v-if="course.certificate === 'Y'" class="detail-section">
-            <div class="detail-section__title">วุฒิบัตร</div>
-            <div class="detail-grid">
-              <DetailField label="มีวุฒิบัตร" value="มี" />
-              <DetailField label="ชื่อวุฒิบัตร" :value="course.certificateName" />
-            </div>
+      <!-- กลุ่มเป้าหมาย -->
+      <div v-if="course.targets.length" class="detail-section">
+        <div class="detail-section__title">กลุ่มเป้าหมาย</div>
+        <div class="detail-list">
+          <div v-for="(t, i) in course.targets" :key="i" class="detail-list__item">
+            {{ targetLabel(t) }}
           </div>
+        </div>
+      </div>
 
-          <!-- ค่าธรรมเนียม -->
-          <div v-if="course.classTypeId" class="detail-section">
-            <div class="detail-section__title">ค่าธรรมเนียม</div>
-            <div class="detail-grid">
-              <DetailField
-                label="ประเภทชั้นเรียน"
-                :value="labelOf(options?.classTypes, course.classTypeId)"
-              />
-              <DetailField
-                label="ค่าธรรมเนียม"
-                :value="course.classFee != null ? `${course.classFee} บาท` : null"
-              />
-              <DetailField label="หมายเหตุ" :value="course.classFeeRemark" />
-            </div>
+      <!-- บทเรียน -->
+      <div v-if="course.chapters.length" class="detail-section">
+        <div class="detail-section__title">บทเรียน</div>
+        <div v-for="(ch, i) in course.chapters" :key="i" class="chapter-item">
+          <div class="chapter-item__header">
+            <span class="chapter-item__seq">{{ i + 1 }}</span>
+            <span class="chapter-item__name">{{ ch.subject }}</span>
+            <span v-if="ch.hour" class="chapter-item__meta">{{ ch.hour }} ชม.</span>
+            <span v-if="ch.chapterTypeId" class="chapter-item__meta">
+              {{ chapterTypeLabel(ch) }}
+            </span>
           </div>
-
-          <!-- ผู้ติดต่อ -->
-          <div class="detail-section">
-            <div class="detail-section__title">ผู้ติดต่อ</div>
-            <div class="detail-grid">
-              <DetailField label="ชื่อ" :value="course.contactName" />
-              <DetailField label="เบอร์โทร" :value="course.contactTel" />
-              <DetailField label="อีเมล" :value="course.contactEmail" />
-              <DetailField label="URL" :value="course.contactUrl" />
+          <div v-if="ch.subchapters?.length" class="chapter-item__subs">
+            <div v-for="(sub, j) in ch.subchapters" :key="j" class="chapter-item__sub">
+              {{ i + 1 }}.{{ j + 1 }} {{ sub.subject }}
             </div>
           </div>
-
-          <!-- ผู้สอน -->
-          <div v-if="course.instructors.length" class="detail-section">
-            <div class="detail-section__title">ผู้สอน</div>
-            <div class="detail-list">
-              <div v-for="(ins, i) in course.instructors" :key="i" class="detail-list__item">
-                {{ ins.email }}
-              </div>
-            </div>
-          </div>
-
-          <!-- กลุ่มเป้าหมาย -->
-          <div v-if="course.targets.length" class="detail-section">
-            <div class="detail-section__title">กลุ่มเป้าหมาย</div>
-            <div class="detail-list">
-              <div v-for="(t, i) in course.targets" :key="i" class="detail-list__item">
-                {{ targetLabel(t) }}
-              </div>
-            </div>
-          </div>
-
-          <!-- บทเรียน -->
-          <div v-if="course.chapters.length" class="detail-section">
-            <div class="detail-section__title">บทเรียน</div>
-            <div v-for="(ch, i) in course.chapters" :key="i" class="chapter-item">
-              <div class="chapter-item__header">
-                <span class="chapter-item__seq">{{ i + 1 }}</span>
-                <span class="chapter-item__name">{{ ch.subject }}</span>
-                <span v-if="ch.hour" class="chapter-item__meta">{{ ch.hour }} ชม.</span>
-                <span v-if="ch.chapterTypeId" class="chapter-item__meta">
-                  {{ chapterTypeLabel(ch) }}
-                </span>
-              </div>
-              <div v-if="ch.subchapters?.length" class="chapter-item__subs">
-                <div v-for="(sub, j) in ch.subchapters" :key="j" class="chapter-item__sub">
-                  {{ i + 1 }}.{{ j + 1 }} {{ sub.subject }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
-      </q-card-section>
-
-      <q-card-actions class="course-detail-dialog__footer">
-        <AppActionButton variant="secondary" label="ปิด" @click="dialogModel = false" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+        </div>
+      </div>
+    </template>
+    <template #actions>
+      <AppActionButton variant="secondary" label="ปิด" @click="dialogModel = false" />
+    </template>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
@@ -171,7 +152,8 @@ import type {
   AdminCourseFormOptions,
   CourseChapterPayload,
 } from 'src/types/admin-courses';
-import AppActionButton from './AppActionButton.vue';
+import AppDialog from 'components/common/AppDialog.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 
 const DetailField = {
   props: ['label', 'value', 'full'],

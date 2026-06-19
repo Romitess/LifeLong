@@ -32,7 +32,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
 import CategoriesManager from 'components/admin/CategoriesManager.vue';
 import CertificateSignerManager from 'components/admin/CertificateSignerManager.vue';
 import CertificateTemplateManager from 'components/admin/CertificateTemplateManager.vue';

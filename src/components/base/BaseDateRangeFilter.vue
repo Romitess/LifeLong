@@ -1,6 +1,9 @@
 <template>
   <div class="base-date-range-filter">
-    <div v-if="label" class="base-date-range-filter__label">{{ label }}</div>
+    <div v-if="label" class="base-date-range-filter__label">
+      <span>{{ label }}</span>
+      <span v-if="required" class="base-date-range-filter__required">*</span>
+    </div>
     <div class="base-date-range-filter__row">
       <q-input
         class="base-date-range-filter__input"
@@ -71,6 +74,7 @@ export interface DateRangeValue {
 interface Props {
   modelValue: DateRangeValue;
   label?: string;
+  required?: boolean;
   fromHint?: string;
   toHint?: string;
   inputMask?: string;
@@ -79,6 +83,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   label: '',
+  required: false,
   fromHint: '',
   toHint: '',
   inputMask: '##/##/####',
@@ -146,10 +151,17 @@ function onEndPicked(value: string | null): void {
 
 <style lang="scss" scoped>
 .base-date-range-filter__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   margin-bottom: 6px;
-  color: #6b7280;
-  font-size: 0.78rem;
-  font-weight: 600;
+  color: var(--admin-navy, #10233f);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.base-date-range-filter__required {
+  color: var(--q-negative, #c10015);
 }
 
 .base-date-range-filter__row {

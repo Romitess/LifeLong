@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import AppSurfaceCard from './AppSurfaceCard.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 
 interface Props {
   icon: string;

@@ -15,5 +15,5 @@
 
 <script setup lang="ts">
 import AdminCoursesManager from 'components/admin/AdminCoursesManager.vue';
-import AppPageHero from 'components/admin/AppPageHero.vue';
+import AppPageHero from 'components/common/AppPageHero.vue';
 </script>

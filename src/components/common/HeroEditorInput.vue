@@ -1,11 +1,8 @@
 <template>
-  <q-input
+  <BaseInput
     :model-value="displayValue"
     @update:model-value="onUpdate"
-    outlined
-    dense
     :type="type"
-    stack-label
     :label="label"
     :min="min"
     :max="max"
@@ -16,11 +13,12 @@
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps || {}" />
     </template>
-  </q-input>
+  </BaseInput>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import BaseInput from 'components/base/BaseInput.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -45,10 +43,10 @@ const displayValue = computed(() => {
   return props.modelValue ?? '';
 });
 
-function onUpdate(val: string | number | null) {
+function onUpdate(val: string | number | FileList | null | undefined): void {
   if (props.type === 'number') {
     // Force numeric conversion and fallback to 0
-    let num = val === '' || val === null ? 0 : Number(val);
+    let num = val === '' || val === null || val === undefined ? 0 : Number(val);
 
     // Clamp values if min/max are provided
     if (props.min !== undefined && num < props.min) num = props.min;

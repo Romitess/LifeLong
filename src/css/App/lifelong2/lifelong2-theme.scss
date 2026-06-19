@@ -144,7 +144,7 @@
       color: #ffffff !important;
     }
 
-    .nav-tabs :deep(.q-tab) {
+    .nav-tabs .q-tab {
       color: rgba(255, 255, 255, 0.8) !important;
 
       &.q-tab--active {
@@ -190,7 +190,7 @@
   }
 
   // Mini sidebar logo (shown when admin collapses sidebar)
-  .sidebar-drawer :deep(.q-drawer) .drawer-mini-logo {
+  .sidebar-drawer .q-drawer .drawer-mini-logo {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -200,7 +200,7 @@
   }
 
   // Sidebar dynamic styles
-  .sidebar-drawer :deep(.q-drawer) {
+  .sidebar-drawer .q-drawer {
     background: #0f172a !important; // Dark premium background
     border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 4px 0 30px rgba(0, 0, 0, 0.2) !important;

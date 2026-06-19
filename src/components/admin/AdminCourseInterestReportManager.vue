@@ -193,8 +193,8 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import AppSearchInput from 'components/admin/AppSearchInput.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import { useAdminCourseInterestReport } from 'src/composables/use-admin-course-interest-report';

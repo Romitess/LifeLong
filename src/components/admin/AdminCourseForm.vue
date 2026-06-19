@@ -354,12 +354,9 @@
                   วัตถุประสงค์รายวิชา
                   <span class="course-form__optional">(ไม่บังคับ)</span>
                 </span>
-                <q-btn
+                <AppActionButton
                   v-if="!props.readonly"
-                  flat
-                  dense
-                  no-caps
-                  color="primary"
+                  variant="ghost"
                   icon="add"
                   label="เพิ่มวัตถุประสงค์"
                   class="course-form__add-btn"
@@ -386,14 +383,12 @@
                   class="course-form__input course-form__summary-input"
                   :readonly="props.readonly"
                 />
-                <q-btn
+                <AppIconButton
                   v-if="!props.readonly"
-                  flat
-                  round
-                  dense
                   icon="delete"
-                  color="negative"
                   size="sm"
+                  tone="delete"
+                  aria-label="ลบวัตถุประสงค์"
                   @click="form.summaryItems.splice(idx, 1)"
                 />
               </div>
@@ -473,12 +468,9 @@
                 <span class="course-form__label">
                   ผลลัพธ์การเรียนรู้ (LO) <span class="course-form__optional">(ไม่บังคับ)</span>
                 </span>
-                <q-btn
+                <AppActionButton
                   v-if="!props.readonly"
-                  flat
-                  dense
-                  no-caps
-                  color="primary"
+                  variant="ghost"
                   icon="add"
                   label="เพิ่ม LO"
                   class="course-form__add-btn"
@@ -501,14 +493,12 @@
                   class="course-form__input course-form__summary-input"
                   :readonly="props.readonly"
                 />
-                <q-btn
+                <AppIconButton
                   v-if="!props.readonly"
-                  flat
-                  round
-                  dense
                   icon="delete"
-                  color="negative"
                   size="sm"
+                  tone="delete"
+                  aria-label="ลบ LO"
                   @click="form.loItems.splice(idx, 1)"
                 />
               </div>
@@ -649,14 +639,11 @@
                     <q-icon name="zoom_in" size="28px" color="white" />
                   </div>
                 </div>
-                <q-btn
+                <AppActionButton
                   v-if="!props.readonly"
-                  flat
-                  dense
-                  no-caps
+                  variant="ghost"
                   icon="crop"
                   label="ปรับ crop"
-                  color="primary"
                   size="sm"
                   class="q-mt-xs"
                   @click="openRecrop"
@@ -664,19 +651,13 @@
               </div>
 
               <!-- Preview dialog — shows crop result if cropBox set, else original -->
-              <q-dialog v-model="imageZoomOpen" transition-show="scale" transition-hide="scale">
+              <AppDialog
+                v-model="imageZoomOpen"
+                title="ตัวอย่างรูปหน้าปก"
+                width="960px"
+                body-class="course-form__zoom-dialog-body"
+              >
                 <div class="course-form__zoom-wrap">
-                  <div class="course-form__zoom-toolbar">
-                    <q-btn
-                      flat
-                      round
-                      dense
-                      icon="close"
-                      color="white"
-                      class="course-form__zoom-close"
-                      v-close-popup
-                    />
-                  </div>
                   <BaseCroppedImage
                     v-if="currentCropBox"
                     :src="imagePreviewUrl ?? ''"
@@ -692,7 +673,7 @@
                     alt="รูปหน้าปก"
                   />
                 </div>
-              </q-dialog>
+              </AppDialog>
 
               <!-- Cropper dialog -->
               <BaseImageCropperDialog
@@ -1286,8 +1267,10 @@ import BaseInput from 'components/base/BaseInput.vue';
 import BaseRadio from 'components/base/BaseRadio.vue';
 import BaseSelect from 'components/base/BaseSelect.vue';
 import type { CropBox } from 'src/composables/use-image-cropper';
-import AppSurfaceCard from './AppSurfaceCard.vue';
-import AppActionButton from './AppActionButton.vue';
+import AppDialog from 'components/common/AppDialog.vue';
+import AppIconButton from 'components/common/AppIconButton.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 import AdminCourseChapterTab from './AdminCourseChapterTab.vue';
 import AdminSectionNav, { type AdminSectionNavItem } from './AdminSectionNav.vue';
 

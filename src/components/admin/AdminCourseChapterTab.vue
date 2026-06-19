@@ -24,33 +24,27 @@
             <div class="chapter-tab__card-header">
               <span class="chapter-tab__seq">{{ idx + 1 }}</span>
               <div v-if="!readonly" class="chapter-tab__card-actions">
-                <q-btn
-                  flat
-                  round
-                  dense
+                <AppIconButton
                   icon="arrow_upward"
-                  :color="idx === 0 ? 'grey-6' : 'primary'"
                   size="sm"
+                  tone="default"
+                  aria-label="เลื่อนขึ้น"
                   :disable="idx === 0"
                   @click="moveUp(idx)"
                 />
-                <q-btn
-                  flat
-                  round
-                  dense
+                <AppIconButton
                   icon="arrow_downward"
-                  :color="idx === chapters.length - 1 ? 'grey-6' : 'primary'"
                   size="sm"
+                  tone="default"
+                  aria-label="เลื่อนลง"
                   :disable="idx === chapters.length - 1"
                   @click="moveDown(idx)"
                 />
-                <q-btn
-                  flat
-                  round
-                  dense
+                <AppIconButton
                   icon="delete_outline"
-                  color="negative"
                   size="sm"
+                  tone="delete"
+                  aria-label="ลบบทเรียน"
                   @click="removeChapter(idx)"
                 />
               </div>
@@ -161,14 +155,12 @@
                   class="chapter-tab__input chapter-tab__sub-input"
                   :readonly="readonly"
                 />
-                <q-btn
+                <AppIconButton
                   v-if="!readonly"
-                  flat
-                  round
-                  dense
                   icon="close"
-                  color="negative"
                   size="sm"
+                  tone="delete"
+                  aria-label="ลบหัวข้อย่อย"
                   @click="removeSubchapter(idx, sIdx)"
                 />
               </div>
@@ -186,8 +178,9 @@ import type { ChapterTypeFormOption, CourseChapterPayload } from 'src/types/admi
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseInput from 'components/base/BaseInput.vue';
 import BaseSelect from 'components/base/BaseSelect.vue';
-import AppSurfaceCard from './AppSurfaceCard.vue';
-import AppActionButton from './AppActionButton.vue';
+import AppIconButton from 'components/common/AppIconButton.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 
 interface Props {
   modelValue: CourseChapterPayload[];

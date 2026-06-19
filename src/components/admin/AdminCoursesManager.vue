@@ -209,12 +209,10 @@
                   />
                 </td>
                 <td class="text-center">
-                  <q-btn
-                    dense
-                    round
-                    unelevated
+                  <AppIconButton
                     icon="content_copy"
                     size="sm"
+                    tone="copy"
                     class="courses-manager-action-btn courses-manager-action-btn--copy"
                     aria-label="คัดลอก"
                     tag="a"
@@ -222,16 +220,14 @@
                     @click="navClick(`/admin/courses/${item.courseId}/copy`, $event)"
                   >
                     <q-tooltip>คัดลอก</q-tooltip>
-                  </q-btn>
+                  </AppIconButton>
                 </td>
                 <td class="text-center">
                   <div class="courses-manager-table__actions-cell">
-                    <q-btn
-                      dense
-                      round
-                      unelevated
+                    <AppIconButton
                       icon="visibility"
                       size="sm"
+                      tone="view"
                       class="courses-manager-action-btn courses-manager-action-btn--view"
                       aria-label="ดูรายละเอียด"
                       tag="a"
@@ -239,13 +235,11 @@
                       @click="navClick(`/admin/courses/${item.courseId}`, $event)"
                     >
                       <q-tooltip>ดูรายละเอียด</q-tooltip>
-                    </q-btn>
-                    <q-btn
-                      dense
-                      round
-                      unelevated
+                    </AppIconButton>
+                    <AppIconButton
                       icon="edit"
                       size="sm"
+                      tone="edit"
                       class="courses-manager-action-btn courses-manager-action-btn--edit"
                       aria-label="แก้ไข"
                       tag="a"
@@ -253,19 +247,17 @@
                       @click="navClick(`/admin/courses/${item.courseId}/edit`, $event)"
                     >
                       <q-tooltip>แก้ไข</q-tooltip>
-                    </q-btn>
-                    <q-btn
-                      dense
-                      round
-                      unelevated
+                    </AppIconButton>
+                    <AppIconButton
                       icon="delete"
                       size="sm"
+                      tone="delete"
                       class="courses-manager-action-btn courses-manager-action-btn--delete"
                       aria-label="ลบ"
                       @click="askDelete(item)"
                     >
                       <q-tooltip>ลบ</q-tooltip>
-                    </q-btn>
+                    </AppIconButton>
                   </div>
                 </td>
               </tr>
@@ -318,10 +310,11 @@
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import AppActionButton from 'components/admin/AppActionButton.vue';
-import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
-import AppSearchInput from 'components/admin/AppSearchInput.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppIconButton from 'components/common/AppIconButton.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
+import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInput from 'components/base/BaseInput.vue';
 import BaseSelect from 'components/base/BaseSelect.vue';
 import BasePagination from 'components/base/BasePagination.vue';

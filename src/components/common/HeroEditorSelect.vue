@@ -1,10 +1,7 @@
 <template>
-  <q-select
+  <BaseSelect
     :model-value="modelValue"
     @update:model-value="$emit('update:modelValue', $event)"
-    outlined
-    dense
-    stack-label
     :label="label"
     :options="options"
     emit-value
@@ -15,10 +12,12 @@
     <template v-for="(_, name) in $slots" #[name]="slotProps">
       <slot :name="name" v-bind="slotProps || {}" />
     </template>
-  </q-select>
+  </BaseSelect>
 </template>
 
 <script setup lang="ts">
+import BaseSelect from 'components/base/BaseSelect.vue';
+
 defineProps<{
   modelValue: unknown;
   label: string;
