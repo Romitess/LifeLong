@@ -279,9 +279,11 @@
                     {{ course.code }}
                   </q-badge>
                   <button type="button" @click="openCourseWorkspace(course.id)">
-                    {{ course.title }}
+                    {{ getTranslatedCourseTitle(course) }}
                   </button>
-                  <span v-if="course.titleEn">{{ course.titleEn }}</span>
+                  <span v-if="course.titleEn && course.titleEn !== course.title">
+                    {{ locale === 'th' ? course.titleEn : course.title }}
+                  </span>
                 </div>
               </div>
             </template>
@@ -292,7 +294,7 @@
               <div class="schedule-cell__content">
                 <span>{{ t('instructor.table.regDate') }}</span>
                 <strong>{{
-                  formatCompactDateRange(course.registrationStart, course.registrationEnd)
+                  formatCompactDateRange(course.registrationStartDate, course.registrationEndDate)
                 }}</strong>
               </div>
             </template>
@@ -327,7 +329,9 @@
                 />
                 <div v-if="course.isActive" class="moodle-status__meta">
                   <span>sukanya</span>
-                  <span>{{ course.registrationEnd }}</span>
+                  <span>{{
+                    formatCourseDateLabel(course.registrationEndDate, course.registrationEnd)
+                  }}</span>
                 </div>
               </div>
               <q-btn
@@ -465,7 +469,12 @@
               <div class="course-summary__meta">
                 <span
                   ><q-icon name="event" /> {{ t('instructor.course.openUntil') }}
-                  {{ selectedCourse.registrationEnd }}</span
+                  {{
+                    formatCourseDateLabel(
+                      selectedCourse.registrationEndDate,
+                      selectedCourse.registrationEnd,
+                    )
+                  }}</span
                 >
                 <span
                   ><q-icon name="payments" />
@@ -2464,6 +2473,11 @@ function moodleModColor(modname: string): string {
   return 'grey-7';
 }
 
+function getTranslatedCourseTitle(course: Course): string {
+  if (locale.value === 'th') return course.title;
+  return course.titleEn || course.title;
+}
+
 function translateStutypeName(thaiName: string): string {
   if (locale.value === 'th') return thaiName || '';
   const enMap: Record<string, string> = {
@@ -2559,27 +2573,45 @@ function previewCourse(): void {
 function formatCourseDateLabel(dateText: string | null | undefined, fallback: string): string {
   if (!dateText) return fallback;
   const [year, month, day] = dateText.split('-').map(Number);
-  if (!year || !month || !day) {
-    return fallback;
-  }
-
-  return new Date(year, month - 1, day).toLocaleDateString('th-TH', {
+  if (!year || !month || !day) return fallback;
+  const lang = locale.value === 'th' ? 'th-TH' : 'en-US';
+  return new Date(year, month - 1, day).toLocaleDateString(lang, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   });
 }
 
-function formatCompactDateRange(startDate: string, endDate: string): string {
-  const thaiShortDatePattern = /^(\d{1,2})\s+(.+?)\s+(\d{4})$/;
-  const startMatch = startDate.match(thaiShortDatePattern);
-  const endMatch = endDate.match(thaiShortDatePattern);
-
-  if (startMatch && endMatch && startMatch[3] === endMatch[3]) {
-    return `${startMatch[1]} ${startMatch[2]} - ${endMatch[1]} ${endMatch[2]} ${endMatch[3]}`;
+function formatCompactDateRange(startIso: string, endIso: string): string {
+  const [sy, sm, sd] = startIso.split('-').map(Number);
+  const [ey, em, ed] = endIso.split('-').map(Number);
+  if (!sy || !sm || !sd || !ey || !em || !ed) {
+    return startIso && endIso ? `${startIso} - ${endIso}` : startIso || endIso || '';
   }
-
-  return `${startDate} - ${endDate}`;
+  const lang = locale.value === 'th' ? 'th-TH' : 'en-US';
+  if (sy === ey) {
+    const startShort = new Date(sy, sm - 1, sd).toLocaleDateString(lang, {
+      day: 'numeric',
+      month: 'short',
+    });
+    const endFull = new Date(ey, em - 1, ed).toLocaleDateString(lang, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    return `${startShort} - ${endFull}`;
+  }
+  const startFull = new Date(sy, sm - 1, sd).toLocaleDateString(lang, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  const endFull = new Date(ey, em - 1, ed).toLocaleDateString(lang, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+  return `${startFull} - ${endFull}`;
 }
 
 function buildCourseUpdatePayload(course: Course): Partial<Course> {
