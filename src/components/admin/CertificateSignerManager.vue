@@ -123,30 +123,26 @@
                 </td>
                 <td class="text-center">
                   <div class="signer-manager-table__actions-cell">
-                    <q-btn
-                      dense
-                      round
-                      unelevated
+                    <AppIconButton
                       icon="edit"
                       size="sm"
+                      tone="edit"
                       class="signer-manager-action-btn signer-manager-action-btn--edit"
                       aria-label="แก้ไข"
                       @click="openEditDialog(item)"
                     >
                       <q-tooltip>แก้ไข</q-tooltip>
-                    </q-btn>
-                    <q-btn
-                      dense
-                      round
-                      unelevated
+                    </AppIconButton>
+                    <AppIconButton
                       icon="delete"
                       size="sm"
+                      tone="delete"
                       class="signer-manager-action-btn signer-manager-action-btn--delete"
                       aria-label="ลบ"
                       @click="askDelete(item)"
                     >
                       <q-tooltip>ลบ</q-tooltip>
-                    </q-btn>
+                    </AppIconButton>
                   </div>
                 </td>
               </tr>
@@ -182,213 +178,178 @@
     </AppSurfaceCard>
 
     <!-- Add / Edit Dialog -->
-    <q-dialog
+    <AppDialog
       v-model="dialogOpen"
-      class="signer-manager-dialog"
-      transition-show="scale"
-      transition-hide="scale"
+      icon="draw"
+      :title="dialogMode === 'add' ? 'เพิ่มผู้เซ็น Certificate' : 'แก้ไขผู้เซ็น Certificate'"
+      card-class="signer-manager-dialog__card"
+      body-class="signer-manager-dialog__body"
+      actions-class="signer-manager-dialog__actions"
       @hide="handleDialogHide"
     >
-      <q-card class="signer-manager-dialog__card">
-        <q-card-section class="signer-manager-dialog__header">
-          <div class="signer-manager-dialog__title-row">
-            <div class="signer-manager-dialog__icon-wrap">
-              <q-icon name="draw" size="24px" color="indigo-7" />
-            </div>
-            <h2 class="signer-manager-dialog__title">
-              {{ dialogMode === 'add' ? 'เพิ่มผู้เซ็น Certificate' : 'แก้ไขผู้เซ็น Certificate' }}
-            </h2>
-          </div>
-        </q-card-section>
+      <div class="signer-manager-dialog__field">
+        <div class="signer-manager-dialog__label">
+          ชื่อผู้เซ็น <span class="text-negative">*</span>
+        </div>
+        <BaseInput
+          v-model="form.name"
+          outlined
+          dense
+          placeholder="ระบุชื่อ-นามสกุลผู้เซ็น"
+          :error="nameError"
+          :error-message="nameError ? 'กรุณากรอกชื่อผู้เซ็น' : ''"
+          @update:model-value="nameError = false"
+        />
+      </div>
 
-        <q-separator />
+      <div class="signer-manager-dialog__field">
+        <div class="signer-manager-dialog__label">ตำแหน่ง <span class="text-negative">*</span></div>
+        <BaseInput
+          v-model="form.position"
+          outlined
+          dense
+          placeholder="ระบุตำแหน่ง"
+          :error="positionError"
+          :error-message="positionError ? 'กรุณากรอกตำแหน่ง' : ''"
+          @update:model-value="positionError = false"
+        />
+      </div>
 
-        <q-card-section class="signer-manager-dialog__body">
-          <div class="signer-manager-dialog__field">
-            <div class="signer-manager-dialog__label">
-              ชื่อผู้เซ็น <span class="text-negative">*</span>
-            </div>
-            <BaseInput
-              v-model="form.name"
-              outlined
-              dense
-              placeholder="ระบุชื่อ-นามสกุลผู้เซ็น"
-              :error="nameError"
-              :error-message="nameError ? 'กรุณากรอกชื่อผู้เซ็น' : ''"
-              @update:model-value="nameError = false"
+      <div class="signer-manager-dialog__field">
+        <div class="signer-manager-dialog__label">ลายเซ็น</div>
+
+        <!-- Existing file section (edit mode only) -->
+        <div
+          v-if="dialogMode === 'edit' && existingFile && !pendingDeleteFile"
+          class="signer-manager-dialog__existing-file"
+        >
+          <div class="signer-manager-dialog__existing-thumb">
+            <img
+              :src="existingFile.url"
+              :alt="existingFile.filename ?? ''"
+              class="signer-manager-dialog__thumb-img"
+              width="72"
+              height="48"
+              decoding="async"
             />
           </div>
-
-          <div class="signer-manager-dialog__field">
-            <div class="signer-manager-dialog__label">
-              ตำแหน่ง <span class="text-negative">*</span>
-            </div>
-            <BaseInput
-              v-model="form.position"
-              outlined
-              dense
-              placeholder="ระบุตำแหน่ง"
-              :error="positionError"
-              :error-message="positionError ? 'กรุณากรอกตำแหน่ง' : ''"
-              @update:model-value="positionError = false"
-            />
-          </div>
-
-          <div class="signer-manager-dialog__field">
-            <div class="signer-manager-dialog__label">ลายเซ็น</div>
-
-            <!-- Existing file section (edit mode only) -->
-            <div
-              v-if="dialogMode === 'edit' && existingFile && !pendingDeleteFile"
-              class="signer-manager-dialog__existing-file"
+          <div class="signer-manager-dialog__existing-info">
+            <a
+              :href="existingFile.url"
+              class="signer-manager-dialog__filename-link"
+              @click.prevent="downloadExistingFile"
             >
-              <div class="signer-manager-dialog__existing-thumb">
-                <img
-                  :src="existingFile.url"
-                  :alt="existingFile.filename ?? ''"
-                  class="signer-manager-dialog__thumb-img"
-                  width="72"
-                  height="48"
-                  decoding="async"
-                />
+              <q-icon name="download" size="14px" />
+              {{ existingFile.filename ?? 'ดาวน์โหลดไฟล์' }}
+            </a>
+            <span v-if="existingFile.imgSize" class="signer-manager-dialog__file-size">
+              {{ existingFile.imgSize }}
+            </span>
+          </div>
+          <AppIconButton
+            icon="close"
+            size="sm"
+            tone="delete"
+            class="signer-manager-dialog__delete-file-btn"
+            @click="pendingDeleteFile = true"
+          >
+            <q-tooltip>ลบไฟล์</q-tooltip>
+          </AppIconButton>
+        </div>
+
+        <!-- New file upload input -->
+        <div
+          v-if="!existingFile || pendingDeleteFile || dialogMode === 'add'"
+          class="signer-manager-dialog__upload-area"
+        >
+          <div
+            class="signer-manager-dialog__drop-zone"
+            :class="{ 'signer-manager-dialog__drop-zone--has-file': form.file }"
+            @dragover.prevent
+            @drop.prevent="onFileDrop"
+          >
+            <template v-if="form.file">
+              <img :src="filePreviewUrl" alt="preview" class="signer-manager-dialog__preview-img" />
+              <div class="signer-manager-dialog__preview-info">
+                <span class="signer-manager-dialog__preview-name">{{ form.file.name }}</span>
+                <span class="signer-manager-dialog__preview-size">{{
+                  formatFileSize(form.file.size)
+                }}</span>
               </div>
-              <div class="signer-manager-dialog__existing-info">
-                <a
-                  :href="existingFile.url"
-                  class="signer-manager-dialog__filename-link"
-                  @click.prevent="downloadExistingFile"
-                >
-                  <q-icon name="download" size="14px" />
-                  {{ existingFile.filename ?? 'ดาวน์โหลดไฟล์' }}
-                </a>
-                <span v-if="existingFile.imgSize" class="signer-manager-dialog__file-size">
-                  {{ existingFile.imgSize }}
-                </span>
-              </div>
-              <q-btn
-                flat
-                round
-                dense
+              <AppIconButton
                 icon="close"
-                color="negative"
                 size="sm"
-                class="signer-manager-dialog__delete-file-btn"
-                @click="pendingDeleteFile = true"
-              >
-                <q-tooltip>ลบไฟล์</q-tooltip>
-              </q-btn>
-            </div>
-
-            <!-- New file upload input -->
-            <div
-              v-if="!existingFile || pendingDeleteFile || dialogMode === 'add'"
-              class="signer-manager-dialog__upload-area"
-            >
-              <div
-                class="signer-manager-dialog__drop-zone"
-                :class="{ 'signer-manager-dialog__drop-zone--has-file': form.file }"
-                @dragover.prevent
-                @drop.prevent="onFileDrop"
-              >
-                <template v-if="form.file">
-                  <img
-                    :src="filePreviewUrl"
-                    alt="preview"
-                    class="signer-manager-dialog__preview-img"
-                  />
-                  <div class="signer-manager-dialog__preview-info">
-                    <span class="signer-manager-dialog__preview-name">{{ form.file.name }}</span>
-                    <span class="signer-manager-dialog__preview-size">{{
-                      formatFileSize(form.file.size)
-                    }}</span>
-                  </div>
-                  <q-btn
-                    flat
-                    round
-                    dense
-                    icon="close"
-                    size="sm"
-                    color="grey-7"
-                    class="signer-manager-dialog__clear-file"
-                    @click="clearFile"
-                  />
-                </template>
-                <template v-else>
-                  <q-icon name="cloud_upload" size="36px" color="grey-4" />
-                  <p class="signer-manager-dialog__drop-hint">ลากไฟล์มาวางที่นี่ หรือ</p>
-                  <label class="signer-manager-dialog__browse-label">
-                    เลือกไฟล์
-                    <input
-                      ref="fileInputRef"
-                      type="file"
-                      accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                      class="signer-manager-dialog__file-input"
-                      @change="onFileSelect"
-                    />
-                  </label>
-                  <p class="signer-manager-dialog__file-hint">JPG, JPEG, PNG · ขนาดไม่เกิน 2 MB</p>
-                </template>
-              </div>
-              <p v-if="fileError" class="signer-manager-dialog__file-error">{{ fileError }}</p>
-            </div>
+                class="signer-manager-dialog__clear-file"
+                @click="clearFile"
+              />
+            </template>
+            <template v-else>
+              <q-icon name="cloud_upload" size="36px" color="grey-4" />
+              <p class="signer-manager-dialog__drop-hint">ลากไฟล์มาวางที่นี่ หรือ</p>
+              <label class="signer-manager-dialog__browse-label">
+                เลือกไฟล์
+                <input
+                  ref="fileInputRef"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                  class="signer-manager-dialog__file-input"
+                  @change="onFileSelect"
+                />
+              </label>
+              <p class="signer-manager-dialog__file-hint">JPG, JPEG, PNG · ขนาดไม่เกิน 2 MB</p>
+            </template>
           </div>
+          <p v-if="fileError" class="signer-manager-dialog__file-error">{{ fileError }}</p>
+        </div>
+      </div>
 
-          <div class="signer-manager-dialog__field signer-manager-dialog__field--status">
-            <div class="signer-manager-dialog__label">สถานะ</div>
-            <div class="signer-manager-dialog__status-row">
-              <BaseToggle v-model="form.statusOn" color="positive" keep-color />
-              <span
-                :class="form.statusOn ? 'text-positive' : 'text-grey-6'"
-                class="signer-manager-dialog__status-label"
-              >
-                {{ form.statusOn ? 'เปิด' : 'ปิด' }}
-              </span>
-            </div>
-          </div>
-        </q-card-section>
+      <div class="signer-manager-dialog__field signer-manager-dialog__field--status">
+        <div class="signer-manager-dialog__label">สถานะ</div>
+        <div class="signer-manager-dialog__status-row">
+          <BaseToggle v-model="form.statusOn" color="positive" keep-color />
+          <span
+            :class="form.statusOn ? 'text-positive' : 'text-grey-6'"
+            class="signer-manager-dialog__status-label"
+          >
+            {{ form.statusOn ? 'เปิด' : 'ปิด' }}
+          </span>
+        </div>
+      </div>
 
-        <q-card-actions class="signer-manager-dialog__actions">
-          <AppActionButton
-            variant="secondary"
-            label="ยกเลิก"
-            class="signer-manager-dialog__cancel-btn"
-            @click="closeDialog"
-          />
-          <AppActionButton
-            variant="primary"
-            icon="save"
-            label="บันทึก"
-            :loading="isSaving"
-            class="signer-manager-dialog__save-btn"
-            @click="saveDialog"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+      <template #actions>
+        <AppActionButton
+          variant="secondary"
+          label="ยกเลิก"
+          class="signer-manager-dialog__cancel-btn"
+          @click="closeDialog"
+        />
+        <AppActionButton
+          variant="primary"
+          icon="save"
+          label="บันทึก"
+          :loading="isSaving"
+          class="signer-manager-dialog__save-btn"
+          @click="saveDialog"
+        />
+      </template>
+    </AppDialog>
 
     <!-- Image Preview Dialog -->
-    <q-dialog v-model="previewOpen" transition-show="fade" transition-hide="fade">
-      <q-card class="signer-manager-preview-card">
-        <q-card-section class="signer-manager-preview-card__header row items-center q-pb-none">
-          <div>
-            <div class="text-h6 text-weight-bold" style="color: var(--admin-navy)">
-              {{ previewItem?.name }}
-            </div>
-            <div class="text-caption text-grey-6">{{ previewItem?.position }}</div>
-          </div>
-          <q-space />
-          <q-btn flat round dense icon="close" @click="previewOpen = false" />
-        </q-card-section>
-        <q-card-section>
-          <img
-            v-if="previewItem?.url"
-            :src="previewItem.url"
-            :alt="previewItem.name"
-            class="signer-manager-preview-card__img"
-          />
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <AppDialog
+      v-model="previewOpen"
+      transition-show="fade"
+      transition-hide="fade"
+      :title="previewItem?.name ?? ''"
+      :subtitle="previewItem?.position ?? ''"
+      card-class="signer-manager-preview-card"
+    >
+      <img
+        v-if="previewItem?.url"
+        :src="previewItem.url"
+        :alt="previewItem.name"
+        class="signer-manager-preview-card__img"
+      />
+    </AppDialog>
 
     <AppConfirmDialog
       v-model="confirmDeleteOpen"
@@ -407,10 +368,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
-import AppActionButton from 'components/admin/AppActionButton.vue';
-import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
-import AppSearchInput from 'components/admin/AppSearchInput.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppIconButton from 'components/common/AppIconButton.vue';
+import AppDialog from 'components/common/AppDialog.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
+import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInput from 'components/base/BaseInput.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import BaseToggle from 'components/base/BaseToggle.vue';

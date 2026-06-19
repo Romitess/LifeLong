@@ -103,13 +103,11 @@
           </p>
         </div>
 
-        <q-btn
-          outline
-          no-caps
-          color="negative"
+        <AppActionButton
+          variant="danger"
           icon="restart_alt"
-          label="Reset เป็นค่าเริ่มต้น"
-          class="full-width"
+          label="รีเซ็ตค่าเริ่มต้น"
+          class="hero-template-reset-btn full-width"
           @click="requestResetTemplate"
         />
       </AppSurfaceCard>
@@ -126,35 +124,29 @@
             <h4>{{ selectedSlide.name }}</h4>
           </div>
           <div class="hero-template-toolbar__actions">
-            <q-btn
-              flat
-              round
-              dense
-              :color="isPreviewPinned ? 'primary' : 'grey-7'"
+            <AppIconButton
               icon="push_pin"
+              :tone="isPreviewPinned ? 'edit' : 'default'"
               class="hero-toolbar-icon-button"
+              aria-label="ปักหมุด preview"
               @click="isPreviewPinned = !isPreviewPinned"
             >
               <q-tooltip>{{
                 isPreviewPinned ? 'ถอนหมุด Preview' : 'ปักหมุด Preview ไว้ด้านบน'
               }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              flat
-              round
-              dense
-              color="primary"
+            </AppIconButton>
+            <AppIconButton
               icon="play_arrow"
+              tone="view"
               class="hero-toolbar-icon-button"
+              aria-label="เล่น Animation ใหม่"
               @click="restartPreviewAnimation"
             >
               <q-tooltip>เล่น Animation ใหม่</q-tooltip>
-            </q-btn>
+            </AppIconButton>
             <q-chip
-              :class="{ invisible: !hasUnsavedChanges }"
+              :class="['hero-unsaved-chip', { invisible: !hasUnsavedChanges }]"
               dense
-              color="warning"
-              text-color="dark"
               icon="edit"
               label="ยังไม่บันทึก"
             />
@@ -175,11 +167,10 @@
                 @click="requestSaveTemplate"
               />
             </div>
-            <q-btn
-              flat
-              round
-              color="negative"
+            <AppIconButton
               icon="delete"
+              tone="delete"
+              aria-label="ลบสไลด์"
               :disable="draftHeroConfig.slides.length <= 1"
               @click="requestDeleteSelectedSlide"
             />
@@ -332,7 +323,11 @@
                       ที่รูปภาพด้านบนเพื่อปรับตำแหน่งได้เลย</span
                     >
                   </div>
-                  <ColorPickerInput v-model="selectedSlide.overlayColor" label="สี Overlay" />
+                  <ColorPickerInput
+                    v-model="selectedSlide.overlayColor"
+                    label="สี Overlay"
+                    :allow-alpha="false"
+                  />
                   <HeroEditorSlider
                     v-model="selectedSlide.overlayOpacity"
                     label="ความทึบ Overlay"
@@ -478,6 +473,7 @@
                   <ColorPickerInput
                     v-model="selectedSlide.textBlock.backgroundColor"
                     label="สีพื้นหลัง"
+                    :allow-alpha="true"
                     :disable="
                       !selectedSlide.textBlock.enabled || !selectedSlide.textBlock.backgroundEnabled
                     "
@@ -510,10 +506,8 @@
               <h5>ข้อความและ Animation</h5>
               <p>เลือก effect ต่อบรรทัดได้ ไม่จำเป็นต้องเป็น typewriter ทุกบรรทัด</p>
             </div>
-            <q-btn
-              unelevated
-              no-caps
-              color="primary"
+            <AppActionButton
+              variant="primary"
               icon="add"
               label="เพิ่มบรรทัด"
               @click="addTextLineToSelectedSlide"
@@ -555,10 +549,8 @@
             <div class="hero-line-editor__body">
               <div class="hero-line-editor__actions">
                 <span>ตั้งค่าบรรทัดนี้</span>
-                <q-btn
-                  outline
-                  no-caps
-                  color="negative"
+                <AppActionButton
+                  variant="danger"
                   icon="delete"
                   label="ลบบรรทัด"
                   @click="requestDeleteHeroTextLine(line.id)"
@@ -634,7 +626,12 @@
                     label="ข้อความในช่วงนี้"
                     style="flex: 2"
                   />
-                  <ColorPickerInput v-model="segment.color" label="สี" style="flex: 1" />
+                  <ColorPickerInput
+                    v-model="segment.color"
+                    label="สี"
+                    :allow-alpha="false"
+                    style="flex: 1"
+                  />
                   <HeroEditorInput
                     v-model="segment.fontWeight"
                     type="number"
@@ -644,11 +641,10 @@
                     :step="50"
                     style="flex: 1"
                   />
-                  <q-btn
-                    flat
-                    round
-                    color="negative"
+                  <AppIconButton
                     icon="close"
+                    tone="delete"
+                    aria-label="ลบ segment"
                     :disable="line.segments.length <= 1"
                     @click="requestDeleteHeroTextSegment(line, segment.id)"
                   />
@@ -709,10 +705,11 @@ import {
 } from 'vue';
 import { useQuasar } from 'quasar';
 import { AxiosError } from 'axios';
-import AppActionButton from 'components/admin/AppActionButton.vue';
-import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
-import AppSearchInput from 'components/admin/AppSearchInput.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppIconButton from 'components/common/AppIconButton.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
+import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import HeroSlideFormDialog, {
   type HeroSlideFormPayload,
 } from 'components/admin/HeroSlideFormDialog.vue';
@@ -1031,6 +1028,34 @@ function isSlideLiveToday(slide: HeroSlideTemplate): boolean {
 
 const liveSlideCount = computed(() => draftHeroConfig.value.slides.filter(isSlideLiveToday).length);
 
+function isValidHeroColor(value: string, allowAlpha = false): boolean {
+  const pattern = allowAlpha ? /^#[0-9A-F]{6}([0-9A-F]{2})?$/i : /^#[0-9A-F]{6}$/i;
+  return pattern.test(value.trim());
+}
+
+function getSlideColorValidationError(slide: HeroSlideTemplate): string {
+  if (!isValidHeroColor(slide.overlayColor)) {
+    return `สไลด์ "${slide.name}" สี Overlay ต้องเป็น HEX 6 หลัก เช่น #0F172A`;
+  }
+
+  if (
+    slide.textBlock.backgroundEnabled &&
+    !isValidHeroColor(slide.textBlock.backgroundColor, true)
+  ) {
+    return `สไลด์ "${slide.name}" สีพื้นหลังกล่องข้อความต้องเป็น HEX 6 หรือ 8 หลัก เช่น #FFFFFFB8`;
+  }
+
+  for (const line of slide.textBlock.lines) {
+    for (const segment of line.segments) {
+      if (!isValidHeroColor(segment.color)) {
+        return `สไลด์ "${slide.name}" สีข้อความต้องเป็น HEX 6 หลัก เช่น #1A237E`;
+      }
+    }
+  }
+
+  return '';
+}
+
 const slideValidationError = computed(() => {
   for (const slide of draftHeroConfig.value.slides) {
     if (!slide.startDate || !slide.endDate) {
@@ -1041,6 +1066,8 @@ const slideValidationError = computed(() => {
     if (start && end && end < start) {
       return `สไลด์ "${slide.name}" วันสิ้นสุดต้องไม่อยู่ก่อนวันเริ่มแสดง`;
     }
+    const colorError = getSlideColorValidationError(slide);
+    if (colorError) return colorError;
   }
   return '';
 });
@@ -2000,6 +2027,15 @@ onBeforeUnmount(() => {
   gap: 14px;
 }
 
+.hero-template-sidebar__header {
+  align-items: center;
+  gap: 8px;
+
+  > div {
+    min-width: 0;
+  }
+}
+
 .hero-template-sidebar__header p,
 .hero-template-toolbar p {
   margin: 0 0 5px;
@@ -2017,6 +2053,12 @@ onBeforeUnmount(() => {
   color: #10233f;
   font-weight: 950;
   letter-spacing: -0.02em;
+}
+
+.hero-template-sidebar__header h4 {
+  font-size: 0.98rem;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .hero-drop-zone {
@@ -2068,7 +2110,7 @@ onBeforeUnmount(() => {
   padding: 12px;
   border: 1px solid var(--hero-admin-inner-border);
   border-radius: var(--admin-radius-md);
-  background: #f8fafc;
+  background: #ffffff;
 }
 
 .hero-slide-filters__reset {
@@ -2110,6 +2152,16 @@ onBeforeUnmount(() => {
   border-radius: var(--admin-radius-md);
   color: #6b7280;
   font-size: 0.84rem;
+}
+
+.hero-template-reset-btn {
+  min-height: 46px !important;
+  padding-inline: 14px !important;
+
+  :deep(.q-btn__content) {
+    justify-content: center;
+    white-space: nowrap;
+  }
 }
 
 .color-picker-btn {
@@ -2191,6 +2243,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+  row-gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
@@ -2204,9 +2257,22 @@ onBeforeUnmount(() => {
 }
 
 .hero-toolbar-icon-button {
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+}
+
+.hero-unsaved-chip {
+  min-height: 32px;
+  border: 1px solid rgba(100, 116, 139, 0.24);
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  font-weight: 800;
+
+  :deep(.q-chip__icon) {
+    color: currentColor;
+  }
 }
 
 .hero-draft-banner {

@@ -119,28 +119,26 @@
                 </td>
                 <td class="text-center">
                   <div class="cert-manager-table__actions-cell">
-                    <q-btn
-                      dense
-                      round
-                      unelevated
+                    <AppIconButton
                       icon="edit"
                       size="sm"
+                      tone="edit"
                       class="cert-manager-action-btn cert-manager-action-btn--edit"
                       aria-label="แก้ไข"
                       @click="openEditDialog(item)"
-                      ><q-tooltip>แก้ไข</q-tooltip></q-btn
                     >
-                    <q-btn
-                      dense
-                      round
-                      unelevated
+                      <q-tooltip>แก้ไข</q-tooltip>
+                    </AppIconButton>
+                    <AppIconButton
                       icon="delete"
                       size="sm"
+                      tone="delete"
                       class="cert-manager-action-btn cert-manager-action-btn--delete"
                       aria-label="ลบ"
                       @click="askDelete(item)"
-                      ><q-tooltip>ลบ</q-tooltip></q-btn
                     >
+                      <q-tooltip>ลบ</q-tooltip>
+                    </AppIconButton>
                   </div>
                 </td>
               </tr>
@@ -175,290 +173,251 @@
     </AppSurfaceCard>
 
     <!-- Add / Edit Dialog -->
-    <q-dialog
+    <AppDialog
       v-model="dialogOpen"
-      class="cert-manager-dialog"
-      transition-show="scale"
-      transition-hide="scale"
+      icon="workspace_premium"
+      :title="dialogMode === 'add' ? 'เพิ่มรูปแบบ Certificate' : 'แก้ไขรูปแบบ Certificate'"
+      card-class="cert-manager-dialog__card"
+      body-class="cert-manager-dialog__body"
+      actions-class="cert-manager-dialog__actions"
       @hide="handleDialogHide"
     >
-      <q-card class="cert-manager-dialog__card">
-        <q-card-section class="cert-manager-dialog__header">
-          <div class="cert-manager-dialog__title-row">
-            <div class="cert-manager-dialog__icon-wrap">
-              <q-icon name="workspace_premium" size="24px" color="amber-8" />
-            </div>
-            <h2 class="cert-manager-dialog__title">
-              {{ dialogMode === 'add' ? 'เพิ่มรูปแบบ Certificate' : 'แก้ไขรูปแบบ Certificate' }}
-            </h2>
-          </div>
-        </q-card-section>
+      <!-- Name -->
+      <div class="cert-manager-dialog__field">
+        <div class="cert-manager-dialog__label">
+          ชื่อรูปแบบ Certificate <span class="text-negative">*</span>
+        </div>
+        <BaseInput
+          v-model="form.name"
+          outlined
+          dense
+          placeholder="ระบุชื่อรูปแบบ"
+          :error="nameError"
+          :error-message="nameError ? 'กรุณากรอกชื่อรูปแบบ' : ''"
+          @update:model-value="nameError = false"
+        />
+      </div>
 
-        <q-separator />
+      <!-- File upload -->
+      <div class="cert-manager-dialog__field">
+        <div class="cert-manager-dialog__label">รูปพื้นหลัง Certificate (PNG)</div>
 
-        <q-card-section class="cert-manager-dialog__body">
-          <!-- Name -->
-          <div class="cert-manager-dialog__field">
-            <div class="cert-manager-dialog__label">
-              ชื่อรูปแบบ Certificate <span class="text-negative">*</span>
-            </div>
-            <BaseInput
-              v-model="form.name"
-              outlined
-              dense
-              placeholder="ระบุชื่อรูปแบบ"
-              :error="nameError"
-              :error-message="nameError ? 'กรุณากรอกชื่อรูปแบบ' : ''"
-              @update:model-value="nameError = false"
+        <div
+          v-if="dialogMode === 'edit' && existingFile && !pendingDeleteFile"
+          class="cert-manager-dialog__existing-file"
+        >
+          <div class="cert-manager-dialog__existing-thumb">
+            <img
+              v-if="existingFileBlobUrl"
+              :src="existingFileBlobUrl"
+              :alt="existingFile.filename ?? ''"
+              class="cert-manager-dialog__thumb-img"
+              width="72"
+              height="48"
+              decoding="async"
             />
           </div>
-
-          <!-- File upload -->
-          <div class="cert-manager-dialog__field">
-            <div class="cert-manager-dialog__label">รูปพื้นหลัง Certificate (PNG)</div>
-
-            <div
-              v-if="dialogMode === 'edit' && existingFile && !pendingDeleteFile"
-              class="cert-manager-dialog__existing-file"
+          <div class="cert-manager-dialog__existing-info">
+            <a
+              :href="existingFile.url"
+              class="cert-manager-dialog__filename-link"
+              @click.prevent="downloadExistingFile"
+              ><q-icon name="download" size="14px" />{{
+                existingFile.filename ?? 'ดาวน์โหลดไฟล์'
+              }}</a
             >
-              <div class="cert-manager-dialog__existing-thumb">
-                <img
-                  v-if="existingFileBlobUrl"
-                  :src="existingFileBlobUrl"
-                  :alt="existingFile.filename ?? ''"
-                  class="cert-manager-dialog__thumb-img"
-                  width="72"
-                  height="48"
-                  decoding="async"
-                />
-              </div>
-              <div class="cert-manager-dialog__existing-info">
-                <a
-                  :href="existingFile.url"
-                  class="cert-manager-dialog__filename-link"
-                  @click.prevent="downloadExistingFile"
-                  ><q-icon name="download" size="14px" />{{
-                    existingFile.filename ?? 'ดาวน์โหลดไฟล์'
-                  }}</a
-                >
-                <span v-if="existingFile.imgSize" class="cert-manager-dialog__file-size">{{
-                  existingFile.imgSize
+            <span v-if="existingFile.imgSize" class="cert-manager-dialog__file-size">{{
+              existingFile.imgSize
+            }}</span>
+          </div>
+          <AppIconButton
+            icon="close"
+            size="sm"
+            tone="delete"
+            class="cert-manager-dialog__delete-file-btn"
+            @click="pendingDeleteFile = true"
+          >
+            <q-tooltip>ลบไฟล์</q-tooltip>
+          </AppIconButton>
+        </div>
+
+        <div
+          v-if="!existingFile || pendingDeleteFile || dialogMode === 'add'"
+          class="cert-manager-dialog__upload-area"
+        >
+          <div
+            class="cert-manager-dialog__drop-zone"
+            :class="{ 'cert-manager-dialog__drop-zone--has-file': form.file }"
+            @dragover.prevent
+            @drop.prevent="onFileDrop"
+          >
+            <template v-if="form.file">
+              <img :src="filePreviewUrl" alt="preview" class="cert-manager-dialog__preview-img" />
+              <div class="cert-manager-dialog__preview-info">
+                <span class="cert-manager-dialog__preview-name">{{ form.file.name }}</span>
+                <span class="cert-manager-dialog__preview-size">{{
+                  formatFileSize(form.file.size)
                 }}</span>
               </div>
-              <q-btn
-                flat
-                round
-                dense
+              <AppIconButton
                 icon="close"
-                color="negative"
                 size="sm"
-                class="cert-manager-dialog__delete-file-btn"
-                @click="pendingDeleteFile = true"
-                ><q-tooltip>ลบไฟล์</q-tooltip></q-btn
-              >
-            </div>
-
-            <div
-              v-if="!existingFile || pendingDeleteFile || dialogMode === 'add'"
-              class="cert-manager-dialog__upload-area"
-            >
-              <div
-                class="cert-manager-dialog__drop-zone"
-                :class="{ 'cert-manager-dialog__drop-zone--has-file': form.file }"
-                @dragover.prevent
-                @drop.prevent="onFileDrop"
-              >
-                <template v-if="form.file">
-                  <img
-                    :src="filePreviewUrl"
-                    alt="preview"
-                    class="cert-manager-dialog__preview-img"
-                  />
-                  <div class="cert-manager-dialog__preview-info">
-                    <span class="cert-manager-dialog__preview-name">{{ form.file.name }}</span>
-                    <span class="cert-manager-dialog__preview-size">{{
-                      formatFileSize(form.file.size)
-                    }}</span>
-                  </div>
-                  <q-btn
-                    flat
-                    round
-                    dense
-                    icon="close"
-                    size="sm"
-                    color="grey-7"
-                    class="cert-manager-dialog__clear-file"
-                    @click="clearFile"
-                  />
-                </template>
-                <template v-else>
-                  <q-icon name="cloud_upload" size="36px" color="grey-4" />
-                  <p class="cert-manager-dialog__drop-hint">ลากไฟล์มาวางที่นี่ หรือ</p>
-                  <label class="cert-manager-dialog__browse-label"
-                    >เลือกไฟล์<input
-                      ref="fileInputRef"
-                      type="file"
-                      accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                      class="cert-manager-dialog__file-input"
-                      @change="onFileSelect"
-                  /></label>
-                  <p class="cert-manager-dialog__file-hint">PNG, JPG · ขนาดไม่เกิน 2 MB</p>
-                </template>
-              </div>
-              <p v-if="fileError" class="cert-manager-dialog__file-error">{{ fileError }}</p>
-            </div>
-          </div>
-
-          <!-- Position Editor -->
-          <div v-if="hasImage" class="cert-manager-dialog__field">
-            <div class="cert-manager-dialog__label">
-              กำหนดตำแหน่งข้อความ
-              <q-btn
-                flat
-                dense
-                size="xs"
-                icon="restart_alt"
-                color="grey-6"
-                label="รีเซ็ต"
-                class="q-ml-sm"
-                @click="resetLayout"
+                class="cert-manager-dialog__clear-file"
+                @click="clearFile"
               />
+            </template>
+            <template v-else>
+              <q-icon name="cloud_upload" size="36px" color="grey-4" />
+              <p class="cert-manager-dialog__drop-hint">ลากไฟล์มาวางที่นี่ หรือ</p>
+              <label class="cert-manager-dialog__browse-label"
+                >เลือกไฟล์<input
+                  ref="fileInputRef"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                  class="cert-manager-dialog__file-input"
+                  @change="onFileSelect"
+              /></label>
+              <p class="cert-manager-dialog__file-hint">PNG, JPG · ขนาดไม่เกิน 2 MB</p>
+            </template>
+          </div>
+          <p v-if="fileError" class="cert-manager-dialog__file-error">{{ fileError }}</p>
+        </div>
+      </div>
+
+      <!-- Position Editor -->
+      <div v-if="hasImage" class="cert-manager-dialog__field">
+        <div class="cert-manager-dialog__label">
+          กำหนดตำแหน่งข้อความ
+          <AppActionButton
+            variant="ghost"
+            size="xs"
+            icon="restart_alt"
+            label="รีเซ็ต"
+            class="q-ml-sm"
+            @click="resetLayout"
+          />
+        </div>
+        <div class="position-editor">
+          <div
+            ref="editorRef"
+            class="position-editor__canvas"
+            @mousemove="onEditorMouseMove"
+            @mouseup="onEditorMouseUp"
+            @mouseleave="onEditorMouseUp"
+          >
+            <img
+              :src="editorImageSrc"
+              alt="template preview"
+              class="position-editor__img"
+              draggable="false"
+            />
+            <div
+              v-for="field in layoutFields"
+              :key="field.key"
+              class="position-editor__handle"
+              :class="`position-editor__handle--${field.key}`"
+              :style="{
+                top: `${form.layout[field.key].top}%`,
+                left: `${form.layout[field.key].left}%`,
+              }"
+              @mousedown.prevent="startDrag(field.key, $event)"
+            >
+              <span class="position-editor__handle-label">{{ field.label }}</span>
+              <span class="position-editor__handle-sample" :style="getSampleStyle(field.key)">{{
+                field.sample
+              }}</span>
             </div>
-            <div class="position-editor">
-              <div
-                ref="editorRef"
-                class="position-editor__canvas"
-                @mousemove="onEditorMouseMove"
-                @mouseup="onEditorMouseUp"
-                @mouseleave="onEditorMouseUp"
-              >
-                <img
-                  :src="editorImageSrc"
-                  alt="template preview"
-                  class="position-editor__img"
-                  draggable="false"
+          </div>
+          <p class="position-editor__hint">
+            <q-icon name="drag_indicator" size="14px" /> ลากข้อความเพื่อจัดตำแหน่ง
+          </p>
+
+          <!-- Field settings -->
+          <div class="position-editor__fields">
+            <div v-for="field in layoutFields" :key="field.key" class="position-editor__field-row">
+              <span class="position-editor__field-name" :class="`text-${field.color}`">{{
+                field.label
+              }}</span>
+              <div class="position-editor__field-controls">
+                <BaseInput
+                  v-model.number="form.layout[field.key].fontSize"
+                  type="number"
+                  outlined
+                  dense
+                  label="ขนาด"
+                  suffix="px"
+                  style="width: 80px"
+                  :min="8"
+                  :max="72"
                 />
-                <div
-                  v-for="field in layoutFields"
-                  :key="field.key"
-                  class="position-editor__handle"
-                  :class="`position-editor__handle--${field.key}`"
-                  :style="{
-                    top: `${form.layout[field.key].top}%`,
-                    left: `${form.layout[field.key].left}%`,
-                  }"
-                  @mousedown.prevent="startDrag(field.key, $event)"
-                >
-                  <span class="position-editor__handle-label">{{ field.label }}</span>
-                  <span class="position-editor__handle-sample" :style="getSampleStyle(field.key)">{{
-                    field.sample
-                  }}</span>
-                </div>
-              </div>
-              <p class="position-editor__hint">
-                <q-icon name="drag_indicator" size="14px" /> ลากข้อความเพื่อจัดตำแหน่ง
-              </p>
-
-              <!-- Field settings -->
-              <div class="position-editor__fields">
-                <div
-                  v-for="field in layoutFields"
-                  :key="field.key"
-                  class="position-editor__field-row"
-                >
-                  <span class="position-editor__field-name" :class="`text-${field.color}`">{{
-                    field.label
-                  }}</span>
-                  <div class="position-editor__field-controls">
-                    <BaseInput
-                      v-model.number="form.layout[field.key].fontSize"
-                      type="number"
-                      outlined
-                      dense
-                      label="ขนาด"
-                      suffix="px"
-                      style="width: 80px"
-                      :min="8"
-                      :max="72"
-                    />
-                    <input
-                      v-model="form.layout[field.key].color"
-                      type="color"
-                      class="position-editor__color-input"
-                      :title="`สีของ ${field.label}`"
-                    />
-                    <q-btn-toggle
-                      v-model="form.layout[field.key].align"
-                      dense
-                      unelevated
-                      :options="[
-                        { value: 'left', icon: 'format_align_left' },
-                        { value: 'center', icon: 'format_align_center' },
-                        { value: 'right', icon: 'format_align_right' },
-                      ]"
-                      toggle-color="primary"
-                      class="position-editor__align-toggle"
-                    />
-                    <BaseToggle v-model="form.layout[field.key].bold" dense size="sm" label="B" />
-                  </div>
-                </div>
+                <input
+                  v-model="form.layout[field.key].color"
+                  type="color"
+                  class="position-editor__color-input"
+                  :title="`สีของ ${field.label}`"
+                />
+                <AppSegmentedControl
+                  v-model="form.layout[field.key].align"
+                  :options="[
+                    { value: 'left', icon: 'format_align_left' },
+                    { value: 'center', icon: 'format_align_center' },
+                    { value: 'right', icon: 'format_align_right' },
+                  ]"
+                  class="position-editor__align-toggle"
+                />
+                <BaseToggle v-model="form.layout[field.key].bold" dense size="sm" label="B" />
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <!-- Status -->
-          <div class="cert-manager-dialog__field cert-manager-dialog__field--status">
-            <div class="cert-manager-dialog__label">สถานะ</div>
-            <div class="cert-manager-dialog__status-row">
-              <BaseToggle v-model="form.statusOn" color="positive" keep-color />
-              <span
-                :class="form.statusOn ? 'text-positive' : 'text-grey-6'"
-                class="cert-manager-dialog__status-label"
-                >{{ form.statusOn ? 'เปิด' : 'ปิด' }}</span
-              >
-            </div>
-          </div>
-        </q-card-section>
+      <!-- Status -->
+      <div class="cert-manager-dialog__field cert-manager-dialog__field--status">
+        <div class="cert-manager-dialog__label">สถานะ</div>
+        <div class="cert-manager-dialog__status-row">
+          <BaseToggle v-model="form.statusOn" color="positive" keep-color />
+          <span
+            :class="form.statusOn ? 'text-positive' : 'text-grey-6'"
+            class="cert-manager-dialog__status-label"
+            >{{ form.statusOn ? 'เปิด' : 'ปิด' }}</span
+          >
+        </div>
+      </div>
 
-        <q-card-actions class="cert-manager-dialog__actions">
-          <AppActionButton
-            variant="secondary"
-            label="ยกเลิก"
-            class="cert-manager-dialog__cancel-btn"
-            @click="closeDialog"
-          />
-          <AppActionButton
-            variant="primary"
-            icon="save"
-            label="บันทึก"
-            :loading="isSaving"
-            class="cert-manager-dialog__save-btn"
-            @click="saveDialog"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+      <template #actions>
+        <AppActionButton
+          variant="secondary"
+          label="ยกเลิก"
+          class="cert-manager-dialog__cancel-btn"
+          @click="closeDialog"
+        />
+        <AppActionButton
+          variant="primary"
+          icon="save"
+          label="บันทึก"
+          :loading="isSaving"
+          class="cert-manager-dialog__save-btn"
+          @click="saveDialog"
+        />
+      </template>
+    </AppDialog>
 
     <!-- Image Preview Dialog -->
-    <q-dialog v-model="previewOpen" transition-show="fade" transition-hide="fade">
-      <q-card class="cert-manager-preview-card">
-        <q-card-section class="cert-manager-preview-card__header row items-center q-pb-none">
-          <div class="text-h6 text-weight-bold" style="color: var(--admin-navy)">
-            {{ previewItem?.name }}
-          </div>
-          <q-space />
-          <q-btn flat round dense icon="close" @click="previewOpen = false" />
-        </q-card-section>
-        <q-card-section>
-          <img
-            v-if="previewItem && itemBlobUrls[previewItem.id]"
-            :src="itemBlobUrls[previewItem.id]"
-            :alt="previewItem.name"
-            class="cert-manager-preview-card__img"
-          />
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <AppDialog
+      v-model="previewOpen"
+      transition-show="fade"
+      transition-hide="fade"
+      :title="previewItem?.name ?? ''"
+      card-class="cert-manager-preview-card"
+    >
+      <img
+        v-if="previewItem && itemBlobUrls[previewItem.id]"
+        :src="itemBlobUrls[previewItem.id]"
+        :alt="previewItem.name"
+        class="cert-manager-preview-card__img"
+      />
+    </AppDialog>
 
     <AppConfirmDialog
       v-model="confirmDeleteOpen"
@@ -477,10 +436,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
-import AppActionButton from 'components/admin/AppActionButton.vue';
-import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
-import AppSearchInput from 'components/admin/AppSearchInput.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppIconButton from 'components/common/AppIconButton.vue';
+import AppDialog from 'components/common/AppDialog.vue';
+import AppSegmentedControl from 'components/common/AppSegmentedControl.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
+import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInput from 'components/base/BaseInput.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import BaseToggle from 'components/base/BaseToggle.vue';

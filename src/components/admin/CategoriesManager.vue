@@ -255,58 +255,50 @@
                         class="categories-manager__sub-add-btn"
                         @click="openCreateSubcategoryDialog(row.category)"
                       />
-                      <q-btn
-                        dense
-                        round
-                        unelevated
+                      <AppIconButton
                         icon="edit"
                         size="sm"
+                        tone="edit"
                         class="categories-manager-action-btn categories-manager-action-btn--edit"
                         aria-label="แก้ไขหมวด"
                         @click="openEditCategoryDialog(row.category)"
                       >
                         <q-tooltip>แก้ไขหมวด</q-tooltip>
-                      </q-btn>
-                      <q-btn
-                        dense
-                        round
-                        unelevated
+                      </AppIconButton>
+                      <AppIconButton
                         icon="delete"
                         size="sm"
+                        tone="delete"
                         class="categories-manager-action-btn categories-manager-action-btn--delete"
                         :disable="!canDeleteCategory(row.category)"
                         aria-label="ลบหมวด"
                         @click="askDeleteCategory(row.category)"
                       >
                         <q-tooltip>ลบหมวด</q-tooltip>
-                      </q-btn>
+                      </AppIconButton>
                     </template>
                     <template v-else>
-                      <q-btn
-                        dense
-                        round
-                        unelevated
+                      <AppIconButton
                         icon="edit"
                         size="sm"
+                        tone="edit"
                         class="categories-manager-action-btn categories-manager-action-btn--edit"
                         aria-label="แก้ไขหมู่"
                         @click="openEditSubcategoryDialog(row.subcategory)"
                       >
                         <q-tooltip>แก้ไขหมู่</q-tooltip>
-                      </q-btn>
-                      <q-btn
-                        dense
-                        round
-                        unelevated
+                      </AppIconButton>
+                      <AppIconButton
                         icon="delete"
                         size="sm"
+                        tone="delete"
                         class="categories-manager-action-btn categories-manager-action-btn--delete"
                         :disable="row.subcategory.courseCount > 0"
                         aria-label="ลบหมู่"
                         @click="askDeleteSubcategory(row.subcategory)"
                       >
                         <q-tooltip>ลบหมู่</q-tooltip>
-                      </q-btn>
+                      </AppIconButton>
                     </template>
                   </div>
                 </td>
@@ -336,108 +328,79 @@
       </div>
     </AppSurfaceCard>
 
-    <q-dialog
+    <AppDialog
       v-model="formDialogOpen"
-      class="admin-dialog"
-      transition-show="scale"
-      transition-hide="scale"
+      :title="dialogTitle"
+      :icon="dialogIcon"
+      :icon-color="dialogIconColor"
+      :icon-background="dialogIconBackground"
+      width="520px"
     >
-      <q-card class="taxonomy-dialog">
-        <q-card-section class="taxonomy-dialog__header">
-          <div
-            class="taxonomy-dialog__icon-wrap"
-            :style="
-              dialogMode === 'category' && form.color
-                ? { background: `${form.color}22`, color: form.color }
-                : selectedParentCategory?.color
-                  ? {
-                      background: `${selectedParentCategory.color}22`,
-                      color: selectedParentCategory.color,
-                    }
-                  : {}
-            "
-          >
-            <q-icon
-              :name="
-                dialogMode === 'category'
-                  ? form.icon || 'category'
-                  : selectedParentCategory?.icon || 'account_tree'
-              "
-              size="30px"
-            />
-          </div>
-          <div>
-            <p>{{ dialogMode === 'category' ? 'Category' : 'Subcategory' }}</p>
-            <h2>{{ dialogTitle }}</h2>
-            <span v-if="selectedParentCategory">
-              สร้างหมู่ภายใต้หมวด {{ selectedParentCategory.name }}
-            </span>
-          </div>
-          <q-btn v-close-popup dense flat round icon="close" />
-        </q-card-section>
+      <q-form
+        id="taxonomy-dialog-form"
+        ref="formRef"
+        greedy
+        class="taxonomy-dialog__form"
+        @submit.prevent="submitForm"
+      >
+        <BaseInput
+          v-model="form.name"
+          label="ชื่อ"
+          required
+          :rules="nameRules"
+          class="admin-editor-field"
+          hide-bottom-space
+        />
 
-        <q-form ref="formRef" greedy @submit.prevent="submitForm">
-          <q-card-section class="taxonomy-dialog__body">
-            <BaseInput
-              v-model="form.name"
-              outlined
-              dense
-              stack-label
-              label="ชื่อ *"
-              :rules="nameRules"
-              class="admin-editor-field"
-              hide-bottom-space
-            />
-
-            <template v-if="dialogMode === 'category'">
-              <!-- Icon picker -->
-              <div class="taxonomy-field-label q-mt-md q-mb-xs">Icon</div>
-              <div class="taxonomy-icon-grid">
-                <button
-                  v-for="ic in PRESET_ICONS"
-                  :key="ic"
-                  type="button"
-                  class="taxonomy-icon-cell"
-                  :class="{ 'taxonomy-icon-cell--active': form.icon === ic }"
-                  :style="form.icon === ic ? { color: form.color, borderColor: form.color } : {}"
-                  @click="form.icon = ic"
-                >
-                  <q-icon :name="ic" size="20px" />
-                </button>
-              </div>
-
-              <!-- Color picker -->
-              <ColorPickerInput v-model="form.color" label="สี" class="q-mt-md" />
-            </template>
-
-            <BaseToggle
-              v-model="form.isActive"
-              color="positive"
-              :label="form.isActive ? 'เผยแพร่' : 'ซ่อน'"
-              class="q-mt-sm"
-            />
-          </q-card-section>
-
-          <q-card-actions class="taxonomy-dialog__actions">
-            <AppActionButton
-              variant="secondary"
-              label="ยกเลิก"
-              no-caps
+        <template v-if="dialogMode === 'category'">
+          <!-- Icon picker -->
+          <div class="taxonomy-field-label q-mt-md q-mb-xs">Icon</div>
+          <div class="taxonomy-icon-grid">
+            <button
+              v-for="ic in PRESET_ICONS"
+              :key="ic"
               type="button"
-              @click="formDialogOpen = false"
-            />
-            <AppActionButton
-              variant="primary"
-              no-caps
-              :loading="isSaving"
-              :label="editingNode ? 'บันทึก' : 'สร้าง'"
-              :icon="editingNode ? 'save' : 'add'"
-              type="submit"
-            />
-          </q-card-actions>
-        </q-form>
-      </q-card>
-    </q-dialog>
+              class="taxonomy-icon-cell"
+              :class="{ 'taxonomy-icon-cell--active': form.icon === ic }"
+              @click="form.icon = ic"
+            >
+              <q-icon :name="ic" size="20px" />
+            </button>
+          </div>
+
+          <!-- Color picker -->
+          <ColorPickerInput v-model="form.color" label="สี" :allow-alpha="false" class="q-mt-md" />
+        </template>
+
+        <BaseToggle
+          v-model="form.isActive"
+          color="positive"
+          :label="form.isActive ? 'เผยแพร่' : 'ซ่อน'"
+          class="q-mt-sm"
+        />
+      </q-form>
+
+      <template #actions>
+        <div class="taxonomy-dialog__actions-inner">
+          <AppActionButton
+            variant="secondary"
+            label="ยกเลิก"
+            no-caps
+            type="button"
+            @click="formDialogOpen = false"
+          />
+          <AppActionButton
+            variant="primary"
+            no-caps
+            :loading="isSaving"
+            :label="editingNode ? 'บันทึก' : 'สร้าง'"
+            :icon="editingNode ? 'save' : 'add'"
+            type="submit"
+            form="taxonomy-dialog-form"
+          />
+        </div>
+      </template>
+    </AppDialog>
 
     <AppConfirmDialog
       v-model="confirmDeleteOpen"
@@ -457,10 +420,12 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import type { QForm, ValidationRule } from 'quasar';
 import { useQuasar } from 'quasar';
-import AppActionButton from 'components/admin/AppActionButton.vue';
-import AppConfirmDialog from 'components/admin/AppConfirmDialog.vue';
-import AppSearchInput from 'components/admin/AppSearchInput.vue';
-import AppSurfaceCard from 'components/admin/AppSurfaceCard.vue';
+import AppIconButton from 'components/common/AppIconButton.vue';
+import AppDialog from 'components/common/AppDialog.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
+import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BaseInput from 'components/base/BaseInput.vue';
 import BasePagination from 'components/base/BasePagination.vue';
@@ -662,6 +627,19 @@ const dialogTitle = computed(() => {
 
   return editingNode.value ? 'แก้ไขหมู่วิชา' : 'เพิ่มหมู่วิชา';
 });
+
+const dialogIcon = computed(() =>
+  dialogMode.value === 'category'
+    ? form.icon || 'category'
+    : selectedParentCategory.value?.icon || 'account_tree',
+);
+
+const dialogIconColor = computed(() => {
+  if (dialogMode.value === 'category' && form.color) return form.color;
+  return selectedParentCategory.value?.color || '#f5a623';
+});
+
+const dialogIconBackground = computed(() => `${dialogIconColor.value}22`);
 
 const deleteTitle = computed(() =>
   pendingDelete.value?.type === 'subcategory' ? 'ลบหมู่วิชา' : 'ลบหมวดวิชา',
@@ -1286,72 +1264,18 @@ function notifyError(error: unknown, fallbackMessage: string): void {
   --admin-action-ring: rgba(225, 29, 72, 0.08);
 }
 
-.taxonomy-dialog {
-  width: min(520px, calc(100vw - 32px));
-  overflow: hidden;
-  border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 28px 64px rgba(15, 23, 42, 0.24);
-}
-
-.taxonomy-dialog__header {
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) auto;
-  gap: 16px;
-  align-items: flex-start;
-  padding: 24px 24px 14px;
-}
-
-.taxonomy-dialog__icon-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  color: var(--admin-gold);
-  background: rgba(245, 166, 35, 0.16);
-}
-
-.taxonomy-dialog__header {
-  p {
-    margin: 0 0 4px;
-    color: var(--admin-accent-ink);
-    font-size: 0.75rem;
-    font-weight: 900;
-    text-transform: uppercase;
-  }
-
-  h2 {
-    margin: 0;
-    color: var(--admin-navy);
-    font-size: 1.15rem;
-    font-weight: 850;
-    line-height: 1.35;
-  }
-
-  span {
-    display: block;
-    margin-top: 6px;
-    color: var(--admin-muted);
-    font-size: 0.86rem;
-  }
-}
-
-.taxonomy-dialog__body {
+.taxonomy-dialog__form {
   display: grid;
   gap: 16px;
-  padding: 10px 24px 14px;
 }
 
-.taxonomy-dialog__actions {
+.taxonomy-dialog__actions-inner {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  padding: 0 24px 24px;
 }
 
-.taxonomy-dialog__actions > * {
+.taxonomy-dialog__actions-inner > * {
   width: 100%;
 }
 
@@ -1364,8 +1288,7 @@ function notifyError(error: unknown, fallbackMessage: string): void {
     padding-left: 8px;
   }
 
-  .taxonomy-dialog__header,
-  .taxonomy-dialog__actions {
+  .taxonomy-dialog__actions-inner {
     grid-template-columns: 1fr;
   }
 }

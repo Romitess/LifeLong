@@ -1,172 +1,141 @@
 <template>
-  <q-dialog
+  <AppDialog
     v-model="dialogModel"
-    class="admin-dialog"
-    transition-show="scale"
-    transition-hide="scale"
+    :eyebrow="isEditing ? 'Edit Category' : 'New Category'"
+    :title="isEditing ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่ใหม่'"
+    :subtitle="usageHint"
+    :icon="form.icon || 'category'"
+    :icon-color="form.color"
+    :icon-background="previewBackground"
+    width="640px"
   >
-    <q-card class="category-form-dialog">
-      <q-card-section class="category-form-dialog__header">
-        <div
-          class="category-form-dialog__icon-wrap"
-          :style="{ backgroundColor: previewBackground, color: form.color }"
-        >
-          <q-icon :name="form.icon || 'category'" size="32px" />
-        </div>
+    <q-form
+      id="category-form-dialog-form"
+      ref="formRef"
+      greedy
+      class="category-form-dialog__form"
+      @submit.prevent="onSubmit"
+    >
+      <div class="category-form-dialog__grid">
+        <BaseInput
+          v-model="form.name"
+          label="ชื่อหมวดหมู่ (ภาษาไทย)"
+          required
+          hide-bottom-space
+          :rules="nameRules"
+          class="category-form-dialog__field--full"
+          @blur="autofillSlug"
+        />
 
-        <div class="category-form-dialog__heading">
-          <p class="category-form-dialog__eyebrow">
-            {{ isEditing ? 'Edit Category' : 'New Category' }}
-          </p>
-          <h2>{{ isEditing ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่ใหม่' }}</h2>
-          <span v-if="usageHint" class="category-form-dialog__usage-hint">
-            <q-icon name="info" size="14px" />
-            {{ usageHint }}
-          </span>
-        </div>
-      </q-card-section>
+        <BaseInput v-model="form.nameEn" label="ชื่อหมวดหมู่ (English)" hide-bottom-space />
 
-      <q-form ref="formRef" greedy class="category-form-dialog__form" @submit.prevent="onSubmit">
-        <q-card-section class="category-form-dialog__body">
-          <div class="category-form-dialog__grid">
+        <BaseInput
+          v-model="form.slug"
+          label="Slug"
+          required
+          hint="ใช้เป็น identifier ใน URL"
+          :rules="slugRules"
+          hide-bottom-space
+        />
+
+        <BaseInput
+          v-model="form.description"
+          type="textarea"
+          autogrow
+          label="คำอธิบาย (ภาษาไทย)"
+          class="category-form-dialog__field--full"
+        />
+
+        <BaseInput
+          v-model="form.descriptionEn"
+          type="textarea"
+          autogrow
+          label="คำอธิบาย (English)"
+          class="category-form-dialog__field--full"
+        />
+
+        <ColorPickerInput
+          v-model="form.color"
+          label="สีประจำหมวดหมู่"
+          required
+          :allow-alpha="false"
+          hide-bottom-space
+          class="category-form-dialog__field--full"
+        />
+      </div>
+
+      <q-expansion-item
+        v-model="iconSectionOpen"
+        dense
+        dense-toggle
+        expand-separator
+        switch-toggle-side
+        header-class="category-form-dialog__icon-expansion-header"
+        class="category-form-dialog__icon-section"
+        icon="palette"
+        label="เลือกไอคอน"
+        caption="เปิดเพื่อเลือกหรือพิมพ์ชื่อ material icon"
+      >
+        <div class="category-form-dialog__icon-section-body">
+          <div class="category-form-dialog__icon-section-header">
+            <span>ระบุชื่อ icon</span>
             <BaseInput
-              v-model="form.name"
-              outlined
-              dense
-              stack-label
-              label="ชื่อหมวดหมู่ (ภาษาไทย) *"
-              hide-bottom-space
-              :rules="nameRules"
-              class="category-form-dialog__field--full"
-              @blur="autofillSlug"
-            />
-
-            <BaseInput
-              v-model="form.nameEn"
-              outlined
-              dense
-              stack-label
-              label="ชื่อหมวดหมู่ (English)"
-              hide-bottom-space
-            />
-
-            <BaseInput
-              v-model="form.slug"
-              outlined
-              dense
-              stack-label
-              label="Slug *"
-              hint="ใช้เป็น identifier ใน URL"
-              :rules="slugRules"
-              hide-bottom-space
-            />
-
-            <BaseInput
-              v-model="form.description"
-              outlined
-              dense
-              type="textarea"
-              autogrow
-              stack-label
-              label="คำอธิบาย (ภาษาไทย)"
-              class="category-form-dialog__field--full"
-            />
-
-            <BaseInput
-              v-model="form.descriptionEn"
-              outlined
-              dense
-              type="textarea"
-              autogrow
-              stack-label
-              label="คำอธิบาย (English)"
-              class="category-form-dialog__field--full"
-            />
-
-            <ColorPickerInput
-              v-model="form.color"
-              label="สีประจำหมวดหมู่ *"
-              hide-bottom-space
-              class="category-form-dialog__field--full"
+              v-model="form.icon"
+              placeholder="material icon name"
+              class="category-form-dialog__icon-input"
             />
           </div>
+          <div class="category-form-dialog__icon-grid">
+            <button
+              v-for="icon in iconOptions"
+              :key="icon"
+              type="button"
+              :class="[
+                'category-form-dialog__icon-cell',
+                { 'category-form-dialog__icon-cell--active': form.icon === icon },
+              ]"
+              @click="form.icon = icon"
+            >
+              <q-icon :name="icon" size="22px" />
+            </button>
+          </div>
+        </div>
+      </q-expansion-item>
 
-          <q-expansion-item
-            v-model="iconSectionOpen"
-            dense
-            dense-toggle
-            expand-separator
-            switch-toggle-side
-            header-class="category-form-dialog__icon-expansion-header"
-            class="category-form-dialog__icon-section"
-            icon="palette"
-            label="เลือกไอคอน"
-            caption="เปิดเพื่อเลือกหรือพิมพ์ชื่อ material icon"
-          >
-            <div class="category-form-dialog__icon-section-body">
-              <div class="category-form-dialog__icon-section-header">
-                <span>ระบุชื่อ icon</span>
-                <BaseInput
-                  v-model="form.icon"
-                  outlined
-                  dense
-                  placeholder="material icon name"
-                  class="category-form-dialog__icon-input"
-                />
-              </div>
-              <div class="category-form-dialog__icon-grid">
-                <button
-                  v-for="icon in iconOptions"
-                  :key="icon"
-                  type="button"
-                  :class="[
-                    'category-form-dialog__icon-cell',
-                    { 'category-form-dialog__icon-cell--active': form.icon === icon },
-                  ]"
-                  :style="{
-                    borderColor: form.icon === icon ? form.color : undefined,
-                    color: form.icon === icon ? form.color : undefined,
-                  }"
-                  @click="form.icon = icon"
-                >
-                  <q-icon :name="icon" size="22px" />
-                </button>
-              </div>
-            </div>
-          </q-expansion-item>
+      <BaseToggle
+        v-model="form.isActive"
+        color="positive"
+        :label="form.isActive ? 'เผยแพร่หมวดหมู่นี้' : 'ซ่อนหมวดหมู่นี้'"
+      />
+    </q-form>
 
-          <BaseToggle
-            v-model="form.isActive"
-            color="positive"
-            :label="form.isActive ? 'เผยแพร่หมวดหมู่นี้' : 'ซ่อนหมวดหมู่นี้'"
-          />
-        </q-card-section>
-
-        <q-card-actions class="category-form-dialog__actions">
-          <AppActionButton
-            variant="secondary"
-            label="ยกเลิก"
-            no-caps
-            type="button"
-            @click="onCancel"
-          />
-          <AppActionButton
-            variant="primary"
-            :label="isEditing ? 'บันทึกการแก้ไข' : 'เพิ่มหมวดหมู่'"
-            :icon="isEditing ? 'save' : 'add'"
-            no-caps
-            type="submit"
-          />
-        </q-card-actions>
-      </q-form>
-    </q-card>
-  </q-dialog>
+    <template #actions>
+      <div class="category-form-dialog__actions-inner">
+        <AppActionButton
+          variant="secondary"
+          label="ยกเลิก"
+          no-caps
+          type="button"
+          @click="onCancel"
+        />
+        <AppActionButton
+          variant="primary"
+          :label="isEditing ? 'บันทึกการแก้ไข' : 'เพิ่มหมวดหมู่'"
+          :icon="isEditing ? 'save' : 'add'"
+          no-caps
+          type="submit"
+          form="category-form-dialog-form"
+        />
+      </div>
+    </template>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import type { QForm, ValidationRule } from 'quasar';
-import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppDialog from 'components/common/AppDialog.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 import BaseInput from 'components/base/BaseInput.vue';
 import BaseToggle from 'components/base/BaseToggle.vue';
 import ColorPickerInput from 'src/components/common/ColorPickerInput.vue';
@@ -338,86 +307,12 @@ function onCancel(): void {
 </script>
 
 <style lang="scss" scoped>
-.category-form-dialog {
-  position: relative;
-  width: min(640px, calc(100vw - 32px));
-  max-height: min(860px, calc(100vh - 40px));
-  display: flex;
-  flex-direction: column;
-  border-radius: 20px;
-  overflow: hidden;
-  background: #ffffff;
-  box-shadow: 0 28px 64px rgba(15, 23, 42, 0.24);
-}
-
-.category-form-dialog__header {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: 16px;
-  padding: 24px 24px 8px;
-  align-items: flex-start;
-}
-
-.category-form-dialog__icon-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  background: rgba(245, 166, 35, 0.16);
-  transition: background 0.2s ease;
-}
-
-.category-form-dialog__heading {
-  min-width: 0;
-}
-
-.category-form-dialog__eyebrow {
-  margin: 0 0 4px;
-  color: #b7791f;
-  font-size: 0.72rem;
-  font-weight: 950;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
-.category-form-dialog__heading h2 {
-  margin: 0;
-  color: #10223c;
-  font-size: 1.2rem;
-  font-weight: 900;
-  line-height: 1.3;
-}
-
 .category-form-dialog__form {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  flex-direction: column;
-}
-
-.category-form-dialog__usage-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(245, 166, 35, 0.14);
-  color: #b45309;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.category-form-dialog__body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 18px 24px 6px;
   display: grid;
   gap: 20px;
+  max-height: min(620px, calc(100vh - 260px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .category-form-dialog__grid {
@@ -525,23 +420,17 @@ function onCancel(): void {
   border-width: 2px;
 }
 
-.category-form-dialog__actions {
+.category-form-dialog__actions-inner {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  padding: 0 24px 24px;
 }
 
-.category-form-dialog__actions > * {
+.category-form-dialog__actions-inner > * {
   width: 100%;
 }
 
 @media (max-width: 720px) {
-  .category-form-dialog {
-    width: min(calc(100vw - 20px), 640px);
-    max-height: calc(100vh - 20px);
-  }
-
   .category-form-dialog__grid {
     grid-template-columns: 1fr;
   }
@@ -554,7 +443,7 @@ function onCancel(): void {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .category-form-dialog__actions {
+  .category-form-dialog__actions-inner {
     grid-template-columns: 1fr;
   }
 

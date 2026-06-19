@@ -1,62 +1,65 @@
 <template>
-  <q-dialog :model-value="modelValue" persistent @update:model-value="emitUpdate">
-    <q-card class="hero-slide-form-dialog">
-      <q-form ref="formRef" greedy @submit.prevent="onSubmit">
-        <q-card-section class="hero-slide-form-dialog__header">
-          <div class="hero-slide-form-dialog__heading">
-            <p>{{ mode === 'create' ? 'New Hero Slide' : 'Edit Hero Slide' }}</p>
-            <h3>{{ mode === 'create' ? 'เพิ่มสไลด์รูปภาพใหม่' : 'แก้ไขข้อมูลสไลด์' }}</h3>
-          </div>
-          <q-btn flat round dense icon="close" type="button" @click="onCancel" />
-        </q-card-section>
+  <AppDialog
+    :model-value="modelValue"
+    persistent
+    :title="mode === 'create' ? 'เพิ่มสไลด์รูปภาพใหม่' : 'แก้ไขข้อมูลสไลด์'"
+    icon="image"
+    icon-color="var(--admin-gold, #f5a623)"
+    icon-background="rgba(245, 166, 35, 0.14)"
+    width="520px"
+    card-class="hero-slide-form-dialog"
+    body-class="hero-slide-form-dialog__body"
+    actions-class="hero-slide-form-dialog__actions"
+    @update:model-value="emitUpdate"
+    @close="onCancel"
+  >
+    <q-form id="hero-slide-form" ref="formRef" greedy @submit.prevent="onSubmit">
+      <div v-if="previewUrl" class="hero-slide-form-dialog__preview">
+        <img :src="previewUrl" alt="" />
+      </div>
 
-        <q-card-section class="hero-slide-form-dialog__body">
-          <div v-if="previewUrl" class="hero-slide-form-dialog__preview">
-            <img :src="previewUrl" alt="" />
-          </div>
+      <BaseInput
+        v-model="form.name"
+        label="ชื่อสไลด์"
+        required
+        autofocus
+        hide-bottom-space
+        :rules="[requiredNameRule]"
+      />
 
-          <BaseInput
-            v-model="form.name"
-            outlined
-            dense
-            label="ชื่อสไลด์"
-            autofocus
-            hide-bottom-space
-            :rules="[requiredNameRule]"
-          />
+      <div>
+        <BaseDateRangeFilter
+          v-model="form.schedule"
+          label="ช่วงวันแสดงผล"
+          required
+          from-hint="วันเริ่มแสดง"
+          to-hint="วันสิ้นสุด"
+        />
+        <p v-if="showScheduleError" class="hero-slide-form-dialog__error">
+          <q-icon name="error_outline" size="14px" />
+          {{ scheduleMessage }}
+        </p>
+      </div>
+    </q-form>
 
-          <div>
-            <BaseDateRangeFilter
-              v-model="form.schedule"
-              label="ช่วงวันแสดงผล *"
-              from-hint="วันเริ่มแสดง"
-              to-hint="วันสิ้นสุด"
-            />
-            <p v-if="showScheduleError" class="hero-slide-form-dialog__error">
-              <q-icon name="error_outline" size="14px" />
-              {{ scheduleMessage }}
-            </p>
-          </div>
-        </q-card-section>
-
-        <q-card-actions class="hero-slide-form-dialog__actions">
-          <AppActionButton variant="secondary" label="ยกเลิก" type="button" @click="onCancel" />
-          <AppActionButton
-            variant="primary"
-            icon="check"
-            :label="mode === 'create' ? 'เพิ่มสไลด์' : 'บันทึก'"
-            type="submit"
-          />
-        </q-card-actions>
-      </q-form>
-    </q-card>
-  </q-dialog>
+    <template #actions>
+      <AppActionButton variant="secondary" label="ยกเลิก" type="button" @click="onCancel" />
+      <AppActionButton
+        variant="primary"
+        icon="check"
+        :label="mode === 'create' ? 'เพิ่มสไลด์' : 'บันทึก'"
+        type="submit"
+        form="hero-slide-form"
+      />
+    </template>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue';
 import type { QForm } from 'quasar';
-import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppDialog from 'components/common/AppDialog.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 import BaseDateRangeFilter, { type DateRangeValue } from 'components/base/BaseDateRangeFilter.vue';
 import BaseInput from 'components/base/BaseInput.vue';
 
@@ -175,41 +178,9 @@ async function onSubmit(): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.hero-slide-form-dialog {
-  width: min(480px, 92vw);
-  border-radius: 18px;
-  overflow: hidden;
-}
-
-.hero-slide-form-dialog__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 20px 22px 4px;
-}
-
-.hero-slide-form-dialog__heading p {
-  margin: 0 0 4px;
-  color: #b7791f;
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
-.hero-slide-form-dialog__heading h3 {
-  margin: 0;
-  color: #10233f;
-  font-size: 1.1rem;
-  font-weight: 900;
-  line-height: 1.3;
-}
-
 .hero-slide-form-dialog__body {
   display: grid;
-  gap: 14px;
-  padding: 12px 22px 20px;
+  gap: 16px;
 }
 
 .hero-slide-form-dialog__preview {
@@ -237,8 +208,6 @@ async function onSubmit(): Promise<void> {
 }
 
 .hero-slide-form-dialog__actions {
-  padding: 12px 18px 18px;
   justify-content: flex-end;
-  gap: 8px;
 }
 </style>

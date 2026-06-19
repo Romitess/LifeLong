@@ -1,32 +1,16 @@
 <template>
-  <q-dialog
+  <AppDialog
     v-model="dialogModel"
-    class="admin-dialog"
-    transition-show="scale"
-    transition-hide="scale"
+    eyebrow="Courses in Category"
+    :title="category?.name ?? 'หมวดหมู่'"
+    :subtitle="category?.nameEn ?? ''"
+    :icon="category?.icon ?? 'category'"
+    :icon-color="category?.color ?? '#b7791f'"
+    :icon-background="category ? `${category.color}1f` : 'rgba(245, 166, 35, 0.16)'"
+    width="640px"
   >
-    <q-card class="category-courses-dialog">
-      <q-card-section class="category-courses-dialog__header">
-        <div
-          class="category-courses-dialog__icon-wrap"
-          :style="{
-            backgroundColor: category ? `${category.color}1f` : 'rgba(245, 166, 35, 0.16)',
-            color: category?.color ?? '#b7791f',
-          }"
-        >
-          <q-icon :name="category?.icon ?? 'category'" size="32px" />
-        </div>
-
-        <div class="category-courses-dialog__heading">
-          <p class="category-courses-dialog__eyebrow">Courses in Category</p>
-          <h2>{{ category?.name ?? 'หมวดหมู่' }}</h2>
-          <span v-if="category?.nameEn" class="category-courses-dialog__subtitle">
-            {{ category.nameEn }}
-          </span>
-        </div>
-      </q-card-section>
-
-      <q-card-section class="category-courses-dialog__summary">
+    <div class="category-courses-dialog__content">
+      <div class="category-courses-dialog__summary">
         <div class="category-courses-dialog__metric">
           <span class="category-courses-dialog__metric-label">รายวิชาทั้งหมด</span>
           <strong class="category-courses-dialog__metric-value">{{ courses.length }}</strong>
@@ -43,104 +27,101 @@
             {{ courses.length - activeCount }}
           </strong>
         </div>
-      </q-card-section>
+      </div>
 
-      <q-card-section class="category-courses-dialog__body">
-        <div v-if="courses.length === 0" class="category-courses-dialog__empty">
-          <div
-            class="category-courses-dialog__empty-preview"
-            :style="{
-              '--category-accent': category?.color ?? '#F5A623',
-              '--category-accent-soft': category
-                ? `${category.color}14`
-                : 'rgba(245, 166, 35, 0.08)',
-            }"
-          >
-            <div class="category-courses-dialog__empty-preview-chip">
-              <q-icon name="visibility" size="16px" />
-              <span>Preview บนหน้า main</span>
-            </div>
-
-            <div class="category-courses-dialog__empty-preview-card">
-              <div
-                class="category-courses-dialog__empty-preview-icon"
-                :style="{
-                  backgroundColor: category ? `${category.color}1f` : 'rgba(245, 166, 35, 0.16)',
-                  color: category?.color ?? '#b7791f',
-                }"
-              >
-                <q-icon :name="category?.icon ?? 'category'" size="28px" />
-              </div>
-
-              <div class="category-courses-dialog__empty-preview-copy">
-                <strong>{{ category?.name ?? 'หมวดหมู่' }}</strong>
-                <span v-if="category?.nameEn">{{ category.nameEn }}</span>
-                <p>
-                  {{
-                    category?.description ||
-                    'หมวดหมู่นี้พร้อมแสดงในระบบแล้ว และสามารถเชื่อมรายวิชาเพิ่มได้ภายหลัง'
-                  }}
-                </p>
-              </div>
-
-              <div class="category-courses-dialog__empty-preview-meta">
-                <span>{{ category?.slug ?? 'category' }}</span>
-                <span>0 รายวิชา</span>
-              </div>
-            </div>
+      <div v-if="courses.length === 0" class="category-courses-dialog__empty">
+        <div
+          class="category-courses-dialog__empty-preview"
+          :style="{
+            '--category-accent': category?.color ?? '#F5A623',
+            '--category-accent-soft': category ? `${category.color}14` : 'rgba(245, 166, 35, 0.08)',
+          }"
+        >
+          <div class="category-courses-dialog__empty-preview-chip">
+            <q-icon name="visibility" size="16px" />
+            <span>Preview บนหน้า main</span>
           </div>
 
-          <p>หมวดหมู่นี้มีอยู่ใน taxonomy ของหน้า main แล้ว แต่ยังไม่มีรายวิชาเชื่อมอยู่</p>
-        </div>
-
-        <ul v-else class="category-courses-dialog__list">
-          <li v-for="course in courses" :key="course.id" class="category-courses-dialog__item">
+          <div class="category-courses-dialog__empty-preview-card">
             <div
-              class="category-courses-dialog__item-cover"
+              class="category-courses-dialog__empty-preview-icon"
               :style="{
-                backgroundColor: course.cover.backgroundColor,
-                color: course.cover.accentColor,
+                backgroundColor: category ? `${category.color}1f` : 'rgba(245, 166, 35, 0.16)',
+                color: category?.color ?? '#b7791f',
               }"
             >
-              <q-icon :name="course.cover.icon" size="22px" />
+              <q-icon :name="category?.icon ?? 'category'" size="28px" />
             </div>
-            <div class="category-courses-dialog__item-copy">
-              <div class="category-courses-dialog__item-code">{{ course.code }}</div>
-              <div class="category-courses-dialog__item-title">{{ course.title }}</div>
-              <div v-if="course.titleEn" class="category-courses-dialog__item-title-en">
-                {{ course.titleEn }}
-              </div>
-            </div>
-            <div class="category-courses-dialog__item-meta">
-              <q-badge
-                rounded
-                :color="course.isActive ? 'positive' : 'grey-6'"
-                :label="course.isActive ? 'เปิดรับ' : 'ปิดรับ'"
-              />
-              <span class="category-courses-dialog__item-seats">
-                {{ course.enrolledCount }}/{{ course.maxSeats }} ที่นั่ง
-              </span>
-            </div>
-          </li>
-        </ul>
-      </q-card-section>
 
-      <q-card-actions class="category-courses-dialog__actions">
-        <AppActionButton
-          variant="secondary"
-          label="ปิด"
-          icon="close"
-          no-caps
-          @click="dialogModel = false"
-        />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+            <div class="category-courses-dialog__empty-preview-copy">
+              <strong>{{ category?.name ?? 'หมวดหมู่' }}</strong>
+              <span v-if="category?.nameEn">{{ category.nameEn }}</span>
+              <p>
+                {{
+                  category?.description ||
+                  'หมวดหมู่นี้พร้อมแสดงในระบบแล้ว และสามารถเชื่อมรายวิชาเพิ่มได้ภายหลัง'
+                }}
+              </p>
+            </div>
+
+            <div class="category-courses-dialog__empty-preview-meta">
+              <span>{{ category?.slug ?? 'category' }}</span>
+              <span>0 รายวิชา</span>
+            </div>
+          </div>
+        </div>
+
+        <p>หมวดหมู่นี้มีอยู่ใน taxonomy ของหน้า main แล้ว แต่ยังไม่มีรายวิชาเชื่อมอยู่</p>
+      </div>
+
+      <ul v-else class="category-courses-dialog__list">
+        <li v-for="course in courses" :key="course.id" class="category-courses-dialog__item">
+          <div
+            class="category-courses-dialog__item-cover"
+            :style="{
+              backgroundColor: course.cover.backgroundColor,
+              color: course.cover.accentColor,
+            }"
+          >
+            <q-icon :name="course.cover.icon" size="22px" />
+          </div>
+          <div class="category-courses-dialog__item-copy">
+            <div class="category-courses-dialog__item-code">{{ course.code }}</div>
+            <div class="category-courses-dialog__item-title">{{ course.title }}</div>
+            <div v-if="course.titleEn" class="category-courses-dialog__item-title-en">
+              {{ course.titleEn }}
+            </div>
+          </div>
+          <div class="category-courses-dialog__item-meta">
+            <q-badge
+              rounded
+              :color="course.isActive ? 'positive' : 'grey-6'"
+              :label="course.isActive ? 'เปิดรับ' : 'ปิดรับ'"
+            />
+            <span class="category-courses-dialog__item-seats">
+              {{ course.enrolledCount }}/{{ course.maxSeats }} ที่นั่ง
+            </span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <template #actions>
+      <AppActionButton
+        variant="secondary"
+        label="ปิด"
+        icon="close"
+        no-caps
+        @click="dialogModel = false"
+      />
+    </template>
+  </AppDialog>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import AppActionButton from 'components/admin/AppActionButton.vue';
+import AppDialog from 'components/common/AppDialog.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
 import type { Category } from 'src/types/category';
 import type { Course } from 'src/types/course';
 
@@ -165,69 +146,16 @@ const activeCount = computed(() => props.courses.filter((course) => course.isAct
 </script>
 
 <style lang="scss" scoped>
-.category-courses-dialog {
-  position: relative;
-  width: min(640px, calc(100vw - 32px));
-  max-height: min(760px, calc(100vh - 40px));
-  display: flex;
-  flex-direction: column;
-  border-radius: 20px;
-  overflow: hidden;
-  background: #ffffff;
-  box-shadow: 0 28px 64px rgba(15, 23, 42, 0.24);
-}
-
-.category-courses-dialog__header {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
-  gap: 16px;
-  padding: 24px 24px 8px;
-  align-items: flex-start;
-}
-
-.category-courses-dialog__icon-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-}
-
-.category-courses-dialog__heading {
-  min-width: 0;
-}
-
-.category-courses-dialog__eyebrow {
-  margin: 0 0 4px;
-  color: #b7791f;
-  font-size: 0.72rem;
-  font-weight: 950;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
-
-.category-courses-dialog__heading h2 {
-  margin: 0;
-  color: #10223c;
-  font-size: 1.25rem;
-  font-weight: 900;
-  line-height: 1.3;
-}
-
-.category-courses-dialog__subtitle {
-  display: block;
-  margin-top: 4px;
-  color: #64748b;
-  font-size: 0.85rem;
-  font-weight: 600;
+.category-courses-dialog__content {
+  max-height: min(560px, calc(100vh - 260px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .category-courses-dialog__summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  padding: 12px 24px 0;
 }
 
 .category-courses-dialog__metric {
@@ -253,14 +181,6 @@ const activeCount = computed(() => props.courses.filter((course) => course.isAct
   font-size: 1.4rem;
   font-weight: 900;
   line-height: 1;
-}
-
-.category-courses-dialog__body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 16px 24px 8px;
 }
 
 .category-courses-dialog__empty {
@@ -441,22 +361,7 @@ const activeCount = computed(() => props.courses.filter((course) => course.isAct
   font-weight: 700;
 }
 
-.category-courses-dialog__actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  padding: 0 24px 24px;
-}
-
-.category-courses-dialog__actions > * {
-  width: 100%;
-}
-
 @media (max-width: 600px) {
-  .category-courses-dialog {
-    width: min(calc(100vw - 20px), 640px);
-    max-height: calc(100vh - 20px);
-  }
-
   .category-courses-dialog__summary {
     grid-template-columns: 1fr;
   }
