@@ -14,21 +14,22 @@
 
       <!-- ── Row 1: KPI Metric Cards ─────────────────────────── -->
       <div class="finance-stat-grid">
-        <CentralFinanceMetricCard
+        <BaseInfoCard
           v-for="stat in metricCards"
           :key="stat.label"
+          variant="stat"
+          :tone="stat.tone"
           :icon="stat.icon"
           :value="stat.value"
-          :label="stat.label"
-          :icon-color="stat.color"
-          :icon-tint="stat.tint"
+          :title="stat.label"
+          description=""
         />
       </div>
 
       <!-- ── Row 2: Revenue Chart + Faculty Breakdown ──────────── -->
       <div class="finance-main-grid">
         <!-- Revenue Trend -->
-        <CentralFinanceSurfaceCard
+        <AppSurfaceCard
           eyebrow="Revenue Trend"
           title="แนวโน้มรายรับรวม"
           :subtitle="dateRangeLabel || 'ทั้งหมด'"
@@ -44,10 +45,10 @@
             :format-y-tick="formatRevenueTick"
             aria-label="รายรับรวมทุกคณะ"
           />
-        </CentralFinanceSurfaceCard>
+        </AppSurfaceCard>
 
         <!-- Faculty Revenue Pie Chart -->
-        <CentralFinanceSurfaceCard
+        <AppSurfaceCard
           eyebrow="By Faculty"
           title="สัดส่วนรายรับตามคณะ/ส่วนงาน"
           card-class="finance-panel"
@@ -63,7 +64,7 @@
             :center-value="formatCompactCurrency(dashboardStats.totalRevenue)"
             :format-value="(v) => formatCurrency(Math.round(v))"
           />
-        </CentralFinanceSurfaceCard>
+        </AppSurfaceCard>
       </div>
     </section>
   </q-page>
@@ -71,9 +72,9 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
-import CentralFinanceMetricCard from 'components/centralfinance/CentralFinanceMetricCard.vue';
+import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
-import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
 import AppDonutChart, { type DonutChartSegment } from 'components/common/AppDonutChart.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
@@ -175,12 +176,21 @@ onMounted(() => {
 });
 
 // ── KPI Metric Cards ─────────────────────────────────────────
+type InfoCardTone =
+  | 'primary'
+  | 'secondary'
+  | 'positive'
+  | 'accent'
+  | 'amber'
+  | 'indigo'
+  | 'gold'
+  | 'blue';
+
 interface MetricCard {
   label: string;
   value: string;
   icon: string;
-  color: string;
-  tint: string;
+  tone: InfoCardTone;
 }
 
 const metricCards = computed<MetricCard[]>(() => [
@@ -188,22 +198,19 @@ const metricCards = computed<MetricCard[]>(() => [
     label: 'รายรับรวมทั้งหมด',
     value: formatCurrency(dashboardStats.value.totalRevenue),
     icon: 'account_balance_wallet',
-    color: '#047857',
-    tint: 'rgba(4, 120, 87, 0.12)',
+    tone: 'positive',
   },
   {
     label: 'ใบเสร็จรับเงินทั้งหมด',
     value: `${dashboardStats.value.totalReceipts.toLocaleString('th-TH')} ใบ`,
     icon: 'receipt',
-    color: '#1d4ed8',
-    tint: 'rgba(29, 78, 216, 0.12)',
+    tone: 'secondary',
   },
   {
     label: 'รายการชำระออนไลน์',
     value: `${dashboardStats.value.onlinePayments.toLocaleString('th-TH')} รายการ`,
     icon: 'payment',
-    color: '#0891b2',
-    tint: 'rgba(8, 145, 178, 0.12)',
+    tone: 'blue',
   },
   {
     label: 'ค่าเฉลี่ยต่อรายการ',
@@ -213,8 +220,7 @@ const metricCards = computed<MetricCard[]>(() => [
         : 0,
     ),
     icon: 'analytics',
-    color: '#7c3aed',
-    tint: 'rgba(124, 58, 237, 0.12)',
+    tone: 'gold',
   },
 ]);
 
@@ -288,10 +294,6 @@ const facultyDonutData = computed<DonutChartSegment[]>(() =>
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-bottom: 18px;
-
-  :deep(.cf-metric-card__copy) {
-    margin-top: 16px !important;
-  }
 }
 
 // ── Main Grid ────────────────────────────────────────────────
