@@ -298,10 +298,10 @@ function facIdToLabel(facId: number | null): string {
   return match?.name ?? 'ไม่ระบุ';
 }
 
-const statusOptions = [
-  { label: 'เปิด', value: true },
-  { label: 'ปิด', value: false },
-];
+const statusOptions = computed(() => [
+  { label: t('finance.sourceOfFunds.active', 'เปิด'), value: true },
+  { label: t('finance.sourceOfFunds.inactive', 'ปิด'), value: false },
+]);
 
 const rows = ref<FundChartRow[]>([]);
 
@@ -366,7 +366,9 @@ const filteredRows = computed(() => {
     list = list.filter((r) => {
       const codeMatch = r.code.toLowerCase().includes(q);
       const nameMatch = r.name.toLowerCase().includes(q);
-      const statusText = r.active ? 'เปิด' : 'ปิด';
+      const statusText = r.active
+        ? t('finance.sourceOfFunds.active', 'เปิด').toLowerCase()
+        : t('finance.sourceOfFunds.inactive', 'ปิด').toLowerCase();
       const statusMatch = statusText.includes(q);
       return codeMatch || nameMatch || statusMatch;
     });

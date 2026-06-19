@@ -23,15 +23,15 @@
         <div class="row items-center q-gutter-x-sm">
           <AppSearchInput
             v-model="searchQuery"
-            placeholder="ค้นหา..."
+            :placeholder="t('finance.registrationStatistics.searchPlaceholder')"
             class="registration-statistics-report__search"
             @update:model-value="handleSearch"
           />
           <TableExportActions
             :pdf-config="pdfConfig"
             :csv-config="csvConfig"
-            pdf-label="ส่งออก PDF"
-            csv-label="ส่งออก CSV"
+            :pdf-label="t('finance.registrationStatistics.export.pdfBtn')"
+            :csv-label="t('finance.registrationStatistics.export.csvBtn')"
           />
         </div>
       </template>
@@ -252,18 +252,18 @@ const pdfConfig = computed<PdfExportConfig | null>(() => {
 
   return {
     filename,
-    titles: ['รายงานสถิติการลงทะเบียน'],
+    titles: [t('finance.registrationStatistics.export.reportTitle')],
     titleStartY: 40,
     startY: 55,
     head: [
       [
-        'ลำดับ',
-        'ชื่อรายวิชา',
-        'คณะ/ส่วนงาน',
-        'ผู้รับผิดชอบรายวิชา',
-        'วันที่เปิด-ปิดการเรียนการสอน',
-        'จำนวนผู้เรียน (คน)',
-        'ค่าลงทะเบียนรวม (บาท)',
+        t('finance.registrationStatistics.export.no'),
+        t('finance.registrationStatistics.export.courseName'),
+        t('finance.registrationStatistics.export.faculty'),
+        t('finance.registrationStatistics.export.owner'),
+        t('finance.registrationStatistics.export.dates'),
+        t('finance.registrationStatistics.export.learners'),
+        t('finance.registrationStatistics.export.fees'),
       ],
     ],
     body: rows,
@@ -293,14 +293,14 @@ const csvConfig = computed<CsvExportConfig | null>(() => {
   return {
     filename: `registration_statistics_${date.formatDate(new Date(), 'DDMMYYYY')}.csv`,
     headers: [
-      'ลำดับ',
-      'ชื่อรายวิชา',
-      'รหัสวิชา',
-      'คณะ/ส่วนงาน',
-      'ผู้รับผิดชอบรายวิชา',
-      'วันที่เปิด-ปิดการเรียนการสอน',
-      'จำนวนผู้เรียน (คน)',
-      'ค่าลงทะเบียนรวม (บาท)',
+      t('finance.registrationStatistics.export.no'),
+      t('finance.registrationStatistics.export.courseName'),
+      t('finance.registrationStatistics.export.courseCode'),
+      t('finance.registrationStatistics.export.faculty'),
+      t('finance.registrationStatistics.export.owner'),
+      t('finance.registrationStatistics.export.dates'),
+      t('finance.registrationStatistics.export.learners'),
+      t('finance.registrationStatistics.export.fees'),
     ],
     data: flatRows.value.map((row, index) => [
       index + 1,

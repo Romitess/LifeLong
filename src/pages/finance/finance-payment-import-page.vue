@@ -119,7 +119,7 @@
                   color="grey-7"
                   :label="$t('finance.paymentImport.cancelBtn')"
                   no-caps
-                  class="col btn-cancel-import"
+                  class="col btn-cancel-import bg-white"
                   :disable="!selectedFiles.length"
                   @click="cancelImport"
                 />
@@ -648,7 +648,7 @@
                             color="grey-7"
                             :label="$t('finance.paymentImport.cancelBtn')"
                             no-caps
-                            class="q-px-lg rounded-borders text-weight-bold"
+                            class="q-px-lg rounded-borders text-weight-bold bg-white"
                             @click.stop="editingRow = null"
                           />
                           <q-btn
@@ -667,7 +667,7 @@
                             color="grey-7"
                             :label="$t('finance.paymentImport.cancelBtn')"
                             no-caps
-                            class="q-px-lg rounded-borders text-weight-bold"
+                            class="q-px-lg rounded-borders text-weight-bold bg-white"
                             @click.stop="cancelRow(props)"
                           />
                           <q-btn
@@ -711,7 +711,12 @@
                 :class="allRowsVerified ? 'text-positive' : 'text-amber-9'"
               >
                 <q-icon :name="allRowsVerified ? 'check_circle' : 'warning'" size="18px" />
-                <span>ยืนยันข้อมูลแล้ว {{ verifiedCount }} / {{ importedRows.length }} รายการ</span>
+                <span>{{
+                  $t('finance.paymentImport.verifiedCount', {
+                    verified: verifiedCount,
+                    total: importedRows.length,
+                  })
+                }}</span>
               </div>
 
               <q-btn
@@ -733,34 +738,48 @@
     <section v-else class="admin-shell admin-content">
       <AdminSurfaceCard class="q-mt-md flex-center column q-pa-xl">
         <q-icon name="check_circle" color="positive" size="64px" class="q-mb-md" />
-        <div class="text-h5 text-weight-bold q-mb-lg">บันทึกและออกใบเสร็จสำเร็จ</div>
+        <div class="text-h5 text-weight-bold q-mb-lg">
+          {{ $t('finance.paymentImport.successTitle') }}
+        </div>
 
         <div class="row q-col-gutter-lg q-mb-xl full-width justify-center">
           <div class="col-12 col-sm-3 text-center">
             <div class="text-h4 text-weight-bold text-primary">
               {{ importResult?.summary.totalImported || 0 }}
             </div>
-            <div class="text-subtitle1 text-grey-8">นำเข้าสำเร็จ (รายการ)</div>
+            <div class="text-subtitle1 text-grey-8">
+              {{ $t('finance.paymentImport.importedCountLabel') }}
+            </div>
           </div>
           <div class="col-12 col-sm-3 text-center">
             <div class="text-h4 text-weight-bold text-positive">
               {{ importResult?.summary.totalReceiptGenerated || 0 }}
             </div>
             <div class="text-subtitle1 text-grey-8">
-              ออกใบเสร็จ (ใบ)<br />
-              <span class="text-caption text-grey-6">ตัวจริงและสำเนา</span>
+              {{ $t('finance.paymentImport.issuedCountLabel') }}<br />
+              <span class="text-caption text-grey-6">{{
+                $t('finance.paymentImport.originalAndCopy')
+              }}</span>
             </div>
           </div>
           <div class="col-12 col-sm-3 text-center">
             <div class="text-h4 text-weight-bold text-warning">
               {{ importResult?.summary.totalSkipped || 0 }}
             </div>
-            <div class="text-subtitle1 text-grey-8">ข้าม/ซ้ำ (รายการ)</div>
+            <div class="text-subtitle1 text-grey-8">
+              {{ $t('finance.paymentImport.skippedCountLabel') }}
+            </div>
           </div>
         </div>
 
         <div class="row q-gutter-md">
-          <q-btn unelevated color="primary" label="นำเข้าชุดใหม่" no-caps @click="resetImport" />
+          <q-btn
+            unelevated
+            color="primary"
+            :label="$t('finance.paymentImport.importNewSet')"
+            no-caps
+            @click="resetImport"
+          />
         </div>
       </AdminSurfaceCard>
     </section>
@@ -769,7 +788,9 @@
     <q-dialog v-model="showSaveConfirm" persistent>
       <q-card style="min-width: 400px; border-radius: 16px" class="q-pa-sm">
         <q-card-section class="row items-center q-pb-sm">
-          <div class="text-h6 text-weight-bold">ยืนยันการบันทึกและออกใบเสร็จ</div>
+          <div class="text-h6 text-weight-bold">
+            {{ $t('finance.paymentImport.confirmDialog.title') }}
+          </div>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup :disable="isGenerating" />
         </q-card-section>
@@ -779,16 +800,22 @@
             <div class="receipt-confirm-summary__item">
               <q-icon name="verified_user" color="primary" size="22px" />
               <div>
-                <div class="text-subtitle1 text-weight-bold">ผู้ออกใบเสร็จ: เจ้าหน้าที่</div>
-                <div class="text-caption text-grey-7">ระบบจะบันทึกเป็นเจ้าหน้าที่ออกให้ (P)</div>
+                <div class="text-subtitle1 text-weight-bold">
+                  {{ $t('finance.paymentImport.confirmDialog.issuer') }}
+                </div>
+                <div class="text-caption text-grey-7">
+                  {{ $t('finance.paymentImport.confirmDialog.issuerHint') }}
+                </div>
               </div>
             </div>
             <div class="receipt-confirm-summary__item">
               <q-icon name="receipt_long" color="positive" size="22px" />
               <div>
-                <div class="text-subtitle1 text-weight-bold">ประเภทใบเสร็จ: ตัวจริงและสำเนา</div>
+                <div class="text-subtitle1 text-weight-bold">
+                  {{ $t('finance.paymentImport.confirmDialog.receiptType') }}
+                </div>
                 <div class="text-caption text-grey-7">
-                  สร้างพร้อมกันทั้งตัวจริง (R) และสำเนา (D)
+                  {{ $t('finance.paymentImport.confirmDialog.receiptTypeHint') }}
                 </div>
               </div>
             </div>
@@ -796,10 +823,17 @@
         </q-card-section>
 
         <q-card-actions align="right" class="q-px-md q-pb-md">
-          <q-btn flat label="ยกเลิก" color="grey-8" v-close-popup no-caps :disable="isGenerating" />
+          <q-btn
+            flat
+            :label="$t('finance.paymentImport.cancelBtn')"
+            color="grey-8"
+            v-close-popup
+            no-caps
+            :disable="isGenerating"
+          />
           <q-btn
             unelevated
-            label="ยืนยันและออกใบเสร็จ"
+            :label="$t('finance.paymentImport.confirmBtn')"
             color="primary"
             no-caps
             :loading="isGenerating"
@@ -863,7 +897,8 @@ type ImportedPaymentRow = {
 };
 
 const defaultDivision = computed(
-  () => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุ',
+  () =>
+    authStore.user?.facName || authStore.user?.faculty || t('finance.paymentImport.unspecified'),
 );
 
 const selectedFiles = ref<File[]>([]);
@@ -1349,11 +1384,16 @@ async function executeFinalizeImport() {
 
     if (response.summary.totalFailed > 0) {
       const errorDetail = response.summary.errors?.length
-        ? `\nรายละเอียด: ${response.summary.errors[0]}`
+        ? t('finance.paymentImport.notifications.errorDetail', {
+            error: response.summary.errors[0],
+          })
         : '';
       $q.notify({
         type: 'warning',
-        message: `มีข้อผิดพลาดบางส่วน (ไม่สำเร็จ ${response.summary.totalFailed} รายการ)${errorDetail}`,
+        message: t('finance.paymentImport.notifications.errorPartial', {
+          failed: response.summary.totalFailed,
+          detail: errorDetail,
+        }),
         position: 'top',
         timeout: 10000,
         multiLine: true,
@@ -1361,7 +1401,7 @@ async function executeFinalizeImport() {
     } else {
       $q.notify({
         type: 'positive',
-        message: 'นำเข้าและออกใบเสร็จสำเร็จทั้งหมด',
+        message: t('finance.paymentImport.notifications.successAll'),
         position: 'top',
       });
     }
@@ -1369,7 +1409,7 @@ async function executeFinalizeImport() {
     console.error('Failed to import and generate receipts:', error);
     $q.notify({
       type: 'negative',
-      message: 'เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์',
+      message: t('finance.paymentImport.notifications.serverError'),
       position: 'top',
     });
   } finally {

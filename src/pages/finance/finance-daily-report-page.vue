@@ -44,7 +44,9 @@
             >
               <template v-slot:no-option>
                 <q-item>
-                  <q-item-section class="text-italic text-grey">ไม่พบข้อมูลหลักสูตร</q-item-section>
+                  <q-item-section class="text-italic text-grey">{{
+                    $t('centralFinance.dailyReport.filters.noCourseOption')
+                  }}</q-item-section>
                 </q-item>
               </template>
             </q-select>
@@ -59,7 +61,7 @@
               :pdf-config="pdfExportConfig"
               :csv-config="csvExportConfig"
               :pdf-label="$t('centralFinance.dailyReport.table.pdfBtn')"
-              csv-label="ส่งออก CSV"
+              :csv-label="$t('centralFinance.dailyReport.table.csvBtn')"
             />
           </div>
         </template>
@@ -264,14 +266,14 @@ async function fetchData() {
     if (err.response && err.response.status === 404) {
       $q.notify({
         type: 'warning',
-        message: 'ไม่พบ API /api/centralfinance/daily-report กรุณาตรวจสอบ Backend',
+        message: t('centralFinance.dailyReport.notifications.apiNotFound'),
         position: 'top',
       });
       tableRows.value = [];
     } else {
       $q.notify({
         type: 'negative',
-        message: 'ไม่สามารถดึงข้อมูลรายงานประจำวันได้',
+        message: t('centralFinance.dailyReport.notifications.fetchFailed'),
         position: 'top',
       });
     }

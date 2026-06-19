@@ -22,6 +22,10 @@
       <PeriodFilterBar
         v-model="period"
         :presets="datePresetOptions"
+        :filter-label="$t('finance.filters.filterLabel', 'ตัวกรอง')"
+        :clear-label="$t('finance.filters.clearLabel', 'ล้างตัวกรอง')"
+        :custom-label="$t('finance.filters.customLabel', 'กำหนดช่วงเวลาเอง')"
+        :custom-placeholder="$t('finance.filters.customPlaceholder', 'เลือกช่วงเวลา')"
         @change="fetchDashboardStats"
       />
 
@@ -39,7 +43,7 @@
 
       <div class="finance-main-grid">
         <CentralFinanceSurfaceCard
-          eyebrow="Financial Trends"
+          :eyebrow="$t('finance.dashboard.financialTrends', 'แนวโน้มการเงิน')"
           :title="$t('finance.dashboard.financialOverview', 'ภาพรวมทางการเงิน')"
           :subtitle="dateRangeLabel || $t('finance.filters.allTime')"
           card-class="finance-panel finance-panel--chart"
@@ -72,7 +76,7 @@
         </CentralFinanceSurfaceCard>
 
         <CentralFinanceSurfaceCard
-          eyebrow="Recent Activity"
+          :eyebrow="$t('finance.dashboard.recentActivities', 'กิจกรรมล่าสุด')"
           :title="$t('finance.dashboard.recentFacultyActivity', 'กิจกรรมล่าสุดของคณะ')"
           card-class="finance-panel finance-panel--activity"
         >
@@ -191,14 +195,14 @@ const mockDashboardStats = computed(() => [
   },
   {
     label: t('finance.dashboard.newTransactionsLabel', 'รายการชำระเงินใหม่'),
-    value: `${dashboardStats.value.totalTransactions} ${t('finance.receiptSummary.entries', 'รายการ')}`,
+    value: `${dashboardStats.value.totalTransactions} ${t('finance.dashboard.entries', 'รายการ')}`,
     icon: 'credit_card',
     color: '#2563eb',
     tint: '#dbeafe',
   },
   {
     label: t('finance.dashboard.pendingReceiptsLabel', 'รายการที่รอออกใบเสร็จ'),
-    value: `${dashboardStats.value.pendingReceipts} ${t('finance.receiptSummary.entries', 'รายการ')}`,
+    value: `${dashboardStats.value.pendingReceipts} ${t('finance.dashboard.entries', 'รายการ')}`,
     icon: 'hourglass_empty',
     color: '#d97706',
     tint: '#fef3c7',
@@ -212,20 +216,44 @@ const mockDashboardStats = computed(() => [
   },
 ]);
 
-const recentActivities = ref<
+const rawActivities = ref<
   { title: string; time: string; detail: string; icon: string; color: string }[]
 >([]);
+
+const recentActivities = computed(() => {
+  return rawActivities.value.map((a) => {
+    let localizedTitle = a.title;
+    if (a.title === 'ออกใบเสร็จสำเร็จ') localizedTitle = t('finance.dashboard.receiptSuccess');
+    else if (a.title === 'ยืนยันการชำระเงิน')
+      localizedTitle = t('finance.dashboard.confirmPayment');
+
+    let localizedDetail = a.detail;
+    if (localizedDetail.includes('จากคุณ')) {
+      localizedDetail = localizedDetail.replace('จากคุณ', t('finance.dashboard.fromPayer'));
+    }
+    if (localizedDetail.includes('ออกใบเสร็จสำเร็จ')) {
+      localizedDetail = localizedDetail.replace(
+        'ออกใบเสร็จสำเร็จ',
+        t('finance.dashboard.receiptSuccess'),
+      );
+    }
+    if (localizedDetail.includes('รายการ')) {
+      localizedDetail = localizedDetail.replace('รายการ', t('finance.dashboard.entries'));
+    }
+
+    return {
+      ...a,
+      title: localizedTitle,
+      detail: localizedDetail,
+      time: formatRelativeTime(a.time),
+    };
+  });
+});
 
 async function fetchRecentActivity() {
   try {
     const { data } = await api.get('/api/lltenroll/recent-activity');
-    const items = data.activities || [];
-    recentActivities.value = items.map(
-      (a: { title: string; time: string; detail: string; icon: string; color: string }) => ({
-        ...a,
-        time: formatRelativeTime(a.time),
-      }),
-    );
+    rawActivities.value = data.activities || [];
   } catch (error) {
     console.error('Failed to load recent activity', error);
   }
@@ -316,9 +344,9 @@ const transactionsChartSeries = computed<AreaChartSeries[]>(() => {
       label: t('finance.dashboard.newTransactionsLabel', 'รายการชำระเงินใหม่'),
       color: '#F5A623',
       values: d.paidEnrollments,
-      totalLabel: `${formatCount(d.paidEnrollments.reduce((sum, v) => sum + v, 0))} ${t('finance.receiptSummary.entries', 'รายการ')}`,
+      totalLabel: `${formatCount(d.paidEnrollments.reduce((sum, v) => sum + v, 0))} ${t('finance.dashboard.entries', 'รายการ')}`,
       formatValue: (value) =>
-        `${formatCount(Math.round(value))} ${t('finance.receiptSummary.entries', 'รายการ')}`,
+        `${formatCount(Math.round(value))} ${t('finance.dashboard.entries', 'รายการ')}`,
     },
   ];
 });

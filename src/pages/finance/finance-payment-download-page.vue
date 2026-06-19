@@ -28,7 +28,8 @@
       <div class="admin-filter-bar" :class="{ 'admin-filter-bar--stuck': filterStuck }">
         <div class="admin-filter-bar__row1">
           <span class="admin-filter-bar__label q-mr-sm">
-            <q-icon name="filter_alt" size="14px" class="q-mr-xs" /> ตัวกรอง
+            <q-icon name="filter_alt" size="14px" class="q-mr-xs" />
+            {{ $t('finance.filters.filterLabel', 'ตัวกรอง') }}
           </span>
 
           <button
@@ -64,18 +65,20 @@
             @click="clearFilters"
             class="q-ml-sm"
           >
-            <q-tooltip>ล้างตัวกรอง</q-tooltip>
+            <q-tooltip>{{ $t('finance.filters.clearLabel', 'ล้างตัวกรอง') }}</q-tooltip>
           </q-btn>
         </div>
 
         <div class="admin-filter-bar__row2">
-          <span class="admin-filter-bar__sub-label q-mr-sm">กำหนดช่วงเวลาเอง</span>
+          <span class="admin-filter-bar__sub-label q-mr-sm">{{
+            $t('finance.filters.customLabel', 'กำหนดช่วงเวลาเอง')
+          }}</span>
           <q-input
             v-model="dateRangeDisplay"
             readonly
             borderless
             dense
-            placeholder="เลือกช่วงเวลา"
+            :placeholder="$t('finance.filters.customPlaceholder', 'เลือกช่วงเวลา')"
             class="admin-filter-bar__input admin-filter-bar__input--range"
           >
             <template #append>
@@ -83,8 +86,18 @@
                 <q-popup-proxy cover transition-show="scale" transition-hide="scale">
                   <q-date v-model="dateRangeModel" range mask="DD/MM/YYYY" color="primary">
                     <div class="row items-center justify-end q-gutter-sm">
-                      <q-btn label="ยกเลิก" color="primary" flat v-close-popup />
-                      <q-btn label="ตกลง" color="primary" flat v-close-popup />
+                      <q-btn
+                        :label="$t('finance.filters.cancel', 'ยกเลิก')"
+                        color="primary"
+                        flat
+                        v-close-popup
+                      />
+                      <q-btn
+                        :label="$t('finance.filters.ok', 'ตกลง')"
+                        color="primary"
+                        flat
+                        v-close-popup
+                      />
                     </div>
                   </q-date>
                 </q-popup-proxy>
@@ -128,6 +141,7 @@
         </div>
 
         <BaseTable
+          class="payment-table"
           :columns="columns"
           :rows="paginatedRows"
           :page="pagination.page"
@@ -137,6 +151,7 @@
           show-index
           show-rows-per-page
           height-mode="auto"
+          min-width="100%"
           @page-change="pagination.page = $event"
           @rows-per-page-change="
             pagination.rowsPerPage = $event;
@@ -152,11 +167,11 @@
           </template>
 
           <template #cell-paymentDate="{ row }">
-            <div style="white-space: nowrap">{{ row.paymentDate }}</div>
+            <div>{{ row.paymentDate }}</div>
           </template>
 
           <template #cell-paymentTime="{ row }">
-            <div style="white-space: nowrap">{{ row.paymentTime }}</div>
+            <div>{{ row.paymentTime }}</div>
           </template>
 
           <template #cell-receiptStatus="{ row }">
@@ -280,11 +295,14 @@ const filters = ref({
   receiptStatus: 'All',
 });
 
-const receiptStatusOptions = [
-  { label: 'ทั้งหมด (All)', value: 'All' },
-  { label: 'ออกใบเสร็จแล้ว (Issued)', value: 'Issued' },
-  { label: 'ยังไม่ได้ออกใบเสร็จ (Not Issued)', value: 'NotIssued' },
-];
+const receiptStatusOptions = computed(() => [
+  { label: t('finance.paymentDownload.statusAll', 'ทั้งหมด'), value: 'All' },
+  { label: t('finance.paymentDownload.statusIssued', 'ออกใบเสร็จแล้ว'), value: 'Issued' },
+  {
+    label: t('finance.paymentDownload.statusNotIssued', 'ยังไม่ได้ออกใบเสร็จ'),
+    value: 'NotIssued',
+  },
+]);
 
 const datePreset = ref('allTime');
 const datePresetOptions = computed(() => [
@@ -399,42 +417,49 @@ const columns = computed<BaseTableColumn[]>(() => [
     label: t('finance.paymentDownload.columns.paymentDate'),
     align: 'center',
     sortable: true,
+    width: '120px',
   },
   {
     key: 'paymentTime',
     label: t('finance.paymentDownload.columns.paymentTime'),
     align: 'center',
     sortable: true,
+    width: '100px',
   },
   {
     key: 'learnerRef',
     label: t('finance.paymentDownload.columns.learnerRef'),
     align: 'center',
     sortable: true,
+    width: '130px',
   },
   {
     key: 'appRef',
     label: t('finance.paymentDownload.columns.appRef'),
     align: 'center',
     sortable: true,
+    width: '130px',
   },
   {
     key: 'payerName',
     label: t('finance.paymentDownload.columns.payerName'),
     align: 'center',
     sortable: true,
+    width: '120px',
   },
   {
     key: 'learnerName',
     label: t('finance.paymentDownload.columns.learnerName'),
     align: 'center',
     sortable: true,
+    width: '120px',
   },
   {
     key: 'amount',
     label: t('finance.paymentDownload.columns.amount'),
     align: 'center',
     sortable: true,
+    width: '90px',
   },
   {
     key: 'courseInfo',
@@ -444,9 +469,10 @@ const columns = computed<BaseTableColumn[]>(() => [
   },
   {
     key: 'receiptStatus',
-    label: 'สถานะ',
+    label: t('finance.paymentDownload.columns.status'),
     align: 'center',
     sortable: true,
+    width: '120px',
   },
 ]);
 
@@ -796,6 +822,24 @@ onUnmounted(() => {
 }
 
 .payment-table {
+  :deep(.base-table__table) {
+    table-layout: fixed;
+    min-width: 100%;
+  }
+
+  :deep(th),
+  :deep(td) {
+    white-space: normal !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  :deep(.base-table__sort-btn) {
+    white-space: pre-wrap !important;
+    text-align: center;
+    justify-content: center;
+  }
+
   :deep(.base-table__header-cell) {
     background: linear-gradient(180deg, #f1f5f9 0%, #e8eef5 100%);
     font-weight: 800;
