@@ -37,7 +37,7 @@
           @click="onClearSelectedCourseClick"
         >
           <q-icon name="menu_book" size="20px" />
-          <span>วิชาของฉัน</span>
+          <span>{{ t('instructor.students.myCourses') }}</span>
         </a>
 
         <q-icon name="chevron_right" size="18px" class="student-breadcrumb-nav__separator" />
@@ -53,83 +53,102 @@
             <h2>
               {{
                 activeStudentTab === 'results'
-                  ? 'เลือกคอร์สเพื่อบันทึกผลการเรียน'
-                  : 'เลือกคอร์สเพื่อตรวจสอบรายชื่อผู้เรียน'
+                  ? t('instructor.students.selectForGrades')
+                  : t('instructor.students.selectForRoster')
               }}
             </h2>
             <span>{{ instructorCourses.length.toLocaleString() }} รายวิชา</span>
           </div>
         </div>
 
-        <BaseTable
-          v-if="activeStudentTab === 'results'"
-          :columns="resultCourseColumns"
-          :rows="paginatedResultCourses"
-          row-key="id"
-          show-index
-          :index-offset="(resultCourseTablePage - 1) * instructorTableRowsPerPage"
-          :rows-per-page="instructorTableRowsPerPage"
-          :page="resultCourseTablePage"
-          :total-pages="resultCoursePageCount"
-          min-width="1080px"
-          empty-text="ไม่พบรายวิชา"
-          height-mode="stable"
-          :on-page-change="setResultCourseTablePage"
-        >
-          <template #cell-title="{ row: course }">
-            <div class="learning-result-title-cell">
-              <button type="button" @click="selectCourse(course.id)">
-                {{ course.code }} : {{ course.title }}
-              </button>
-              <span v-if="course.titleEn">{{ course.titleEn }}</span>
-            </div>
-          </template>
-          <template #cell-price="{ row: course }">
-            {{ course.isFree ? 'ไม่มีค่าใช้จ่าย' : formatCurrency(course.price) }}
-          </template>
-          <template #cell-schedule="{ row: course }">
-            <div class="learning-result-schedule-cell">
-              <span>ลงทะเบียน</span>
-              <strong>{{ formatCourseDateRange(course) }}</strong>
-            </div>
-          </template>
-          <template #cell-maxSeats="{ row: course }">
-            {{ course.maxSeats?.toLocaleString() ?? '-' }}
-          </template>
-          <template #cell-enrolledCount="{ row: course }">
-            {{ course.enrolledCount.toLocaleString() }}
-          </template>
-          <template #cell-passed="{ row: course }">
-            <span class="text-positive">{{ getCoursePassedCount(course).toLocaleString() }}</span>
-          </template>
-          <template #cell-failed="{ row: course }">
-            <span class="text-negative">{{ getCourseFailedCount(course).toLocaleString() }}</span>
-          </template>
-          <template #cell-actions="{ row: course }">
-            <q-btn
-              dense
-              round
-              flat
-              color="primary"
-              icon="edit"
-              class="learning-result-icon-btn"
-              tag="a"
-              :href="resolveFullUrl(`/instructor/results?courseId=${course.id}`)"
-              @click="onSelectCourseClick(course.id, $event)"
-            >
-              <q-tooltip>บันทึกผลการเรียน</q-tooltip>
-            </q-btn>
-          </template>
-          <template #cell-download="{ row: course }">
-            <button
-              type="button"
-              class="learning-result-download-link"
-              @click.stop="printCbs003(course)"
-            >
-              {{ getLearningResultDownloadCode() }}
-            </button>
-          </template>
-        </BaseTable>
+        <div v-if="activeStudentTab === 'results'" class="learning-result-table-scroll">
+          <table class="learning-result-course-table">
+            <colgroup>
+              <col class="learning-result-col-index" />
+              <col class="learning-result-col-title" />
+              <col class="learning-result-col-fee" />
+              <col class="learning-result-col-schedule" />
+              <col class="learning-result-col-seat" />
+              <col class="learning-result-col-enrolled" />
+              <col class="learning-result-col-pass" />
+              <col class="learning-result-col-fail" />
+              <col class="learning-result-col-actions" />
+              <col class="learning-result-col-download" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>{{ t('instructor.students.col.no') }}</th>
+                <th>{{ t('instructor.students.col.courseName') }}</th>
+                <th>{{ t('instructor.students.col.fee') }}</th>
+                <th>{{ t('instructor.students.col.schedule') }}</th>
+                <th>{{ t('instructor.students.col.capacity') }}</th>
+                <th>{{ t('instructor.students.col.enrolled') }}</th>
+                <th>{{ t('instructor.students.col.passed') }}</th>
+                <th>{{ t('instructor.students.col.failed') }}</th>
+                <th>{{ t('instructor.students.col.actions') }}</th>
+                <th>{{ t('instructor.students.col.download') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(course, index) in instructorCourses" :key="course.id">
+                <td class="text-center">{{ index + 1 }}</td>
+                <td class="learning-result-title-cell">
+                  <button type="button" @click="selectCourse(course.id)">
+                    {{ course.code }} : {{ course.title }}
+                  </button>
+                  <span v-if="course.titleEn">{{ course.titleEn }}</span>
+                </td>
+                <td class="text-center">
+                  {{
+                    course.isFree ? t('instructor.students.noFee') : formatCurrency(course.price)
+                  }}
+                </td>
+                <td class="learning-result-schedule-cell">
+                  <span>{{ t('instructor.students.enrollmentLabel') }}</span>
+                  <strong>{{ formatCourseDateRange(course) }}</strong>
+                </td>
+                <td class="text-center">{{ course.maxSeats?.toLocaleString() ?? '-' }}</td>
+                <td class="text-center">{{ course.enrolledCount.toLocaleString() }}</td>
+                <td class="text-center text-positive">
+                  {{ getCoursePassedCount(course).toLocaleString() }}
+                </td>
+                <td class="text-center text-negative">
+                  {{ getCourseFailedCount(course).toLocaleString() }}
+                </td>
+                <td class="text-center">
+                  <q-btn
+                    dense
+                    round
+                    flat
+                    color="primary"
+                    icon="edit"
+                    class="learning-result-icon-btn"
+                    tag="a"
+                    :href="resolveFullUrl(`/instructor/results?courseId=${course.id}`)"
+                    @click="onSelectCourseClick(course.id, $event)"
+                  >
+                    <q-tooltip>{{ t('instructor.students.recordResultTooltip') }}</q-tooltip>
+                  </q-btn>
+                </td>
+                <td class="text-center">
+                  <button
+                    type="button"
+                    class="learning-result-download-link"
+                    @click.stop="printCbs003(course)"
+                  >
+                    {{ getLearningResultDownloadCode() }}
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="instructorCourses.length === 0">
+                <td colspan="10" class="learning-result-empty-cell">
+                  {{ t('instructor.table.noCourseFound') }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <div v-else class="student-course-list">
           <button
             v-for="course in instructorCourses"
@@ -145,18 +164,20 @@
               <p v-if="course.titleEn && course.titleEn !== course.title">{{ course.title }}</p>
             </div>
             <div class="student-course-row__metric">
-              <span>ผู้เรียน</span>
+              <span>{{ t('instructor.students.learnerUnit') }}</span>
               <strong>{{ course.enrolledCount.toLocaleString() }}</strong>
             </div>
             <div class="student-course-row__metric">
-              <span>รับ</span>
-              <strong>{{ course.maxSeats?.toLocaleString() ?? 'ไม่จำกัด' }}</strong>
+              <span>{{ t('instructor.students.capacityLabel') }}</span>
+              <strong>{{
+                course.maxSeats?.toLocaleString() ?? t('instructor.students.unlimited')
+              }}</strong>
             </div>
             <BaseButton
               unelevated
               color="primary"
               icon="fact_check"
-              label="ตรวจสอบรายชื่อ"
+              :label="t('instructor.students.checkRosterBtn')"
               no-caps
               class="student-course-row__action"
               tag="a"
@@ -170,15 +191,17 @@
       <section v-else class="student-roster-panel">
         <div v-if="activeStudentTab === 'results'" class="student-roster-panel__summary">
           <div>
-            <span>ลงทะเบียนแล้ว</span>
+            <span>{{ t('instructor.students.enrolledLabel') }}</span>
             <strong>{{ displayedEnrolledCount.toLocaleString() }}</strong>
           </div>
           <div>
-            <span>จำนวนที่นั่ง</span>
-            <strong>{{ selectedCourse.maxSeats?.toLocaleString() ?? 'ไม่จำกัด' }}</strong>
+            <span>{{ t('instructor.students.col.capacity') }}</span>
+            <strong>{{
+              selectedCourse.maxSeats?.toLocaleString() ?? t('instructor.students.unlimited')
+            }}</strong>
           </div>
           <div>
-            <span>ความคืบหน้าเฉลี่ย</span>
+            <span>{{ t('instructor.students.avgProgress') }}</span>
             <strong>{{ averageProgress }}%</strong>
           </div>
         </div>
@@ -187,30 +210,44 @@
           <div class="learning-result-import-page">
             <div class="learning-result-course-info">
               <div>
-                <span>รายวิชา</span>
+                <span>{{ t('instructor.certificates.courseLabel') }}</span>
                 <strong>{{ selectedCourse.code }} : {{ selectedCourse.title }}</strong>
               </div>
               <div>
-                <span>ค่าธรรมเนียม</span>
+                <span>{{ t('instructor.students.feeSummaryLabel') }}</span>
                 <strong>{{
-                  selectedCourse.isFree ? 'ไม่มีค่าใช้จ่าย' : formatCurrency(selectedCourse.price)
+                  selectedCourse.isFree
+                    ? t('instructor.students.noFee')
+                    : formatCurrency(selectedCourse.price)
                 }}</strong>
               </div>
               <div>
-                <span>จำนวนรับ</span>
-                <strong>{{ selectedCourse.maxSeats?.toLocaleString() ?? 'ไม่จำกัด' }} คน</strong>
+                <span>{{ t('instructor.certificates.capacityLabel') }}</span>
+                <strong
+                  >{{
+                    selectedCourse.maxSeats?.toLocaleString() ?? t('instructor.students.unlimited')
+                  }}
+                  {{ t('instructor.certificates.persons') }}</strong
+                >
               </div>
               <div>
-                <span>จำนวนผู้ลงทะเบียน</span>
-                <strong>{{ selectedCourse.enrolledCount.toLocaleString() }} คน</strong>
+                <span>{{ t('instructor.certificates.enrolledLabel') }}</span>
+                <strong
+                  >{{ selectedCourse.enrolledCount.toLocaleString() }}
+                  {{ t('instructor.certificates.persons') }}</strong
+                >
               </div>
               <p>
-                <span class="text-positive"
-                  >ผ่าน {{ getCoursePassedCount(selectedCourse) }} คน</span
-                >
-                <span class="text-negative"
-                  >ไม่ผ่าน {{ getCourseFailedCount(selectedCourse) }} คน</span
-                >
+                <span class="text-positive">{{
+                  t('instructor.students.passedCount', {
+                    count: getCoursePassedCount(selectedCourse),
+                  })
+                }}</span>
+                <span class="text-negative">{{
+                  t('instructor.students.failedCount', {
+                    count: getCourseFailedCount(selectedCourse),
+                  })
+                }}</span>
               </p>
             </div>
 
@@ -225,7 +262,7 @@
                       outline
                       color="primary"
                       icon="download"
-                      label="ดาวน์โหลด Template"
+                      :label="t('instructor.students.downloadTemplate')"
                       no-caps
                       class="learning-result-import-tool-btn"
                       @click="downloadGradeImportTemplate"
@@ -234,7 +271,7 @@
                       outline
                       color="primary"
                       icon="upload_file"
-                      label="อัปโหลด CSV/TXT"
+                      :label="t('instructor.students.uploadCsv')"
                       no-caps
                       class="learning-result-import-tool-btn"
                       @click="triggerGradeImportFile"
@@ -252,7 +289,7 @@
                       outline
                       color="primary"
                       icon="groups"
-                      label="ดึงรายชื่อทั้งหมด"
+                      :label="t('instructor.students.fetchAll')"
                       no-caps
                       :disable="learners.length === 0"
                       class="learning-result-import-tool-btn"
@@ -262,7 +299,7 @@
                       outline
                       color="primary"
                       icon="pending_actions"
-                      label="ดึงรายชื่อที่ยังไม่มีผลการเรียน"
+                      :label="t('instructor.students.fetchPending')"
                       no-caps
                       :disable="learners.length === 0"
                       class="learning-result-import-tool-btn"
@@ -272,7 +309,7 @@
                       flat
                       color="grey-7"
                       icon="close"
-                      label="ล้าง"
+                      :label="t('instructor.students.clearBtn')"
                       no-caps
                       :disable="!resultImportText"
                       class="learning-result-import-tool-btn"
@@ -286,7 +323,7 @@
                   v-model="resultImportText"
                   type="textarea"
                   outlined
-                  placeholder="วางข้อมูลรูปแบบ: รหัสผู้เรียน เกรด เช่น C6901355 A"
+                  :placeholder="t('instructor.students.importPlaceholder')"
                   class="learning-result-import-input"
                 />
 
@@ -294,7 +331,7 @@
                   outline
                   color="primary"
                   icon="preview"
-                  label="ดูตัวอย่าง"
+                  :label="t('instructor.students.previewBtn')"
                   no-caps
                   :disable="!resultImportText.trim()"
                   class="learning-result-import-action-btn"
@@ -302,16 +339,16 @@
                 />
               </div>
               <div class="learning-result-import-help">
-                <strong>ตัวอย่าง</strong>
-                <p>พิมพ์หรือวางข้อมูล รหัสผู้เรียน และ เกรด คั่นด้วย Tab หรือ Space</p>
+                <strong>{{ t('instructor.students.importExample') }}</strong>
+                <p>{{ t('instructor.students.importHint') }}</p>
                 <p>C6600001 A</p>
                 <p>C6600002 B</p>
                 <p>C6600003 B+</p>
                 <ol>
-                  <li>วางข้อมูลในช่อง import หรืออัปโหลด CSV/TXT</li>
-                  <li>กดปุ่ม <strong>ดูตัวอย่าง</strong> เพื่อตรวจสอบข้อมูล</li>
-                  <li>เลือกหรือแก้ไข <strong>ผลการเรียน</strong> ในตารางตัวอย่าง</li>
-                  <li>กดปุ่ม <strong>import</strong> เพื่อบันทึกลงระบบ</li>
+                  <li>{{ t('instructor.students.importStep1') }}</li>
+                  <li>{{ t('instructor.students.importStep2') }}</li>
+                  <li>{{ t('instructor.students.importStep3') }}</li>
+                  <li>{{ t('instructor.students.importStep4') }}</li>
                 </ol>
               </div>
             </div>
@@ -335,7 +372,7 @@
                   flat
                   no-caps
                   icon="close"
-                  label="ยกเลิก"
+                  :label="t('instructor.students.cancelImport')"
                   color="grey-7"
                   style="margin-left: auto"
                   @click="detailPreviewRows = []"
@@ -343,7 +380,9 @@
               </div>
               <div class="preview-bulk-bar">
                 <div class="preview-bulk-bar__section">
-                  <span class="preview-bulk-bar__label">ให้เกรดทั้งหมด</span>
+                  <span class="preview-bulk-bar__label">{{
+                    t('instructor.students.bulkGradeAll')
+                  }}</span>
                   <q-select
                     v-model="bulkGradeId"
                     :options="gradeItemOptions"
@@ -353,13 +392,13 @@
                     map-options
                     dense
                     outlined
-                    placeholder="เลือกเกรด"
+                    :placeholder="t('instructor.students.gradePlaceholder')"
                     class="preview-bulk-bar__select"
                   />
                   <BaseButton
                     unelevated
                     color="primary"
-                    label="ใส่ทั้งหมด"
+                    :label="t('instructor.students.applyAllBtn')"
                     no-caps
                     :disable="!bulkGradeId"
                     class="preview-bulk-bar__btn"
@@ -367,14 +406,18 @@
                   />
                 </div>
 
-                <div class="preview-bulk-bar__divider">หรือกำหนดเกณฑ์คะแนน</div>
+                <div class="preview-bulk-bar__divider">
+                  {{ t('instructor.students.scoreCriteriaLabel') }}
+                </div>
 
                 <div class="preview-bulk-bar__section preview-bulk-bar__section--rules">
-                  <span class="preview-bulk-bar__hint"
-                    >เกณฑ์ถูกตรวจจากบนลงล่าง เจอที่ตรงก่อนชนะ</span
-                  >
+                  <span class="preview-bulk-bar__hint">{{
+                    t('instructor.students.criteriaHint')
+                  }}</span>
                   <div v-for="(rule, i) in scoreRules" :key="i" class="preview-bulk-bar__rule">
-                    <span class="preview-bulk-bar__label">คะแนน</span>
+                    <span class="preview-bulk-bar__label">{{
+                      t('instructor.students.col.score')
+                    }}</span>
                     <q-select
                       v-model="rule.operator"
                       :options="operatorOptions"
@@ -405,7 +448,7 @@
                       map-options
                       dense
                       outlined
-                      placeholder="เกรด"
+                      :placeholder="t('instructor.students.gradePlaceholder')"
                       class="preview-bulk-bar__select"
                     />
                     <q-btn
@@ -422,7 +465,7 @@
                       flat
                       color="primary"
                       icon="add"
-                      label="เพิ่มเกณฑ์"
+                      :label="t('instructor.students.addCriteriaBtn')"
                       no-caps
                       class="preview-bulk-bar__btn"
                       @click="
@@ -433,7 +476,7 @@
                       unelevated
                       color="primary"
                       icon="calculate"
-                      label="คำนวณอัตโนมัติ"
+                      :label="t('instructor.students.autoCalcBtn')"
                       no-caps
                       :disable="!scoreRules.some((r) => r.minScore !== null && r.gradeItemId)"
                       class="preview-bulk-bar__btn"
@@ -443,7 +486,7 @@
                       flat
                       color="grey-7"
                       icon="clear_all"
-                      label="ล้างทั้งหมด"
+                      :label="t('instructor.students.clearAllBtn')"
                       no-caps
                       class="preview-bulk-bar__btn"
                       style="margin-left: auto"
@@ -453,61 +496,74 @@
                 </div>
               </div>
 
-              <BaseTable
-                :columns="detailPreviewColumns"
-                :rows="paginatedDetailPreviewRows"
-                :row-key="(row, index) => `${row.studentId}-${index}`"
-                show-index
-                :index-offset="(detailPreviewTablePage - 1) * instructorTableRowsPerPage"
-                :rows-per-page="instructorTableRowsPerPage"
-                :page="detailPreviewTablePage"
-                :total-pages="detailPreviewPageCount"
-                min-width="900px"
-                empty-text="ไม่พบข้อมูลตัวอย่าง"
-                height-mode="stable"
-                :row-class="(row) => (!row.matched ? 'detail-row--unmatched' : undefined)"
-                :on-page-change="setDetailPreviewTablePage"
-              >
-                <template #cell-learnerName="{ row }">
-                  {{ row.learnerName ?? '-' }}
-                </template>
-                <template #cell-lmsFinalscore="{ row }">
-                  {{ row.lmsFinalscore !== null ? row.lmsFinalscore.toFixed(2) : '-' }}
-                </template>
-                <template #cell-currentGradeName="{ row }">
-                  <span v-if="row.currentGradeName" class="detail-grade-badge">
-                    {{ row.currentGradeName }}
-                  </span>
-                  <span v-else class="detail-grade-dash">-</span>
-                </template>
-                <template #cell-gradeItemId="{ row }">
-                  <q-select
-                    v-if="row.matched"
-                    v-model="row.gradeItemId"
-                    :options="gradeItemOptions"
-                    option-value="id"
-                    option-label="name"
-                    emit-value
-                    map-options
-                    dense
-                    outlined
-                    placeholder="เลือกผลการเรียน"
-                    class="detail-grade-select"
-                  />
-                  <span v-else class="detail-unmatched-label">ไม่พบในระบบ</span>
-                </template>
-                <template #cell-status="{ row }">
-                  <span
-                    v-if="row.matched && row.gradeItemId"
-                    class="detail-status detail-status--ready"
-                    >พร้อม</span
-                  >
-                  <span v-else-if="row.matched" class="detail-status detail-status--pending"
-                    >รอเกรด</span
-                  >
-                  <span v-else class="detail-status detail-status--error">ไม่พบ</span>
-                </template>
-              </BaseTable>
+              <div class="learning-result-table-scroll">
+                <table class="learning-result-entry-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 52px">{{ t('instructor.students.col.no') }}</th>
+                      <th style="width: 120px">{{ t('instructor.students.col.studentId') }}</th>
+                      <th>{{ t('instructor.students.col.nameSurname') }}</th>
+                      <th style="width: 110px">{{ t('instructor.students.col.lmsScore') }}</th>
+                      <th style="width: 100px">{{ t('instructor.students.col.oldValue') }}</th>
+                      <th style="width: 200px">{{ t('instructor.students.col.result') }}</th>
+                      <th style="width: 80px">{{ t('instructor.students.col.statusCol') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(row, index) in detailPreviewRows"
+                      :key="row.studentId + index"
+                      :class="{ 'detail-row--unmatched': !row.matched }"
+                    >
+                      <td class="text-center">{{ index + 1 }}</td>
+                      <td class="text-center">{{ row.studentId }}</td>
+                      <td>{{ row.learnerName ?? '-' }}</td>
+                      <td class="text-center">
+                        {{ row.lmsFinalscore !== null ? row.lmsFinalscore.toFixed(2) : '—' }}
+                      </td>
+                      <td class="text-center">
+                        <span v-if="row.currentGradeName" class="detail-grade-badge">
+                          {{ row.currentGradeName }}
+                        </span>
+                        <span v-else class="detail-grade-dash">—</span>
+                      </td>
+                      <td>
+                        <q-select
+                          v-if="row.matched"
+                          v-model="row.gradeItemId"
+                          :options="gradeItemOptions"
+                          option-value="id"
+                          option-label="name"
+                          emit-value
+                          map-options
+                          dense
+                          outlined
+                          :placeholder="t('instructor.students.gradePlaceholder')"
+                          class="detail-grade-select"
+                        />
+                        <span v-else class="detail-unmatched-label">{{
+                          t('instructor.students.notFoundInSystem')
+                        }}</span>
+                      </td>
+                      <td class="text-center">
+                        <span
+                          v-if="row.matched && row.gradeItemId"
+                          class="detail-status detail-status--ready"
+                          >{{ t('instructor.students.statusReady') }}</span
+                        >
+                        <span
+                          v-else-if="row.matched"
+                          class="detail-status detail-status--pending"
+                          >{{ t('instructor.students.statusPendingGrade') }}</span
+                        >
+                        <span v-else class="detail-status detail-status--error">{{
+                          t('instructor.students.statusNotFound')
+                        }}</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
               <BaseButton
                 unelevated
                 color="primary"
@@ -551,7 +607,7 @@
                   outline
                   color="primary"
                   icon="cloud_download"
-                  label="ดึงคะแนนจาก LMS"
+                  :label="t('instructor.students.fetchLmsScore')"
                   no-caps
                   :loading="syncingScores"
                   @click="pullScoresFromLms"
@@ -560,7 +616,7 @@
                   outline
                   color="primary"
                   icon="refresh"
-                  label="ดึงผลการเรียน"
+                  :label="t('instructor.students.fetchResults')"
                   no-caps
                   :loading="syncingResults"
                   @click="saveLearningResults"
@@ -570,7 +626,7 @@
                   unelevated
                   color="positive"
                   icon="how_to_reg"
-                  label="บันทึกอนุมัติผลการเรียน"
+                  :label="t('instructor.students.saveApproveBtn')"
                   no-caps
                   :loading="approvingGrades"
                   @click="openApproveDialog"
@@ -578,40 +634,46 @@
               </div>
             </div>
 
-            <BaseTable
-              :columns="resultEntryColumns"
-              :rows="paginatedResultEntryLearners"
-              row-key="id"
-              show-index
-              :index-offset="(resultEntryTablePage - 1) * instructorTableRowsPerPage"
-              :rows-per-page="instructorTableRowsPerPage"
-              :page="resultEntryTablePage"
-              :total-pages="resultEntryPageCount"
-              min-width="900px"
-              :empty-text="emptyLearnerStateMessage"
-              height-mode="stable"
-              :on-page-change="setResultEntryTablePage"
-            >
-              <template #cell-lmsFinalscore="{ row: learner }">
-                {{ getLearnerLmsScore(learner) }}
-              </template>
-              <template #cell-importedGradeName="{ row: learner }">
-                {{ learner.importedGradeName ?? '' }}
-              </template>
-              <template #cell-lmsSyncedAt="{ row: learner }">
-                {{ getLearnerLmsUpdatedAt(learner) }}
-              </template>
-              <template #cell-details="{ row: learner }">
-                <button
-                  type="button"
-                  class="learning-result-breakdown-btn"
-                  @click="openGradePanel(learner)"
-                >
-                  <q-icon name="assignment" size="13px" />
-                  ดูรายละเอียด
-                </button>
-              </template>
-            </BaseTable>
+            <div class="learning-result-table-scroll">
+              <table class="learning-result-entry-table">
+                <thead>
+                  <tr>
+                    <th>{{ t('instructor.students.col.no') }}</th>
+                    <th>{{ t('instructor.students.col.studentId') }}</th>
+                    <th>{{ t('instructor.students.col.nameSurname') }}</th>
+                    <th>{{ t('instructor.students.col.lmsScore') }}</th>
+                    <th>{{ t('instructor.students.col.result') }}</th>
+                    <th>{{ t('instructor.students.col.updateDate') }}</th>
+                    <th>{{ t('instructor.students.col.detail') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(learner, index) in learners" :key="learner.id">
+                    <td class="text-center">{{ index + 1 }}</td>
+                    <td class="text-center">{{ learner.studentId }}</td>
+                    <td>{{ learner.name }}</td>
+                    <td class="text-center">{{ getLearnerLmsScore(learner) }}</td>
+                    <td class="text-center">{{ learner.importedGradeName ?? '' }}</td>
+                    <td class="text-center">{{ getLearnerLmsUpdatedAt(learner) }}</td>
+                    <td class="text-center">
+                      <button
+                        type="button"
+                        class="learning-result-breakdown-btn"
+                        @click="openGradePanel(learner)"
+                      >
+                        <q-icon name="assignment" size="13px" />
+                        ดูรายละเอียด
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="learners.length === 0">
+                    <td colspan="7" class="learning-result-empty-cell">
+                      {{ emptyLearnerStateMessage }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </template>
 
@@ -625,14 +687,24 @@
             class="student-roster-tabs"
             @update:model-value="switchTab"
           >
-            <q-tab name="roster" icon="groups" label="รายชื่อผู้เรียน" no-caps />
-            <q-tab name="results" icon="fact_check" label="บันทึกผลการเรียน" no-caps />
+            <q-tab
+              name="roster"
+              icon="groups"
+              :label="t('instructor.students.heroRosterTitle')"
+              no-caps
+            />
+            <q-tab
+              name="results"
+              icon="fact_check"
+              :label="t('instructor.students.heroGradesTitle')"
+              no-caps
+            />
           </q-tabs>
 
           <div class="student-roster-filters row items-center q-gutter-md q-mb-md">
             <q-input
               v-model="searchQuery"
-              placeholder="ค้นหาชื่อ หรือ รหัสนิสิต..."
+              :placeholder="t('instructor.students.searchPlaceholder')"
               outlined
               dense
               bg-color="white"
@@ -649,7 +721,7 @@
             <q-select
               v-model="statusFilter"
               :options="statusOptions"
-              label="สถานะ"
+              :label="t('instructor.students.statusFilter')"
               outlined
               dense
               bg-color="white"
@@ -688,7 +760,7 @@
               unelevated
               color="primary"
               icon="save"
-              label="บันทึกผลการเรียน"
+              :label="t('instructor.students.recordGradeBtn')"
               no-caps
               class="student-export-btn student-export-btn--primary"
               :disable="filteredLearners.length === 0"
@@ -792,19 +864,6 @@
                 class="student-result-score"
               />
             </template>
-            <template #cell-resultStatus="{ row }">
-              <q-select
-                v-model="row.resultStatus"
-                :options="gradeItemOptions"
-                option-value="name"
-                option-label="name"
-                dense
-                outlined
-                emit-value
-                map-options
-                class="student-result-status"
-              />
-            </template>
             <template #cell-note="{ row }">
               <q-input v-model="row.resultNote" dense outlined placeholder="หมายเหตุ" />
             </template>
@@ -818,10 +877,10 @@
             <q-icon name="search_off" size="3rem" class="q-mb-md" />
             <div class="text-body1">{{ emptyLearnerStateMessage }}</div>
             <BaseButton
-              v-if="searchQuery || statusFilter !== 'ทั้งหมด'"
+              v-if="searchQuery || statusFilter !== ''"
               flat
               no-caps
-              label="ล้างการค้นหา"
+              :label="t('instructor.students.clearSearchBtn')"
               color="primary"
               class="q-mt-md"
               @click="clearFilters"
@@ -857,7 +916,7 @@
 
         <q-card-section class="student-detail-stats">
           <div>
-            <span>ความก้าวหน้า</span>
+            <span>{{ t('instructor.learnerDetail.progress') }}</span>
             <strong>{{ selectedLearner.progress }}%</strong>
             <q-linear-progress
               rounded
@@ -867,36 +926,41 @@
             />
           </div>
           <div>
-            <span>คะแนนรวม</span>
+            <span>{{ t('instructor.learnerDetail.totalScore') }}</span>
             <strong>{{ selectedLearner.score }}</strong>
           </div>
           <div>
-            <span>บทเรียนที่จบ</span>
+            <span>{{ t('instructor.learnerDetail.completedWork') }}</span>
             <strong
               >{{ selectedLearner.completedLessons }}/{{ selectedLearner.totalLessons }}</strong
             >
           </div>
           <div>
-            <span>เข้าเรียนล่าสุด</span>
+            <span>{{ t('instructor.learnerDetail.lastActive') }}</span>
             <strong>{{ selectedLearner.lastActive }}</strong>
           </div>
         </q-card-section>
 
         <q-card-section class="student-detail-info">
           <div>
-            <span>คณะ/หน่วยงาน</span><strong>{{ selectedLearner.faculty }}</strong>
+            <span>{{ t('instructor.learnerDetail.faculty') }}</span
+            ><strong>{{ selectedLearner.faculty }}</strong>
           </div>
           <div>
-            <span>สาขา</span><strong>{{ selectedLearner.department }}</strong>
+            <span>{{ t('instructor.learnerDetail.branch') }}</span
+            ><strong>{{ selectedLearner.department }}</strong>
           </div>
           <div>
-            <span>เบอร์โทร</span><strong>{{ selectedLearner.phone }}</strong>
+            <span>{{ t('instructor.learnerDetail.phone') }}</span
+            ><strong>{{ selectedLearner.phone }}</strong>
           </div>
           <div>
-            <span>วันที่ลงทะเบียน</span><strong>{{ selectedLearner.enrolledAt }}</strong>
+            <span>{{ t('instructor.learnerDetail.enrollDate') }}</span
+            ><strong>{{ selectedLearner.enrolledAt }}</strong>
           </div>
           <div>
-            <span>สถานะชำระเงิน</span><strong>{{ selectedLearner.paymentStatus }}</strong>
+            <span>{{ t('instructor.learnerDetail.paymentStatus') }}</span
+            ><strong>{{ selectedLearner.paymentStatus }}</strong>
           </div>
         </q-card-section>
       </q-card>
@@ -912,13 +976,19 @@
               <h3 class="student-grade-panel__title">{{ panelRow?.name }}</h3>
               <span class="student-grade-panel__sub">{{ panelRow?.studentId }}</span>
             </div>
-            <button class="student-grade-panel__close" aria-label="ปิด" @click="closeGradePanel">
+            <button
+              class="student-grade-panel__close"
+              :aria-label="t('instructor.students.close')"
+              @click="closeGradePanel"
+            >
               <q-icon name="close" size="20px" />
             </button>
           </div>
 
           <div class="student-grade-panel__total">
-            <span class="student-grade-panel__total-label">คะแนนรวม</span>
+            <span class="student-grade-panel__total-label">{{
+              t('instructor.learnerDetail.totalScore')
+            }}</span>
             <span class="student-grade-panel__total-value">
               {{ panelRow?.lmsFinalscore ?? '—' }}
               <span v-if="panelRow?.lmsFinalscore !== null"> / 100</span>
@@ -930,7 +1000,7 @@
 
           <div class="student-grade-panel__body">
             <div v-if="!panelRow?.gradeItems.length" class="student-grade-panel__empty">
-              ยังไม่มีข้อมูลคะแนนรายงาน
+              {{ t('instructor.status.noScore') }}
             </div>
             <div
               v-for="item in panelRow?.gradeItems"
@@ -944,10 +1014,10 @@
                 >
                   {{
                     item.itemmodule === 'assign'
-                      ? 'งาน'
+                      ? t('instructor.assignmentType.assignment')
                       : item.itemmodule === 'quiz'
-                        ? 'แบบทดสอบ'
-                        : (item.itemmodule ?? 'งาน')
+                        ? t('instructor.assignmentType.quiz')
+                        : t('instructor.assignmentType.assignment')
                   }}
                 </span>
                 <span class="student-grade-panel__item-name">{{ item.itemname ?? '—' }}</span>
@@ -969,7 +1039,7 @@
                   class="student-grade-panel__grade-link"
                 >
                   <q-icon name="rate_review" size="13px" />
-                  ตรวจงาน
+                  {{ t('instructor.grading.gradeBtn') }}
                 </a>
               </div>
             </div>
@@ -982,18 +1052,22 @@
     <q-dialog v-model="approveDialogOpen" transition-show="scale" transition-hide="scale">
       <q-card style="min-width: 420px; border-radius: 12px">
         <q-card-section class="row items-center q-pb-none">
-          <div class="text-subtitle1 text-weight-bold">บันทึกอนุมัติผลการเรียน</div>
+          <div class="text-subtitle1 text-weight-bold">
+            {{ t('instructor.students.approveTitle') }}
+          </div>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
         <q-card-section class="q-gutter-y-sm">
           <div>
-            <div class="text-caption text-grey-7 q-mb-xs">อนุมัติการเรียน</div>
+            <div class="text-caption text-grey-7 q-mb-xs">
+              {{ t('instructor.students.approveMode') }}
+            </div>
             <q-option-group
               v-model="approveForm.mode"
               :options="[
-                { label: 'อนุมัติ', value: 'specify' },
-                { label: 'ไม่อนุมัติ', value: 'none' },
+                { label: t('instructor.students.approveOption'), value: 'specify' },
+                { label: t('instructor.students.rejectOption'), value: 'none' },
               ]"
               color="primary"
               inline
@@ -1006,21 +1080,27 @@
             outlined
             dense
             rows="3"
-            label="รายละเอียดการประชุมอนุมัติผลการเรียน"
+            :label="t('instructor.students.approveDetailLabel')"
             :disable="approveForm.mode === 'none'"
           />
           <BaseDateInput
             v-model="approveForm.date"
             value-format="YYYY-MM-DD"
-            label="วันที่อนุมัติ"
+            :label="t('instructor.students.approveDateLabel')"
           />
         </q-card-section>
         <q-card-actions align="right" class="q-px-md q-pb-md">
-          <BaseButton flat label="ยกเลิก" no-caps color="grey-7" v-close-popup />
+          <BaseButton
+            flat
+            :label="t('instructor.common.cancel')"
+            no-caps
+            color="grey-7"
+            v-close-popup
+          />
           <BaseButton
             unelevated
             color="primary"
-            label="บันทึก"
+            :label="t('instructor.students.saveBtn')"
             no-caps
             :loading="approvingGrades"
             @click="confirmApproveGrades"
@@ -1033,6 +1113,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -1092,6 +1173,7 @@ interface RosterSummaryCard {
   softColor: string;
 }
 
+const { t } = useI18n();
 const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
@@ -1105,7 +1187,9 @@ const activeStudentTab = computed<'roster' | 'results'>(() =>
   route.path.includes('/instructor/results') ? 'results' : 'roster',
 );
 const studentHeroTitle = computed(() =>
-  activeStudentTab.value === 'results' ? 'บันทึกผลการเรียน' : 'ตรวจสอบรายชื่อ',
+  activeStudentTab.value === 'results'
+    ? t('instructor.students.heroGradesTitle')
+    : t('instructor.students.heroRosterTitle'),
 );
 const studentHeroDescription = computed(() => {
   if (activeStudentTab.value === 'roster') {
@@ -1121,19 +1205,13 @@ const studentHeroDescription = computed(() => {
   }
 
   return activeStudentTab.value === 'results'
-    ? 'เลือกคอร์สเพื่อบันทึกผลการเรียน'
-    : 'เลือกคอร์สเพื่อตรวจสอบรายชื่อผู้เรียน';
+    ? t('instructor.students.selectForGrades')
+    : t('instructor.students.selectForRoster');
 });
 const learnerDetailDialogOpen = ref(false);
 const selectedLearner = ref<LearnerRow | null>(null);
 const searchQuery = ref('');
-const statusFilter = ref('ทั้งหมด');
-const instructorTableRowsPerPage = 10;
-const resultCourseTablePage = ref(1);
-const detailPreviewTablePage = ref(1);
-const resultEntryTablePage = ref(1);
-const rosterTablePage = ref(1);
-const learningResultTablePage = ref(1);
+const statusFilter = ref('');
 const resultImportText = ref('');
 const gradeImportFileInput = ref<HTMLInputElement | null>(null);
 const importedLearningResults = ref<Record<string, ImportedLearningResult>>({});
@@ -1152,6 +1230,10 @@ const approveForm = ref({
 const approvalStatus = ref<{ approvedBy: string; approvedAt: string } | null>(null);
 const panelOpen = ref(false);
 const panelRow = ref<LearnerRow | null>(null);
+
+const instructorTableRowsPerPage = 10;
+const rosterTablePage = ref(1);
+const learningResultTablePage = ref(1);
 
 const MOODLE_BASE_URL =
   (import.meta.env.VITE_MOODLE_URL as string | undefined) ?? 'http://localhost:8080';
@@ -1186,7 +1268,13 @@ const detailPreviewRows = ref<DetailPreviewRow[]>([]);
 const bulkGradeId = ref<number | null>(null);
 const scoreRules = ref<ScoreRule[]>([{ minScore: null, operator: '>=', gradeItemId: null }]);
 
-const statusOptions = ['ทั้งหมด', 'เรียนต่อเนื่อง', 'ปกติ', 'ควรติดตาม', 'เสี่ยงหลุด'];
+const statusOptions = computed(() => [
+  { label: t('tabAll'), value: '' },
+  { label: t('instructor.status.activeStudent'), value: t('instructor.status.activeStudent') },
+  { label: t('instructor.status.normal'), value: t('instructor.status.normal') },
+  { label: t('instructor.status.watchlist'), value: t('instructor.status.watchlist') },
+  { label: t('instructor.status.waitingProgress'), value: t('instructor.status.waitingProgress') },
+]);
 
 watch(
   () => route.query.courseId,
@@ -1205,16 +1293,6 @@ const instructorCourses = computed<Course[]>(() =>
 );
 const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
-);
-
-const resultCoursePageCount = computed(() =>
-  Math.max(1, Math.ceil(instructorCourses.value.length / instructorTableRowsPerPage)),
-);
-const paginatedResultCourses = computed(() =>
-  instructorCourses.value.slice(
-    (resultCourseTablePage.value - 1) * instructorTableRowsPerPage,
-    resultCourseTablePage.value * instructorTableRowsPerPage,
-  ),
 );
 
 function clearAllGrades(): void {
@@ -1333,10 +1411,11 @@ watch(
 );
 
 function getLearnerStatus(progress: number): Pick<LearnerRow, 'status' | 'statusColor'> {
-  if (progress >= 85) return { status: 'เรียนต่อเนื่อง', statusColor: 'positive' };
-  if (progress >= 60) return { status: 'ปกติ', statusColor: 'primary' };
-  if (progress >= 35) return { status: 'ควรติดตาม', statusColor: 'warning' };
-  return { status: 'รอข้อมูลความคืบหน้า', statusColor: 'grey-7' };
+  if (progress >= 85)
+    return { status: t('instructor.status.activeStudent'), statusColor: 'positive' };
+  if (progress >= 60) return { status: t('instructor.status.normal'), statusColor: 'primary' };
+  if (progress >= 35) return { status: t('instructor.status.watchlist'), statusColor: 'warning' };
+  return { status: t('instructor.status.waitingProgress'), statusColor: 'grey-7' };
 }
 
 function formatBackendDate(value: string | null | undefined): string {
@@ -1365,9 +1444,9 @@ function formatBackendDateTime(value: string | null | undefined): string {
 }
 
 function formatPaymentStatus(value: string | null | undefined, isFree: boolean): string {
-  if (isFree) return 'ไม่มีค่าใช้จ่าย';
-  if (value === 'Y') return 'ชำระแล้ว';
-  if (value === 'N') return 'ยังไม่ชำระ';
+  if (isFree) return t('instructor.students.noFee');
+  if (value === 'Y') return t('instructor.status.paid');
+  if (value === 'N') return t('instructor.status.unpaid');
   return value || '-';
 }
 
@@ -1412,7 +1491,7 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
       lastActive: grade?.updatedAt ? formatBackendDate(grade.updatedAt) : '-',
       score:
         grade?.score === null || grade?.score === undefined
-          ? 'ยังไม่มีคะแนน'
+          ? t('instructor.status.noScore')
           : `${grade.score}/${grade.maxScore ?? 100}`,
       ...status,
       enrolledAt: formatBackendDate(learner.enrolledAt),
@@ -1492,7 +1571,7 @@ const rosterSummaryCards = computed<RosterSummaryCard[]>(() => {
   const counts = rosterSummaryCounts.value;
   return [
     {
-      label: 'นิสิตทั้งหมด',
+      label: t('instructor.students.summaryCards.totalStudents'),
       value: counts.total.toLocaleString('th-TH'),
       caption: counts.scope,
       icon: 'groups',
@@ -1500,25 +1579,25 @@ const rosterSummaryCards = computed<RosterSummaryCard[]>(() => {
       softColor: 'rgba(37, 99, 235, 0.12)',
     },
     {
-      label: 'ยืนยันรายชื่อแล้ว',
+      label: t('instructor.students.summaryCards.verified'),
       value: counts.verified.toLocaleString('th-TH'),
-      caption: 'ผ่านการตรวจสอบ',
+      caption: t('instructor.students.summaryCards.verifiedCaption'),
       icon: 'verified_user',
       color: '#16a34a',
       softColor: 'rgba(22, 163, 74, 0.12)',
     },
     {
-      label: 'รอตรวจสอบ',
+      label: t('instructor.students.summaryCards.pending'),
       value: counts.pending.toLocaleString('th-TH'),
-      caption: 'ข้อมูล/สถานะรอจัดการ',
+      caption: t('instructor.students.summaryCards.pendingCaption'),
       icon: 'pending_actions',
       color: '#f59e0b',
       softColor: 'rgba(245, 158, 11, 0.14)',
     },
     {
-      label: 'มีปัญหา/ต้องแก้ไข',
+      label: t('instructor.students.summaryCards.issues'),
       value: counts.issue.toLocaleString('th-TH'),
-      caption: 'ข้อมูลไม่ครบหรือผิดปกติ',
+      caption: t('instructor.students.summaryCards.issuesCaption'),
       icon: 'report_problem',
       color: '#dc2626',
       softColor: 'rgba(220, 38, 38, 0.12)',
@@ -1583,7 +1662,7 @@ const learningResultSummaryCards = computed<RosterSummaryCard[]>(() => {
   const counts = learningResultSummaryCounts.value;
   return [
     {
-      label: 'นิสิตทั้งหมด',
+      label: t('instructor.students.summaryCards.totalStudents'),
       value: counts.total.toLocaleString('th-TH'),
       caption: '',
       icon: 'groups',
@@ -1591,7 +1670,7 @@ const learningResultSummaryCards = computed<RosterSummaryCard[]>(() => {
       softColor: 'rgba(37, 99, 235, 0.12)',
     },
     {
-      label: 'บันทึกผลแล้ว',
+      label: t('instructor.students.summaryCards.recorded'),
       value: counts.saved.toLocaleString('th-TH'),
       caption: '',
       icon: 'task_alt',
@@ -1599,7 +1678,7 @@ const learningResultSummaryCards = computed<RosterSummaryCard[]>(() => {
       softColor: 'rgba(22, 163, 74, 0.12)',
     },
     {
-      label: 'รอบันทึกผล',
+      label: t('instructor.students.summaryCards.pendingRecord'),
       value: counts.pending.toLocaleString('th-TH'),
       caption: '',
       icon: 'pending_actions',
@@ -1607,7 +1686,7 @@ const learningResultSummaryCards = computed<RosterSummaryCard[]>(() => {
       softColor: 'rgba(245, 158, 11, 0.14)',
     },
     {
-      label: 'ต้องตรวจทาน',
+      label: t('instructor.students.summaryCards.needsReview'),
       value: counts.review.toLocaleString('th-TH'),
       caption: '',
       icon: 'rule',
@@ -1626,7 +1705,7 @@ const studentHeroSummaryCards = computed<RosterSummaryCard[]>(() =>
 const filteredLearners = computed(() => {
   let result = learners.value;
 
-  if (statusFilter.value && statusFilter.value !== 'ทั้งหมด') {
+  if (statusFilter.value && statusFilter.value !== '') {
     result = result.filter((l) => l.status === statusFilter.value);
   }
 
@@ -1658,31 +1737,12 @@ const paginatedLearningResultLearners = computed(() =>
     learningResultTablePage.value * instructorTableRowsPerPage,
   ),
 );
-const detailPreviewPageCount = computed(() =>
-  Math.max(1, Math.ceil(detailPreviewRows.value.length / instructorTableRowsPerPage)),
-);
-const paginatedDetailPreviewRows = computed(() =>
-  detailPreviewRows.value.slice(
-    (detailPreviewTablePage.value - 1) * instructorTableRowsPerPage,
-    detailPreviewTablePage.value * instructorTableRowsPerPage,
-  ),
-);
-const resultEntryPageCount = computed(() =>
-  Math.max(1, Math.ceil(learners.value.length / instructorTableRowsPerPage)),
-);
-const paginatedResultEntryLearners = computed(() =>
-  learners.value.slice(
-    (resultEntryTablePage.value - 1) * instructorTableRowsPerPage,
-    resultEntryTablePage.value * instructorTableRowsPerPage,
-  ),
-);
-
 const emptyLearnerStateMessage = computed(() => {
-  if (searchQuery.value || statusFilter.value !== 'ทั้งหมด') {
-    return 'ไม่พบรายชื่อนิสิตที่ตรงกับการค้นหา';
+  if (searchQuery.value || statusFilter.value !== '') {
+    return t('instructor.students.notFoundMsg');
   }
 
-  return 'รายวิชานี้ยังไม่มีผู้ลงทะเบียนในฐานข้อมูล';
+  return t('instructor.students.noEnrolledMsg');
 });
 
 function formatCurrency(value: number): string {
@@ -1715,36 +1775,6 @@ function getLearningResultDownloadCode(): string {
   return 'CBS 003';
 }
 
-const resultCourseColumns: BaseTableColumn[] = [
-  { key: 'title', label: 'ชื่อรายวิชา', width: '32%', sortable: true },
-  { key: 'price', label: 'ค่าเรียน', align: 'center', width: '120px' },
-  { key: 'schedule', label: 'กำหนดการ', width: '170px' },
-  { key: 'maxSeats', label: 'รับ', align: 'center', width: '78px', sortable: true },
-  { key: 'enrolledCount', label: 'ลง', align: 'center', width: '78px', sortable: true },
-  { key: 'passed', label: 'ผ่าน', align: 'center', width: '78px' },
-  { key: 'failed', label: 'ไม่ผ่าน', align: 'center', width: '86px' },
-  { key: 'actions', label: 'ดำเนินการ', align: 'center', width: '110px' },
-  { key: 'download', label: 'ดาวน์โหลด', align: 'center', width: '120px' },
-];
-
-const detailPreviewColumns: BaseTableColumn[] = [
-  { key: 'studentId', label: 'รหัสผู้เรียน', align: 'center', width: '130px', sortable: true },
-  { key: 'learnerName', label: 'ชื่อ-สกุล', sortable: true },
-  { key: 'lmsFinalscore', label: 'คะแนน LMS', align: 'center', width: '120px', sortable: true },
-  { key: 'currentGradeName', label: 'ค่าเดิม', align: 'center', width: '110px' },
-  { key: 'gradeItemId', label: 'ผลการเรียน', width: '210px' },
-  { key: 'status', label: 'สถานะ', align: 'center', width: '100px' },
-];
-
-const resultEntryColumns: BaseTableColumn[] = [
-  { key: 'studentId', label: 'รหัสผู้เรียน', align: 'center', width: '130px', sortable: true },
-  { key: 'name', label: 'ชื่อ-สกุล', sortable: true },
-  { key: 'lmsFinalscore', label: 'คะแนนจาก LMS', align: 'center', width: '140px', sortable: true },
-  { key: 'importedGradeName', label: 'ผลการเรียน', align: 'center', width: '130px' },
-  { key: 'lmsSyncedAt', label: 'วันที่อัปเดต', align: 'center', width: '150px' },
-  { key: 'details', label: 'รายละเอียด', align: 'center', width: '130px' },
-];
-
 const learnerColumns: BaseTableColumn[] = [
   { key: 'name', label: 'นิสิต', width: '280px', sortable: true },
   { key: 'email', label: 'อีเมล', width: '240px' },
@@ -1764,18 +1794,6 @@ const learningResultColumns: BaseTableColumn[] = [
   { key: 'note', label: 'หมายเหตุ', width: '220px' },
 ];
 
-function setResultCourseTablePage(page: number): void {
-  resultCourseTablePage.value = page;
-}
-
-function setDetailPreviewTablePage(page: number): void {
-  detailPreviewTablePage.value = page;
-}
-
-function setResultEntryTablePage(page: number): void {
-  resultEntryTablePage.value = page;
-}
-
 function setRosterTablePage(page: number): void {
   rosterTablePage.value = page;
 }
@@ -1783,30 +1801,6 @@ function setRosterTablePage(page: number): void {
 function setLearningResultTablePage(page: number): void {
   learningResultTablePage.value = page;
 }
-
-watch(instructorCourses, () => {
-  resultCourseTablePage.value = 1;
-});
-
-watch(resultCoursePageCount, (pageCount) => {
-  resultCourseTablePage.value = Math.min(resultCourseTablePage.value, pageCount);
-});
-
-watch(detailPreviewRows, () => {
-  detailPreviewTablePage.value = 1;
-});
-
-watch(detailPreviewPageCount, (pageCount) => {
-  detailPreviewTablePage.value = Math.min(detailPreviewTablePage.value, pageCount);
-});
-
-watch(learners, () => {
-  resultEntryTablePage.value = 1;
-});
-
-watch(resultEntryPageCount, (pageCount) => {
-  resultEntryTablePage.value = Math.min(resultEntryTablePage.value, pageCount);
-});
 
 watch(filteredLearners, () => {
   rosterTablePage.value = 1;
@@ -1861,7 +1855,7 @@ function onClearSelectedCourseClick(event: Event) {
 
 function clearFilters(): void {
   searchQuery.value = '';
-  statusFilter.value = 'ทั้งหมด';
+  statusFilter.value = '';
 }
 
 function openLearnerDetail(_event: Event | null, learner: LearnerRow): void {
@@ -1893,7 +1887,7 @@ async function saveLearningResults(): Promise<void> {
     $q.notify({
       type: 'positive',
       icon: 'refresh',
-      message: 'อัปเดตผลการเรียนแล้ว',
+      message: t('instructor.students.updatedMsg'),
     });
   } finally {
     syncingResults.value = false;
@@ -1909,7 +1903,7 @@ async function importLearningResults(): Promise<void> {
     $q.notify({
       type: 'warning',
       icon: 'error',
-      message: 'ยังไม่มีข้อมูลที่นำเข้าได้ กรุณาตรวจสอบรหัสผู้เรียนและเลือกผลการเรียน',
+      message: t('instructor.students.noImportDataMsg'),
     });
     return;
   }
@@ -1934,13 +1928,18 @@ async function importLearningResults(): Promise<void> {
         $q.notify({
           type: 'positive',
           icon: 'upload_file',
-          message: `บันทึกผลการเรียน ${result.saved.toLocaleString('th-TH')} รายการแล้ว`,
+          message: t('instructor.students.importSavedMsg', {
+            count: result.saved.toLocaleString('th-TH'),
+          }),
         });
       }
       if (result.failed > 0) {
         $q.notify({
           type: 'warning',
-          message: `ไม่สำเร็จ ${result.failed} รายการ: ${result.errors.map((e) => e.userCode).join(', ')}`,
+          message: t('instructor.students.importFailedMsg', {
+            count: result.failed,
+            codes: result.errors.map((e) => e.userCode).join(', '),
+          }),
           timeout: 6000,
         });
       }
@@ -2047,13 +2046,13 @@ async function confirmApproveGrades(): Promise<void> {
     $q.notify({
       type: 'positive',
       icon: 'how_to_reg',
-      message: `อนุมัติผลการเรียนแล้ว ${data.approved} ราย`,
+      message: t('instructor.students.approvedMsg', { count: data.approved }),
     });
     await instructorBackend.fetchGrades(email, course.id);
   } catch (err) {
     const msg =
       (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-      'เกิดข้อผิดพลาดในการอนุมัติ';
+      t('instructor.students.approveErrorMsg');
     console.error('approveGrades error:', err);
     $q.notify({ type: 'negative', icon: 'error', message: msg });
   } finally {

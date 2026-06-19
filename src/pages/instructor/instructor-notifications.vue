@@ -12,7 +12,7 @@
           unelevated
           color="primary"
           icon="done_all"
-          label="ทำเครื่องหมายว่าอ่านแล้ว"
+          :label="t('instructor.notifPage.markAllRead')"
           class="notifications-action"
           no-caps
           @click="markAllAsRead"
@@ -48,10 +48,10 @@
             indicator-color="primary"
             class="notification-tabs"
           >
-            <q-tab name="all" label="ทั้งหมด" />
-            <q-tab name="urgent" label="เร่งด่วน" />
+            <q-tab name="all" :label="t('instructor.notifPage.tabAll')" />
+            <q-tab name="urgent" :label="t('instructor.notifPage.tabUrgent')" />
             <q-tab name="grading" :label="primaryWorkFilterLabel" />
-            <q-tab name="system" label="ระบบ" />
+            <q-tab name="system" :label="t('instructor.notifPage.tabSystem')" />
           </q-tabs>
 
           <q-input
@@ -59,7 +59,7 @@
             outlined
             dense
             debounce="200"
-            placeholder="ค้นหาแจ้งเตือน"
+            :placeholder="t('instructor.notifPage.searchPlaceholder')"
             class="notification-search"
           >
             <template #prepend>
@@ -130,8 +130,10 @@
           <q-item v-if="filteredNotifications.length === 0" class="empty-state">
             <q-item-section class="text-center">
               <q-icon name="notifications_off" size="48px" color="grey-5" />
-              <div class="text-subtitle1 text-weight-bold q-mt-sm">ไม่พบแจ้งเตือน</div>
-              <div class="text-body2 text-grey-7">ลองเปลี่ยนตัวกรองหรือคำค้นหา</div>
+              <div class="text-subtitle1 text-weight-bold q-mt-sm">
+                {{ t('instructor.notifPage.emptyTitle') }}
+              </div>
+              <div class="text-body2 text-grey-7">{{ t('instructor.notifPage.emptyHint') }}</div>
             </q-item-section>
           </q-item>
         </q-list>
@@ -144,6 +146,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
 import {
   TEACHER_NOTIFICATION_ITEMS,
@@ -155,6 +158,7 @@ import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 type NotificationFilter = 'all' | 'urgent' | 'grading' | 'system';
 
+const { t } = useI18n();
 const $q = useQuasar();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -199,14 +203,20 @@ onMounted(async () => {
   }
 });
 const notificationPageTitle = computed(() =>
-  isTeachingRole.value ? 'แจ้งเตือนสำหรับผู้สอน' : 'การแจ้งเตือนของฉัน',
+  isTeachingRole.value
+    ? t('instructor.notifPage.teacherTitle')
+    : t('instructor.notifPage.studentTitle'),
 );
 const notificationPageSubtitle = computed(() =>
   isTeachingRole.value
-    ? 'รวมเรื่องที่ต้องติดตาม เช่น งานที่ใกล้ครบกำหนดให้คะแนน งานที่รอตรวจ และประกาศจากระบบ'
-    : 'รวมข่าวสารรายวิชา บทเรียนใหม่ กำหนดส่งงาน เอกสาร และประกาศที่เกี่ยวกับการเรียนของคุณ',
+    ? t('instructor.notifPage.teacherSubtitle')
+    : t('instructor.notifPage.studentSubtitle'),
 );
-const primaryWorkFilterLabel = computed(() => (isTeachingRole.value ? 'ให้คะแนน' : 'การเรียน'));
+const primaryWorkFilterLabel = computed(() =>
+  isTeachingRole.value
+    ? t('instructor.notifPage.tabGrading')
+    : t('instructor.notifPage.tabLearning'),
+);
 
 const summaries = computed(() => {
   const unreadCount = notifications.value.filter((item) => !item.read).length;
@@ -215,28 +225,28 @@ const summaries = computed(() => {
   if (!isTeachingRole.value) {
     return [
       {
-        label: 'ยังไม่ได้อ่าน',
+        label: t('instructor.notifPage.summary.unread'),
         value: unreadCount,
         icon: 'notifications_active',
         color: '#1565c0',
         bg: '#e3f2fd',
       },
       {
-        label: 'ใกล้ครบกำหนด',
+        label: t('instructor.notifPage.summary.nearDeadline'),
         value: urgentCount,
         icon: 'event_available',
         color: '#c62828',
         bg: '#ffebee',
       },
       {
-        label: 'ข่าวสารรายวิชา',
+        label: t('instructor.notifPage.summary.courseNews'),
         value: notifications.value.filter((item) => item.type === 'course').length,
         icon: 'menu_book',
         color: '#2e7d32',
         bg: '#e8f5e9',
       },
       {
-        label: 'เอกสารของฉัน',
+        label: t('instructor.notifPage.summary.myDocuments'),
         value: notifications.value.filter((item) => item.type === 'payment').length,
         icon: 'receipt_long',
         color: '#ef6c00',
@@ -247,28 +257,28 @@ const summaries = computed(() => {
 
   return [
     {
-      label: 'แจ้งเตือนยังไม่ได้อ่าน',
+      label: t('instructor.notifPage.summary.teacherUnread'),
       value: unreadCount,
       icon: 'notifications_active',
       color: '#1565c0',
       bg: '#e3f2fd',
     },
     {
-      label: 'งานเร่งด่วน',
+      label: t('instructor.notifPage.summary.urgentWork'),
       value: urgentCount,
       icon: 'priority_high',
       color: '#c62828',
       bg: '#ffebee',
     },
     {
-      label: 'รายการรอให้คะแนน',
+      label: t('instructor.notifPage.summary.pendingGrading'),
       value: notifications.value.filter((item) => item.type === 'grading').length,
       icon: 'fact_check',
       color: '#ef6c00',
       bg: '#fff3e0',
     },
     {
-      label: 'กำหนดส่งใกล้มาถึง',
+      label: t('instructor.notifPage.summary.nearDeadlineTeacher'),
       value: notifications.value.filter((item) => item.type === 'deadline').length,
       icon: 'event_available',
       color: '#2e7d32',
@@ -316,7 +326,7 @@ async function markAllAsRead(): Promise<void> {
 
   $q.notify({
     type: 'positive',
-    message: 'ทำเครื่องหมายว่าอ่านแจ้งเตือนทั้งหมดแล้ว',
+    message: t('instructor.notifPage.markedAllRead'),
     position: 'bottom-right',
     timeout: 1200,
   });

@@ -17,7 +17,12 @@
           <div class="instructor-page-hero__eyebrow">{{ eyebrow }}</div>
           <h1>{{ title }}</h1>
           <div class="instructor-page-hero__meta">
-            <q-badge rounded color="positive" label="Teacher" class="text-weight-bold" />
+            <q-badge
+              rounded
+              color="positive"
+              :label="t('profile.roles.instructor')"
+              class="text-weight-bold"
+            />
             <span>{{ authStore.user?.studentId || authStore.user?.username || '-' }}</span>
           </div>
           <p v-if="description">{{ description }}</p>
@@ -32,8 +37,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
 
+const { t } = useI18n();
 const authStore = useAuthStore();
 
 defineProps<{

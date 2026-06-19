@@ -109,7 +109,11 @@
                         :color="course.isActive ? 'positive' : 'blue-grey-7'"
                         class="badge-pill"
                       >
-                        {{ course.isActive ? 'เปิดสอน' : 'ฉบับร่าง' }}
+                        {{
+                          course.isActive
+                            ? t('instructor.course.publishedBadge')
+                            : t('instructor.course.draftBadge')
+                        }}
                       </q-badge>
                       <q-badge
                         v-for="mode in course.deliveryModes"
@@ -120,13 +124,17 @@
                         {{ mode }}
                       </q-badge>
                       <q-badge color="green-6" class="badge-pill">
-                        ว่าง {{ getRemainingSeats(course) }} ที่
+                        {{
+                          t('instructor.course.seatsRemaining', {
+                            count: getRemainingSeats(course),
+                          })
+                        }}
                       </q-badge>
                     </div>
                   </div>
 
                   <div class="instructor-profile-course-card__publish">
-                    <span>สถานะการเผยแพร่</span>
+                    <span>{{ t('instructor.table.colPublish') }}</span>
                     <q-toggle
                       :model-value="course.isActive"
                       color="positive"
@@ -139,13 +147,14 @@
                 <div class="instructor-profile-course-card__meta">
                   <q-icon name="event" size="15px" color="grey-5" />
                   <span
-                    >ลงทะเบียน {{ course.registrationStart }} ถึง {{ course.registrationEnd }}</span
+                    >{{ t('instructor.table.regDate') }} {{ course.registrationStart }} -
+                    {{ course.registrationEnd }}</span
                   >
                 </div>
 
                 <div class="instructor-profile-course-card__progress">
                   <div class="instructor-profile-course-card__progress-head">
-                    <span>จำนวนผู้เรียน</span>
+                    <span>{{ t('instructor.course.learnersLabel') }}</span>
                     <q-badge color="primary" class="badge-pill">
                       {{ course.enrolledCount }}{{ course.maxSeats ? ` / ${course.maxSeats}` : '' }}
                     </q-badge>
@@ -161,10 +170,17 @@
                   />
                   <div class="instructor-profile-course-card__payment">
                     <span class="text-positive"
-                      >ไม่มีหนี้ค้างชำระ {{ getPaidLearnerCount(course) }}</span
+                      >{{ t('instructor.course.paidLabel') }}
+                      {{ getPaidLearnerCount(course) }}</span
                     >
-                    <span class="text-negative">ค้างชำระ {{ getUnpaidLearnerCount(course) }}</span>
-                    <span>เหลือ {{ getRemainingSeats(course) }}</span>
+                    <span class="text-negative"
+                      >{{ t('instructor.course.unpaidLabel') }}
+                      {{ getUnpaidLearnerCount(course) }}</span
+                    >
+                    <span
+                      >{{ t('instructor.course.remainLabel') }}
+                      {{ getRemainingSeats(course) }}</span
+                    >
                   </div>
                 </div>
 
@@ -174,7 +190,11 @@
                       rounded
                       :color="course.isActive ? 'positive' : 'grey-5'"
                       text-color="white"
-                      :label="course.isActive ? 'ส่งข้อมูลแล้ว' : 'ยังไม่ส่ง'"
+                      :label="
+                        course.isActive
+                          ? t('instructor.table.moodleSent')
+                          : t('instructor.table.moodleNotSent')
+                      "
                     />
                     <span v-if="course.isActive">sukanya ยท {{ course.registrationEnd }}</span>
                   </div>
@@ -184,7 +204,7 @@
                       outline
                       color="primary"
                       icon="list_alt"
-                      label="รายละเอียด"
+                      :label="t('instructor.table.tooltipDetails')"
                       no-caps
                       class="course-action-btn"
                       tag="a"
@@ -195,7 +215,7 @@
                       outline
                       color="primary"
                       icon="edit"
-                      label="แก้ไข"
+                      :label="t('instructor.table.tooltipEdit')"
                       no-caps
                       class="course-action-btn"
                       tag="a"
@@ -206,7 +226,7 @@
                       unelevated
                       color="positive"
                       icon="login"
-                      label="เข้าระบบ Moodle"
+                      :label="t('instructor.table.openMoodle')"
                       no-caps
                       class="course-action-btn course-action-btn--moodle"
                       :disable="!course.moodleId"
@@ -216,8 +236,8 @@
                     <q-btn
                       outline
                       color="negative"
-                      icon="delete"
-                      label="ลบ"
+                      icon="close"
+                      :label="t('instructor.table.tooltipDelete')"
                       no-caps
                       class="course-action-btn"
                       @click="queueDeleteCourse(course)"
@@ -372,9 +392,7 @@
           <div class="toolbar-row">
             <div>
               <h2>{{ t('instructor.course.sidebarTitle') }}</h2>
-              <span
-                >{{ instructorCourses.length }} {{ locale === 'th' ? 'รายวิชา' : 'courses' }}</span
-              >
+              <span>{{ instructorCourses.length }} {{ t('instructor.table.coursesUnit') }}</span>
             </div>
           </div>
 
@@ -871,7 +889,7 @@
                   icon="download"
                   :label="t('instructor.learners.exportCsvBtn')"
                   no-caps
-                  @click="openQuickDialog('ส่งออกข้อมูลผู้เรียน')"
+                  @click="openQuickDialog(t('instructor.learners.exportCsvBtn'))"
                 />
               </div>
 
@@ -956,7 +974,7 @@
                   icon="assignment_add"
                   :label="t('instructor.grading.createBtn')"
                   no-caps
-                  @click="openQuickDialog('สร้างงานใหม่')"
+                  @click="openQuickDialog(t('instructor.grading.createBtn'))"
                 />
               </div>
 
@@ -1149,7 +1167,7 @@
                   icon="picture_as_pdf"
                   :label="t('instructor.reports.exportBtn')"
                   no-caps
-                  @click="openQuickDialog('ส่งออกรายงาน')"
+                  @click="openQuickDialog(t('instructor.reports.exportBtn'))"
                 />
               </div>
               <div class="report-grid">
@@ -1644,20 +1662,20 @@ const defaultFacultyStaff: FacultyStaffMember[] = [
   {
     name: 'เจ้าหน้าที่คณะตัวอย่าง',
     email: 'faculty.staff@buu.ac.th',
-    permission: 'แก้ไขข้อมูลและตรวจสอบรายชื่อ',
+    permission: 'edit-and-verify',
   },
 ];
 const facultyStaffByCourseId = ref<Record<string, FacultyStaffMember[]>>({});
 const facultyStaffDialogOpen = ref(false);
-const facultyStaffPermissionOptions = [
-  { label: 'แก้ไขข้อมูลรายวิชา', value: 'แก้ไขข้อมูลรายวิชา' },
-  { label: 'แก้ไขข้อมูลและตรวจสอบรายชื่อ', value: 'แก้ไขข้อมูลและตรวจสอบรายชื่อ' },
-  { label: 'ตรวจสอบรายชื่ออย่างเดียว', value: 'ตรวจสอบรายชื่ออย่างเดียว' },
-];
+const facultyStaffPermissionOptions = computed(() => [
+  { label: t('instructor.dialog.permEditInfo'), value: 'edit-info' },
+  { label: t('instructor.dialog.permEditAndVerify'), value: 'edit-and-verify' },
+  { label: t('instructor.dialog.permVerifyOnly'), value: 'verify-only' },
+]);
 const facultyStaffForm = reactive<FacultyStaffForm>({
   name: '',
   email: '',
-  permission: facultyStaffPermissionOptions[0]?.value ?? 'แก้ไขข้อมูลรายวิชา',
+  permission: 'edit-info',
 });
 const courseStatusFilter = computed<'all' | 'active'>(() =>
   route.query.status === 'active' ? 'active' : 'all',
@@ -2254,7 +2272,7 @@ function openPriorityTask(task: InstructorPriorityTask): void {
 function resetFacultyStaffForm(): void {
   facultyStaffForm.name = '';
   facultyStaffForm.email = '';
-  facultyStaffForm.permission = facultyStaffPermissionOptions[0]?.value ?? 'แก้ไขข้อมูลรายวิชา';
+  facultyStaffForm.permission = facultyStaffPermissionOptions.value[0]?.value ?? 'edit-info';
 }
 
 function openFacultyStaffDialog(): void {

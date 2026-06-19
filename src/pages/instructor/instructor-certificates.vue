@@ -1,7 +1,10 @@
 <template>
   <q-page class="certificate-page">
     <div class="section-container certificate-page__inner">
-      <InstructorPageHero eyebrow="Instructor Workspace" title="สร้าง Certificate">
+      <InstructorPageHero
+        eyebrow="Instructor Workspace"
+        :title="t('instructor.certificates.pageTitle')"
+      >
         <template #actions>
           <div class="certificate-hero-actions">
             <div class="certificate-hero-summary">
@@ -31,7 +34,7 @@
           @click="onClearSelectedCourseClick"
         >
           <q-icon name="menu_book" size="20px" />
-          <span>วิชาของฉัน</span>
+          <span>{{ t('instructor.certificates.myCourses') }}</span>
         </a>
 
         <q-icon name="chevron_right" size="18px" class="certificate-breadcrumb-nav__separator" />
@@ -44,15 +47,19 @@
       <section v-if="!selectedCourse" class="certificate-panel">
         <div class="certificate-panel__header">
           <div>
-            <h2>เลือกรายวิชาเพื่อสร้าง Certificate</h2>
-            <span>แสดงข้อมูล {{ instructorCourses.length.toLocaleString('th-TH') }} รายการ</span>
+            <h2>{{ t('instructor.certificates.selectCourseTitle') }}</h2>
+            <span>{{
+              t('instructor.certificates.showingCount', {
+                count: instructorCourses.length.toLocaleString('th-TH'),
+              })
+            }}</span>
           </div>
           <q-input
             v-model="courseSearch"
             dense
             outlined
             clearable
-            placeholder="ค้นหารหัสหรือชื่อรายวิชา"
+            :placeholder="t('instructor.certificates.searchPlaceholder')"
             class="certificate-search"
           >
             <template #prepend>
@@ -61,87 +68,109 @@
           </q-input>
         </div>
 
-        <BaseTable
-          :columns="certificateCourseColumns"
-          :rows="paginatedCertificateCourses"
-          row-key="id"
-          show-index
-          :index-offset="(certificateCoursePage - 1) * certificateRowsPerPage"
-          :rows-per-page="certificateRowsPerPage"
-          :page="certificateCoursePage"
-          :total-pages="certificateCoursePageCount"
-          min-width="980px"
-          empty-text="ไม่พบรายวิชา"
-          height-mode="stable"
-          :on-page-change="setCertificateCoursePage"
-        >
-          <template #cell-title="{ row: course }">
-            <button type="button" class="course-title-button" @click="selectCourse(course.id)">
-              {{ course.code }} : {{ course.title }}
-            </button>
-            <span v-if="course.titleEn" class="course-title-en">{{ course.titleEn }}</span>
-          </template>
-          <template #cell-price="{ row: course }">
-            {{ course.isFree ? 'ฟรี' : formatCurrency(course.price) }}
-          </template>
-          <template #cell-schedule="{ row: course }">
-            <div class="schedule-lines">
-              <span>ลงทะเบียน {{ course.registrationStart }} - {{ course.registrationEnd }}</span>
-              <span
-                >การเรียนการสอน {{ course.registrationStart }} - {{ course.registrationEnd }}</span
-              >
-            </div>
-          </template>
-          <template #cell-maxSeats="{ row: course }">
-            {{ course.maxSeats?.toLocaleString('th-TH') ?? '-' }}
-          </template>
-          <template #cell-enrolledCount="{ row: course }">
-            {{ course.enrolledCount.toLocaleString('th-TH') }}
-          </template>
-          <template #cell-passed="{ row: course }">
-            <span class="text-positive">{{
-              getPassedLearners(course).length.toLocaleString('th-TH')
-            }}</span>
-          </template>
-          <template #cell-failed="{ row: course }">
-            <span class="text-negative">{{
-              getFailedLearners(course).length.toLocaleString('th-TH')
-            }}</span>
-          </template>
-          <template #cell-actions="{ row: course }">
-            <q-btn
-              dense
-              round
-              flat
-              color="primary"
-              icon="edit"
-              class="certificate-edit-action-btn"
-              tag="a"
-              :href="resolveFullUrl(`/instructor/certificates?courseId=${course.id}`)"
-              @click="onSelectCourseClick(course.id, $event)"
-            >
-              <q-tooltip>จัดการ Certificate</q-tooltip>
-            </q-btn>
-          </template>
-        </BaseTable>
+        <div class="certificate-table-scroll">
+          <table class="certificate-course-table">
+            <thead>
+              <tr>
+                <th class="text-center">{{ t('instructor.certificates.col.no') }}</th>
+                <th>{{ t('instructor.certificates.col.courseName') }}</th>
+                <th class="text-center">{{ t('instructor.certificates.col.fee') }}</th>
+                <th>{{ t('instructor.certificates.col.schedule') }}</th>
+                <th class="text-center">{{ t('instructor.certificates.col.capacity') }}</th>
+                <th class="text-center">{{ t('instructor.certificates.col.enrolled') }}</th>
+                <th class="text-center">{{ t('instructor.certificates.col.passed') }}</th>
+                <th class="text-center">{{ t('instructor.certificates.col.failed') }}</th>
+                <th class="text-center">{{ t('instructor.certificates.col.actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(course, index) in filteredCourses" :key="course.id">
+                <td class="text-center">{{ index + 1 }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="course-title-button"
+                    @click="selectCourse(course.id)"
+                  >
+                    {{ course.code }} : {{ course.title }}
+                  </button>
+                  <span v-if="course.titleEn" class="course-title-en">{{ course.titleEn }}</span>
+                </td>
+                <td class="text-center">
+                  {{ course.isFree ? t('free') : formatCurrency(course.price) }}
+                </td>
+                <td>
+                  <div class="schedule-lines">
+                    <span
+                      >{{ t('instructor.certificates.registration') }}
+                      {{ course.registrationStart }} - {{ course.registrationEnd }}</span
+                    >
+                    <span
+                      >{{ t('instructor.certificates.teaching') }} {{ course.registrationStart }} -
+                      {{ course.registrationEnd }}</span
+                    >
+                  </div>
+                </td>
+                <td class="text-center">{{ course.maxSeats?.toLocaleString('th-TH') ?? '-' }}</td>
+                <td class="text-center">{{ course.enrolledCount.toLocaleString('th-TH') }}</td>
+                <td class="text-center text-positive">
+                  {{ getPassedLearners(course).length.toLocaleString('th-TH') }}
+                </td>
+                <td class="text-center text-negative">
+                  {{ getFailedLearners(course).length.toLocaleString('th-TH') }}
+                </td>
+                <td class="text-center">
+                  <q-btn
+                    dense
+                    round
+                    flat
+                    color="primary"
+                    icon="edit"
+                    tag="a"
+                    :href="resolveFullUrl(`/instructor/certificates?courseId=${course.id}`)"
+                    @click="onSelectCourseClick(course.id, $event)"
+                  >
+                    <q-tooltip>{{ t('instructor.certificates.manageCert') }}</q-tooltip>
+                  </q-btn>
+                </td>
+              </tr>
+              <tr v-if="filteredCourses.length === 0">
+                <td colspan="9" class="empty-cell">{{ t('instructor.table.noCourseFound') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section v-else class="certificate-panel">
         <div class="course-detail-summary">
-          <div class="summary-label">รายวิชา</div>
+          <div class="summary-label">{{ t('instructor.certificates.courseLabel') }}</div>
           <div>
             <strong>{{ selectedCourse.code }} : {{ selectedCourse.title }}</strong>
             <span v-if="selectedCourse.titleEn">{{ selectedCourse.titleEn }}</span>
           </div>
-          <div class="summary-label">ค่าธรรมเนียม</div>
-          <div>{{ selectedCourse.isFree ? 'ฟรี' : formatCurrency(selectedCourse.price) }}</div>
-          <div class="summary-label">จำนวนรับ</div>
-          <div>{{ selectedCourse.maxSeats?.toLocaleString('th-TH') ?? 'ไม่จำกัด' }} คน</div>
-          <div class="summary-label">จำนวนผู้ลงทะเบียน</div>
-          <div>{{ selectedCourse.enrolledCount.toLocaleString('th-TH') }} คน</div>
+          <div class="summary-label">{{ t('instructor.certificates.feeLabel') }}</div>
+          <div>{{ selectedCourse.isFree ? t('free') : formatCurrency(selectedCourse.price) }}</div>
+          <div class="summary-label">{{ t('instructor.certificates.capacityLabel') }}</div>
+          <div>
+            {{
+              selectedCourse.maxSeats?.toLocaleString('th-TH') ??
+              t('instructor.certificates.unlimited')
+            }}
+            {{ t('instructor.certificates.persons') }}
+          </div>
+          <div class="summary-label">{{ t('instructor.certificates.enrolledLabel') }}</div>
+          <div>
+            {{ selectedCourse.enrolledCount.toLocaleString('th-TH') }}
+            {{ t('instructor.certificates.persons') }}
+          </div>
           <div></div>
           <div class="text-positive">
-            ( ผ่าน {{ passedLearners.length.toLocaleString('th-TH') }} คน )
+            {{
+              t('instructor.certificates.passedCount', {
+                count: passedLearners.length.toLocaleString('th-TH'),
+              })
+            }}
           </div>
         </div>
 
@@ -149,7 +178,9 @@
         <div class="template-selector">
           <div class="template-selector__header">
             <q-icon name="workspace_premium" size="20px" color="amber-8" />
-            <span class="template-selector__title">Template Certificate สำหรับวิชานี้</span>
+            <span class="template-selector__title">{{
+              t('instructor.certificates.templateSectionTitle')
+            }}</span>
           </div>
 
           <div v-if="isLoadingTemplates" class="template-selector__loading">
@@ -159,7 +190,7 @@
 
           <div v-else-if="availableTemplates.length === 0" class="template-selector__empty">
             <q-icon name="warning" size="18px" color="warning" />
-            ยังไม่มี Template ที่เปิดใช้งาน กรุณาให้ Admin เพิ่ม Template ก่อน
+            {{ t('instructor.certificates.noTemplate') }}
           </div>
 
           <div v-else class="template-selector__grid">
@@ -190,39 +221,46 @@
           </div>
         </div>
 
-        <BaseTable
-          :columns="certificateLearnerColumns"
-          :rows="paginatedPassedLearners"
-          row-key="id"
-          show-index
-          :index-offset="(certificateLearnerPage - 1) * certificateRowsPerPage"
-          :rows-per-page="certificateRowsPerPage"
-          :page="certificateLearnerPage"
-          :total-pages="certificateLearnerPageCount"
-          min-width="760px"
-          empty-text="ไม่มีผู้เรียนที่ผ่านเกณฑ์สำหรับสร้าง Certificate"
-          height-mode="stable"
-          :on-page-change="setCertificateLearnerPage"
-        >
-          <template #cell-name="{ row: learner }">
-            <strong>{{ learner.name }}</strong>
-            <span>{{ learner.studentId }} · {{ learner.email }}</span>
-          </template>
-          <template #cell-resultStatus="{ row: learner }">
-            <span class="text-positive">{{ learner.resultStatus }}</span>
-          </template>
-          <template #cell-actions="{ row: learner }">
-            <q-btn
-              dense
-              unelevated
-              color="primary"
-              icon="workspace_premium"
-              label="สร้าง"
-              no-caps
-              @click="openCertificate(learner)"
-            />
-          </template>
-        </BaseTable>
+        <div class="certificate-table-scroll">
+          <table class="certificate-learner-table">
+            <thead>
+              <tr>
+                <th class="text-center">{{ t('instructor.certificates.col.no') }}</th>
+                <th>{{ t('instructor.certificates.col.learnerName') }}</th>
+                <th class="text-center">{{ t('instructor.certificates.col.score') }}</th>
+                <th class="text-center">{{ t('instructor.certificates.col.result') }}</th>
+                <th class="text-center">{{ t('instructor.certificates.col.download') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(learner, index) in passedLearners" :key="learner.id">
+                <td class="text-center">{{ index + 1 }}</td>
+                <td>
+                  <strong>{{ learner.name }}</strong>
+                  <span>{{ learner.studentId }} · {{ learner.email }}</span>
+                </td>
+                <td class="text-center">{{ learner.score }}</td>
+                <td class="text-center text-positive">{{ learner.resultStatus }}</td>
+                <td class="text-center">
+                  <q-btn
+                    dense
+                    unelevated
+                    color="primary"
+                    icon="workspace_premium"
+                    :label="t('instructor.certificates.createBtn')"
+                    no-caps
+                    @click="openCertificate(learner)"
+                  />
+                </td>
+              </tr>
+              <tr v-if="passedLearners.length === 0">
+                <td colspan="5" class="empty-cell">
+                  {{ t('instructor.certificates.noPassedLearners') }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
 
@@ -237,10 +275,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import CertificateModal from 'components/certificate/CertificateModal.vue';
 import InstructorPageHero from 'components/instructor/InstructorPageHero.vue';
-import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
@@ -267,6 +305,7 @@ interface CertificateSummaryCard {
   softColor: string;
 }
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -275,9 +314,6 @@ courseStore.init();
 
 const selectedCourseId = ref(typeof route.query.courseId === 'string' ? route.query.courseId : '');
 const courseSearch = ref('');
-const certificateRowsPerPage = 10;
-const certificateCoursePage = ref(1);
-const certificateLearnerPage = ref(1);
 const certificateDialogOpen = ref(false);
 const selectedLearner = ref<CertificateLearner | null>(null);
 const issuedCertificateIds = ref<Set<string>>(new Set());
@@ -371,16 +407,6 @@ const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
 );
 
-const certificateCoursePageCount = computed(() =>
-  Math.max(1, Math.ceil(filteredCourses.value.length / certificateRowsPerPage)),
-);
-const paginatedCertificateCourses = computed(() =>
-  filteredCourses.value.slice(
-    (certificateCoursePage.value - 1) * certificateRowsPerPage,
-    certificateCoursePage.value * certificateRowsPerPage,
-  ),
-);
-
 const courseLearners = computed<CertificateLearner[]>(() =>
   selectedCourse.value ? buildCertificateLearners(selectedCourse.value) : [],
 );
@@ -388,58 +414,6 @@ const courseLearners = computed<CertificateLearner[]>(() =>
 const passedLearners = computed<CertificateLearner[]>(() =>
   courseLearners.value.filter((learner) => learner.resultStatus === 'ผ่าน'),
 );
-
-const certificateLearnerPageCount = computed(() =>
-  Math.max(1, Math.ceil(passedLearners.value.length / certificateRowsPerPage)),
-);
-const paginatedPassedLearners = computed(() =>
-  passedLearners.value.slice(
-    (certificateLearnerPage.value - 1) * certificateRowsPerPage,
-    certificateLearnerPage.value * certificateRowsPerPage,
-  ),
-);
-
-const certificateCourseColumns: BaseTableColumn[] = [
-  { key: 'title', label: 'ชื่อรายวิชา', width: '28%', sortable: true },
-  { key: 'price', label: 'ค่าธรรมเนียม', align: 'center', width: '120px' },
-  { key: 'schedule', label: 'กำหนดการ', width: '260px' },
-  { key: 'maxSeats', label: 'รับ', align: 'center', width: '80px', sortable: true },
-  { key: 'enrolledCount', label: 'ลง', align: 'center', width: '80px', sortable: true },
-  { key: 'passed', label: 'ผ่าน', align: 'center', width: '80px' },
-  { key: 'failed', label: 'ไม่ผ่าน', align: 'center', width: '92px' },
-  { key: 'actions', label: 'ดำเนินการ', align: 'center', width: '112px' },
-];
-
-const certificateLearnerColumns: BaseTableColumn[] = [
-  { key: 'name', label: 'ชื่อ-สกุล', sortable: true },
-  { key: 'score', label: 'คะแนนจาก LMS', align: 'center', width: '150px', sortable: true },
-  { key: 'resultStatus', label: 'ผลการเรียน', align: 'center', width: '140px' },
-  { key: 'actions', label: 'Download ประกาศนียบัตร', align: 'center', width: '210px' },
-];
-
-watch(filteredCourses, () => {
-  certificateCoursePage.value = 1;
-});
-
-watch(certificateCoursePageCount, (pageCount) => {
-  certificateCoursePage.value = Math.min(certificateCoursePage.value, pageCount);
-});
-
-watch(passedLearners, () => {
-  certificateLearnerPage.value = 1;
-});
-
-watch(certificateLearnerPageCount, (pageCount) => {
-  certificateLearnerPage.value = Math.min(certificateLearnerPage.value, pageCount);
-});
-
-function setCertificateCoursePage(page: number): void {
-  certificateCoursePage.value = page;
-}
-
-function setCertificateLearnerPage(page: number): void {
-  certificateLearnerPage.value = page;
-}
 
 function hasCertificateDataIssue(learner: CertificateLearner): boolean {
   return (
@@ -485,28 +459,28 @@ const certificateSummaryCards = computed<CertificateSummaryCard[]>(() => {
   const counts = certificateSummaryCounts.value;
   return [
     {
-      label: 'ผู้ผ่านเกณฑ์',
+      label: t('instructor.certificates.summary.eligible'),
       value: counts.eligible.toLocaleString('th-TH'),
       icon: 'workspace_premium',
       color: '#f59e0b',
       softColor: 'rgba(245, 158, 11, 0.14)',
     },
     {
-      label: 'ออกใบรับรองแล้ว',
+      label: t('instructor.certificates.summary.issued'),
       value: counts.issued.toLocaleString('th-TH'),
       icon: 'verified',
       color: '#16a34a',
       softColor: 'rgba(22, 163, 74, 0.12)',
     },
     {
-      label: 'รอออกใบรับรอง',
+      label: t('instructor.certificates.summary.pending'),
       value: counts.pending.toLocaleString('th-TH'),
       icon: 'pending_actions',
       color: '#2563eb',
       softColor: 'rgba(37, 99, 235, 0.12)',
     },
     {
-      label: 'ข้อมูลไม่ครบ',
+      label: t('instructor.certificates.summary.issues'),
       value: counts.issues.toLocaleString('th-TH'),
       icon: 'report_problem',
       color: '#dc2626',

@@ -1,10 +1,13 @@
 ﻿<template>
   <q-page class="instructor-chat-page">
     <div v-if="isTeachingRole" class="section-container instructor-chat-page__inner">
-      <InstructorPageHero eyebrow="Instructor Workspace" title="สนทนากับผู้เรียน">
+      <InstructorPageHero
+        eyebrow="Instructor Workspace"
+        :title="t('instructor.chatPage.pageTitle')"
+      >
         <template #actions>
           <q-badge rounded color="primary" class="chat-hero__badge">
-            {{ conversationEntries.length }} ห้องสนทนา
+            {{ t('instructor.chatPage.chatRoomsBadge', { count: conversationEntries.length }) }}
           </q-badge>
         </template>
       </InstructorPageHero>
@@ -13,8 +16,12 @@
         <div class="col-12 col-lg-4">
           <q-card flat bordered class="chat-panel">
             <q-card-section class="chat-panel__header">
-              <div class="text-subtitle1 text-weight-bolder">รายการสนทนา</div>
-              <div class="text-caption text-grey-6">แยกตามรายวิชาและผู้เรียน</div>
+              <div class="text-subtitle1 text-weight-bolder">
+                {{ t('instructor.chatPage.conversationList') }}
+              </div>
+              <div class="text-caption text-grey-6">
+                {{ t('instructor.chatPage.conversationListSub') }}
+              </div>
               <q-select
                 v-model="selectedCourseFilter"
                 :options="courseFilterOptions"
@@ -23,7 +30,7 @@
                 emit-value
                 map-options
                 class="q-mt-sm"
-                label="กรองข้อมูลตามรายวิชา"
+                :label="t('instructor.chatPage.filterByCourse')"
               >
                 <template #prepend>
                   <q-icon name="filter_alt" size="xs" color="primary" />
@@ -36,7 +43,7 @@
             <q-list class="conversation-list">
               <div v-if="conversationEntries.length === 0" class="q-pa-lg text-center text-grey-6">
                 <q-icon name="info" size="md" color="grey-4" class="q-mb-sm" />
-                <div>ไม่พบรายการสนทนาในรายวิชานี้</div>
+                <div>{{ t('instructor.chatPage.noConversations') }}</div>
               </div>
               <q-item
                 v-for="entry in conversationEntries"
@@ -94,7 +101,8 @@
                     {{ getCourseTitle(selectedConversation.course) }}
                   </div>
                   <div class="text-caption text-grey-6 q-mt-xs">
-                    ผู้เรียน: {{ selectedConversation.learnerName }}
+                    {{ t('instructor.chatPage.learnerPrefix') }}
+                    {{ selectedConversation.learnerName }}
                   </div>
                 </div>
               </div>
@@ -105,9 +113,11 @@
             <div ref="messageListRef" class="thread-panel__messages col">
               <div v-if="selectedMessages.length === 0" class="thread-empty">
                 <q-icon name="forum" size="46px" color="primary" />
-                <div class="text-subtitle1 text-weight-bolder q-mt-md">ยังไม่มีข้อความ</div>
+                <div class="text-subtitle1 text-weight-bolder q-mt-md">
+                  {{ t('instructor.chatPage.emptyMessages') }}
+                </div>
                 <div class="text-caption text-grey-6 q-mt-xs">
-                  เมื่อผู้เรียนส่งข้อความจากหน้าโปรไฟล์ ข้อความจะแสดงที่นี่
+                  {{ t('instructor.chatPage.emptyMessagesSub') }}
                 </div>
               </div>
 
@@ -151,7 +161,7 @@
                   outlined
                   dense
                   class="col"
-                  placeholder="พิมพ์ข้อความตอบกลับผู้เรียน..."
+                  :placeholder="t('instructor.chatPage.replyPlaceholder')"
                   @keydown.enter.exact.prevent="sendReply"
                 >
                   <template #prepend>
@@ -162,7 +172,7 @@
                   unelevated
                   color="primary"
                   icon="send"
-                  label="ส่ง"
+                  :label="t('instructor.chatPage.sendBtn')"
                   :disable="!canSendReply"
                   @click="sendReply"
                 />
@@ -174,9 +184,9 @@
 
       <q-card v-else flat bordered class="chat-empty-card">
         <q-icon name="forum" size="52px" color="primary" />
-        <div class="text-h6 text-weight-bolder q-mt-md">ยังไม่มีห้องสนทนา</div>
+        <div class="text-h6 text-weight-bolder q-mt-md">{{ t('instructor.chatPage.noRooms') }}</div>
         <div class="text-body2 text-grey-7 q-mt-xs">
-          เมื่อมีผู้เรียนลงทะเบียนในรายวิชาของคุณ ระบบจะแสดงห้องสนทนาที่นี่
+          {{ t('instructor.chatPage.noRoomsSub') }}
         </div>
       </q-card>
     </div>
@@ -184,7 +194,9 @@
     <div v-else class="section-container q-pa-xl">
       <q-card flat bordered class="chat-empty-card">
         <q-icon name="lock" size="48px" color="grey-6" />
-        <div class="text-h6 text-weight-bolder q-mt-md">หน้านี้สำหรับผู้สอนเท่านั้น</div>
+        <div class="text-h6 text-weight-bolder q-mt-md">
+          {{ t('instructor.chatPage.teacherOnly') }}
+        </div>
       </q-card>
     </div>
   </q-page>
@@ -192,6 +204,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import InstructorPageHero from 'components/instructor/InstructorPageHero.vue';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -223,6 +236,7 @@ interface ConversationEntry {
   enrollId: number;
 }
 
+const { t } = useI18n();
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
 const instructorBackend = useInstructorBackend();
@@ -282,7 +296,8 @@ const conversationEntriesUnsorted = computed<ConversationEntry[]>(() =>
       learnerName: conversation.learnerName,
       learnerInitials: getLearnerInitials(conversation.learnerName),
       messageCount: unreadCount,
-      latestMessagePreview: conversation.latestMessagePreview || 'ยังไม่มีข้อความ',
+      latestMessagePreview:
+        conversation.latestMessagePreview || t('instructor.chatPage.emptyMessages'),
       latestMessageTime,
       enrollId: conversation.enrollId,
     };

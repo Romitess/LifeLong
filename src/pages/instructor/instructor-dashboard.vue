@@ -10,7 +10,9 @@
         <div class="instructor-greeting-banner__title">
           {{ timeGreeting.label }} {{ instructorDisplayName }}
         </div>
-        <div class="instructor-greeting-banner__subtitle">พร้อมลุยงานสอนและติดตามผู้เรียน</div>
+        <div class="instructor-greeting-banner__subtitle">
+          {{ t('instructor.dashboard.greetingSubtitle') }}
+        </div>
       </div>
     </div>
 
@@ -128,11 +130,13 @@
         <!-- ─── ACTIVE COURSES ─── -->
         <div class="col-12 col-lg-8">
           <div class="row items-center justify-between q-mb-lg">
-            <h2 class="section-title-underline q-mb-none">รายวิชาที่กำลังเปิดสอน</h2>
+            <h2 class="section-title-underline q-mb-none">
+              {{ t('instructor.nav.activeCourses') }}
+            </h2>
             <q-btn
               flat
               color="primary"
-              label="ดูทั้งหมด"
+              :label="t('viewAll')"
               no-caps
               tag="a"
               :href="resolveFullUrl('/instructor/courses')"
@@ -154,7 +158,9 @@
                   <div class="row items-center justify-between no-wrap">
                     <div>
                       <div class="text-overline text-primary">{{ course.code }}</div>
-                      <div class="text-h6 text-weight-bold q-mb-xs">{{ course.title }}</div>
+                      <div class="text-h6 text-weight-bold q-mb-xs">
+                        {{ getTranslatedCourseTitle(course) }}
+                      </div>
                     </div>
                     <q-badge
                       :color="course.status === 'เปิดรับสมัคร' ? 'positive' : 'grey-7'"
@@ -167,8 +173,8 @@
                   <div class="row items-center q-gutter-x-lg q-mt-sm text-grey-7 text-caption">
                     <div class="row items-center">
                       <q-icon name="group" class="q-mr-xs" />
-                      {{ course.enrolledCount
-                      }}{{ course.maxSeats ? ` / ${course.maxSeats}` : '' }} นิสิต
+                      {{ course.enrolledCount }}{{ course.maxSeats ? ` / ${course.maxSeats}` : '' }}
+                      {{ t('instructor.course.learnersLabel') }}
                     </div>
                     <div class="row items-center">
                       <q-icon name="star" class="q-mr-xs text-amber" />
@@ -184,7 +190,7 @@
                     <q-btn
                       unelevated
                       color="primary"
-                      label="จัดการรายวิชา"
+                      :label="t('instructor.dashboard.manageCourse')"
                       size="sm"
                       class="q-px-md"
                       tag="a"
@@ -194,7 +200,7 @@
                     <q-btn
                       outline
                       color="primary"
-                      label="ตรวจงาน / ให้เกรด"
+                      :label="t('instructor.dashboard.gradeWork')"
                       size="sm"
                       class="q-px-md"
                       tag="a"
@@ -208,9 +214,9 @@
                       color="grey-7"
                       icon="more_horiz"
                       dense
-                      aria-label="ดูรายละเอียดรายวิชา"
+                      :aria-label="t('instructor.dashboard.viewCourseDetail')"
                     >
-                      <q-tooltip>ดูรายละเอียดรายวิชา</q-tooltip>
+                      <q-tooltip>{{ t('instructor.dashboard.viewCourseDetail') }}</q-tooltip>
                       <q-menu
                         anchor="center right"
                         self="center left"
@@ -223,14 +229,19 @@
                           <q-card-section class="course-syllabus-card__header">
                             <div class="course-syllabus-card__header-copy">
                               <div class="course-syllabus-card__eyebrow">Course Syllabus</div>
-                              <div class="course-syllabus-card__title">{{ course.title }}</div>
-                              <div v-if="course.titleEn" class="course-syllabus-card__subtitle">
-                                {{ course.titleEn }}
+                              <div class="course-syllabus-card__title">
+                                {{ getTranslatedCourseTitle(course) }}
+                              </div>
+                              <div
+                                v-if="course.titleEn && course.titleEn !== course.title"
+                                class="course-syllabus-card__subtitle"
+                              >
+                                {{ locale === 'th' ? course.titleEn : course.title }}
                               </div>
                             </div>
                             <div class="course-syllabus-card__hours">
                               <strong>{{ course.totalHours ?? 0 }}</strong>
-                              <span>ชม.</span>
+                              <span>{{ t('instructor.dashboard.hoursAbbr') }}</span>
                             </div>
                           </q-card-section>
 
@@ -242,7 +253,8 @@
                               </q-chip>
                               <q-chip dense square class="course-syllabus-card__chip">
                                 <q-icon name="groups" />
-                                {{ course.enrolledCount }}/{{ course.maxSeats ?? '-' }} นิสิต
+                                {{ course.enrolledCount }}/{{ course.maxSeats ?? '-' }}
+                                {{ t('instructor.course.learnersLabel') }}
                               </q-chip>
                               <q-chip dense square class="course-syllabus-card__chip">
                                 <q-icon name="sell" />
@@ -271,7 +283,9 @@
                               {{ getCourseDetail(course.id)?.descriptionFull }}
                             </div>
 
-                            <div class="course-syllabus-card__section-label">หัวข้อบทเรียน</div>
+                            <div class="course-syllabus-card__section-label">
+                              {{ t('instructor.dashboard.syllabusTopics') }}
+                            </div>
                             <div
                               v-if="getCourseDetail(course.id)?.syllabus?.length"
                               class="course-syllabus-card__timeline"
@@ -291,7 +305,7 @@
                               </div>
                             </div>
                             <div v-else class="course-syllabus-card__empty">
-                              ยังไม่มีหัวข้อบทเรียนในระบบ
+                              {{ t('instructor.dashboard.noSyllabusTopics') }}
                             </div>
                           </q-card-section>
                         </q-card>
@@ -306,7 +320,9 @@
 
         <!-- ─── SIDEBAR / ACTIVITIES ─── -->
         <div class="col-12 col-lg-4">
-          <h2 class="section-title-underline q-mb-lg">กิจกรรมล่าสุด</h2>
+          <h2 class="section-title-underline q-mb-lg">
+            {{ t('instructor.dashboard.recentActivities') }}
+          </h2>
           <q-card flat bordered class="activity-card">
             <q-list separator>
               <q-item v-for="activity in activities" :key="activity.id" class="q-py-md">
@@ -336,7 +352,7 @@
               <q-btn
                 flat
                 color="primary"
-                label="ดูกิจกรรมทั้งหมด"
+                :label="t('instructor.dashboard.viewAllActivities')"
                 no-caps
                 tag="a"
                 :href="resolveFullUrl('/instructor/students')"
@@ -345,7 +361,9 @@
             </q-card-section>
           </q-card>
 
-          <h2 class="section-title-underline q-mt-xl q-mb-lg">ประกาศจากระบบ</h2>
+          <h2 class="section-title-underline q-mt-xl q-mb-lg">
+            {{ t('instructor.dashboard.systemAnnouncement') }}
+          </h2>
           <q-banner dense rounded class="bg-blue-1 text-blue-9 q-pa-md">
             <template v-slot:avatar>
               <q-icon name="info" color="blue-9" />
@@ -360,6 +378,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -374,6 +393,7 @@ import heroClassroomImageUrl from 'src/assets/homepicture2.png';
 import heroInstructorImageUrl from 'src/assets/in.png';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
+const { t, locale } = useI18n();
 const $q = useQuasar();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -437,7 +457,7 @@ const instructorDisplayName = computed(() => {
     user?.firstNameEn ||
     user?.username ||
     user?.email?.split('@')[0] ||
-    'อาจารย์'
+    t('profile.roles.instructor')
   );
 });
 
@@ -446,27 +466,27 @@ const timeGreeting = computed(() => {
   const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
 
   if (minutesSinceMidnight >= 6 * 60 && minutesSinceMidnight <= 12 * 60) {
-    return { label: 'อรุณสวัสดิ์', icon: '🌅' };
+    return { label: t('instructor.dashboard.greeting.morning'), icon: '🌅' };
   }
   if (minutesSinceMidnight >= 12 * 60 + 1 && minutesSinceMidnight <= 15 * 60 + 59) {
-    return { label: 'สวัสดียามบ่าย', icon: '🌞' };
+    return { label: t('instructor.dashboard.greeting.afternoon'), icon: '🌞' };
   }
   if (minutesSinceMidnight >= 16 * 60 && minutesSinceMidnight <= 19 * 60 + 59) {
-    return { label: 'สวัสดียามเย็น', icon: '🌇' };
+    return { label: t('instructor.dashboard.greeting.evening'), icon: '🌇' };
   }
-  return { label: 'ราตรีสวัสดิ์', icon: '🌙' };
+  return { label: t('instructor.dashboard.greeting.night'), icon: '🌙' };
 });
 
 const stats = computed(() => [
   {
-    label: 'นิสิตทั้งหมด',
+    label: t('instructor.metrics.totalLearners'),
     value: (instructorBackend.summary.value?.totalStudents ?? 0).toLocaleString('th-TH'),
     icon: 'people',
     color: 'white',
     bgColor: '#F59E0B',
   },
   {
-    label: 'รายวิชาที่เปิด',
+    label: t('instructor.metrics.publishedCourses'),
     value: (
       instructorBackend.summary.value?.activeCourses ?? instructorCourses.value.length
     ).toLocaleString('th-TH'),
@@ -475,14 +495,14 @@ const stats = computed(() => [
     bgColor: '#4F7DF3',
   },
   {
-    label: 'คะแนนเฉลี่ย',
+    label: t('instructor.reportLabels.avgScore'),
     value: instructorBackend.summary.value?.averageScore?.toFixed(2) ?? '-',
     icon: 'star',
     color: 'white',
     bgColor: '#18B65A',
   },
   {
-    label: 'ห้องสนทนา',
+    label: t('instructor.dashboard.chatRoomsMetric'),
     value: (instructorBackend.summary.value?.conversations ?? 0).toLocaleString('th-TH'),
     icon: 'forum',
     color: 'white',
@@ -559,7 +579,7 @@ const heroTypingSequences: Record<string, HeroTypingEntry[]> = {
     { key: 'course', text: 'COURSE', speed: 70, delayBefore: 70 },
     {
       key: 'subtitle',
-      text: 'หลักสูตรระยะสั้นที่ออกแบบมาเพื่อเพิ่มพูนทักษะ และสมรรถนะ',
+      text: t('instructor.dashboard.heroSubtitle'),
       speed: 32,
       delayBefore: 220,
     },
@@ -567,11 +587,11 @@ const heroTypingSequences: Record<string, HeroTypingEntry[]> = {
   'instructor-entry': [
     { key: 'entryBuu', text: 'BUU', speed: 85 },
     { key: 'entryLll', text: 'LLL', speed: 85, delayBefore: 90 },
-    { key: 'entryTitle', text: 'ยินดีต้อนรับ', speed: 70, delayBefore: 140 },
-    { key: 'entryAccent', text: 'อาจารย์', speed: 70, delayBefore: 70 },
+    { key: 'entryTitle', text: t('instructor.dashboard.heroWelcome'), speed: 70, delayBefore: 140 },
+    { key: 'entryAccent', text: t('profile.roles.instructor'), speed: 70, delayBefore: 70 },
     {
       key: 'entrySystem',
-      text: 'ระบบตรวจงานและให้คะแนน BUU LLL',
+      text: t('instructor.dashboard.heroSystem'),
       speed: 32,
       delayBefore: 220,
     },
@@ -667,13 +687,18 @@ function getCourseDetail(courseId: string): CourseDetail | undefined {
   return courseStore.getCourseDetailById(courseId);
 }
 
+function getTranslatedCourseTitle(course: Course): string {
+  if (locale.value === 'th') return course.title;
+  return course.titleEn || course.title;
+}
+
 function formatDeliveryModes(course: Course): string {
   return course.deliveryModes.length > 0 ? course.deliveryModes.join(', ') : '-';
 }
 
 function formatCoursePrice(course: Course): string {
   if (course.isFree || course.price === 0) {
-    return 'ฟรี';
+    return t('free');
   }
 
   return `${course.price.toLocaleString('th-TH')} บาท`;
@@ -683,32 +708,32 @@ function getCourseSyllabusMeta(course: Course) {
   return [
     {
       icon: 'account_balance',
-      label: 'คณะ/หน่วยงาน',
+      label: t('instructor.dashboard.syllabusMetaFaculty'),
       value: course.faculty || '-',
     },
     {
       icon: 'category',
-      label: 'หมวดหมู่',
+      label: t('instructor.dashboard.syllabusMetaCategory'),
       value: course.category || '-',
     },
     {
       icon: 'schedule',
-      label: 'ชั่วโมงเรียน',
-      value: `${course.totalHours ?? 0} ชั่วโมง`,
+      label: t('instructor.dashboard.syllabusMetaHours'),
+      value: `${course.totalHours ?? 0} ${t('instructor.dashboard.syllabusHoursUnit')}`,
     },
     {
       icon: 'devices',
-      label: 'รูปแบบเรียน',
+      label: t('instructor.dashboard.syllabusMetaMode'),
       value: formatDeliveryModes(course),
     },
     {
       icon: 'event',
-      label: 'รับสมัคร',
+      label: t('instructor.dashboard.syllabusMetaRegistration'),
       value: `${course.registrationStart} - ${course.registrationEnd}`,
     },
     {
       icon: 'payments',
-      label: 'ค่าลงทะเบียน',
+      label: t('instructor.dashboard.syllabusMetaFee'),
       value: formatCoursePrice(course),
     },
   ];
@@ -716,11 +741,11 @@ function getCourseSyllabusMeta(course: Course) {
 
 function showDevelopmentDialog(featureName: string) {
   $q.dialog({
-    title: 'ฟีเจอร์นี้กำลังอยู่ระหว่างการพัฒนา',
-    message: `ขออภัย ฟีเจอร์ "${featureName}" กำลังจะเปิดให้บริการในเร็วๆ นี้`,
+    title: t('instructor.dashboard.devFeature'),
+    message: t('instructor.dashboard.devMsg', { name: featureName }),
     ok: {
       color: 'primary',
-      label: 'รับทราบ',
+      label: t('ok'),
       unelevated: true,
     },
   });
