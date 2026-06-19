@@ -23,20 +23,12 @@
             {{ $t('finance.applicantSearch.resultsTitle') }}
           </div>
           <div class="applicant-table-toolbar">
-            <q-input
+            <AppSearchInput
               v-model="searchForm.keyword"
-              outlined
-              clearable
-              debounce="200"
               :placeholder="$t('finance.applicantSearch.fields.learnerNamePlaceholder')"
-              bg-color="white"
-              class="applicant-search-input-main"
+              class="applicant-search"
               @update:model-value="handleSearch"
-            >
-              <template #prepend>
-                <q-icon name="search" color="grey-5" />
-              </template>
-            </q-input>
+            />
           </div>
         </div>
 
@@ -173,6 +165,7 @@
 <script setup lang="ts">
 import AppPageHero from 'components/common/AppPageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
 import { api } from 'src/boot/axios';
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -412,57 +405,25 @@ onMounted(() => {
     flex: 1 1 100%;
     justify-content: stretch;
 
-    .applicant-search-input-main {
+    .applicant-search {
       max-width: none;
       flex: 1 1 100%;
     }
   }
 }
 
-.applicant-search-input-main {
+.applicant-search {
   flex: 1 1 280px;
   min-width: 200px;
   max-width: 520px;
 
-  :deep(.q-field__control) {
+  :deep(.q-field__control),
+  :deep(.q-field__marginal) {
     height: 52px;
-    padding: 0 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    border: 2px solid #edf2f7;
-    border-radius: 26px !important;
-    transition:
-      border-color 0.2s ease,
-      box-shadow 0.2s ease;
-    background: #fff !important;
-
-    &:hover {
-      border-color: rgba(245, 166, 35, 0.35);
-    }
-
-    &.q-field__control--focused {
-      border-color: #f5a623;
-      box-shadow: 0 12px 28px rgba(245, 166, 35, 0.12);
-    }
-
-    &::before,
-    &::after {
-      display: none;
-    }
   }
 
   :deep(.q-field__native) {
     font-size: 1rem;
-    font-weight: 500;
-    color: #1e293b;
-  }
-
-  :deep(.q-field__native::placeholder) {
-    color: #9e9e9e;
-    opacity: 1;
-  }
-
-  :deep(.q-field__marginal) {
-    height: 52px;
   }
 }
 

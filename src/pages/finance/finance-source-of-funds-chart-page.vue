@@ -118,100 +118,11 @@
             {{ $t('finance.sourceOfFunds.allItems') }}
           </div>
           <div class="sof-table-toolbar">
-            <q-input
+            <AppSearchInput
               v-model="tableSearch"
-              outlined
-              clearable
-              debounce="200"
               :placeholder="$t('finance.sourceOfFunds.searchPlaceholder')"
-              bg-color="white"
-              class="sof-search-input-main"
-            >
-              <template #prepend>
-                <q-icon name="search" color="grey-5" />
-              </template>
-              <template #append>
-                <q-separator vertical class="q-mx-sm" />
-                <q-btn flat round color="grey-7" icon="filter_list">
-                  <q-menu padding class="sof-filter-menu shadow-10" style="border-radius: 16px">
-                    <div class="q-pa-md" style="min-width: 260px">
-                      <div class="text-subtitle1 text-weight-bold q-mb-md">
-                        {{ $t('finance.sourceOfFunds.additionalFilters') }}
-                      </div>
-
-                      <div class="filter-group q-mb-md">
-                        <q-select
-                          v-model="listFilter.faculty"
-                          :options="facultyFilterMenuOptions"
-                          outlined
-                          dense
-                          emit-value
-                          map-options
-                          options-dense
-                          :label="$t('finance.sourceOfFunds.faculty')"
-                          class="full-width sof-filter-menu-field"
-                        />
-                      </div>
-
-                      <div class="filter-group q-mb-md">
-                        <div class="text-caption text-grey-7 q-mb-xs">
-                          {{ $t('finance.sourceOfFunds.activeStatus') }}
-                        </div>
-                        <div class="row q-gutter-xs">
-                          <q-btn
-                            unelevated
-                            dense
-                            no-caps
-                            :color="listFilter.status === 'open' ? 'primary' : 'grey-2'"
-                            :text-color="listFilter.status === 'open' ? 'white' : 'dark'"
-                            :label="$t('finance.sourceOfFunds.active')"
-                            class="q-px-md text-caption"
-                            @click="
-                              listFilter.status = listFilter.status === 'open' ? null : 'open'
-                            "
-                          />
-                          <q-btn
-                            unelevated
-                            dense
-                            no-caps
-                            :color="listFilter.status === 'closed' ? 'primary' : 'grey-2'"
-                            :text-color="listFilter.status === 'closed' ? 'white' : 'dark'"
-                            :label="$t('finance.sourceOfFunds.inactive')"
-                            class="q-px-md text-caption"
-                            @click="
-                              listFilter.status = listFilter.status === 'closed' ? null : 'closed'
-                            "
-                          />
-                        </div>
-                      </div>
-
-                      <q-separator class="q-my-sm" />
-                      <div class="row q-gutter-sm">
-                        <q-btn
-                          unelevated
-                          :label="$t('finance.sourceOfFunds.clear')"
-                          color="grey-2"
-                          text-color="dark"
-                          dense
-                          no-caps
-                          class="col q-px-md rounded-borders"
-                          @click="resetTableFilters"
-                        />
-                        <q-btn
-                          unelevated
-                          :label="$t('finance.sourceOfFunds.ok')"
-                          color="primary"
-                          dense
-                          no-caps
-                          class="col q-px-md rounded-borders"
-                          v-close-popup
-                        />
-                      </div>
-                    </div>
-                  </q-menu>
-                </q-btn>
-              </template>
-            </q-input>
+              class="sof-search"
+            />
           </div>
         </div>
 
@@ -381,6 +292,7 @@
 import AppPageHero from 'components/common/AppPageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
 import { useQuasar, type QTableProps, type QInput } from 'quasar';
 import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -459,11 +371,6 @@ const statusOptions = [
   { label: 'ปิด', value: false },
 ];
 
-const facultyFilterMenuOptions = computed(() => [
-  { label: 'ทุกคณะ', value: null },
-  ...faculties.value.map((f) => ({ label: f.name || 'ไม่ระบุ', value: f.id })),
-]);
-
 const rows = ref<FundChartRow[]>([]);
 
 // -- Map backend row to frontend row --
@@ -493,22 +400,10 @@ async function fetchRows() {
 
 onMounted(async () => {
   await fetchFaculties();
-  if (userFacName.value !== 'ไม่ระบุ' && userFacId.value) {
-    listFilter.value.faculty = userFacId.value;
-  }
   await fetchRows();
 });
 
 const tableSearch = ref('');
-
-/** ตัวกรองในเมนู (รูปแบบเดียวกับหน้า short-courses) */
-const listFilter = ref<{
-  faculty: number | null;
-  status: 'open' | 'closed' | null;
-}>({
-  faculty: null,
-  status: null,
-});
 
 const editingId = ref<string | null>(null);
 
@@ -529,26 +424,20 @@ const pagination = ref({
 const filteredRows = computed(() => {
   let list = rows.value;
 
-  const faculty = listFilter.value.faculty;
-  if (faculty !== null) {
-    list = list.filter((r) => r.facId === faculty);
-  }
-
-  const st = listFilter.value.status;
-  if (st === 'open') {
-    list = list.filter((r) => r.active);
-  } else if (st === 'closed') {
-    list = list.filter((r) => !r.active);
+  // Implicitly filter by user's faculty if they belong to a specific faculty
+  if (userFacName.value !== 'ไม่ระบุ' && userFacId.value) {
+    list = list.filter((r) => r.facId === userFacId.value);
   }
 
   const q = tableSearch.value.trim().toLowerCase();
   if (q) {
-    list = list.filter(
-      (r) =>
-        facIdToLabel(r.facId).toLowerCase().includes(q) ||
-        r.code.includes(q) ||
-        r.name.toLowerCase().includes(q),
-    );
+    list = list.filter((r) => {
+      const codeMatch = r.code.toLowerCase().includes(q);
+      const nameMatch = r.name.toLowerCase().includes(q);
+      const statusText = r.active ? 'เปิด' : 'ปิด';
+      const statusMatch = statusText.includes(q);
+      return codeMatch || nameMatch || statusMatch;
+    });
   }
 
   return [...list].sort((a, b) => {
@@ -557,12 +446,6 @@ const filteredRows = computed(() => {
     return idB - idA;
   });
 });
-
-function resetTableFilters() {
-  listFilter.value = { faculty: null, status: null };
-  tableSearch.value = '';
-  pagination.value.page = 1;
-}
 
 function pageStart(tablePagination: { page: number; rowsPerPage: number }): number {
   if (filteredRows.value.length === 0) {
@@ -575,12 +458,9 @@ function pageEnd(tablePagination: { page: number; rowsPerPage: number }): number
   return Math.min(tablePagination.page * tablePagination.rowsPerPage, filteredRows.value.length);
 }
 
-watch(
-  () => [listFilter.value.faculty, listFilter.value.status, tableSearch.value] as const,
-  () => {
-    pagination.value.page = 1;
-  },
-);
+watch(tableSearch, () => {
+  pagination.value.page = 1;
+});
 
 const codeFieldRules = computed(() => [
   (v: string) => !!String(v ?? '').trim() || t('finance.sourceOfFunds.validation.codeRequired'),
@@ -873,7 +753,7 @@ async function confirmDelete() {
     flex: 1 1 100%;
     justify-content: stretch;
 
-    .sof-search-input-main {
+    .sof-search {
       max-width: none;
       flex: 1 1 100%;
     }
@@ -883,54 +763,6 @@ async function confirmDelete() {
 .sof-filter-menu-field {
   :deep(.q-field__control) {
     min-height: 40px;
-  }
-}
-
-/* ช่องค้นหา + ปุ่มตัวกรอง แบบหน้า short-courses */
-.sof-search-input-main {
-  flex: 1 1 280px;
-  min-width: 200px;
-  max-width: 520px;
-
-  :deep(.q-field__control) {
-    height: 52px;
-    padding: 0 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    border: 2px solid #edf2f7;
-    border-radius: 26px !important;
-    transition:
-      border-color 0.2s ease,
-      box-shadow 0.2s ease;
-    background: #fff !important;
-
-    &:hover {
-      border-color: rgba(245, 166, 35, 0.35);
-    }
-
-    &.q-field__control--focused {
-      border-color: #f5a623;
-      box-shadow: 0 12px 28px rgba(245, 166, 35, 0.12);
-    }
-
-    &::before,
-    &::after {
-      display: none;
-    }
-  }
-
-  :deep(.q-field__native) {
-    font-size: 1rem;
-    font-weight: 500;
-    color: #1e293b;
-  }
-
-  :deep(.q-field__native::placeholder) {
-    color: #9e9e9e;
-    opacity: 1;
-  }
-
-  :deep(.q-field__marginal) {
-    height: 52px;
   }
 }
 
@@ -984,7 +816,18 @@ async function confirmDelete() {
 }
 
 .sof-search {
-  min-width: 220px;
+  flex: 1 1 280px;
+  min-width: 200px;
+  max-width: 520px;
+
+  :deep(.q-field__control),
+  :deep(.q-field__marginal) {
+    height: 52px;
+  }
+
+  :deep(.q-field__native) {
+    font-size: 1rem;
+  }
 }
 
 .sof-table {

@@ -150,23 +150,16 @@
         >
           <template #header-actions>
             <div class="payment-table-toolbar q-mb-lg">
-              <q-input
+              <AppSearchInput
                 v-model="tableSearch"
-                outlined
-                clearable
-                debounce="200"
                 :placeholder="$t('finance.paymentImport.searchPlaceholder')"
                 class="payment-search"
-              >
-                <template #prepend>
-                  <q-icon name="search" />
-                </template>
-              </q-input>
+              />
 
               <q-btn
                 unelevated
                 color="negative"
-                icon="delete_sweep"
+                icon="delete"
                 :label="$t('finance.paymentImport.clearAllData')"
                 no-caps
                 class="payment-delete-btn"
@@ -824,6 +817,7 @@
 <script setup lang="ts">
 import AppPageHero from 'components/common/AppPageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
 import { useQuasar, type QTableProps } from 'quasar';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -1848,9 +1842,13 @@ function confirmClearAll() {
   width: min(380px, 42vw);
   min-width: 240px;
 
-  :deep(.q-field__control) {
+  :deep(.q-field__control),
+  :deep(.q-field__marginal) {
     height: 52px;
-    border-radius: 12px;
+  }
+
+  :deep(.q-field__native) {
+    font-size: 1rem;
   }
 }
 

@@ -50,12 +50,14 @@
 
       <AppSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
-          <ReportExportActions
-            :pdf-label="$t('centralFinance.dailyReport.table.pdfBtn')"
-            :excel-label="$t('centralFinance.dailyReport.table.excelBtn')"
-            @export-pdf="exportToPdf"
-            @export-excel="exportToExcel"
-          />
+          <div class="table-export-actions">
+            <TableExportActions
+              :pdf-config="pdfExportConfig"
+              :excel-config="excelExportConfig"
+              :pdf-label="$t('centralFinance.dailyReport.table.pdfBtn')"
+              :excel-label="$t('centralFinance.dailyReport.table.excelBtn')"
+            />
+          </div>
         </template>
 
         <div class="text-center q-pt-lg q-pb-sm">
@@ -82,12 +84,10 @@
             :columns="columns"
             row-key="id"
             flat
-            dense
             :loading="isLoading"
             class="report-table"
             v-model:pagination="pagination"
             :rows-per-page-options="[10, 25, 50, 100]"
-            :header-style="{ fontSize: '0.75rem', whiteSpace: 'pre-wrap', lineHeight: '1.3' }"
           >
             <template v-slot:body-cell-amount="props">
               <q-td :props="props" class="text-right">
@@ -176,19 +176,17 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useQuasar } from 'quasar';
+import { useQuasar, date } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import AppPageHero from 'components/common/AppPageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
-import ReportExportActions from 'components/common/ReportExportActions.vue';
+
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { useAuthStore } from 'stores/auth-store';
 import { api } from 'src/boot/axios';
 import type { QTableColumn } from 'quasar';
-import jsPDF from 'jspdf';
-import { autoTable } from 'jspdf-autotable';
-import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
-import * as XLSX from 'xlsx';
+import TableExportActions from 'components/common/TableExportActions.vue';
+import type { PdfExportConfig, ExcelExportConfig } from 'src/types/export-types';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -355,39 +353,15 @@ function formatCurrency(val: number): string {
   }).format(val);
 }
 
-async function exportToPdf(): Promise<void> {
-  const doc = new jsPDF({
-    orientation: 'landscape',
-    unit: 'pt',
-    format: 'a4',
-  });
+const pdfExportConfig = computed<PdfExportConfig | null>(() => {
+  if (tableRows.value.length === 0) return null;
 
-  const response = await fetch(SarabunFontUrl);
-  const blob = await response.blob();
-  const base64Font = await new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const dataUrl = reader.result as string;
-      resolve(dataUrl.split(',')[1] || '');
-    };
-    reader.readAsDataURL(blob);
-  });
-
-  doc.addFileToVFS('THSarabunPSK.ttf', base64Font);
-  doc.addFont('THSarabunPSK.ttf', 'Sarabun', 'normal');
-  doc.setFont('Sarabun');
-
-  doc.setFontSize(13);
   const title1 = t('centralFinance.dailyReport.table.reportTitle');
   const title2 = `${t('centralFinance.dailyReport.table.departmentLabel')}: ${currentUserDepartment.value}`;
   const title3 = t('centralFinance.dailyReport.table.dateLabel', {
     start: period.value.dateFrom || '-',
     end: period.value.dateTo || '-',
   });
-
-  doc.text(title1, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
-  doc.text(title2, doc.internal.pageSize.getWidth() / 2, 50, { align: 'center' });
-  doc.text(title3, doc.internal.pageSize.getWidth() / 2, 65, { align: 'center' });
 
   const rows = tableRows.value.map((row) => [
     row.no,
@@ -396,10 +370,16 @@ async function exportToPdf(): Promise<void> {
     formatCurrency(row.amount),
   ]);
 
-  autoTable(doc, {
+  const todayStr = date.formatDate(new Date(), 'DDMMYYYY');
+  const facName = currentUserDepartment.value.replace(/\s+/g, '_') || 'All';
+  const filename = `dailyreport_${facName}_${todayStr}`;
+
+  return {
+    filename,
+    titles: [title1, title2, title3],
+    titleStartY: 35,
+    titleLineHeight: 15,
     startY: 80,
-    rowPageBreak: 'avoid',
-    showHead: 'everyPage',
     head: [
       [
         t('centralFinance.dailyReport.table.no'),
@@ -410,38 +390,25 @@ async function exportToPdf(): Promise<void> {
     ],
     body: rows,
     styles: {
-      font: 'Sarabun',
       fontSize: 9,
       cellPadding: 5,
       valign: 'middle',
-      lineColor: [180, 180, 180],
-      lineWidth: 0.5,
-      overflow: 'linebreak',
     },
     headStyles: {
-      font: 'Sarabun',
-      fillColor: [226, 232, 240],
-      textColor: [51, 65, 85],
-      fontStyle: 'normal',
       fontSize: 9,
-      halign: 'center',
-      valign: 'middle',
     },
     columnStyles: {
       0: { halign: 'center', cellWidth: 40 },
-      1: { cellWidth: 350 },
-      2: { cellWidth: 250 },
+      1: {},
+      2: {},
       3: { halign: 'right', cellWidth: 100 },
     },
-    alternateRowStyles: { fillColor: [255, 255, 255] },
-    margin: { top: 20, left: 20, right: 20 },
-    tableWidth: 'auto',
-  });
+  };
+});
 
-  doc.save('daily-report.pdf');
-}
+const excelExportConfig = computed<ExcelExportConfig | null>(() => {
+  if (tableRows.value.length === 0) return null;
 
-function exportToExcel(): void {
   const header = [
     t('centralFinance.dailyReport.table.no'),
     t('centralFinance.dailyReport.table.courseName'),
@@ -464,20 +431,24 @@ function exportToExcel(): void {
   });
 
   const wsData = [[title1], [title2], [title3], [], header, ...rows];
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  ws['!merges'] = [
+  const merges = [
     { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
     { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } },
     { s: { r: 2, c: 0 }, e: { r: 2, c: 3 } },
   ];
 
-  ws['!cols'] = [{ wch: 8 }, { wch: 60 }, { wch: 45 }, { wch: 15 }];
+  const todayStr = date.formatDate(new Date(), 'DDMMYYYY');
+  const facName = currentUserDepartment.value.replace(/\s+/g, '_') || 'All';
+  const filename = `dailyreport_${facName}_${todayStr}`;
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Report');
-  XLSX.writeFile(wb, 'daily-report.xlsx');
-}
+  return {
+    filename,
+    sheetName: 'Daily Report',
+    rawWsData: wsData,
+    merges,
+    cols: [{ wch: 8 }, { wch: 60 }, { wch: 45 }, { wch: 15 }],
+  };
+});
 </script>
 
 <style lang="scss" scoped>
@@ -571,26 +542,32 @@ function exportToExcel(): void {
     box-shadow: none;
   }
 
-  :deep(thead tr) {
-    background: #e2e8f0;
+  :deep(.q-table__top) {
+    padding: 0;
   }
 
-  :deep(th) {
-    font-weight: 600;
-    color: #334155;
-    font-size: 0.75rem;
-    white-space: pre-wrap;
-    text-align: center !important;
-    vertical-align: middle;
-    line-height: 1.3;
-    padding: 8px 6px;
+  :deep(.q-table thead tr th) {
+    background: linear-gradient(180deg, #f1f5f9 0%, #e8eef5 100%);
+    font-weight: 800;
+    font-size: 0.8125rem;
+    color: #475569;
+    letter-spacing: 0.02em;
   }
 
-  :deep(tbody td) {
+  :deep(.q-table tbody tr:nth-child(even)) {
+    background: rgba(248, 246, 241, 0.55);
+  }
+
+  :deep(.q-table tbody td) {
+    font-size: 0.9rem;
     vertical-align: middle;
     padding-top: 12px;
     padding-bottom: 12px;
     white-space: pre-wrap;
+  }
+
+  :deep(.q-table__bottom) {
+    border-top: 1px solid var(--admin-line, #e2e8f0);
   }
 }
 

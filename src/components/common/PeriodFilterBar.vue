@@ -32,10 +32,7 @@
       </q-btn>
     </div>
 
-    <div
-      class="period-filter-bar__row2"
-      :class="{ 'period-filter-bar__row2--inactive': period.preset !== 'custom' }"
-    >
+    <div class="period-filter-bar__row2">
       <span class="period-filter-bar__sub-label q-mr-sm">{{ customLabel }}</span>
       <q-input
         :model-value="dateRangeDisplay"
@@ -261,12 +258,6 @@ onUnmounted(() => {
 .period-filter-bar__row2 {
   padding: 4px 8px 8px;
   border-top: 1px solid rgba(17, 24, 39, 0.06);
-  transition: opacity 0.18s ease;
-
-  &--inactive {
-    opacity: 0.35;
-    pointer-events: none;
-  }
 }
 
 .period-filter-bar__label,

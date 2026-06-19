@@ -64,10 +64,7 @@
           </q-btn>
         </div>
 
-        <div
-          class="admin-filter-bar__row2"
-          :class="{ 'admin-filter-bar__row2--inactive': datePreset !== 'custom' }"
-        >
+        <div class="admin-filter-bar__row2">
           <span class="admin-filter-bar__sub-label q-mr-sm">กำหนดช่วงเวลาเอง</span>
           <q-input
             v-model="dateRangeDisplay"
@@ -96,17 +93,14 @@
       <AppSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
           <div class="row items-center">
-            <q-btn
-              unelevated
-              color="positive"
-              icon="download"
-              :label="
+            <TableExportActions
+              :csv-config="csvExportConfig"
+              :csv-label="
                 selectedRows.length > 0
                   ? `${$t('finance.paymentDownload.downloadCsv')} (${selectedRows.length})`
                   : $t('finance.paymentDownload.downloadCsv')
               "
-              :disable="tableData.length === 0"
-              @click="downloadCsv"
+              @exported="onExported"
             />
           </div>
         </template>
@@ -121,19 +115,11 @@
             </div>
           </div>
           <div class="payment-table-toolbar">
-            <q-input
+            <AppSearchInput
               v-model="search"
-              outlined
-              clearable
-              debounce="200"
               :placeholder="$t('finance.paymentDownload.searchPlaceholder')"
-              bg-color="white"
-              class="payment-search-input-main"
-            >
-              <template #prepend>
-                <q-icon name="search" color="grey-5" />
-              </template>
-            </q-input>
+              class="payment-search"
+            />
           </div>
         </div>
 
@@ -272,11 +258,14 @@
 <script setup lang="ts">
 import AppPageHero from 'components/common/AppPageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import TableExportActions from 'components/common/TableExportActions.vue';
 import { api } from 'src/boot/axios';
 import { computed, onMounted, ref, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Notify, type QTableProps } from 'quasar';
 import { useAuthStore } from 'stores/auth-store';
+import type { CsvExportConfig } from 'src/types/export-types';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
@@ -598,54 +587,49 @@ async function fetchData() {
   }
 }
 
-function escapeCsvValue(value: string | number): string {
-  const text = String(value ?? '');
-  if (text.includes(',') || text.includes('"') || text.includes('\n')) {
-    return `"${text.replace(/"/g, '""')}"`;
-  }
-  return text;
-}
-
-function downloadCsv() {
+const csvExportConfig = computed<CsvExportConfig | null>(() => {
   const dataToDownload = selectedRows.value.length > 0 ? selectedRows.value : tableData.value;
-  if (dataToDownload.length === 0) return;
+  if (dataToDownload.length === 0) return null;
 
-  const header = [
+  const headers = [
     t('finance.paymentDownload.layoutColumns.learnerRef'),
     t('finance.paymentDownload.layoutColumns.appRef'),
     t('finance.paymentDownload.layoutColumns.payerName'),
     t('finance.paymentDownload.layoutColumns.paymentDate'),
     t('finance.paymentDownload.layoutColumns.paymentTime'),
     t('finance.paymentDownload.layoutColumns.amount'),
-  ].join(',');
+  ];
 
-  const rows = dataToDownload.map((row) =>
-    [
-      escapeCsvValue(row.learnerRef),
-      escapeCsvValue(row.appRef),
-      escapeCsvValue(row.payerName),
-      escapeCsvValue(row.paymentDate),
-      escapeCsvValue(row.paymentTime),
-      escapeCsvValue(row.amount.toFixed(2)),
-    ].join(','),
-  );
+  const data = dataToDownload.map((row) => [
+    row.learnerRef,
+    row.appRef,
+    row.payerName,
+    row.paymentDate,
+    row.paymentTime,
+    row.amount.toFixed(2),
+  ]);
 
-  const csvContent = [header, ...rows].join('\n');
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
   const stamp = todayFormatted().replace(/\//g, '');
   const facName = userFacName.value.replace(/\s+/g, '_');
-  link.href = url;
-  link.download = `payment_${facName}_${stamp}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
 
-  Notify.create({
-    type: 'positive',
-    message: t('finance.paymentDownload.downloadSuccess', { count: dataToDownload.length }),
-    position: 'top',
-  });
+  return {
+    filename: `payment_${facName}_${stamp}.csv`,
+    headers,
+    data,
+  };
+});
+
+function onExported(type: 'pdf' | 'excel' | 'csv') {
+  if (type === 'csv') {
+    const count =
+      selectedRows.value.length > 0 ? selectedRows.value.length : tableData.value.length;
+    Notify.create({
+      type: 'positive',
+      message: t('finance.paymentDownload.downloadSuccess', { count }),
+      position: 'top',
+    });
+    selectedRows.value = [];
+  }
 }
 
 const sentinelRef = ref<HTMLElement | null>(null);
@@ -718,12 +702,6 @@ onUnmounted(() => {
 .admin-filter-bar__row2 {
   padding: 4px 8px 8px;
   border-top: 1px solid rgba(17, 24, 39, 0.06);
-  transition: opacity 0.18s ease;
-
-  &--inactive {
-    opacity: 0.35;
-    pointer-events: none;
-  }
 }
 
 .admin-filter-bar__label,
@@ -846,57 +824,25 @@ onUnmounted(() => {
   @media (max-width: 600px) {
     flex: 1 1 100%;
 
-    .payment-search-input-main {
+    .payment-search {
       max-width: none;
       flex: 1 1 100%;
     }
   }
 }
 
-.payment-search-input-main {
+.payment-search {
   flex: 1 1 280px;
   min-width: 200px;
   max-width: 520px;
 
-  :deep(.q-field__control) {
+  :deep(.q-field__control),
+  :deep(.q-field__marginal) {
     height: 52px;
-    padding: 0 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    border: 2px solid #edf2f7;
-    border-radius: 26px !important;
-    transition:
-      border-color 0.2s ease,
-      box-shadow 0.2s ease;
-    background: #fff !important;
-
-    &:hover {
-      border-color: rgba(245, 166, 35, 0.35);
-    }
-
-    &.q-field__control--focused {
-      border-color: #f5a623;
-      box-shadow: 0 12px 28px rgba(245, 166, 35, 0.12);
-    }
-
-    &::before,
-    &::after {
-      display: none;
-    }
   }
 
   :deep(.q-field__native) {
     font-size: 1rem;
-    font-weight: 500;
-    color: #1e293b;
-  }
-
-  :deep(.q-field__native::placeholder) {
-    color: #9e9e9e;
-    opacity: 1;
-  }
-
-  :deep(.q-field__marginal) {
-    height: 52px;
   }
 }
 

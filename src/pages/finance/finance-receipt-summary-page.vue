@@ -15,164 +15,98 @@
     </AppPageHero>
 
     <section class="admin-shell admin-content">
-      <AppSurfaceCard>
-        <div class="row q-col-gutter-md q-mb-md">
-          <!-- Filter section -->
-          <div class="col-12 col-md-8 offset-md-2">
-            <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
-                {{ $t('finance.receiptSummary.departmentLabel') }}
-              </div>
-              <div class="col-12 col-sm-8">
-                <q-input :model-value="userFacName" borderless dense readonly />
-              </div>
-            </div>
+      <!-- Sticky sentinel — 1px div สำหรับ IntersectionObserver detect "stuck" -->
+      <div ref="sentinelRef" class="admin-filter-sentinel" />
 
-            <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
-                {{ $t('finance.receiptSummary.filters.receiptDate') }}
-              </div>
-              <div class="col-12 col-sm-8 row q-col-gutter-sm">
-                <div class="col-6">
-                  <q-input
-                    v-model="filters.receiptDateStart"
-                    outlined
-                    dense
-                    :label="$t('finance.receiptSummary.filters.start')"
-                    placeholder="วว/ดด/ปปปป"
-                    mask="##/##/####"
-                    class="bg-white"
-                  >
-                    <template v-slot:append>
-                      <q-icon name="event" class="cursor-pointer" color="grey-7">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                          <q-date
-                            v-model="filters.receiptDateStart"
-                            mask="DD/MM/YYYY"
-                            color="warning"
-                            text-color="black"
-                          />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-                <div class="col-6">
-                  <q-input
-                    v-model="filters.receiptDateEnd"
-                    outlined
-                    dense
-                    :label="$t('finance.receiptSummary.filters.end')"
-                    placeholder="วว/ดด/ปปปป"
-                    mask="##/##/####"
-                    class="bg-white"
-                  >
-                    <template v-slot:append>
-                      <q-icon name="event" class="cursor-pointer" color="grey-7">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                          <q-date
-                            v-model="filters.receiptDateEnd"
-                            mask="DD/MM/YYYY"
-                            color="warning"
-                            text-color="black"
-                          />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-              </div>
-            </div>
+      <!-- Sticky Filter Bar -->
+      <div class="admin-filter-bar" :class="{ 'admin-filter-bar--stuck': filterStuck }">
+        <div class="admin-filter-bar__row1">
+          <span class="admin-filter-bar__label q-mr-sm">
+            <q-icon name="filter_alt" size="14px" class="q-mr-xs" /> ตัวกรอง
+          </span>
 
-            <div class="row items-center q-mb-sm">
-              <div class="col-12 col-sm-4 text-right q-pr-md text-weight-medium">
-                {{ $t('finance.receiptSummary.filters.effectiveDate') }}
-              </div>
-              <div class="col-12 col-sm-8 row q-col-gutter-sm">
-                <div class="col-6">
-                  <q-input
-                    v-model="filters.effectiveDateStart"
-                    outlined
-                    dense
-                    :label="$t('finance.receiptSummary.filters.start')"
-                    placeholder="วว/ดด/ปปปป"
-                    mask="##/##/####"
-                    class="bg-white"
-                  >
-                    <template v-slot:append>
-                      <q-icon name="event" class="cursor-pointer" color="grey-7">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                          <q-date
-                            v-model="filters.effectiveDateStart"
-                            mask="DD/MM/YYYY"
-                            color="warning"
-                            text-color="black"
-                          />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-                <div class="col-6">
-                  <q-input
-                    v-model="filters.effectiveDateEnd"
-                    outlined
-                    dense
-                    :label="$t('finance.receiptSummary.filters.end')"
-                    placeholder="วว/ดด/ปปปป"
-                    mask="##/##/####"
-                    class="bg-white"
-                  >
-                    <template v-slot:append>
-                      <q-icon name="event" class="cursor-pointer" color="grey-7">
-                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                          <q-date
-                            v-model="filters.effectiveDateEnd"
-                            mask="DD/MM/YYYY"
-                            color="warning"
-                            text-color="black"
-                          />
-                        </q-popup-proxy>
-                      </q-icon>
-                    </template>
-                  </q-input>
-                </div>
-              </div>
-            </div>
+          <button
+            v-for="opt in datePresetOptions"
+            :key="opt.value"
+            class="admin-filter-bar__item"
+            :class="{ 'admin-filter-bar__item--active': datePreset === opt.value }"
+            @click="applyDatePreset(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
 
-            <div class="row items-center">
-              <div class="col-12 col-sm-4 text-right q-pr-md"></div>
-              <div class="col-12 col-sm-8 q-gutter-sm">
-                <q-btn
-                  color="warning"
-                  text-color="black"
-                  :label="$t('finance.receiptSummary.filters.searchBtn')"
-                  unelevated
-                  class="q-px-xl"
-                  :loading="isLoading"
-                  @click="fetchData"
-                />
-                <q-btn
-                  outline
-                  color="grey-7"
-                  :label="$t('finance.receiptSummary.filters.clearBtn')"
-                  class="q-px-lg bg-white"
-                  @click="clearDates"
-                />
-              </div>
-            </div>
-          </div>
+          <div class="admin-filter-bar__divider" />
+
+          <q-btn
+            flat
+            dense
+            round
+            icon="filter_alt_off"
+            color="negative"
+            @click="clearDates"
+            class="q-ml-sm"
+          >
+            <q-tooltip>ล้างตัวกรอง</q-tooltip>
+          </q-btn>
         </div>
-      </AppSurfaceCard>
+
+        <div class="admin-filter-bar__row2">
+          <span class="admin-filter-bar__sub-label q-mr-sm">วันที่ใบเสร็จ:</span>
+          <q-input
+            v-model="receiptDateDisplay"
+            readonly
+            borderless
+            dense
+            placeholder="เลือกช่วงเวลา"
+            class="admin-filter-bar__input admin-filter-bar__input--range q-mr-md"
+          >
+            <template #append>
+              <q-icon name="event" class="cursor-pointer" color="primary">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-date v-model="receiptDateModel" range mask="DD/MM/YYYY" color="primary">
+                    <div class="row items-center justify-end q-gutter-sm">
+                      <q-btn label="ตกลง" color="primary" flat v-close-popup />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+
+          <span class="admin-filter-bar__sub-label q-mr-sm">วันที่ชำระเงิน (Effective Date):</span>
+          <q-input
+            v-model="effectiveDateDisplay"
+            readonly
+            borderless
+            dense
+            placeholder="เลือกช่วงเวลา"
+            class="admin-filter-bar__input admin-filter-bar__input--range"
+          >
+            <template #append>
+              <q-icon name="event" class="cursor-pointer" color="primary">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-date v-model="effectiveDateModel" range mask="DD/MM/YYYY" color="primary">
+                    <div class="row items-center justify-end q-gutter-sm">
+                      <q-btn label="ตกลง" color="primary" flat v-close-popup />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+        </div>
+      </div>
 
       <AppSurfaceCard class="q-mt-md" card-class="q-pa-none">
         <template #header-actions>
-          <ReportExportActions
-            :pdf-label="$t('finance.receiptSummary.exportPdf')"
-            :excel-label="$t('finance.receiptSummary.exportExcel')"
-            @export-pdf="exportToPdf"
-            @export-excel="exportToExcel"
-          />
+          <div class="row items-center">
+            <TableExportActions
+              :pdf-config="pdfExportConfig"
+              :excel-config="excelExportConfig"
+              :pdf-label="$t('finance.receiptSummary.exportPdf')"
+              :excel-label="$t('finance.receiptSummary.exportExcel')"
+            />
+          </div>
         </template>
 
         <div class="receipt-table-head row items-center justify-between q-mb-md q-px-md">
@@ -180,19 +114,11 @@
             {{ $t('finance.receiptSummary.title') }}
           </div>
           <div class="receipt-table-toolbar">
-            <q-input
+            <AppSearchInput
               v-model="search"
-              outlined
-              clearable
-              debounce="200"
               :placeholder="$t('finance.receiptSummary.searchLabel')"
-              bg-color="white"
-              class="receipt-search-input-main"
-            >
-              <template #prepend>
-                <q-icon name="search" color="grey-5" />
-              </template>
-            </q-input>
+              class="receipt-search"
+            />
           </div>
         </div>
 
@@ -352,18 +278,19 @@
 <script setup lang="ts">
 import AppPageHero from 'components/common/AppPageHero.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
-import ReportExportActions from 'components/common/ReportExportActions.vue';
-import { ref, computed, nextTick, onMounted } from 'vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import TableExportActions from 'components/common/TableExportActions.vue';
+import type { PdfExportConfig, ExcelExportConfig } from 'src/types/export-types';
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
-import { Notify, type QTableProps } from 'quasar';
-import jsPDF from 'jspdf';
-import { autoTable, type CellHookData } from 'jspdf-autotable';
-import SarabunFontUrl from 'src/assets/fonts/THSarabunPSK.ttf';
-import * as XLSX from 'xlsx';
+import { Notify, date, type QTableProps } from 'quasar';
+import { type CellHookData } from 'jspdf-autotable';
 import { useAuthStore } from 'stores/auth-store';
 import { api } from 'src/boot/axios';
 
 const authStore = useAuthStore();
+const { t } = useI18n();
 const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || 'ไม่ระบุ');
 
 const search = ref('');
@@ -383,6 +310,137 @@ const filters = ref({
   effectiveDateStart: '',
   effectiveDateEnd: '',
 });
+
+const filterStuck = ref(false);
+const sentinelRef = ref<HTMLElement | null>(null);
+let stickyObserver: IntersectionObserver | null = null;
+
+const datePreset = ref('allTime');
+const datePresetOptions = computed(() => [
+  { label: t('finance.filters.today'), value: 'today' },
+  { label: t('finance.filters.thisWeek'), value: 'thisWeek' },
+  { label: t('finance.filters.thisMonth'), value: 'thisMonth' },
+  { label: t('finance.filters.thisYear'), value: 'thisYear' },
+  { label: t('finance.filters.allTime'), value: 'allTime' },
+  { label: t('finance.filters.custom'), value: 'custom' },
+]);
+
+function formatDateInput(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+const receiptDateModel = computed({
+  get() {
+    if (
+      filters.value.receiptDateStart &&
+      filters.value.receiptDateEnd &&
+      filters.value.receiptDateStart !== filters.value.receiptDateEnd
+    ) {
+      return { from: filters.value.receiptDateStart, to: filters.value.receiptDateEnd };
+    }
+    return filters.value.receiptDateStart || null;
+  },
+  set(val: { from: string; to: string } | string | null) {
+    if (val !== null && typeof val === 'object' && 'from' in val && 'to' in val) {
+      filters.value.receiptDateStart = val.from;
+      filters.value.receiptDateEnd = val.to;
+    } else if (typeof val === 'string') {
+      filters.value.receiptDateStart = val;
+      filters.value.receiptDateEnd = val;
+    } else {
+      filters.value.receiptDateStart = '';
+      filters.value.receiptDateEnd = '';
+    }
+    datePreset.value = 'custom';
+    void fetchData();
+  },
+});
+
+const receiptDateDisplay = computed(() => {
+  if (
+    filters.value.receiptDateStart &&
+    filters.value.receiptDateEnd &&
+    filters.value.receiptDateStart !== filters.value.receiptDateEnd
+  ) {
+    return `${filters.value.receiptDateStart} - ${filters.value.receiptDateEnd}`;
+  }
+  return filters.value.receiptDateStart || '';
+});
+
+const effectiveDateModel = computed({
+  get() {
+    if (
+      filters.value.effectiveDateStart &&
+      filters.value.effectiveDateEnd &&
+      filters.value.effectiveDateStart !== filters.value.effectiveDateEnd
+    ) {
+      return { from: filters.value.effectiveDateStart, to: filters.value.effectiveDateEnd };
+    }
+    return filters.value.effectiveDateStart || null;
+  },
+  set(val: { from: string; to: string } | string | null) {
+    if (val !== null && typeof val === 'object' && 'from' in val && 'to' in val) {
+      filters.value.effectiveDateStart = val.from;
+      filters.value.effectiveDateEnd = val.to;
+    } else if (typeof val === 'string') {
+      filters.value.effectiveDateStart = val;
+      filters.value.effectiveDateEnd = val;
+    } else {
+      filters.value.effectiveDateStart = '';
+      filters.value.effectiveDateEnd = '';
+    }
+    datePreset.value = 'custom';
+    void fetchData();
+  },
+});
+
+const effectiveDateDisplay = computed(() => {
+  if (
+    filters.value.effectiveDateStart &&
+    filters.value.effectiveDateEnd &&
+    filters.value.effectiveDateStart !== filters.value.effectiveDateEnd
+  ) {
+    return `${filters.value.effectiveDateStart} - ${filters.value.effectiveDateEnd}`;
+  }
+  return filters.value.effectiveDateStart || '';
+});
+
+function applyDatePreset(preset: string) {
+  datePreset.value = preset;
+  const now = new Date();
+
+  let start = '';
+  let end = '';
+
+  if (preset === 'today') {
+    start = end = formatDateInput(now);
+  } else if (preset === 'thisWeek') {
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diff);
+    start = formatDateInput(startOfWeek);
+    end = formatDateInput(new Date());
+  } else if (preset === 'thisMonth') {
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    start = formatDateInput(startOfMonth);
+    end = formatDateInput(new Date());
+  } else if (preset === 'thisYear') {
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    start = formatDateInput(startOfYear);
+    end = formatDateInput(new Date());
+  }
+
+  if (preset !== 'custom') {
+    filters.value.receiptDateStart = start;
+    filters.value.receiptDateEnd = end;
+    filters.value.effectiveDateStart = '';
+    filters.value.effectiveDateEnd = '';
+    void fetchData();
+  }
+}
 
 const receiptDialogRef = ref<InstanceType<typeof ReceiptCard> | null>(null);
 const showReceiptDialog = ref(false);
@@ -471,10 +529,12 @@ async function downloadReceipt(row: ReceiptSummaryItem) {
 }
 
 function clearDates() {
+  datePreset.value = 'allTime';
   filters.value.receiptDateStart = '';
   filters.value.receiptDateEnd = '';
   filters.value.effectiveDateStart = '';
   filters.value.effectiveDateEnd = '';
+  void fetchData();
 }
 async function fetchData() {
   isLoading.value = true;
@@ -503,34 +563,8 @@ async function fetchData() {
   }
 }
 
-async function exportToPdf() {
-  const doc = new jsPDF({
-    orientation: 'landscape',
-    unit: 'pt',
-    format: 'a4',
-  });
-
-  // Fetch font and convert to base64
-  const response = await fetch(SarabunFontUrl);
-  const blob = await response.blob();
-  const base64Font = await new Promise<string>((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const dataUrl = reader.result as string;
-      resolve(dataUrl.split(',')[1] || '');
-    };
-    reader.readAsDataURL(blob);
-  });
-
-  // Embed Sarabun font
-  doc.addFileToVFS('THSarabunPSK.ttf', base64Font);
-  doc.addFont('THSarabunPSK.ttf', 'Sarabun', 'normal');
-  doc.setFont('Sarabun');
-
-  // Title
-  doc.setFontSize(13);
-  const title = 'รายงานสรุปการรับเงินค่าลงทะเบียน LifeLong Learning มหาวิทยาลัยบูรพา';
-  doc.text(title, doc.internal.pageSize.getWidth() / 2, 40, { align: 'center' });
+const pdfExportConfig = computed<PdfExportConfig | null>(() => {
+  if (tableData.value.length === 0) return null;
 
   const rows = tableData.value.map((row) => [
     row.no,
@@ -546,10 +580,15 @@ async function exportToPdf() {
       : 'ใช้งาน',
   ]);
 
-  autoTable(doc, {
+  const todayStr = date.formatDate(new Date(), 'DDMMYYYY');
+  const facName = userFacName.value === 'ไม่ระบุ' ? 'All' : userFacName.value.replace(/\s+/g, '_');
+  const filename = `reportpayment_${facName}_${todayStr}`;
+
+  return {
+    filename,
+    titles: ['รายงานสรุปการรับเงินค่าลงทะเบียน LifeLong Learning มหาวิทยาลัยบูรพา'],
+    titleStartY: 40,
     startY: 55,
-    rowPageBreak: 'avoid',
-    showHead: 'everyPage',
     head: [
       [
         'ลำดับ',
@@ -565,22 +604,12 @@ async function exportToPdf() {
     ],
     body: rows,
     styles: {
-      font: 'Sarabun', // ← เปลี่ยนตรงนี้
       fontSize: 8,
       cellPadding: 4,
       valign: 'top',
-      lineColor: [180, 180, 180],
-      lineWidth: 0.5,
-      overflow: 'linebreak',
     },
     headStyles: {
-      font: 'Sarabun', // ← และตรงนี้
-      fillColor: [226, 232, 240],
-      textColor: [51, 65, 85],
-      fontStyle: 'normal', // ← bold ไม่มีใน Sarabun-Regular ให้ใช้ normal
       fontSize: 8,
-      halign: 'center',
-      valign: 'middle',
     },
     columnStyles: {
       0: { halign: 'center', cellWidth: 28 },
@@ -593,7 +622,6 @@ async function exportToPdf() {
       7: { halign: 'center', cellWidth: 120 },
       8: { halign: 'center', cellWidth: 90 },
     },
-    alternateRowStyles: { fillColor: [255, 255, 255] },
     didParseCell(data: CellHookData) {
       if (data.section === 'body' && data.column.index === 8) {
         const val = typeof data.cell.raw === 'string' ? data.cell.raw : '';
@@ -602,12 +630,49 @@ async function exportToPdf() {
         }
       }
     },
-    margin: { top: 20, left: 20, right: 20 },
-    tableWidth: 'auto',
-  });
+  };
+});
 
-  doc.save('receipt-summary.pdf');
-}
+const excelExportConfig = computed<ExcelExportConfig | null>(() => {
+  if (tableData.value.length === 0) return null;
+
+  const header = [
+    'ลำดับ',
+    'เลขที่ใบเสร็จรับเงิน',
+    'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
+    'จำนวนเงิน',
+    'วันที่ชำระเงิน (effective date)',
+    'ชื่อ-สกุล ผู้เรียน',
+    'ชื่อโครงการ/อบรม/หลักสูตร',
+    'ผู้รับเงิน (Collector) / วันที่ใบเสร็จรับเงิน',
+    'สถานะ',
+  ];
+
+  const data = tableData.value.map((row) => [
+    row.no,
+    row.receiptNo,
+    row.customerName,
+    row.amount,
+    formatEffectiveDate(row.effectiveDate),
+    row.learnerName,
+    row.courseName,
+    formatCollectorDate(row.collector).replace(/\n/g, ' '),
+    row.status === 'ยกเลิก'
+      ? 'ยกเลิก ' + (row.cancelBy ?? '') + ' ' + (row.cancelDate ?? '')
+      : 'ใช้งาน',
+  ]);
+
+  const todayStr = date.formatDate(new Date(), 'DDMMYYYY');
+  const facName = userFacName.value === 'ไม่ระบุ' ? 'All' : userFacName.value.replace(/\s+/g, '_');
+  const filename = `reportpayment_${facName}_${todayStr}`;
+
+  return {
+    filename,
+    sheetName: 'Receipt Summary',
+    header,
+    data,
+  };
+});
 
 const columns = computed<QTableProps['columns']>(() => [
   {
@@ -726,69 +791,142 @@ interface ReceiptSummaryResponse {
 }
 
 onMounted(() => {
+  if (sentinelRef.value) {
+    stickyObserver = new IntersectionObserver(
+      ([entry]) => {
+        filterStuck.value = !(entry?.isIntersecting ?? true);
+      },
+      { threshold: 0, rootMargin: '-73px 0px 0px 0px' },
+    );
+    stickyObserver.observe(sentinelRef.value);
+  }
+
   void fetchData();
 });
 
-function exportToExcel() {
-  // สร้าง header row
-  const header = [
-    'ลำดับ',
-    'เลขที่ใบเสร็จรับเงิน',
-    'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
-    'จำนวนเงิน',
-    'วันที่ชำระเงิน (effective date)',
-    'ชื่อ-สกุล ผู้เรียน',
-    'ชื่อโครงการ/อบรม/หลักสูตร',
-    'ผู้รับเงิน (Collector) วันที่ใบเสร็จรับเงิน',
-    'สถานะ',
-  ];
-
-  // สร้าง data rows
-  const rows = tableData.value.map((row) => [
-    row.no,
-    row.receiptNo,
-    row.customerName,
-    row.amount,
-    formatEffectiveDate(row.effectiveDate),
-    row.learnerName,
-    row.courseName.replace(/\n/g, ' '),
-    formatCollectorDate(row.collector).replace(/\n/g, ' '),
-    row.status === 'ยกเลิก'
-      ? `ยกเลิก ${row.cancelBy ?? ''} ${row.cancelDate?.replace('\n', ' ') ?? ''}`
-      : 'ใช้งาน',
-  ]);
-
-  // สร้าง title row
-  const title = 'รายงานสรุปการรับเงินค่าลงทะเบียน LifeLong Learning มหาวิทยาลัยบูรพา';
-
-  // รวม worksheet data: title + blank row + header + rows
-  const wsData = [[title], [], header, ...rows];
-
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // Merge title across all columns (A1:I1)
-  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
-
-  // กำหนดความกว้างคอลัมน์
-  ws['!cols'] = [
-    { wch: 8 }, // ลำดับ
-    { wch: 18 }, // เลขที่ใบเสร็จ
-    { wch: 25 }, // ชื่อผู้ชำระเงิน
-    { wch: 12 }, // จำนวนเงิน
-    { wch: 22 }, // วันที่ชำระเงิน
-    { wch: 25 }, // ชื่อผู้เรียน
-    { wch: 40 }, // ชื่อโครงการ
-    { wch: 30 }, // ผู้รับเงิน
-    { wch: 30 }, // สถานะ
-  ];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'รายงาน');
-  XLSX.writeFile(wb, 'receipt-summary.xlsx');
-}
+onUnmounted(() => {
+  stickyObserver?.disconnect();
+});
 </script>
 
 <style lang="scss" scoped>
+// ─── Sticky Filter Bar ───────────────────────────────────────
+.admin-filter-sentinel {
+  height: 1px;
+}
+
+.admin-filter-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 9;
+  margin-bottom: 16px;
+  border-radius: var(--admin-radius-lg, 16px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  transition: box-shadow 0.2s ease;
+  overflow: clip;
+
+  &--stuck {
+    box-shadow:
+      0 6px 28px rgba(17, 24, 39, 0.1),
+      0 1px 4px rgba(17, 24, 39, 0.05);
+  }
+}
+
+.admin-filter-bar__row1,
+.admin-filter-bar__row2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.admin-filter-bar__row1 {
+  padding: 8px 8px 4px;
+  min-height: 52px;
+}
+
+.admin-filter-bar__row2 {
+  padding: 4px 8px 8px;
+  border-top: 1px solid rgba(17, 24, 39, 0.06);
+}
+
+.admin-filter-bar__label,
+.admin-filter-bar__sub-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--admin-navy, #10233f);
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+.admin-filter-bar__sub-label {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.admin-filter-bar__item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--admin-muted, #64748b);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba($primary, 0.04);
+    color: var(--admin-navy, #10233f);
+  }
+
+  &--active {
+    background: rgba($primary, 0.08) !important;
+    box-shadow: inset 4px 0 0 $primary;
+    color: var(--admin-navy, #10233f);
+  }
+}
+
+.admin-filter-bar__divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(17, 24, 39, 0.08);
+  margin: 0 10px;
+  flex: 0 0 auto;
+}
+
+.admin-filter-bar__input {
+  width: 140px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+}
+.admin-filter-bar__input--range {
+  width: 220px;
+}
+.admin-filter-bar__input:focus-within {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
+}
+
 .receipt-table-head {
   flex-wrap: wrap;
   gap: 12px;
@@ -816,57 +954,25 @@ function exportToExcel() {
     flex: 1 1 100%;
     justify-content: stretch;
 
-    .receipt-search-input-main {
+    .receipt-search {
       max-width: none;
       flex: 1 1 100%;
     }
   }
 }
 
-.receipt-search-input-main {
+.receipt-search {
   flex: 1 1 280px;
   min-width: 200px;
   max-width: 520px;
 
-  :deep(.q-field__control) {
+  :deep(.q-field__control),
+  :deep(.q-field__marginal) {
     height: 52px;
-    padding: 0 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    border: 2px solid #edf2f7;
-    border-radius: 26px !important;
-    transition:
-      border-color 0.2s ease,
-      box-shadow 0.2s ease;
-    background: #fff !important;
-
-    &:hover {
-      border-color: rgba(245, 166, 35, 0.35);
-    }
-
-    &.q-field__control--focused {
-      border-color: #f5a623;
-      box-shadow: 0 12px 28px rgba(245, 166, 35, 0.12);
-    }
-
-    &::before,
-    &::after {
-      display: none;
-    }
   }
 
   :deep(.q-field__native) {
     font-size: 1rem;
-    font-weight: 500;
-    color: #1e293b;
-  }
-
-  :deep(.q-field__native::placeholder) {
-    color: #9e9e9e;
-    opacity: 1;
-  }
-
-  :deep(.q-field__marginal) {
-    height: 52px;
   }
 }
 
