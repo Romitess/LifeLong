@@ -5,16 +5,7 @@
       eyebrow-icon="analytics"
       title="รายงาน"
       description="ติดตามรายวิชาที่ได้รับความสนใจจากจำนวนการเข้าชมและจำนวนผู้ลงทะเบียน"
-    >
-      <template #aside>
-        <q-badge
-          rounded
-          color="primary"
-          :label="activeMenuLabel"
-          class="admin-reports-page__hero-badge"
-        />
-      </template>
-    </AppPageHero>
+    />
 
     <section ref="reportsContentRef" class="admin-shell admin-content admin-reports-page__shell">
       <AdminSectionNav v-model="activeMenu" :items="menuItems" />
@@ -28,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AdminCourseInterestReportManager from 'components/admin/AdminCourseInterestReportManager.vue';
 import RegistrationStatisticsReportManager from 'components/reports/RegistrationStatisticsReportManager.vue';
@@ -54,10 +45,6 @@ const route = useRoute();
 const router = useRouter();
 const activeMenu = ref<ReportsMenu>('interested-courses');
 const reportsContentRef = ref<HTMLElement | null>(null);
-
-const activeMenuLabel = computed(
-  () => menuItems.find((item) => item.value === activeMenu.value)?.label ?? '',
-);
 
 const TAB_TO_SLUG: Record<ReportsMenu, string> = {
   'interested-courses': 'interested-courses',
@@ -122,21 +109,11 @@ watch(activeMenu, () => {
 </script>
 
 <style lang="scss" scoped>
-.admin-reports-page__hero-badge {
-  justify-self: end;
-}
-
 .admin-reports-page__shell {
   padding-top: 8px;
 }
 
 .admin-reports-page__content {
   min-width: 0;
-}
-
-@media (max-width: 900px) {
-  .admin-reports-page__hero-badge {
-    justify-self: start;
-  }
 }
 </style>

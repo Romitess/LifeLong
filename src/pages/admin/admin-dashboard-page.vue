@@ -1,20 +1,11 @@
 <template>
   <q-page class="admin-page admin-dashboard-page">
     <AppPageHero
-      eyebrow="BUU Lifelong Admin Console"
+      :eyebrow="workspaceEyebrow"
       eyebrow-icon="admin_panel_settings"
       title="แดชบอร์ดผู้ดูแลระบบ"
       description="ภาพรวมหลักสูตร ผู้สอน ผู้เรียน และรายได้สำหรับการดูแลระบบในที่เดียว"
-    >
-      <template #aside>
-        <q-badge
-          rounded
-          color="positive"
-          :label="heroBadgeLabel"
-          class="admin-dashboard__hero-badge"
-        />
-      </template>
-    </AppPageHero>
+    />
 
     <section class="admin-shell admin-content">
       <q-banner v-if="errorMessage" rounded dense class="bg-negative text-white q-mb-md">
@@ -287,6 +278,7 @@ import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import { useAdminDashboardMetrics } from 'src/composables/use-admin-dashboard-metrics';
+import { useWorkspaceEyebrow } from 'src/composables/use-workspace-eyebrow';
 import type { RecentRegistration } from 'src/composables/use-admin-dashboard-metrics';
 import { formatCompactCurrency, formatCount, formatCurrency } from 'src/utils/course-format';
 
@@ -295,7 +287,6 @@ type ChartMetric = 'pipeline' | 'learners' | 'revenue';
 const {
   isLoading,
   errorMessage,
-  generatedAt,
   period,
   dateFrom,
   dateTo,
@@ -356,14 +347,7 @@ watch(chartMetric, () => {
 
 type PulseTone = 'gold' | 'secondary' | 'positive' | 'indigo';
 
-const heroBadgeLabel = computed(() =>
-  generatedAt.value
-    ? `อัปเดต ${new Intl.DateTimeFormat('th-TH', {
-        dateStyle: 'short',
-        timeStyle: 'short',
-      }).format(new Date(generatedAt.value))}`
-    : 'กำลังอัปเดต',
-);
+const { workspaceEyebrow } = useWorkspaceEyebrow();
 
 const systemPulse = computed<
   { icon: string; value: string; label: string; description: string; tone: PulseTone }[]
@@ -606,13 +590,6 @@ function formatRelativeTime(iso: string | null): string {
 </script>
 
 <style lang="scss" scoped>
-.admin-dashboard__hero-badge {
-  padding: 10px 18px;
-  font-size: 0.85rem;
-  font-weight: 900;
-  letter-spacing: 0.05em;
-}
-
 .admin-dashboard__pulse {
   margin-bottom: 18px;
 }

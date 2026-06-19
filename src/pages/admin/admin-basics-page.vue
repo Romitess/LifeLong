@@ -5,16 +5,7 @@
       eyebrow-icon="tune"
       title="จัดการข้อมูลพื้นฐาน"
       description="ตั้งค่าหมวด/หมู่วิชา รูปแบบใบประกาศ ผู้ลงนาม และสไลด์รูปภาพหน้าหลักของระบบในที่เดียว"
-    >
-      <template #aside>
-        <q-badge
-          rounded
-          color="primary"
-          :label="activeMenuLabel"
-          class="admin-basics-page__hero-badge"
-        />
-      </template>
-    </AppPageHero>
+    />
 
     <section ref="basicsContentRef" class="admin-shell admin-content admin-basics-page__shell">
       <AdminSectionNav v-model="activeMenu" :items="menuItems" />
@@ -30,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AppPageHero from 'components/common/AppPageHero.vue';
 import CategoriesManager from 'components/admin/CategoriesManager.vue';
@@ -72,10 +63,6 @@ const route = useRoute();
 const router = useRouter();
 const activeMenu = ref<BasicsMenu>('categories');
 const basicsContentRef = ref<HTMLElement | null>(null);
-
-const activeMenuLabel = computed(
-  () => menuItems.find((item) => item.value === activeMenu.value)?.label ?? '',
-);
 
 const TAB_TO_SLUG: Record<BasicsMenu, string> = {
   categories: 'categories',
@@ -142,21 +129,11 @@ watch(activeMenu, () => {
 </script>
 
 <style lang="scss" scoped>
-.admin-basics-page__hero-badge {
-  justify-self: end;
-}
-
 .admin-basics-page__shell {
   padding-top: 8px;
 }
 
 .admin-basics-page__content {
   min-width: 0;
-}
-
-@media (max-width: 900px) {
-  .admin-basics-page__hero-badge {
-    justify-self: start;
-  }
 }
 </style>
