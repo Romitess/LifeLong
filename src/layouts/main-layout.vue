@@ -817,7 +817,7 @@ const navItems = computed<NavItem[]>(() => {
       },
       {
         name: 'finance-reports',
-        label: 'รายงาน',
+        label: t('finance.menu.reports'),
         icon: 'analytics',
         children: [
           {

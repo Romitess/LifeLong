@@ -31,10 +31,10 @@
                 type="button"
                 class="base-table__sort-btn"
                 :class="{ 'base-table__sort-btn--active': sortBy === '__index__' }"
-                :aria-label="`เรียงตาม ${indexLabel}`"
+                :aria-label="`เรียงตาม ${resolvedIndexLabel}`"
                 @click="toggleIndexSort"
               >
-                <span>{{ indexLabel }}</span>
+                <span>{{ resolvedIndexLabel }}</span>
                 <q-icon
                   :name="
                     sortBy !== '__index__'
@@ -138,7 +138,7 @@
 
           <tr v-else class="base-table__empty-row">
             <td :colspan="totalColumnCount" class="base-table__empty" :style="emptyStyle">
-              <slot name="empty">{{ emptyText }}</slot>
+              <slot name="empty">{{ resolvedEmptyText }}</slot>
             </td>
           </tr>
         </tbody>
@@ -147,7 +147,7 @@
 
     <div ref="paginationRef" class="base-table__footer">
       <div v-if="showRowsPerPage" class="base-table__rows-per-page">
-        <span class="base-table__rpp-label">{{ rowsPerPageLabelPrefix }}</span>
+        <span class="base-table__rpp-label">{{ resolvedRowsPerPageLabelPrefix }}</span>
         <BaseSelect
           :model-value="rowsPerPage"
           :options="resolvedRowsPerPageOptions"
@@ -158,7 +158,7 @@
           class="base-table__rpp-select"
           @update:model-value="onRowsPerPageSelect"
         />
-        <span class="base-table__rpp-label">{{ rowsPerPageLabelSuffix }}</span>
+        <span class="base-table__rpp-label">{{ resolvedRowsPerPageLabelSuffix }}</span>
       </div>
 
       <div class="base-table__pagination">
@@ -179,6 +179,7 @@
 
 <script setup lang="ts" generic="T extends object">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BasePagination from 'components/base/BasePagination.vue';
 import BaseSelect from 'components/base/BaseSelect.vue';
 import { useTablePagination } from 'src/composables/use-table-pagination';
@@ -251,10 +252,8 @@ const props = withDefaults(
     rowsPerPage: 10,
     rowHeight: 72,
     headerHeight: 53,
-    emptyText: 'ไม่มีข้อมูล',
     minWidth: '720px',
     showIndex: false,
-    indexLabel: 'ลำดับ',
     indexWidth: '64px',
     indexOffset: 0,
     page: 1,
@@ -263,10 +262,21 @@ const props = withDefaults(
     heightMode: 'auto',
     showRowsPerPage: false,
     rowsPerPageOptions: () => [10, 25, 50],
-    rowsPerPageLabelPrefix: 'แสดง',
-    rowsPerPageLabelSuffix: 'รายการ / หน้า',
     emptyMinHeight: 240,
   },
+);
+
+const { t } = useI18n();
+
+const resolvedEmptyText = computed(
+  () => props.emptyText ?? t('baseTable.emptyText', 'ไม่มีข้อมูล'),
+);
+const resolvedIndexLabel = computed(() => props.indexLabel ?? t('baseTable.indexLabel', 'ลำดับ'));
+const resolvedRowsPerPageLabelPrefix = computed(
+  () => props.rowsPerPageLabelPrefix ?? t('baseTable.rowsPerPagePrefix', 'แสดง'),
+);
+const resolvedRowsPerPageLabelSuffix = computed(
+  () => props.rowsPerPageLabelSuffix ?? t('baseTable.rowsPerPageSuffix', 'รายการ / หน้า'),
 );
 
 const { currentPage, paginationRef, handlePageChange } = useTablePagination({

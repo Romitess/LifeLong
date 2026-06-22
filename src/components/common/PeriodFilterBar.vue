@@ -5,7 +5,7 @@
   <div class="period-filter-bar" :class="{ 'period-filter-bar--stuck': stuck }">
     <div class="period-filter-bar__row1">
       <span class="period-filter-bar__label q-mr-sm">
-        <q-icon name="filter_alt" size="14px" class="q-mr-xs" /> {{ filterLabel }}
+        <q-icon name="filter_alt" size="14px" class="q-mr-xs" /> {{ resolvedFilterLabel }}
       </span>
 
       <button
@@ -28,18 +28,18 @@
         class="q-ml-sm"
         @click="clearFilters"
       >
-        <q-tooltip>{{ clearLabel }}</q-tooltip>
+        <q-tooltip>{{ resolvedClearLabel }}</q-tooltip>
       </q-btn>
     </div>
 
     <div class="period-filter-bar__row2">
-      <span class="period-filter-bar__sub-label q-mr-sm">{{ customLabel }}</span>
+      <span class="period-filter-bar__sub-label q-mr-sm">{{ resolvedCustomLabel }}</span>
       <q-input
         :model-value="dateRangeDisplay"
         readonly
         borderless
         dense
-        :placeholder="customPlaceholder"
+        :placeholder="resolvedCustomPlaceholder"
         class="period-filter-bar__input period-filter-bar__input--range"
       >
         <template #append>
@@ -53,8 +53,18 @@
                 @update:model-value="onDateRangePicked"
               >
                 <div class="row items-center justify-end q-gutter-sm">
-                  <q-btn label="ยกเลิก" color="primary" flat v-close-popup />
-                  <q-btn label="ตกลง" color="primary" flat v-close-popup />
+                  <q-btn
+                    :label="$t('finance.filters.cancel', 'ยกเลิก')"
+                    color="primary"
+                    flat
+                    v-close-popup
+                  />
+                  <q-btn
+                    :label="$t('finance.filters.ok', 'ตกลง')"
+                    color="primary"
+                    flat
+                    v-close-popup
+                  />
                 </div>
               </q-date>
             </q-popup-proxy>
@@ -67,6 +77,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 export interface PeriodFilterValue {
   preset: string;
@@ -79,31 +90,38 @@ export interface PeriodPresetOption {
   value: string;
 }
 
-const DEFAULT_PRESETS: PeriodPresetOption[] = [
-  { label: 'วันนี้', value: 'today' },
-  { label: 'สัปดาห์นี้', value: 'thisWeek' },
-  { label: 'เดือนนี้', value: 'thisMonth' },
-  { label: 'ปีนี้', value: 'thisYear' },
-  { label: 'ทั้งหมด', value: 'allTime' },
-  { label: 'กำหนดเอง', value: 'custom' },
-];
+const { t } = useI18n();
+
+const DEFAULT_PRESETS = computed<PeriodPresetOption[]>(() => [
+  { label: t('finance.filters.today', 'วันนี้'), value: 'today' },
+  { label: t('finance.filters.thisWeek', 'สัปดาห์นี้'), value: 'thisWeek' },
+  { label: t('finance.filters.thisMonth', 'เดือนนี้'), value: 'thisMonth' },
+  { label: t('finance.filters.thisYear', 'ปีนี้'), value: 'thisYear' },
+  { label: t('finance.filters.allTime', 'ทั้งหมด'), value: 'allTime' },
+  { label: t('finance.filters.custom', 'กำหนดเอง'), value: 'custom' },
+]);
 
 const period = defineModel<PeriodFilterValue>({ required: true });
 
-const props = withDefaults(
-  defineProps<{
-    presets?: PeriodPresetOption[];
-    filterLabel?: string;
-    clearLabel?: string;
-    customLabel?: string;
-    customPlaceholder?: string;
-  }>(),
-  {
-    filterLabel: 'ตัวกรอง',
-    clearLabel: 'ล้างตัวกรอง',
-    customLabel: 'กำหนดช่วงเวลาเอง',
-    customPlaceholder: 'เลือกช่วงเวลา',
-  },
+const props = defineProps<{
+  presets?: PeriodPresetOption[];
+  filterLabel?: string;
+  clearLabel?: string;
+  customLabel?: string;
+  customPlaceholder?: string;
+}>();
+
+const resolvedFilterLabel = computed(
+  () => props.filterLabel ?? t('finance.filters.filterLabel', 'ตัวกรอง'),
+);
+const resolvedClearLabel = computed(
+  () => props.clearLabel ?? t('finance.filters.clearLabel', 'ล้างตัวกรอง'),
+);
+const resolvedCustomLabel = computed(
+  () => props.customLabel ?? t('finance.filters.customLabel', 'กำหนดช่วงเวลาเอง'),
+);
+const resolvedCustomPlaceholder = computed(
+  () => props.customPlaceholder ?? t('finance.filters.customPlaceholder', 'เลือกช่วงเวลา'),
 );
 
 const emit = defineEmits<{
@@ -111,7 +129,7 @@ const emit = defineEmits<{
   clear: [];
 }>();
 
-const resolvedPresets = computed(() => props.presets ?? DEFAULT_PRESETS);
+const resolvedPresets = computed(() => props.presets ?? DEFAULT_PRESETS.value);
 
 function formatDateInput(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
