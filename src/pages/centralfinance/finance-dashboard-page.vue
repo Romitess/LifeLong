@@ -118,60 +118,13 @@ const trendData = ref<{ months: string[]; revenue: number[] }>({
 
 const facultyData = ref<{ faculty: string; totalAmount: number }[]>([]);
 
-function toApiDate(ddmmyyyy: string): string {
-  if (!ddmmyyyy) return '';
-  const [dd, mm, yyyy] = ddmmyyyy.split('/');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-function generatePeriodLabels(preset: string, dateFrom: string, dateTo: string): string[] {
-  const parseDmy = (dmy: string): Date => {
-    const [dd, mm, yyyy] = dmy.split('/');
-    return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-  };
-  const now = new Date();
-
-  if (preset === 'today') {
-    const d = dateFrom ? parseDmy(dateFrom) : now;
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return Array.from(
-      { length: 24 },
-      (_, h) => `${y}-${m}-${day} ${String(h).padStart(2, '0')}:00`,
-    );
-  }
-
-  if (preset === 'thisYear') {
-    const year = now.getFullYear();
-    return Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`);
-  }
-
-  if (preset === 'allTime') return [];
-
-  const start = dateFrom ? parseDmy(dateFrom) : now;
-  const end = dateTo ? parseDmy(dateTo) : now;
-  const labels: string[] = [];
-  const cur = new Date(start);
-  while (cur <= end && labels.length < 366) {
-    labels.push(
-      `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`,
-    );
-    cur.setDate(cur.getDate() + 1);
-  }
-  return labels;
-}
-
 async function fetchDashboardData() {
-  const dateFrom = toApiDate(period.value.dateFrom);
-  const dateTo = toApiDate(period.value.dateTo);
+  const { preset, dateFrom, dateTo } = period.value;
   const params: Record<string, string> =
-    period.value.preset === 'allTime'
-      ? { period: 'allTime' }
-      : { period: 'custom', dateFrom, dateTo };
+    preset === 'allTime' ? { period: 'allTime' } : { period: 'custom', dateFrom, dateTo };
 
   const receiptParams: Record<string, string> = {};
-  if (period.value.preset !== 'allTime' && dateFrom) {
+  if (preset !== 'allTime' && dateFrom) {
     receiptParams.receiptDateStart = dateFrom;
     receiptParams.receiptDateEnd = dateTo;
   }
@@ -206,32 +159,8 @@ async function fetchDashboardData() {
 
   if (trendResult.status === 'fulfilled') {
     const trend = trendResult.value.data;
-    const apiMonths: string[] = trend.months ?? trend.labels ?? [];
-    const apiRevenue: number[] = trend.revenue ?? [];
-    const generated = generatePeriodLabels(
-      period.value.preset,
-      period.value.dateFrom,
-      period.value.dateTo,
-    );
-    if (generated.length > 0) {
-      const revenueMap = new Map<string, number>();
-      apiMonths.forEach((label, i) => revenueMap.set(label, apiRevenue[i] ?? 0));
-      trendData.value.months = generated;
-      trendData.value.revenue = generated.map((label) => revenueMap.get(label) ?? 0);
-    } else {
-      trendData.value.months = apiMonths;
-      trendData.value.revenue = apiRevenue;
-    }
-  } else {
-    const generated = generatePeriodLabels(
-      period.value.preset,
-      period.value.dateFrom,
-      period.value.dateTo,
-    );
-    if (generated.length > 0) {
-      trendData.value.months = generated;
-      trendData.value.revenue = generated.map(() => 0);
-    }
+    trendData.value.months = trend.months ?? trend.labels ?? [];
+    trendData.value.revenue = trend.revenue ?? [];
   }
 
   if (receiptResult.status === 'fulfilled') {
