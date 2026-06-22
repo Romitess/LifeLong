@@ -16,6 +16,7 @@ export interface CoursePaymentRecord {
   taxId?: string;
   customerName?: string;
   customerAddress?: string;
+  collectorName?: string;
 }
 
 interface CoursePaymentState {
