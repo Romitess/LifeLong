@@ -57,7 +57,10 @@
                   : t('instructor.students.selectForRoster')
               }}
             </h2>
-            <span>{{ instructorCourses.length.toLocaleString() }} รายวิชา</span>
+            <span
+              >{{ instructorCourses.length.toLocaleString() }}
+              {{ t('instructor.students.coursesUnit') }}</span
+            >
           </div>
         </div>
 
@@ -1547,7 +1550,7 @@ const rosterSummaryCounts = computed(() => {
       verified: total,
       pending: 0,
       issue: 0,
-      scope: `${instructorCourses.value.length.toLocaleString('th-TH')} รายวิชา`,
+      scope: `${instructorCourses.value.length.toLocaleString('th-TH')} ${t('instructor.students.coursesUnit')}`,
     };
   }
 

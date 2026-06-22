@@ -2036,6 +2036,7 @@ export default {
       heroGradesTitle: 'บันทึกผลการเรียน',
       selectForGrades: 'เลือกคอร์สเพื่อบันทึกผลการเรียน',
       selectForRoster: 'เลือกคอร์สเพื่อตรวจสอบรายชื่อผู้เรียน',
+      coursesUnit: 'รายวิชา',
       myCourses: 'วิชาของฉัน',
       col: {
         no: 'ลำดับ',

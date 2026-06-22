@@ -2021,6 +2021,7 @@ export default {
       heroGradesTitle: 'Record Learning Results',
       selectForGrades: 'Select course to record learning results',
       selectForRoster: 'Select course to check student list',
+      coursesUnit: 'courses',
       myCourses: 'My Courses',
       col: {
         no: 'No.',
