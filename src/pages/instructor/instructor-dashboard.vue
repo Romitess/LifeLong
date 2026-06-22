@@ -361,7 +361,7 @@
             </q-card-section>
           </q-card>
 
-          <h2 class="section-title-underline q-mt-xl q-mb-lg">
+          <h2 class="section-title-underline q-mb-lg" style="margin-top: 30px">
             {{ t('instructor.dashboard.systemAnnouncement') }}
           </h2>
           <q-banner dense rounded class="bg-blue-1 text-blue-9 q-pa-md">
