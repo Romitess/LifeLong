@@ -167,7 +167,7 @@ const segmentsWithPercent = computed(() => {
 }
 
 .cf-donut-chart__center-label {
-  color: #475569;
+  color: var(--finance-navy, #10233f);
   font-size: 0.68rem;
   font-weight: 900;
   text-transform: uppercase;
