@@ -727,7 +727,7 @@ export default {
       admin: 'ผู้ดูแล',
       instructor: 'ผู้สอน',
       finance: 'เจ้าหน้าที่การเงินคณะ',
-      central_finance: 'เจ้าหน้าที่การเงินกลาง',
+      central_finance: 'เจ้าหน้าที่การเงินกองคลัง',
       student: 'ผู้เรียน',
     },
     menu: {
