@@ -268,7 +268,7 @@ const form = reactive({
   fundCode: '',
   isNotifyFaculty: false,
   notifyFaculty: '',
-  notifyApprover: 'เจ้าหน้าที่การเงินกลาง', // Mock default approver
+  notifyApprover: 'เจ้าหน้าที่การเงินกองคลัง', // Mock default approver
   notifyNote: '',
 });
 
