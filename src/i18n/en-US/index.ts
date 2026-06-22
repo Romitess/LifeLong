@@ -1591,6 +1591,10 @@ export default {
     goHome: 'Go to Home',
     goBack: 'Go Back',
   },
+  courseLearning: {
+    markDone: 'Mark as done',
+    done: 'Done',
+  },
   instructor: {
     nav: {
       dashboard: 'Instructor Dashboard',

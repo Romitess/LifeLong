@@ -1606,6 +1606,10 @@ export default {
     goHome: 'กลับหน้าหลัก',
     goBack: 'ย้อนกลับ',
   },
+  courseLearning: {
+    markDone: 'ทำเครื่องหมายว่าเสร็จแล้ว',
+    done: 'เสร็จแล้ว',
+  },
   instructor: {
     nav: {
       dashboard: 'หน้าหลักผู้สอน',

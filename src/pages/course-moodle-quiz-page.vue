@@ -277,31 +277,12 @@
         </div>
 
         <!-- Waiting for manual grade -->
-        <q-banner
+        <!-- <q-banner
           v-if="isWaitingReviewGrade"
           rounded
           class="summary-banner summary-banner--waiting q-mb-lg"
         >
-          <template #avatar>
-            <q-spinner-dots color="amber-8" size="28px" />
-          </template>
-          <span class="text-weight-medium">รอผลการตรวจจากอาจารย์</span>
-          <br />
-          <span class="text-caption text-grey-7"
-            >ระบบจะแจ้งเตือนเมื่อมีผล (ตรวจสอบอัตโนมัติทุก 30 วินาที)</span
-          >
-          <template #action>
-            <BaseButton
-              flat
-              no-caps
-              color="amber-9"
-              label="ตรวจสอบเดี๋ยวนี้"
-              icon="refresh"
-              :loading="loading"
-              @click="() => void pollReviewGrade()"
-            />
-          </template>
-        </q-banner>
+        </q-banner> -->
 
         <q-banner
           v-if="quizPassed === true"

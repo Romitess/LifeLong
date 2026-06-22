@@ -164,7 +164,7 @@
                           "
                           color="positive"
                           icon="check_circle"
-                          :label="$q.screen.lt.sm ? '' : 'เสร็จแล้ว'"
+                          :label="$q.screen.lt.sm ? '' : $t('courseLearning.done')"
                           no-caps
                           dense
                           disable
@@ -182,8 +182,8 @@
                             $q.screen.lt.sm
                               ? ''
                               : lesson.isCompleted
-                                ? 'เสร็จแล้ว'
-                                : 'ทำเครื่องหมายว่าเสร็จแล้ว'
+                                ? $t('courseLearning.done')
+                                : $t('courseLearning.markDone')
                           "
                           no-caps
                           dense
@@ -238,7 +238,7 @@
                         "
                         color="positive"
                         icon="check_circle"
-                        :label="$q.screen.lt.sm ? '' : 'เสร็จแล้ว'"
+                        :label="$q.screen.lt.sm ? '' : $t('courseLearning.done')"
                         no-caps
                         dense
                         disable
@@ -256,8 +256,8 @@
                           $q.screen.lt.sm
                             ? ''
                             : lesson.isCompleted
-                              ? 'เสร็จแล้ว'
-                              : 'ทำเครื่องหมายว่าเสร็จแล้ว'
+                              ? $t('courseLearning.done')
+                              : $t('courseLearning.markDone')
                         "
                         no-caps
                         dense
