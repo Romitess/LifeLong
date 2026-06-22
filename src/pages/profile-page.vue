@@ -236,6 +236,7 @@
       :amount="selectedPayment?.amount ?? 0"
       :is-copy="false"
       :receipt-filename="currentReceiptFilename"
+      :collector-name="selectedPayment?.collectorName || ''"
     />
   </q-page>
 </template>
@@ -700,6 +701,7 @@ async function downloadReceiptByCourseId(courseId: string): Promise<void> {
         effectiveDate: string;
         coseCode: string;
         coseNameTh: string;
+        collectorName?: string;
       } | null;
     }>(`/api/lltenrollreceipt/enroll/${registration.enrollId}/receipt-data`);
 
@@ -730,6 +732,7 @@ async function downloadReceiptByCourseId(courseId: string): Promise<void> {
       customerName: data.enrollData?.receivedFrom || '',
       taxId: data.enrollData?.taxId || '',
       customerAddress: data.enrollData?.address || '',
+      collectorName: data.enrollData?.collectorName || '',
     };
 
     selectedPayment.value = paymentData;

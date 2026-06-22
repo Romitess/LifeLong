@@ -29,28 +29,30 @@
       <!-- ── Row 2: Revenue Chart + Faculty Breakdown ──────────── -->
       <div class="finance-main-grid">
         <!-- Revenue Trend -->
-        <AppSurfaceCard
-          eyebrow="Revenue Trend"
-          title="แนวโน้มรายรับรวม"
-          :subtitle="dateRangeLabel || 'ทั้งหมด'"
-          card-class="finance-panel"
+        <CentralFinanceSurfaceCard
+          :eyebrow="$t('finance.dashboard.financialTrends', 'แนวโน้มการเงิน')"
+          :title="$t('finance.dashboard.financialOverview', 'ภาพรวมทางการเงิน')"
+          :subtitle="dateRangeLabel || $t('finance.filters.allTime')"
+          card-class="finance-panel finance-panel--chart"
         >
-          <div class="chart-block__header">
-            <span class="chart-block__title">รายรับรวมทุกคณะ/ส่วนงาน (บาท)</span>
+          <div class="q-mb-md">
+            <div class="text-subtitle1 text-weight-bold q-mb-md text-grey-8">
+              {{ $t('finance.dashboard.totalRevenueLabel', 'รายรับรวมทั้งหมด (บาท)') }}
+            </div>
+            <AppAreaChart
+              :series="revenueChartSeries"
+              :x-labels="trendChartLabels"
+              :height="240"
+              :format-y-tick="formatRevenueTick"
+              :aria-label="$t('finance.dashboard.totalRevenueLabel', 'รายรับรวมทั้งหมด')"
+            />
           </div>
-          <AppAreaChart
-            :series="revenueChartSeries"
-            :x-labels="trendChartLabels"
-            :height="280"
-            :format-y-tick="formatRevenueTick"
-            aria-label="รายรับรวมทุกคณะ"
-          />
-        </AppSurfaceCard>
+        </CentralFinanceSurfaceCard>
 
         <!-- Faculty Revenue Pie Chart -->
-        <AppSurfaceCard
-          eyebrow="By Faculty"
-          title="สัดส่วนรายรับตามคณะ/ส่วนงาน"
+        <CentralFinanceSurfaceCard
+          :eyebrow="$t('centralFinance.facultyRevenue.chart.eyebrow', 'By Faculty')"
+          :title="$t('centralFinance.facultyRevenue.chart.title')"
           card-class="finance-panel"
         >
           <div v-if="facultyDonutData.length === 0" class="breakdown-empty">
@@ -61,10 +63,10 @@
             v-else
             :data="facultyDonutData"
             center-label="รายรับรวม"
-            :center-value="formatCompactCurrency(dashboardStats.totalRevenue)"
+            :center-value="formatCurrency(dashboardStats.totalRevenue)"
             :format-value="(v) => formatCurrency(Math.round(v))"
           />
-        </AppSurfaceCard>
+        </CentralFinanceSurfaceCard>
       </div>
     </section>
   </q-page>
@@ -72,9 +74,10 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
-import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
 import CentralFinanceDonutChart, {
   type DonutChartSegment,
@@ -85,6 +88,7 @@ import { api } from 'src/boot/axios';
 import { formatCompactCurrency } from 'src/utils/course-format';
 import type { ReceiptUsageResponse } from 'src/types/receipt-usage-report';
 
+const { locale, t } = useI18n();
 const financeStore = useCentralFinanceStore();
 
 // ── Sticky Filter Bar ────────────────────────────────────────
@@ -103,7 +107,6 @@ const dashboardStats = ref({
   totalRevenue: 0,
   totalReceipts: 0,
   issuedReceipts: 0,
-  onlinePayments: 0,
   voidReceipts: 0,
 });
 
@@ -115,15 +118,14 @@ const trendData = ref<{ months: string[]; revenue: number[] }>({
 const facultyData = ref<{ faculty: string; totalAmount: number }[]>([]);
 
 async function fetchDashboardData() {
+  const { preset, dateFrom, dateTo } = period.value;
   const params: Record<string, string> =
-    period.value.preset === 'allTime'
-      ? { period: 'allTime' }
-      : { period: 'custom', dateFrom: period.value.dateFrom, dateTo: period.value.dateTo };
+    preset === 'allTime' ? { period: 'allTime' } : { period: 'custom', dateFrom, dateTo };
 
   const receiptParams: Record<string, string> = {};
-  if (period.value.preset !== 'allTime' && period.value.dateFrom) {
-    receiptParams.receiptDateStart = period.value.dateFrom;
-    receiptParams.receiptDateEnd = period.value.dateTo;
+  if (preset !== 'allTime' && dateFrom) {
+    receiptParams.receiptDateStart = dateFrom;
+    receiptParams.receiptDateEnd = dateTo;
   }
 
   const [statsResult, trendResult, receiptResult, facultyResult] = await Promise.allSettled([
@@ -142,13 +144,9 @@ async function fetchDashboardData() {
     const stats = statsResult.value.data;
     dashboardStats.value.totalRevenue = stats.totalRevenue ?? 0;
     dashboardStats.value.issuedReceipts = stats.issuedReceipts ?? 0;
-    dashboardStats.value.onlinePayments = stats.onlinePayments ?? 0;
-    dashboardStats.value.voidReceipts = stats.voidReceipts ?? 0;
+    dashboardStats.value.voidReceipts = stats.pendingReceipts ?? 0;
   } else {
     dashboardStats.value.totalRevenue = validTx.reduce((s, t) => s + t.amount, 0);
-    dashboardStats.value.onlinePayments = validTx.filter(
-      (t) => t.paymentChannel === 'transfer' || t.paymentChannel === 'qrcode',
-    ).length;
     dashboardStats.value.voidReceipts = financeStore.transactions.filter(
       (t) => t.status === 'void',
     ).length;
@@ -197,25 +195,25 @@ interface MetricCard {
 
 const metricCards = computed<MetricCard[]>(() => [
   {
-    label: 'รายรับรวมทั้งหมด',
+    label: t('centralFinance.dashboard.kpi.totalRevenue'),
     value: formatCurrency(dashboardStats.value.totalRevenue),
     icon: 'account_balance_wallet',
     tone: 'positive',
   },
   {
-    label: 'ใบเสร็จรับเงินทั้งหมด',
-    value: `${dashboardStats.value.totalReceipts.toLocaleString('th-TH')} ใบ`,
+    label: t('centralFinance.dashboard.kpi.totalReceipts'),
+    value: `${dashboardStats.value.totalReceipts.toLocaleString('th-TH')} ${t('centralFinance.dashboard.kpi.receiptUnit')}`,
     icon: 'receipt',
     tone: 'secondary',
   },
   {
-    label: 'รายการชำระออนไลน์',
-    value: `${dashboardStats.value.onlinePayments.toLocaleString('th-TH')} รายการ`,
-    icon: 'payment',
-    tone: 'blue',
+    label: t('centralFinance.dashboard.kpi.voidReceipts'),
+    value: `${dashboardStats.value.voidReceipts.toLocaleString('th-TH')} ${t('centralFinance.dashboard.kpi.receiptUnit')}`,
+    icon: 'cancel',
+    tone: 'amber',
   },
   {
-    label: 'ค่าเฉลี่ยต่อรายการ',
+    label: t('centralFinance.dashboard.kpi.avgPerReceipt'),
     value: formatCurrency(
       dashboardStats.value.issuedReceipts > 0
         ? Math.round(dashboardStats.value.totalRevenue / dashboardStats.value.issuedReceipts)
@@ -227,30 +225,16 @@ const metricCards = computed<MetricCard[]>(() => [
 ]);
 
 // ── Revenue Trend Chart ──────────────────────────────────────
-const THAI_MONTH_ABBR: Record<string, string> = {
-  '01': 'ม.ค.',
-  '02': 'ก.พ.',
-  '03': 'มี.ค.',
-  '04': 'เม.ย.',
-  '05': 'พ.ค.',
-  '06': 'มิ.ย.',
-  '07': 'ก.ค.',
-  '08': 'ส.ค.',
-  '09': 'ก.ย.',
-  '10': 'ต.ค.',
-  '11': 'พ.ย.',
-  '12': 'ธ.ค.',
-};
-
 function formatYmLabel(ym: string): string {
   if (ym.includes(' ')) return ym.split(' ')[1] ?? ym;
   const parts = ym.split('-');
+  const localeStr = locale.value === 'th' ? 'th-TH' : 'en-US';
   if (parts.length === 3) {
-    return `${Number(parts[2])} ${THAI_MONTH_ABBR[parts[1] ?? '01'] ?? parts[1]}`;
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return new Intl.DateTimeFormat(localeStr, { day: 'numeric', month: 'short' }).format(d);
   }
-  const mm = parts[1] ?? '01';
-  const buddhistYear = Number(parts[0] ?? 0) + 543;
-  return `${THAI_MONTH_ABBR[mm] ?? mm} ${String(buddhistYear).slice(-2)}`;
+  const d = new Date(Number(parts[0]), Number(parts[1] ?? '1') - 1);
+  return new Intl.DateTimeFormat(localeStr, { month: 'short', year: '2-digit' }).format(d);
 }
 
 const trendChartLabels = computed(() => trendData.value.months.map(formatYmLabel));
@@ -259,9 +243,9 @@ const revenueChartSeries = computed<AreaChartSeries[]>(() => [
   {
     id: 'revenue',
     label: 'รายรับรวมทั้งหมด',
-    color: '#047857',
+    color: '#0F766E',
     values: trendData.value.revenue,
-    totalLabel: formatCompactCurrency(trendData.value.revenue.reduce((s, v) => s + v, 0)),
+    totalLabel: formatCurrency(dashboardStats.value.totalRevenue),
     formatValue: (v) => formatCurrency(Math.round(v)),
   },
 ]);

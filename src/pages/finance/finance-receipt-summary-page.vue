@@ -220,6 +220,7 @@
       :receipt-filename="selectedReceipt?.receiptFilename ?? ''"
       :receipt-type="selectedReceipt?.receiptType ?? 'D'"
       :is-copy="selectedReceipt?.receiptType === 'D'"
+      :collector-name="collectorName"
     />
   </q-page>
 </template>
@@ -405,6 +406,7 @@ const issuedAtDate = ref<string | null>(null);
 const customerName = ref('');
 const customerTaxId = ref('');
 const customerAddress = ref('');
+const collectorName = ref('');
 
 const courseCode = ref('');
 const courseTitle = ref('');
@@ -467,6 +469,9 @@ async function downloadReceipt(row: ReceiptSummaryItem) {
     customerTaxId.value = data.enrollData?.taxId || '';
     customerAddress.value = data.enrollData?.address || '';
     customerName.value = data.enrollData?.receivedFrom || row.customerName || '';
+    collectorName.value =
+      data.enrollData?.collectorName ||
+      (row.collector ? (row.collector.split('\n')[0]?.trim() ?? '') : '');
 
     courseCode.value = data.enrollData?.coseCode || row.courseName.split(':')[0] || '';
     courseTitle.value =

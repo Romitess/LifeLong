@@ -135,6 +135,7 @@
       :course-code="courseCode"
       :amount="amount"
       :is-copy="true"
+      :collector-name="collectorName"
     />
   </q-page>
 </template>
@@ -327,6 +328,11 @@ const courseTitle = computed<string>(() => {
 const amount = computed<number>(() => {
   const val = selectedReceipt.value?.amount;
   return typeof val === 'number' ? val : 0;
+});
+const collectorName = computed<string>(() => {
+  if (!selectedReceipt.value?.collector) return '';
+  const lines = selectedReceipt.value.collector.split('\n');
+  return lines[0]?.trim() || '';
 });
 
 const columns = computed<BaseTableColumn[]>(() => [
