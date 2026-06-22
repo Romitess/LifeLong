@@ -123,7 +123,8 @@ const router = useRouter();
 
 function handleChangePassword(): void {
   const email = authStore.user?.email ?? '';
-  if (email.endsWith('@go.buu.ac.th')) {
+  const isValid = /^[^\s@]+@(go\.)?buu\.ac\.th$/i.test(email);
+  if (isValid) {
     window.open('https://myid.buu.ac.th', '_blank', 'noopener,noreferrer');
   } else {
     void router.push('/login-forget');
