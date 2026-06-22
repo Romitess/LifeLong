@@ -129,7 +129,7 @@
       <div class="row q-col-gutter-xl">
         <!-- ─── ACTIVE COURSES ─── -->
         <div class="col-12 col-lg-8">
-          <div class="row items-center justify-between q-mb-lg">
+          <div class="row items-end justify-between q-mb-lg">
             <h2 class="section-title-underline q-mb-none">
               {{ t('instructor.nav.activeCourses') }}
             </h2>
@@ -318,9 +318,11 @@
 
         <!-- ─── SIDEBAR / ACTIVITIES ─── -->
         <div class="col-12 col-lg-4">
-          <h2 class="section-title-underline q-mb-lg">
-            {{ t('instructor.dashboard.recentActivities') }}
-          </h2>
+          <div class="row items-end q-mb-lg">
+            <h2 class="section-title-underline q-mb-none">
+              {{ t('instructor.dashboard.recentActivities') }}
+            </h2>
+          </div>
           <q-card flat bordered class="activity-card">
             <q-list separator>
               <q-item v-for="activity in activities" :key="activity.id" class="q-py-md">
@@ -1355,8 +1357,6 @@ function onViewAllActivitiesClick(event: Event) {
 .section-title-underline {
   display: inline-block;
   padding-bottom: 8px;
-  border-bottom: 4px solid $primary;
-  border-radius: 0 0 2px 2px;
   font-size: 1.5rem;
   font-weight: 700;
   color: $blue-grey-9;
