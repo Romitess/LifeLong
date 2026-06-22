@@ -1248,6 +1248,7 @@ export default {
         voidReceipts: 'ใบเสร็จโมฆะ',
         avgPerReceipt: 'ค่าเฉลี่ยต่อรายการ',
         receiptUnit: 'ใบ',
+        noRevenueData: 'ไม่มีข้อมูลรายรับ',
       },
     },
     fundSources: {

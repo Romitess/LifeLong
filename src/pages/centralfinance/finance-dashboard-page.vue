@@ -57,7 +57,7 @@
         >
           <div v-if="facultyDonutData.length === 0" class="breakdown-empty">
             <q-icon name="pie_chart" size="42px" color="grey-4" />
-            <p>ไม่มีข้อมูลรายรับ</p>
+            <p>{{ $t('centralFinance.dashboard.kpi.noRevenueData') }}</p>
           </div>
           <CentralFinanceDonutChart
             v-else
@@ -242,7 +242,7 @@ const trendChartLabels = computed(() => trendData.value.months.map(formatYmLabel
 const revenueChartSeries = computed<AreaChartSeries[]>(() => [
   {
     id: 'revenue',
-    label: 'รายรับรวมทั้งหมด',
+    label: t('centralFinance.dashboard.kpi.totalRevenue'),
     color: '#0F766E',
     values: trendData.value.revenue,
     totalLabel: formatCurrency(dashboardStats.value.totalRevenue),

@@ -1233,6 +1233,7 @@ export default {
         voidReceipts: 'Void Receipts',
         avgPerReceipt: 'Average per Receipt',
         receiptUnit: 'receipts',
+        noRevenueData: 'No revenue data',
       },
     },
     fundSources: {
