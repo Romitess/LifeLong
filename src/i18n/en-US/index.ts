@@ -1547,6 +1547,7 @@ export default {
         facultyCount: 'Departments with Revenue',
       },
       chart: {
+        eyebrow: 'By Faculty',
         title: 'Revenue by Faculty',
         totalRevenue: 'Total Annual Revenue',
       },

@@ -1562,6 +1562,7 @@ export default {
         facultyCount: 'ส่วนงานที่มีรายรับ',
       },
       chart: {
+        eyebrow: 'แยกตามคณะ',
         title: 'สัดส่วนรายได้แยกตามคณะ',
         totalRevenue: 'รายรับรวมทั้งหมดประจำปี',
       },
