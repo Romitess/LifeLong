@@ -162,11 +162,8 @@
                         {{ getTranslatedCourseTitle(course) }}
                       </div>
                     </div>
-                    <q-badge
-                      :color="course.status === 'เปิดรับสมัคร' ? 'positive' : 'grey-7'"
-                      class="q-pa-sm"
-                    >
-                      {{ course.status }}
+                    <q-badge :color="getStatusColor(course.status)" class="q-pa-sm">
+                      {{ t(getStatusKey(course.status)) }}
                     </q-badge>
                   </div>
 
@@ -178,11 +175,12 @@
                     </div>
                     <div class="row items-center">
                       <q-icon name="star" class="q-mr-xs text-amber" />
-                      4.8 (124 รีวิว)
+                      4.8 (124 {{ t('instructor.dashboard.reviews') }})
                     </div>
                     <div class="row items-center">
                       <q-icon name="update" class="q-mr-xs" />
-                      อัปเดตล่าสุด: 2 วันที่แล้ว
+                      {{ t('instructor.dashboard.lastUpdated') }}:
+                      {{ t('instructor.dashboard.daysAgo', { count: 2 }) }}
                     </div>
                   </div>
 
@@ -385,7 +383,7 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import StatCard from 'src/components/base/StatCard.vue';
-import type { Course } from 'src/types/course';
+import type { Course, CourseStatus } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
 import heroOverviewImageUrl from 'src/assets/we1.png';
 import heroCourseImageUrl from 'src/assets/homepicture1.png';
@@ -690,6 +688,28 @@ function getCourseDetail(courseId: string): CourseDetail | undefined {
 function getTranslatedCourseTitle(course: Course): string {
   if (locale.value === 'th') return course.title;
   return course.titleEn || course.title;
+}
+
+function getStatusKey(status: CourseStatus): string {
+  const map: Record<CourseStatus, string> = {
+    ประกาศนียบัตร: 'statusCert',
+    สะสมหน่วยกิต: 'statusCredit',
+    เปิดรับสมัคร: 'statusOpen',
+    ปิดรับสมัคร: 'statusClosed',
+    เร็วๆนี้: 'statusSoon',
+  };
+  return map[status] ?? status;
+}
+
+function getStatusColor(status: CourseStatus): string {
+  const colorMap: Record<CourseStatus, string> = {
+    ประกาศนียบัตร: 'blue-grey-8',
+    สะสมหน่วยกิต: 'amber-8',
+    เปิดรับสมัคร: 'positive',
+    ปิดรับสมัคร: 'red-7',
+    เร็วๆนี้: 'orange-8',
+  };
+  return colorMap[status] ?? 'grey-7';
 }
 
 function formatDeliveryModes(course: Course): string {

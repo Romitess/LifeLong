@@ -333,6 +333,14 @@ const selectedTemplateForModal = computed<ActiveCertTemplate | null>(() => {
   return { ...t, url: templateBlobUrls.value[t.id] ?? null };
 });
 
+function toRelativePath(rawUrl: string): string {
+  try {
+    return new URL(rawUrl).pathname;
+  } catch {
+    return rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`;
+  }
+}
+
 async function loadTemplateBlobUrls(templates: ActiveCertTemplate[]): Promise<void> {
   const newUrls: Record<number, string> = {};
   await Promise.all(
@@ -340,7 +348,8 @@ async function loadTemplateBlobUrls(templates: ActiveCertTemplate[]): Promise<vo
       .filter((t) => t.url)
       .map(async (t) => {
         try {
-          const response = await api.get<Blob>(t.url!, { responseType: 'blob' });
+          const imgPath = toRelativePath(t.url!);
+          const response = await api.get<Blob>(imgPath, { responseType: 'blob' });
           newUrls[t.id] = URL.createObjectURL(response.data);
         } catch (err) {
           console.error('[CertTemplate] failed to load image', t.url, err);

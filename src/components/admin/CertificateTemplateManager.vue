@@ -530,13 +530,13 @@ async function replaceItemBlobUrls(templateItems: AdminCertTemplateItem[]): Prom
   const newUrls: Record<number, string> = {};
   await Promise.all(
     templateItems
-      .filter((item) => item.url)
+      .filter((item) => item.path)
       .map(async (item) => {
         try {
-          const response = await api.get<Blob>(item.url!, { responseType: 'blob' });
+          const response = await api.get<Blob>(`/${item.path!}`, { responseType: 'blob' });
           newUrls[item.id] = URL.createObjectURL(response.data);
         } catch (err) {
-          console.error('[CertTemplate] failed to load image', item.url, err);
+          console.error('[CertTemplate] failed to load image', item.path, err);
         }
       }),
   );
@@ -590,9 +590,9 @@ function openEditDialog(item: AdminCertTemplateItem): void {
   dialogMode.value = 'edit';
   editingId.value = item.id;
   pendingDeleteFile.value = false;
-  existingFile.value = item.url
+  existingFile.value = item.path
     ? {
-        url: item.url,
+        url: `/${item.path}`,
         ...(item.filename ? { filename: item.filename } : {}),
         ...(item.imgSize ? { imgSize: item.imgSize } : {}),
       }
@@ -737,8 +737,15 @@ async function confirmDelete(): Promise<void> {
     $q.notify({ type: 'positive', message: 'ลบรูปแบบ Certificate เรียบร้อย', position: 'top' });
     if (items.value.length === 0 && pagination.value.page > 1)
       await load(pagination.value.page - 1);
-  } catch {
-    $q.notify({ type: 'negative', message: 'ลบไม่สำเร็จ กรุณาลองใหม่', position: 'top' });
+  } catch (err: unknown) {
+    const serverMsg = (err as { response?: { data?: { message?: string } } })?.response?.data
+      ?.message;
+    $q.notify({
+      type: 'negative',
+      message: typeof serverMsg === 'string' ? serverMsg : 'ลบไม่สำเร็จ กรุณาลองใหม่',
+      position: 'top',
+      timeout: 5000,
+    });
   }
 }
 
@@ -859,10 +866,6 @@ function formatFileSize(bytes: number): string {
   flex-direction: column;
 }
 
-.cert-manager-dialog__body {
-  overflow-y: auto;
-  flex: 1;
-}
 .cert-manager-dialog__header {
   padding: 20px 24px 16px;
 }
@@ -888,6 +891,9 @@ function formatFileSize(bytes: number): string {
   font-weight: 850;
 }
 .cert-manager-dialog__body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
@@ -1222,5 +1228,31 @@ function formatFileSize(bytes: number): string {
   margin: 0 auto;
   border-radius: 8px;
   object-fit: contain;
+}
+</style>
+
+<style lang="scss">
+/* Non-scoped: q-dialog teleports to <body> so scoped styles can't reach it */
+.cert-manager-dialog__card {
+  max-height: calc(100dvh - 48px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+.cert-manager-dialog__body {
+  overflow-y: auto !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 20px 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+}
+.cert-manager-dialog__actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  padding: 0 24px 24px !important;
+  flex-shrink: 0 !important;
 }
 </style>

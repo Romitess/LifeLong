@@ -1937,6 +1937,9 @@ export default {
       syllabusMetaRegistration: 'รับสมัคร',
       syllabusMetaFee: 'ค่าลงทะเบียน',
       syllabusHoursUnit: 'ชั่วโมง',
+      lastUpdated: 'อัปเดตล่าสุด',
+      daysAgo: '{count} วันที่แล้ว',
+      reviews: 'รีวิว',
     },
     certificates: {
       pageTitle: 'สร้าง Certificate',

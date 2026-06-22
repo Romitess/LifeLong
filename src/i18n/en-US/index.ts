@@ -1922,6 +1922,9 @@ export default {
       syllabusMetaRegistration: 'Registration',
       syllabusMetaFee: 'Fee',
       syllabusHoursUnit: 'hours',
+      lastUpdated: 'Last updated',
+      daysAgo: '{count} days ago',
+      reviews: 'reviews',
     },
     certificates: {
       pageTitle: 'Create Certificate',
