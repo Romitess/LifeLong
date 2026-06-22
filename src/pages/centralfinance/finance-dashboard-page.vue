@@ -88,7 +88,7 @@ import { api } from 'src/boot/axios';
 import { formatCompactCurrency } from 'src/utils/course-format';
 import type { ReceiptUsageResponse } from 'src/types/receipt-usage-report';
 
-const { locale } = useI18n();
+const { locale, t } = useI18n();
 const financeStore = useCentralFinanceStore();
 
 // ── Sticky Filter Bar ────────────────────────────────────────
@@ -195,25 +195,25 @@ interface MetricCard {
 
 const metricCards = computed<MetricCard[]>(() => [
   {
-    label: 'รายรับรวมทั้งหมด',
+    label: t('centralFinance.dashboard.kpi.totalRevenue'),
     value: formatCurrency(dashboardStats.value.totalRevenue),
     icon: 'account_balance_wallet',
     tone: 'positive',
   },
   {
-    label: 'ใบเสร็จรับเงินทั้งหมด',
-    value: `${dashboardStats.value.totalReceipts.toLocaleString('th-TH')} ใบ`,
+    label: t('centralFinance.dashboard.kpi.totalReceipts'),
+    value: `${dashboardStats.value.totalReceipts.toLocaleString('th-TH')} ${t('centralFinance.dashboard.kpi.receiptUnit')}`,
     icon: 'receipt',
     tone: 'secondary',
   },
   {
-    label: 'ใบเสร็จโมฆะ',
-    value: `${dashboardStats.value.voidReceipts.toLocaleString('th-TH')} ใบ`,
+    label: t('centralFinance.dashboard.kpi.voidReceipts'),
+    value: `${dashboardStats.value.voidReceipts.toLocaleString('th-TH')} ${t('centralFinance.dashboard.kpi.receiptUnit')}`,
     icon: 'cancel',
     tone: 'amber',
   },
   {
-    label: 'ค่าเฉลี่ยต่อรายการ',
+    label: t('centralFinance.dashboard.kpi.avgPerReceipt'),
     value: formatCurrency(
       dashboardStats.value.issuedReceipts > 0
         ? Math.round(dashboardStats.value.totalRevenue / dashboardStats.value.issuedReceipts)

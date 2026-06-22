@@ -1222,6 +1222,13 @@ export default {
         addFundSourceDetail: 'Record and issue fund source codes for approved requests',
         exportReportDetail: 'Generate and download revenue reports in PDF or Excel format',
       },
+      kpi: {
+        totalRevenue: 'Total Revenue',
+        totalReceipts: 'Total Receipts',
+        voidReceipts: 'Void Receipts',
+        avgPerReceipt: 'Average per Receipt',
+        receiptUnit: 'receipts',
+      },
     },
     fundSources: {
       hero: {

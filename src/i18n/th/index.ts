@@ -1237,6 +1237,13 @@ export default {
         exportReportDetail: 'สร้างและดาวน์โหลดรายงานยอดรับเงินในรูปแบบ PDF หรือ Excel',
         facultyRevenueDetail: 'วิเคราะห์สัดส่วนรายได้แยกตามคณะ พร้อมกราฟวงกลมเปรียบเทียบ',
       },
+      kpi: {
+        totalRevenue: 'รายรับรวมทั้งหมด',
+        totalReceipts: 'ใบเสร็จรับเงินทั้งหมด',
+        voidReceipts: 'ใบเสร็จโมฆะ',
+        avgPerReceipt: 'ค่าเฉลี่ยต่อรายการ',
+        receiptUnit: 'ใบ',
+      },
     },
     fundSources: {
       hero: {
