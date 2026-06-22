@@ -107,7 +107,6 @@ const dashboardStats = ref({
   totalRevenue: 0,
   totalReceipts: 0,
   issuedReceipts: 0,
-  onlinePayments: 0,
   voidReceipts: 0,
 });
 
@@ -145,13 +144,9 @@ async function fetchDashboardData() {
     const stats = statsResult.value.data;
     dashboardStats.value.totalRevenue = stats.totalRevenue ?? 0;
     dashboardStats.value.issuedReceipts = stats.issuedReceipts ?? 0;
-    dashboardStats.value.onlinePayments = stats.onlinePayments ?? 0;
-    dashboardStats.value.voidReceipts = stats.voidReceipts ?? 0;
+    dashboardStats.value.voidReceipts = stats.pendingReceipts ?? 0;
   } else {
     dashboardStats.value.totalRevenue = validTx.reduce((s, t) => s + t.amount, 0);
-    dashboardStats.value.onlinePayments = validTx.filter(
-      (t) => t.paymentChannel === 'transfer' || t.paymentChannel === 'qrcode',
-    ).length;
     dashboardStats.value.voidReceipts = financeStore.transactions.filter(
       (t) => t.status === 'void',
     ).length;
@@ -212,10 +207,10 @@ const metricCards = computed<MetricCard[]>(() => [
     tone: 'secondary',
   },
   {
-    label: 'รายการชำระออนไลน์',
-    value: `${dashboardStats.value.onlinePayments.toLocaleString('th-TH')} รายการ`,
-    icon: 'payment',
-    tone: 'blue',
+    label: 'ใบเสร็จโมฆะ',
+    value: `${dashboardStats.value.voidReceipts.toLocaleString('th-TH')} ใบ`,
+    icon: 'cancel',
+    tone: 'amber',
   },
   {
     label: 'ค่าเฉลี่ยต่อรายการ',
