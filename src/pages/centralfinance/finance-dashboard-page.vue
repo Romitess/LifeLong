@@ -29,28 +29,30 @@
       <!-- ── Row 2: Revenue Chart + Faculty Breakdown ──────────── -->
       <div class="finance-main-grid">
         <!-- Revenue Trend -->
-        <AppSurfaceCard
-          eyebrow="Revenue Trend"
-          title="แนวโน้มรายรับรวม"
-          :subtitle="dateRangeLabel || 'ทั้งหมด'"
-          card-class="finance-panel"
+        <CentralFinanceSurfaceCard
+          :eyebrow="$t('finance.dashboard.financialTrends', 'แนวโน้มการเงิน')"
+          :title="$t('finance.dashboard.financialOverview', 'ภาพรวมทางการเงิน')"
+          :subtitle="dateRangeLabel || $t('finance.filters.allTime')"
+          card-class="finance-panel finance-panel--chart"
         >
-          <div class="chart-block__header">
-            <span class="chart-block__title">รายรับรวมทุกคณะ/ส่วนงาน (บาท)</span>
+          <div class="q-mb-md">
+            <div class="text-subtitle1 text-weight-bold q-mb-md text-grey-8">
+              {{ $t('finance.dashboard.totalRevenueLabel', 'รายรับรวมทั้งหมด (บาท)') }}
+            </div>
+            <AppAreaChart
+              :series="revenueChartSeries"
+              :x-labels="trendChartLabels"
+              :height="240"
+              :format-y-tick="formatRevenueTick"
+              :aria-label="$t('finance.dashboard.totalRevenueLabel', 'รายรับรวมทั้งหมด')"
+            />
           </div>
-          <AppAreaChart
-            :series="revenueChartSeries"
-            :x-labels="trendChartLabels"
-            :height="280"
-            :format-y-tick="formatRevenueTick"
-            aria-label="รายรับรวมทุกคณะ"
-          />
-        </AppSurfaceCard>
+        </CentralFinanceSurfaceCard>
 
         <!-- Faculty Revenue Pie Chart -->
-        <AppSurfaceCard
-          eyebrow="By Faculty"
-          title="สัดส่วนรายรับตามคณะ/ส่วนงาน"
+        <CentralFinanceSurfaceCard
+          :eyebrow="$t('centralFinance.facultyRevenue.chart.eyebrow', 'By Faculty')"
+          :title="$t('centralFinance.facultyRevenue.chart.title')"
           card-class="finance-panel"
         >
           <div v-if="facultyDonutData.length === 0" class="breakdown-empty">
@@ -64,7 +66,7 @@
             :center-value="formatCompactCurrency(dashboardStats.totalRevenue)"
             :format-value="(v) => formatCurrency(Math.round(v))"
           />
-        </AppSurfaceCard>
+        </CentralFinanceSurfaceCard>
       </div>
     </section>
   </q-page>
@@ -72,9 +74,10 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
-import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
 import CentralFinanceDonutChart, {
   type DonutChartSegment,
@@ -85,6 +88,7 @@ import { api } from 'src/boot/axios';
 import { formatCompactCurrency } from 'src/utils/course-format';
 import type { ReceiptUsageResponse } from 'src/types/receipt-usage-report';
 
+const { locale } = useI18n();
 const financeStore = useCentralFinanceStore();
 
 // ── Sticky Filter Bar ────────────────────────────────────────
@@ -114,16 +118,62 @@ const trendData = ref<{ months: string[]; revenue: number[] }>({
 
 const facultyData = ref<{ faculty: string; totalAmount: number }[]>([]);
 
+function toApiDate(ddmmyyyy: string): string {
+  if (!ddmmyyyy) return '';
+  const [dd, mm, yyyy] = ddmmyyyy.split('/');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function generatePeriodLabels(preset: string, dateFrom: string, dateTo: string): string[] {
+  const parseDmy = (dmy: string): Date => {
+    const [dd, mm, yyyy] = dmy.split('/');
+    return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+  };
+  const now = new Date();
+
+  if (preset === 'today') {
+    const d = dateFrom ? parseDmy(dateFrom) : now;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return Array.from(
+      { length: 24 },
+      (_, h) => `${y}-${m}-${day} ${String(h).padStart(2, '0')}:00`,
+    );
+  }
+
+  if (preset === 'thisYear') {
+    const year = now.getFullYear();
+    return Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, '0')}`);
+  }
+
+  if (preset === 'allTime') return [];
+
+  const start = dateFrom ? parseDmy(dateFrom) : now;
+  const end = dateTo ? parseDmy(dateTo) : now;
+  const labels: string[] = [];
+  const cur = new Date(start);
+  while (cur <= end && labels.length < 366) {
+    labels.push(
+      `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, '0')}-${String(cur.getDate()).padStart(2, '0')}`,
+    );
+    cur.setDate(cur.getDate() + 1);
+  }
+  return labels;
+}
+
 async function fetchDashboardData() {
+  const dateFrom = toApiDate(period.value.dateFrom);
+  const dateTo = toApiDate(period.value.dateTo);
   const params: Record<string, string> =
     period.value.preset === 'allTime'
       ? { period: 'allTime' }
-      : { period: 'custom', dateFrom: period.value.dateFrom, dateTo: period.value.dateTo };
+      : { period: 'custom', dateFrom, dateTo };
 
   const receiptParams: Record<string, string> = {};
-  if (period.value.preset !== 'allTime' && period.value.dateFrom) {
-    receiptParams.receiptDateStart = period.value.dateFrom;
-    receiptParams.receiptDateEnd = period.value.dateTo;
+  if (period.value.preset !== 'allTime' && dateFrom) {
+    receiptParams.receiptDateStart = dateFrom;
+    receiptParams.receiptDateEnd = dateTo;
   }
 
   const [statsResult, trendResult, receiptResult, facultyResult] = await Promise.allSettled([
@@ -156,8 +206,32 @@ async function fetchDashboardData() {
 
   if (trendResult.status === 'fulfilled') {
     const trend = trendResult.value.data;
-    trendData.value.months = trend.months ?? [];
-    trendData.value.revenue = trend.revenue ?? [];
+    const apiMonths: string[] = trend.months ?? trend.labels ?? [];
+    const apiRevenue: number[] = trend.revenue ?? [];
+    const generated = generatePeriodLabels(
+      period.value.preset,
+      period.value.dateFrom,
+      period.value.dateTo,
+    );
+    if (generated.length > 0) {
+      const revenueMap = new Map<string, number>();
+      apiMonths.forEach((label, i) => revenueMap.set(label, apiRevenue[i] ?? 0));
+      trendData.value.months = generated;
+      trendData.value.revenue = generated.map((label) => revenueMap.get(label) ?? 0);
+    } else {
+      trendData.value.months = apiMonths;
+      trendData.value.revenue = apiRevenue;
+    }
+  } else {
+    const generated = generatePeriodLabels(
+      period.value.preset,
+      period.value.dateFrom,
+      period.value.dateTo,
+    );
+    if (generated.length > 0) {
+      trendData.value.months = generated;
+      trendData.value.revenue = generated.map(() => 0);
+    }
   }
 
   if (receiptResult.status === 'fulfilled') {
@@ -227,30 +301,16 @@ const metricCards = computed<MetricCard[]>(() => [
 ]);
 
 // ── Revenue Trend Chart ──────────────────────────────────────
-const THAI_MONTH_ABBR: Record<string, string> = {
-  '01': 'ม.ค.',
-  '02': 'ก.พ.',
-  '03': 'มี.ค.',
-  '04': 'เม.ย.',
-  '05': 'พ.ค.',
-  '06': 'มิ.ย.',
-  '07': 'ก.ค.',
-  '08': 'ส.ค.',
-  '09': 'ก.ย.',
-  '10': 'ต.ค.',
-  '11': 'พ.ย.',
-  '12': 'ธ.ค.',
-};
-
 function formatYmLabel(ym: string): string {
   if (ym.includes(' ')) return ym.split(' ')[1] ?? ym;
   const parts = ym.split('-');
+  const localeStr = locale.value === 'th' ? 'th-TH' : 'en-US';
   if (parts.length === 3) {
-    return `${Number(parts[2])} ${THAI_MONTH_ABBR[parts[1] ?? '01'] ?? parts[1]}`;
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return new Intl.DateTimeFormat(localeStr, { day: 'numeric', month: 'short' }).format(d);
   }
-  const mm = parts[1] ?? '01';
-  const buddhistYear = Number(parts[0] ?? 0) + 543;
-  return `${THAI_MONTH_ABBR[mm] ?? mm} ${String(buddhistYear).slice(-2)}`;
+  const d = new Date(Number(parts[0]), Number(parts[1] ?? '1') - 1);
+  return new Intl.DateTimeFormat(localeStr, { month: 'short', year: '2-digit' }).format(d);
 }
 
 const trendChartLabels = computed(() => trendData.value.months.map(formatYmLabel));
@@ -259,7 +319,7 @@ const revenueChartSeries = computed<AreaChartSeries[]>(() => [
   {
     id: 'revenue',
     label: 'รายรับรวมทั้งหมด',
-    color: '#047857',
+    color: '#0F766E',
     values: trendData.value.revenue,
     totalLabel: formatCompactCurrency(trendData.value.revenue.reduce((s, v) => s + v, 0)),
     formatValue: (v) => formatCurrency(Math.round(v)),
