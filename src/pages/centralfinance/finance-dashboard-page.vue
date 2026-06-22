@@ -159,7 +159,7 @@ async function fetchDashboardData() {
 
   if (trendResult.status === 'fulfilled') {
     const trend = trendResult.value.data;
-    trendData.value.months = trend.months ?? trend.labels ?? [];
+    trendData.value.months = trend.months ?? [];
     trendData.value.revenue = trend.revenue ?? [];
   }
 
@@ -250,7 +250,7 @@ const revenueChartSeries = computed<AreaChartSeries[]>(() => [
     label: 'รายรับรวมทั้งหมด',
     color: '#0F766E',
     values: trendData.value.revenue,
-    totalLabel: formatCompactCurrency(trendData.value.revenue.reduce((s, v) => s + v, 0)),
+    totalLabel: formatCompactCurrency(dashboardStats.value.totalRevenue),
     formatValue: (v) => formatCurrency(Math.round(v)),
   },
 ]);
