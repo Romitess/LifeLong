@@ -4,6 +4,11 @@ export default {
   login: 'Login',
   register: 'Register',
   logout: 'Logout',
+  logoutDialog: {
+    title: 'Confirm Logout',
+    message: 'Are you sure you want to log out?',
+    cancel: 'Cancel',
+  },
   baseTable: {
     emptyText: 'No data available',
     indexLabel: 'No.',

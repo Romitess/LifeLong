@@ -4,6 +4,11 @@ export default {
   login: 'เข้าสู่ระบบ',
   register: 'สมัครเป็นผู้เรียน',
   logout: 'ออกจากระบบ',
+  logoutDialog: {
+    title: 'ยืนยันการออกจากระบบ',
+    message: 'คุณต้องการออกจากระบบใช่หรือไม่?',
+    cancel: 'ยกเลิก',
+  },
   baseTable: {
     emptyText: 'ไม่มีข้อมูล',
     indexLabel: 'ลำดับ',

@@ -470,12 +470,12 @@
     <BaseSystemDialog
       v-model="logoutDialogOpen"
       variant="danger"
-      title="ยืนยันการออกจากระบบ"
-      message="คุณต้องการออกจากระบบใช่หรือไม่?"
+      :title="t('logoutDialog.title')"
+      :message="t('logoutDialog.message')"
       icon="logout"
-      confirm-label="ออกจากระบบ"
+      :confirm-label="t('logout')"
       confirm-icon="logout"
-      cancel-label="ยกเลิก"
+      :cancel-label="t('logoutDialog.cancel')"
       @confirm="confirmLogout"
     />
   </q-layout>
