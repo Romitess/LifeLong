@@ -63,7 +63,7 @@
             v-else
             :data="facultyDonutData"
             center-label="รายรับรวม"
-            :center-value="formatCompactCurrency(dashboardStats.totalRevenue)"
+            :center-value="formatCurrency(dashboardStats.totalRevenue)"
             :format-value="(v) => formatCurrency(Math.round(v))"
           />
         </CentralFinanceSurfaceCard>
@@ -245,7 +245,7 @@ const revenueChartSeries = computed<AreaChartSeries[]>(() => [
     label: 'รายรับรวมทั้งหมด',
     color: '#0F766E',
     values: trendData.value.revenue,
-    totalLabel: formatCompactCurrency(dashboardStats.value.totalRevenue),
+    totalLabel: formatCurrency(dashboardStats.value.totalRevenue),
     formatValue: (v) => formatCurrency(Math.round(v)),
   },
 ]);
