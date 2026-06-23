@@ -50,6 +50,15 @@
           <!-- Loading state -->
           <BaseSpinner v-if="moodleContentsLoading" />
 
+          <!-- Empty state -->
+          <BaseSurfaceCard v-else-if="!courseModulesWithProgress.length">
+            <BaseEmptyState
+              icon="menu_book"
+              title="ยังไม่มีเนื้อหาบทเรียน"
+              caption="หลักสูตรนี้ยังไม่ได้เพิ่มเนื้อหา หรือยังไม่ได้เชื่อมต่อกับระบบ Moodle"
+            />
+          </BaseSurfaceCard>
+
           <q-list v-else class="course-list-modern">
             <q-expansion-item
               v-for="(module, index) in courseModulesWithProgress"
@@ -122,12 +131,12 @@
                       <q-icon name="subdirectory_arrow_right" size="18px" color="amber-8" />
                     </q-item-section>
                     <q-item-section>
-                      <q-item-label class="subsection-title-text text-grey-9 text-weight-medium">{{
+                      <q-item-label class="subsection-title-text text-dark text-weight-bold">{{
                         sub.title
                       }}</q-item-label>
                     </q-item-section>
                     <q-item-section side>
-                      <span class="subsection-count text-grey-6"
+                      <span class="subsection-count text-amber-9"
                         >{{ sub.lessons.length }} รายการ</span
                       >
                     </q-item-section>
@@ -289,6 +298,8 @@ import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import BaseButton from 'components/base/BaseButton.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
+import BaseEmptyState from 'components/base/BaseEmptyState.vue';
+import BaseSurfaceCard from 'components/base/BaseSurfaceCard.vue';
 import { getCourseStructure, type CourseModule, type Lesson } from 'src/data/course-structure';
 import { useCourseStore } from 'src/stores/course-store';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -577,27 +588,33 @@ $sidebar-transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 
 // Nested subsection (หัวข้อย่อย) — collapsible
 .subsection-item {
-  margin: 6px 16px 6px 28px;
-  border-left: 3px solid rgba(247, 208, 70, 0.55);
-  border-radius: 0 10px 10px 0;
-  background: rgba(247, 208, 70, 0.04);
+  margin: 8px 16px 8px 28px;
+  border-left: 4px solid rgba($primary, 0.85);
+  border-radius: 0 12px 12px 0;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.06);
   overflow: hidden;
 
   :deep(.subsection-header) {
-    min-height: 48px;
-    padding: 6px 16px;
+    min-height: 52px;
+    padding: 8px 18px;
     border-radius: 0;
+    background: rgba($primary, 0.1);
   }
   .subsection-header__avatar {
     min-width: auto;
     padding-right: 10px;
   }
   .subsection-title-text {
-    font-size: 0.9rem;
+    font-size: 0.98rem;
   }
   .subsection-count {
     font-size: 0.72rem;
+    font-weight: 600;
     white-space: nowrap;
+    background: rgba($primary, 0.18);
+    padding: 2px 10px;
+    border-radius: 999px;
   }
   .subsection-empty {
     padding: 6px 24px 12px 46px;

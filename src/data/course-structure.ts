@@ -261,7 +261,9 @@ export function getCourseStructure(courseId: string): CourseModule[] {
     }));
   }
 
-  return CANVA_COURSE_STRUCTURE;
+  // No known structure and no syllabus → return empty so the UI shows a proper
+  // empty state instead of a misleading mock course (real content comes from Moodle).
+  return [];
 }
 
 export function getFlatLessons(structure: CourseModule[]): Lesson[] {
