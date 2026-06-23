@@ -7,14 +7,7 @@
       :description="$t('centralFinance.receiptSummary.hero.description')"
     >
       <template #aside>
-        <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">
-            {{ $t('centralFinance.receiptSummary.scopeLabel') }}
-          </div>
-          <div class="faculty-scope-card__faculty">
-            {{ activeFacultyScopeLabel }}
-          </div>
-        </div>
+        <CentralFinanceScopeCard :label="activeFacultyScopeLabel" />
       </template>
     </CentralFinancePageHero>
 
@@ -152,6 +145,7 @@ import type { ApiFaculty } from 'src/types/faculty';
 import type { ReceiptSummaryItem } from 'src/types/receipt-summary-report';
 import type { PdfExportConfig, CsvExportConfig } from 'src/types/export-types';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
+import CentralFinanceScopeCard from 'components/centralfinance/CentralFinanceScopeCard.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
@@ -444,37 +438,6 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.faculty-scope-card {
-  min-width: 260px;
-  padding: 16px 18px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  display: grid;
-  gap: 6px;
-
-  @media (max-width: 599px) {
-    min-width: 0;
-    width: 100%;
-    padding: 12px 14px;
-  }
-}
-
-.faculty-scope-card__label {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.68rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-}
-
-.faculty-scope-card__faculty {
-  color: #fff;
-  font-size: 1.05rem;
-  font-weight: 900;
-}
-
 .filter-faculty-wrap {
   margin-left: 12px;
   flex-shrink: 0;

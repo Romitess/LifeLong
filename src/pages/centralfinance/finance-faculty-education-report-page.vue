@@ -2,20 +2,13 @@
   <q-page class="finance-page finance-faculty-report-page">
     <!-- ── Hero ─────────────────────────────────────────────── -->
     <CentralFinancePageHero
-      :eyebrow="$t('centralFinance.dashboard.hero.eyebrow')"
+      :eyebrow="$t('finance.educationReport.eyebrow')"
       eyebrow-icon="analytics"
       :title="$t('centralFinance.facultyRevenue.hero.title')"
       :description="$t('centralFinance.facultyRevenue.hero.desc')"
     >
       <template #aside>
-        <div class="faculty-scope-card">
-          <div class="faculty-scope-card__label">
-            {{ $t('centralFinance.receiptSummary.scopeLabel') }}
-          </div>
-          <div class="faculty-scope-card__faculty">
-            {{ activeFacultyLabel }}
-          </div>
-        </div>
+        <CentralFinanceScopeCard :label="activeFacultyLabel" />
       </template>
     </CentralFinancePageHero>
 
@@ -70,6 +63,7 @@ import { useI18n } from 'vue-i18n';
 import { useFacultyList } from 'src/composables/use-faculty-list';
 import type { ApiFaculty } from 'src/types/faculty';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
+import CentralFinanceScopeCard from 'components/centralfinance/CentralFinanceScopeCard.vue';
 import RegistrationStatisticsReportManager from 'components/reports/RegistrationStatisticsReportManager.vue';
 
 const { t } = useI18n();
@@ -124,37 +118,6 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.faculty-scope-card {
-  min-width: 220px;
-  padding: 16px 18px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  display: grid;
-  gap: 6px;
-
-  @media (max-width: 599px) {
-    min-width: 0;
-    width: 100%;
-    padding: 12px 14px;
-  }
-}
-
-.faculty-scope-card__label {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 0.68rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-}
-
-.faculty-scope-card__faculty {
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 900;
-}
-
 // ── Sticky filter bar ────────────────────────────────────────
 .faculty-filter-sentinel {
   height: 1px;

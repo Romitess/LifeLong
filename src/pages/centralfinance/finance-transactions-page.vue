@@ -6,6 +6,9 @@
       :title="$t('centralFinance.transactions.hero.title')"
       :description="$t('centralFinance.transactions.hero.desc')"
     >
+      <template #aside>
+        <CentralFinanceScopeCard :label="activeFacultyLabel" />
+      </template>
       <template #actions>
         <CentralFinanceActionButton
           icon="file_download"
@@ -258,6 +261,7 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
+import CentralFinanceScopeCard from 'components/centralfinance/CentralFinanceScopeCard.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import CentralFinanceActionButton from 'components/centralfinance/CentralFinanceActionButton.vue';
 import { useCentralFinanceStore, type Transaction } from 'src/stores/central-finance-store';
@@ -296,6 +300,13 @@ const facultyOptions = computed(() => [
   { label: t('common.faculties.engineering'), value: 'คณะวิศวกรรมศาสตร์' },
   { label: t('common.faculties.computerCenter'), value: 'สำนักคอมพิวเตอร์' },
 ]);
+
+const activeFacultyLabel = computed<string>(() => {
+  if (!facultyFilter.value) return t('centralFinance.receiptSummary.allFaculties');
+  return (
+    facultyOptions.value.find((o) => o.value === facultyFilter.value)?.label ?? facultyFilter.value
+  );
+});
 
 const pagination = ref({
   rowsPerPage: 10,

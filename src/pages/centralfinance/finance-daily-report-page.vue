@@ -5,7 +5,11 @@
       eyebrow-icon="receipt_long"
       :title="$t('centralFinance.dailyReport.hero.title')"
       :description="$t('centralFinance.dailyReport.hero.desc')"
-    />
+    >
+      <template #aside>
+        <CentralFinanceScopeCard :label="activeFacultyLabel" />
+      </template>
+    </CentralFinancePageHero>
 
     <section class="finance-shell finance-content">
       <PeriodFilterBar
@@ -95,6 +99,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useQuasar, date } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
+import CentralFinanceScopeCard from 'components/centralfinance/CentralFinanceScopeCard.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
 import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
@@ -159,6 +164,10 @@ async function fetchFacultyOptions(): Promise<void> {
     isFacultyLoading.value = false;
   }
 }
+const activeFacultyLabel = computed<string>(() => {
+  if (!selectedFaculty.value) return t('centralFinance.receiptSummary.allFaculties');
+  return selectedFaculty.value;
+});
 
 function getDepartmentLabel(val: string): string {
   if (!val) return 'ทุกคณะ/ส่วนงาน';
