@@ -1141,6 +1141,7 @@ export default {
     enrollNow: 'ลงทะเบียนเรียน',
     pendingPayment: 'รอชำระเงิน',
     courseCompleted: 'เรียนจบแล้ว',
+    reviewLessons: 'ทบทวนบทเรียน',
     teachTime: 'ตารางเรียน',
   },
   homepage: {

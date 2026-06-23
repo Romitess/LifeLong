@@ -1128,6 +1128,7 @@ export default {
     enrollNow: 'Enroll Now',
     pendingPayment: 'Pending Payment',
     courseCompleted: 'Course Completed',
+    reviewLessons: 'Review Lessons',
     teachTime: 'Class Schedule',
   },
   homepage: {

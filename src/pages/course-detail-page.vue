@@ -1113,11 +1113,12 @@ const registrationWindowStatus = computed<RegistrationWindowStatus>(() => {
 
 const enrollmentAction = computed<EnrollmentAction>(() => {
   if (isCourseCompleted.value) {
+    // Completed courses stay enterable so learners can go back and review.
     return {
-      label: t('courseDetail.courseCompleted'),
-      icon: 'verified',
+      label: t('courseDetail.reviewLessons'),
+      icon: 'menu_book',
       color: 'positive',
-      disabled: true,
+      disabled: false,
     };
   }
 
