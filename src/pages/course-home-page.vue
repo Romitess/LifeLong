@@ -1,19 +1,11 @@
 <template>
   <q-page class="bg-grey-1 course-home-page">
-    <!-- Course Toolbar -->
-    <CourseLayout @toggleDrawer="leftDrawerOpen = !leftDrawerOpen" />
-
     <q-layout
       view="lHh Lpr lFf"
       container
       style="height: calc(100vh - 72px)"
       class="learning-layout"
     >
-      <!-- Sidebar -->
-      <q-drawer v-model="leftDrawerOpen" bordered :width="300" :breakpoint="1024" class="bg-white">
-        <SidebarNavigation />
-      </q-drawer>
-
       <!-- Main Content -->
       <q-page-container>
         <div
@@ -125,8 +117,6 @@ import BaseButton from 'components/base/BaseButton.vue';
 import BaseSearchInput from 'components/base/BaseSearchInput.vue';
 import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
-import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
-import CourseLayout from 'layouts/course-layout.vue';
 import {
   useMyRegisteredCourses,
   type RegisteredCourseEntry,
@@ -154,7 +144,6 @@ onMounted(async () => {
   }
 });
 
-const leftDrawerOpen = ref(false);
 const searchQuery = ref('');
 import { useUiStore } from 'src/stores/ui-store';
 const uiStore = useUiStore();

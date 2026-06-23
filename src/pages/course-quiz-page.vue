@@ -1,18 +1,11 @@
 <template>
   <q-page class="bg-grey-1 course-page">
-    <!-- Course Toolbar -->
-    <CourseLayout @toggleDrawer="leftDrawerOpen = !leftDrawerOpen" />
-
     <q-layout
       view="lHh Lpr lFf"
       container
       style="height: calc(100vh - 72px)"
       class="learning-layout shadow-2"
     >
-      <!-- Sidebar Navigation (Drawer) -->
-      <q-drawer v-model="leftDrawerOpen" bordered :width="300" :breakpoint="1024" class="bg-white">
-        <SidebarNavigation />
-      </q-drawer>
       <q-page-container>
         <CoursePageHeader
           :course-id="String($route.params.id)"
@@ -418,10 +411,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useCourseProgressStore } from 'src/stores/course-progress-store';
-import SidebarNavigation from 'components/navigation/sidebar-navigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import { getNavigation, type Lesson } from 'src/data/course-structure';
-import CourseLayout from 'layouts/course-layout.vue';
 import { useUiStore } from 'src/stores/ui-store';
 import { useCourseStore } from 'src/stores/course-store';
 
@@ -435,7 +426,6 @@ const courseStore = useCourseStore();
 const uiStore = useUiStore();
 
 // 5. Reactive State
-const leftDrawerOpen = ref(false);
 const quizStarted = ref(false);
 const quizSubmitted = ref(false);
 const showSummary = ref(false);
