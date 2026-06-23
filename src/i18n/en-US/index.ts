@@ -1141,7 +1141,7 @@ export default {
   centralFinance: {
     dashboard: {
       hero: {
-        eyebrow: 'Central Finance · Treasury Department',
+        eyebrow: 'Central Finance',
         title: 'Financial Dashboard',
         desc: 'Overview of fund source requests, daily revenue, and recent treasury activities',
       },

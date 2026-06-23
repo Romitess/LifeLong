@@ -1154,7 +1154,7 @@ export default {
   centralFinance: {
     dashboard: {
       hero: {
-        eyebrow: 'Central Finance · กองคลัง',
+        eyebrow: 'เจ้าหน้าที่การเงินกองคลัง',
         title: 'แดชบอร์ดการเงิน',
         desc: 'ภาพรวมคำขอเพิ่มแหล่งเงิน ยอดรับเงินรายวัน และกิจกรรมล่าสุดของกองคลัง',
       },
