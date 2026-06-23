@@ -775,6 +775,12 @@ const navItems = computed<NavItem[]>(() => {
         to: '/admin/courses',
       },
       {
+        name: 'admin-reviews',
+        label: 'รีวิวหลักสูตร',
+        icon: 'rate_review',
+        to: '/admin/reviews',
+      },
+      {
         name: 'admin-reports',
         label: 'รายงาน',
         icon: 'analytics',
