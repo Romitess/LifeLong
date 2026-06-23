@@ -782,6 +782,13 @@
         </div>
       </section>
 
+      <!-- Course Reviews -->
+      <CourseReviewSection
+        v-if="numericCourseId"
+        :course-id="numericCourseId"
+        class="detail-reviews"
+      />
+
       <CourseRecommendationSection
         v-if="recommendedCourses.length > 0"
         :courses="recommendedCourses"
@@ -826,6 +833,7 @@ import { useRoute, useRouter } from 'vue-router';
 import CourseCoverImage from 'components/course/CourseCoverImage.vue';
 import CourseEnrollmentDialog from 'components/course/CourseEnrollmentDialog.vue';
 import CourseRecommendationSection from 'components/course/CourseRecommendationSection.vue';
+import CourseReviewSection from 'components/course/CourseReviewSection.vue';
 import BaseConfirmDialog from 'components/base/BaseConfirmDialog.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import { useCourseDetail } from 'src/composables/use-course-detail';
@@ -995,6 +1003,11 @@ function getYoutubeEmbedUrl(videoUrl: string, showControls: boolean): string {
 }
 
 const courseId = computed<string>(getRouteCourseId);
+const numericCourseId = computed<number | null>(() => {
+  const raw = courseId.value.replace('db-', '');
+  const n = Number(raw);
+  return !Number.isNaN(n) && n > 0 ? n : null;
+});
 const { course, recommendedCourses, isLoading, error, fetchCourseDetail } =
   useCourseDetail(courseId);
 
