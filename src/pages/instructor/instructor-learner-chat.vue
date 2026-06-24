@@ -155,7 +155,7 @@
             <q-separator />
 
             <q-card-section class="thread-panel__composer">
-              <div class="row items-start no-wrap q-gutter-sm">
+              <div class="row items-stretch no-wrap q-gutter-sm">
                 <q-input
                   v-model="replyDraft"
                   outlined
@@ -170,10 +170,12 @@
                 </q-input>
                 <q-btn
                   unelevated
+                  no-caps
                   color="primary"
                   icon="send"
                   :label="t('instructor.chatPage.sendBtn')"
                   :disable="!canSendReply"
+                  class="self-stretch"
                   @click="sendReply"
                 />
               </div>
