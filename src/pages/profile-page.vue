@@ -19,6 +19,7 @@
               :my-registrations-count="activeCoursesCount"
               :my-bookmarks-count="courseBookmarkStore.myBookmarks.length"
               :my-certificates-count="completedCoursesCount"
+              :unread-chat-count="unreadChatCount"
               :student-id="authStore.user?.studentId ?? ''"
               @show-student-card="showStudentCardDialog = true"
             />
@@ -271,6 +272,7 @@ import {
   useMyRegisteredCourses,
   type RegisteredCourseEntry,
 } from 'src/composables/use-my-registered-courses';
+import { useProfileChat } from 'src/composables/use-profile-chat';
 import { useProfileNavigation } from 'src/composables/use-profile-navigation';
 import type { Course } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
@@ -299,6 +301,7 @@ const enrollmentProgressStore = useEnrollmentProgressStore();
 const courseStore = useCourseStore();
 courseStore.init();
 const { myRegistrations, myRegisteredCourseEntries } = useMyRegisteredCourses();
+const { unreadChatCount } = useProfileChat(myRegistrations, myRegisteredCourseEntries);
 const { goToCourse } = useProfileNavigation();
 const route = useRoute();
 const router = useRouter();

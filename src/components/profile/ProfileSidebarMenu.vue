@@ -44,6 +44,9 @@
         <q-item-section v-if="menu.value === 'my-certificates' && myCertificatesCount > 0" side>
           <q-badge rounded color="primary" :label="myCertificatesCount" />
         </q-item-section>
+        <q-item-section v-if="menu.value === 'chat' && unreadChatCount > 0" side>
+          <q-badge rounded color="primary" :label="unreadChatCount" />
+        </q-item-section>
       </q-item>
     </q-list>
 
@@ -110,6 +113,7 @@ defineProps<{
   myRegistrationsCount: number;
   myBookmarksCount: number;
   myCertificatesCount: number;
+  unreadChatCount: number;
   studentId: string;
 }>();
 

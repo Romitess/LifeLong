@@ -36,6 +36,24 @@ interface ApiChatMessage {
   status: string | null;
 }
 
+// --- Module-level shared state ---
+// Socket is shared so it stays alive while the profile page is mounted,
+// even when the user is not on the chat tab.
+let socket: Socket | null = null;
+let socketRefCount = 0;
+
+const selectedChatCourseId = ref<string | null>(null);
+const chatDraft = ref('');
+const chatMessages = ref<ChatMessage[]>([]);
+const chatMessagesRef = ref<HTMLElement | null>(null);
+
+// Unread count: tracks instructor messages that arrived via socket
+// but have not yet been "read" (fetchChatMessages clears them per enrollment).
+const unreadByEnrollId = ref<Record<number, number>>({});
+const unreadChatCount = computed(() =>
+  Object.values(unreadByEnrollId.value).reduce((sum, n) => sum + n, 0),
+);
+
 export function useProfileChat(
   myRegistrations: Ref<CourseRegistration[]> | ComputedRef<CourseRegistration[]>,
   myRegisteredCourseEntries: Ref<RegisteredCourseEntry[]> | ComputedRef<RegisteredCourseEntry[]>,
@@ -43,12 +61,6 @@ export function useProfileChat(
   const { t, locale } = useI18n();
   const $q = useQuasar();
   const authStore = useAuthStore();
-
-  const selectedChatCourseId = ref<string | null>(null);
-  const chatDraft = ref('');
-  const chatMessages = ref<ChatMessage[]>([]);
-  const chatMessagesRef = ref<HTMLElement | null>(null);
-  let socket: Socket | null = null;
 
   const selectedChatEntry = computed<RegisteredCourseEntry | null>(() => {
     if (myRegisteredCourseEntries.value.length === 0) {
@@ -96,12 +108,15 @@ export function useProfileChat(
         sentAt: chat.chatTime ? new Date(chat.chatTime) : new Date(),
         status: chat.status === 'R' ? 'read' : 'sent',
       }));
+      // Backend marks instructor messages as read when fetched — clear local unread count.
+      unreadByEnrollId.value = { ...unreadByEnrollId.value, [enrollId]: 0 };
     } catch (error) {
       console.error('Failed to fetch chat messages', error);
     }
   }
 
   function connectChatSocket() {
+    socketRefCount++;
     if (socket?.connected) return;
     if (socket) {
       socket.disconnect();
@@ -127,19 +142,30 @@ export function useProfileChat(
     });
 
     socket.on('newMessage', (msg: Record<string, unknown>) => {
-      const enrollId = selectedChatEntry.value?.registration?.enrollId;
-      if (!enrollId || Number(msg.enrollId) !== Number(enrollId)) return;
+      const msgEnrollId = Number(msg.enrollId);
 
-      const msgId = String(msg.id);
-      const exists = chatMessages.value.some((m) => m.id === msgId);
-      if (exists) return;
-
-      // Support both transformed (sender/body) and raw DB (typeSender/message) formats
+      // Resolve sender regardless of field format
       const typeSender = (msg.typeSender as string) ?? '';
       const rawSender = msg.sender as ChatMessageSender | undefined;
       const sender: ChatMessageSender =
         rawSender ??
         (typeSender === 'T' ? 'instructor' : typeSender === 'U' ? 'learner' : 'system');
+
+      // Increment unread count for any incoming instructor message
+      if (sender === 'instructor') {
+        unreadByEnrollId.value = {
+          ...unreadByEnrollId.value,
+          [msgEnrollId]: (unreadByEnrollId.value[msgEnrollId] ?? 0) + 1,
+        };
+      }
+
+      // Update chat display only for the currently selected enrollment
+      const selectedEnrollId = selectedChatEntry.value?.registration?.enrollId;
+      if (!selectedEnrollId || msgEnrollId !== Number(selectedEnrollId)) return;
+
+      const msgId = String(msg.id);
+      const exists = chatMessages.value.some((m) => m.id === msgId);
+      if (exists) return;
 
       chatMessages.value.push({
         id: msgId,
@@ -163,14 +189,20 @@ export function useProfileChat(
             m.status = 'read';
           }
         });
+
+        if (data.senderType === 'instructor') {
+          unreadByEnrollId.value = { ...unreadByEnrollId.value, [Number(data.enrollId)]: 0 };
+        }
       },
     );
   }
 
   function disconnectChatSocket() {
-    if (socket) {
-      socket.disconnect();
+    socketRefCount--;
+    if (socketRefCount <= 0) {
+      socket?.disconnect();
       socket = null;
+      socketRefCount = 0;
     }
   }
 
@@ -325,6 +357,7 @@ export function useProfileChat(
     selectedChatEntry,
     chatThreadMessages,
     canSendChatMessage,
+    unreadChatCount,
     fetchChatMessages,
     connectChatSocket,
     disconnectChatSocket,
