@@ -336,13 +336,22 @@
           @wheel="onTopCoursesWheel"
         >
           <a
-            v-for="course in topEnrolledCourses"
+            v-for="(course, index) in topEnrolledCourses"
             :key="course.id"
             :href="resolveFullUrl(`/course/${course.id}`)"
             class="top-course-card"
             style="text-decoration: none"
             @click.prevent="selectTopCourse(course, $event)"
           >
+            <span
+              class="top-course-card__rank"
+              :class="{
+                'top-course-card__rank--double': (course.topEnrollmentRank ?? index + 1) >= 10,
+              }"
+              aria-hidden="true"
+            >
+              {{ course.topEnrollmentRank ?? index + 1 }}
+            </span>
             <span class="top-course-card__poster">
               <img :src="getPreferredCourseImageUrl(course.imageUrl)" :alt="course.title" />
               <span class="top-course-card__shade" />
@@ -2248,8 +2257,8 @@ onBeforeUnmount(() => {
 .top-courses-loading {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(260px, 330px);
-  gap: 18px;
+  grid-auto-columns: minmax(300px, 360px);
+  gap: 48px;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 8px 2px 18px;
@@ -2278,8 +2287,8 @@ onBeforeUnmount(() => {
 .top-course-card {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(168px, 1fr) auto;
+  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-rows: auto auto;
   gap: 0;
   min-height: 248px;
   padding: 0;
@@ -2291,24 +2300,32 @@ onBeforeUnmount(() => {
   scroll-snap-align: start;
   text-align: left;
   transform-origin: center;
+  z-index: 0;
   transition:
     transform 0.22s ease,
-    filter 0.22s ease;
+    filter 0.22s ease,
+    z-index 0s 0.22s;
 }
 
 .top-course-card:hover,
 .top-course-card:focus-visible {
+  z-index: 3;
   transform: translateY(-6px) scale(1.02);
   filter: drop-shadow(0 18px 26px rgba(245, 166, 35, 0.18));
   outline: none;
+  transition:
+    transform 0.22s ease,
+    filter 0.22s ease,
+    z-index 0s 0s;
 }
 
 .top-course-card__poster {
   position: relative;
   z-index: 1;
+  grid-column: 2;
   display: block;
   min-width: 0;
-  min-height: 168px;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
   border-radius: 8px;
   background: #26364d;
@@ -2336,6 +2353,30 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, transparent 42%, rgba(38, 54, 77, 0.74) 100%);
 }
 
+.top-course-card__rank {
+  position: absolute;
+  z-index: 0;
+  right: calc(100% - 108px);
+  top: 42%;
+  transform: translateY(-50%);
+  color: rgba($primary, 0.1);
+  -webkit-text-stroke: 2.6px rgba($primary, 0.64);
+  font-size: clamp(8.5rem, 12vw, 12rem);
+  font-weight: 1000;
+  line-height: 0.78;
+  letter-spacing: 0;
+  opacity: 1;
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 0 10px 26px rgba($primary, 0.1);
+}
+
+.top-course-card__rank--double {
+  right: calc(100% - 104px);
+  letter-spacing: -0.1em;
+  font-size: clamp(7.4rem, 10.4vw, 10.4rem);
+}
+
 .top-course-card__badge {
   position: absolute;
   right: 10px;
@@ -2355,6 +2396,7 @@ onBeforeUnmount(() => {
 }
 
 .top-course-card__body {
+  grid-column: 2;
   display: grid;
   gap: 5px;
   padding-top: 11px;
@@ -2913,6 +2955,16 @@ onBeforeUnmount(() => {
 
   .top-course-card__poster {
     min-height: 148px;
+  }
+
+  .top-course-card__rank {
+    -webkit-text-stroke-width: 1.8px;
+    right: calc(100% - 82px);
+    font-size: 7.4rem;
+  }
+
+  .top-course-card__rank--double {
+    right: calc(100% - 104px);
   }
 
   .top-course-preview {
