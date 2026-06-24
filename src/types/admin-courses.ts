@@ -86,7 +86,7 @@ export interface CreateCoursePayload {
   theoryHours?: number | undefined;
   practiceHours?: number | undefined;
   studyTypeId: number;
-  skillIds?: number[] | undefined;
+  skillWeights?: { skillId: number; weight: number }[] | undefined;
   startDate: string;
   endDate: string;
   categoryId: number;
@@ -184,7 +184,7 @@ export interface AdminCourseDetail {
   theoryHours: number | null;
   practiceHours: number | null;
   studyTypeId: number | null;
-  skillIds: number[];
+  skillWeights: { skillId: number; weight: number }[];
   startDate: string | null;
   endDate: string | null;
   categoryId: number | null;

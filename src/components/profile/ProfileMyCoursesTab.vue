@@ -81,7 +81,6 @@
             class="course-action-btn"
             @click="$emit('prompt-unregister', entry.registration)"
           />
-          <CourseCompletionDocumentActions v-if="entry.progress.isCompleted" :entry="entry" />
           <q-space />
           <q-btn
             flat
@@ -189,7 +188,6 @@ import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import BaseSearchInput from 'components/base/BaseSearchInput.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
-import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import { useCourseBookmarkStore } from 'src/stores/course-bookmark-store';
 import type { RegisteredCourseEntry } from 'src/composables/use-my-registered-courses';
 import type { CourseRegistration } from 'src/stores/course-registration-store';

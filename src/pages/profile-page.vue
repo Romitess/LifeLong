@@ -405,9 +405,7 @@ const inProgressCoursesCount = computed<number>(
 const completedCoursesCount = computed<number>(
   () => myRegisteredCourseEntries.value.filter((e) => e.progress.isCompleted).length,
 );
-const activeCoursesCount = computed<number>(
-  () => myRegisteredCourseEntries.value.filter((e) => !e.progress.isCompleted).length,
-);
+const activeCoursesCount = computed<number>(() => myRegisteredCourseEntries.value.length);
 
 function withOpacity(hexColor: string, opacity: number): string {
   const hex = hexColor.replace('#', '');
@@ -557,10 +555,10 @@ watch(activeMenu, async (tab) => {
 });
 
 const filteredRegistrations = computed<RegisteredCourseEntry[]>(() => {
-  const notCompleted = myRegisteredCourseEntries.value.filter((e) => !e.progress.isCompleted);
-  if (!courseSearch.value.trim()) return notCompleted;
+  const allRegistrations = myRegisteredCourseEntries.value;
+  if (!courseSearch.value.trim()) return allRegistrations;
   const keyword = courseSearch.value.toLowerCase();
-  return notCompleted.filter(
+  return allRegistrations.filter(
     (e) =>
       e.course.title.toLowerCase().includes(keyword) ||
       e.course.code.toLowerCase().includes(keyword),
@@ -625,10 +623,20 @@ async function confirmUnregister(): Promise<void> {
     });
   } catch (error) {
     console.error('Unregister error:', error);
+
+    let errorMsg = '';
+    const apiError = error as { response?: { data?: { message?: string | string[] } } };
+    if (apiError?.response?.data?.message) {
+      const msg = apiError.response.data.message;
+      errorMsg = Array.isArray(msg) ? msg.join(', ') : msg;
+    }
+
     $q.notify({
       type: 'negative',
       message:
-        t('profile.notifications.unregisterError') || 'เกิดข้อผิดพลาดในการยกเลิกการลงทะเบียน',
+        errorMsg ||
+        t('profile.notifications.unregisterError') ||
+        'เกิดข้อผิดพลาดในการยกเลิกการลงทะเบียน',
       position: 'top',
     });
   } finally {

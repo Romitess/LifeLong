@@ -1,5 +1,5 @@
 <template>
-  <q-page class="admin-page finance-sof-page finance-sof-page--static-cards">
+  <q-page class="admin-page finance-sof-page">
     <AppPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="schema"
@@ -552,19 +552,6 @@ async function confirmDelete() {
 <style scoped lang="scss">
 .finance-sof-page {
   padding-bottom: 48px;
-}
-
-/* ปิดเอฟเฟกต์การ์ดเด้งขึ้นตอน hover จากธีม admin (ใช้เฉพาะหน้านี้) */
-.finance-sof-page--static-cards :deep(.admin-surface-card:not(.admin-surface-card--glass)) {
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease !important;
-}
-
-.finance-sof-page--static-cards :deep(.admin-surface-card:not(.admin-surface-card--glass):hover) {
-  transform: none !important;
-  border-color: var(--admin-line) !important;
-  box-shadow: var(--admin-shadow-sm) !important;
 }
 
 .faculty-scope-card {
