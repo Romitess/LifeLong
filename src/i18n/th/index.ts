@@ -1609,6 +1609,7 @@ export default {
       business: 'คณะบริหารธุรกิจ',
       engineering: 'คณะวิศวกรรมศาสตร์',
       computerCenter: 'สำนักคอมพิวเตอร์',
+      humanities: 'คณะมนุษยศาสตร์และสังคมศาสตร์',
     },
   },
   error403: {

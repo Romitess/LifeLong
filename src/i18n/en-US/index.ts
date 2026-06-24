@@ -1594,6 +1594,7 @@ export default {
       business: 'Business Administration',
       engineering: 'Engineering',
       computerCenter: 'Computer Center',
+      humanities: 'Humanities and Social Sciences',
     },
   },
   error403: {

@@ -62,7 +62,7 @@
           <CentralFinanceDonutChart
             v-else
             :data="facultyDonutData"
-            center-label="รายรับรวม"
+            :center-label="$t('centralFinance.dashboard.kpi.totalRevenue')"
             :center-value="formatCurrency(dashboardStats.totalRevenue)"
             :format-value="(v) => formatCurrency(Math.round(v))"
           />
@@ -263,13 +263,27 @@ function formatCurrency(value: number | string | undefined | null): string {
 // ── Faculty Revenue Pie Chart ─────────────────────────────────
 const FACULTY_COLORS = ['#1d4ed8', '#047857', '#7c3aed', '#0891b2', '#b45309', '#dc2626'];
 
+const FACULTY_I18N_MAP: Record<string, string> = {
+  คณะวิทยาการสารสนเทศ: 'informatics',
+  คณะวิทยาศาสตร์: 'science',
+  คณะพยาบาลศาสตร์: 'nursing',
+  คณะบริหารธุรกิจ: 'business',
+  คณะวิศวกรรมศาสตร์: 'engineering',
+  สำนักคอมพิวเตอร์: 'computerCenter',
+  คณะมนุษยศาสตร์และสังคมศาสตร์: 'humanities',
+};
+
 const facultyDonutData = computed<DonutChartSegment[]>(() =>
-  facultyData.value.map((item, i) => ({
-    id: item.faculty,
-    label: item.faculty,
-    value: item.totalAmount,
-    color: FACULTY_COLORS[i % FACULTY_COLORS.length] ?? '#1d4ed8',
-  })),
+  facultyData.value.map((item, i) => {
+    const i18nKey = FACULTY_I18N_MAP[item.faculty];
+    const label = i18nKey ? t(`common.faculties.${i18nKey}`) : item.faculty;
+    return {
+      id: item.faculty,
+      label,
+      value: item.totalAmount,
+      color: FACULTY_COLORS[i % FACULTY_COLORS.length] ?? '#1d4ed8',
+    };
+  }),
 );
 </script>
 
