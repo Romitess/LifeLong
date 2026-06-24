@@ -55,7 +55,34 @@ const unreadChatCount = computed(() =>
 );
 
 // Last message timestamp per enrollId — used to sort the course list (most recent first).
-const lastMessageAt = ref<Record<number, number>>({});
+// Persisted in localStorage so sort order survives page refresh.
+const LS_LAST_MESSAGE_AT = 'lll-chat-last-message-at';
+
+function loadLastMessageAt(): Record<number, number> {
+  try {
+    const raw =
+      typeof window !== 'undefined' ? window.localStorage.getItem(LS_LAST_MESSAGE_AT) : null;
+    if (!raw) return {};
+    return Object.fromEntries(
+      Object.entries(JSON.parse(raw) as Record<string, number>).map(([k, v]) => [Number(k), v]),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function saveLastMessageAt(data: Record<number, number>): void {
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_LAST_MESSAGE_AT, JSON.stringify(data));
+    }
+  } catch (error) {
+    console.log(error);
+    // ignore localStorage write errors
+  }
+}
+
+const lastMessageAt = ref<Record<number, number>>(loadLastMessageAt());
 
 // Instructor email per courseId — fetched on-demand when course.instructorEmail is absent.
 const instructorEmailByCourseId = ref<Record<string, string>>({});
@@ -145,6 +172,7 @@ export function useProfileChat(
       }, lastMessageAt.value[enrollId] ?? 0);
       if (latest > 0) {
         lastMessageAt.value = { ...lastMessageAt.value, [enrollId]: latest };
+        saveLastMessageAt(lastMessageAt.value);
       }
     } catch (error) {
       console.error('Failed to fetch chat messages', error);
@@ -189,6 +217,7 @@ export function useProfileChat(
 
       // Bubble course to top + increment unread for instructor messages
       lastMessageAt.value = { ...lastMessageAt.value, [msgEnrollId]: Date.now() };
+      saveLastMessageAt(lastMessageAt.value);
       if (sender === 'instructor') {
         unreadByEnrollId.value = {
           ...unreadByEnrollId.value,
