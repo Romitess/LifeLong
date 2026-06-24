@@ -722,7 +722,7 @@ const navItems = computed<NavItem[]>(() => {
     return [
       {
         name: 'central-finance-dashboard',
-        label: 'แดชบอร์ดกองคลัง',
+        label: t('centralFinance.nav.dashboard'),
         icon: 'analytics',
         to: '/central-finance/dashboard',
       },
@@ -734,30 +734,30 @@ const navItems = computed<NavItem[]>(() => {
       // },
       {
         name: 'central-finance-reports',
-        label: 'รายงาน',
+        label: t('centralFinance.nav.reports'),
         icon: 'analytics',
         children: [
           {
             name: 'central-finance-faculty-revenue-report',
-            label: 'รายงานการจัดการศึกษาแยกตามคณะ/ส่วนงาน',
+            label: t('centralFinance.nav.facultyRevenueReport'),
             icon: 'school',
             to: '/central-finance/faculty-revenue',
           },
           {
             name: 'central-finance-daily-report',
-            label: 'รายงานการรับเงินประจำวัน',
+            label: t('centralFinance.nav.dailyReport'),
             icon: 'account_balance_wallet',
             to: '/central-finance/daily-report',
           },
           {
             name: 'central-finance-receipt-summary',
-            label: 'รายงานสรุปการรับเงินค่าลงทะเบียน ',
+            label: t('centralFinance.nav.receiptSummary'),
             icon: 'receipt_long',
             to: '/central-finance/receipt-summary',
           },
           {
             name: 'central-finance-receipt-usage',
-            label: 'รายงานการใช้ใบเสร็จ',
+            label: t('centralFinance.nav.receiptUsage'),
             icon: 'receipt',
             to: '/central-finance/receipt-usage',
           },

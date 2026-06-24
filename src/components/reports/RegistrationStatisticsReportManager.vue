@@ -126,7 +126,17 @@ const selectedTypeCourseId = ref<number | null>(null);
 const { groups, filterOptions, summary, pagination, generatedAt, isLoading, error, fetchData } =
   useAdminRegistrationStatisticsReport();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+const FACULTY_I18N_MAP: Record<string, string> = {
+  คณะวิทยาการสารสนเทศ: 'informatics',
+  คณะวิทยาศาสตร์: 'science',
+  คณะพยาบาลศาสตร์: 'nursing',
+  คณะบริหารธุรกิจ: 'business',
+  คณะวิศวกรรมศาสตร์: 'engineering',
+  สำนักคอมพิวเตอร์: 'computerCenter',
+  คณะมนุษยศาสตร์และสังคมศาสตร์: 'humanities',
+};
 
 const stats = computed<
   {
@@ -182,7 +192,10 @@ const flatRows = computed<FlatCourseRow[]>(() => {
         courseCode: item.courseCode,
         courseName: item.courseName,
         responsibleName: item.responsibleName,
-        facultyName: group.facultyName,
+        facultyName: (() => {
+          const key = FACULTY_I18N_MAP[group.facultyName];
+          return key ? t(`common.faculties.${key}`) : group.facultyName;
+        })(),
         startDate: item.startDate,
         endDate: item.endDate,
         learnerCount: item.learnerCount,
@@ -487,7 +500,8 @@ function formatDate(value: string | null): string {
     return '-';
   }
 
-  return new Intl.DateTimeFormat('th-TH', {
+  const localeStr = locale.value === 'th' ? 'th-TH' : 'en-US';
+  return new Intl.DateTimeFormat(localeStr, {
     dateStyle: 'medium',
   }).format(date);
 }

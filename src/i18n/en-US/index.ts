@@ -1547,6 +1547,14 @@ export default {
         faculty: 'Faculty',
       },
     },
+    nav: {
+      dashboard: 'Treasury Dashboard',
+      reports: 'Reports',
+      facultyRevenueReport: 'Education Revenue by Faculty / Department',
+      dailyReport: 'Daily Revenue Report',
+      receiptSummary: 'Registration Receipt Summary',
+      receiptUsage: 'Receipt Usage Report',
+    },
     facultyRevenue: {
       hero: {
         title: 'Report by Faculty / Department',

@@ -1562,6 +1562,14 @@ export default {
         faculty: 'ส่วนงาน',
       },
     },
+    nav: {
+      dashboard: 'แดชบอร์ดกองคลัง',
+      reports: 'รายงาน',
+      facultyRevenueReport: 'รายงานการจัดการศึกษาแยกตามคณะ/ส่วนงาน',
+      dailyReport: 'รายงานการรับเงินประจำวัน',
+      receiptSummary: 'รายงานสรุปการรับเงินค่าลงทะเบียน',
+      receiptUsage: 'รายงานการใช้ใบเสร็จ',
+    },
     facultyRevenue: {
       hero: {
         title: 'รายงานแยกตามคณะ/ส่วนงาน',
