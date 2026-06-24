@@ -33,7 +33,7 @@
       unelevated
       icon="flag"
       label="จบการทำแบบทดสอบ"
-      :loading="loading"
+      :disable="loading"
       @click="emit('finish')"
     />
   </aside>
@@ -97,6 +97,12 @@ function cellAriaLabel(q: QuizSummaryQuestion): string {
     grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
     gap: 8px;
     margin-bottom: 16px;
+    // Keep the panel compact for long quizzes (e.g. 100 questions) — scroll the
+    // number grid instead of letting it stretch the whole page down.
+    max-height: 304px;
+    overflow-y: auto;
+    // Padding so the first/last rows' borders aren't clipped by the scroll edge.
+    padding: 3px 6px 6px 3px;
   }
 
   &__cell {
@@ -133,10 +139,12 @@ function cellAriaLabel(q: QuizSummaryQuestion): string {
       color: rgba(15, 23, 42, 0.85);
     }
 
-    // Current question: strong ring
+    // Current question: a dark inset frame that hugs the cell's rounded square
+    // exactly (an outer ring overflowed and clashed with the gold "answered"
+    // fill). Distinct from gold so the current position is always clear.
     &--current {
-      border-color: var(--q-primary);
-      box-shadow: 0 0 0 2px rgba(247, 208, 70, 0.45);
+      border-color: rgba(15, 23, 42, 0.9);
+      box-shadow: inset 0 0 0 2px rgba(15, 23, 42, 0.9);
     }
   }
 
