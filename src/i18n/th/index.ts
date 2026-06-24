@@ -17,6 +17,12 @@ export default {
   },
   myProfile: 'โปรไฟล์ของฉัน',
   notifications: 'การแจ้งเตือน',
+  notifPreview: {
+    newBadge: 'ใหม่',
+    subtitleAdmin: 'รายการสำคัญสำหรับผู้ดูแลระบบ',
+    subtitleInstructor: 'รายการสำคัญสำหรับผู้สอน',
+    subtitleStudent: 'ข่าวสารและกิจกรรมการเรียนของคุณ',
+  },
   language: 'เปลี่ยนภาษา',
   home: 'หน้าหลัก',
   category: 'หมวดหมู่',

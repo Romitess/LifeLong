@@ -17,6 +17,12 @@ export default {
   },
   myProfile: 'My Profile',
   notifications: 'Notifications',
+  notifPreview: {
+    newBadge: 'new',
+    subtitleAdmin: 'Important items for administrators',
+    subtitleInstructor: 'Important items for instructors',
+    subtitleStudent: 'Your news and learning activities',
+  },
   language: 'Change language',
   home: 'Home',
   category: 'Category',

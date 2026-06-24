@@ -168,13 +168,13 @@
                   <div class="notification-preview">
                     <div class="notification-preview__header">
                       <div>
-                        <div class="notification-preview__title">แจ้งเตือน</div>
+                        <div class="notification-preview__title">{{ t('notifications') }}</div>
                         <div class="notification-preview__subtitle">
                           {{ notificationPreviewSubtitle }}
                         </div>
                       </div>
                       <q-badge rounded color="negative" class="notification-preview__count"
-                        >{{ notificationUnreadCount }} ใหม่</q-badge
+                        >{{ notificationUnreadCount }} {{ t('notifPreview.newBadge') }}</q-badge
                       >
                     </div>
 
@@ -228,7 +228,7 @@
                         unelevated
                         color="primary"
                         icon="notifications"
-                        label="แสดงทั้งหมด"
+                        :label="t('showAll')"
                         class="notification-preview__all-btn"
                         no-caps
                         @click="goToNotifications"
@@ -535,137 +535,6 @@ function isTeachingNotificationRole(role: string | undefined): boolean {
 
 function isAdminNotificationRole(role: string | undefined): boolean {
   return role === 'admin';
-}
-
-function getNotificationItemsForRole(role: string | undefined) {
-  if (role === 'lifelong2') {
-    return [
-      {
-        id: 801,
-        title: 'ผู้เรียนลงทะเบียนใหม่ 25 คน',
-        message: 'มีผู้เรียนสมัครเรียนหลักสูตรอบรมระยะสั้นเพิ่มขึ้นในวันนี้',
-        time: 'วันนี้ 10:30',
-        icon: 'people',
-        iconBg: 'rgba(245, 166, 35, 0.15)',
-        iconColor: '#f5a623',
-        action: '/lifelong2/dashboard',
-        read: false,
-      },
-      {
-        id: 802,
-        title: 'Moodle Sync สำเร็จ',
-        message: 'ซิงค์ข้อมูลผู้เรียนและคะแนนจากระบบ Moodle เรียบร้อยแล้ว',
-        time: 'วันนี้ 09:15',
-        icon: 'sync',
-        iconBg: 'rgba(76, 175, 80, 0.15)',
-        iconColor: '#4caf50',
-        action: '/lifelong2/dashboard',
-        read: false,
-      },
-    ];
-  }
-
-  if (isAdminNotificationRole(role)) {
-    return [
-      {
-        id: 901,
-        title: 'รอตรวจหมวดหมู่ใหม่ 3 รายการ',
-        message: 'มีคำขอเพิ่มหมวดหมู่รายวิชาจากทีมวิชาการ',
-        time: 'วันนี้ 10:15',
-        icon: 'category',
-        iconBg: '#e0f2fe',
-        iconColor: '#0369a1',
-        action: '/admin/basics',
-        read: false,
-      },
-      {
-        id: 902,
-        title: 'ภาพ Hero ใกล้หมดอายุ',
-        message: 'แบนเนอร์แคมเปญ Summer Credit Bank สิ้นสุดวันที่ 31 พ.ค.',
-        time: 'วันนี้ 08:40',
-        icon: 'image',
-        iconBg: '#fff7ed',
-        iconColor: '#c2410c',
-        action: '/admin/basics',
-        read: false,
-      },
-      {
-        id: 903,
-        title: 'ข้อมูลระบบถูกอัปเดต',
-        message: 'ทีมทะเบียนแก้ไขปีการศึกษาเริ่มต้นล่าสุด',
-        time: 'เมื่อวานนี้',
-        icon: 'settings',
-        iconBg: '#ecfdf5',
-        iconColor: '#047857',
-        action: '/admin/basics',
-        read: true,
-      },
-    ];
-  }
-
-  if (isTeachingNotificationRole(role)) {
-    return [
-      {
-        id: 1,
-        title: 'เหลือเวลาอีก 2 วัน',
-        message: 'ครบกำหนดให้คะแนนใบงานวิเคราะห์กรณีศึกษา',
-        time: 'วันนี้ 09:00',
-        icon: 'alarm',
-        iconBg: '#ffebee',
-        iconColor: '#c62828',
-        action: '/instructor/grading',
-        read: false,
-      },
-      {
-        id: 2,
-        title: 'รอตรวจ 18 รายการ',
-        message: 'แบบทดสอบปลายบทที่ 3 ปิดรับคำตอบแล้ว',
-        time: '1 ชั่วโมงที่แล้ว',
-        icon: 'rate_review',
-        iconBg: '#fff3e0',
-        iconColor: '#ef6c00',
-        action: '/instructor/grading',
-        read: false,
-      },
-      {
-        id: 3,
-        title: 'นิสิตส่งงานใหม่ 6 รายการ',
-        message: 'มีไฟล์รายงานใหม่จากรายวิชาที่กำลังเปิดสอน',
-        time: '3 ชั่วโมงที่แล้ว',
-        icon: 'upload_file',
-        iconBg: '#e3f2fd',
-        iconColor: '#1565c0',
-        action: '/instructor/notifications',
-        read: false,
-      },
-    ];
-  }
-
-  // Student Notifications
-  return [
-    {
-      id: 101,
-      title: 'ยินดีต้อนรับสู่ BUU LLL',
-      message: 'เริ่มเรียนรู้วันนี้เพื่อสะสมหน่วยกิตและวุฒิบัตร',
-      time: 'เมื่อวานนี้',
-      icon: 'celebration',
-      iconBg: '#e8f5e9',
-      iconColor: '#2e7d32',
-      action: '/short-courses',
-      read: false,
-    },
-    {
-      id: 102,
-      title: 'คอร์สใหม่แนะนำ',
-      message: 'มีคอร์สใหม่ในหมวดหมู่ที่คุณสนใจ ลองเข้าไปดูกันเลย!',
-      time: '2 วันที่แล้ว',
-      icon: 'auto_awesome',
-      iconBg: '#f3e5f5',
-      iconColor: '#7b1fa2',
-      action: '/short-courses',
-      read: true,
-    },
-  ];
 }
 
 const instructorBackend = useInstructorBackend();
@@ -1103,23 +972,19 @@ const studentNotifications = computed(() =>
 );
 
 const notificationPreviewItems = computed(() => {
-  const base = getNotificationItemsForRole(authStore.user?.role);
-  const all = [...studentNotifications.value, ...announcementNotifications.value, ...base];
+  const all = [...studentNotifications.value, ...announcementNotifications.value];
   return all.slice(0, 3);
 });
 const notificationUnreadCount = computed(() => {
-  const base = getNotificationItemsForRole(authStore.user?.role).filter(
-    (item) => !item.read,
-  ).length;
   const studentUnread = studentNotifications.value.filter((n) => !n.read).length;
-  return base + announcementNotifications.value.length + studentUnread;
+  return announcementNotifications.value.length + studentUnread;
 });
 const notificationPreviewSubtitle = computed(() =>
   isAdminRole.value
-    ? 'รายการสำคัญสำหรับผู้ดูแลระบบ'
+    ? t('notifPreview.subtitleAdmin')
     : isTeachingRole.value
-      ? 'รายการสำคัญสำหรับผู้สอน'
-      : 'ข่าวสารและกิจกรรมการเรียนของคุณ',
+      ? t('notifPreview.subtitleInstructor')
+      : t('notifPreview.subtitleStudent'),
 );
 
 function clearNotificationAttentionTimers(): void {
