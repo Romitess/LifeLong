@@ -43,14 +43,11 @@
             </div>
           </div>
           <div class="col-12 col-md-auto">
-            <q-btn
-              flat
-              dense
+            <BaseButton
               no-caps
-              color="grey-6"
+              color="primary"
               icon="refresh"
               :label="$t('profile.benefits.refresh')"
-              size="sm"
               :loading="isRefreshingBenefits"
               @click="$emit('refresh-benefits')"
             />
@@ -80,14 +77,11 @@
             {{ $t('profile.benefits.checkedAt') }} {{ benefitsCheckedAtLabel }}
           </span>
         </div>
-        <q-btn
-          flat
-          dense
+        <BaseButton
           no-caps
-          color="grey-6"
+          color="primary"
           icon="refresh"
           :label="$t('profile.benefits.refresh')"
-          size="sm"
           class="q-mt-sm"
           :loading="isRefreshingBenefits"
           @click="$emit('refresh-benefits')"
