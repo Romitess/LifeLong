@@ -19,6 +19,7 @@
               :my-registrations-count="activeCoursesCount"
               :my-bookmarks-count="courseBookmarkStore.myBookmarks.length"
               :my-certificates-count="completedCoursesCount"
+              :unread-chat-count="unreadChatCount"
               :student-id="authStore.user?.studentId ?? ''"
               @show-student-card="showStudentCardDialog = true"
             />
@@ -271,6 +272,7 @@ import {
   useMyRegisteredCourses,
   type RegisteredCourseEntry,
 } from 'src/composables/use-my-registered-courses';
+import { useProfileChat } from 'src/composables/use-profile-chat';
 import { useProfileNavigation } from 'src/composables/use-profile-navigation';
 import type { Course } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
@@ -299,6 +301,7 @@ const enrollmentProgressStore = useEnrollmentProgressStore();
 const courseStore = useCourseStore();
 courseStore.init();
 const { myRegistrations, myRegisteredCourseEntries } = useMyRegisteredCourses();
+const { unreadChatCount } = useProfileChat(myRegistrations, myRegisteredCourseEntries);
 const { goToCourse } = useProfileNavigation();
 const route = useRoute();
 const router = useRouter();
@@ -402,9 +405,7 @@ const inProgressCoursesCount = computed<number>(
 const completedCoursesCount = computed<number>(
   () => myRegisteredCourseEntries.value.filter((e) => e.progress.isCompleted).length,
 );
-const activeCoursesCount = computed<number>(
-  () => myRegisteredCourseEntries.value.filter((e) => !e.progress.isCompleted).length,
-);
+const activeCoursesCount = computed<number>(() => myRegisteredCourseEntries.value.length);
 
 function withOpacity(hexColor: string, opacity: number): string {
   const hex = hexColor.replace('#', '');
@@ -554,10 +555,10 @@ watch(activeMenu, async (tab) => {
 });
 
 const filteredRegistrations = computed<RegisteredCourseEntry[]>(() => {
-  const notCompleted = myRegisteredCourseEntries.value.filter((e) => !e.progress.isCompleted);
-  if (!courseSearch.value.trim()) return notCompleted;
+  const allRegistrations = myRegisteredCourseEntries.value;
+  if (!courseSearch.value.trim()) return allRegistrations;
   const keyword = courseSearch.value.toLowerCase();
-  return notCompleted.filter(
+  return allRegistrations.filter(
     (e) =>
       e.course.title.toLowerCase().includes(keyword) ||
       e.course.code.toLowerCase().includes(keyword),
@@ -622,10 +623,20 @@ async function confirmUnregister(): Promise<void> {
     });
   } catch (error) {
     console.error('Unregister error:', error);
+
+    let errorMsg = '';
+    const apiError = error as { response?: { data?: { message?: string | string[] } } };
+    if (apiError?.response?.data?.message) {
+      const msg = apiError.response.data.message;
+      errorMsg = Array.isArray(msg) ? msg.join(', ') : msg;
+    }
+
     $q.notify({
       type: 'negative',
       message:
-        t('profile.notifications.unregisterError') || 'เกิดข้อผิดพลาดในการยกเลิกการลงทะเบียน',
+        errorMsg ||
+        t('profile.notifications.unregisterError') ||
+        'เกิดข้อผิดพลาดในการยกเลิกการลงทะเบียน',
       position: 'top',
     });
   } finally {

@@ -36,6 +36,57 @@ interface ApiChatMessage {
   status: string | null;
 }
 
+// --- Module-level shared state ---
+// Socket is shared so it stays alive while the profile page is mounted,
+// even when the user is not on the chat tab.
+let socket: Socket | null = null;
+let socketRefCount = 0;
+
+const selectedChatCourseId = ref<string | null>(null);
+const chatDraft = ref('');
+const chatMessages = ref<ChatMessage[]>([]);
+const chatMessagesRef = ref<HTMLElement | null>(null);
+
+// Unread count: tracks instructor messages that arrived via socket
+// but have not yet been "read" (fetchChatMessages clears them per enrollment).
+const unreadByEnrollId = ref<Record<number, number>>({});
+const unreadChatCount = computed(() =>
+  Object.values(unreadByEnrollId.value).reduce((sum, n) => sum + n, 0),
+);
+
+// Last message timestamp per enrollId — used to sort the course list (most recent first).
+// Persisted in localStorage so sort order survives page refresh.
+const LS_LAST_MESSAGE_AT = 'lll-chat-last-message-at';
+
+function loadLastMessageAt(): Record<number, number> {
+  try {
+    const raw =
+      typeof window !== 'undefined' ? window.localStorage.getItem(LS_LAST_MESSAGE_AT) : null;
+    if (!raw) return {};
+    return Object.fromEntries(
+      Object.entries(JSON.parse(raw) as Record<string, number>).map(([k, v]) => [Number(k), v]),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function saveLastMessageAt(data: Record<number, number>): void {
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_LAST_MESSAGE_AT, JSON.stringify(data));
+    }
+  } catch (error) {
+    console.log(error);
+    // ignore localStorage write errors
+  }
+}
+
+const lastMessageAt = ref<Record<number, number>>(loadLastMessageAt());
+
+// Instructor email per courseId — fetched on-demand when course.instructorEmail is absent.
+const instructorEmailByCourseId = ref<Record<string, string>>({});
+
 export function useProfileChat(
   myRegistrations: Ref<CourseRegistration[]> | ComputedRef<CourseRegistration[]>,
   myRegisteredCourseEntries: Ref<RegisteredCourseEntry[]> | ComputedRef<RegisteredCourseEntry[]>,
@@ -43,12 +94,6 @@ export function useProfileChat(
   const { t, locale } = useI18n();
   const $q = useQuasar();
   const authStore = useAuthStore();
-
-  const selectedChatCourseId = ref<string | null>(null);
-  const chatDraft = ref('');
-  const chatMessages = ref<ChatMessage[]>([]);
-  const chatMessagesRef = ref<HTMLElement | null>(null);
-  let socket: Socket | null = null;
 
   const selectedChatEntry = computed<RegisteredCourseEntry | null>(() => {
     if (myRegisteredCourseEntries.value.length === 0) {
@@ -78,11 +123,33 @@ export function useProfileChat(
     () => Boolean(selectedChatEntry.value) && chatDraft.value.trim().length > 0,
   );
 
+  async function fetchInstructorEmail(courseId: string): Promise<void> {
+    if (instructorEmailByCourseId.value[courseId]) return;
+    const numId = Number(courseId.replace('db-', ''));
+    if (Number.isNaN(numId)) return;
+    try {
+      const { data } = await api.get<{ instructorInfo?: { email?: string | null } | null }>(
+        `/api/moodle/courses/${numId}`,
+      );
+      const email = data?.instructorInfo?.email?.trim();
+      if (email) {
+        instructorEmailByCourseId.value = { ...instructorEmailByCourseId.value, [courseId]: email };
+      }
+    } catch {
+      // silently ignore — avatar fallback will be used
+    }
+  }
+
   async function fetchChatMessages(): Promise<void> {
     const enrollId = selectedChatEntry.value?.registration?.enrollId;
     if (!enrollId) {
       chatMessages.value = [];
       return;
+    }
+
+    const courseId = selectedChatEntry.value?.course.id;
+    if (courseId && !selectedChatEntry.value?.course.instructorEmail) {
+      void fetchInstructorEmail(courseId);
     }
 
     try {
@@ -96,13 +163,30 @@ export function useProfileChat(
         sentAt: chat.chatTime ? new Date(chat.chatTime) : new Date(),
         status: chat.status === 'R' ? 'read' : 'sent',
       }));
+      // Backend marks instructor messages as read when fetched — clear local unread count.
+      unreadByEnrollId.value = { ...unreadByEnrollId.value, [enrollId]: 0 };
+      // Seed last-message timestamp from fetched history so initial sort reflects real order.
+      const latest = data.reduce<number>((max, m) => {
+        const t = m.chatTime ? new Date(m.chatTime).getTime() : 0;
+        return t > max ? t : max;
+      }, lastMessageAt.value[enrollId] ?? 0);
+      if (latest > 0) {
+        lastMessageAt.value = { ...lastMessageAt.value, [enrollId]: latest };
+        saveLastMessageAt(lastMessageAt.value);
+      }
     } catch (error) {
       console.error('Failed to fetch chat messages', error);
     }
   }
 
   function connectChatSocket() {
-    if (socket) return;
+    socketRefCount++;
+    if (socket?.connected) return;
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
+
     const baseUrl =
       (import.meta.env.VITE_API_URL as string) ||
       (import.meta.env.VITE_BACKEND_URL as string) ||
@@ -110,7 +194,7 @@ export function useProfileChat(
     const origin = baseUrl.startsWith('http') ? new URL(baseUrl).origin : window.location.origin;
 
     socket = io(`${origin}/chat`, {
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       auth: { token: authStore.token ? `Bearer ${authStore.token}` : '' },
     });
 
@@ -121,53 +205,70 @@ export function useProfileChat(
       }
     });
 
-    socket.on(
-      'newMessage',
-      (msg: {
-        enrollId: number;
-        id: number;
-        sender: ChatMessageSender;
-        body: string;
-        sentAt: string;
-        status: ChatMessageStatus;
-      }) => {
-        const enrollId = selectedChatEntry.value?.registration?.enrollId;
-        if (enrollId && msg.enrollId === enrollId) {
-          const exists = chatMessages.value.some((m) => String(m.id) === String(msg.id));
-          if (!exists) {
-            chatMessages.value.push({
-              id: String(msg.id),
-              courseId: selectedChatEntry.value?.course.id || '',
-              sender: msg.sender,
-              body: msg.body,
-              sentAt: new Date(msg.sentAt),
-              status: msg.status === 'read' ? 'read' : 'sent',
-            });
-            void nextTick(scrollChatToLatestMessage);
-          }
-        }
-      },
-    );
+    socket.on('newMessage', (msg: Record<string, unknown>) => {
+      const msgEnrollId = Number(msg.enrollId);
+
+      // Resolve sender regardless of field format
+      const typeSender = (msg.typeSender as string) ?? '';
+      const rawSender = msg.sender as ChatMessageSender | undefined;
+      const sender: ChatMessageSender =
+        rawSender ??
+        (typeSender === 'T' ? 'instructor' : typeSender === 'U' ? 'learner' : 'system');
+
+      // Bubble course to top + increment unread for instructor messages
+      lastMessageAt.value = { ...lastMessageAt.value, [msgEnrollId]: Date.now() };
+      saveLastMessageAt(lastMessageAt.value);
+      if (sender === 'instructor') {
+        unreadByEnrollId.value = {
+          ...unreadByEnrollId.value,
+          [msgEnrollId]: (unreadByEnrollId.value[msgEnrollId] ?? 0) + 1,
+        };
+      }
+
+      // Update chat display only for the currently selected enrollment
+      const selectedEnrollId = selectedChatEntry.value?.registration?.enrollId;
+      if (!selectedEnrollId || msgEnrollId !== Number(selectedEnrollId)) return;
+
+      const msgId = String(msg.id);
+      const exists = chatMessages.value.some((m) => m.id === msgId);
+      if (exists) return;
+
+      chatMessages.value.push({
+        id: msgId,
+        courseId: selectedChatEntry.value?.course.id || '',
+        sender,
+        body: (msg.body as string) || (msg.message as string) || '',
+        sentAt: new Date((msg.sentAt as string) || (msg.chatTime as string) || Date.now()),
+        status: msg.status === 'read' || msg.status === 'R' ? 'read' : 'sent',
+      });
+      void nextTick(scrollChatToLatestMessage);
+    });
 
     socket.on(
       'messagesRead',
-      (data: { enrollId: number; senderType: 'learner' | 'instructor' }) => {
+      (data: { enrollId: number | string; senderType: 'learner' | 'instructor' }) => {
         const enrollId = selectedChatEntry.value?.registration?.enrollId;
-        if (enrollId && data.enrollId === enrollId) {
-          chatMessages.value.forEach((m) => {
-            if (m.sender === data.senderType) {
-              m.status = 'read';
-            }
-          });
+        if (!enrollId || Number(data.enrollId) !== Number(enrollId)) return;
+
+        chatMessages.value.forEach((m) => {
+          if (m.sender === data.senderType) {
+            m.status = 'read';
+          }
+        });
+
+        if (data.senderType === 'instructor') {
+          unreadByEnrollId.value = { ...unreadByEnrollId.value, [Number(data.enrollId)]: 0 };
         }
       },
     );
   }
 
   function disconnectChatSocket() {
-    if (socket) {
-      socket.disconnect();
+    socketRefCount--;
+    if (socketRefCount <= 0) {
+      socket?.disconnect();
       socket = null;
+      socketRefCount = 0;
     }
   }
 
@@ -250,7 +351,10 @@ export function useProfileChat(
   }
 
   function formatChatMessageTime(date: Date): string {
-    return date.toLocaleTimeString(locale.value === 'th' ? 'th-TH' : 'en-US', {
+    const isTh = locale.value === 'th';
+    return date.toLocaleDateString(isTh ? 'th-TH' : 'en-US', {
+      day: 'numeric',
+      month: 'short',
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
@@ -258,13 +362,11 @@ export function useProfileChat(
   }
 
   function getChatStatusLabel(status: ChatMessageStatus): string {
-    void status;
-    return t('profile.chat.statusSent');
+    return status === 'read' ? t('profile.chat.statusRead') : t('profile.chat.statusSent');
   }
 
   function getChatStatusIcon(status: ChatMessageStatus): string {
-    void status;
-    return 'done';
+    return status === 'read' ? 'done_all' : 'done';
   }
 
   function isLatestLearnerMessage(message: ChatMessage): boolean {
@@ -284,7 +386,7 @@ export function useProfileChat(
 
   // Watch for selected course changes in chat tab
   watch(selectedChatCourseId, async () => {
-    void fetchChatMessages();
+    await fetchChatMessages();
     const enrollId = selectedChatEntry.value?.registration?.enrollId;
     if (enrollId) {
       joinChatRoom(enrollId);
@@ -324,6 +426,10 @@ export function useProfileChat(
     selectedChatEntry,
     chatThreadMessages,
     canSendChatMessage,
+    unreadChatCount,
+    unreadByEnrollId,
+    lastMessageAt,
+    instructorEmailByCourseId,
     fetchChatMessages,
     connectChatSocket,
     disconnectChatSocket,

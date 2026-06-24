@@ -1,7 +1,5 @@
 <template>
-  <q-page
-    class="admin-page finance-payment-download-page finance-payment-download-page--static-cards"
-  >
+  <q-page class="admin-page finance-payment-download-page">
     <AppPageHero
       eyebrow="Financial Operations"
       eyebrow-icon="download"
@@ -755,19 +753,6 @@ onUnmounted(() => {
   }
 }
 
-.finance-payment-download-page--static-cards
-  :deep(.admin-surface-card:not(.admin-surface-card--glass)) {
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease !important;
-}
-
-.finance-payment-download-page--static-cards
-  :deep(.admin-surface-card:not(.admin-surface-card--glass):hover) {
-  transform: none !important;
-  border-color: var(--admin-line) !important;
-  box-shadow: var(--admin-shadow-sm) !important;
-}
 .download-format-link {
   display: flex;
   justify-content: flex-start;

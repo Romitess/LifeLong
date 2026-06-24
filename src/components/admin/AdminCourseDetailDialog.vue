@@ -189,9 +189,12 @@ function labelOf(
 }
 
 const skillLabels = computed(() => {
-  if (!props.options || !props.course?.skillIds.length) return null;
-  return props.course.skillIds
-    .map((id) => props.options!.skills.find((s) => s.id === id)?.label)
+  if (!props.options || !props.course?.skillWeights.length) return null;
+  return props.course.skillWeights
+    .map((sw) => {
+      const label = props.options!.skills.find((s) => s.id === sw.skillId)?.label;
+      return label ? `${label} (${sw.weight}%)` : null;
+    })
     .filter(Boolean)
     .join(', ');
 });

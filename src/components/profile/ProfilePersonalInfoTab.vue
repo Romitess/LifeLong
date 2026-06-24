@@ -396,21 +396,6 @@
               <span>/{{ RADAR_MAX_SCORE }}</span>
             </div>
           </div>
-          <div class="skill-radar-card__meta-copy">
-            Skill summary across {{ allSkillMetrics.length }} areas
-          </div>
-        </div>
-
-        <div class="skill-radar-card__chips">
-          <div
-            v-for="category in skillCategoryAverages"
-            :key="category.shortTitle"
-            class="skill-radar-chip"
-          >
-            <span class="skill-radar-chip__dot" :style="{ backgroundColor: category.accent }" />
-            <span>{{ category.shortTitle }}</span>
-            <strong>{{ formatSkillScore(category.average) }}/{{ RADAR_MAX_SCORE }}</strong>
-          </div>
         </div>
 
         <div class="skill-radar-layout">
@@ -446,12 +431,6 @@
               <path :d="radarDataPath" class="skill-radar-svg__area" />
               <path :d="radarDataPath" class="skill-radar-svg__outline" />
 
-              <circle cx="210" cy="200" r="38" class="skill-radar-svg__center" />
-              <text x="210" y="190" class="skill-radar-svg__center-label">AVG</text>
-              <text x="210" y="216" class="skill-radar-svg__center-value">
-                {{ formatSkillScore(overallSkillAverage) }}
-              </text>
-
               <text
                 v-for="scale in radarScaleLabels"
                 :key="`scale-${scale.level}`"
@@ -470,65 +449,109 @@
                   class="skill-radar-svg__point"
                 />
                 <g :transform="`translate(${axis.badgePoint.x} ${axis.badgePoint.y})`">
-                  <circle r="13" class="skill-radar-svg__badge" :style="{ fill: axis.accent }" />
-                  <text class="skill-radar-svg__badge-label">{{ axis.index + 1 }}</text>
+                  <text
+                    :style="{ fill: axis.accent }"
+                    font-size="14px"
+                    font-weight="800"
+                    text-anchor="middle"
+                    dominant-baseline="central"
+                  >
+                    {{ axis.shortLabel }}
+                  </text>
                 </g>
               </g>
             </svg>
           </div>
 
-          <div class="skill-radar-legend">
-            <div class="skill-radar-legend__title">Skill list</div>
-            <div class="skill-radar-legend__items">
-              <div
-                v-for="axis in radarAxisItems"
-                :key="`legend-${axis.id}`"
-                class="skill-radar-legend__item"
+          <div
+            class="skill-list-card"
+            style="
+              width: 100%;
+              padding: 32px 24px;
+              background: #ffffff;
+              border-radius: 24px;
+              border: 1px solid rgba(17, 24, 39, 0.08);
+              display: flex;
+              flex-direction: column;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 32px;
+                flex-shrink: 0;
+              "
+            >
+              <h3
+                style="
+                  font-size: 16px;
+                  font-weight: 700;
+                  color: #1e293b;
+                  margin: 0;
+                  line-height: 1.4;
+                "
               >
-                <span class="skill-radar-legend__index" :style="{ backgroundColor: axis.accent }">
-                  {{ axis.index + 1 }}
-                </span>
-                <div class="skill-radar-legend__copy">
-                  <strong>{{ axis.shortLabel }}</strong>
-                  <span>{{ axis.categoryShortTitle }} - {{ formatSkillScore(axis.score) }}/5</span>
-                </div>
+                {{ $t('profile.personal.oecdSkillsTitle', 'OECD Learning Compass 2030 Skills') }}
+              </h3>
+              <div
+                style="
+                  background: #f1f5f9;
+                  color: #475569;
+                  padding: 4px 10px;
+                  border-radius: 99px;
+                  font-size: 13px;
+                  font-weight: 700;
+                  flex-shrink: 0;
+                  margin-left: 12px;
+                "
+              >
+                {{ formatSkillScore(overallSkillAverage) }}/{{ RADAR_MAX_SCORE }}
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- Score Cards -->
-    <section class="score-section">
-      <h2 class="text-dark">{{ $t('profile.personal.currentSkills') }}</h2>
-
-      <div class="score-grid">
-        <div
-          v-for="cat in skillCategories"
-          :key="cat.title"
-          class="skill-card shadow-1"
-          :style="{ '--skill-card-accent': cat.accent }"
-        >
-          <div class="skill-card__header">
-            <h3>{{ cat.title }}</h3>
-            <div class="skill-card__badge">
-              {{ formatSkillScore(getAverageSkillScore(cat.items)) }}/{{ RADAR_MAX_SCORE }}
-            </div>
-          </div>
-          <div class="skill-inner">
-            <div v-for="item in cat.items" :key="item.id" class="skill-item">
-              <strong class="text-dark">{{ item.label }}</strong>
-              <div class="score-box">
-                <div class="score-box__track">
+            <div
+              class="skill-list-items"
+              style="flex: 1; display: flex; flex-direction: column; justify-content: space-between"
+            >
+              <div v-for="item in oecdSkills" :key="item.id" style="margin-bottom: 0">
+                <strong
+                  style="color: #334155; font-size: 14px; display: block; margin-bottom: 8px"
+                  >{{ item.label }}</strong
+                >
+                <div style="display: flex; align-items: center; gap: 12px">
                   <div
-                    class="score-box__fill"
-                    :style="{ width: `${(item.score / RADAR_MAX_SCORE) * 100}%` }"
-                  />
+                    style="
+                      flex: 1;
+                      height: 8px;
+                      background: #f1f5f9;
+                      border-radius: 99px;
+                      overflow: hidden;
+                    "
+                  >
+                    <div
+                      style="
+                        height: 100%;
+                        background: #f5a623;
+                        border-radius: 99px;
+                        transition: width 1s ease-out;
+                      "
+                      :style="{ width: `${(item.score / RADAR_MAX_SCORE) * 100}%` }"
+                    />
+                  </div>
+                  <span
+                    style="
+                      color: #64748b;
+                      font-size: 13px;
+                      font-weight: 700;
+                      min-width: 44px;
+                      text-align: right;
+                    "
+                  >
+                    {{ formatSkillScore(item.score) }}/{{ RADAR_MAX_SCORE }}
+                  </span>
                 </div>
-                <span class="score-box__value">
-                  {{ formatSkillScore(item.score) }}/{{ RADAR_MAX_SCORE }}
-                </span>
               </div>
             </div>
           </div>
@@ -575,7 +598,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import BaseButton from 'components/base/BaseButton.vue';
@@ -624,16 +647,14 @@ const {
 } = useProfileAvatar();
 
 const {
-  skillCategories,
-  allSkillMetrics,
+  fetchUserSkills,
+  oecdSkills,
   overallSkillAverage,
-  skillCategoryAverages,
   radarGridPaths,
   radarAxisItems,
   radarDataPath,
   radarScaleLabels,
   formatSkillScore,
-  getAverageSkillScore,
 } = useProfileSkills();
 
 const isSavingProfile = ref(false);
@@ -663,6 +684,10 @@ function syncFormWithUser(user: User | null): void {
   form.lastNameEn = user?.lastNameEn ?? '';
   form.phone = user?.phone ?? '';
 }
+
+onMounted(() => {
+  void fetchUserSkills();
+});
 
 function openSaveConfirmationDialog(title: string, message: string, onConfirm: () => void): void {
   saveConfirmTitle.value = title;
@@ -1202,9 +1227,9 @@ function savePersonalInfo(): void {
 
 .skill-radar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 1fr);
   gap: 24px;
-  align-items: center;
+  align-items: stretch;
   margin-top: 24px;
 }
 

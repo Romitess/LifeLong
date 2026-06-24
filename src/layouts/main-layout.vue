@@ -50,8 +50,6 @@
             </div>
           </template>
           <template v-else>
-            <NavRealtimeClock />
-
             <div class="nav-user-group">
               <div class="nav-profile-summary column items-start justify-center gt-xs">
                 <span class="nav-profile-name"
@@ -495,7 +493,6 @@ import BaseSpinner from 'components/base/BaseSpinner.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import AppFooter from 'components/AppFooter.vue';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
-import NavRealtimeClock from 'components/navigation/NavRealtimeClock.vue';
 import HeaderAuthButton from 'components/navigation/header-auth-button.vue';
 import { useI18n } from 'vue-i18n';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';

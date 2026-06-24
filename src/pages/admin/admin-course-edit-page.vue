@@ -205,7 +205,8 @@ async function submitOverride(payload: CreateCoursePayload): Promise<{ courseId:
   if (payload.theoryHours != null) form.append('theoryHours', String(payload.theoryHours));
   if (payload.practiceHours != null) form.append('practiceHours', String(payload.practiceHours));
   form.append('studyTypeId', String(payload.studyTypeId));
-  if (payload.skillIds?.length) form.append('skillIds', payload.skillIds.join(','));
+  if (payload.skillWeights?.length)
+    form.append('skillWeightsJson', JSON.stringify(payload.skillWeights));
   form.append('startDate', payload.startDate);
   form.append('endDate', payload.endDate);
   form.append('categoryId', String(payload.categoryId));

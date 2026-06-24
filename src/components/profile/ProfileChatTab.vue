@@ -22,7 +22,7 @@
 
         <div class="chat-course-list">
           <q-card
-            v-for="entry in myRegisteredCourseEntries"
+            v-for="entry in sortedCourseEntries"
             :key="entry.registration.id"
             flat
             bordered
@@ -46,7 +46,18 @@
               </div>
 
               <div class="col" style="min-width: 0; overflow: hidden">
-                <div class="text-caption text-grey-6">{{ entry.course.code }}</div>
+                <div class="row items-center justify-between no-wrap q-gutter-xs">
+                  <div class="text-caption text-grey-6">{{ entry.course.code }}</div>
+                  <q-badge
+                    v-if="
+                      entry.registration.enrollId &&
+                      unreadByEnrollId[entry.registration.enrollId]! > 0
+                    "
+                    rounded
+                    color="primary"
+                    :label="unreadByEnrollId[entry.registration.enrollId]"
+                  />
+                </div>
                 <div class="chat-course-card__title text-weight-bolder text-dark">
                   {{ getTranslatedCourseTitle(entry.course) }}
                 </div>
@@ -108,12 +119,18 @@
               :class="`chat-message--${message.sender}`"
             >
               <q-avatar
-                v-if="message.sender === 'system'"
+                v-if="message.sender === 'instructor' || message.sender === 'system'"
                 size="34px"
-                color="blue-grey-1"
-                text-color="blue-grey-8"
+                class="chat-message__avatar--instructor"
               >
-                <q-icon name="support_agent" size="20px" />
+                <img
+                  v-if="instructorAvatarSeed"
+                  :src="`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(instructorAvatarSeed)}`"
+                  alt="instructor avatar"
+                  loading="eager"
+                  decoding="sync"
+                />
+                <q-icon v-else name="support_agent" size="20px" color="blue-grey-8" />
               </q-avatar>
 
               <div class="chat-message__bubble">
@@ -122,7 +139,10 @@
                   {{ formatChatMessageTime(message.sentAt) }}
                 </div>
                 <div
-                  v-if="message.sender === 'learner' && isLatestLearnerMessage(message)"
+                  v-if="
+                    message.sender === 'learner' &&
+                    (message.status === 'read' || isLatestLearnerMessage(message))
+                  "
                   class="chat-message__status"
                   :class="`chat-message__status--${message.status}`"
                 >
@@ -203,6 +223,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import BaseButton from 'components/base/BaseButton.vue';
@@ -225,6 +246,9 @@ const {
   selectedChatEntry,
   chatThreadMessages,
   canSendChatMessage,
+  unreadByEnrollId,
+  lastMessageAt,
+  instructorEmailByCourseId,
   sendChatMessage,
   selectChatCourse,
   formatChatMessageTime,
@@ -232,6 +256,23 @@ const {
   getChatStatusIcon,
   isLatestLearnerMessage,
 } = useProfileChat(myRegistrations, myRegisteredCourseEntries);
+
+const instructorAvatarSeed = computed(() => {
+  const courseId = selectedChatEntry.value?.course.id;
+  return (
+    selectedChatEntry.value?.course.instructorEmail ||
+    (courseId ? instructorEmailByCourseId.value[courseId] : undefined) ||
+    null
+  );
+});
+
+const sortedCourseEntries = computed(() =>
+  [...myRegisteredCourseEntries.value].sort((a, b) => {
+    const ta = lastMessageAt.value[a.registration.enrollId ?? 0] ?? 0;
+    const tb = lastMessageAt.value[b.registration.enrollId ?? 0] ?? 0;
+    return tb - ta;
+  }),
+);
 
 function getTranslatedCourseTitle(course: { title: string; titleEn?: string }): string {
   if (locale.value === 'th') return course.title;
@@ -400,8 +441,20 @@ function formatDate(isoDate: string): string {
   }
 
   &__avatar {
-    background: linear-gradient(135deg, rgba($secondary, 0.9), rgba($primary, 0.9));
+    background: linear-gradient(135deg, rgba($primary, 0.15), rgba($secondary, 0.15));
     overflow: hidden;
+  }
+
+  &__avatar--instructor {
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba($primary, 0.15), rgba($secondary, 0.15));
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   }
 
   &__avatar-image {

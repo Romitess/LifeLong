@@ -16,6 +16,7 @@ interface FetchReportOptions {
   endDate?: string | null;
   facultyId?: number | null;
   typeCourseId?: number | null;
+  feeType?: 'free' | 'paid' | null;
   search?: string | null;
 }
 
@@ -94,6 +95,7 @@ export function useAdminRegistrationStatisticsReport() {
             endDate: options.endDate || undefined,
             facultyId: options.facultyId ?? undefined,
             typeCourseId: options.typeCourseId ?? undefined,
+            feeType: options.feeType || undefined,
             search: options.search || undefined,
           },
         },

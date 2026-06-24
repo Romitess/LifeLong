@@ -20,7 +20,20 @@
       body-padding="none"
     >
       <template #header-actions>
-        <div class="row items-center q-gutter-x-sm">
+        <div class="registration-statistics-report__header-actions">
+          <q-select
+            v-model="selectedFeeType"
+            :options="feeTypeOptions"
+            option-value="value"
+            option-label="label"
+            dense
+            outlined
+            emit-value
+            map-options
+            class="registration-statistics-report__filter"
+            style="min-width: 160px"
+            @update:model-value="handleSearch"
+          />
           <AppSearchInput
             v-model="searchQuery"
             :placeholder="t('finance.registrationStatistics.searchPlaceholder')"
@@ -30,8 +43,17 @@
           <TableExportActions
             :pdf-config="pdfConfig"
             :csv-config="csvConfig"
-            :pdf-label="t('finance.registrationStatistics.export.pdfBtn')"
-            :csv-label="t('finance.registrationStatistics.export.csvBtn')"
+            :pdf-label="
+              selectedRows.length > 0
+                ? `${t('finance.registrationStatistics.export.pdfBtn')} (${selectedRows.length})`
+                : t('finance.registrationStatistics.export.pdfBtn')
+            "
+            :csv-label="
+              selectedRows.length > 0
+                ? `${t('finance.registrationStatistics.export.csvBtn')} (${selectedRows.length})`
+                : t('finance.registrationStatistics.export.csvBtn')
+            "
+            @exported="selectedRows = []"
           />
         </div>
       </template>
@@ -53,6 +75,13 @@
         @page-change="handlePageChange"
         @rows-per-page-change="handleRowsPerPageChange"
       >
+        <template #header-selection>
+          <q-checkbox v-model="allSelected" dense />
+        </template>
+
+        <template #cell-selection="{ row }">
+          <q-checkbox v-model="selectedRows" :val="row" dense />
+        </template>
         <template #cell-courseName="{ row }">
           <div style="white-space: pre-wrap; word-break: break-word">
             {{ row.courseName }}
@@ -101,6 +130,7 @@ import type { AdminRegistrationStatisticsReportResponse } from 'src/types/admin-
 import { formatCount, formatCurrency } from 'src/utils/course-format';
 import { useI18n } from 'vue-i18n';
 import { date } from 'quasar';
+import { useAuthStore } from 'src/stores/auth-store';
 
 interface DateRangeValue {
   start: string | null;
@@ -122,11 +152,34 @@ const dateRange = ref<DateRangeValue>({
 });
 const selectedFacultyId = ref<number | null>(null);
 const selectedTypeCourseId = ref<number | null>(null);
+const selectedFeeType = ref<'all' | 'free' | 'paid'>('all');
+
+const feeTypeOptions = computed(() => [
+  { label: t('finance.registrationStatistics.filter.allFees'), value: 'all' },
+  { label: t('finance.registrationStatistics.filter.free'), value: 'free' },
+  { label: t('finance.registrationStatistics.filter.paid'), value: 'paid' },
+]);
+const selectedRows = ref<FlatCourseRow[]>([]);
+
+const allSelected = computed({
+  get() {
+    return flatRows.value.length > 0 && selectedRows.value.length === flatRows.value.length;
+  },
+  set(val: boolean) {
+    if (val) {
+      selectedRows.value = [...flatRows.value];
+    } else {
+      selectedRows.value = [];
+    }
+  },
+});
 
 const { groups, filterOptions, summary, pagination, generatedAt, isLoading, error, fetchData } =
   useAdminRegistrationStatisticsReport();
 
 const { t, locale } = useI18n();
+const authStore = useAuthStore();
+const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || 'All');
 
 const FACULTY_I18N_MAP: Record<string, string> = {
   คณะวิทยาการสารสนเทศ: 'informatics',
@@ -209,6 +262,13 @@ const flatRows = computed<FlatCourseRow[]>(() => {
 
 const flatColumns = computed<BaseTableColumn[]>(() => [
   {
+    key: 'selection',
+    label: '',
+    align: 'center',
+    sortable: false,
+    width: '40px',
+  },
+  {
     key: 'courseName',
     label: t('finance.registrationStatistics.table.courseName'),
     sortable: true,
@@ -248,9 +308,10 @@ const flatColumns = computed<BaseTableColumn[]>(() => [
 ]);
 
 const pdfConfig = computed<PdfExportConfig | null>(() => {
-  if (flatRows.value.length === 0) return null;
+  const dataToExport = selectedRows.value.length > 0 ? selectedRows.value : flatRows.value;
+  if (dataToExport.length === 0) return null;
 
-  const rows = flatRows.value.map((row, index) => [
+  const rows = dataToExport.map((row, index) => [
     index + 1,
     row.courseCode ? `${row.courseCode} : ${row.courseName}` : row.courseName,
     row.facultyName,
@@ -261,7 +322,8 @@ const pdfConfig = computed<PdfExportConfig | null>(() => {
   ]);
 
   const todayStr = date.formatDate(new Date(), 'DDMMYYYY');
-  const filename = `registration_statistics_${todayStr}`;
+  const facNameStr = userFacName.value.replace(/\s+/g, '_');
+  const filename = `facultyreport_${facNameStr}_${todayStr}`;
 
   return {
     filename,
@@ -289,22 +351,26 @@ const pdfConfig = computed<PdfExportConfig | null>(() => {
       fontSize: 8,
     },
     columnStyles: {
-      0: { halign: 'center', cellWidth: 28 },
-      1: { cellWidth: 150 },
-      2: { cellWidth: 90 },
-      3: { cellWidth: 90 },
-      4: { halign: 'center', cellWidth: 80 },
-      5: { halign: 'center', cellWidth: 50 },
-      6: { halign: 'right', cellWidth: 60 },
+      0: { halign: 'center', cellWidth: 30 },
+      1: {},
+      2: {},
+      3: {},
+      4: { halign: 'center', cellWidth: 100 },
+      5: { halign: 'center', cellWidth: 60 },
+      6: { halign: 'right', cellWidth: 70 },
     },
   };
 });
 
 const csvConfig = computed<CsvExportConfig | null>(() => {
-  if (flatRows.value.length === 0) return null;
+  const dataToExport = selectedRows.value.length > 0 ? selectedRows.value : flatRows.value;
+  if (dataToExport.length === 0) return null;
+
+  const todayStr = date.formatDate(new Date(), 'DD_MM_YYYY');
+  const facNameStr = userFacName.value.replace(/\s+/g, '_');
 
   return {
-    filename: `registration_statistics_${date.formatDate(new Date(), 'DDMMYYYY')}.csv`,
+    filename: `facultyreport_${facNameStr}_${todayStr}.csv`,
     headers: [
       t('finance.registrationStatistics.export.no'),
       t('finance.registrationStatistics.export.courseName'),
@@ -315,7 +381,7 @@ const csvConfig = computed<CsvExportConfig | null>(() => {
       t('finance.registrationStatistics.export.learners'),
       t('finance.registrationStatistics.export.fees'),
     ],
-    data: flatRows.value.map((row, index) => [
+    data: dataToExport.map((row, index) => [
       index + 1,
       row.courseName,
       row.courseCode || '',
@@ -331,6 +397,7 @@ const csvConfig = computed<CsvExportConfig | null>(() => {
 function handleRowsPerPageChange(val: number) {
   rowsPerPage.value = val;
   currentPage.value = 1;
+  selectedRows.value = [];
   void loadReport(1);
 }
 
@@ -410,7 +477,14 @@ function applyMockFilters(page = 1): void {
           item.courseCode?.toLowerCase().includes(searchLower) ||
           item.responsibleName?.toLowerCase().includes(searchLower);
 
-        return matchesFaculty && matchesDateRange && matchesSearch;
+        const fee = getSafeAmount(item.unitPrice) + getSafeAmount(item.registrationFee);
+        const matchesFeeType =
+          !selectedFeeType.value ||
+          selectedFeeType.value === 'all' ||
+          (selectedFeeType.value === 'free' && fee === 0) ||
+          (selectedFeeType.value === 'paid' && fee > 0);
+
+        return matchesFaculty && matchesDateRange && matchesSearch && matchesFeeType;
       });
 
       const normalizedItems = filteredItems.map((item, index) => ({
@@ -472,12 +546,14 @@ function loadReport(page = 1): Promise<void> {
     endDate: normalizeDateForApi(dateRange.value.end),
     facultyId: selectedFacultyId.value,
     typeCourseId: selectedTypeCourseId.value,
+    feeType: selectedFeeType.value === 'all' ? null : selectedFeeType.value,
     search: searchQuery.value || null,
   });
 }
 
 async function handleSearch(): Promise<void> {
   currentPage.value = 1;
+  selectedRows.value = [];
   await loadReport(1);
 }
 
@@ -487,6 +563,7 @@ async function handlePageChange(page: number): Promise<void> {
   }
 
   currentPage.value = page;
+  selectedRows.value = [];
   await loadReport(page);
 }
 
@@ -532,6 +609,19 @@ onMounted(() => {
 <style lang="scss" scoped>
 .registration-statistics-report__stats {
   margin-bottom: 18px;
+}
+
+.registration-statistics-report__header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  @media (max-width: 599px) {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
 }
 
 .registration-statistics-report__date-filter,
@@ -594,7 +684,38 @@ onMounted(() => {
 }
 
 .registration-statistics-report__search {
-  min-width: 260px;
+  min-width: 220px;
+  flex: 1 1 220px;
+
+  @media (max-width: 599px) {
+    min-width: 0;
+    flex: none;
+  }
+}
+
+.registration-statistics-report__filter {
+  :deep(.q-field__control) {
+    background: #ffffff !important;
+  }
+
+  :deep(.q-field__control::before) {
+    border-color: rgba(17, 24, 39, 0.14) !important;
+  }
+
+  :deep(.q-field__control:hover::before) {
+    border-color: rgba(17, 24, 39, 0.22) !important;
+  }
+
+  &.q-field--focused :deep(.q-field__control::after) {
+    border-color: var(--q-primary) !important;
+  }
+
+  :deep(.q-field__native),
+  :deep(.q-field__input) {
+    color: #1f2937;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
 }
 
 .registration-statistics-report__action-spacer {

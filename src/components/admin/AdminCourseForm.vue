@@ -269,22 +269,59 @@
               </q-field>
             </div>
 
-            <!-- ทักษะที่ผู้เรียนจะได้รับ -->
+            <!-- Skill Weight Mapping (OECD Learning Compass 2030) -->
             <div class="course-form__field course-form__field--full">
               <div class="course-form__label">
-                ทักษะที่ผู้เรียนจะได้รับ <span class="course-form__optional">(ไม่บังคับ)</span>
+                Skill Mapping
+                <span class="course-form__optional"
+                  >(รวมกันต้องไม่เกิน 100%, โดย 20% เท่ากับ 1 แต้ม)</span
+                >
               </div>
-              <div class="course-form__options-row">
-                <BaseCheckbox
-                  v-for="opt in formOptions.skills"
-                  :key="opt.id"
-                  v-model="form.skillIds"
-                  :val="opt.id"
-                  :label="opt.label"
-                  color="primary"
-                  :disable="props.readonly"
-                  class="course-form__checkbox"
-                />
+              <div class="course-form__skill-mapping">
+                <div
+                  v-for="skill in formOptions.skills"
+                  :key="skill.id"
+                  class="course-form__skill-row"
+                >
+                  <BaseCheckbox
+                    :model-value="isSkillSelected(skill.id)"
+                    :label="skill.label"
+                    color="primary"
+                    :disable="props.readonly"
+                    class="course-form__skill-checkbox"
+                    @update:model-value="(v: any) => toggleSkill(skill.id, Boolean(v))"
+                  />
+                  <div v-if="isSkillSelected(skill.id)" class="course-form__skill-weight">
+                    <BaseInput
+                      :model-value="getSkillWeight(skill.id)"
+                      outlined
+                      dense
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      placeholder="0"
+                      class="course-form__skill-weight-input"
+                      :readonly="props.readonly"
+                      @update:model-value="(v: any) => setSkillWeight(skill.id, Number(v) || 0)"
+                    />
+                    <span class="course-form__skill-weight-unit">%</span>
+                  </div>
+                </div>
+                <div
+                  class="course-form__skill-total q-mt-sm"
+                  :class="
+                    totalSkillWeight > 100
+                      ? 'text-negative text-weight-bold'
+                      : 'text-primary text-weight-medium'
+                  "
+                >
+                  แต้มรวมที่ผู้เรียนจะได้รับจากวิชานี้:
+                  {{ (totalSkillWeight / 20).toFixed(2) }} แต้ม (รวม {{ totalSkillWeight }}% / 100%)
+                  <span v-if="totalSkillWeight > 100">
+                    <br />* ไม่อนุญาตให้ตั้งค่าน้ำหนักรวมเกิน 100%
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1086,8 +1123,8 @@
                 v-model="form.contactTel"
                 outlined
                 dense
-                maxlength="30"
-                placeholder="038-123-456"
+                maxlength="10"
+                placeholder="0812345678"
                 :rules="[requiredRule, phoneRule]"
                 :readonly="props.readonly"
                 class="course-form__input"
@@ -1247,7 +1284,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { AxiosError } from 'axios';
-import { QForm } from 'quasar';
+import { QForm, useQuasar } from 'quasar';
 import { api } from 'src/boot/axios';
 import { useAdminCourseForm } from 'src/composables/use-admin-course-form';
 import { useAuthStore } from 'src/stores/auth-store';
@@ -1308,6 +1345,7 @@ const moodleSyncLabel = computed(() => {
 });
 
 const authStore = useAuthStore();
+const $q = useQuasar();
 const { formOptions, isLoadingOptions, isSaving, error, fetchFormOptions, createCourse } =
   useAdminCourseForm();
 const qFormRef = ref<InstanceType<typeof QForm> | null>(null);
@@ -1340,7 +1378,7 @@ const form = reactive({
   theoryHours: undefined as number | undefined,
   practiceHours: undefined as number | undefined,
   studyTypeId: undefined as number | undefined,
-  skillIds: [] as number[],
+  skillWeights: [] as { skillId: number; weight: number }[],
   startDate: '',
   endDate: '',
   categoryId: undefined as number | undefined,
@@ -1382,6 +1420,36 @@ function toFormDate(s: string | null | undefined): string {
 }
 
 const selectedTargetIds = ref<number[]>([]);
+
+// --- Skill weight helpers ---
+function isSkillSelected(skillId: number): boolean {
+  return form.skillWeights.some((sw) => sw.skillId === skillId);
+}
+
+function toggleSkill(skillId: number, selected: boolean): void {
+  if (selected) {
+    if (!isSkillSelected(skillId)) {
+      form.skillWeights.push({ skillId, weight: 0 });
+    }
+  } else {
+    form.skillWeights = form.skillWeights.filter((sw) => sw.skillId !== skillId);
+  }
+}
+
+function getSkillWeight(skillId: number): number {
+  return form.skillWeights.find((sw) => sw.skillId === skillId)?.weight ?? 0;
+}
+
+function setSkillWeight(skillId: number, weight: number): void {
+  const sw = form.skillWeights.find((s) => s.skillId === skillId);
+  if (sw) sw.weight = weight;
+}
+
+const totalSkillWeight = computed(() =>
+  form.skillWeights.reduce((sum, sw) => sum + (sw.weight || 0), 0),
+);
+// --- End skill weight helpers ---
+
 const selectedSubtargetIds = ref<number[]>([]);
 const subtargetOtherText = ref<Record<number, string>>({});
 const targetOtherText = ref<Record<number, string>>({});
@@ -1462,7 +1530,10 @@ watch(
     form.theoryHours = data.theoryHours ?? undefined;
     form.practiceHours = data.practiceHours ?? undefined;
     form.studyTypeId = data.studyTypeId ?? undefined;
-    form.skillIds = data.skillIds ?? [];
+    form.skillWeights = (data.skillWeights ?? []).map((sw) => ({
+      skillId: sw.skillId,
+      weight: sw.weight,
+    }));
     form.startDate = toFormDate(data.startDate);
     form.endDate = toFormDate(data.endDate);
     form.categoryId = data.categoryId ?? undefined;
@@ -1881,6 +1952,15 @@ async function submit() {
     return;
   }
 
+  if (totalSkillWeight.value > 100) {
+    $q.notify({
+      type: 'negative',
+      message: 'ไม่อนุญาตให้ตั้งค่าน้ำหนักทักษะรวมเกิน 100%',
+      position: 'top',
+    });
+    return;
+  }
+
   const valid = await qFormRef.value?.validate();
   if (!valid) {
     await revealAndFocusFirstError();
@@ -1898,7 +1978,7 @@ async function submit() {
     theoryHours: form.theoryHours,
     practiceHours: form.practiceHours,
     studyTypeId: form.studyTypeId!,
-    skillIds: form.skillIds,
+    skillWeights: form.skillWeights,
     startDate: toDatabaseDate(form.startDate),
     endDate: toDatabaseDate(form.endDate),
     categoryId: form.categoryId!,
@@ -2437,6 +2517,69 @@ async function submitAndPublish() {
   font-weight: 500;
   &:hover {
     text-decoration: underline;
+  }
+}
+
+.course-form__skill-mapping {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.course-form__skill-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(245, 166, 35, 0.04);
+  border: 1px solid rgba(245, 166, 35, 0.1);
+  transition: background 0.2s ease;
+  &:hover {
+    background: rgba(245, 166, 35, 0.08);
+  }
+}
+
+.course-form__skill-checkbox {
+  flex: 1;
+  min-width: 0;
+}
+
+.course-form__skill-weight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.course-form__skill-weight-input {
+  width: 80px;
+}
+
+.course-form__skill-weight-unit {
+  font-weight: 700;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.course-form__skill-total {
+  text-align: right;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #374151;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+
+  &--over {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #dc2626;
   }
 }
 </style>
