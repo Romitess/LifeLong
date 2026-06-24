@@ -611,7 +611,14 @@ export default {
       eyebrow: 'Registration Statistics',
       cardTitle: 'Registration Statistics',
       cardSubtitle: 'Monitor learners and fees by faculty/department from real system data',
-      searchPlaceholder: 'Search course name, instructor...',
+      searchPlaceholder: 'Search...',
+      filter: {
+        courseType: 'Course Type',
+        allFees: 'All',
+        feeType: 'Fee Type',
+        free: 'Free Courses',
+        paid: 'Paid Courses',
+      },
       exportBtn: 'Export',
       stats: {
         coursesFound: 'Courses Found',

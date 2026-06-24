@@ -609,7 +609,14 @@ export default {
       eyebrow: 'Registration Statistics',
       cardTitle: 'สถิติการลงทะเบียน',
       cardSubtitle: 'ติดตามจำนวนผู้เรียนและค่าลงทะเบียน แยกตามคณะหรือส่วนงานจากข้อมูลจริงในระบบ',
-      searchPlaceholder: 'ค้นหาชื่อรายวิชา, ผู้สอน...',
+      searchPlaceholder: 'ค้นหา...',
+      filter: {
+        courseType: 'ประเภทคอร์ส',
+        allFees: 'ทั้งหมด',
+        feeType: 'ค่าใช้จ่าย',
+        free: 'คอร์สฟรี',
+        paid: 'คอร์สเสียเงิน',
+      },
       exportBtn: 'ส่งออก',
       stats: {
         coursesFound: 'รายวิชาที่พบ',
