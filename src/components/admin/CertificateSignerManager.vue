@@ -67,16 +67,14 @@
         </template>
 
         <template #cell-preview="{ row }">
-          <div v-if="row.url || row.path" class="signer-cell__thumb-wrap">
-            <img
-              :src="getImageUrl(row.url || row.path)"
+          <div v-if="row.url || row.path" class="signer-cell__thumb-wrap" @click="openPreview(row)">
+            <ImageDisplay
+              :image-path="row.url || row.path"
               :alt="row.name"
-              class="signer-cell__thumb"
-              width="100"
-              height="60"
-              loading="lazy"
-              decoding="async"
-              @click="openPreview(row)"
+              width="100px"
+              height="60px"
+              object-fit="contain"
+              border-radius="6px"
             />
           </div>
           <span v-else class="signer-cell__no-file">-</span>
@@ -172,13 +170,13 @@
           class="signer-manager-dialog__existing-file"
         >
           <div class="signer-manager-dialog__existing-thumb">
-            <img
-              :src="existingFile.url"
+            <ImageDisplay
+              :image-path="existingFile.imagePath"
               :alt="existingFile.filename ?? ''"
-              class="signer-manager-dialog__thumb-img"
-              width="72"
-              height="48"
-              decoding="async"
+              width="72px"
+              height="48px"
+              object-fit="contain"
+              border-radius="0"
             />
           </div>
           <div class="signer-manager-dialog__existing-info">
@@ -291,10 +289,13 @@
       :subtitle="previewItem?.position ?? ''"
       card-class="signer-manager-preview-card"
     >
-      <img
+      <ImageDisplay
         v-if="previewItem?.url || previewItem?.path"
-        :src="getImageUrl(previewItem.url || previewItem.path)"
+        :image-path="previewItem.url || previewItem.path"
         :alt="previewItem.name"
+        width="100%"
+        height="auto"
+        object-fit="contain"
         class="signer-manager-preview-card__img"
       />
     </AppDialog>
@@ -326,6 +327,7 @@ import BaseInput from 'components/base/BaseInput.vue';
 import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
 import BaseStatusBadge from 'components/base/BaseStatusBadge.vue';
 import BaseToggle from 'components/base/BaseToggle.vue';
+import ImageDisplay from 'components/base/image-display.vue';
 import { api } from 'src/boot/axios';
 import { useAdminCertSigners } from 'src/composables/use-admin-cert-signers';
 import { getImageUrl } from 'src/services/image.service';
@@ -355,6 +357,7 @@ const isSaving = ref(false);
 
 interface ExistingFile {
   url: string;
+  imagePath: string;
   filename?: string;
   imgSize?: string;
 }
@@ -431,6 +434,7 @@ function openEditDialog(item: AdminCertSignerItem): void {
     item.url || item.path
       ? {
           url: getImageUrl(item.url || item.path),
+          imagePath: item.url || item.path || '',
           ...(item.filename ? { filename: item.filename } : {}),
           ...(item.imgSize ? { imgSize: item.imgSize } : {}),
         }
@@ -636,6 +640,15 @@ function formatFileSize(bytes: number): string {
   width: 100px;
   height: 60px;
   margin: 0 auto;
+  cursor: pointer;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: box-shadow 0.18s ease;
+
+  &:hover {
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+  }
 }
 
 .signer-cell__thumb {
