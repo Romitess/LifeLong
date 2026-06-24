@@ -69,7 +69,7 @@
                 @click="openReview(a.id)"
               />
               <BaseButton
-                v-else
+                v-else-if="a.state === 'inprogress' || a.state === 'overdue'"
                 outline
                 dense
                 no-caps
@@ -153,7 +153,7 @@
                 unelevated
                 icon-right="chevron_right"
                 label="ถัดไป"
-                :loading="loading"
+                :disable="loading"
                 @click="goPage(attemptData.nextpage)"
               />
               <BaseButton
@@ -163,7 +163,7 @@
                 unelevated
                 icon="flag"
                 label="จบการทำแบบทดสอบ"
-                :loading="loading"
+                :disable="loading"
                 @click="goToSummary"
               />
             </div>
@@ -487,12 +487,16 @@ const introHtml = computed<string>(() => (quiz.value?.intro ? sanitize(quiz.valu
 const inProgressAttempt = computed(() =>
   attempts.value.find((a) => a.state === 'inprogress' || a.state === 'overdue'),
 );
-const finishedCount = computed(() => attempts.value.filter((a) => a.state === 'finished').length);
+// Terminal attempts (finished OR abandoned) all count toward Moodle's attempt
+// limit — an abandoned attempt is used up and can't be resumed or restarted.
+const usedAttempts = computed(
+  () => attempts.value.filter((a) => a.state !== 'inprogress' && a.state !== 'overdue').length,
+);
 const canStartNew = computed(
   () =>
     !!inProgressAttempt.value ||
     quiz.value?.attempts === 0 ||
-    finishedCount.value < (quiz.value?.attempts ?? 0),
+    usedAttempts.value < (quiz.value?.attempts ?? 0),
 );
 const gradeMethodLabel = computed(() => {
   switch (quiz.value?.grademethod) {
@@ -559,12 +563,28 @@ async function init(): Promise<void> {
 
 async function loadPage(page: number): Promise<void> {
   if (currentAttemptId.value == null) return;
+
+  // First entry: load content + nav grid together so the nav doesn't pop in
+  // after the content. On later navigation the nav is already mounted, so we
+  // render the content immediately and refresh nav states in the background —
+  // otherwise every "next/prev" would block on the summary call and feel slow.
+  if (summaryQuestions.value.length === 0) {
+    const [data] = await Promise.all([
+      getAttemptData(currentAttemptId.value, page),
+      refreshSummary(),
+    ]);
+    if (!data) return;
+    attemptData.value = data;
+    currentPage.value = page;
+    screen.value = 'attempt';
+    return;
+  }
+
   const data = await getAttemptData(currentAttemptId.value, page);
   if (!data) return;
   attemptData.value = data;
   currentPage.value = page;
   screen.value = 'attempt';
-  // Refresh the navigation grid (question states/flags) after the page is shown.
   void refreshSummary();
 }
 
@@ -647,13 +667,18 @@ function handleFormClick(e: MouseEvent): void {
 
   // Intercept all <a> links inside the Moodle HTML to prevent page navigation.
   // "Clear my choice" is rendered as an anchor by Moodle; clicking it should
-  // uncheck the radios in that question block instead of navigating away.
+  // clear the answer in that question block instead of navigating away.
   const link = target.closest('a');
   if (link) {
     e.preventDefault();
     const que = link.closest('.que');
-    que?.querySelectorAll<HTMLInputElement>('.answer input[type="radio"]').forEach((r) => {
-      r.checked = false;
+    // Moodle renders a hidden radio with value="-1" as the "no answer" option.
+    // Just unchecking the visible radios sends no answer field at all, and
+    // Moodle then keeps the previous answer on the next save — so the choice
+    // "comes back" on reload. Selecting the value="-1" radio submits
+    // `q…_answer=-1`, which Moodle persists as a real cleared answer.
+    que?.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((r) => {
+      r.checked = r.value === '-1';
     });
     // Reflect "not answered" instantly in the question label + navigation grid.
     const slot = slotFromQuestion(que);
@@ -745,10 +770,13 @@ async function resume(att: QuizAttempt): Promise<void> {
 
 async function goPage(page: number): Promise<void> {
   if (currentAttemptId.value == null) return;
-  // Save current page answers before navigating.
-  const saved = await processAttempt(currentAttemptId.value, false, serializeForm());
-  if (!saved) return;
-  await loadPage(page);
+  // Persist the current page and load the target page concurrently. They touch
+  // different questions, so navigation doesn't have to wait for the save
+  // round-trip to finish first — this halves the perceived page-change latency.
+  // serializeForm() runs synchronously here, capturing answers before loadPage
+  // swaps the form content.
+  const savePromise = processAttempt(currentAttemptId.value, false, serializeForm());
+  await Promise.all([savePromise, loadPage(page)]);
 }
 
 function buildCompletion() {
@@ -1071,6 +1099,33 @@ onUnmounted(() => {
   :deep(.que.partiallycorrect .state) {
     color: var(--q-warning);
     background: rgba(242, 192, 55, 0.18);
+  }
+  // "Clear my choice" — Moodle renders this as a plain underlined link.
+  // Restyle it as a proper outlined pill button to match the rest of the UI.
+  :deep(.qtype_multichoice_clearchoice) {
+    margin-top: 10px;
+  }
+  // Mirror BaseButton's look (radius 12px, soft border, hover lift) so the
+  // Moodle anchor reads as the same button component used across the app.
+  :deep(.qtype_multichoice_clearchoice a) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 24px;
+    min-height: 40px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    background: #fff;
+    color: rgba(15, 23, 42, 0.78);
+    font-weight: 600;
+    text-transform: none;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  :deep(.qtype_multichoice_clearchoice a:hover) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(17, 24, 39, 0.1);
+    text-decoration: none;
   }
   // Moodle question info bar (Question N / state / flag).
   // Render it as a clean header row and CONSTRAIN the flag image — the raw
