@@ -130,24 +130,49 @@
                 <q-avatar
                   v-if="message.sender === 'learner'"
                   size="34px"
-                  color="primary"
-                  text-color="white"
+                  class="chat-message__avatar--learner"
                 >
-                  {{ selectedConversation.learnerInitials }}
+                  <img
+                    v-if="selectedConversation.learnerEmail"
+                    :src="`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(selectedConversation.learnerEmail)}`"
+                    alt="learner avatar"
+                    loading="eager"
+                    decoding="sync"
+                  />
+                  <span v-else>{{ selectedConversation.learnerInitials }}</span>
                 </q-avatar>
 
                 <div class="chat-message__bubble">
                   <div class="chat-message__body">{{ message.body }}</div>
                   <div class="chat-message__time">{{ formatMessageTime(message.sentAt) }}</div>
+                  <div
+                    v-if="
+                      message.sender === 'system' &&
+                      (message.status === 'read' || message.id === latestSystemMessageId)
+                    "
+                    class="chat-message__status"
+                    :class="`chat-message__status--${message.status}`"
+                  >
+                    <q-icon :name="message.status === 'read' ? 'done_all' : 'done'" size="13px" />
+                    <span>{{
+                      message.status === 'read'
+                        ? t('instructor.chatPage.statusRead')
+                        : t('instructor.chatPage.statusSent')
+                    }}</span>
+                  </div>
                 </div>
 
                 <q-avatar
                   v-if="message.sender === 'system'"
                   size="34px"
-                  color="amber-8"
-                  text-color="white"
+                  class="chat-message__avatar--self"
                 >
-                  <q-icon name="support_agent" size="19px" />
+                  <img
+                    :src="`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authStore.user?.email ?? '')}`"
+                    alt="instructor avatar"
+                    loading="eager"
+                    decoding="sync"
+                  />
                 </q-avatar>
               </div>
             </div>
@@ -232,6 +257,7 @@ interface ConversationEntry {
   learnerUserId: number;
   learnerName: string;
   learnerInitials: string;
+  learnerEmail: string | null;
   messageCount: number;
   latestMessagePreview: string;
   latestMessageTime: number;
@@ -297,6 +323,7 @@ const conversationEntriesUnsorted = computed<ConversationEntry[]>(() =>
       learnerUserId: conversation.learnerUserId,
       learnerName: conversation.learnerName,
       learnerInitials: getLearnerInitials(conversation.learnerName),
+      learnerEmail: conversation.learnerEmail ?? null,
       messageCount: unreadCount,
       latestMessagePreview:
         conversation.latestMessagePreview || t('instructor.chatPage.emptyMessages'),
@@ -373,6 +400,11 @@ const selectedMessages = computed<ChatMessage[]>(() => {
 const canSendReply = computed(
   () => replyDraft.value.trim().length > 0 && !!selectedConversation.value,
 );
+
+const latestSystemMessageId = computed<string>(() => {
+  const msgs = [...selectedMessages.value].reverse();
+  return msgs.find((m) => m.sender === 'system')?.id ?? '';
+});
 
 watch(
   conversationEntries,
@@ -542,7 +574,7 @@ function scrollToLatestMessage(): void {
 .chat-panel,
 .thread-panel,
 .chat-empty-card {
-  border-radius: 8px;
+  border-radius: 14px !important;
   background: #ffffff;
 }
 
@@ -592,8 +624,10 @@ function scrollToLatestMessage(): void {
 .thread-panel__messages {
   min-height: 0;
   overflow-y: auto;
-  padding: 22px;
-  background: #fbfcfc;
+  padding: 20px;
+  background:
+    radial-gradient(circle at 90% 8%, rgba($primary, 0.08), transparent 30%),
+    linear-gradient(180deg, #fbfcfd 0%, #f6f8f8 100%);
 }
 
 .thread-panel__composer {
@@ -614,7 +648,7 @@ function scrollToLatestMessage(): void {
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .chat-message--system {
@@ -623,32 +657,80 @@ function scrollToLatestMessage(): void {
 
 .chat-message__bubble {
   max-width: min(520px, 78%);
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 16px;
   background: #ffffff;
-  border: 1px solid rgba(38, 50, 56, 0.08);
-  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+  color: #1f2937;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.08);
 }
 
 .chat-message--system .chat-message__bubble {
-  color: #3d2600;
-  background: rgba(247, 208, 70, 0.18);
-  border-color: rgba(245, 166, 35, 0.22);
+  background: linear-gradient(135deg, $primary, #f8c94a);
+  border-color: transparent;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-message--learner .chat-message__bubble {
+  border-bottom-left-radius: 4px;
 }
 
 .chat-message__body {
   color: inherit;
-  font-size: 0.92rem;
-  line-height: 1.55;
+  font-size: 0.875rem;
+  line-height: 1.5;
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .chat-message__time {
   margin-top: 4px;
-  color: #90a4ae;
-  font-size: 0.7rem;
-  font-weight: 700;
+  color: rgba(31, 41, 55, 0.48);
+  font-size: 0.62rem;
+  font-weight: 400;
   text-align: right;
+}
+
+.chat-message__status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 2px;
+  color: rgba(31, 41, 55, 0.45);
+  font-size: 0.62rem;
+  font-weight: 400;
+  line-height: 1.2;
+
+  &--read {
+    color: rgba(25, 118, 210, 0.68);
+  }
+}
+
+.chat-message__avatar--learner {
+  flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba($primary, 0.15), rgba($secondary, 0.15));
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.chat-message__avatar--self {
+  flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba($primary, 0.15), rgba($secondary, 0.15));
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
 @media (max-width: 1023px) {

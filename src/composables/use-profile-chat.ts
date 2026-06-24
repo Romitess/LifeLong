@@ -57,6 +57,9 @@ const unreadChatCount = computed(() =>
 // Last message timestamp per enrollId — used to sort the course list (most recent first).
 const lastMessageAt = ref<Record<number, number>>({});
 
+// Instructor email per courseId — fetched on-demand when course.instructorEmail is absent.
+const instructorEmailByCourseId = ref<Record<string, string>>({});
+
 export function useProfileChat(
   myRegistrations: Ref<CourseRegistration[]> | ComputedRef<CourseRegistration[]>,
   myRegisteredCourseEntries: Ref<RegisteredCourseEntry[]> | ComputedRef<RegisteredCourseEntry[]>,
@@ -93,11 +96,33 @@ export function useProfileChat(
     () => Boolean(selectedChatEntry.value) && chatDraft.value.trim().length > 0,
   );
 
+  async function fetchInstructorEmail(courseId: string): Promise<void> {
+    if (instructorEmailByCourseId.value[courseId]) return;
+    const numId = Number(courseId.replace('db-', ''));
+    if (Number.isNaN(numId)) return;
+    try {
+      const { data } = await api.get<{ instructorInfo?: { email?: string | null } | null }>(
+        `/api/moodle/courses/${numId}`,
+      );
+      const email = data?.instructorInfo?.email?.trim();
+      if (email) {
+        instructorEmailByCourseId.value = { ...instructorEmailByCourseId.value, [courseId]: email };
+      }
+    } catch {
+      // silently ignore — avatar fallback will be used
+    }
+  }
+
   async function fetchChatMessages(): Promise<void> {
     const enrollId = selectedChatEntry.value?.registration?.enrollId;
     if (!enrollId) {
       chatMessages.value = [];
       return;
+    }
+
+    const courseId = selectedChatEntry.value?.course.id;
+    if (courseId && !selectedChatEntry.value?.course.instructorEmail) {
+      void fetchInstructorEmail(courseId);
     }
 
     try {
@@ -297,7 +322,10 @@ export function useProfileChat(
   }
 
   function formatChatMessageTime(date: Date): string {
-    return date.toLocaleTimeString(locale.value === 'th' ? 'th-TH' : 'en-US', {
+    const isTh = locale.value === 'th';
+    return date.toLocaleDateString(isTh ? 'th-TH' : 'en-US', {
+      day: 'numeric',
+      month: 'short',
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
@@ -329,7 +357,7 @@ export function useProfileChat(
 
   // Watch for selected course changes in chat tab
   watch(selectedChatCourseId, async () => {
-    void fetchChatMessages();
+    await fetchChatMessages();
     const enrollId = selectedChatEntry.value?.registration?.enrollId;
     if (enrollId) {
       joinChatRoom(enrollId);
@@ -372,6 +400,7 @@ export function useProfileChat(
     unreadChatCount,
     unreadByEnrollId,
     lastMessageAt,
+    instructorEmailByCourseId,
     fetchChatMessages,
     connectChatSocket,
     disconnectChatSocket,

@@ -2035,6 +2035,8 @@ export default {
       emptyMessagesSub: 'When learners send messages from their profile, they will appear here',
       replyPlaceholder: 'Type a reply to the learner...',
       sendBtn: 'Send',
+      statusSent: 'Sent',
+      statusRead: 'Read',
       noRooms: 'No chat rooms yet',
       noRoomsSub: 'When learners enroll in your courses, chat rooms will appear here',
       teacherOnly: 'This page is for instructors only',
