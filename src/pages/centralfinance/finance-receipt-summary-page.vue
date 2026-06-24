@@ -80,6 +80,10 @@
           :on-rows-per-page-change="onRowsPerPageChange"
           min-width="900px"
         >
+          <template #cell-faculty="{ value }">
+            {{ translateFaculty(value as string) }}
+          </template>
+
           <template #cell-status="{ value, row }">
             <div v-if="value === 'ยกเลิก'" class="text-negative">
               {{ $t('finance.receiptSummary.statusCancelled') }}
@@ -154,6 +158,21 @@ import ReceiptCard from 'components/receipt/receipt-card.vue';
 
 const { t } = useI18n();
 
+const FACULTY_I18N_MAP: Record<string, string> = {
+  คณะวิทยาการสารสนเทศ: 'informatics',
+  คณะวิทยาศาสตร์: 'science',
+  คณะพยาบาลศาสตร์: 'nursing',
+  คณะบริหารธุรกิจ: 'business',
+  คณะวิศวกรรมศาสตร์: 'engineering',
+  สำนักคอมพิวเตอร์: 'computerCenter',
+  คณะมนุษยศาสตร์และสังคมศาสตร์: 'humanities',
+};
+
+function translateFaculty(name: string): string {
+  const key = FACULTY_I18N_MAP[name];
+  return key ? t(`common.faculties.${key}`) : name;
+}
+
 const { isLoading: isFacultyLoading, fetchFaculties } = useFacultyList();
 const { items, isLoading, filters, fetchData, clearFilters } = useReceiptSummaryReport();
 
@@ -204,21 +223,21 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
     startY: 65,
     head: [
       [
-        'ลำดับ',
-        'ส่วนงาน',
-        'เลขที่ใบเสร็จรับเงิน',
-        'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
-        'จำนวนเงิน',
-        'วันที่ชำระเงิน (effective date)',
-        'ชื่อ-สกุล ผู้เรียน',
-        'ชื่อโครงการ/อบรม/หลักสูตร',
-        'ผู้รับเงิน (Collector)',
-        'สถานะ',
+        t('centralFinance.receiptSummary.export.no'),
+        t('centralFinance.receiptSummary.export.faculty'),
+        t('centralFinance.receiptSummary.export.receiptNo'),
+        t('centralFinance.receiptSummary.export.customerName'),
+        t('centralFinance.receiptSummary.export.amount'),
+        t('centralFinance.receiptSummary.export.effectiveDate'),
+        t('centralFinance.receiptSummary.export.learnerName'),
+        t('centralFinance.receiptSummary.export.courseName'),
+        t('centralFinance.receiptSummary.export.collector'),
+        t('centralFinance.receiptSummary.export.status'),
       ],
     ],
     body: items.value.map((row) => [
       row.no,
-      row.faculty,
+      translateFaculty(row.faculty ?? ''),
       row.receiptNo,
       row.customerName ?? '',
       row.amount,
@@ -227,8 +246,8 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
       row.courseName.replace(/\n/g, ' '),
       row.collector,
       row.status === 'ยกเลิก'
-        ? `ยกเลิก ${row.cancelBy ?? ''} ${(row.cancelDate ?? '').replace('\n', ' ')}`
-        : 'ใช้งาน',
+        ? `${t('centralFinance.receiptSummary.export.statusCancelled')} ${row.cancelBy ?? ''} ${(row.cancelDate ?? '').replace('\n', ' ')}`
+        : t('centralFinance.receiptSummary.export.statusActive'),
     ]),
     styles: { fontSize: 7, cellPadding: 3, valign: 'top' },
     headStyles: { fontSize: 7 },
@@ -252,20 +271,20 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
   return {
     filename: `central-finance-receipt-summary_${todayStr}.csv`,
     headers: [
-      'ลำดับ',
-      'ส่วนงาน',
-      'เลขที่ใบเสร็จรับเงิน',
-      'ชื่อ-สกุล ผู้ชำระเงิน (Customer Name)',
-      'จำนวนเงิน',
-      'วันที่ชำระเงิน (effective date)',
-      'ชื่อ-สกุล ผู้เรียน',
-      'ชื่อโครงการ/อบรม/หลักสูตร',
-      'ผู้รับเงิน (Collector)',
-      'สถานะ',
+      t('centralFinance.receiptSummary.export.no'),
+      t('centralFinance.receiptSummary.export.faculty'),
+      t('centralFinance.receiptSummary.export.receiptNo'),
+      t('centralFinance.receiptSummary.export.customerName'),
+      t('centralFinance.receiptSummary.export.amount'),
+      t('centralFinance.receiptSummary.export.effectiveDate'),
+      t('centralFinance.receiptSummary.export.learnerName'),
+      t('centralFinance.receiptSummary.export.courseName'),
+      t('centralFinance.receiptSummary.export.collector'),
+      t('centralFinance.receiptSummary.export.status'),
     ],
     data: items.value.map((row) => [
       row.no,
-      row.faculty,
+      translateFaculty(row.faculty ?? ''),
       row.receiptNo,
       row.customerName ?? '',
       row.amount,
@@ -274,8 +293,8 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
       row.courseName.replace(/\n/g, ' '),
       row.collector.replace('\n', ' '),
       row.status === 'ยกเลิก'
-        ? `ยกเลิก ${row.cancelBy ?? ''} ${(row.cancelDate ?? '').replace('\n', ' ')}`
-        : 'ใช้งาน',
+        ? `${t('centralFinance.receiptSummary.export.statusCancelled')} ${row.cancelBy ?? ''} ${(row.cancelDate ?? '').replace('\n', ' ')}`
+        : t('centralFinance.receiptSummary.export.statusActive'),
     ]),
   };
 });

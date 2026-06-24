@@ -140,7 +140,9 @@
                   icon="visibility"
                   @click="onViewDetail(props.row)"
                 >
-                  <q-tooltip v-if="!$q.platform.is.mobile">ดูรายละเอียด</q-tooltip>
+                  <q-tooltip v-if="!$q.platform.is.mobile">{{
+                    $t('centralFinance.fundSources.table.viewDetail')
+                  }}</q-tooltip>
                 </q-btn>
                 <q-btn
                   flat
@@ -154,8 +156,8 @@
                   <q-tooltip v-if="!$q.platform.is.mobile">
                     {{
                       props.row.status === 'completed'
-                        ? 'ไม่สามารถแก้ไขคำขอที่ออกเลขแล้วได้'
-                        : 'แก้ไข/อัปเดต'
+                        ? $t('centralFinance.fundSources.table.editDisabled')
+                        : $t('centralFinance.fundSources.table.edit')
                     }}
                   </q-tooltip>
                 </q-btn>
@@ -416,14 +418,18 @@
       <q-card style="width: 520px; max-width: 95vw; border-radius: 18px">
         <q-card-section class="bg-positive text-white q-pa-md row items-center">
           <q-icon name="check_circle" size="sm" class="q-mr-sm" />
-          <div class="text-subtitle1 text-weight-bold">ออกรหัสแหล่งเงิน</div>
+          <div class="text-subtitle1 text-weight-bold">
+            {{ $t('centralFinance.fundSources.approve.title') }}
+          </div>
           <q-space />
           <q-btn icon="close" flat round dense color="white" v-close-popup />
         </q-card-section>
 
         <q-card-section class="q-pa-lg">
           <div class="issue-request-ref q-pa-sm q-mb-md rounded-borders bg-green-1">
-            <div class="text-caption text-grey-7">คำขอที่อ้างอิง</div>
+            <div class="text-caption text-grey-7">
+              {{ $t('centralFinance.fundSources.approve.refLabel') }}
+            </div>
             <div class="text-subtitle2 text-weight-bold">{{ selectedRequest?.requestId }}</div>
             <div class="text-caption text-grey-8">
               {{ selectedRequest?.faculty }} — {{ selectedRequest?.project }}
@@ -474,8 +480,8 @@
               outlined
               dense
               rows="2"
-              label="หมายเหตุ (สำหรับแจ้งกลับคณะ)"
-              placeholder="ระบุหมายเหตุหรือรายละเอียดเพิ่มเติม..."
+              :label="$t('centralFinance.fundSources.approve.noteLabel')"
+              :placeholder="$t('centralFinance.fundSources.approve.notePlaceholder')"
             />
           </div>
         </q-card-section>
@@ -483,13 +489,19 @@
         <q-separator />
 
         <q-card-actions align="right" class="q-pa-md q-gutter-sm">
-          <q-btn flat no-caps label="ยกเลิก" color="grey-7" v-close-popup />
+          <q-btn
+            flat
+            no-caps
+            :label="$t('centralFinance.fundSources.approve.cancelBtn')"
+            color="grey-7"
+            v-close-popup
+          />
           <q-btn
             unelevated
             no-caps
             color="positive"
             icon="check_circle"
-            label="ยืนยันออกเลขแหล่งเงิน"
+            :label="$t('centralFinance.fundSources.approve.confirmBtn')"
             :disable="!approveForm.fundCode.trim() || !approveForm.nameTh.trim()"
             @click="onConfirmApprove"
           />
@@ -502,13 +514,19 @@
       <q-card style="width: 420px; max-width: 92vw; border-radius: 16px">
         <q-card-section class="row items-center q-pa-md">
           <q-avatar icon="reply" color="negative" text-color="white" />
-          <div class="text-h6 text-weight-bold q-ml-md">ตีกลับคำขอ</div>
+          <div class="text-h6 text-weight-bold q-ml-md">
+            {{ $t('centralFinance.fundSources.reject.title') }}
+          </div>
         </q-card-section>
 
         <q-card-section class="q-pt-none q-px-lg">
           <p class="text-body2 text-grey-8">
-            คำขอ <strong>{{ selectedRequest?.requestId }}</strong> จะถูกส่งคืนไปยัง
-            <strong>{{ selectedRequest?.faculty }}</strong> เพื่อแก้ไข
+            {{
+              $t('centralFinance.fundSources.reject.body', {
+                id: selectedRequest?.requestId,
+                faculty: selectedRequest?.faculty,
+              })
+            }}
           </p>
           <q-input
             v-model="rejectNote"
@@ -516,19 +534,25 @@
             outlined
             dense
             rows="3"
-            label="เหตุผลในการตีกลับ *"
-            placeholder="ระบุเหตุผลที่ตีกลับเพื่อแก้ไข..."
+            :label="$t('centralFinance.fundSources.reject.reasonLabel')"
+            :placeholder="$t('centralFinance.fundSources.reject.reasonPlaceholder')"
           />
         </q-card-section>
 
         <q-card-actions align="right" class="q-pa-md q-gutter-sm">
-          <q-btn flat no-caps label="ยกเลิก" color="grey-7" v-close-popup />
+          <q-btn
+            flat
+            no-caps
+            :label="$t('centralFinance.fundSources.reject.cancelBtn')"
+            color="grey-7"
+            v-close-popup
+          />
           <q-btn
             unelevated
             no-caps
             color="negative"
             icon="reply"
-            label="ยืนยันตีกลับ"
+            :label="$t('centralFinance.fundSources.reject.confirmBtn')"
             :disable="!rejectNote.trim()"
             @click="onConfirmReject"
           />
@@ -542,7 +566,7 @@
         <q-card-section class="row items-center q-pb-none">
           <div class="text-h6 text-weight-bold">
             <q-icon name="history" size="md" color="primary" class="q-mr-sm" />
-            ประวัติการส่งแจ้งเตือนกลับคณะ
+            {{ $t('centralFinance.fundSources.history.title') }}
           </div>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
@@ -572,7 +596,7 @@
             <template #no-data>
               <div class="full-width row flex-center text-grey-6 q-pa-md">
                 <q-icon size="2em" name="info" class="q-mr-sm" />
-                <span>ยังไม่มีประวัติการแจ้งเตือน</span>
+                <span>{{ $t('centralFinance.fundSources.history.noData') }}</span>
               </div>
             </template>
           </q-table>
@@ -627,14 +651,30 @@ const pagination = ref({
   rowsPerPage: 10,
 });
 
-const facultyOptions = [
+const FACULTY_VALUES = [
   'คณะวิทยาการสารสนเทศ',
   'คณะวิทยาศาสตร์',
   'คณะพยาบาลศาสตร์',
   'คณะบริหารธุรกิจ',
   'คณะวิศวกรรมศาสตร์',
   'สำนักคอมพิวเตอร์',
-];
+] as const;
+
+const FACULTY_I18N_MAP: Record<string, string> = {
+  คณะวิทยาการสารสนเทศ: 'informatics',
+  คณะวิทยาศาสตร์: 'science',
+  คณะพยาบาลศาสตร์: 'nursing',
+  คณะบริหารธุรกิจ: 'business',
+  คณะวิศวกรรมศาสตร์: 'engineering',
+  สำนักคอมพิวเตอร์: 'computerCenter',
+};
+
+const facultyOptions = computed(() =>
+  FACULTY_VALUES.map((v) => ({
+    label: t(`common.faculties.${FACULTY_I18N_MAP[v] ?? ''}`),
+    value: v,
+  })),
+);
 
 const statusOptions = computed(() => [
   { label: t('centralFinance.fundSources.status.new'), value: 'new' },
@@ -841,7 +881,11 @@ const rejectNote = ref('');
 function onStartReview(): void {
   if (!selectedRequest.value) return;
   financeStore.updateRequestStatus(selectedRequest.value.id, 'processing');
-  $q.notify({ type: 'info', message: 'รับเรื่องและเริ่มตรวจสอบเอกสารแล้ว', position: 'top' });
+  $q.notify({
+    type: 'info',
+    message: t('centralFinance.fundSources.notify.startReview'),
+    position: 'top',
+  });
 }
 
 function onOpenApprove(): void {
@@ -859,7 +903,7 @@ function onConfirmApprove(): void {
 
   const approverName =
     `${authStore.user?.firstNameTh ?? ''} ${authStore.user?.lastNameTh ?? ''}`.trim() ||
-    'เจ้าหน้าที่กองคลัง';
+    t('centralFinance.fundSources.notify.approverFallback');
 
   const nameEn = approveForm.nameEn.trim();
   financeStore.addFundSource({
@@ -876,12 +920,17 @@ function onConfirmApprove(): void {
     fundCode: approveForm.fundCode.trim(),
     sentTo: selectedRequest.value.faculty,
     approvedBy: approverName,
-    note: approveForm.note.trim() || `ออกเลขแหล่งเงิน ${approveForm.fundCode} เรียบร้อยแล้ว`,
+    note:
+      approveForm.note.trim() ||
+      t('centralFinance.fundSources.notify.approvedNote', { code: approveForm.fundCode }),
   });
 
   $q.notify({
     type: 'positive',
-    message: `ออกเลขแหล่งเงิน ${approveForm.fundCode} และแจ้งกลับ ${selectedRequest.value.faculty} เรียบร้อยแล้ว`,
+    message: t('centralFinance.fundSources.notify.approved', {
+      code: approveForm.fundCode,
+      faculty: selectedRequest.value.faculty,
+    }),
     position: 'top',
     timeout: 4000,
   });
@@ -900,7 +949,7 @@ function onConfirmReject(): void {
 
   const approverName =
     `${authStore.user?.firstNameTh ?? ''} ${authStore.user?.lastNameTh ?? ''}`.trim() ||
-    'เจ้าหน้าที่กองคลัง';
+    t('centralFinance.fundSources.notify.approverFallback');
 
   financeStore.updateRequestStatus(selectedRequest.value.id, 'rejected');
 
@@ -913,7 +962,10 @@ function onConfirmReject(): void {
 
   $q.notify({
     type: 'negative',
-    message: `ตีกลับคำขอ ${selectedRequest.value.requestId} ไปยัง ${selectedRequest.value.faculty} แล้ว`,
+    message: t('centralFinance.fundSources.notify.rejected', {
+      id: selectedRequest.value.requestId,
+      faculty: selectedRequest.value.faculty,
+    }),
     position: 'top',
   });
 

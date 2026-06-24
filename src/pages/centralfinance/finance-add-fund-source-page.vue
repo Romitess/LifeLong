@@ -272,14 +272,21 @@ const form = reactive({
   notifyNote: '',
 });
 
-const facultyOptions = [
-  'คณะวิทยาการสารสนเทศ',
-  'คณะวิทยาศาสตร์',
-  'คณะพยาบาลศาสตร์',
-  'คณะบริหารธุรกิจ',
-  'คณะวิศวกรรมศาสตร์',
-  'สำนักคอมพิวเตอร์',
-];
+const FACULTY_VALUES_ADD = [
+  { label_key: 'informatics', value: 'คณะวิทยาการสารสนเทศ' },
+  { label_key: 'science', value: 'คณะวิทยาศาสตร์' },
+  { label_key: 'nursing', value: 'คณะพยาบาลศาสตร์' },
+  { label_key: 'business', value: 'คณะบริหารธุรกิจ' },
+  { label_key: 'engineering', value: 'คณะวิศวกรรมศาสตร์' },
+  { label_key: 'computerCenter', value: 'สำนักคอมพิวเตอร์' },
+] as const;
+
+const facultyOptions = computed(() =>
+  FACULTY_VALUES_ADD.map((f) => ({
+    label: t(`common.faculties.${f.label_key}`),
+    value: f.value,
+  })),
+);
 
 const fundTypeOptions = computed(() => [
   { label: t('centralFinance.addFundSource.form.fundTypes.budget'), value: 'BG' },

@@ -85,6 +85,16 @@
           :on-rows-per-page-change="onRowsPerPageChange"
           min-width="800px"
         >
+          <template #cell-faculty="{ value }">
+            {{ translateFaculty(value as string) }}
+          </template>
+
+          <template #cell-courseName="{ row }">
+            <div style="word-break: break-word">
+              {{ getCourseDisplayName(row as DailyReportItem) }}
+            </div>
+          </template>
+
           <template #cell-amount="{ value }">
             {{ formatCurrency(value as number) }}
           </template>
@@ -110,7 +120,27 @@ import type { PdfExportConfig, CsvExportConfig } from 'src/types/export-types';
 import { api } from 'src/boot/axios';
 
 const $q = useQuasar();
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+const FACULTY_I18N_MAP: Record<string, string> = {
+  คณะวิทยาการสารสนเทศ: 'informatics',
+  คณะวิทยาศาสตร์: 'science',
+  คณะพยาบาลศาสตร์: 'nursing',
+  คณะบริหารธุรกิจ: 'business',
+  คณะวิศวกรรมศาสตร์: 'engineering',
+  สำนักคอมพิวเตอร์: 'computerCenter',
+  คณะมนุษยศาสตร์และสังคมศาสตร์: 'humanities',
+};
+
+function translateFaculty(name: string): string {
+  const key = FACULTY_I18N_MAP[name];
+  return key ? t(`common.faculties.${key}`) : name;
+}
+
+function getCourseDisplayName(row: DailyReportItem): string {
+  if (locale.value !== 'th' && row.courseNameEn) return row.courseNameEn;
+  return row.courseName;
+}
 const search = ref('');
 const isLoading = ref(false);
 const isFacultyLoading = ref(false);
@@ -135,6 +165,7 @@ interface DailyReportItem {
   no: number;
   faculty: string;
   courseName: string;
+  courseNameEn: string | null;
   fundCode: string | null;
   amount: number;
   receiptDate: string | null;
@@ -145,7 +176,7 @@ const tableRows = ref<DailyReportItem[]>([]);
 
 // ── Faculty Options ──────────────────────────────────────────
 const departmentOptions = ref<{ label: string; value: string }[]>([
-  { label: 'ทุกคณะ/ส่วนงาน', value: '' },
+  { label: t('centralFinance.receiptSummary.allFaculties'), value: '' },
 ]);
 
 async function fetchFacultyOptions(): Promise<void> {
@@ -155,11 +186,11 @@ async function fetchFacultyOptions(): Promise<void> {
       '/api/centralfinance/daily-report/faculty-options',
     );
     departmentOptions.value = [
-      { label: 'ทุกคณะ/ส่วนงาน', value: '' },
+      { label: t('centralFinance.receiptSummary.allFaculties'), value: '' },
       ...data.map((f) => ({ label: f.name, value: f.name })),
     ];
   } catch {
-    // ใช้ค่า default เมื่อโหลดไม่ได้
+    // use default when load fails
   } finally {
     isFacultyLoading.value = false;
   }
@@ -170,14 +201,19 @@ const activeFacultyLabel = computed<string>(() => {
 });
 
 function getDepartmentLabel(val: string): string {
-  if (!val) return 'ทุกคณะ/ส่วนงาน';
+  if (!val) return t('centralFinance.receiptSummary.allFaculties');
   return val;
 }
 
 // ── Columns ──────────────────────────────────────────────────
 const columns = computed<BaseTableColumn[]>(() => [
   { key: 'no', label: t('centralFinance.dailyReport.table.no'), align: 'center', sortable: true },
-  { key: 'faculty', label: 'คณะ/ส่วนงาน', align: 'left', sortable: true },
+  {
+    key: 'faculty',
+    label: t('centralFinance.dailyReport.table.faculty'),
+    align: 'left',
+    sortable: true,
+  },
   {
     key: 'courseName',
     label: t('centralFinance.dailyReport.table.courseName'),
@@ -248,7 +284,7 @@ async function fetchData(): Promise<void> {
     tableRows.value = [];
     $q.notify({
       type: 'negative',
-      message: 'ไม่สามารถดึงข้อมูลรายงานประจำวันได้',
+      message: t('centralFinance.dailyReport.notifications.fetchFailed'),
       position: 'top',
     });
   } finally {
@@ -308,19 +344,19 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
     startY: 80,
     head: [
       [
-        'ลำดับ',
-        'คณะ/ส่วนงาน',
-        'ชื่อโครงการ/หลักสูตร',
-        'แหล่งเงิน',
-        'วันที่รับเงิน',
-        'สถานะ',
-        'จำนวนเงิน',
+        t('centralFinance.dailyReport.export.no'),
+        t('centralFinance.dailyReport.export.faculty'),
+        t('centralFinance.dailyReport.export.courseName'),
+        t('centralFinance.dailyReport.export.fundCode'),
+        t('centralFinance.dailyReport.export.receiptDate'),
+        t('centralFinance.dailyReport.export.status'),
+        t('centralFinance.dailyReport.export.amount'),
       ],
     ],
     body: tableRows.value.map((row) => [
       row.no,
-      row.faculty,
-      row.courseName,
+      translateFaculty(row.faculty),
+      getCourseDisplayName(row),
       row.fundCode ?? '-',
       row.receiptDate ?? '-',
       row.receiptStatus,
@@ -347,18 +383,18 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
   return {
     filename: `central-finance-daily-report_${facName}_${todayStr}.csv`,
     headers: [
-      'ลำดับ',
-      'คณะ/ส่วนงาน',
-      'ชื่อโครงการ/หลักสูตร',
-      'แหล่งเงิน',
-      'วันที่รับเงิน',
-      'สถานะ',
-      'จำนวนเงิน',
+      t('centralFinance.dailyReport.export.no'),
+      t('centralFinance.dailyReport.export.faculty'),
+      t('centralFinance.dailyReport.export.courseName'),
+      t('centralFinance.dailyReport.export.fundCode'),
+      t('centralFinance.dailyReport.export.receiptDate'),
+      t('centralFinance.dailyReport.export.status'),
+      t('centralFinance.dailyReport.export.amount'),
     ],
     data: tableRows.value.map((row) => [
       row.no,
-      row.faculty,
-      row.courseName.replace(/\n/g, ' '),
+      translateFaculty(row.faculty),
+      getCourseDisplayName(row).replace(/\n/g, ' '),
       (row.fundCode ?? '-').replace(/\n/g, ' '),
       row.receiptDate ?? '-',
       row.receiptStatus,

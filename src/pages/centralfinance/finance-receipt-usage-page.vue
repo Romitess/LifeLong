@@ -43,7 +43,7 @@
             :pdf-config="pdfExportConfig"
             :csv-config="csvExportConfig"
             :pdf-label="$t('finance.receiptSummary.exportPdf')"
-            csv-label="ส่งออก CSV"
+            :csv-label="$t('centralFinance.receiptUsage.export.csvLabel')"
           />
         </template>
 
@@ -77,6 +77,10 @@
           :on-rows-per-page-change="onRowsPerPageChange"
           min-width="0"
         >
+          <template #cell-faculty="{ value }">
+            {{ translateFaculty(value as string) }}
+          </template>
+
           <template #cell-cancelDoc="{ row }">
             <div v-if="(row as ReceiptUsageItem).status === 'ยกเลิก'" class="text-negative">
               {{ $t('finance.receiptSummary.statusCancelled') }}
@@ -130,6 +134,21 @@ import { useReceiptUsageReport } from 'src/composables/use-receipt-usage-report'
 import type { ReceiptUsageItem } from 'src/types/receipt-usage-report';
 
 const { t } = useI18n();
+
+const FACULTY_I18N_MAP: Record<string, string> = {
+  คณะวิทยาการสารสนเทศ: 'informatics',
+  คณะวิทยาศาสตร์: 'science',
+  คณะพยาบาลศาสตร์: 'nursing',
+  คณะบริหารธุรกิจ: 'business',
+  คณะวิศวกรรมศาสตร์: 'engineering',
+  สำนักคอมพิวเตอร์: 'computerCenter',
+  คณะมนุษยศาสตร์และสังคมศาสตร์: 'humanities',
+};
+
+function translateFaculty(name: string): string {
+  const key = FACULTY_I18N_MAP[name];
+  return key ? t(`common.faculties.${key}`) : name;
+}
 const $q = useQuasar();
 const {
   items,
@@ -312,25 +331,27 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
     startY: 65,
     head: [
       [
-        'ลำดับ',
-        'รหัส\nหน่วยงาน',
-        'ชื่อหน่วยงาน',
-        'เลขที่ใบเสร็จ\nรับเงิน',
-        'ยกเลิกเอกสาร',
-        'วันที่ใบเสร็จ\nรับเงิน',
-        'ปีเอกสาร',
-        'จำนวนเงิน',
-        'ชื่อโครงการ/อบรม/หลักสูตร',
-        'ชื่อผู้ชำระเงิน',
-        'ชื่อผู้รับเงิน',
+        t('centralFinance.receiptUsage.export.no'),
+        t('centralFinance.receiptUsage.export.departmentCode'),
+        t('centralFinance.receiptUsage.export.departmentName'),
+        t('centralFinance.receiptUsage.export.receiptNo'),
+        t('centralFinance.receiptUsage.export.cancelDoc'),
+        t('centralFinance.receiptUsage.export.receiptDate'),
+        t('centralFinance.receiptUsage.export.fiscalYear'),
+        t('centralFinance.receiptUsage.export.amount'),
+        t('centralFinance.receiptUsage.export.courseName'),
+        t('centralFinance.receiptUsage.export.customerName'),
+        t('centralFinance.receiptUsage.export.cashierName'),
       ],
     ],
     body: filteredRows.value.map((row) => [
       row.no,
       row.departmentCode,
-      row.faculty,
+      translateFaculty(row.faculty),
       row.receiptNo,
-      row.status === 'ยกเลิก' ? `ยกเลิก\n${row.cancelBy ?? ''}\n${row.cancelDate ?? ''}` : '',
+      row.status === 'ยกเลิก'
+        ? `${t('centralFinance.receiptUsage.export.statusCancelled')}\n${row.cancelBy ?? ''}\n${row.cancelDate ?? ''}`
+        : '',
       row.effectiveDate,
       row.fiscalYear,
       row.amount,
@@ -369,24 +390,26 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
   return {
     filename: `central-finance-receipt-usage_${todayStr}.csv`,
     headers: [
-      'ลำดับ',
-      'รหัสหน่วยงาน',
-      'ชื่อหน่วยงาน',
-      'เลขที่ใบเสร็จรับเงิน',
-      'ยกเลิกเอกสาร',
-      'วันที่ใบเสร็จรับเงิน',
-      'ปีเอกสาร',
-      'จำนวนเงิน',
-      'ชื่อโครงการ/อบรม/หลักสูตร',
-      'ชื่อผู้ชำระเงิน',
-      'ชื่อผู้รับเงิน',
+      t('centralFinance.receiptUsage.export.no'),
+      t('centralFinance.receiptUsage.export.departmentCode').replace('\n', ''),
+      t('centralFinance.receiptUsage.export.departmentName'),
+      t('centralFinance.receiptUsage.export.receiptNo').replace('\n', ''),
+      t('centralFinance.receiptUsage.export.cancelDoc'),
+      t('centralFinance.receiptUsage.export.receiptDate').replace('\n', ''),
+      t('centralFinance.receiptUsage.export.fiscalYear'),
+      t('centralFinance.receiptUsage.export.amount'),
+      t('centralFinance.receiptUsage.export.courseName'),
+      t('centralFinance.receiptUsage.export.customerName'),
+      t('centralFinance.receiptUsage.export.cashierName'),
     ],
     data: filteredRows.value.map((row) => [
       row.no,
       row.departmentCode,
-      row.faculty,
+      translateFaculty(row.faculty),
       row.receiptNo,
-      row.status === 'ยกเลิก' ? `ยกเลิก | ${row.cancelBy ?? ''} | ${row.cancelDate ?? ''}` : '',
+      row.status === 'ยกเลิก'
+        ? `${t('centralFinance.receiptUsage.export.statusCancelled')} | ${row.cancelBy ?? ''} | ${row.cancelDate ?? ''}`
+        : '',
       row.effectiveDate,
       row.fiscalYear,
       row.amount,
