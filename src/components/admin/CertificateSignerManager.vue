@@ -67,9 +67,9 @@
         </template>
 
         <template #cell-preview="{ row }">
-          <div v-if="row.url" class="signer-cell__thumb-wrap">
+          <div v-if="row.url || row.path" class="signer-cell__thumb-wrap">
             <img
-              :src="row.url"
+              :src="getImageUrl(row.url || row.path)"
               :alt="row.name"
               class="signer-cell__thumb"
               width="100"
@@ -292,8 +292,8 @@
       card-class="signer-manager-preview-card"
     >
       <img
-        v-if="previewItem?.url"
-        :src="previewItem.url"
+        v-if="previewItem?.url || previewItem?.path"
+        :src="getImageUrl(previewItem.url || previewItem.path)"
         :alt="previewItem.name"
         class="signer-manager-preview-card__img"
       />
@@ -326,7 +326,9 @@ import BaseInput from 'components/base/BaseInput.vue';
 import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
 import BaseStatusBadge from 'components/base/BaseStatusBadge.vue';
 import BaseToggle from 'components/base/BaseToggle.vue';
+import { api } from 'src/boot/axios';
 import { useAdminCertSigners } from 'src/composables/use-admin-cert-signers';
+import { getImageUrl } from 'src/services/image.service';
 import type { AdminCertSignerItem } from 'src/types/admin-cert-signers';
 
 const $q = useQuasar();
@@ -425,13 +427,14 @@ function openEditDialog(item: AdminCertSignerItem): void {
   dialogMode.value = 'edit';
   editingId.value = item.id;
   pendingDeleteFile.value = false;
-  existingFile.value = item.url
-    ? {
-        url: item.url,
-        ...(item.filename ? { filename: item.filename } : {}),
-        ...(item.imgSize ? { imgSize: item.imgSize } : {}),
-      }
-    : null;
+  existingFile.value =
+    item.url || item.path
+      ? {
+          url: getImageUrl(item.url || item.path),
+          ...(item.filename ? { filename: item.filename } : {}),
+          ...(item.imgSize ? { imgSize: item.imgSize } : {}),
+        }
+      : null;
   form.value = {
     name: item.name,
     position: item.position,
@@ -500,10 +503,8 @@ function clearFile(): void {
 async function downloadExistingFile(): Promise<void> {
   if (!existingFile.value) return;
   try {
-    const response = await fetch(existingFile.value.url);
-    if (!response.ok) throw new Error(`Download failed with status ${response.status}`);
-    const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
+    const response = await api.get<Blob>(existingFile.value.url, { responseType: 'blob' });
+    const objectUrl = URL.createObjectURL(response.data);
     const link = document.createElement('a');
     link.href = objectUrl;
     link.download = existingFile.value.filename ?? 'signer-signature';
@@ -512,7 +513,7 @@ async function downloadExistingFile(): Promise<void> {
     document.body.removeChild(link);
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
   } catch {
-    window.open(existingFile.value.url, '_blank', 'noopener,noreferrer');
+    // no fallback: protected URLs require auth headers.
   }
 }
 

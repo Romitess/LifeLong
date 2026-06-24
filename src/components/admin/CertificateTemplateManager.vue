@@ -389,6 +389,7 @@ import BaseStatusBadge from 'components/base/BaseStatusBadge.vue';
 import BaseToggle from 'components/base/BaseToggle.vue';
 import { useAdminCertTemplates } from 'src/composables/use-admin-cert-templates';
 import { api } from 'src/boot/axios';
+import { getImageUrl } from 'src/services/image.service';
 import type {
   AdminCertTemplateItem,
   CertLayout,
@@ -530,10 +531,12 @@ async function replaceItemBlobUrls(templateItems: AdminCertTemplateItem[]): Prom
   const newUrls: Record<number, string> = {};
   await Promise.all(
     templateItems
-      .filter((item) => item.path)
+      .filter((item) => item.url || item.path)
       .map(async (item) => {
         try {
-          const response = await api.get<Blob>(`/${item.path!}`, { responseType: 'blob' });
+          const response = await api.get<Blob>(getImageUrl(item.url || item.path), {
+            responseType: 'blob',
+          });
           newUrls[item.id] = URL.createObjectURL(response.data);
         } catch (err) {
           console.error('[CertTemplate] failed to load image', item.path, err);
@@ -590,13 +593,14 @@ function openEditDialog(item: AdminCertTemplateItem): void {
   dialogMode.value = 'edit';
   editingId.value = item.id;
   pendingDeleteFile.value = false;
-  existingFile.value = item.path
-    ? {
-        url: `/${item.path}`,
-        ...(item.filename ? { filename: item.filename } : {}),
-        ...(item.imgSize ? { imgSize: item.imgSize } : {}),
-      }
-    : null;
+  existingFile.value =
+    item.url || item.path
+      ? {
+          url: getImageUrl(item.url || item.path),
+          ...(item.filename ? { filename: item.filename } : {}),
+          ...(item.imgSize ? { imgSize: item.imgSize } : {}),
+        }
+      : null;
   form.value = {
     name: item.name,
     statusOn: item.status === 'Y',
