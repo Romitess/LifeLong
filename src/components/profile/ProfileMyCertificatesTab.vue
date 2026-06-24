@@ -165,13 +165,17 @@ const completedEntries = computed<RegisteredCourseEntry[]>(() =>
   props.registeredCourseEntries.filter((e) => e.progress.isCompleted),
 );
 
-const completedCourseCodes = computed<Set<string>>(
-  () => new Set(completedEntries.value.map((e) => e.course.code)),
+// Codes of ALL registered courses (completed or not). A cert for a registered
+// course belongs only in the top "completed" section above. If the course is
+// registered but not yet completed, its certificate was auto-generated early —
+// we must NOT surface it as a stray card (no card for unfinished courses).
+const registeredCourseCodes = computed<Set<string>>(
+  () => new Set(props.registeredCourseEntries.map((e) => e.course.code)),
 );
 
-// API certs that are NOT already shown via completedEntries (auto-unenrolled courses)
+// API certs only for courses the user is no longer registered in (legit old certs).
 const apiOnlyCerts = computed<ApiCertItem[]>(() =>
-  apiCerts.value.filter((c) => !completedCourseCodes.value.has(c.courseCode ?? '')),
+  apiCerts.value.filter((c) => !registeredCourseCodes.value.has(c.courseCode ?? '')),
 );
 
 const totalCount = computed(() => completedEntries.value.length + apiOnlyCerts.value.length);
