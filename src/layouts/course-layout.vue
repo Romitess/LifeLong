@@ -195,7 +195,6 @@
     <!-- Right: View Mode + User Actions -->
     <div class="gt-sm nav-actions row items-center no-wrap">
       <LanguageToggle class="nav-actions__language" />
-      <NavRealtimeClock />
 
       <div class="nav-user-group">
         <div class="nav-profile-summary column items-start justify-center gt-xs">
@@ -407,7 +406,6 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useMyRegisteredCourses } from 'src/composables/use-my-registered-courses';
 import { useI18n } from 'vue-i18n';
 import LanguageToggle from 'components/navigation/language-toggle.vue';
-import NavRealtimeClock from 'components/navigation/NavRealtimeClock.vue';
 import { pushMoodleLearningRoute } from 'src/utils/moodle-navigation';
 import { isNewTabClick, openInNewTab, resolveFullUrl } from 'src/composables/use-nav-link';
 import type { Course } from 'src/types/course';

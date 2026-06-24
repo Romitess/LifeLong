@@ -1942,7 +1942,23 @@ export default {
       syllabusTopics: 'หัวข้อบทเรียน',
       noSyllabusTopics: 'ยังไม่มีหัวข้อบทเรียนในระบบ',
       recentActivities: 'กิจกรรมล่าสุด',
+      todoTitle: 'สิ่งที่ต้องทำ',
       viewAllActivities: 'ดูกิจกรรมทั้งหมด',
+      viewAllTasks: 'ดูงานทั้งหมด',
+      todo: {
+        gradeWork: {
+          title: 'ให้คะแนนงาน',
+          detail: '{count} รายการรอให้คะแนน',
+        },
+        certificates: {
+          title: 'รับรองเกียรติบัตร',
+          detail: 'ตรวจผู้ผ่านเกณฑ์และออกเกียรติบัตร',
+        },
+        messages: {
+          title: 'ตอบข้อความผู้เรียน',
+          detail: '{count} ข้อความยังไม่ได้อ่าน',
+        },
+      },
       systemAnnouncement: 'ประกาศจากระบบ',
       chatRoomsMetric: 'ห้องสนทนา',
       hoursAbbr: 'ชม.',

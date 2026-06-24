@@ -134,10 +134,11 @@
               {{ t('instructor.nav.activeCourses') }}
             </h2>
             <q-btn
-              flat
-              color="primary"
+              unelevated
+              text-color="primary"
               :label="t('viewAll')"
               no-caps
+              class="dashboard-view-all-btn"
               tag="a"
               :href="resolveFullUrl('/instructor/courses')"
               @click="onViewAllCoursesClick"
@@ -320,21 +321,29 @@
         <div class="col-12 col-lg-4">
           <div class="row items-end q-mb-lg">
             <h2 class="section-title-underline q-mb-none">
-              {{ t('instructor.dashboard.recentActivities') }}
+              {{ t('instructor.dashboard.todoTitle') }}
             </h2>
           </div>
           <q-card flat bordered class="activity-card">
             <q-list separator>
-              <q-item v-for="activity in activities" :key="activity.id" class="q-py-md">
+              <q-item
+                v-for="task in todoTasks"
+                :key="task.id"
+                clickable
+                v-ripple
+                tag="a"
+                :href="resolveFullUrl(task.to)"
+                class="q-py-md"
+                @click="onTodoTaskClick(task.to, $event)"
+              >
                 <q-item-section avatar>
-                  <q-avatar size="40px">
-                    <img :src="activity.avatar" />
+                  <q-avatar size="40px" :color="task.color" text-color="white">
+                    <q-icon :name="task.icon" />
                   </q-avatar>
                 </q-item-section>
                 <q-item-section>
-                  <q-item-label class="text-weight-bold">{{ activity.userName }}</q-item-label>
-                  <q-item-label caption class="text-grey-8">{{ activity.action }}</q-item-label>
-                  <q-item-label caption class="text-grey-5">{{ activity.time }}</q-item-label>
+                  <q-item-label class="text-weight-bold">{{ task.title }}</q-item-label>
+                  <q-item-label caption class="text-grey-8">{{ task.detail }}</q-item-label>
                 </q-item-section>
                 <q-item-section side top>
                   <q-btn
@@ -342,21 +351,22 @@
                     round
                     dense
                     icon="chevron_right"
-                    color="grey-5"
-                    @click="showDevelopmentDialog('รายละเอียดกิจกรรม')"
+                    color="primary"
+                    class="todo-task-chevron"
                   />
                 </q-item-section>
               </q-item>
             </q-list>
             <q-card-section class="text-center">
               <q-btn
-                flat
-                color="primary"
-                :label="t('instructor.dashboard.viewAllActivities')"
+                unelevated
+                text-color="primary"
+                :label="t('instructor.dashboard.viewAllTasks')"
                 no-caps
+                class="todo-view-all-btn"
                 tag="a"
                 :href="resolveFullUrl('/instructor/students')"
-                @click="onViewAllActivitiesClick"
+                @click="onViewAllTasksClick"
               />
             </q-card-section>
           </q-card>
@@ -379,7 +389,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
@@ -394,7 +403,6 @@ import heroInstructorImageUrl from 'src/assets/in.png';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const { t, locale } = useI18n();
-const $q = useQuasar();
 const router = useRouter();
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
@@ -510,15 +518,36 @@ const stats = computed(() => [
   },
 ]);
 
-const activities = computed(() =>
-  (instructorBackend.summary.value?.recentActivities ?? []).map((activity) => ({
-    id: activity.id,
-    userName: activity.learnerName,
-    action: activity.action,
-    time: formatActivityDate(activity.createdAt),
-    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(activity.learnerName)}`,
-  })),
-);
+const todoTasks = computed(() => [
+  {
+    id: 'grade-work',
+    title: t('instructor.dashboard.todo.gradeWork.title'),
+    detail: t('instructor.dashboard.todo.gradeWork.detail', {
+      count: instructorBackend.summary.value?.recentActivities.length ?? 0,
+    }),
+    icon: 'grading',
+    color: 'primary',
+    to: '/instructor/students?tab=results',
+  },
+  {
+    id: 'approve-certificates',
+    title: t('instructor.dashboard.todo.certificates.title'),
+    detail: t('instructor.dashboard.todo.certificates.detail'),
+    icon: 'workspace_premium',
+    color: 'amber-8',
+    to: '/instructor/certificates',
+  },
+  {
+    id: 'reply-learners',
+    title: t('instructor.dashboard.todo.messages.title'),
+    detail: t('instructor.dashboard.todo.messages.detail', {
+      count: instructorBackend.summary.value?.conversations ?? 0,
+    }),
+    icon: 'forum',
+    color: 'teal-7',
+    to: '/instructor/chat',
+  },
+]);
 
 const heroSlides = [
   {
@@ -670,19 +699,6 @@ function getTypeLineClass(key: string) {
   };
 }
 
-function formatActivityDate(value: string | null): string {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat('th-TH', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
-}
-
 function getCourseDetail(courseId: string): CourseDetail | undefined {
   return courseStore.getCourseDetailById(courseId);
 }
@@ -761,18 +777,6 @@ function getCourseSyllabusMeta(course: Course) {
   ];
 }
 
-function showDevelopmentDialog(featureName: string) {
-  $q.dialog({
-    title: t('instructor.dashboard.devFeature'),
-    message: t('instructor.dashboard.devMsg', { name: featureName }),
-    ok: {
-      color: 'primary',
-      label: t('ok'),
-      unelevated: true,
-    },
-  });
-}
-
 function goToCourseManagement(courseId: string) {
   void router.push({
     path: '/instructor/courses',
@@ -801,7 +805,13 @@ function onGradeClick(courseId: string, event: Event) {
   });
 }
 
-function onViewAllActivitiesClick(event: Event) {
+function onTodoTaskClick(to: string, event: Event) {
+  if (isNewTabClick(event)) return;
+  event.preventDefault();
+  void router.push(to);
+}
+
+function onViewAllTasksClick(event: Event) {
   if (isNewTabClick(event)) return;
   event.preventDefault();
   void router.push('/instructor/students');
@@ -1352,6 +1362,27 @@ function onViewAllActivitiesClick(event: Event) {
 
 .activity-card {
   border-radius: 16px;
+}
+
+.dashboard-view-all-btn {
+  background: #ffffff !important;
+  border: 1px solid rgba($primary, 0.28);
+  border-radius: 12px;
+  box-shadow: none !important;
+  font-weight: 700;
+}
+
+.todo-task-chevron {
+  background: #ffffff;
+  border: 1px solid rgba($primary, 0.28);
+}
+
+.todo-view-all-btn {
+  background: #ffffff !important;
+  border: 1px solid rgba($primary, 0.28);
+  border-radius: 12px;
+  box-shadow: none !important;
+  font-weight: 700;
 }
 
 .section-title-underline {
