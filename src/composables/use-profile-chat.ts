@@ -102,7 +102,12 @@ export function useProfileChat(
   }
 
   function connectChatSocket() {
-    if (socket) return;
+    if (socket?.connected) return;
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
+
     const baseUrl =
       (import.meta.env.VITE_API_URL as string) ||
       (import.meta.env.VITE_BACKEND_URL as string) ||
@@ -110,7 +115,7 @@ export function useProfileChat(
     const origin = baseUrl.startsWith('http') ? new URL(baseUrl).origin : window.location.origin;
 
     socket = io(`${origin}/chat`, {
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       auth: { token: authStore.token ? `Bearer ${authStore.token}` : '' },
     });
 
@@ -121,45 +126,43 @@ export function useProfileChat(
       }
     });
 
-    socket.on(
-      'newMessage',
-      (msg: {
-        enrollId: number;
-        id: number;
-        sender: ChatMessageSender;
-        body: string;
-        sentAt: string;
-        status: ChatMessageStatus;
-      }) => {
-        const enrollId = selectedChatEntry.value?.registration?.enrollId;
-        if (enrollId && msg.enrollId === enrollId) {
-          const exists = chatMessages.value.some((m) => String(m.id) === String(msg.id));
-          if (!exists) {
-            chatMessages.value.push({
-              id: String(msg.id),
-              courseId: selectedChatEntry.value?.course.id || '',
-              sender: msg.sender,
-              body: msg.body,
-              sentAt: new Date(msg.sentAt),
-              status: msg.status === 'read' ? 'read' : 'sent',
-            });
-            void nextTick(scrollChatToLatestMessage);
-          }
-        }
-      },
-    );
+    socket.on('newMessage', (msg: Record<string, unknown>) => {
+      const enrollId = selectedChatEntry.value?.registration?.enrollId;
+      if (!enrollId || Number(msg.enrollId) !== Number(enrollId)) return;
+
+      const msgId = String(msg.id);
+      const exists = chatMessages.value.some((m) => m.id === msgId);
+      if (exists) return;
+
+      // Support both transformed (sender/body) and raw DB (typeSender/message) formats
+      const typeSender = (msg.typeSender as string) ?? '';
+      const rawSender = msg.sender as ChatMessageSender | undefined;
+      const sender: ChatMessageSender =
+        rawSender ??
+        (typeSender === 'T' ? 'instructor' : typeSender === 'U' ? 'learner' : 'system');
+
+      chatMessages.value.push({
+        id: msgId,
+        courseId: selectedChatEntry.value?.course.id || '',
+        sender,
+        body: (msg.body as string) || (msg.message as string) || '',
+        sentAt: new Date((msg.sentAt as string) || (msg.chatTime as string) || Date.now()),
+        status: msg.status === 'read' || msg.status === 'R' ? 'read' : 'sent',
+      });
+      void nextTick(scrollChatToLatestMessage);
+    });
 
     socket.on(
       'messagesRead',
-      (data: { enrollId: number; senderType: 'learner' | 'instructor' }) => {
+      (data: { enrollId: number | string; senderType: 'learner' | 'instructor' }) => {
         const enrollId = selectedChatEntry.value?.registration?.enrollId;
-        if (enrollId && data.enrollId === enrollId) {
-          chatMessages.value.forEach((m) => {
-            if (m.sender === data.senderType) {
-              m.status = 'read';
-            }
-          });
-        }
+        if (!enrollId || Number(data.enrollId) !== Number(enrollId)) return;
+
+        chatMessages.value.forEach((m) => {
+          if (m.sender === data.senderType) {
+            m.status = 'read';
+          }
+        });
       },
     );
   }
@@ -258,13 +261,11 @@ export function useProfileChat(
   }
 
   function getChatStatusLabel(status: ChatMessageStatus): string {
-    void status;
-    return t('profile.chat.statusSent');
+    return status === 'read' ? t('profile.chat.statusRead') : t('profile.chat.statusSent');
   }
 
   function getChatStatusIcon(status: ChatMessageStatus): string {
-    void status;
-    return 'done';
+    return status === 'read' ? 'done_all' : 'done';
   }
 
   function isLatestLearnerMessage(message: ChatMessage): boolean {

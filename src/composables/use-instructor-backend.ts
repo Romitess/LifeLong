@@ -384,7 +384,12 @@ export function useInstructorBackend() {
   }
 
   function connectSocket(email?: string): void {
-    if (socket || !email) return;
+    if (!email) return;
+    if (socket?.connected) return;
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
 
     const baseUrl =
       (import.meta.env.VITE_API_URL as string) ||
@@ -393,7 +398,7 @@ export function useInstructorBackend() {
     const origin = baseUrl.startsWith('http') ? new URL(baseUrl).origin : window.location.origin;
 
     socket = io(`${origin}/chat`, {
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       auth: { token: authStore.token ? `Bearer ${authStore.token}` : '' },
     });
 
@@ -406,41 +411,39 @@ export function useInstructorBackend() {
       socket?.emit('joinInstructorRoom');
     });
 
-    socket.on(
-      'newMessage',
-      (msg: {
-        enrollId: number;
-        id: number;
-        sender: 'learner' | 'instructor';
-        body: string;
-        sentAt: string;
-        status: 'sent' | 'read';
-      }) => {
-        const conv = conversations.value.find((c) => c.enrollId === msg.enrollId);
-        if (conv) {
-          const exists = conv.messages.some((m) => String(m.id) === String(msg.id));
-          if (!exists) {
-            conv.messages.push({
-              id: String(msg.id),
-              sender: msg.sender,
-              body: msg.body,
-              sentAt: msg.sentAt,
-              status: msg.status,
-            });
-            conv.latestMessagePreview = msg.body;
-            conv.messageCount = conv.messages.length;
-          }
-        } else {
-          // Conversation entry does not exist in local state (first message), refetch
-          void fetchConversations(email);
+    socket.on('newMessage', (msg: Record<string, unknown>) => {
+      const msgEnrollId = Number(msg.enrollId);
+      const conv = conversations.value.find((c) => Number(c.enrollId) === msgEnrollId);
+
+      if (conv) {
+        const msgId = String(msg.id);
+        const exists = conv.messages.some((m) => String(m.id) === msgId);
+        if (!exists) {
+          // Support both transformed (sender/body) and raw DB (typeSender/message) formats
+          const typeSender = (msg.typeSender as string) ?? '';
+          const rawSender = msg.sender as 'learner' | 'instructor' | undefined;
+          const sender: 'learner' | 'instructor' =
+            rawSender ?? (typeSender === 'T' ? 'instructor' : 'learner');
+          const body = (msg.body as string) || (msg.message as string) || '';
+          const sentAt =
+            (msg.sentAt as string) || (msg.chatTime as string) || new Date().toISOString();
+          const status: 'sent' | 'read' =
+            msg.status === 'read' || msg.status === 'R' ? 'read' : 'sent';
+
+          conv.messages.push({ id: msgId, sender, body, sentAt, status });
+          conv.latestMessagePreview = body;
+          conv.messageCount = conv.messages.length;
         }
-      },
-    );
+      } else {
+        // Conversation entry does not exist in local state (first message), refetch
+        void fetchConversations(email);
+      }
+    });
 
     socket.on(
       'messagesRead',
-      (data: { enrollId: number; senderType: 'learner' | 'instructor' }) => {
-        const conv = conversations.value.find((c) => c.enrollId === data.enrollId);
+      (data: { enrollId: number | string; senderType: 'learner' | 'instructor' }) => {
+        const conv = conversations.value.find((c) => Number(c.enrollId) === Number(data.enrollId));
         if (conv) {
           conv.messages.forEach((m) => {
             if (m.sender === data.senderType) {
