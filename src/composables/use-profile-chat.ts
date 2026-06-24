@@ -54,6 +54,9 @@ const unreadChatCount = computed(() =>
   Object.values(unreadByEnrollId.value).reduce((sum, n) => sum + n, 0),
 );
 
+// Last message timestamp per enrollId — used to sort the course list (most recent first).
+const lastMessageAt = ref<Record<number, number>>({});
+
 export function useProfileChat(
   myRegistrations: Ref<CourseRegistration[]> | ComputedRef<CourseRegistration[]>,
   myRegisteredCourseEntries: Ref<RegisteredCourseEntry[]> | ComputedRef<RegisteredCourseEntry[]>,
@@ -110,6 +113,14 @@ export function useProfileChat(
       }));
       // Backend marks instructor messages as read when fetched — clear local unread count.
       unreadByEnrollId.value = { ...unreadByEnrollId.value, [enrollId]: 0 };
+      // Seed last-message timestamp from fetched history so initial sort reflects real order.
+      const latest = data.reduce<number>((max, m) => {
+        const t = m.chatTime ? new Date(m.chatTime).getTime() : 0;
+        return t > max ? t : max;
+      }, lastMessageAt.value[enrollId] ?? 0);
+      if (latest > 0) {
+        lastMessageAt.value = { ...lastMessageAt.value, [enrollId]: latest };
+      }
     } catch (error) {
       console.error('Failed to fetch chat messages', error);
     }
@@ -151,7 +162,8 @@ export function useProfileChat(
         rawSender ??
         (typeSender === 'T' ? 'instructor' : typeSender === 'U' ? 'learner' : 'system');
 
-      // Increment unread count for any incoming instructor message
+      // Bubble course to top + increment unread for instructor messages
+      lastMessageAt.value = { ...lastMessageAt.value, [msgEnrollId]: Date.now() };
       if (sender === 'instructor') {
         unreadByEnrollId.value = {
           ...unreadByEnrollId.value,
@@ -358,6 +370,8 @@ export function useProfileChat(
     chatThreadMessages,
     canSendChatMessage,
     unreadChatCount,
+    unreadByEnrollId,
+    lastMessageAt,
     fetchChatMessages,
     connectChatSocket,
     disconnectChatSocket,
