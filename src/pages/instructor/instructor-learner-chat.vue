@@ -56,9 +56,18 @@
                 @click="selectedConversationId = entry.id"
               >
                 <q-item-section avatar>
-                  <q-avatar size="42px" color="primary" text-color="white">
-                    {{ entry.learnerInitials }}
-                  </q-avatar>
+                  <div class="conversation-avatar-wrap">
+                    <q-avatar size="42px" color="primary" text-color="white">
+                      {{ entry.learnerInitials }}
+                    </q-avatar>
+                    <q-badge
+                      v-if="entry.messageCount > 0"
+                      rounded
+                      color="primary"
+                      :label="entry.messageCount"
+                      class="conversation-avatar-badge"
+                    />
+                  </div>
                 </q-item-section>
 
                 <q-item-section>
@@ -74,12 +83,6 @@
                   >
                     {{ entry.latestMessagePreview }}
                   </q-item-label>
-                </q-item-section>
-
-                <q-item-section side top>
-                  <q-badge v-if="entry.messageCount > 0" rounded color="amber-8">
-                    {{ entry.messageCount }}
-                  </q-badge>
                 </q-item-section>
               </q-item>
             </q-list>
@@ -596,6 +599,23 @@ function scrollToLatestMessage(): void {
   min-height: 86px;
   border-radius: 8px;
   margin-bottom: 6px;
+}
+
+.conversation-avatar-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.conversation-avatar-badge {
+  position: absolute;
+  top: -4px;
+  right: -310px;
+  min-width: 18px;
+  height: 18px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0 5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .conversation-item--active {
