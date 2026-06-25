@@ -318,11 +318,12 @@ onBeforeUnmount(() => {
 }
 
 .auth-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 14px;
-  padding: clamp(18px, 2.4vw, 30px);
+  padding: 160px clamp(18px, 2.4vw, 30px) clamp(18px, 2.4vw, 30px);
   background: #ffffff;
   overflow-y: auto;
   min-height: 0;
@@ -330,6 +331,13 @@ onBeforeUnmount(() => {
     transform 0.48s cubic-bezier(0.76, 0, 0.24, 1),
     opacity 0.28s ease;
   z-index: 1;
+}
+
+.auth-shell--login .auth-panel__header {
+  position: absolute;
+  top: 61px;
+  left: clamp(18px, 2.4vw, 30px);
+  right: clamp(18px, 2.4vw, 30px);
 }
 
 .auth-page--register .auth-panel {
@@ -362,7 +370,7 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: 44px 1fr;
   gap: 10px;
-  align-items: center;
+  align-items: flex-start;
   animation: auth-content-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
 
   h2,
@@ -374,12 +382,14 @@ onBeforeUnmount(() => {
     color: #111827;
     font-size: 1.25rem;
     font-weight: 800;
+    line-height: 1.1;
   }
 
   p {
     color: #667085;
     font-size: 0.9rem;
     line-height: 1.5;
+    margin-top: 2px;
   }
 }
 

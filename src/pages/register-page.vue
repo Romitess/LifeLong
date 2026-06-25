@@ -199,7 +199,11 @@
           </div>
         </div>
 
-        <div class="password-hint">{{ $t('auth.register.passwordHint') }}</div>
+        <ul class="password-hint">
+          <li>อย่างน้อย 8 ตัว</li>
+          <li>มีตัวอักษรพิเศษ</li>
+          <li>มีอักษรตัวใหม่</li>
+        </ul>
 
         <div class="privacy-notice privacy-notice--register">
           <q-icon name="privacy_tip" />
@@ -604,9 +608,11 @@ async function onRegister(): Promise<void> {
 }
 
 .password-hint {
-  margin-top: -4px;
+  margin: -4px 0 0;
+  padding-left: 18px;
   color: #667085;
   font-size: 0.8rem;
+  line-height: 1.8;
 }
 
 .privacy-notice {

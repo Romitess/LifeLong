@@ -88,23 +88,6 @@
       </BaseButton>
     </q-form>
 
-    <div class="auth-demo">
-      <div class="auth-demo__title">Test Accounts</div>
-      <div v-for="acc in TEST_ACCOUNTS" :key="acc.username" class="auth-demo__row">
-        <span class="auth-demo__text">{{ acc.username }} / {{ acc.password }}</span>
-        <q-btn
-          flat
-          dense
-          no-caps
-          size="sm"
-          color="primary"
-          label="use"
-          class="auth-demo__btn"
-          @click="loadTestAccount(acc)"
-        />
-      </div>
-    </div>
-
     <div class="auth-switch">
       <span>{{ $t('auth.login.registerPrompt') }}</span>
       <BaseButton
@@ -175,14 +158,6 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const ENABLE_LOGIN_CHECK_IN_DIALOG = false;
-
-const TEST_ACCOUNTS = [
-  { username: 'admin_test', password: 'P@ssword123!' },
-  { username: 'instructor_test', password: 'P@ssword123!' },
-  { username: 'student_test', password: 'P@ssword123!' },
-  { username: 'finance_test', password: 'P@ssword123!' },
-  { username: 'central_finance_test', password: 'P@ssword123!' },
-];
 
 const isLoading = ref(false);
 const isPasswordVisible = ref(false);
@@ -326,11 +301,6 @@ function handleCheckInContinue(): void {
   const nextPath = pendingPostLoginPath.value || '/main';
   pendingPostLoginPath.value = '';
   void router.push(nextPath);
-}
-
-function loadTestAccount(account: { username: string; password: string }): void {
-  loginForm.username = account.username;
-  loginForm.password = account.password;
 }
 
 async function onLogin(): Promise<void> {
@@ -492,33 +462,6 @@ async function onLogin(): Promise<void> {
   object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
-}
-
-.auth-demo {
-  padding: 12px 14px;
-  border-radius: 12px;
-  color: #344054;
-  background: #f8fafc;
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  font-size: 0.8rem;
-  line-height: 1.55;
-}
-
-.auth-demo__title {
-  color: #b7791f;
-  font-weight: 800;
-  margin-bottom: 4px;
-}
-
-.auth-demo__row {
-  display: flex;
-  gap: 8px;
-}
-
-.auth-demo__role {
-  min-width: 110px;
-  font-weight: 600;
-  color: #475467;
 }
 
 .auth-switch {
