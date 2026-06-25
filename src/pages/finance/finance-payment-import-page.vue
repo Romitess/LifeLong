@@ -1308,11 +1308,14 @@ async function saveImportedFile() {
 
     const dbItems = data.items || [];
 
+    const dbItemMap = new Map();
+    for (const item of dbItems) {
+      dbItemMap.set(String(item.appRef).trim(), item);
+    }
+
     // Match each imported row against the DB data by appRef (Ref2)
     for (const row of allNewRows) {
-      const match = dbItems.find(
-        (item) => String(item.appRef).trim() === String(row.applicationRef).trim(),
-      );
+      const match = dbItemMap.get(String(row.applicationRef).trim());
 
       if (match) {
         row.dbLearnerRef = match.learnerRef ?? '';

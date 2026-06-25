@@ -1948,11 +1948,15 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
   const backendLearners = instructorBackend.learnersByCourseId.value[course.id] ?? [];
   const backendGrades = instructorBackend.gradesByCourseId.value[course.id] ?? [];
 
+  const gradeMap = new Map<string | number, (typeof backendGrades)[0]>();
+  for (const grade of backendGrades) {
+    if (grade.learnerUserId) gradeMap.set(`user-${grade.learnerUserId}`, grade);
+    if (grade.studentId) gradeMap.set(`student-${grade.studentId}`, grade);
+  }
+
   return backendLearners.map((learner) => {
-    const grade = backendGrades.find(
-      (candidate) =>
-        candidate.learnerUserId === learner.userId || candidate.studentId === learner.studentId,
-    );
+    const grade =
+      gradeMap.get(`user-${learner.userId}`) || gradeMap.get(`student-${learner.studentId}`);
 
     const GRADEABLE = ['assign', 'quiz'];
     const gradeItems = (grade?.gradeItems ?? []).filter(
