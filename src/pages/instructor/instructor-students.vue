@@ -1469,11 +1469,11 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
   const totalLessons =
     getCourseStructure(course.id).reduce((sum, module) => sum + module.lessons.length, 0) || 0;
 
+  const gradesByUserId = new Map(backendGrades.map((g) => [g.learnerUserId, g]));
+  const gradesByStudentId = new Map(backendGrades.map((g) => [g.studentId, g]));
+
   return backendLearners.map((learner) => {
-    const grade = backendGrades.find(
-      (candidate) =>
-        candidate.learnerUserId === learner.userId || candidate.studentId === learner.studentId,
-    );
+    const grade = gradesByUserId.get(learner.userId) || gradesByStudentId.get(learner.studentId);
     const importedResult = importedLearningResults.value[learner.studentId];
     const score = importedResult?.score ?? grade?.score ?? 0;
     const importedGradeName = grade?.importedGradeName ?? null;
