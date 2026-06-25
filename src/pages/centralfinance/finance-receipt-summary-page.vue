@@ -12,15 +12,29 @@
     </CentralFinancePageHero>
 
     <section class="finance-shell finance-content">
+      <!-- Sticky-bar sentinel -->
+      <div ref="sentinelRef" class="period-filter-sentinel" />
+
       <!-- Filter Bar -->
-      <PeriodFilterBar
-        v-model="receiptPeriod"
-        :presets="datePresetOptions"
-        :custom-label="$t('finance.receiptSummary.filters.receiptDate')"
-        @change="onPeriodChange"
-        @clear="onClear"
-      >
-        <template #append>
+      <div class="period-filter-bar" :class="{ 'period-filter-bar--stuck': filterStuck }">
+        <div class="period-filter-bar__row1">
+          <span class="period-filter-bar__label q-mr-sm">
+            <q-icon name="filter_alt" size="14px" class="q-mr-xs" />
+            {{ $t('finance.filters.filterLabel') }}
+          </span>
+
+          <button
+            v-for="opt in datePresetOptions"
+            :key="opt.value"
+            class="period-filter-bar__item"
+            :class="{ 'period-filter-bar__item--active': datePreset === opt.value }"
+            @click="applyDatePreset(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+
+          <div class="period-filter-bar__divider" />
+
           <div class="filter-faculty-wrap">
             <q-select
               v-model="filters.faculty"
@@ -35,8 +49,80 @@
               @update:model-value="onFacultyChange"
             />
           </div>
-        </template>
-      </PeriodFilterBar>
+
+          <q-btn
+            flat
+            dense
+            round
+            icon="filter_alt_off"
+            color="negative"
+            class="q-ml-sm"
+            @click="clearDates"
+          >
+            <q-tooltip>{{ $t('finance.filters.clearLabel') }}</q-tooltip>
+          </q-btn>
+        </div>
+
+        <div class="period-filter-bar__row2">
+          <span class="period-filter-bar__sub-label q-mr-sm"
+            >{{ $t('finance.receiptSummary.filters.receiptDate') }}:</span
+          >
+          <q-input
+            v-model="receiptDateDisplay"
+            readonly
+            borderless
+            dense
+            :placeholder="$t('finance.receiptSummary.filters.selectPeriod')"
+            class="period-filter-bar__input period-filter-bar__input--range q-mr-md"
+          >
+            <template #append>
+              <q-icon name="event" class="cursor-pointer" color="primary">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-date v-model="receiptDateModel" range mask="DD/MM/YYYY" color="primary">
+                    <div class="row items-center justify-end q-gutter-sm">
+                      <q-btn
+                        :label="$t('finance.receiptSummary.filters.ok')"
+                        color="primary"
+                        flat
+                        v-close-popup
+                      />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+
+          <span class="period-filter-bar__sub-label q-mr-sm"
+            >{{ $t('finance.receiptSummary.filters.effectiveDate') }}:</span
+          >
+          <q-input
+            v-model="effectiveDateDisplay"
+            readonly
+            borderless
+            dense
+            :placeholder="$t('finance.receiptSummary.filters.selectPeriod')"
+            class="period-filter-bar__input period-filter-bar__input--range"
+          >
+            <template #append>
+              <q-icon name="event" class="cursor-pointer" color="primary">
+                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                  <q-date v-model="effectiveDateModel" range mask="DD/MM/YYYY" color="primary">
+                    <div class="row items-center justify-end q-gutter-sm">
+                      <q-btn
+                        :label="$t('finance.receiptSummary.filters.ok')"
+                        color="primary"
+                        flat
+                        v-close-popup
+                      />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
+          </q-input>
+        </div>
+      </div>
 
       <!-- Table Card -->
       <CentralFinanceSurfaceCard class="q-mt-md" card-class="q-pa-none">
@@ -138,7 +224,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { date } from 'quasar';
 import { useFacultyList } from 'src/composables/use-faculty-list';
@@ -151,7 +237,6 @@ import type { PdfExportConfig, CsvExportConfig } from 'src/types/export-types';
 import CentralFinancePageHero from 'components/centralfinance/CentralFinancePageHero.vue';
 import CentralFinanceScopeCard from 'components/centralfinance/CentralFinanceScopeCard.vue';
 import CentralFinanceSurfaceCard from 'components/centralfinance/CentralFinanceSurfaceCard.vue';
-import PeriodFilterBar, { type PeriodFilterValue } from 'components/common/PeriodFilterBar.vue';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
 import TableExportActions from 'components/common/TableExportActions.vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
@@ -176,7 +261,11 @@ function translateFaculty(name: string): string {
 const { isLoading: isFacultyLoading, fetchFaculties } = useFacultyList();
 const { items, isLoading, filters, fetchData, clearFilters } = useReceiptSummaryReport();
 
-const receiptPeriod = ref<PeriodFilterValue>({ preset: 'allTime', dateFrom: '', dateTo: '' });
+// ── Sticky Filter Bar ────────────────────────────────────────
+const filterStuck = ref(false);
+const sentinelRef = ref<HTMLElement | null>(null);
+let stickyObserver: IntersectionObserver | null = null;
+const datePreset = ref('allTime');
 
 const datePresetOptions = computed(() => [
   { label: t('finance.filters.today'), value: 'today' },
@@ -187,22 +276,130 @@ const datePresetOptions = computed(() => [
   { label: t('finance.filters.custom'), value: 'custom' },
 ]);
 
-function onPeriodChange(): void {
-  filters.value.receiptDateStart = receiptPeriod.value.dateFrom;
-  filters.value.receiptDateEnd = receiptPeriod.value.dateTo;
+function formatDateInput(d: Date): string {
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+const receiptDateModel = computed({
+  get() {
+    if (
+      filters.value.receiptDateStart &&
+      filters.value.receiptDateEnd &&
+      filters.value.receiptDateStart !== filters.value.receiptDateEnd
+    ) {
+      return { from: filters.value.receiptDateStart, to: filters.value.receiptDateEnd };
+    }
+    return filters.value.receiptDateStart || null;
+  },
+  set(val: { from: string; to: string } | string | null) {
+    if (val !== null && typeof val === 'object' && 'from' in val && 'to' in val) {
+      filters.value.receiptDateStart = val.from;
+      filters.value.receiptDateEnd = val.to;
+    } else if (typeof val === 'string') {
+      filters.value.receiptDateStart = val;
+      filters.value.receiptDateEnd = val;
+    } else {
+      filters.value.receiptDateStart = '';
+      filters.value.receiptDateEnd = '';
+    }
+    datePreset.value = 'custom';
+    currentPage.value = 1;
+    void fetchData();
+  },
+});
+
+const receiptDateDisplay = computed(() => {
+  if (
+    filters.value.receiptDateStart &&
+    filters.value.receiptDateEnd &&
+    filters.value.receiptDateStart !== filters.value.receiptDateEnd
+  ) {
+    return `${filters.value.receiptDateStart} - ${filters.value.receiptDateEnd}`;
+  }
+  return filters.value.receiptDateStart || '';
+});
+
+const effectiveDateModel = computed({
+  get() {
+    if (
+      filters.value.effectiveDateStart &&
+      filters.value.effectiveDateEnd &&
+      filters.value.effectiveDateStart !== filters.value.effectiveDateEnd
+    ) {
+      return { from: filters.value.effectiveDateStart, to: filters.value.effectiveDateEnd };
+    }
+    return filters.value.effectiveDateStart || null;
+  },
+  set(val: { from: string; to: string } | string | null) {
+    if (val !== null && typeof val === 'object' && 'from' in val && 'to' in val) {
+      filters.value.effectiveDateStart = val.from;
+      filters.value.effectiveDateEnd = val.to;
+    } else if (typeof val === 'string') {
+      filters.value.effectiveDateStart = val;
+      filters.value.effectiveDateEnd = val;
+    } else {
+      filters.value.effectiveDateStart = '';
+      filters.value.effectiveDateEnd = '';
+    }
+    datePreset.value = 'custom';
+    currentPage.value = 1;
+    void fetchData();
+  },
+});
+
+const effectiveDateDisplay = computed(() => {
+  if (
+    filters.value.effectiveDateStart &&
+    filters.value.effectiveDateEnd &&
+    filters.value.effectiveDateStart !== filters.value.effectiveDateEnd
+  ) {
+    return `${filters.value.effectiveDateStart} - ${filters.value.effectiveDateEnd}`;
+  }
+  return filters.value.effectiveDateStart || '';
+});
+
+function applyDatePreset(preset: string) {
+  datePreset.value = preset;
+  const now = new Date();
+  let start = '';
+  let end = '';
+  if (preset === 'today') {
+    start = end = formatDateInput(now);
+  } else if (preset === 'thisWeek') {
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), diff);
+    start = formatDateInput(startOfWeek);
+    end = formatDateInput(now);
+  } else if (preset === 'thisMonth') {
+    start = formatDateInput(new Date(now.getFullYear(), now.getMonth(), 1));
+    end = formatDateInput(now);
+  } else if (preset === 'thisYear') {
+    start = formatDateInput(new Date(now.getFullYear(), 0, 1));
+    end = formatDateInput(now);
+  }
+  if (preset !== 'custom') {
+    filters.value.receiptDateStart = start;
+    filters.value.receiptDateEnd = end;
+    filters.value.effectiveDateStart = '';
+    filters.value.effectiveDateEnd = '';
+    currentPage.value = 1;
+    void fetchData();
+  }
+}
+
+function clearDates() {
+  datePreset.value = 'allTime';
+  clearFilters();
+  search.value = '';
   currentPage.value = 1;
   void fetchData();
 }
 
 function onFacultyChange(): void {
-  currentPage.value = 1;
-  void fetchData();
-}
-
-function onClear(): void {
-  clearFilters();
-  receiptPeriod.value = { preset: 'allTime', dateFrom: '', dateTo: '' };
-  search.value = '';
   currentPage.value = 1;
   void fetchData();
 }
@@ -451,17 +648,152 @@ async function downloadReceipt(row: ReceiptSummaryItem): Promise<void> {
 }
 
 onMounted(async () => {
+  if (sentinelRef.value) {
+    stickyObserver = new IntersectionObserver(
+      ([entry]) => {
+        filterStuck.value = !(entry?.isIntersecting ?? true);
+      },
+      { threshold: 0, rootMargin: '-73px 0px 0px 0px' },
+    );
+    stickyObserver.observe(sentinelRef.value);
+  }
   faculties.value = await fetchFaculties();
   await fetchData();
+});
+
+onUnmounted(() => {
+  stickyObserver?.disconnect();
 });
 </script>
 
 <style lang="scss" scoped>
+// ─── Sticky Filter Bar ───────────────────────────────────────
+.period-filter-sentinel {
+  height: 1px;
+}
+
+.period-filter-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 9;
+  margin-bottom: 16px;
+  border-radius: var(--admin-radius-lg, 16px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  transition: box-shadow 0.2s ease;
+  overflow: clip;
+
+  &--stuck {
+    box-shadow:
+      0 6px 28px rgba(17, 24, 39, 0.1),
+      0 1px 4px rgba(17, 24, 39, 0.05);
+  }
+}
+
+.period-filter-bar__row1,
+.period-filter-bar__row2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.period-filter-bar__row1 {
+  padding: 8px 8px 4px;
+  min-height: 52px;
+}
+
+.period-filter-bar__row2 {
+  padding: 4px 8px 8px;
+  border-top: 1px solid rgba(17, 24, 39, 0.06);
+}
+
+.period-filter-bar__label,
+.period-filter-bar__sub-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--admin-navy, #10233f);
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+.period-filter-bar__sub-label {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.period-filter-bar__item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--admin-muted, #64748b);
+  white-space: nowrap;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba($primary, 0.04);
+    color: var(--admin-navy, #10233f);
+  }
+
+  &--active {
+    background: rgba($primary, 0.08) !important;
+    box-shadow: inset 4px 0 0 $primary;
+    color: var(--admin-navy, #10233f);
+  }
+}
+
+.period-filter-bar__divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(17, 24, 39, 0.08);
+  margin: 0 10px;
+  flex: 0 0 auto;
+}
+
+.period-filter-bar__input {
+  width: 140px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0 12px;
+  transition: all 0.2s ease;
+
+  &--range {
+    width: 220px;
+  }
+
+  &:focus-within {
+    border-color: #0d9488;
+    box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
+  }
+}
+
+// ─── Filter ───────────────────────────────────────────────────
 .filter-faculty-wrap {
-  margin-left: 12px;
+  margin-left: 4px;
   flex-shrink: 0;
 }
 
+// ─── Table ────────────────────────────────────────────────────
 .receipt-search-bar {
   @media (max-width: 599px) {
     justify-content: stretch;
