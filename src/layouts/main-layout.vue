@@ -720,7 +720,7 @@ const navItems = computed<NavItem[]>(() => {
       {
         name: 'central-finance-dashboard',
         label: t('centralFinance.nav.dashboard'),
-        icon: 'analytics',
+        icon: 'dashboard_customize',
         to: '/central-finance/dashboard',
       },
       // {
