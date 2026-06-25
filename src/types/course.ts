@@ -46,4 +46,5 @@ export interface Course {
   openclassId?: number | null;
   totalHours?: number;
   evaluationText?: string | null;
+  updatedAt?: string;
 }

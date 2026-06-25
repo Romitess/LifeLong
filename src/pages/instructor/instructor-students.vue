@@ -1348,15 +1348,21 @@ function buildDetailPreview(): void {
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
+
+  // Use Maps for O(1) lookups to avoid O(N*M) nested loops
+  const learnerMap = new Map(learners.value.map((l) => [l.studentId, l]));
+  const gradeMap = new Map(grades.map((g) => [g.studentId, g]));
+  const gradeItemMap = new Map(gradeItemOptions.value.map((opt) => [opt.name.toLowerCase(), opt]));
+
   detailPreviewRows.value = lines.map((line) => {
     const parts = line.split(/[,\t ]+/).filter(Boolean);
     const studentId = parts[0] ?? '';
     const gradeText = parts.slice(1).join(' ').trim();
-    const learner = learners.value.find((l) => l.studentId === studentId);
-    const gradeData = grades.find((g) => g.studentId === studentId);
-    const matchedItem = gradeItemOptions.value.find(
-      (opt) => opt.name.toLowerCase() === gradeText.toLowerCase(),
-    );
+
+    const learner = learnerMap.get(studentId);
+    const gradeData = gradeMap.get(studentId);
+    const matchedItem = gradeItemMap.get(gradeText.toLowerCase());
+
     return {
       studentId,
       gradeText,

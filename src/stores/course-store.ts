@@ -52,6 +52,7 @@ interface BackendCourse {
   clickCount?: number | null;
   openclassId?: number | null;
   facultyName?: string | null;
+  updatedAt?: string | null;
 }
 
 interface BackendInstructorCourse {
@@ -70,6 +71,7 @@ interface BackendInstructorCourse {
   enrolledCount?: number | null;
   amount?: number | null;
   categoryId?: number | null;
+  updatedAt?: string | null;
 }
 
 function normalizeInstructorEmail(email?: string): string {
@@ -199,6 +201,7 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     enrolledCount: course.enrolledCount ?? 0,
     totalHours: course.hours ?? 0,
     evaluationText: course.evaluationText ?? null,
+    ...(course.updatedAt ? { updatedAt: course.updatedAt } : {}),
   };
 }
 
@@ -507,6 +510,7 @@ export const useCourseStore = defineStore('course', {
               enrolledCount: course.enrolledCount ?? null,
               amount: course.amount ?? null,
               categoryId: course.categoryId ?? null,
+              updatedAt: course.updatedAt ?? null,
             }),
           )
           .filter((c): c is Course => Boolean(c));

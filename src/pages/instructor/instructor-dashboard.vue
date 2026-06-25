@@ -181,7 +181,7 @@
                     <div class="row items-center">
                       <q-icon name="update" class="q-mr-xs" />
                       {{ t('instructor.dashboard.lastUpdated') }}:
-                      {{ t('instructor.dashboard.daysAgo', { count: 2 }) }}
+                      {{ getDaysAgoText(course.updatedAt) }}
                     </div>
                   </div>
 
@@ -740,6 +740,19 @@ function formatCoursePrice(course: Course): string {
   }
 
   return `${course.price.toLocaleString('th-TH')} บาท`;
+}
+
+function getDaysAgoText(updatedAt?: string): string {
+  if (!updatedAt) return '-';
+  const updatedDate = new Date(updatedAt);
+  if (Number.isNaN(updatedDate.getTime())) return '-';
+
+  const now = new Date();
+  const diffTime = now.getTime() - updatedDate.getTime();
+  const diffDays = Math.floor(Math.max(0, diffTime) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return locale.value === 'th' ? 'วันนี้' : 'Today';
+  return t('instructor.dashboard.daysAgo', { count: diffDays });
 }
 
 function getCourseSyllabusMeta(course: Course) {
