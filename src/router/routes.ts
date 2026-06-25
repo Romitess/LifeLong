@@ -208,21 +208,6 @@ const routes: RouteRecordRaw[] = [
         meta: { role: 'central_finance' },
       },
       {
-        path: 'central-finance/fund-sources',
-        component: () => import('pages/centralfinance/finance-fund-sources-page.vue'),
-        meta: { role: 'central_finance' },
-      },
-      {
-        path: 'central-finance/fund-sources/add',
-        component: () => import('pages/centralfinance/finance-add-fund-source-page.vue'),
-        meta: { role: 'central_finance' },
-      },
-      {
-        path: 'central-finance/transactions',
-        component: () => import('pages/centralfinance/finance-transactions-page.vue'),
-        meta: { role: 'central_finance' },
-      },
-      {
         path: 'central-finance/daily-report',
         component: () => import('pages/centralfinance/finance-daily-report-page.vue'),
         meta: { role: 'central_finance' },
