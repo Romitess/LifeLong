@@ -538,22 +538,17 @@ import {
   type HeroTextSegment,
 } from 'src/stores/system-image-store';
 import { useCourseList } from 'src/composables/use-course-list';
-import { useLearnerProgress } from 'src/composables/use-learner-progress';
-import { useAuthStore } from 'src/stores/auth-store';
 import { formatPriceLabel } from 'src/utils/course-format';
 import type { Course } from 'src/types/course';
 import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import { useQuasar } from 'quasar';
-import learnerHeroBackgroundUrl from 'src/assets/bb.png';
 import fallbackCourseImageUrl from 'src/assets/homepicture1.png';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const router = useRouter();
-const authStore = useAuthStore();
 const courseStore = useCourseStore();
-const { learnerProgress } = useLearnerProgress();
 const categoryStore = useCategoryStore();
 const systemImageStore = useSystemImageStore();
 const $q = useQuasar();
@@ -691,10 +686,6 @@ async function fetchTopEnrolledCourses(): Promise<void> {
   }
 }
 
-function createHeroAvatar(seed: string): string {
-  return `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(seed)}`;
-}
-
 watch(
   () => courseStore.selectedCategory,
   () => {
@@ -797,50 +788,7 @@ const infoCards = computed<HomeInfoItem[]>(() => [
 
 const activeHeroSlides = computed(() => systemImageStore.activeHeroSlides);
 
-// Show only logged-in student's profile on HERO section
-const learnerHeroSlides = computed<LearnerHeroSlide[]>(() => {
-  // Only show learner spotlight if user is logged in and is a student role
-  if (!authStore.isLoggedIn || !authStore.user || authStore.user.role !== 'student') {
-    return [];
-  }
-
-  const user = authStore.user;
-  const progress = learnerProgress.value;
-
-  // Get the primary active course for the student
-  const primaryCourse = activeCourses.value[0] ??
-    courses.value[0] ?? {
-      title: 'เส้นทางการเรียนรู้ดิจิทัล',
-      code: 'BUU-LLL-001',
-      imageUrl: fallbackCourseImageUrl,
-    };
-
-  const courseImageUrl = getPreferredCourseImageUrl(primaryCourse?.imageUrl);
-  const fullName = `${user.firstNameTh} ${user.lastNameTh}`.trim() || user.firstNameTh;
-
-  return [
-    {
-      id: 'learner-spotlight-current',
-      name: fullName,
-      faculty: user.faculty,
-      courseTitle: primaryCourse?.title ?? 'เส้นทางการเรียนรู้ดิจิทัล',
-      courseCode: primaryCourse?.code ?? 'BUU-LLL-001',
-      courseImageUrl,
-      imageUrl: learnerHeroBackgroundUrl,
-      backgroundPosition: 'center 56%',
-      avatarUrl: user.avatar || createHeroAvatar(user.email),
-      attendanceRate: 92,
-      statusLabel: 'ผู้เรียนที่ใช้งาน',
-      statusNote: `กำลังศึกษา ${primaryCourse?.title ?? 'คอร์สปัจจุบัน'}`,
-      streakDays: progress?.streakDays ?? 5,
-      xp: progress?.xp ?? 1250,
-      level: progress?.level ?? 7,
-      completedLessons: 18,
-      totalLessons: 20,
-      peers: [], // Show no peers to keep focus on current user
-    },
-  ];
-});
+const learnerHeroSlides = computed<LearnerHeroSlide[]>(() => []);
 const homeHeroSlides = computed<HomeHeroSlide[]>(() => {
   const templateSlides: HomeHeroSlide[] = activeHeroSlides.value.map((slide) => ({
     kind: 'template',
