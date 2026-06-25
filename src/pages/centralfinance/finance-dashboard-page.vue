@@ -106,8 +106,8 @@ const dateRangeLabel = computed(() => {
 const dashboardStats = ref({
   totalRevenue: 0,
   totalReceipts: 0,
-  issuedReceipts: 0,
   voidReceipts: 0,
+  activeFaculties: 0,
 });
 
 const trendData = ref<{ months: string[]; revenue: number[] }>({
@@ -143,8 +143,8 @@ async function fetchDashboardData() {
   if (statsResult.status === 'fulfilled') {
     const stats = statsResult.value.data;
     dashboardStats.value.totalRevenue = stats.totalRevenue ?? 0;
-    dashboardStats.value.issuedReceipts = stats.issuedReceipts ?? 0;
     dashboardStats.value.voidReceipts = stats.pendingReceipts ?? 0;
+    dashboardStats.value.activeFaculties = stats.activeFaculties ?? 0;
   } else {
     dashboardStats.value.totalRevenue = validTx.reduce((s, t) => s + t.amount, 0);
     dashboardStats.value.voidReceipts = financeStore.transactions.filter(
@@ -213,14 +213,10 @@ const metricCards = computed<MetricCard[]>(() => [
     tone: 'amber',
   },
   {
-    label: t('centralFinance.dashboard.kpi.avgPerReceipt'),
-    value: formatCurrency(
-      dashboardStats.value.issuedReceipts > 0
-        ? Math.round(dashboardStats.value.totalRevenue / dashboardStats.value.issuedReceipts)
-        : 0,
-    ),
-    icon: 'analytics',
-    tone: 'gold',
+    label: t('centralFinance.dashboard.kpi.activeFaculties'),
+    value: `${dashboardStats.value.activeFaculties.toLocaleString('th-TH')} ${t('centralFinance.dashboard.kpi.facultyUnit')}`,
+    icon: 'account_balance',
+    tone: 'indigo',
   },
 ]);
 
