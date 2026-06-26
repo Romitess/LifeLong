@@ -24,22 +24,26 @@
               </div>
             </div>
           </div>
-          <q-badge
-            v-if="isDetailView"
-            rounded
-            color="primary"
-            class="registrant-email-page__hero-badge"
+          <div
+            v-if="isDetailView && selectedCourse"
+            class="registrant-email-page__detail-hero-summary"
           >
-            {{
-              currentView === 'list'
-                ? tt('instructor.registrantEmail.heroBadgeCourses', '{count} รายวิชา', {
-                    count: filteredCourseRows.length,
-                  })
-                : tt('instructor.registrantEmail.heroBadgeRecipients', '{count} ผู้ลงทะเบียน', {
-                    count: learnerRows.length,
-                  })
-            }}
-          </q-badge>
+            <div
+              v-for="card in detailHeroSummaryCards"
+              :key="card.label"
+              class="registrant-detail-summary-card"
+              :style="{ '--summary-accent': card.color, '--summary-soft': card.bg }"
+            >
+              <div class="registrant-detail-summary-card__icon">
+                <q-icon :name="card.icon" />
+              </div>
+              <div>
+                <strong>{{ card.value }}</strong>
+                <span>{{ card.label }}</span>
+                <small v-if="card.caption">{{ card.caption }}</small>
+              </div>
+            </div>
+          </div>
         </template>
       </InstructorPageHero>
       <div v-if="isDetailView" class="registrant-email-page__breadcrumb">
@@ -138,55 +142,10 @@
         </BaseTable>
       </section>
 
-      <section v-else-if="selectedCourse" class="registrant-email-page__surface">
-        <div class="registrant-email-page__summary">
-          <div class="registrant-email-page__summary-row">
-            <span>{{ tt('instructor.registrantEmail.courseLabel', 'รายวิชา') }}</span>
-            <div
-              class="registrant-email-page__summary-value registrant-email-page__summary-value--course"
-            >
-              <strong>{{ selectedCourse.code }} : {{ selectedCourse.title }}</strong>
-              <small v-if="selectedCourse.titleEn">{{ selectedCourse.titleEn }}</small>
-            </div>
-          </div>
-          <div class="registrant-email-page__summary-row">
-            <span>{{ tt('instructor.registrantEmail.feeLabel', 'ค่าธรรมเนียม') }}</span>
-            <div class="registrant-email-page__summary-value">
-              <strong>{{ formatNumber(selectedCourse.price) }}</strong>
-              <small>{{ tt('instructor.registrantEmail.baht', 'บาท') }}</small>
-            </div>
-          </div>
-          <div class="registrant-email-page__summary-row">
-            <span>{{ tt('instructor.registrantEmail.seatLabel', 'จำนวนรับ') }}</span>
-            <div class="registrant-email-page__summary-value">
-              <strong>{{ formatNumber(selectedCourse.maxSeats ?? 0) }}</strong>
-              <small>{{ tt('instructor.registrantEmail.people', 'คน') }}</small>
-            </div>
-          </div>
-          <div class="registrant-email-page__summary-row">
-            <span>{{ tt('instructor.registrantEmail.registeredLabel', 'จำนวนผู้ลงทะเบียน') }}</span>
-            <div class="registrant-email-page__summary-value">
-              <strong>{{ formatNumber(learnerRows.length) }}</strong>
-              <small class="registrant-email-page__summary-status">
-                <span class="text-positive">
-                  {{
-                    tt('instructor.registrantEmail.noDebt', 'ไม่มีหนี้ค้างชำระ {count} คน', {
-                      count: paidCount,
-                    })
-                  }}
-                </span>
-                <span class="text-negative q-ml-xs">
-                  {{
-                    tt('instructor.registrantEmail.debt', 'ค้างชำระ {count} คน', {
-                      count: unpaidCount,
-                    })
-                  }}
-                </span>
-              </small>
-            </div>
-          </div>
-        </div>
-
+      <section
+        v-else-if="selectedCourse"
+        class="registrant-email-page__surface registrant-email-page__surface--detail"
+      >
         <div v-if="currentView === 'compose'" class="registrant-email-page__detail-grid">
           <div class="registrant-email-page__left-panel">
             <BaseTable
@@ -407,6 +366,7 @@ interface SummaryCardItem {
   icon: string;
   value: string;
   label: string;
+  caption?: string;
   bg: string;
   color: string;
 }
@@ -524,6 +484,46 @@ const listSummaries = computed<SummaryCardItem[]>(() => {
       label: tt('instructor.registrantEmail.summaryPending', 'ค้างชำระ'),
       bg: 'rgba(245, 158, 11, 0.16)',
       color: '#d97706',
+    },
+  ];
+});
+
+const detailHeroSummaryCards = computed<SummaryCardItem[]>(() => {
+  const course = selectedCourse.value;
+  if (!course) return [];
+
+  return [
+    {
+      icon: 'menu_book',
+      value: course.code,
+      label: compactKeyword(course.title, 7),
+      caption: '',
+      bg: 'rgba(37, 99, 235, 0.12)',
+      color: '#2563eb',
+    },
+    {
+      icon: 'payments',
+      value: formatNumber(course.price),
+      label: 'ค่าธรรมเนียม',
+      caption: 'บาท',
+      bg: 'rgba(14, 165, 233, 0.12)',
+      color: '#0284c7',
+    },
+    {
+      icon: 'event_seat',
+      value: formatNumber(course.maxSeats ?? 0),
+      label: 'จำนวนรับ',
+      caption: 'คน',
+      bg: 'rgba(245, 158, 11, 0.14)',
+      color: '#d97706',
+    },
+    {
+      icon: 'groups',
+      value: formatNumber(learnerRows.value.length),
+      label: 'ลงทะเบียน',
+      caption: `ชำระ ${formatNumber(paidCount.value)} / ค้าง ${formatNumber(unpaidCount.value)}`,
+      bg: 'rgba(22, 163, 74, 0.12)',
+      color: '#16a34a',
     },
   ];
 });
@@ -958,6 +958,15 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat('th-TH').format(value);
 }
 
+function compactKeyword(value: string, maxWords = 4): string {
+  const words = value
+    .replace(/[:：|/()[\],]+/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length <= maxWords) return words.join(' ');
+  return `${words.slice(0, maxWords).join(' ')}...`;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -1019,8 +1028,9 @@ function stripHtml(value: string): string {
 }
 
 .registrant-email-page :deep(.instructor-page-hero__actions) {
-  flex: 0 0 auto;
+  flex: 1 1 760px;
   margin-left: auto;
+  min-width: 0;
 }
 
 .registrant-email-page__title {
@@ -1126,6 +1136,15 @@ function stripHtml(value: string): string {
   border-radius: var(--admin-radius-lg);
   background: var(--admin-surface);
   box-shadow: var(--admin-shadow-sm);
+}
+
+.registrant-email-page__surface--detail {
+  display: grid;
+  gap: 22px;
+  overflow: visible;
+  padding: 22px;
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(255, 255, 255, 0.78);
 }
 
 .registrant-email-page__table-head {
@@ -1309,82 +1328,90 @@ function stripHtml(value: string): string {
   }
 }
 
-.registrant-email-page__summary {
+.registrant-email-page__detail-hero-summary {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(280px, 1.45fr) repeat(3, minmax(150px, 1fr));
   gap: 14px;
-  padding: 20px 22px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.05);
+  width: min(980px, 100%);
+  margin-left: auto;
 }
 
-.registrant-email-page__summary-row {
-  display: grid;
-  gap: 10px;
-  align-items: start;
-  min-height: 132px;
-  padding: 18px 20px;
-  border: 1px solid rgba(226, 232, 240, 0.92);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.56);
-
-  span {
-    color: var(--admin-navy);
-    font-size: 0.9rem;
-    font-weight: 700;
-    line-height: 1.4;
-    text-align: left;
-  }
-}
-
-.registrant-email-page__summary-value {
-  display: grid;
-  justify-items: start;
-  align-content: start;
-  gap: 6px;
-
-  strong {
-    display: block;
-    color: #0d6efd;
-    font-size: 1.18rem;
-    font-weight: 800;
-    line-height: 1.35;
-  }
-
-  small {
-    display: block;
-    color: #64748b;
-    font-size: 0.92rem;
-    font-weight: 700;
-    line-height: 1.5;
-  }
-}
-
-.registrant-email-page__summary-value--course {
-  strong {
-    color: #0d6efd;
-    font-size: 1.28rem;
-  }
-
-  small {
-    font-size: 0.98rem;
-  }
-}
-
-.registrant-email-page__summary-status {
+.registrant-detail-summary-card {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  min-height: 94px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(4px);
+}
+
+.registrant-detail-summary-card__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--summary-accent);
+  font-size: 23px;
+}
+
+.registrant-detail-summary-card div:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.registrant-detail-summary-card span,
+.registrant-detail-summary-card small {
+  color: rgba(255, 255, 255, 0.76);
+  font-weight: 700;
+  line-height: 1.22;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.registrant-detail-summary-card span {
+  margin-top: 4px;
+  font-size: 0.82rem;
+}
+
+.registrant-detail-summary-card small {
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.registrant-detail-summary-card strong {
+  color: #ffffff;
+  font-size: 1.48rem;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.registrant-detail-summary-card:first-child strong {
+  font-size: 1.28rem;
+  letter-spacing: 0;
+}
+
+.registrant-detail-summary-card:first-child span {
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
 }
 
 .registrant-email-page__detail-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
-  gap: 26px;
+  grid-template-columns: minmax(0, 1.12fr) minmax(420px, 0.88fr);
+  gap: 22px;
+  align-items: start;
 }
 
 .registrant-email-page__left-panel,
@@ -1393,10 +1420,25 @@ function stripHtml(value: string): string {
   min-width: 0;
 }
 
+.registrant-email-page__left-panel,
+.registrant-email-page__right-panel,
+.registrant-email-page__history-panel {
+  overflow: hidden;
+  border: 1px solid rgba(203, 213, 225, 0.78);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
+}
+
 .registrant-email-page__right-panel {
   display: grid;
-  gap: 12px;
+  gap: 16px;
   align-content: start;
+  padding: 22px;
+}
+
+.registrant-email-page__history-panel {
+  border-radius: 14px;
 }
 
 .registrant-email-page__recipient-select {
@@ -1481,12 +1523,13 @@ function stripHtml(value: string): string {
 
 .registrant-email-page__inline-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
+  padding-bottom: 2px;
 }
 
 .registrant-email-page__textarea :deep(textarea) {
-  min-height: 290px;
+  min-height: 250px;
   resize: vertical;
 }
 
@@ -1537,6 +1580,11 @@ function stripHtml(value: string): string {
     grid-template-columns: repeat(2, minmax(180px, 1fr));
   }
 
+  .registrant-email-page__detail-hero-summary {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    margin-left: 0;
+  }
+
   .registrant-email-page__detail-grid {
     grid-template-columns: 1fr;
   }
@@ -1556,18 +1604,14 @@ function stripHtml(value: string): string {
     width: 100%;
   }
 
+  .registrant-email-page__detail-hero-summary {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
   .registrant-email-page__table-head {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .registrant-email-page__summary {
-    grid-template-columns: 1fr;
-  }
-
-  .registrant-email-page__summary-row {
-    min-height: auto;
-    padding: 16px;
   }
 
   .registrant-email-page__inline-actions {

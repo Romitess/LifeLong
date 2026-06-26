@@ -4174,13 +4174,15 @@ function exportLearnersPdf(): void {
 
 @media (max-width: 1180px) {
   .student-hero-actions {
-    width: 100%;
+    width: min(720px, 100%);
   }
 
   .student-roster-hero-summary {
-    width: 100%;
+    width: min(720px, 100%);
   }
+}
 
+@media (max-width: 900px) {
   .student-roster-hero-summary,
   .student-roster-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
