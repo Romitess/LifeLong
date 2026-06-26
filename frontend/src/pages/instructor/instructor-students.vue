@@ -1779,37 +1779,60 @@ function getLearningResultDownloadCode(): string {
 const studentCourseColumns = computed<BaseTableColumn[]>(() =>
   activeStudentTab.value === 'results'
     ? [
-        { key: 'course', label: t('instructor.students.col.courseName'), width: '30%' },
-        { key: 'fee', label: t('instructor.students.col.fee'), width: '96px', align: 'center' },
+        {
+          key: 'course',
+          label: t('instructor.students.col.courseName'),
+          width: '30%',
+          sortable: true,
+          sortKey: 'title',
+        },
+        {
+          key: 'fee',
+          label: t('instructor.students.col.fee'),
+          width: '96px',
+          align: 'center',
+          sortable: true,
+          sortKey: 'price',
+        },
         {
           key: 'schedule',
           label: t('instructor.students.col.schedule'),
           width: '170px',
           align: 'center',
+          sortable: true,
+          sortKey: 'registrationStartDate',
         },
         {
           key: 'seats',
           label: t('instructor.students.col.capacity'),
           width: '86px',
           align: 'center',
+          sortable: true,
+          sortKey: 'maxSeats',
         },
         {
           key: 'enrolled',
           label: t('instructor.students.col.enrolled'),
           width: '92px',
           align: 'center',
+          sortable: true,
+          sortKey: 'enrolledCount',
         },
         {
           key: 'passed',
           label: t('instructor.students.col.passed'),
           width: '92px',
           align: 'center',
+          sortable: true,
+          sortValue: (course) => getCoursePassedCount(course as Course),
         },
         {
           key: 'failed',
           label: t('instructor.students.col.failed'),
           width: '92px',
           align: 'center',
+          sortable: true,
+          sortValue: (course) => getCourseFailedCount(course as Course),
         },
         {
           key: 'action',
@@ -1825,25 +1848,44 @@ const studentCourseColumns = computed<BaseTableColumn[]>(() =>
         },
       ]
     : [
-        { key: 'course', label: t('instructor.students.col.courseName'), width: '30%' },
-        { key: 'fee', label: t('instructor.students.col.fee'), width: '96px', align: 'center' },
+        {
+          key: 'course',
+          label: t('instructor.students.col.courseName'),
+          width: '30%',
+          sortable: true,
+          sortKey: 'title',
+        },
+        {
+          key: 'fee',
+          label: t('instructor.students.col.fee'),
+          width: '96px',
+          align: 'center',
+          sortable: true,
+          sortKey: 'price',
+        },
         {
           key: 'schedule',
           label: t('instructor.students.col.schedule'),
           width: '170px',
           align: 'center',
+          sortable: true,
+          sortKey: 'registrationStartDate',
         },
         {
           key: 'seats',
           label: t('instructor.students.col.capacity'),
           width: '86px',
           align: 'center',
+          sortable: true,
+          sortKey: 'maxSeats',
         },
         {
           key: 'enrolled',
           label: t('instructor.students.col.enrolled'),
           width: '92px',
           align: 'center',
+          sortable: true,
+          sortKey: 'enrolledCount',
         },
         {
           key: 'action',
@@ -1856,21 +1898,21 @@ const studentCourseColumns = computed<BaseTableColumn[]>(() =>
 
 const learnerColumns: BaseTableColumn[] = [
   { key: 'name', label: 'นิสิต', width: '280px', sortable: true },
-  { key: 'email', label: 'อีเมล', width: '240px' },
+  { key: 'email', label: 'อีเมล', width: '240px', sortable: true },
   { key: 'progress', label: 'ความก้าวหน้า', width: '190px', sortable: true },
-  { key: 'score', label: 'คะแนน', align: 'center', width: '140px' },
-  { key: 'lastActive', label: 'เข้าเรียนล่าสุด', align: 'center', width: '150px' },
-  { key: 'status', label: 'สถานะ', align: 'center', width: '150px' },
+  { key: 'score', label: 'คะแนน', align: 'center', width: '140px', sortable: true },
+  { key: 'lastActive', label: 'เข้าเรียนล่าสุด', align: 'center', width: '150px', sortable: true },
+  { key: 'status', label: 'สถานะ', align: 'center', width: '150px', sortable: true },
   { key: 'actions', label: 'จัดการ', align: 'center', width: '92px' },
 ];
 
 const learningResultColumns: BaseTableColumn[] = [
   { key: 'name', label: 'ผู้เรียน', sortable: true },
   { key: 'progress', label: 'ความก้าวหน้า', width: '180px', sortable: true },
-  { key: 'score', label: 'คะแนนปัจจุบัน', width: '140px' },
+  { key: 'score', label: 'คะแนนปัจจุบัน', width: '140px', sortable: true },
   { key: 'finalScore', label: 'คะแนนผลการเรียน', width: '170px', sortable: true },
-  { key: 'resultStatus', label: 'ผลการเรียน', width: '150px' },
-  { key: 'note', label: 'หมายเหตุ', width: '220px' },
+  { key: 'resultStatus', label: 'ผลการเรียน', width: '150px', sortable: true },
+  { key: 'note', label: 'หมายเหตุ', width: '220px', sortable: true },
 ];
 
 function setRosterTablePage(page: number): void {

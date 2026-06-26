@@ -548,42 +548,51 @@ const paginatedCourseRows = computed(() =>
 );
 
 const courseColumns = computed<BaseTableColumn[]>(() => [
-  { key: 'course', label: tt('instructor.registrantEmail.colCourse', 'ชื่อรายวิชา'), width: '30%' },
+  { key: 'course', label: tt('instructor.registrantEmail.colCourse', 'ชื่อรายวิชา'), width: '30%', sortable: true, sortKey: 'courseTitle' },
   {
     key: 'fee',
     label: tt('instructor.registrantEmail.feeLabel', 'ค่าธรรมเนียม'),
     width: '96px',
     align: 'center',
+    sortable: true,
   },
   {
     key: 'schedule',
     label: tt('instructor.registrantEmail.scheduleLabel', 'กำหนดการ'),
     width: '170px',
     align: 'center',
+    sortable: true,
+    sortKey: 'registrationRange',
   },
   {
     key: 'seats',
     label: tt('instructor.registrantEmail.seatShortLabel', 'รับ'),
     width: '86px',
     align: 'center',
+    sortable: true,
   },
   {
     key: 'paid',
     label: tt('instructor.registrantEmail.noDebtShortLabel', 'ไม่มีหนี้ค้างชำระ'),
     width: '92px',
     align: 'center',
+    sortable: true,
+    sortKey: 'paidCount',
   },
   {
     key: 'unpaid',
     label: tt('instructor.registrantEmail.debtShortLabel', 'ค้างชำระ'),
     width: '92px',
     align: 'center',
+    sortable: true,
+    sortKey: 'unpaidCount',
   },
   {
     key: 'remainingCount',
     label: tt('instructor.registrantEmail.remainingLabel', 'เหลือ'),
     width: '92px',
     align: 'center',
+    sortable: true,
   },
   {
     key: 'emailAction',
@@ -600,13 +609,14 @@ const courseColumns = computed<BaseTableColumn[]>(() => [
 ]);
 
 const learnerColumns = computed<BaseTableColumn[]>(() => [
-  { key: 'name', label: tt('instructor.registrantEmail.colName', 'ชื่อ-สกุล'), width: '220px' },
-  { key: 'email', label: tt('instructor.registrantEmail.colEmail', 'อีเมล'), width: '220px' },
-  { key: 'phone', label: tt('instructor.registrantEmail.colPhone', 'เบอร์โทร'), width: '130px' },
+  { key: 'name', label: tt('instructor.registrantEmail.colName', 'ชื่อ-สกุล'), width: '220px', sortable: true },
+  { key: 'email', label: tt('instructor.registrantEmail.colEmail', 'อีเมล'), width: '220px', sortable: true },
+  { key: 'phone', label: tt('instructor.registrantEmail.colPhone', 'เบอร์โทร'), width: '130px', sortable: true },
   {
     key: 'enrolledAt',
     label: tt('instructor.registrantEmail.colRegisteredAt', 'วันที่ลงทะเบียนเรียน'),
     width: '170px',
+    sortable: true,
   },
 ]);
 
@@ -615,26 +625,31 @@ const historyColumns = computed<BaseTableColumn[]>(() => [
     key: 'sender',
     label: tt('instructor.registrantEmail.colSender', 'ชื่อ-สกุล ผู้ส่ง'),
     width: '220px',
+    sortable: true,
   },
   {
     key: 'recipients',
     label: tt('instructor.registrantEmail.colRecipients', 'ชื่อ-สกุล ผู้รับ'),
     width: '240px',
+    sortable: true,
   },
   {
     key: 'sentAt',
     label: tt('instructor.registrantEmail.colSentAt', 'เวลาส่ง E-mail'),
     width: '160px',
+    sortable: true,
   },
   {
     key: 'subject',
     label: tt('instructor.registrantEmail.subjectLabel', 'ชื่อเรื่อง'),
     width: '220px',
+    sortable: true,
   },
   {
     key: 'body',
     label: tt('instructor.registrantEmail.detailLabel', 'รายละเอียด'),
     width: '320px',
+    sortable: true,
   },
 ]);
 

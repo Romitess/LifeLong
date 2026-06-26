@@ -1799,8 +1799,21 @@ const paginatedCourses = computed(() =>
 
 const courseAdminColumns = computed<BaseTableColumn[]>(() => [
   { key: 'title', label: t('instructor.table.colCourse'), width: '30%', sortable: true },
-  { key: 'price', label: t('instructor.table.colFee'), align: 'center', width: '110px' },
-  { key: 'schedule', label: t('instructor.table.colDate'), align: 'center', width: '150px' },
+  {
+    key: 'price',
+    label: t('instructor.table.colFee'),
+    align: 'center',
+    width: '110px',
+    sortable: true,
+  },
+  {
+    key: 'schedule',
+    label: t('instructor.table.colDate'),
+    align: 'center',
+    width: '150px',
+    sortable: true,
+    sortKey: 'registrationStartDate',
+  },
   {
     key: 'maxSeats',
     label: t('instructor.table.colSeats'),
@@ -1808,11 +1821,46 @@ const courseAdminColumns = computed<BaseTableColumn[]>(() => [
     width: '86px',
     sortable: true,
   },
-  { key: 'paid', label: t('instructor.table.colPaid'), align: 'center', width: '86px' },
-  { key: 'unpaid', label: t('instructor.table.colUnpaid'), align: 'center', width: '92px' },
-  { key: 'remain', label: t('instructor.table.colRemain'), align: 'center', width: '92px' },
-  { key: 'publish', label: t('instructor.table.colPublish'), align: 'center', width: '96px' },
-  { key: 'moodle', label: 'Moodle', align: 'center', width: '150px' },
+  {
+    key: 'paid',
+    label: t('instructor.table.colPaid'),
+    align: 'center',
+    width: '86px',
+    sortable: true,
+    sortValue: (course) => getPaidLearnerCount(course as Course),
+  },
+  {
+    key: 'unpaid',
+    label: t('instructor.table.colUnpaid'),
+    align: 'center',
+    width: '92px',
+    sortable: true,
+    sortValue: (course) => getUnpaidLearnerCount(course as Course),
+  },
+  {
+    key: 'remain',
+    label: t('instructor.table.colRemain'),
+    align: 'center',
+    width: '92px',
+    sortable: true,
+    sortValue: (course) => getRemainingSeats(course as Course),
+  },
+  {
+    key: 'publish',
+    label: t('instructor.table.colPublish'),
+    align: 'center',
+    width: '96px',
+    sortable: true,
+    sortKey: 'isActive',
+  },
+  {
+    key: 'moodle',
+    label: 'Moodle',
+    align: 'center',
+    width: '150px',
+    sortable: true,
+    sortKey: 'moodleId',
+  },
   { key: 'actions', label: t('instructor.table.colManage'), align: 'center', width: '126px' },
 ]);
 
@@ -2015,11 +2063,16 @@ const paginatedManagementLearners = computed(() =>
 );
 const managementLearnerColumns = computed<BaseTableColumn[]>(() => [
   { key: 'name', label: t('instructor.learners.colName'), sortable: true },
-  { key: 'email', label: t('instructor.learners.colEmail'), width: '220px' },
+  { key: 'email', label: t('instructor.learners.colEmail'), width: '220px', sortable: true },
   { key: 'progress', label: t('instructor.learners.colProgress'), width: '190px', sortable: true },
-  { key: 'score', label: t('instructor.learners.colScore'), width: '140px' },
-  { key: 'lastActive', label: t('instructor.learners.colLastActive'), width: '150px' },
-  { key: 'status', label: t('instructor.learners.colStatus'), width: '140px' },
+  { key: 'score', label: t('instructor.learners.colScore'), width: '140px', sortable: true },
+  {
+    key: 'lastActive',
+    label: t('instructor.learners.colLastActive'),
+    width: '150px',
+    sortable: true,
+  },
+  { key: 'status', label: t('instructor.learners.colStatus'), width: '140px', sortable: true },
   { key: 'actions', label: '', align: 'right', width: '92px' },
 ]);
 

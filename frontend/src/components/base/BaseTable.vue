@@ -196,6 +196,8 @@ export interface BaseTableColumn {
   sortable?: boolean;
   /** Override the row property key used for sorting (default: `key`). */
   sortKey?: string;
+  /** Override the value used for sorting when the displayed value is derived. */
+  sortValue?: (row: unknown) => unknown;
 }
 
 type SortDirection = 'asc' | 'desc' | null;
@@ -367,10 +369,11 @@ const sortedRows = computed<T[]>(() => {
 
   const key = sortBy.value;
   const dir = sortDirection.value;
+  const activeColumn = props.columns.find((col) => (col.sortKey ?? col.key) === key);
 
   return [...props.rows].sort((a, b) => {
-    const valA = (a as Record<string, unknown>)[key];
-    const valB = (b as Record<string, unknown>)[key];
+    const valA = activeColumn?.sortValue?.(a) ?? (a as Record<string, unknown>)[key];
+    const valB = activeColumn?.sortValue?.(b) ?? (b as Record<string, unknown>)[key];
     return defaultCompare(valA, valB, dir);
   });
 });
