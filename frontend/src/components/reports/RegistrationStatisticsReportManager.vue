@@ -84,13 +84,13 @@
         </template>
         <template #cell-courseName="{ row }">
           <div style="white-space: pre-wrap; word-break: break-word">
-            {{ row.courseName }}
+            {{ getCourseDisplayName(row as FlatCourseRow) }}
             <div style="color: #94a3b8; font-size: 0.78rem">{{ row.courseCode || '' }}</div>
           </div>
         </template>
 
         <template #cell-courseOwner="{ row }">
-          {{ row.responsibleName || t('finance.registrationStatistics.table.noOwner') }}
+          {{ getResponsibleDisplayName(row as FlatCourseRow) }}
         </template>
 
         <template #cell-facultyName="{ row }">
@@ -227,7 +227,9 @@ interface FlatCourseRow {
   courseId: number;
   courseCode: string | null;
   courseName: string;
+  courseNameEn: string | null;
   responsibleName: string | null;
+  responsibleNameEn: string | null;
   facultyName: string;
   startDate: string | null;
   endDate: string | null;
@@ -244,7 +246,9 @@ const flatRows = computed<FlatCourseRow[]>(() => {
         courseId: item.courseId,
         courseCode: item.courseCode,
         courseName: item.courseName,
+        courseNameEn: item.courseNameEn ?? null,
         responsibleName: item.responsibleName,
+        responsibleNameEn: item.responsibleNameEn ?? null,
         facultyName: (() => {
           const key = FACULTY_I18N_MAP[group.facultyName];
           return key ? t(`common.faculties.${key}`) : group.facultyName;
@@ -313,9 +317,9 @@ const pdfConfig = computed<PdfExportConfig | null>(() => {
 
   const rows = dataToExport.map((row, index) => [
     index + 1,
-    row.courseCode ? `${row.courseCode} : ${row.courseName}` : row.courseName,
+    row.courseCode ? `${row.courseCode} : ${getCourseDisplayName(row)}` : getCourseDisplayName(row),
     row.facultyName,
-    row.responsibleName || '-',
+    getResponsibleDisplayName(row),
     formatDateRange(row.startDate, row.endDate),
     row.learnerCount,
     formatCurrency(getSafeAmount(row.registrationFee)),
@@ -383,10 +387,10 @@ const csvConfig = computed<CsvExportConfig | null>(() => {
     ],
     data: dataToExport.map((row, index) => [
       index + 1,
-      row.courseName,
+      getCourseDisplayName(row),
       row.courseCode || '',
       row.facultyName,
-      row.responsibleName || '-',
+      getResponsibleDisplayName(row),
       formatDateRange(row.startDate, row.endDate),
       row.learnerCount,
       getSafeAmount(row.registrationFee),
@@ -448,6 +452,16 @@ function normalizeDateForApi(value: string | null): string | null {
 
 function getSafeAmount(value: number): number {
   return Number.isFinite(value) ? value : 0;
+}
+
+function getCourseDisplayName(row: FlatCourseRow): string {
+  if (locale.value !== 'th' && row.courseNameEn) return row.courseNameEn;
+  return row.courseName;
+}
+
+function getResponsibleDisplayName(row: FlatCourseRow): string {
+  if (locale.value !== 'th' && row.responsibleNameEn) return row.responsibleNameEn;
+  return row.responsibleName || t('finance.registrationStatistics.table.noOwner');
 }
 
 function applyMockFilters(page = 1): void {

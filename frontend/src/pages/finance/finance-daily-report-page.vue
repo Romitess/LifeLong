@@ -108,7 +108,7 @@
             </template>
 
             <template #cell-courseName="{ row }">
-              <div style="white-space: pre-wrap; word-break: break-word">{{ row.courseName }}</div>
+              <div style="white-space: pre-wrap; word-break: break-word">{{ getCourseDisplayName(row as DailyReportItem) }}</div>
             </template>
 
             <template #cell-fundCode="{ row }">
@@ -137,7 +137,7 @@ import TableExportActions from 'components/common/TableExportActions.vue';
 import type { PdfExportConfig, CsvExportConfig } from 'src/types/export-types';
 
 const $q = useQuasar();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const authStore = useAuthStore();
 
 interface CourseOption {
@@ -197,8 +197,14 @@ interface DailyReportItem {
   id: string | number;
   no: number;
   courseName: string;
+  courseNameEn: string | null;
   fundCode: string;
   amount: number;
+}
+
+function getCourseDisplayName(row: DailyReportItem): string {
+  if (locale.value !== 'th' && row.courseNameEn) return row.courseNameEn;
+  return row.courseName;
 }
 
 const tableRows = ref<DailyReportItem[]>([]);
@@ -307,7 +313,7 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
 
   const rows = tableRows.value.map((row) => [
     row.no,
-    row.courseName,
+    getCourseDisplayName(row),
     row.fundCode,
     formatCurrency(row.amount),
   ]);
@@ -360,7 +366,7 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
 
   const rows = tableRows.value.map((row) => [
     row.no,
-    row.courseName.replace(/\n/g, ' '),
+    getCourseDisplayName(row).replace(/\n/g, ' '),
     row.fundCode.replace(/\n/g, ' '),
     row.amount,
   ]);

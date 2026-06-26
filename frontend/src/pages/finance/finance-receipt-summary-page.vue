@@ -188,8 +188,22 @@
             </div>
           </template>
 
+          <template #cell-customerName="{ row }">
+            <div style="white-space: pre-wrap; word-break: break-word">
+              {{ getCustomerDisplayName(row as ReceiptSummaryItem) }}
+            </div>
+          </template>
+
+          <template #cell-learnerName="{ row }">
+            <div style="white-space: pre-wrap; word-break: break-word">
+              {{ getCustomerDisplayName(row as ReceiptSummaryItem) }}
+            </div>
+          </template>
+
           <template #cell-courseName="{ row }">
-            <div style="white-space: pre-wrap; word-break: break-word">{{ row.courseName }}</div>
+            <div style="white-space: pre-wrap; word-break: break-word">
+              {{ getCourseDisplayName(row as ReceiptSummaryItem) }}
+            </div>
           </template>
 
           <template #cell-effectiveDate="{ row }">
@@ -198,7 +212,7 @@
 
           <template #cell-collector="{ row }">
             <div style="white-space: pre-wrap; word-break: break-word">
-              {{ formatCollectorDate(row.collector) }}
+              {{ formatCollectorDate(getCollectorDisplay(row as ReceiptSummaryItem)) }}
             </div>
           </template>
         </BaseTable>
@@ -242,7 +256,27 @@ import BaseTable from 'components/base/BaseTable.vue';
 import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 
 const authStore = useAuthStore();
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+function getCourseDisplayName(row: ReceiptSummaryItem): string {
+  if (locale.value !== 'th' && row.courseNameEn) return row.courseNameEn;
+  return row.courseName;
+}
+
+function getCustomerDisplayName(row: ReceiptSummaryItem): string {
+  if (locale.value !== 'th' && row.customerNameEn) return row.customerNameEn;
+  return row.customerName;
+}
+
+function getCollectorDisplay(row: ReceiptSummaryItem): string {
+  if (locale.value !== 'th' && row.collectorNameEn) {
+    const parts = row.collector.split('\n');
+    const datePart = parts.slice(1).join('\n');
+    return datePart ? `${row.collectorNameEn}\n${datePart}` : row.collectorNameEn;
+  }
+  return row.collector;
+}
+
 const userFacName = computed(
   () =>
     authStore.user?.facName || authStore.user?.faculty || t('finance.receiptSummary.unspecified'),
@@ -540,12 +574,12 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
   const rows = tableData.value.map((row) => [
     row.no,
     row.receiptNo,
-    row.customerName,
+    getCustomerDisplayName(row),
     row.amount,
     formatEffectiveDate(row.effectiveDate),
-    row.learnerName,
-    row.courseName,
-    formatCollectorDate(row.collector),
+    getCustomerDisplayName(row),
+    getCourseDisplayName(row),
+    formatCollectorDate(getCollectorDisplay(row)),
     row.status === 'ยกเลิก'
       ? t('finance.receiptSummary.statusCancelled') +
         '\n' +
@@ -632,12 +666,12 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
   const data = tableData.value.map((row) => [
     row.no,
     row.receiptNo,
-    row.customerName,
+    getCustomerDisplayName(row),
     row.amount,
     formatEffectiveDate(row.effectiveDate),
-    row.learnerName,
-    row.courseName,
-    formatCollectorDate(row.collector).replace(/\n/g, ' '),
+    getCustomerDisplayName(row),
+    getCourseDisplayName(row),
+    formatCollectorDate(getCollectorDisplay(row)).replace(/\n/g, ' '),
     row.status === 'ยกเลิก'
       ? t('finance.receiptSummary.statusCancelled') +
         ' ' +
@@ -750,11 +784,14 @@ interface ReceiptSummaryItem {
   receiptFilename?: string;
   receiptType?: 'R' | 'D';
   customerName: string;
+  customerNameEn: string | null;
   amount: number | string;
   effectiveDate: string;
   learnerName: string;
   courseName: string;
+  courseNameEn: string | null;
   collector: string;
+  collectorNameEn: string | null;
   status: string;
   cancelBy?: string | undefined;
   cancelDate?: string | undefined;

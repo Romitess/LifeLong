@@ -26,7 +26,9 @@ export interface AdminRegistrationStatisticsReportCourseItem {
   courseId: number;
   courseCode: string | null;
   courseName: string;
+  courseNameEn: string | null;
   responsibleName: string | null;
+  responsibleNameEn: string | null;
   startDate: string | null;
   endDate: string | null;
   learnerCount: number;

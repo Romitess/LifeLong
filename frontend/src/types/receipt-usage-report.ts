@@ -7,11 +7,14 @@ export interface ReceiptUsageItem {
   receiptFilename: string | null;
   receiptType: string | null;
   customerName: string;
+  customerNameEn: string | null;
   amount: number | string;
   effectiveDate: string;
   fiscalYear: string;
   courseName: string;
+  courseNameEn: string | null;
   collector: string;
+  collectorNameEn: string | null;
   status: string;
   cancelBy?: string;
   cancelDate?: string;

@@ -179,7 +179,7 @@
                         <q-icon name="school" />
                       </span>
                       <div class="centralfinance-faculty-report__course-copy">
-                        <strong>{{ item.courseName }}</strong>
+                        <strong>{{ getCourseDisplayName(item) }}</strong>
                         <span>{{ item.courseCode || `COURSE-${item.courseId}` }}</span>
                         <span class="centralfinance-faculty-report__course-owner">
                           <q-icon name="badge" size="13px" />
@@ -305,7 +305,7 @@ const props = defineProps<{
   overrideFacultyLabel?: string | undefined;
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const ITEMS_PER_PAGE = 10;
 const clientPage = ref(1);
@@ -437,6 +437,11 @@ watch(
 
 function getSafeAmount(value: number): number {
   return Number.isFinite(value) ? value : 0;
+}
+
+function getCourseDisplayName(item: { courseName: string; courseNameEn?: string | null }): string {
+  if (locale.value !== 'th' && item.courseNameEn) return item.courseNameEn;
+  return item.courseName;
 }
 
 function getEffectiveUnitPrice(

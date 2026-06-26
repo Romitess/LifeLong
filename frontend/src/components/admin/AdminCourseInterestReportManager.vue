@@ -59,7 +59,7 @@
                 <q-icon name="menu_book" />
               </span>
               <div class="course-interest-report__course-copy">
-                <strong>{{ row.courseName }}</strong>
+                <strong>{{ getCourseDisplayName(row as AdminCourseInterestReportItem) }}</strong>
                 <span>{{ row.courseCode || `COURSE-${row.courseId}` }}</span>
               </div>
             </div>
@@ -81,7 +81,7 @@
             <div class="course-interest-report__owner-cell">
               <span class="course-interest-report__owner-chip">
                 <q-icon name="badge" size="15px" />
-                {{ row.responsibleName || 'ไม่ระบุผู้รับผิดชอบ' }}
+                {{ getResponsibleDisplayName(row as AdminCourseInterestReportItem) }}
               </span>
             </div>
           </template>
@@ -154,13 +154,27 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppSearchInput from 'components/common/AppSearchInput.vue';
 import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
 import BaseInfoCard from 'components/base/BaseInfoCard.vue';
 import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
 import { useAdminCourseInterestReport } from 'src/composables/use-admin-course-interest-report';
+import type { AdminCourseInterestReportItem } from 'src/types/admin-course-interest-report';
 import { useTablePagination } from 'src/composables/use-table-pagination';
 import { formatCount } from 'src/utils/course-format';
+
+const { locale } = useI18n();
+
+function getCourseDisplayName(row: AdminCourseInterestReportItem): string {
+  if (locale.value !== 'th' && row.courseNameEn) return row.courseNameEn;
+  return row.courseName;
+}
+
+function getResponsibleDisplayName(row: AdminCourseInterestReportItem): string {
+  if (locale.value !== 'th' && row.responsibleNameEn) return row.responsibleNameEn;
+  return row.responsibleName || 'ไม่ระบุผู้รับผิดชอบ';
+}
 
 const rowsPerPage = ref(10);
 const search = ref('');

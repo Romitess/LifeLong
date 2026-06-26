@@ -91,8 +91,16 @@
             </div>
           </template>
 
-          <template #cell-courseName="{ value }">
-            <div style="word-break: break-word">{{ value }}</div>
+          <template #cell-customerName="{ row }">
+            <div style="word-break: break-word">{{ getCustomerDisplayName(row as ReceiptUsageItem) }}</div>
+          </template>
+
+          <template #cell-courseName="{ row }">
+            <div style="word-break: break-word">{{ getCourseDisplayName(row as ReceiptUsageItem) }}</div>
+          </template>
+
+          <template #cell-collector="{ row }">
+            <div style="word-break: break-word">{{ getCollectorDisplayName(row as ReceiptUsageItem) }}</div>
           </template>
         </BaseTable>
 
@@ -133,7 +141,22 @@ import type { PdfExportConfig, CsvExportConfig } from 'src/types/export-types';
 import { useReceiptUsageReport } from 'src/composables/use-receipt-usage-report';
 import type { ReceiptUsageItem } from 'src/types/receipt-usage-report';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+function getCourseDisplayName(row: ReceiptUsageItem): string {
+  if (locale.value !== 'th' && row.courseNameEn) return row.courseNameEn;
+  return row.courseName;
+}
+
+function getCustomerDisplayName(row: ReceiptUsageItem): string {
+  if (locale.value !== 'th' && row.customerNameEn) return row.customerNameEn;
+  return row.customerName;
+}
+
+function getCollectorDisplayName(row: ReceiptUsageItem): string {
+  if (locale.value !== 'th' && row.collectorNameEn) return row.collectorNameEn;
+  return row.collector;
+}
 
 const FACULTY_I18N_MAP: Record<string, string> = {
   คณะวิทยาการสารสนเทศ: 'informatics',
@@ -355,9 +378,9 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
       row.effectiveDate,
       row.fiscalYear,
       row.amount,
-      row.courseName,
-      row.customerName,
-      row.collector,
+      getCourseDisplayName(row),
+      getCustomerDisplayName(row),
+      getCollectorDisplayName(row),
     ]),
     styles: { fontSize: 7, cellPadding: 3, valign: 'top' },
     headStyles: { fontSize: 7 },
@@ -413,9 +436,9 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
       row.effectiveDate,
       row.fiscalYear,
       row.amount,
-      row.courseName,
-      row.customerName,
-      row.collector,
+      getCourseDisplayName(row),
+      getCustomerDisplayName(row),
+      getCollectorDisplayName(row),
     ]),
   };
 });

@@ -4,11 +4,14 @@ export interface ReceiptSummaryItem {
   faculty: string;
   receiptNo: string;
   customerName: string;
+  customerNameEn: string | null;
   amount: number | string;
   effectiveDate: string;
   learnerName: string;
   courseName: string;
+  courseNameEn: string | null;
   collector: string;
+  collectorNameEn: string | null;
   status: string;
   cancelBy?: string;
   cancelDate?: string;

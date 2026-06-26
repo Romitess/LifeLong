@@ -198,8 +198,22 @@
             </q-btn>
           </template>
 
-          <template #cell-courseName="{ value }">
-            <div style="white-space: pre-wrap; word-break: break-word">{{ value }}</div>
+          <template #cell-customerName="{ row }">
+            <div style="white-space: pre-wrap; word-break: break-word">{{ getCustomerDisplayName(row as ReceiptSummaryItem) }}</div>
+          </template>
+
+          <template #cell-learnerName="{ row }">
+            <div style="white-space: pre-wrap; word-break: break-word">{{ getCustomerDisplayName(row as ReceiptSummaryItem) }}</div>
+          </template>
+
+          <template #cell-courseName="{ row }">
+            <div style="white-space: pre-wrap; word-break: break-word">
+              {{ getCourseDisplayName(row as ReceiptSummaryItem) }}
+            </div>
+          </template>
+
+          <template #cell-collector="{ row }">
+            <div style="white-space: pre-wrap; word-break: break-word">{{ getCollectorDisplay(row as ReceiptSummaryItem) }}</div>
           </template>
         </BaseTable>
       </CentralFinanceSurfaceCard>
@@ -241,7 +255,7 @@ import AppSearchInput from 'components/common/AppSearchInput.vue';
 import TableExportActions from 'components/common/TableExportActions.vue';
 import ReceiptCard from 'components/receipt/receipt-card.vue';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const FACULTY_I18N_MAP: Record<string, string> = {
   คณะวิทยาการสารสนเทศ: 'informatics',
@@ -256,6 +270,25 @@ const FACULTY_I18N_MAP: Record<string, string> = {
 function translateFaculty(name: string): string {
   const key = FACULTY_I18N_MAP[name];
   return key ? t(`common.faculties.${key}`) : name;
+}
+
+function getCourseDisplayName(row: ReceiptSummaryItem): string {
+  if (locale.value !== 'th' && row.courseNameEn) return row.courseNameEn;
+  return row.courseName;
+}
+
+function getCustomerDisplayName(row: ReceiptSummaryItem): string {
+  if (locale.value !== 'th' && row.customerNameEn) return row.customerNameEn;
+  return row.customerName;
+}
+
+function getCollectorDisplay(row: ReceiptSummaryItem): string {
+  if (locale.value !== 'th' && row.collectorNameEn) {
+    const parts = row.collector.split('\n');
+    const datePart = parts.slice(1).join('\n');
+    return datePart ? `${row.collectorNameEn}\n${datePart}` : row.collectorNameEn;
+  }
+  return row.collector;
 }
 
 const { isLoading: isFacultyLoading, fetchFaculties } = useFacultyList();
@@ -436,12 +469,12 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
       row.no,
       translateFaculty(row.faculty ?? ''),
       row.receiptNo,
-      row.customerName ?? '',
+      getCustomerDisplayName(row) ?? '',
       row.amount,
       row.effectiveDate,
-      row.learnerName ?? '',
-      row.courseName.replace(/\n/g, ' '),
-      row.collector,
+      getCustomerDisplayName(row) ?? '',
+      getCourseDisplayName(row).replace(/\n/g, ' '),
+      getCollectorDisplay(row).replace(/\n/g, ' '),
       row.status === 'ยกเลิก'
         ? `${t('centralFinance.receiptSummary.export.statusCancelled')} ${row.cancelBy ?? ''} ${(row.cancelDate ?? '').replace('\n', ' ')}`
         : t('centralFinance.receiptSummary.export.statusActive'),
@@ -483,12 +516,12 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
       row.no,
       translateFaculty(row.faculty ?? ''),
       row.receiptNo,
-      row.customerName ?? '',
+      getCustomerDisplayName(row) ?? '',
       row.amount,
       row.effectiveDate,
-      row.learnerName ?? '',
-      row.courseName.replace(/\n/g, ' '),
-      row.collector.replace('\n', ' '),
+      getCustomerDisplayName(row) ?? '',
+      getCourseDisplayName(row).replace(/\n/g, ' '),
+      getCollectorDisplay(row).replace(/\n/g, ' '),
       row.status === 'ยกเลิก'
         ? `${t('centralFinance.receiptSummary.export.statusCancelled')} ${row.cancelBy ?? ''} ${(row.cancelDate ?? '').replace('\n', ' ')}`
         : t('centralFinance.receiptSummary.export.statusActive'),
