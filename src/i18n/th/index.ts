@@ -1635,7 +1635,7 @@ export default {
       },
     },
     nav: {
-      dashboard: 'แดชบอร์ดกองคลัง',
+      dashboard: 'แดชบอร์ด',
       reports: 'รายงาน',
       facultyRevenueReport: 'รายงานการจัดการศึกษาแยกตามคณะ/ส่วนงาน',
       dailyReport: 'รายงานการรับเงินประจำวัน',

@@ -1620,7 +1620,7 @@ export default {
       },
     },
     nav: {
-      dashboard: 'Treasury Dashboard',
+      dashboard: 'Dashboard',
       reports: 'Reports',
       facultyRevenueReport: 'Education Revenue by Faculty / Department',
       dailyReport: 'Daily Revenue Report',
