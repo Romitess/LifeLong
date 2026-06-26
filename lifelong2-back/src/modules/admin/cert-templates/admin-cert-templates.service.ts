@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -8,6 +8,7 @@ import {
   AdminCertTemplatesResponseDto,
   CertLayout,
 } from './dto/admin-cert-templates-response.dto';
+import { PlatformGatewayService } from '../../platform-gateway/platform-gateway.service';
 
 interface CertTemplateRow {
   id: number | string | null;
@@ -47,7 +48,12 @@ const SELECT_COLS = `
 
 @Injectable()
 export class AdminCertTemplatesService {
-  constructor(private readonly dataSource: DataSource) {}
+  private readonly logger = new Logger(AdminCertTemplatesService.name);
+
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly platformGatewayService: PlatformGatewayService,
+  ) {}
 
   async findAll(query: AdminCertTemplatesQueryDto): Promise<AdminCertTemplatesResponseDto> {
     const page = Math.max(query.page ?? 1, 1);
@@ -207,8 +213,21 @@ export class AdminCertTemplatesService {
 
   private async unlinkFile(filePath: string | null): Promise<void> {
     if (!filePath) return;
-    if (filePath.startsWith('/api/uploads/') || /\/api\/uploads\//.test(filePath)) return;
-    if (/^https?:\/\//i.test(filePath)) return;
+
+    if (
+      filePath.startsWith('/api/uploads/') ||
+      /\/api\/uploads\//.test(filePath) ||
+      /^https?:\/\//i.test(filePath)
+    ) {
+      const gatewayPath = toGatewayFilePath(filePath);
+      if (gatewayPath) {
+        await this.platformGatewayService.deleteFile(gatewayPath).catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.warn(`Failed to delete old cert template image from gateway: ${message}`);
+        });
+      }
+      return;
+    }
 
     const normalizedPath = filePath.replace(/^\/+/, '');
     if (!normalizedPath.startsWith('uploads/')) return;
@@ -242,4 +261,11 @@ export class AdminCertTemplatesService {
       layout: this.parseLayout(row.layout),
     };
   }
+}
+
+function toGatewayFilePath(filePath: string): string | null {
+  const withoutQuery = filePath.split('?')[0] ?? filePath;
+  const match = withoutQuery.match(/\/uploads\/.+$/);
+  if (match) return match[0].replace(/^\/+/, '');
+  return withoutQuery.split('/').pop() || null;
 }

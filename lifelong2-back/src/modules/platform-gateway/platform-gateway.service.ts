@@ -7,6 +7,7 @@ import { isImageCategory, resolveImageFolder } from './constants/image-category.
 import {
   ApiToken,
   GatewayApiConfig,
+  GatewayFileResult,
   UploadedGatewayFile,
   UploadFileDto,
 } from './platform-gateway.types';
@@ -97,6 +98,13 @@ export class PlatformGatewayService {
       bucket: this.getBucket(),
       originalFileName: { file_1: cleanDownloadName || baseName },
     });
+  }
+
+  async getPublicFileUrl(fileName: string, downloadName?: string): Promise<string> {
+    const result = (await this.getPublicFile(fileName, downloadName)) as GatewayFileResult;
+    const fileData = result?.result?.file_1 || result?.file_1;
+    if (typeof fileData === 'string') return fileData;
+    return fileData?.view ?? '';
   }
 
   async getPublicFiles(files: { fileName: string; downloadName?: string }[]): Promise<unknown> {
@@ -474,7 +482,7 @@ export class PlatformGatewayService {
   }
 
   private getBucket(): string {
-    return this.configService.get<string>('PLATFORM_GATEWAY_BUCKET') || 'hrd.storage';
+    return this.configService.get<string>('PLATFORM_GATEWAY_BUCKET') || 'lifelong2.storage';
   }
 
   private getTokenConfig(): {
@@ -511,7 +519,7 @@ export class PlatformGatewayService {
         this.configService.get<string>('PLATFORM_GATEWAY_AUTHENTICATED_USERID') ||
         this.configService.get<string>('BUU_REQUEST_AUTH_USERID') ||
         this.configService.get<string>('BUU_REQUEST_AUTHENTICATED_USERID') ||
-        'hrd-kong',
+        'lifelong2-kong',
     };
   }
 

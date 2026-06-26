@@ -107,7 +107,7 @@ export class AdminSlideshowController {
       imgSize: formatFileSize(file.size),
       imgType: file.mimetype,
       path: uploaded.path,
-      url: uploaded.url,
+      url: await this.platformGatewayService.getPublicFileUrl(uploaded.path),
     };
   }
 }

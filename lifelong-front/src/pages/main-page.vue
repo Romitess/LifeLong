@@ -253,7 +253,8 @@
         <div v-else-if="selectedTopCourse" class="top-course-preview">
           <div class="top-course-preview__media">
             <img
-              :src="getPreferredCourseImageUrl(selectedTopCourse.imageUrl)"
+              v-if="selectedTopCourse.imageUrl"
+              :src="selectedTopCourse.imageUrl"
               :alt="selectedTopCourse.title"
             />
             <span class="top-course-preview__rank">
@@ -353,7 +354,7 @@
               {{ course.topEnrollmentRank ?? index + 1 }}
             </span>
             <span class="top-course-card__poster">
-              <img :src="getPreferredCourseImageUrl(course.imageUrl)" :alt="course.title" />
+              <img v-if="course.imageUrl" :src="course.imageUrl" :alt="course.title" />
               <span class="top-course-card__shade" />
               <span class="top-course-card__badge">
                 <q-icon name="groups" size="16px" />
@@ -544,7 +545,6 @@ import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import { useQuasar } from 'quasar';
-import fallbackCourseImageUrl from 'src/assets/homepicture1.png';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const router = useRouter();
@@ -626,10 +626,6 @@ const categoryMap: Record<string, string> = {
   ศิลปวัฒนธรรมและศาสนา: 'artCult',
   เกษตรและสิ่งแวดล้อม: 'agriEnv',
 };
-function getPreferredCourseImageUrl(imageUrl?: string | null): string {
-  return imageUrl?.trim() ? imageUrl : fallbackCourseImageUrl;
-}
-
 function formatLearnerCount(value?: number | null): string {
   const num = new Intl.NumberFormat(locale.value === 'th' ? 'th-TH' : 'en-US').format(value ?? 0);
   return `${num} ${t('topCourses.enrolled')}`;

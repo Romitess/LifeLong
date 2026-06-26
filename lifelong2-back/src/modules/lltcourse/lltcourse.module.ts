@@ -16,6 +16,7 @@ import { Lltcategory } from '../../lltcategory/entities/lltcategory.entity';
 import { Lltsubcategory } from '../../lltsubcategory/entities/lltsubcategory.entity';
 import { Lltcoursein } from '../../lltcourseins/entities/lltcoursein.entity';
 import { Lltcoursetarget } from '../../lltcoursetarget/entities/lltcoursetarget.entity';
+import { PlatformGatewayModule } from '../platform-gateway/platform-gateway.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { Lltcoursetarget } from '../../lltcoursetarget/entities/lltcoursetarget.
     MoodleModule,
     LltchatModule,
     LltenrollModule,
+    PlatformGatewayModule,
   ],
   controllers: [LltcourseController],
   providers: [LltcourseService],

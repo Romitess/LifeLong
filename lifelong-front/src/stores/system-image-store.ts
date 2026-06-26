@@ -62,131 +62,11 @@ export interface HeroTemplateConfig {
 }
 
 const DEFAULT_FONT_STACK = "'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif";
-const BACKEND_PUBLIC_URL = (
-  import.meta.env.VITE_BACKEND_PUBLIC_URL ||
-  import.meta.env.VITE_API_URL ||
-  'http://localhost:3000'
-)
-  .replace(/\/api\/?$/, '')
-  .replace(/\/+$/, '');
-const heroImageUrl = (filename: string) => `${BACKEND_PUBLIC_URL}/uploads/system/${filename}`;
 
 const DEFAULT_HERO_CONFIG: HeroTemplateConfig = {
   slideDurationMs: 12000,
   initialDelayMs: 250,
-  slides: [
-    {
-      id: 'main-short-course',
-      name: 'Main Short Course Hero',
-      imageUrl: heroImageUrl('homepicture1.png'),
-      enabled: true,
-      backgroundPosition: 'center 60%',
-      overlayColor: '#ffffff',
-      overlayOpacity: 0,
-      startDate: '01/05/2026',
-      endDate: '31/12/2026',
-      textBlock: {
-        enabled: true,
-        xPercent: 8,
-        yPercent: 18,
-        widthPercent: 56,
-        gapPx: 10,
-        textAlign: 'left',
-        backgroundEnabled: false,
-        backgroundColor: '#FFFFFFB8',
-        paddingTopPx: 0,
-        paddingRightPx: 0,
-        paddingBottomPx: 0,
-        paddingLeftPx: 0,
-        borderRadiusPx: 28,
-        lines: [
-          {
-            id: 'buu-title',
-            label: 'BUU title',
-            enabled: true,
-            effect: 'typewriter',
-            durationMs: 1300,
-            gapMs: 120,
-            fontFamily: DEFAULT_FONT_STACK,
-            fontSizePx: 96,
-            fontWeight: 800,
-            lineHeight: 0.95,
-            letterSpacing: '0',
-            segments: [
-              { id: 'buu-title-bu', text: 'BU', color: '#f7d046', fontWeight: 800 },
-              { id: 'buu-title-u', text: 'U', color: '#7c7c7c', fontWeight: 800 },
-            ],
-          },
-          {
-            id: 'course-title',
-            label: 'Course title',
-            enabled: true,
-            effect: 'typewriter',
-            durationMs: 1300,
-            gapMs: 120,
-            fontFamily: DEFAULT_FONT_STACK,
-            fontSizePx: 72,
-            fontWeight: 800,
-            lineHeight: 0.95,
-            letterSpacing: '0',
-            segments: [{ id: 'course-title-main', text: 'SHORT COURSE', color: '#1a237e' }],
-          },
-          {
-            id: 'course-body-1',
-            label: 'Description line 1',
-            enabled: true,
-            effect: 'fade',
-            durationMs: 520,
-            gapMs: 100,
-            fontFamily: DEFAULT_FONT_STACK,
-            fontSizePx: 22,
-            fontWeight: 500,
-            lineHeight: 1.45,
-            letterSpacing: '0',
-            segments: [
-              {
-                id: 'course-body-1-main',
-                text: 'หลักสูตรระยะสั้นที่ออกแบบมาเพื่อเพิ่มพูนทักษะ และสมรรถนะ',
-                color: '#667085',
-              },
-            ],
-          },
-          {
-            id: 'course-body-2',
-            label: 'Description line 2',
-            enabled: true,
-            effect: 'fade',
-            durationMs: 520,
-            gapMs: 0,
-            fontFamily: DEFAULT_FONT_STACK,
-            fontSizePx: 22,
-            fontWeight: 500,
-            lineHeight: 1.45,
-            letterSpacing: '0',
-            segments: [
-              {
-                id: 'course-body-2-main',
-                text: 'ในด้านต่าง ๆ ให้กับผู้เรียนทุกช่วงวัยในการพัฒนาตนเองอย่างต่อเนื่อง.',
-                color: '#667085',
-              },
-            ],
-          },
-        ],
-      },
-    },
-    {
-      id: 'main-catalog',
-      name: 'Catalog Hero',
-      imageUrl: heroImageUrl('homepicture2.png'),
-      enabled: true,
-      backgroundPosition: 'center 58%',
-      overlayColor: '#0f172a',
-      overlayOpacity: 0,
-      startDate: '01/05/2026',
-      endDate: '31/12/2026',
-      textBlock: createEmptyTextBlock(),
-    },
-  ],
+  slides: [],
 };
 
 function createEmptyTextBlock(): HeroTextBlock {
@@ -431,10 +311,7 @@ function normalizeSlide(slide: Partial<HeroSlideTemplate>, index: number): HeroS
   return {
     id: typeof slide.id === 'string' ? slide.id : createId(`hero-slide-${index}`),
     name: typeof slide.name === 'string' ? slide.name : `Hero ${index + 1}`,
-    imageUrl:
-      typeof slide.imageUrl === 'string' && slide.imageUrl
-        ? slide.imageUrl
-        : heroImageUrl('homepicture1.png'),
+    imageUrl: typeof slide.imageUrl === 'string' ? slide.imageUrl : '',
     enabled: typeof slide.enabled === 'boolean' ? slide.enabled : true,
     backgroundPosition:
       typeof slide.backgroundPosition === 'string' ? slide.backgroundPosition : 'center 60%',
@@ -453,17 +330,15 @@ function normalizeHeroConfig(value: unknown): HeroTemplateConfig {
 
   const partialConfig = value as Partial<HeroTemplateConfig>;
   const slides = Array.isArray(partialConfig.slides)
-    ? partialConfig.slides.map((slide, index) => normalizeSlide(slide, index))
-    : cloneHeroConfig(DEFAULT_HERO_CONFIG).slides;
-  const usableSlides =
-    slides.filter((slide) => slide.enabled).length >= 2
-      ? slides
-      : cloneHeroConfig(DEFAULT_HERO_CONFIG).slides;
+    ? partialConfig.slides
+        .map((slide, index) => normalizeSlide(slide, index))
+        .filter((slide) => slide.imageUrl.trim().length > 0)
+    : [];
 
   return {
     slideDurationMs: clampNumber(partialConfig.slideDurationMs, 12000, 3000, 60000),
     initialDelayMs: clampNumber(partialConfig.initialDelayMs, 250, 0, 5000),
-    slides: usableSlides.length > 0 ? usableSlides : cloneHeroConfig(DEFAULT_HERO_CONFIG).slides,
+    slides,
   };
 }
 
@@ -500,15 +375,14 @@ export const useSystemImageStore = defineStore('systemImage', {
       await this.reloadFromServer();
     },
 
-    // DB is the single source of truth. Falls back to defaults (display only) on
-    // an empty store or a failed request so the hero never renders blank.
+    // DB/gateway are the single source of truth. Do not fallback to local images.
     async reloadFromServer(): Promise<void> {
       try {
         const raw = await fetchHeroConfig();
         this.heroConfig = normalizeHeroConfig(raw);
       } catch (error) {
         console.warn('Failed to load hero config from server', error);
-        this.heroConfig = createDefaultHeroTemplateConfig();
+        this.heroConfig = cloneHeroConfig(DEFAULT_HERO_CONFIG);
       }
     },
 

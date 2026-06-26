@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { HeroConfigDto, HeroSlideDto } from './dto/hero-config.dto';
 import {
@@ -6,6 +6,7 @@ import {
   HeroSlideResponse,
   HeroTextBlockResponse,
 } from './dto/hero-config-response.dto';
+import { PlatformGatewayService } from '../../platform-gateway/platform-gateway.service';
 
 export const DEFAULT_SLIDESHOW_GROUP = 'main';
 
@@ -17,6 +18,7 @@ interface ConfigRow {
 interface SlideRow {
   id: number | string;
   name: string | null;
+  path: string | null;
   imageUrl: string | null;
   status: string | null;
   startDate: Date | string | null;
@@ -33,7 +35,12 @@ interface SlideLayout {
 
 @Injectable()
 export class AdminSlideshowService {
-  constructor(private readonly dataSource: DataSource) {}
+  private readonly logger = new Logger(AdminSlideshowService.name);
+
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly platformGatewayService: PlatformGatewayService,
+  ) {}
 
   async getConfig(group: string = DEFAULT_SLIDESHOW_GROUP): Promise<HeroConfigResponseDto> {
     const configRows = await this.dataSource.query<ConfigRow[]>(
@@ -43,7 +50,8 @@ export class AdminSlideshowService {
     );
 
     const slideRows = await this.dataSource.query<SlideRow[]>(
-      `SELECT SLIDE_ID AS id, SLIDE_NAMETH AS name, SLIDE_URL AS imageUrl, SLIDE_STATUS AS status,
+      `SELECT SLIDE_ID AS id, SLIDE_NAMETH AS name, SLIDE_PATH AS path,
+              SLIDE_URL AS imageUrl, SLIDE_STATUS AS status,
               SLIDE_STARTDATE AS startDate, SLIDE_ENDDATE AS endDate, SLIDE_LAYOUT AS layout
        FROM LLTSLIDESHOW WHERE SLIDE_GROUP = ?
        ORDER BY SLIDE_ORDER ASC, SLIDE_ID ASC`,
@@ -53,7 +61,7 @@ export class AdminSlideshowService {
     return {
       slideDurationMs: toNullableInt(configRows[0]?.durationMs),
       initialDelayMs: toNullableInt(configRows[0]?.initialDelayMs),
-      slides: slideRows.map((row) => this.mapSlideRow(row)),
+      slides: await Promise.all(slideRows.map((row) => this.mapSlideRow(row))),
     };
   }
 
@@ -61,6 +69,18 @@ export class AdminSlideshowService {
     dto: HeroConfigDto,
     group: string = DEFAULT_SLIDESHOW_GROUP,
   ): Promise<HeroConfigResponseDto> {
+    const currentSlides = await this.dataSource.query<SlideRow[]>(
+      `SELECT SLIDE_PATH AS path, SLIDE_URL AS imageUrl FROM LLTSLIDESHOW WHERE SLIDE_GROUP = ?`,
+      [group],
+    );
+    const newImagePaths = new Set(
+      dto.slides.map((slide) => deriveGatewayPath(slide.imageUrl)).filter(isString),
+    );
+
+    const deletedPaths = currentSlides
+      .map((row) => row.path || deriveGatewayPath(row.imageUrl ?? ''))
+      .filter((path): path is string => typeof path === 'string' && !newImagePaths.has(path));
+
     await this.dataSource.transaction(async (manager: EntityManager) => {
       await manager.query(
         `INSERT INTO LLTSLIDESHOWCONFIG
@@ -79,6 +99,7 @@ export class AdminSlideshowService {
 
       let order = 0;
       for (const slide of dto.slides) {
+        const gatewayPath = deriveGatewayPath(slide.imageUrl);
         await manager.query(
           `INSERT INTO LLTSLIDESHOW
              (SLIDE_NAMETH, SLIDE_FILENAME, SLIDE_STATUS, SLIDE_STARTDATE, SLIDE_ENDDATE,
@@ -91,7 +112,7 @@ export class AdminSlideshowService {
             slide.enabled ? 'Y' : 'N',
             dmyToIso(slide.startDate),
             dmyToIso(slide.endDate),
-            deriveRelativePath(slide.imageUrl),
+            gatewayPath,
             slide.imageUrl,
             group,
             order,
@@ -102,15 +123,24 @@ export class AdminSlideshowService {
       }
     });
 
+    for (const gatewayPath of deletedPaths) {
+      if (gatewayPath) {
+        await this.platformGatewayService.deleteFile(gatewayPath).catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.warn(`Failed to delete old hero image from gateway: ${message}`);
+        });
+      }
+    }
+
     return this.getConfig(group);
   }
 
-  private mapSlideRow(row: SlideRow): HeroSlideResponse {
+  private async mapSlideRow(row: SlideRow): Promise<HeroSlideResponse> {
     const layout = parseLayout(row.layout);
     return {
       id: String(row.id),
       name: row.name ?? '',
-      imageUrl: row.imageUrl ?? '',
+      imageUrl: await this.resolveGatewayImageUrl(row.path, row.imageUrl),
       enabled: row.status === 'Y',
       backgroundPosition: layout.backgroundPosition ?? 'center center',
       overlayColor: layout.overlayColor ?? '#0f172a',
@@ -119,6 +149,22 @@ export class AdminSlideshowService {
       startDate: formatDbDateToDmy(row.startDate),
       endDate: formatDbDateToDmy(row.endDate),
     };
+  }
+
+  private async resolveGatewayImageUrl(
+    path: string | null,
+    imageUrl: string | null,
+  ): Promise<string> {
+    const gatewayPath = path || deriveRelativePath(imageUrl ?? '');
+    if (!gatewayPath) return '';
+
+    try {
+      return await this.platformGatewayService.getPublicFileUrl(gatewayPath);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Failed to resolve hero image from gateway: ${message}`);
+      return '';
+    }
   }
 }
 
@@ -164,6 +210,19 @@ function deriveRelativePath(imageUrl: string): string | null {
   if (!imageUrl) return null;
   const match = imageUrl.match(/\/uploads\/.+$/);
   return match ? match[0].replace(/^\//, '') : null;
+}
+
+function deriveGatewayPath(imageUrl: string): string | null {
+  return deriveRelativePath(imageUrl) || deriveSystemPathFromFilename(imageUrl);
+}
+
+function deriveSystemPathFromFilename(imageUrl: string): string | null {
+  const fileName = deriveFilename(imageUrl);
+  return fileName ? `uploads/system/${fileName}` : null;
+}
+
+function isString(value: string | null): value is string {
+  return typeof value === 'string' && value.length > 0;
 }
 
 function dmyToIso(value: string | null | undefined): string | null {

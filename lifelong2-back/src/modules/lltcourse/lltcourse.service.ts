@@ -13,6 +13,7 @@ import { Lltcategory } from '../../lltcategory/entities/lltcategory.entity';
 import { Lltsubcategory } from '../../lltsubcategory/entities/lltsubcategory.entity';
 import { Lltcoursein } from '../../lltcourseins/entities/lltcoursein.entity';
 import { Lltcoursetarget } from '../../lltcoursetarget/entities/lltcoursetarget.entity';
+import { PlatformGatewayService } from '../platform-gateway/platform-gateway.service';
 import { Llttarget } from '../../llttarget/entities/llttarget.entity';
 import { Lltsubtarget } from '../../lltsubtarget/entities/lltsubtarget.entity';
 import { Llttypestudy } from '../../llttypestudy/entities/llttypestudy.entity';
@@ -151,6 +152,7 @@ export class LltcourseService {
     private dataSource: DataSource,
     private chatGateway: ChatGateway,
     private lltenrollService: LltenrollService,
+    private platformGatewayService: PlatformGatewayService,
   ) {}
 
   private async generateCourseCode(
@@ -874,6 +876,22 @@ export class LltcourseService {
     updateLltcourseDto: UpdateLltcourseDto,
     actor: string,
   ): Promise<(Lltcourse & { moodleId: number | null }) | null> {
+    const existing = await this.lltcourseRepository.findOne({ where: { id } });
+    if (
+      existing &&
+      existing.imageUrl &&
+      updateLltcourseDto.imageUrl !== undefined &&
+      existing.imageUrl !== updateLltcourseDto.imageUrl
+    ) {
+      const gatewayPath = toGatewayFilePath(existing.imageUrl);
+      if (gatewayPath) {
+        await this.platformGatewayService.deleteFile(gatewayPath).catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.warn(`Failed to delete old course image from gateway: ${message}`);
+        });
+      }
+    }
+
     await this.lltcourseRepository.update(id, {
       ...(updateLltcourseDto as unknown as Partial<Lltcourse>),
       updateUser: actor,
@@ -1972,4 +1990,11 @@ export class LltcourseService {
     );
     return { clickCount: Number(count) };
   }
+}
+
+function toGatewayFilePath(filePath: string): string | null {
+  const withoutQuery = filePath.split('?')[0] ?? filePath;
+  const match = withoutQuery.match(/\/uploads\/.+$/);
+  if (match) return match[0].replace(/^\/+/, '');
+  return withoutQuery.split('/').pop() || null;
 }

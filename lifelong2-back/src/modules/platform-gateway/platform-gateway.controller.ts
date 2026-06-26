@@ -147,17 +147,6 @@ export class PlatformGatewayController {
   ): Promise<void> {
     return this.proxyPublicFile(`uploads/${folder}/${subfolder}/${fileName}`, res);
   }
-
-  @Public()
-  @Get(':folder/:fileName')
-  serveFile(
-    @Param('folder') folder: string,
-    @Param('fileName') fileName: string,
-    @Res() res: Response,
-  ): Promise<void> {
-    return this.proxyPublicFile(`${folder}/${fileName}`, res);
-  }
-
   @Public()
   @Post('getFileList')
   getFileList(@Body() body: JsonRecord): Promise<unknown> {
