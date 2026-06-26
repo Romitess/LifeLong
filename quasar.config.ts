@@ -2,7 +2,14 @@
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
 import { defineConfig } from '#q-app/wrappers';
+import { config as loadDotEnv } from 'dotenv';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const frontendRoot = dirname(fileURLToPath(import.meta.url));
+
+loadDotEnv({ path: resolve(frontendRoot, '..', '.env') });
+loadDotEnv({ path: resolve(frontendRoot, '.env'), override: false });
 
 export default defineConfig((ctx) => {
   return {
@@ -55,6 +62,9 @@ export default defineConfig((ctx) => {
       // analyze: true
       env: {
         VITE_API_URL: process.env.VITE_API_URL ?? process.env.BACKEND_URL ?? '',
+        VITE_BACKEND_PUBLIC_URL:
+          process.env.VITE_BACKEND_PUBLIC_URL ?? process.env.BACKEND_PUBLIC_URL ?? '',
+        VITE_MOODLE_URL: process.env.VITE_MOODLE_URL ?? process.env.MOODLE_PUBLIC_URL ?? '',
       },
       // rawDefine: {}
       // ignorePublicFolder: true
@@ -107,15 +117,15 @@ export default defineConfig((ctx) => {
       host: '0.0.0.0', // เครื่องอื่นในวงแลนเข้าได้
       proxy: {
         '/api': {
-          target: process.env.BACKEND_URL ?? 'http://localhost:3000',
+          target: process.env.BACKEND_URL ?? process.env.BACKEND_PUBLIC_URL ?? 'http://localhost:3000',
           changeOrigin: true,
         },
         '/uploads': {
-          target: process.env.BACKEND_URL ?? 'http://localhost:3000',
+          target: process.env.BACKEND_URL ?? process.env.BACKEND_PUBLIC_URL ?? 'http://localhost:3000',
           changeOrigin: true,
         },
         '/socket.io': {
-          target: process.env.BACKEND_URL ?? 'http://localhost:3000',
+          target: process.env.BACKEND_URL ?? process.env.BACKEND_PUBLIC_URL ?? 'http://localhost:3000',
           changeOrigin: true,
           ws: true,
         },
