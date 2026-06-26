@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"e:\\\\workkk\\\\LLL\\\\lifelong2-back\\\\src\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(xargs wc -l)",
+      "Bash(npx eslint *)",
+      "Bash(npx prettier *)",
+      "Bash(git add *)",
+      "Bash(docker network *)",
+      "PowerShell(ls \"e:\\\\workkk\\\\LLL\\\\lifelong2-back\" | Where-Object { $_.PSIsContainer } | Select-Object Name)",
+      "Bash(docker exec *)",
+      "Bash(docker restart *)",
+      "Bash(ls \"e:\\\\workkk\\\\LLL\")",
+      "Read(//e/workkk/LLL/**)",
+      "Bash(Get-ChildItem -Path \"E:\\\\workkk\\\\LLL\\\\lifelong2-front\\\\src\\\\components\" -Recurse -Filter \"*.vue\")",
+      "Bash(Select-Object FullName)",
+      "Bash(Get-ChildItem -Recurse -File)",
+      "Bash(Select-Object -First 50)",
+      "Bash(Format-Table Name, DirectoryName)",
+      "Bash(dir \"e:\\\\workkk\\\\LLL\\\\lifelong2-front\\\\src\\\\i18n\" /s /b)",
+      "Bash(Get-ChildItem -Path \"e:\\\\workkk\\\\LLL\" -Directory)",
+      "Bash(docker compose *)",
+      "Bash(docker run *)",
+      "Bash(docker stop *)",
+      "Bash(docker start *)",
+      "Bash(docker volume *)",
+      "Bash(docker rm *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -v \"^\\\\s*$\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(New-Item -ItemType Directory -Force \"d:\\\\workkk\\\\LLL\\\\lifelong2-back\\\\moodle-theme\\\\lang\\\\en\")",
+      "Bash(Out-Null)",
+      "Bash(git checkout *)",
+      "Bash(grep -c *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git config *)",
+      "Bash(curl -s -X POST http://localhost:8080/webservice/rest/server.php -H 'Content-Type: application/x-www-form-urlencoded' -d 'wstoken=62d98de9a8ec4d232412bd2d83b7f5b6&wsfunction=auth_userkey_request_login_url&moodlewsrestformat=json&user[username]=admin')"
+    ]
+  }
+}

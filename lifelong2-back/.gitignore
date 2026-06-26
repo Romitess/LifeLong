@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+backups/
+uploads/*
+!uploads/system/
+uploads/system/*
+!uploads/system/homepicture1.png
+!uploads/system/homepicture2.png
+.env
+.env.*
+!.env.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
