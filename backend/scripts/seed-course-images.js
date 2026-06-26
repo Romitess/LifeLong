@@ -1,5 +1,6 @@
 const mysql = require('mysql2/promise');
 const { loadEnv } = require('./load-env');
+const { getEnv } = require('./utils/env-validator');
 
 loadEnv();
 
@@ -137,11 +138,11 @@ function getCourseImageUrl(course) {
 
 async function main() {
   const connection = await mysql.createConnection({
-    host: process.env.DB_HOST ?? 'localhost',
-    port: Number(process.env.DB_PORT ?? 3306),
-    user: process.env.DB_USER ?? 'root',
-    password: process.env.DB_PASSWORD ?? '',
-    database: process.env.DB_NAME ?? 'lifelong2',
+    host: getEnv('SEED_DB_HOST', { fallback: 'localhost' }),
+    port: Number(getEnv('SEED_DB_PORT', { fallback: 3306 })),
+    user: getEnv('SEED_DB_USER', { fallback: 'root' }),
+    password: getEnv('SEED_DB_PASSWORD', { sensitive: true }),
+    database: getEnv('SEED_DB_NAME', { fallback: 'lifelong2' }),
   });
 
   const [courses] = await connection.execute(

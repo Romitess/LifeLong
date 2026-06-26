@@ -3,7 +3,7 @@ import { ProgressController } from './progress.controller';
 import { ProgressService } from './progress.service';
 import { CertificatesModule } from '../certificates/certificates.module';
 import { MoodleModule } from '../moodle/moodle.module';
-import { LltcourseskillModule } from '../../lltcourseskill/lltcourseskill.module';
+import { LltcourseskillModule } from '../courses/lltcourseskill/lltcourseskill.module';
 
 @Module({
   imports: [forwardRef(() => CertificatesModule), MoodleModule, LltcourseskillModule],

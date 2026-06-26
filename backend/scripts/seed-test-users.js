@@ -1,6 +1,9 @@
 /**
  * seed-test-users.js
  *
+ * Seeds test users for development/testing
+ * Required env vars: SEED_USER_PASSWORD, SEED_DB_PASSWORD
+ *
  * 1. สร้าง test users ครบทุกสิทธิ์ (นิสิต / บุคลากร / ศิษย์เก่า / ทั่วไป)
  * 2. Seed USER_CITIZEN_ID ใน LLTUMUSER ให้ทุก user ที่ยังไม่มี
  * 3. Seed LLTPRIVILEGE ให้ตรงกับสิทธิ์
@@ -13,10 +16,11 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const { loadEnv } = require('./load-env');
+const { getEnv } = require('./utils/env-validator');
 
 loadEnv();
 
-const PASSWORD = 'P@ssword123!';
+const PASSWORD = getEnv('SEED_USER_PASSWORD', { sensitive: true });
 const BCRYPT_ROUNDS = 12;
 
 function genThaiCitizenId() {
@@ -43,11 +47,11 @@ async function uniqueCitizenId(conn) {
 
 async function main() {
   const conn = await mysql.createConnection({
-    host: process.env.DB_HOST ?? 'localhost',
-    port: Number(process.env.DB_PORT ?? 3306),
-    user: process.env.DB_USER ?? process.env.DB_USERNAME ?? 'root',
-    password: process.env.DB_PASSWORD ?? '',
-    database: process.env.DB_NAME ?? 'lifelong2',
+    host: getEnv('SEED_DB_HOST', { fallback: 'localhost' }),
+    port: Number(getEnv('SEED_DB_PORT', { fallback: 3306 })),
+    user: getEnv('SEED_DB_USER', { fallback: 'root' }),
+    password: getEnv('SEED_DB_PASSWORD', { sensitive: true }),
+    database: getEnv('SEED_DB_NAME', { fallback: 'lifelong2' }),
   });
 
   try {

@@ -1,20 +1,20 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LltcourseskillService } from '../../lltcourseskill/lltcourseskill.service';
+import { LltcourseskillService } from '../courses/lltcourseskill/lltcourseskill.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
 import { createPool, Pool, RowDataPacket } from 'mysql2/promise';
-import { LltEnroll } from '../../lltenroll/entities/llt-enroll.entity';
+import { LltEnroll } from '../enrollment/lltenroll/entities/llt-enroll.entity';
 import { LltOpenclass } from '../lltcourse/entities/llt-openclass.entity';
 import { Lltcourse } from '../lltcourse/entities/lltcourse.entity';
 import { LltumUser } from '../auth/entities/lltum-user.entity';
-import { Lltcoursein } from '../../lltcourseins/entities/lltcoursein.entity';
-import { Lltchat } from '../../lltchat/entities/lltchat.entity';
+import { Lltcoursein } from '../courses/lltcourseins/entities/lltcoursein.entity';
+import { Lltchat } from '../chat/lltchat/entities/lltchat.entity';
 import { LltGradeItem } from './entities/llt-grade-item.entity';
 import { LltImportGrade } from './entities/llt-import-grade.entity';
 import { LltLogUpdateGrade } from './entities/llt-log-update-grade.entity';
 import { MoodleService } from '../moodle/moodle.service';
-import { ChatGateway } from '../../lltchat/chat-gateway';
+import { ChatGateway } from '../chat/lltchat/chat-gateway';
 import { ImportGradesDto, ImportGradesResult } from './dto/import-grades.dto';
 import { ApproveGradesDto, ApproveGradesResult } from './dto/approve-grades.dto';
 import { ActiveCertTemplateDto, CertLayoutDto } from './dto/active-cert-template.dto';
@@ -1688,12 +1688,22 @@ export class InstructorService {
       return this.moodlePool;
     }
 
+    const host = this.configService.get<string>('MOODLE_DB_HOST');
+    const user = this.configService.get<string>('MOODLE_DB_USER');
+    const database = this.configService.get<string>('MOODLE_DB_NAME');
+
+    if (!host || !user || !database) {
+      throw new Error(
+        'Moodle DB connection is not configured (set MOODLE_DB_HOST, MOODLE_DB_USER, and MOODLE_DB_NAME).',
+      );
+    }
+
     this.moodlePool = createPool({
-      host: this.configService.get<string>('MOODLE_DB_HOST') ?? '127.0.0.1',
-      port: Number(this.configService.get<string>('MOODLE_DB_PORT') ?? 3307),
-      user: this.configService.get<string>('MOODLE_DB_USER') ?? 'bn_moodle',
-      password: this.configService.get<string>('MOODLE_DB_PASSWORD') ?? 'moodle_password',
-      database: this.configService.get<string>('MOODLE_DB_NAME') ?? 'LLLv.2',
+      host,
+      port: Number(this.configService.get<number>('MOODLE_DB_PORT') ?? 3306),
+      user,
+      password: this.configService.get<string>('MOODLE_DB_PASSWORD') ?? '',
+      database,
       waitForConnections: true,
       connectionLimit: 4,
       queueLimit: 0,

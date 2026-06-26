@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { MoodleService } from '../moodle/moodle.service';
-import { LltcourseskillService } from '../../lltcourseskill/lltcourseskill.service';
+import { LltcourseskillService } from '../courses/lltcourseskill/lltcourseskill.service';
 
 export interface ProgressRow {
   progressId: number | string;

@@ -1,28 +1,34 @@
 #!/usr/bin/env python3
 """
 Script to add realistic student data to both Moodle and Backend databases
+Required env vars: PYTHON_BACKEND_DB_PASSWORD, PYTHON_MOODLE_DB_PASSWORD, SEED_USER_PASSWORD
 """
 import mysql.connector
 from mysql.connector import Error
 import sys
+import os
 from datetime import datetime
 import hashlib
 
+# Add utils directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'utils'))
+from env_validator import get_env
+
 # Database configurations
 BACKEND_DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'password',  # Change if different
-    'database': 'lifelong2',
-    'port': 3306
+    'host': get_env('PYTHON_BACKEND_DB_HOST', fallback='localhost'),
+    'user': get_env('PYTHON_BACKEND_DB_USER', fallback='root'),
+    'password': get_env('PYTHON_BACKEND_DB_PASSWORD', sensitive=True),
+    'database': get_env('PYTHON_BACKEND_DB_NAME', fallback='lifelong2'),
+    'port': int(get_env('PYTHON_BACKEND_DB_PORT', fallback='3306'))
 }
 
 MOODLE_DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'bn_moodle',
-    'password': 'moodle_password',  # Change if different
-    'database': 'LLLv.2',
-    'port': 3307
+    'host': get_env('PYTHON_MOODLE_DB_HOST', fallback='localhost'),
+    'user': get_env('PYTHON_MOODLE_DB_USER', fallback='bn_moodle'),
+    'password': get_env('PYTHON_MOODLE_DB_PASSWORD', sensitive=True),
+    'database': get_env('PYTHON_MOODLE_DB_NAME', fallback='LLLv.2'),
+    'port': int(get_env('PYTHON_MOODLE_DB_PORT', fallback='3307'))
 }
 
 # Student data
@@ -51,7 +57,7 @@ STUDENTS = [
     {'fname_th': 'ประเสริฐ', 'lname_th': 'สันติมา', 'fname_en': 'Prasert', 'lname_en': 'Santima', 'email': 'student015@university.edu', 'tel': '0812345615'},
 ]
 
-PASSWORD = 'Password@123'
+PASSWORD = get_env('SEED_USER_PASSWORD', sensitive=True)
 
 def hash_password(password):
     """Generate MD5 hash for password"""

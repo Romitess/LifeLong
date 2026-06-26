@@ -48,7 +48,22 @@ export class MoodleService {
     });
 
     const responseText = await response.text();
-    this.logger.debug(`Moodle Raw Response: ${responseText}`);
+    let logResponse = responseText;
+    if (responseText.includes('"token"')) {
+      try {
+        const parsed = JSON.parse(responseText) as unknown;
+        if (parsed && typeof parsed === 'object') {
+          const cloned = { ...(parsed as Record<string, unknown>) };
+          if ('token' in cloned) {
+            cloned.token = '[REDACTED]';
+          }
+          logResponse = JSON.stringify(cloned);
+        }
+      } catch {
+        logResponse = responseText.replace(/"token"\s*:\s*"[^"]*"/g, '"token":"[REDACTED]"');
+      }
+    }
+    this.logger.debug(`Moodle Raw Response: ${logResponse}`);
 
     let data: unknown;
     try {

@@ -3,21 +3,13 @@
 // (prior schema was applied via standalone script). All statements are idempotent.
 const fs = require('node:fs');
 const path = require('node:path');
-const { loadEnv } = require('./load-env');
+const { loadEnv, requiredEnv, optionalEnv } = require('./load-env');
 const mysql = require('mysql2/promise');
 
 loadEnv({ quiet: true });
 
 const rootDir = path.resolve(__dirname, '..');
 const backupDir = path.join(rootDir, 'backups');
-
-function requiredEnv(name, fallbackName) {
-  const value = process.env[name] || (fallbackName ? process.env[fallbackName] : undefined);
-  if (!value || value.includes('PLACEHOLDER')) {
-    throw new Error(`Missing required database config: ${name}`);
-  }
-  return value;
-}
 
 function timestamp() {
   return new Date().toISOString().replace(/[-:]/g, '').replace(/\..+/, '').replace('T', '-');
@@ -37,8 +29,8 @@ async function backupSlideTable(connection) {
 
 async function main() {
   const connection = await mysql.createConnection({
-    host: requiredEnv('DB_HOST') || 'localhost',
-    port: Number(process.env.DB_PORT || 3306),
+    host: requiredEnv('DB_HOST'),
+    port: Number(optionalEnv('DB_PORT', 3306)),
     user: requiredEnv('DB_USER'),
     password: requiredEnv('DB_PASSWORD'),
     database: requiredEnv('DB_NAME'),

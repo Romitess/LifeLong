@@ -20,7 +20,7 @@
 **ขั้นตอน:**
 
 ```bash
-cd c:\Users\ntpkim\lifelong\backend
+cd <BACKEND_PROJECT_DIR>
 
 # ครั้งแรกติดตั้ง dependency
 pip install mysql-connector-python
@@ -51,9 +51,9 @@ python scripts/fix_student_roster.py
 1. เปิด http://localhost:8081
 2. เข้าสู่ระบบ:
    - Server: `db`
-   - Username: `root`
-   - Password: `password`
-   - Database: `lifelong2`
+   - Username: `<BACKEND_DB_USER>`
+   - Password: `<BACKEND_DB_PASSWORD>`
+   - Database: `<BACKEND_DB_NAME>`
 
 3. ไปที่ "SQL command"
 4. คัดลอกและวาง (paste) content จากไฟล์:
@@ -67,8 +67,8 @@ python scripts/fix_student_roster.py
 ### ตัวเลือก 3️⃣: ใช้ MySQL Command Line
 
 ```bash
-cd c:\Users\ntpkim\lifelong\backend
-mysql -h localhost -u root -ppassword lifelong2 < scripts/fix_student_roster_c2601001.sql
+cd <BACKEND_PROJECT_DIR>
+mysql -h <BACKEND_DB_HOST> -u <BACKEND_DB_USER> -p <BACKEND_DB_NAME> < scripts/fix_student_roster_c2601001.sql
 ```
 
 ---
@@ -96,7 +96,7 @@ LIMIT 5;
 ### 2. ตรวจสอบใน Web UI
 
 1. เปิด http://localhost:3000
-2. Login เป็น Instructor: `instructor_test` / `password123`
+2. Login เป็น Instructor: `<INSTRUCTOR_USERNAME>` / `<INSTRUCTOR_PASSWORD>`
 3. ไปที่ Student Roster
 4. เลือก Course: `C2601001 ุ Introduction to Data Science`
 5. **ควรเห็น:**
@@ -179,7 +179,7 @@ ENROLL_STATUS: 'A' (Active)
 
 - ตรวจสอบการเชื่อมต่อ MySQL:
   ```bash
-  mysql -h localhost -u root -ppassword -e "SELECT 1;"
+  mysql -h <BACKEND_DB_HOST> -u <BACKEND_DB_USER> -p -e "SELECT 1;"
   ```
 - ตรวจสอบ port 3306 เปิดอยู่
 

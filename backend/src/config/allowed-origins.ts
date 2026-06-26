@@ -1,9 +1,24 @@
-export const ALLOWED_ORIGINS = [
-  'http://localhost:8080',
-  'http://localhost:9000',
-  'http://lll.localhost',
-  'http://moodle.localhost',
-  'http://10.5.1.92:8080',
-  'http://10.5.1.92:9000',
-  'http://10.108.32.75:9000',
-];
+const originsEnv = process.env['ALLOWED_ORIGINS'];
+const isProd = process.env['NODE_ENV'] === 'production';
+
+let origins: string[] = [];
+
+if (originsEnv) {
+  origins = originsEnv
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+} else if (isProd) {
+  throw new Error(
+    'CRITICAL: ALLOWED_ORIGINS environment variable is not defined in production environment.',
+  );
+} else {
+  origins = [
+    'http://localhost:8080',
+    'http://localhost:9000', 
+    'http://lll.localhost',
+    'http://moodle.localhost',
+  ];
+}
+
+export const ALLOWED_ORIGINS = origins;

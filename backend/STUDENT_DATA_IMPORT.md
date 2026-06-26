@@ -44,7 +44,7 @@
 **รหัสผ่านเดียวกันสำหรับทั้งหมด:**
 
 ```
-Password@123
+<STUDENT_SEED_PASSWORD>
 ```
 
 ---
@@ -80,7 +80,7 @@ Password@123
 ### ตัวเลือก 1: ใช้ Python Script (แนะนำ)
 
 ```bash
-cd c:\Users\ntpkim\lifelong\backend
+cd <BACKEND_PROJECT_DIR>
 python scripts/add_student_data.py
 ```
 
@@ -96,26 +96,26 @@ python scripts/add_student_data.py
 
 ```bash
 # Backend Database
-mysql -h localhost -u root -ppassword lifelong2 < scripts/add_student_data.sql
+mysql -h <BACKEND_DB_HOST> -u <BACKEND_DB_USER> -p <BACKEND_DB_NAME> < scripts/add_student_data.sql
 
 # Moodle Database
-mysql -h localhost -u bn_moodle -pmoodle_password -P 3307 LLLv.2 < scripts/add_moodle_student_data.sql
+mysql -h <MOODLE_DB_HOST> -u <MOODLE_DB_USER> -p -P <MOODLE_DB_PORT> <MOODLE_DB_NAME> < scripts/add_moodle_student_data.sql
 ```
 
 ### ตัวเลือก 3: ใช้ Adminer Web Interface
 
 1. เปิด http://localhost:8081 (Backend DB)
    - Server: `db`
-   - Username: `root`
-   - Password: `password`
-   - Database: `lifelong2`
+   - Username: `<BACKEND_DB_USER>`
+   - Password: `<BACKEND_DB_PASSWORD>`
+   - Database: `<BACKEND_DB_NAME>`
    - วาง SQL จากไฟล์ `add_student_data.sql`
 
 2. เปิด http://localhost:8888 (Moodle)
    - Server: `moodle_mariadb`
-   - Username: `bn_moodle`
-   - Password: `moodle_password`
-   - Database: `LLLv.2`
+   - Username: `<MOODLE_DB_USER>`
+   - Password: `<MOODLE_DB_PASSWORD>`
+   - Database: `<MOODLE_DB_NAME>`
    - วาง SQL จากไฟล์ `add_moodle_student_data.sql`
 
 ---
@@ -247,14 +247,14 @@ DELETE FROM mdl_user WHERE username LIKE 's%_student';
 
 ```sql
 -- Backend Database
-UPDATE LLT_AUTH_USERS SET PASSWORD = MD5('NewPassword@123')
+UPDATE LLT_AUTH_USERS SET PASSWORD = MD5('<NEW_STUDENT_PASSWORD>')
 WHERE USERNAME LIKE 's%_student';
 
-UPDATE LLTUMUSER SET USER_PASSWORD = MD5('NewPassword@123')
+UPDATE LLTUMUSER SET USER_PASSWORD = MD5('<NEW_STUDENT_PASSWORD>')
 WHERE USER_USERNAME LIKE 's%_student';
 
 -- Moodle Database
-UPDATE mdl_user SET password = MD5('NewPassword@123')
+UPDATE mdl_user SET password = MD5('<NEW_STUDENT_PASSWORD>')
 WHERE username LIKE 's%_student';
 ```
 
@@ -271,8 +271,8 @@ WHERE username LIKE 's%_student';
    ```
 
 2. **ตรวจสอบการเชื่อมต่อฐานข้อมูล:**
-   - Backend: `mysql -h localhost -u root -ppassword -e "SELECT 1;"`
-   - Moodle: `mysql -h localhost -P 3307 -u bn_moodle -pmoodle_password -e "SELECT 1;"`
+   - Backend: `mysql -h <BACKEND_DB_HOST> -u <BACKEND_DB_USER> -p -e "SELECT 1;"`
+   - Moodle: `mysql -h <MOODLE_DB_HOST> -P <MOODLE_DB_PORT> -u <MOODLE_DB_USER> -p -e "SELECT 1;"`
 
 3. **ดูบันทึก Docker:**
 

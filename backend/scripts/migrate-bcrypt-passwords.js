@@ -8,18 +8,22 @@
 
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
+const { loadEnv, requiredEnv, optionalEnv } = require('./load-env');
+
+loadEnv({ quiet: true });
 
 const BCRYPT_ROUNDS = 12;
 
 const DB_CONFIG = {
-  host: process.env.DB_HOST || '10.5.1.92',
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER || 'lifelong2',
-  password: process.env.DB_PASSWORD || 'U2XL0cHum9UP',
-  database: process.env.DB_NAME || 'lifelong2',
+  host: requiredEnv('DB_HOST'),
+  port: Number(optionalEnv('DB_PORT', 3306)),
+  user: requiredEnv('DB_USER', 'DB_USERNAME'),
+  password: requiredEnv('DB_PASSWORD'),
+  database: requiredEnv('DB_NAME', 'DB_DATABASE'),
 };
 
 async function migrate() {
+  console.log(`Connecting to database: ${DB_CONFIG.database} (host: ${DB_CONFIG.host})`);
   const conn = await mysql.createConnection(DB_CONFIG);
   console.log('Connected to DB');
 

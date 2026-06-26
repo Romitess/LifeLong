@@ -1,24 +1,28 @@
 /* eslint-disable no-console */
 const mysql = require('mysql2/promise');
+const bcrypt = require('bcryptjs');
 const { loadEnv } = require('./load-env');
+const { getEnv } = require('./utils/env-validator');
 
 loadEnv();
 
+const PASSWORD = getEnv('SEED_USER_PASSWORD', { sensitive: true });
+const BCRYPT_ROUNDS = 12;
+
 const moodleConfig = {
-  host: process.env.SEED_MOODLE_DB_HOST || process.env.MOODLE_DB_HOST || '127.0.0.1',
-  port: Number(process.env.SEED_MOODLE_DB_PORT || process.env.MOODLE_DB_PORT || 3307),
-  user: process.env.SEED_MOODLE_DB_USER || process.env.MOODLE_DB_USER || 'bn_moodle',
-  password:
-    process.env.SEED_MOODLE_DB_PASSWORD || process.env.MOODLE_DB_PASSWORD || 'moodle_password',
-  database: process.env.SEED_MOODLE_DB_NAME || process.env.MOODLE_DB_NAME || 'LLLv.2',
+  host: getEnv('SEED_MOODLE_DB_HOST', { fallback: '127.0.0.1' }),
+  port: Number(getEnv('SEED_MOODLE_DB_PORT', { fallback: 3307 })),
+  user: getEnv('SEED_MOODLE_DB_USER', { fallback: 'bn_moodle' }),
+  password: getEnv('SEED_MOODLE_DB_PASSWORD', { sensitive: true }),
+  database: getEnv('SEED_MOODLE_DB_NAME', { fallback: 'LLLv.2' }),
 };
 
 const appConfig = {
-  host: process.env.SEED_APP_DB_HOST || '127.0.0.1',
-  port: Number(process.env.SEED_APP_DB_PORT || 3306),
-  user: process.env.SEED_APP_DB_USER || 'root',
-  password: process.env.SEED_APP_DB_PASSWORD || 'password',
-  database: process.env.SEED_APP_DB_NAME || 'lifelong2',
+  host: getEnv('SEED_APP_DB_HOST', { fallback: '127.0.0.1' }),
+  port: Number(getEnv('SEED_APP_DB_PORT', { fallback: 3306 })),
+  user: getEnv('SEED_APP_DB_USER', { fallback: 'root' }),
+  password: getEnv('SEED_APP_DB_PASSWORD', { sensitive: true }),
+  database: getEnv('SEED_APP_DB_NAME', { fallback: 'lifelong2' }),
 };
 
 const firstNamesTh = [
@@ -264,12 +268,12 @@ async function ensureRoleAssignment(connection, roleId, contextId, userId, enrol
   );
 }
 
-async function upsertBackendUsers(connection, moodleUserId, profile) {
+async function upsertBackendUsers(connection, moodleUserId, profile, hashedPassword) {
   await connection.execute(
     `INSERT INTO LLT_AUTH_USERS (USERNAME, EMAIL, PASSWORD, ROLE, CREATEUSER, CREATEDATE, UPDATEUSER, UPDATEDATE)
      VALUES (?, ?, ?, 'Student', 'SEED_MOODLE', NOW(), 'SEED_MOODLE', NOW())
      ON DUPLICATE KEY UPDATE EMAIL = VALUES(EMAIL), ROLE = 'Student', UPDATEUSER = 'SEED_MOODLE', UPDATEDATE = NOW()`,
-    [profile.studentId, profile.email, 'password123'],
+    [profile.studentId, profile.email, hashedPassword],
   );
 
   const [existing] = await connection.execute(
@@ -310,7 +314,7 @@ async function upsertBackendUsers(connection, moodleUserId, profile) {
       profile.phone,
       profile.studentId,
       profile.email,
-      'password123',
+      hashedPassword,
       moodleUserId,
     ],
   );
@@ -341,6 +345,7 @@ async function main() {
     const enrolByCourseId = new Map(enrolments.map((row) => [row.courseid, row]));
     const contextByCourseId = new Map(contexts.map((row) => [row.instanceid, row.id]));
     const passwordHash = passwordRows[0].password;
+    const backendPasswordHash = await bcrypt.hash(PASSWORD, BCRYPT_ROUNDS);
 
     let totalUsersSeeded = 0;
     let totalEnrolmentsSeeded = 0;
@@ -361,7 +366,7 @@ async function main() {
         const moodleUserId = await upsertMoodleUser(moodle, passwordHash, profile);
         await ensureUserEnrolment(moodle, enrol.id, moodleUserId);
         await ensureRoleAssignment(moodle, enrol.roleid || 5, contextId, moodleUserId, enrol.id);
-        await upsertBackendUsers(app, moodleUserId, profile);
+        await upsertBackendUsers(app, moodleUserId, profile, backendPasswordHash);
         totalUsersSeeded += 1;
         totalEnrolmentsSeeded += 1;
       }

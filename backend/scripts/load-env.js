@@ -13,4 +13,20 @@ function loadEnv(options = {}) {
   }
 }
 
-module.exports = { envFilePaths, loadEnv };
+function requiredEnv(name, fallbackName) {
+  const value = process.env[name] || (fallbackName ? process.env[fallbackName] : undefined);
+  if (!value || value.includes('PLACEHOLDER')) {
+    throw new Error(`Missing required environment variable: ${name}${fallbackName ? ` or ${fallbackName}` : ''}`);
+  }
+  return value;
+}
+
+function optionalEnv(name, fallback) {
+  const value = process.env[name];
+  if (value === undefined || value === null || value.includes('PLACEHOLDER')) {
+    return fallback;
+  }
+  return value;
+}
+
+module.exports = { envFilePaths, loadEnv, requiredEnv, optionalEnv };

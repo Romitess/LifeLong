@@ -22,18 +22,35 @@ echo ✓ Docker is running
 echo.
 
 REM Backend DB connection details
-set BACKEND_HOST=localhost
-set BACKEND_PORT=3306
-set BACKEND_USER=root
-set BACKEND_PASSWORD=password
-set BACKEND_DB=lifelong2
+if "%BACKEND_HOST%"=="" set BACKEND_HOST=localhost
+if "%BACKEND_PORT%"=="" set BACKEND_PORT=3306
+if "%BACKEND_USER%"=="" set BACKEND_USER=
+if "%BACKEND_PASSWORD%"=="" set BACKEND_PASSWORD=
+if "%BACKEND_DB%"=="" set BACKEND_DB=
 
 REM Moodle DB connection details
-set MOODLE_HOST=localhost
-set MOODLE_PORT=3307
-set MOODLE_USER=bn_moodle
-set MOODLE_PASSWORD=moodle_password
-set MOODLE_DB=LLLv.2
+if "%MOODLE_HOST%"=="" set MOODLE_HOST=localhost
+if "%MOODLE_PORT%"=="" set MOODLE_PORT=3307
+if "%MOODLE_USER%"=="" set MOODLE_USER=
+if "%MOODLE_PASSWORD%"=="" set MOODLE_PASSWORD=
+if "%MOODLE_DB%"=="" set MOODLE_DB=
+
+if "%BACKEND_USER%"=="" (
+    echo ERROR: BACKEND_USER is required
+    exit /b 1
+)
+if "%BACKEND_DB%"=="" (
+    echo ERROR: BACKEND_DB is required
+    exit /b 1
+)
+if "%MOODLE_USER%"=="" (
+    echo ERROR: MOODLE_USER is required
+    exit /b 1
+)
+if "%MOODLE_DB%"=="" (
+    echo ERROR: MOODLE_DB is required
+    exit /b 1
+)
 
 echo ======================================================
 echo 1. ADDING STUDENTS TO BACKEND DATABASE
@@ -41,7 +58,9 @@ echo ======================================================
 
 REM Execute backend SQL script
 echo Adding students to LLT_AUTH_USERS and LLTUMUSER...
-mysql -h %BACKEND_HOST% -u %BACKEND_USER% -p%BACKEND_PASSWORD% %BACKEND_DB% < add_student_data.sql
+set MYSQL_PWD=%BACKEND_PASSWORD%
+mysql -h %BACKEND_HOST% -P %BACKEND_PORT% -u %BACKEND_USER% %BACKEND_DB% < add_student_data.sql
+set MYSQL_PWD=
 
 if errorlevel 1 (
     echo ERROR: Failed to add students to backend database
@@ -57,7 +76,9 @@ echo ======================================================
 
 REM Execute moodle SQL script
 echo Adding students to Moodle...
-mysql -h %MOODLE_HOST% -u %MOODLE_USER% -p%MOODLE_PASSWORD% %MOODLE_DB% < add_moodle_student_data.sql
+set MYSQL_PWD=%MOODLE_PASSWORD%
+mysql -h %MOODLE_HOST% -P %MOODLE_PORT% -u %MOODLE_USER% %MOODLE_DB% < add_moodle_student_data.sql
+set MYSQL_PWD=
 
 if errorlevel 1 (
     echo ERROR: Failed to add students to Moodle database
@@ -75,7 +96,7 @@ echo Added 15 students to both databases:
 echo  - Backend: LLT_AUTH_USERS and LLTUMUSER tables
 echo  - Moodle: mdl_user and course enrollments
 echo.
-echo Default password for all students: Password@123
+echo Default password for all students: configured by the seed data
 echo.
 echo You can now access the system with student accounts:
 echo  - s001_student (สมชาย ปัญญาดี)

@@ -2,18 +2,24 @@
 """
 Script to add student enrollments to C2601001 course
 This will fix the Student Roster display on the Instructor page
+Required env vars: PYTHON_BACKEND_DB_PASSWORD
 """
 import mysql.connector
 from mysql.connector import Error
 import sys
+import os
+
+# Add utils directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'utils'))
+from env_validator import get_env
 
 # Database configuration
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'password',
-    'database': 'lifelong2',
-    'port': 3306
+    'host': get_env('PYTHON_BACKEND_DB_HOST', fallback='localhost'),
+    'user': get_env('PYTHON_BACKEND_DB_USER', fallback='root'),
+    'password': get_env('PYTHON_BACKEND_DB_PASSWORD', sensitive=True),
+    'database': get_env('PYTHON_BACKEND_DB_NAME', fallback='lifelong2'),
+    'port': int(get_env('PYTHON_BACKEND_DB_PORT', fallback='3306'))
 }
 
 def connect_db():

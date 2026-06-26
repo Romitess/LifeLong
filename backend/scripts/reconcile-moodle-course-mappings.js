@@ -1,14 +1,10 @@
 const mysql = require('mysql2/promise');
-const { loadEnv } = require('./load-env');
+const { loadEnv, requiredEnv, optionalEnv } = require('./load-env');
 
 loadEnv();
 
-const MOODLE_BASE_URL = (process.env.MOODLE_BASE_URL || '').replace(/\/+$/, '');
-const MOODLE_TOKEN = process.env.MOODLE_TOKEN || '';
-
-if (!MOODLE_BASE_URL || !MOODLE_TOKEN) {
-  throw new Error('Missing Moodle configuration in .env');
-}
+const MOODLE_BASE_URL = requiredEnv('MOODLE_URL', 'MOODLE_BASE_URL').replace(/\/+$/, '');
+const MOODLE_TOKEN = requiredEnv('MOODLE_TOKEN');
 
 async function callMoodleApi(wsfunction, params) {
   params.set('wstoken', MOODLE_TOKEN);
@@ -126,11 +122,11 @@ async function resolveMoodleCategoryId(conn, categoryId, subcategoryId) {
 
 async function main() {
   const conn = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT || 3306),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    host: requiredEnv('DB_HOST'),
+    port: Number(optionalEnv('DB_PORT', 3306)),
+    user: requiredEnv('DB_USER'),
+    password: requiredEnv('DB_PASSWORD'),
+    database: requiredEnv('DB_NAME'),
   });
 
   const [courses] = await conn.execute(`

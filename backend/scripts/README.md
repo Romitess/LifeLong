@@ -48,7 +48,7 @@ STUDENT_DATA_IMPORT.md                # Documentation (งาน README)
 
 ```bash
 # 1. ไปที่ directory backend
-cd c:\Users\ntpkim\lifelong\backend
+cd <BACKEND_PROJECT_DIR>
 
 # 2. ติดตั้ง dependency (ถ้ายังไม่ได้)
 pip install mysql-connector-python
@@ -85,9 +85,9 @@ python scripts/add_student_data.py
 2. ใส่ข้อมูล:
    ```
    Server: db
-   Username: root
-   Password: password
-   Database: lifelong2
+   Username: <BACKEND_DB_USER>
+   Password: <BACKEND_DB_PASSWORD>
+   Database: <BACKEND_DB_NAME>
    ```
 3. กด "Login"
 4. ไปที่ "SQL command"
@@ -100,9 +100,9 @@ python scripts/add_student_data.py
 2. ใส่ข้อมูล:
    ```
    Server: moodle_mariadb
-   Username: bn_moodle
-   Password: moodle_password
-   Database: LLLv.2
+   Username: <MOODLE_DB_USER>
+   Password: <MOODLE_DB_PASSWORD>
+   Database: <MOODLE_DB_NAME>
    ```
 3. กด "Login"
 4. ไปที่ "SQL command"
@@ -121,11 +121,11 @@ python scripts/add_student_data.py
 
 ```bash
 # Backend Database
-cd c:\Users\ntpkim\lifelong\backend
-mysql -h localhost -u root -ppassword lifelong2 < scripts/add_student_data.sql
+cd <BACKEND_PROJECT_DIR>
+mysql -h <BACKEND_DB_HOST> -u <BACKEND_DB_USER> -p <BACKEND_DB_NAME> < scripts/add_student_data.sql
 
 # Moodle Database
-mysql -h localhost -P 3307 -u bn_moodle -pmoodle_password "LLLv.2" < scripts/add_moodle_student_data.sql
+mysql -h <MOODLE_DB_HOST> -P <MOODLE_DB_PORT> -u <MOODLE_DB_USER> -p <MOODLE_DB_NAME> < scripts/add_moodle_student_data.sql
 ```
 
 ---
@@ -150,10 +150,10 @@ mysql -h localhost -P 3307 -u bn_moodle -pmoodle_password "LLLv.2" < scripts/add
 
 ```bash
 # Backend
-mysql -h localhost -u root -ppassword lifelong2 < scripts/verify_student_data.sql
+mysql -h <BACKEND_DB_HOST> -u <BACKEND_DB_USER> -p <BACKEND_DB_NAME> < scripts/verify_student_data.sql
 
 # Moodle
-mysql -h localhost -P 3307 -u bn_moodle -pmoodle_password "LLLv.2" < scripts/verify_student_data.sql
+mysql -h <MOODLE_DB_HOST> -P <MOODLE_DB_PORT> -u <MOODLE_DB_USER> -p <MOODLE_DB_NAME> < scripts/verify_student_data.sql
 ```
 
 ---
@@ -178,7 +178,7 @@ mysql -h localhost -P 3307 -u bn_moodle -pmoodle_password "LLLv.2" < scripts/ver
 | 14  | s014_student | จรูญ ศรีมงคล      | Engineering | student014@university.edu |
 | 15  | s015_student | ประเสริฐ สันติมา  | Engineering | student015@university.edu |
 
-**Password สำหรับทั้งหมด:** `Password@123`
+**Password สำหรับทั้งหมด:** `<STUDENT_SEED_PASSWORD>`
 
 ---
 
@@ -207,7 +207,7 @@ DELETE FROM mdl_user WHERE username LIKE 's%_student';
 ### รีเซ็ต Docker (ลบทั้งหมด):
 
 ```bash
-cd c:\Users\ntpkim\lifelong\backend
+cd <BACKEND_PROJECT_DIR>
 docker compose down -v  # ลบข้อมูลทั้งหมด
 docker compose up -d    # สร้าง containers ใหม่
 ```
@@ -279,7 +279,7 @@ backend/
 
 1. **ลอง login** ด้วยบัญชีนักเรียน:
    - Username: `s001_student`
-   - Password: `Password@123`
+   - Password: `<STUDENT_SEED_PASSWORD>`
 
 2. **ตรวจสอบ courses** ที่นักเรียนลงทะเบียน
 

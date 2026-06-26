@@ -7,7 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Lltfaculty } from '../../../lltfaculty/entities/lltfaculty.entity';
+import { Lltfaculty } from '../../faculties/lltfaculty/entities/lltfaculty.entity';
 import { Role } from '../enums/role.enum';
 
 @Entity('LLT_AUTH_USERS')

@@ -6,10 +6,13 @@ $CFG = new stdClass();
 
 $CFG->dbtype    = 'mariadb';
 $CFG->dblibrary = 'native';
-$CFG->dbhost    = 'moodle_mariadb';
-$CFG->dbname    = 'LLLv.2';
-$CFG->dbuser    = 'bn_moodle';
-$CFG->dbpass    = 'moodle_password';
+$CFG->dbhost    = getenv('MOODLE_DATABASE_HOST') ?: 'moodle_mariadb';
+$CFG->dbname    = getenv('MOODLE_DATABASE_NAME') ?: 'LLLv.2';
+$CFG->dbuser    = getenv('MOODLE_DATABASE_USER');
+$CFG->dbpass    = getenv('MOODLE_DATABASE_PASSWORD');
+if (!$CFG->dbuser || !$CFG->dbpass) {
+    die("CRITICAL: MOODLE_DATABASE_USER or MOODLE_DATABASE_PASSWORD environment variable is not defined.\n");
+}
 $CFG->prefix    = 'mdl_';
 $CFG->dboptions = array (
   'dbpersist' => 0,
@@ -18,7 +21,7 @@ $CFG->dboptions = array (
   'dbcollation' => 'utf8mb4_unicode_ci',
 );
 
-$CFG->wwwroot   = 'http://localhost:8080';
+$CFG->wwwroot   = getenv('MOODLE_SITE_URL') ?: 'http://localhost:8080';
 $CFG->dataroot  = '/bitnami/moodle_data';
 $CFG->admin     = 'admin';
 

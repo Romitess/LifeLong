@@ -12,15 +12,21 @@ function getEnvVar(name) {
 
 const MOODLE_BASE_URL = getEnvVar('MOODLE_BASE_URL') || 'http://localhost:8080';
 const MOODLE_TOKEN = getEnvVar('MOODLE_TOKEN');
+const MOODLE_TEST_PASSWORD = getEnvVar('MOODLE_TEST_PASSWORD') || getEnvVar('SEED_USER_PASSWORD');
 
 if (!MOODLE_TOKEN) {
-  console.error('Error: MOODLE_TOKEN not found in .env');
+  console.error('❌ ERROR: MOODLE_TOKEN not found in .env');
+  process.exit(1);
+}
+
+if (!MOODLE_TEST_PASSWORD) {
+  console.error('❌ ERROR: MOODLE_TEST_PASSWORD or SEED_USER_PASSWORD must be set in .env');
   process.exit(1);
 }
 
 const USER_DATA = {
   username: 'teach',
-  password: 'Moodle111111!', // เปลี่ยนเป็นรหัสที่ปลอดภัยขึ้น
+  password: MOODLE_TEST_PASSWORD,
   firstname: 'Teach',
   lastname: 'LLL',
   email: 'teach@go.buu.ac.th',

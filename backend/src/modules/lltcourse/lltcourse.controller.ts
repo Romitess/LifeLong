@@ -33,14 +33,14 @@ import { assertFileMagic } from 'src/common/utils/file-magic.validator';
 import { PlatformGatewayService } from '../platform-gateway/platform-gateway.service';
 import { CreateLltcourseDto } from './dto/create-lltcourse.dto';
 import { UpdateLltcourseDto } from './dto/update-lltcourse.dto';
-import { EnrollCourseDto } from '../../lltenroll/dto/enroll-course.dto';
+import { EnrollCourseDto } from '../enrollment/lltenroll/dto/enroll-course.dto';
 import { Lltcourse } from './entities/lltcourse.entity';
 import { Public } from '../auth/public.decorator';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../auth/enums/role.enum';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt-auth.guard';
-import { Llttypestudy } from '../../llttypestudy/entities/llttypestudy.entity';
+import { Llttypestudy } from '../users/llttypestudy/entities/llttypestudy.entity';
 import {
   MoodleAnnouncement,
   MoodleModule,
@@ -220,9 +220,10 @@ export class LltcourseController {
 
   private buildCbsFileData(file?: UploadedCourseFile): CourseFileData | undefined {
     if (!file) return undefined;
-    const publicBaseUrl =
-      this.configService.get<string>('BACKEND_URL') ||
-      `http://localhost:${this.configService.get<number>('PORT') ?? 3000}`;
+    const publicBaseUrl = (
+      this.configService.get<string>('BACKEND_PUBLIC_URL') ||
+      `http://localhost:${this.configService.get<number>('PORT') ?? 3000}`
+    ).replace(/\/+$/, '');
     const relativePath = `uploads/course-cbs/${file.filename}`;
     return {
       filename: file.originalname,
@@ -230,7 +231,7 @@ export class LltcourseController {
       size: formatFileSize(file.size),
       type: file.mimetype,
       path: relativePath,
-      url: `${publicBaseUrl.replace(/\/+$/, '')}/${relativePath}`,
+      url: `${publicBaseUrl}/${relativePath}`,
     };
   }
 

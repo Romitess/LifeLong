@@ -13,7 +13,10 @@ export const envValidationSchema = Joi.object({
     otherwise: Joi.string().allow('').required(),
   }),
   DB_NAME: Joi.string().required(),
-  BACKEND_URL: Joi.string().uri().optional(),
+  ALLOWED_ORIGINS: Joi.string().optional(),
+  FRONTEND_URL: Joi.string().uri().optional(),
+  BACKEND_PUBLIC_URL: Joi.string().uri().optional(),
+  BACKEND_INTERNAL_URL: Joi.string().uri().optional(),
   MOODLE_BASE_URL: Joi.string().uri().optional(),
   MOODLE_PUBLIC_URL: Joi.string().uri().optional(),
   // In production the Moodle (service-account) token must be present and meet a minimum length.

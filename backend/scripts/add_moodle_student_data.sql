@@ -7,7 +7,7 @@
 -- PART 1: Add Students to mdl_user (Moodle Users Table)
 -- =====================================================================
 -- Note: Moodle uses MD5 hashes for passwords
--- Password hash for "Password@123" needs to be computed properly
+-- Password hash should be generated from the local seed password.
 
 -- First, check current user count
 SELECT 'Current Moodle Users:' AS info;
@@ -19,7 +19,7 @@ SELECT id, fullname FROM mdl_course WHERE id > 1 LIMIT 5;
 
 -- =====================================================================
 -- Insert new students (mdl_user table)
--- Password: Password@123 (MD5 will be handled, using placeholder)
+-- Password: <STUDENT_SEED_PASSWORD> (MD5 will be handled, using placeholder)
 -- =====================================================================
 INSERT INTO mdl_user (auth, confirmed, policyagreed, deleted, suspended, mnethostid, username, email, firstname, lastname, mailformat, maildigest, maildisplay, autosubscribe, trackforums, timecreated, timemodified, firstaccess, lastaccess, lastlogin, currentlogin, lastip, secret, timezone, lang, calendartype, theme, description) VALUES
 

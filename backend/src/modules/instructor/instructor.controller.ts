@@ -19,7 +19,7 @@ import { ImportGradesDto, ImportGradesResult } from './dto/import-grades.dto';
 import { UpdateOpenclassDto } from './dto/update-openclass.dto';
 import { ApproveGradesDto, ApproveGradesResult } from './dto/approve-grades.dto';
 import { ActiveCertTemplateDto } from './dto/active-cert-template.dto';
-import { Lltchat } from '../../lltchat/entities/lltchat.entity';
+import { Lltchat } from '../chat/lltchat/entities/lltchat.entity';
 
 @ApiTags('instructor')
 @Roles(Role.Instructor)

@@ -1,22 +1,12 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { loadEnv } = require('./load-env');
+const { loadEnv, requiredEnv, optionalEnv } = require('./load-env');
 const mysql = require('mysql2/promise');
 
 loadEnv({ quiet: true });
 
 const rootDir = path.resolve(__dirname, '..');
 const backupDir = path.join(rootDir, 'backups');
-
-function requiredEnv(name, fallbackName) {
-  const value = process.env[name] || (fallbackName ? process.env[fallbackName] : undefined);
-  if (!value || value.includes('PLACEHOLDER')) {
-    throw new Error(
-      `Missing required database config: ${name}${fallbackName ? `/${fallbackName}` : ''}`,
-    );
-  }
-  return value;
-}
 
 function timestamp() {
   return new Date().toISOString().replace(/[-:]/g, '').replace(/\..+/, '').replace('T', '-');
@@ -279,9 +269,9 @@ async function main() {
   const database = requiredEnv('DB_NAME', 'DB_DATABASE');
   const connection = await mysql.createConnection({
     host: requiredEnv('DB_HOST'),
-    port: Number(process.env.DB_PORT || 3306),
+    port: Number(optionalEnv('DB_PORT', 3306)),
     user: requiredEnv('DB_USER', 'DB_USERNAME'),
-    password: process.env.DB_PASSWORD || '',
+    password: requiredEnv('DB_PASSWORD'),
     database,
     multipleStatements: true,
     dateStrings: true,

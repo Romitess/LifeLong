@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { join } from 'node:path';
 import { mkdir, readFile } from 'node:fs/promises';
@@ -89,6 +90,7 @@ export class CertificatesService {
     private readonly dataSource: DataSource,
     private readonly progressService: ProgressService,
     private readonly platformGatewayService: PlatformGatewayService,
+    private readonly configService: ConfigService,
   ) {}
 
   async generate(
@@ -273,7 +275,10 @@ export class CertificatesService {
   // ── private helpers ─────────────────────────────────────────────────────────
 
   private backendUrl(): string {
-    return process.env['BACKEND_URL'] ?? 'http://localhost:3000';
+    return (
+      this.configService.get<string>('BACKEND_PUBLIC_URL') ||
+      `http://localhost:${this.configService.get<number>('PORT') ?? 3000}`
+    ).replace(/\/+$/, '');
   }
 
   private deriveCertUrl(certCode: string): string {

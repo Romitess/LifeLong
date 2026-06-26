@@ -8,8 +8,11 @@ $CFG->dbtype    = 'mariadb';
 $CFG->dblibrary = 'native';
 $CFG->dbhost    = getenv('MOODLE_DATABASE_HOST') ?: 'moodle_mariadb';
 $CFG->dbname    = getenv('MOODLE_DATABASE_NAME') ?: 'LLLv.2';
-$CFG->dbuser    = getenv('MOODLE_DATABASE_USER') ?: 'bn_moodle';
-$CFG->dbpass    = getenv('MOODLE_DATABASE_PASSWORD') ?: 'moodle_password';
+$CFG->dbuser    = getenv('MOODLE_DATABASE_USER');
+$CFG->dbpass    = getenv('MOODLE_DATABASE_PASSWORD');
+if (!$CFG->dbuser || !$CFG->dbpass) {
+    die("CRITICAL: MOODLE_DATABASE_USER or MOODLE_DATABASE_PASSWORD environment variable is not defined.\n");
+}
 $CFG->prefix    = 'mdl_';
 $CFG->dboptions = [
     'dbpersist' => false,

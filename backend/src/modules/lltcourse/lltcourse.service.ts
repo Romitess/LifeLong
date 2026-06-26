@@ -1,30 +1,31 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { TIME_CONSTANTS, BATCH_SIZES, DEFAULT_URLS } from '../../common/constants';
 import { Repository, DeleteResult, In, DataSource } from 'typeorm';
 import { Readable } from 'node:stream';
 import { Lltcourse } from './entities/lltcourse.entity';
 import { LltOpenclass } from './entities/llt-openclass.entity';
 import { LltOpenclassIns } from './entities/llt-openclassins.entity';
-import { LltEnroll } from '../../lltenroll/entities/llt-enroll.entity';
+import { LltEnroll } from '../enrollment/lltenroll/entities/llt-enroll.entity';
 import { LltOpenclassClick } from './entities/llt-openclass-click.entity';
 import { LltumUser } from '../auth/entities/lltum-user.entity';
-import { Lltevaluation } from '../../lltevaluation/entities/lltevaluation.entity';
-import { Lltcategory } from '../../lltcategory/entities/lltcategory.entity';
-import { Lltsubcategory } from '../../lltsubcategory/entities/lltsubcategory.entity';
-import { Lltcoursein } from '../../lltcourseins/entities/lltcoursein.entity';
-import { Lltcoursetarget } from '../../lltcoursetarget/entities/lltcoursetarget.entity';
+import { Lltevaluation } from '../evaluations/lltevaluation/entities/lltevaluation.entity';
+import { Lltcategory } from '../categories/lltcategory/entities/lltcategory.entity';
+import { Lltsubcategory } from '../categories/lltsubcategory/entities/lltsubcategory.entity';
+import { Lltcoursein } from '../courses/lltcourseins/entities/lltcoursein.entity';
+import { Lltcoursetarget } from '../courses/lltcoursetarget/entities/lltcoursetarget.entity';
 import { PlatformGatewayService } from '../platform-gateway/platform-gateway.service';
-import { Llttarget } from '../../llttarget/entities/llttarget.entity';
-import { Lltsubtarget } from '../../lltsubtarget/entities/lltsubtarget.entity';
-import { Llttypestudy } from '../../llttypestudy/entities/llttypestudy.entity';
+import { Llttarget } from '../targets/llttarget/entities/llttarget.entity';
+import { Lltsubtarget } from '../targets/lltsubtarget/entities/lltsubtarget.entity';
+import { Llttypestudy } from '../users/llttypestudy/entities/llttypestudy.entity';
 import { CreateLltcourseDto } from './dto/create-lltcourse.dto';
 import { UpdateLltcourseDto } from './dto/update-lltcourse.dto';
-import { EnrollCourseDto } from '../../lltenroll/dto/enroll-course.dto';
+import { EnrollCourseDto } from '../enrollment/lltenroll/dto/enroll-course.dto';
 import { ConfigService } from '@nestjs/config';
 import { MoodleService } from '../moodle/moodle.service';
 import { MoodleFileProxyService } from '../moodle/moodle-file-proxy.service';
-import { ChatGateway } from '../../lltchat/chat-gateway';
-import { LltenrollService } from '../../lltenroll/lltenroll.service';
+import { ChatGateway } from '../chat/lltchat/chat-gateway';
+import { LltenrollService } from '../enrollment/lltenroll/lltenroll.service';
 import { getCourseImageUrl } from './course-image-catalog';
 import {
   MoodleModule,
@@ -121,7 +122,7 @@ export interface CourseTypeClassDetail {
 export class LltcourseService {
   private readonly logger = new Logger(LltcourseService.name);
   private readonly moodleEnrollmentCache = new Map<string, number>();
-  private readonly moodleEnrollmentCacheTtlMs = 10 * 60 * 1000;
+  private readonly moodleEnrollmentCacheTtlMs = TIME_CONSTANTS.MOODLE_CACHE_TTL;
 
   constructor(
     @InjectRepository(Lltcourse)
@@ -1476,17 +1477,19 @@ export class LltcourseService {
   }
 
   private toMoodleFetchableImageUrl(imageUrl: string): string {
-    const backendInternalUrl =
-      this.configService.get<string>('BACKEND_INTERNAL_URL') || 'http://backend:3000';
+    const backendInternalUrl = (
+      this.configService.get<string>('BACKEND_INTERNAL_URL') || DEFAULT_URLS.BACKEND_URL
+    ).replace(/\/+$/, '');
     const internalBase = new URL(backendInternalUrl);
 
     if (imageUrl.startsWith('/api/uploads/') || imageUrl.startsWith('/uploads/')) {
       return `${internalBase.origin}${imageUrl}`;
     }
 
-    const backendPublicUrl =
-      this.configService.get<string>('BACKEND_URL') ||
-      `http://localhost:${this.configService.get<number>('PORT') ?? 3000}`;
+    const backendPublicUrl = (
+      this.configService.get<string>('BACKEND_PUBLIC_URL') ||
+      `http://localhost:${this.configService.get<number>('PORT') ?? DEFAULT_URLS.BACKEND_PORT}`
+    ).replace(/\/+$/, '');
 
     try {
       const image = new URL(imageUrl);
