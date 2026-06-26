@@ -354,7 +354,7 @@
               {{ course.topEnrollmentRank ?? index + 1 }}
             </span>
             <span class="top-course-card__poster">
-              <img v-if="course.imageUrl" :src="course.imageUrl" :alt="course.title" />
+              <CourseCoverImage :course="course" fill class="absolute-full" />
               <span class="top-course-card__shade" />
               <span class="top-course-card__badge">
                 <q-icon name="groups" size="16px" />
@@ -529,6 +529,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { revealVariant, headingRevealVariant } from 'src/composables/use-scroll-reveal';
 import HomeInfoStrip, { type HomeInfoItem } from 'src/components/home/HomeInfoStrip.vue';
+import CourseCoverImage from 'src/components/course/CourseCoverImage.vue';
 import HomeMarquee from 'src/components/home/HomeMarquee.vue';
 import { useCourseStore } from 'src/stores/course-store';
 import { useCategoryStore } from 'src/stores/category-store';
