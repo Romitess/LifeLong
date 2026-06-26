@@ -146,6 +146,10 @@ export class AdminReportsService {
                 ),
                 ''
               ),
+              NULLIF(
+                TRIM(CONCAT(COALESCE(u_ins.USER_FNAMETH, ''), ' ', COALESCE(u_ins.USER_LNAMETH, ''))),
+                ''
+              ),
               NULLIF(ci.COSEINS_EMAIL, '')
             )
             ORDER BY ci.COSEINS_ID
@@ -385,6 +389,10 @@ export class AdminReportsService {
                 ),
                 ''
               ),
+              NULLIF(
+                TRIM(CONCAT(COALESCE(u_ins.USER_FNAMETH, ''), ' ', COALESCE(u_ins.USER_LNAMETH, ''))),
+                ''
+              ),
               NULLIF(ci.COSEINS_EMAIL, '')
             )
             ORDER BY ci.COSEINS_ID
@@ -620,6 +628,10 @@ export class AdminReportsService {
                     COALESCE(p.PSN_LNAMETH, '')
                   )
                 ),
+                ''
+              ),
+              NULLIF(
+                TRIM(CONCAT(COALESCE(u_ins.USER_FNAMETH, ''), ' ', COALESCE(u_ins.USER_LNAMETH, ''))),
                 ''
               ),
               NULLIF(ci.COSEINS_EMAIL, '')
