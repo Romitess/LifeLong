@@ -405,7 +405,6 @@ const {
 } = useMoodleQuiz();
 
 const screen = ref<Screen>('loading');
-const tabSwitchCount = ref(0);
 const quiz = ref<QuizInfo | null>(null);
 const attempts = ref<QuizAttempt[]>([]);
 const attemptData = ref<QuizAttemptData | null>(null);
@@ -426,23 +425,6 @@ let finishing = false;
 // Grade polling (for manually-graded quizzes where review.grade === null)
 const isWaitingReviewGrade = ref(false);
 let reviewPollHandle: ReturnType<typeof setInterval> | null = null;
-
-function tabSwitchStorageKey(): string | null {
-  return currentAttemptId.value != null ? `quiz-tab-switch-${currentAttemptId.value}` : null;
-}
-function loadTabSwitchCount(): void {
-  const key = tabSwitchStorageKey();
-  const stored = key ? window.localStorage.getItem(key) : null;
-  tabSwitchCount.value = stored != null ? parseInt(stored, 10) : 0;
-}
-function saveTabSwitchCount(): void {
-  const key = tabSwitchStorageKey();
-  if (key) window.localStorage.setItem(key, String(tabSwitchCount.value));
-}
-function clearTabSwitchCount(): void {
-  const key = tabSwitchStorageKey();
-  if (key) window.localStorage.removeItem(key);
-}
 
 const unansweredCount = computed(
   () => summaryQuestions.value.filter((q) => q.state === 'notyetanswered' || q.state === '').length,
@@ -515,23 +497,6 @@ const gradeMethodLabel = computed(() => {
 
 function sanitize(html: string): string {
   return DOMPurify.sanitize(html, { ADD_ATTR: ['target'] });
-}
-
-function onVisibilityChange(): void {
-  if (screen.value !== 'attempt') return;
-  if (document.hidden) {
-    tabSwitchCount.value++;
-    saveTabSwitchCount();
-  } else if (tabSwitchCount.value > 0) {
-    $q.notify({
-      type: 'warning',
-      icon: 'tab_unselected',
-      message: `ออกจากหน้าแบบทดสอบแล้ว ${tabSwitchCount.value} ครั้ง`,
-      caption: 'กรุณาอยู่ในหน้านี้จนกว่าจะส่งคำตอบ',
-      timeout: 5000,
-      position: 'top',
-    });
-  }
 }
 
 function stateLabel(state: string): string {
@@ -751,8 +716,6 @@ async function startOrResume(): Promise<void> {
   if (inProgressAttempt.value) {
     return resume(inProgressAttempt.value);
   }
-  // New attempt — always start from zero
-  tabSwitchCount.value = 0;
   if (!quiz.value) return;
   const att = await startAttempt(quiz.value.id);
   if (!att) return;
@@ -763,7 +726,6 @@ async function startOrResume(): Promise<void> {
 
 async function resume(att: QuizAttempt): Promise<void> {
   currentAttemptId.value = att.id;
-  loadTabSwitchCount();
   setupTimer(att);
   await loadPage(att.currentpage ?? 0);
 }
@@ -809,7 +771,7 @@ async function submit(): Promise<void> {
   finishing = false;
   if (!res) return;
   confirmSubmit.value = false;
-  clearTabSwitchCount();
+
   if (res.autoMarked) await handlePassedResult(res.passed);
   void openReview(currentAttemptId.value);
 }
@@ -828,7 +790,7 @@ async function autoSubmit(): Promise<void> {
   finishing = false;
   if (!res) return;
   confirmSubmit.value = false;
-  clearTabSwitchCount();
+
   if (res.autoMarked) await handlePassedResult(res.passed);
   void openReview(currentAttemptId.value);
 }
@@ -889,13 +851,11 @@ function startReviewPoll(): void {
 
 onMounted(() => {
   void init();
-  document.addEventListener('visibilitychange', onVisibilityChange);
 });
 
 onUnmounted(() => {
   stopTimer();
   stopReviewPoll();
-  document.removeEventListener('visibilitychange', onVisibilityChange);
 });
 </script>
 
