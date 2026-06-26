@@ -42,11 +42,13 @@ export interface ReceiptSummaryItem {
   receiptFilename?: string;
   receiptType?: 'R' | 'D';
   customerName: string;
+  customerNameEn: string | null;
   amount: number | string;
   effectiveDate: string;
   learnerName: string;
   courseName: string;
   collector: string;
+  collectorNameEn: string | null;
   status: string;
 }
 
@@ -435,7 +437,8 @@ export class LltenrollreceiptService {
       const qb = this.enrollreceiptRepo
         .createQueryBuilder('e')
         .leftJoin(Lltreceipt, 'r', 'r.RECEIPT_ID = e.RECEIPT_ID_COPY')
-        .leftJoin('LLTUMUSER', 'u', 'u.USER_USERNAME = e.CREATEUSER')
+        .leftJoin('LLTUMUSER', 'cu', 'cu.USER_USERNAME = e.CREATEUSER')
+        .leftJoin('LLTUMUSER', 'u', 'u.USER_ID = e.USER_ID')
         .select('e.id', 'id')
         .addSelect('e.ENROLLRECEIPT_ID', 'receiptNo')
         .addSelect('r.RECEIPT_FILENAME', 'receiptFilename')
@@ -443,6 +446,10 @@ export class LltenrollreceiptService {
         .addSelect(
           "NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(e.USER_FNAMETH, ''), ' ', COALESCE(e.USER_LNAMETH, '')))), '')",
           'customerName',
+        )
+        .addSelect(
+          "NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(u.USER_FNAMEEN, ''), ' ', COALESCE(u.USER_LNAMEEN, '')))), '')",
+          'customerNameEn',
         )
         .addSelect('e.amount', 'amount')
         .addSelect('e.payDate', 'effectiveDate')
@@ -452,8 +459,12 @@ export class LltenrollreceiptService {
         )
         .addSelect('e.coseNameTh', 'courseName')
         .addSelect(
-          "CONCAT(COALESCE(NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(u.USER_FNAMETH, ''), ' ', COALESCE(u.USER_LNAMETH, '')))), ''), e.CREATEUSER, '-'), CHAR(10), COALESCE(DATE_FORMAT(e.CREATEDATE, '%Y-%m-%d %H:%i:%s'), '-'))",
+          "CONCAT(COALESCE(NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(cu.USER_FNAMETH, ''), ' ', COALESCE(cu.USER_LNAMETH, '')))), ''), e.CREATEUSER, '-'), CHAR(10), COALESCE(DATE_FORMAT(e.CREATEDATE, '%Y-%m-%d %H:%i:%s'), '-'))",
           'collector',
+        )
+        .addSelect(
+          "NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(cu.USER_FNAMEEN, ''), ' ', COALESCE(cu.USER_LNAMEEN, '')))), '')",
+          'collectorNameEn',
         )
         .addSelect(
           "CASE e.RECEIPT_STATUS WHEN 'Y' THEN 'ใช้งาน' WHEN 'C' THEN 'ยกเลิก' ELSE NULL END",
@@ -514,11 +525,13 @@ export class LltenrollreceiptService {
           ...(receiptFilenameRaw !== '-' ? { receiptFilename: receiptFilenameRaw } : {}),
           ...(receiptType ? { receiptType } : {}),
           customerName: this.valueOrDash(row.customerName),
+          customerNameEn: row.customerNameEn ? String(row.customerNameEn).trim() || null : null,
           amount: this.numberOrDash(row.amount),
           effectiveDate: this.valueOrDash(row.effectiveDate),
           learnerName: this.valueOrDash(row.learnerName),
           courseName: this.valueOrDash(row.courseName),
           collector: this.valueOrDash(row.collector),
+          collectorNameEn: row.collectorNameEn ? String(row.collectorNameEn).trim() || null : null,
           status: this.valueOrDash(row.status),
         };
       });

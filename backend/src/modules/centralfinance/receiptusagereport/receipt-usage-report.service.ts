@@ -12,11 +12,14 @@ export interface ReceiptUsageItem {
   receiptFilename: string | null;
   receiptType: string | null;
   customerName: string;
+  customerNameEn: string | null;
   amount: number | string;
   effectiveDate: string;
   fiscalYear: string;
   courseName: string;
+  courseNameEn: string | null;
   collector: string;
+  collectorNameEn: string | null;
   status: string;
   cancelBy?: string;
   cancelDate?: string;
@@ -30,11 +33,14 @@ interface RawReceiptUsageRow {
   receiptFilename: string | null;
   receiptType: string | null;
   customerName: string | null;
+  customerNameEn: string | null;
   amount: string | number | null;
   effectiveDate: string | null;
   fiscalYear: string | null;
   courseName: string | null;
+  courseNameEn: string | null;
   collector: string | null;
+  collectorNameEn: string | null;
   status: string | null;
   cancelBy: string | null;
   cancelDate: string | null;
@@ -120,6 +126,10 @@ export class ReceiptUsageReportService {
       const baseSql = `
         FROM LLTENROLLRECEIPT e
         LEFT JOIN LLTRECEIPT r ON r.RECEIPT_ID = e.RECEIPT_ID_COPY
+        LEFT JOIN LLTENROLL en ON en.ENROLL_ID = e.ENROLL_ID
+        LEFT JOIN LLTCOURSE c ON c.COSE_ID = en.COSE_ID
+        LEFT JOIN LLTUMUSER u ON u.USER_ID = e.USER_ID
+        LEFT JOIN LLTUMUSER cu ON cu.USER_USERNAME = e.CREATEUSER
         ${whereClause}
       `;
 
@@ -132,11 +142,14 @@ export class ReceiptUsageReportService {
           r.RECEIPT_FILENAME                                                                                AS receiptFilename,
           r.RECEIPT_TYPE                                                                                    AS receiptType,
           NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(e.USER_FNAMETH, ''), ' ', COALESCE(e.USER_LNAMETH, '')))), '') AS customerName,
+          NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(u.USER_FNAMEEN, ''), ' ', COALESCE(u.USER_LNAMEEN, '')))), '') AS customerNameEn,
           e.AMOUNT                                                                                          AS amount,
           DATE_FORMAT(e.PAYDATE, '%Y-%m-%d')                                                               AS effectiveDate,
           COALESCE(CAST(YEAR(e.PAYDATE) AS CHAR), '-')                                                     AS fiscalYear,
           COALESCE(e.COSE_NAMETH, '-')                                                                     AS courseName,
-          COALESCE(e.CREATEUSER, '-')                                                                      AS collector,
+          NULLIF(c.COSE_NAMEEN, '')                                                                        AS courseNameEn,
+          COALESCE(NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(cu.USER_FNAMETH, ''), ' ', COALESCE(cu.USER_LNAMETH, '')))), ''), e.CREATEUSER, '-') AS collector,
+          NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(cu.USER_FNAMEEN, ''), ' ', COALESCE(cu.USER_LNAMEEN, '')))), '') AS collectorNameEn,
           CASE e.RECEIPT_STATUS
             WHEN 'Y' THEN 'ใช้งาน'
             WHEN 'C' THEN 'ยกเลิก'
@@ -180,11 +193,14 @@ export class ReceiptUsageReportService {
           receiptFilename: row.receiptFilename ?? null,
           receiptType: row.receiptType ?? null,
           customerName: row.customerName ?? '-',
+          customerNameEn: row.customerNameEn?.trim() || null,
           amount: row.amount !== null && row.amount !== undefined ? Number(row.amount) : '-',
           effectiveDate: row.effectiveDate ?? '-',
           fiscalYear: row.fiscalYear ?? '-',
           courseName: row.courseName ?? '-',
+          courseNameEn: row.courseNameEn?.trim() || null,
           collector: row.collector ?? '-',
+          collectorNameEn: row.collectorNameEn?.trim() || null,
           status: row.status ?? '-',
         };
 

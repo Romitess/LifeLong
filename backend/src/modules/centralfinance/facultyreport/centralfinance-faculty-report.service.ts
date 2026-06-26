@@ -28,6 +28,7 @@ interface CourseRow {
   courseId: number | string | null;
   courseCode: string | null;
   courseName: string | null;
+  courseNameEn: string | null;
   facultyId: number | string | null;
   facultyName: string | null;
   responsibleName: string | null;
@@ -99,6 +100,7 @@ export class CentralFinanceFacultyReportService {
           NULLIF(c.COSE_NAMEEN, ''),
           CONCAT('Course #', c.COSE_ID)
         ) AS courseName,
+        NULLIF(c.COSE_NAMEEN, '') AS courseNameEn,
         COALESCE(f.FAC_ID, 0) AS facultyId,
         COALESCE(NULLIF(f.FAC_NAME, ''), 'ไม่ระบุคณะ/ส่วนงาน') AS facultyName,
         COALESCE(tc.TYPECOSE_ID, 0) AS typeCourseId,
@@ -405,6 +407,7 @@ export class CentralFinanceFacultyReportService {
       courseId: this.toNumber(row.courseId),
       courseCode: row.courseCode?.trim() || null,
       courseName: row.courseName?.trim() || `Course #${this.toNumber(row.courseId)}`,
+      courseNameEn: row.courseNameEn?.trim() || null,
       responsibleName: row.responsibleName?.trim() || null,
       startDate: this.toIsoString(row.startDate),
       endDate: this.toIsoString(row.endDate),

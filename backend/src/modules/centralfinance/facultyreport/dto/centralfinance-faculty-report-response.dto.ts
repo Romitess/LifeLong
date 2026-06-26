@@ -54,6 +54,9 @@ export class CentralFinanceFacultyReportCourseItemDto {
   @ApiProperty({ example: 'การประยุกต์ใช้ AI ในการทำวิจัย' })
   courseName: string;
 
+  @ApiProperty({ example: 'Applying AI in Research', nullable: true })
+  courseNameEn: string | null;
+
   @ApiProperty({ example: 'รองศาสตราจารย์พิมพ์ใจ กิตติคุณ', nullable: true })
   responsibleName: string | null;
 

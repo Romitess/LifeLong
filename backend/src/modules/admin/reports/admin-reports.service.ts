@@ -28,7 +28,9 @@ interface InterestedCourseRow {
   courseId: number | string | null;
   courseCode: string | null;
   courseName: string | null;
+  courseNameEn: string | null;
   responsibleName: string | null;
+  responsibleNameEn: string | null;
   startDate: Date | string | null;
   endDate: Date | string | null;
   viewCount: number | string | null;
@@ -50,9 +52,11 @@ interface RegistrationStatisticsCourseRow {
   courseId: number | string | null;
   courseCode: string | null;
   courseName: string | null;
+  courseNameEn: string | null;
   facultyId: number | string | null;
   facultyName: string | null;
   responsibleName: string | null;
+  responsibleNameEn: string | null;
   startDate: Date | string | null;
   endDate: Date | string | null;
   learnerCount: number | string | null;
@@ -92,11 +96,13 @@ export class AdminReportsService {
           NULLIF(c.COSE_NAMEEN, ''),
           CONCAT('Course #', c.COSE_ID)
         ) AS courseName,
+        NULLIF(c.COSE_NAMEEN, '') AS courseNameEn,
         COALESCE(f.FAC_ID, 0) AS facultyId,
         COALESCE(NULLIF(f.FAC_NAME, ''), 'ไม่ระบุคณะ/ส่วนงาน') AS facultyName,
         COALESCE(tc.TYPECOSE_ID, 0) AS typeCourseId,
         COALESCE(NULLIF(tc.TYPECOSE_NAME, ''), 'ไม่ระบุประเภท') AS typeCourseName,
         responsibleCourses.responsibleNames AS responsibleName,
+        responsibleCourses.responsibleNamesEn AS responsibleNameEn,
         COALESCE(courseSchedules.classStartDate, c.COSE_STARTDATE) AS startDate,
         COALESCE(courseSchedules.classEndDate, c.COSE_ENDDATE) AS endDate,
         COALESCE(courseSchedules.unitPrice, courseEnrollments.unitPrice, 0) AS unitPrice,
@@ -144,9 +150,18 @@ export class AdminReportsService {
             )
             ORDER BY ci.COSEINS_ID
             SEPARATOR ' | '
-          ) AS responsibleNames
+          ) AS responsibleNames,
+          GROUP_CONCAT(
+            DISTINCT NULLIF(
+              TRIM(CONCAT(COALESCE(u_ins.USER_FNAMEEN, ''), ' ', COALESCE(u_ins.USER_LNAMEEN, ''))),
+              ''
+            )
+            ORDER BY ci.COSEINS_ID
+            SEPARATOR ' | '
+          ) AS responsibleNamesEn
         FROM LLTCOURSEINS ci
         LEFT JOIN PSNTPERSON p ON p.PSN_ID = ci.PSN_ID
+        LEFT JOIN LLTUMUSER u_ins ON LOWER(u_ins.USER_EMAIL) = LOWER(ci.COSEINS_EMAIL)
         WHERE ci.COSEINS_ADMIN = 'Y'
         GROUP BY ci.COSE_ID
       ) responsibleCourses ON responsibleCourses.COSE_ID = c.COSE_ID
@@ -212,9 +227,11 @@ export class AdminReportsService {
               base.courseId,
               base.courseCode,
               base.courseName,
+              base.courseNameEn,
               base.facultyId,
               base.facultyName,
               base.responsibleName,
+              base.responsibleNameEn,
               base.startDate,
               base.endDate,
               base.learnerCount,
@@ -318,11 +335,13 @@ export class AdminReportsService {
           NULLIF(c.COSE_NAMEEN, ''),
           CONCAT('Course #', c.COSE_ID)
         ) AS courseName,
+        NULLIF(c.COSE_NAMEEN, '') AS courseNameEn,
         COALESCE(f.FAC_ID, 0) AS facultyId,
         COALESCE(NULLIF(f.FAC_NAME, ''), 'ไม่ระบุคณะ/ส่วนงาน') AS facultyName,
         COALESCE(tc.TYPECOSE_ID, 0) AS typeCourseId,
         COALESCE(NULLIF(tc.TYPECOSE_NAME, ''), 'ไม่ระบุประเภท') AS typeCourseName,
         responsibleCourses.responsibleNames AS responsibleName,
+        responsibleCourses.responsibleNamesEn AS responsibleNameEn,
         COALESCE(courseSchedules.classStartDate, c.COSE_STARTDATE) AS startDate,
         COALESCE(courseSchedules.classEndDate, c.COSE_ENDDATE) AS endDate,
         COALESCE(courseSchedules.unitPrice, courseEnrollments.unitPrice, 0) AS unitPrice,
@@ -370,9 +389,18 @@ export class AdminReportsService {
             )
             ORDER BY ci.COSEINS_ID
             SEPARATOR ' | '
-          ) AS responsibleNames
+          ) AS responsibleNames,
+          GROUP_CONCAT(
+            DISTINCT NULLIF(
+              TRIM(CONCAT(COALESCE(u_ins.USER_FNAMEEN, ''), ' ', COALESCE(u_ins.USER_LNAMEEN, ''))),
+              ''
+            )
+            ORDER BY ci.COSEINS_ID
+            SEPARATOR ' | '
+          ) AS responsibleNamesEn
         FROM LLTCOURSEINS ci
         LEFT JOIN PSNTPERSON p ON p.PSN_ID = ci.PSN_ID
+        LEFT JOIN LLTUMUSER u_ins ON LOWER(u_ins.USER_EMAIL) = LOWER(ci.COSEINS_EMAIL)
         WHERE ci.COSEINS_ADMIN = 'Y'
         GROUP BY ci.COSE_ID
       ) responsibleCourses ON responsibleCourses.COSE_ID = c.COSE_ID
@@ -438,9 +466,11 @@ export class AdminReportsService {
               base.courseId,
               base.courseCode,
               base.courseName,
+              base.courseNameEn,
               base.facultyId,
               base.facultyName,
               base.responsibleName,
+              base.responsibleNameEn,
               base.startDate,
               base.endDate,
               base.learnerCount,
@@ -596,9 +626,18 @@ export class AdminReportsService {
             )
             ORDER BY ci.COSEINS_ID
             SEPARATOR ' | '
-          ) AS responsibleNames
+          ) AS responsibleNames,
+          GROUP_CONCAT(
+            DISTINCT NULLIF(
+              TRIM(CONCAT(COALESCE(u_ins.USER_FNAMEEN, ''), ' ', COALESCE(u_ins.USER_LNAMEEN, ''))),
+              ''
+            )
+            ORDER BY ci.COSEINS_ID
+            SEPARATOR ' | '
+          ) AS responsibleNamesEn
         FROM LLTCOURSEINS ci
         LEFT JOIN PSNTPERSON p ON p.PSN_ID = ci.PSN_ID
+        LEFT JOIN LLTUMUSER u_ins ON LOWER(u_ins.USER_EMAIL) = LOWER(ci.COSEINS_EMAIL)
         WHERE ci.COSEINS_ADMIN = 'Y'
         GROUP BY ci.COSE_ID
       ) responsibleCourses ON responsibleCourses.COSE_ID = c.COSE_ID
@@ -639,7 +678,9 @@ export class AdminReportsService {
               NULLIF(c.COSE_NAMEEN, ''),
               CONCAT('Course #', c.COSE_ID)
             ) AS courseName,
+            NULLIF(c.COSE_NAMEEN, '') AS courseNameEn,
             responsibleCourses.responsibleNames AS responsibleName,
+            responsibleCourses.responsibleNamesEn AS responsibleNameEn,
             COALESCE(courseSchedules.classStartDate, c.COSE_STARTDATE) AS startDate,
             COALESCE(courseSchedules.classEndDate, c.COSE_ENDDATE) AS endDate,
             COALESCE(courseViews.viewCount, 0) AS viewCount,
@@ -684,7 +725,9 @@ export class AdminReportsService {
       courseId: this.toNumber(row.courseId),
       courseCode: row.courseCode,
       courseName: row.courseName?.trim() || `Course #${this.toNumber(row.courseId)}`,
+      courseNameEn: row.courseNameEn?.trim() || null,
       responsibleName: row.responsibleName?.trim() || null,
+      responsibleNameEn: row.responsibleNameEn?.trim() || null,
       startDate: this.toIsoString(row.startDate),
       endDate: this.toIsoString(row.endDate),
       viewCount: this.toNumber(row.viewCount),
@@ -728,7 +771,9 @@ export class AdminReportsService {
       courseId: this.toNumber(row.courseId),
       courseCode: row.courseCode?.trim() || null,
       courseName: row.courseName?.trim() || `Course #${this.toNumber(row.courseId)}`,
+      courseNameEn: row.courseNameEn?.trim() || null,
       responsibleName: row.responsibleName?.trim() || null,
+      responsibleNameEn: row.responsibleNameEn?.trim() || null,
       startDate: this.toIsoString(row.startDate),
       endDate: this.toIsoString(row.endDate),
       learnerCount: this.toNumber(row.learnerCount),

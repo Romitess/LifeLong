@@ -54,8 +54,14 @@ export class AdminRegistrationStatisticsReportCourseItemDto {
   @ApiProperty({ example: 'การประยุกต์ใช้ AI ในการทำวิจัย' })
   courseName: string;
 
+  @ApiProperty({ example: 'Applying AI in Research', nullable: true })
+  courseNameEn: string | null;
+
   @ApiProperty({ example: 'รองศาสตราจารย์พิมพ์ใจ กิตติคุณ', nullable: true })
   responsibleName: string | null;
+
+  @ApiProperty({ example: 'Pimjai Kittikhun', nullable: true })
+  responsibleNameEn: string | null;
 
   @ApiProperty({ example: '2026-04-09T17:00:00.000Z', nullable: true })
   startDate: string | null;

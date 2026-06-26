@@ -8,6 +8,7 @@ export interface FinanceDailyReportItem {
   no: number;
   courseCode: string | null;
   courseName: string;
+  courseNameEn: string | null;
   fundCode: string | null;
   fundName: string | null;
   amount: number;
@@ -20,6 +21,7 @@ interface RawDailyReportRow {
   id: string | number | null;
   courseCode: string | null;
   courseName: string | null;
+  courseNameEn: string | null;
   fundCode: string | null;
   fundName: string | null;
   amount: string | number | null;
@@ -77,6 +79,7 @@ export class FinanceDailyReportService {
           MIN(e.ENROLLRECEIPT_ID)                                              AS id,
           MAX(c.COSE_CODE)                                                     AS courseCode,
           COALESCE(c.COSE_NAMETH, e.COSE_NAMETH, '-')                          AS courseName,
+          MAX(NULLIF(c.COSE_NAMEEN, ''))                                        AS courseNameEn,
           COALESCE(NULLIF(TRIM(CONCAT_WS(' ', cp.COSTPLAN_CODE, cp.COSTPLAN_NAME)), ''), '-') AS fundCode,
           NULL                                                                 AS fundName,
           SUM(COALESCE(CAST(en.ENROLL_AMOUNT AS DECIMAL(15,2)), CAST(e.AMOUNT AS DECIMAL(15,2)), 0)) AS amount,
@@ -107,6 +110,7 @@ export class FinanceDailyReportService {
         no: index + 1,
         courseCode: row.courseCode?.trim() ?? null,
         courseName: row.courseName ?? '-',
+        courseNameEn: row.courseNameEn?.trim() || null,
         fundCode: row.fundCode?.trim() || '-',
         fundName: row.fundName?.trim() ?? null,
         amount: row.amount !== null && row.amount !== undefined ? Number(row.amount) : 0,
