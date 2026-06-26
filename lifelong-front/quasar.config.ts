@@ -2,14 +2,37 @@
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
 import { defineConfig } from '#q-app/wrappers';
-import { config as loadDotEnv } from 'dotenv';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const frontendRoot = dirname(fileURLToPath(import.meta.url));
 
-loadDotEnv({ path: resolve(frontendRoot, '..', '.env') });
-loadDotEnv({ path: resolve(frontendRoot, '.env'), override: false });
+function loadDotEnv(path: string) {
+  if (!existsSync(path)) {
+    return;
+  }
+
+  for (const line of readFileSync(path, 'utf8').split(/\r?\n/)) {
+    const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+
+    if (!match) {
+      continue;
+    }
+
+    const key = match[1];
+    const value = match[2] ?? '';
+
+    if (!key || key.startsWith('#') || process.env[key] !== undefined) {
+      continue;
+    }
+
+    process.env[key] = value.replace(/^(['"])(.*)\1$/, '$2');
+  }
+}
+
+loadDotEnv(resolve(frontendRoot, '..', '.env'));
+loadDotEnv(resolve(frontendRoot, '.env'));
 
 export default defineConfig((ctx) => {
   return {
