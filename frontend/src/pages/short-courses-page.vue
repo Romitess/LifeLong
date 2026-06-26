@@ -9,6 +9,12 @@
               :placeholder="$t('searchPlaceholder')"
               class="col"
             />
+            <ShortCourseFilterMenu
+              v-model="filter"
+              :type-options="typeOptions"
+              :date-locale="dateLocale"
+              @reset="resetFilter"
+            />
           </div>
         </div>
       </div>
@@ -96,6 +102,10 @@ import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import BaseSearchInput from 'components/base/BaseSearchInput.vue';
+import ShortCourseFilterMenu, {
+  type ShortCourseTypeOption,
+} from 'components/short-courses/ShortCourseFilterMenu.vue';
+import { useDateLocale } from 'src/composables/use-date-locale';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const router = useRouter();
@@ -103,6 +113,7 @@ const route = useRoute();
 const { t, locale } = useI18n();
 const categoryStore = useCategoryStore();
 categoryStore.init();
+const dateLocale = useDateLocale();
 
 const { courses, isLoading, fetchCourses } = useCourseList();
 
@@ -167,6 +178,14 @@ const activeFilter = ref({
   startDate: null as string | null,
   endDate: null as string | null,
 });
+
+const typeOptions = computed<ShortCourseTypeOption[]>(() => [
+  { label: t('statusCert'), value: 'ประกาศนียบัตร' },
+  { label: t('creditBank'), value: 'สะสมหน่วยกิต' },
+  { label: t('statusOpen'), value: 'เปิดรับสมัคร' },
+  { label: t('statusClosed'), value: 'ปิดรับสมัคร' },
+  { label: t('statusSoon'), value: 'เร็วๆนี้' },
+]);
 
 function parseDateString(dateStr: string | null): string | null {
   if (!dateStr || dateStr.length !== 10) return null;
