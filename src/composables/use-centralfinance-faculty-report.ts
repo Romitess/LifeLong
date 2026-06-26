@@ -1,0 +1,112 @@
+import { computed, ref } from 'vue';
+import { AxiosError } from 'axios';
+import { api } from 'src/boot/axios';
+import type {
+  CentralFinanceFacultyReportFacultyGroup,
+  CentralFinanceFacultyReportFilterOptions,
+  CentralFinanceFacultyReportPagination,
+  CentralFinanceFacultyReportResponse,
+  CentralFinanceFacultyReportSummary,
+} from 'src/types/centralfinance-faculty-report';
+
+interface FetchReportOptions {
+  page?: number;
+  pageSize?: number;
+  startDate?: string | null;
+  endDate?: string | null;
+  facultyId?: number | null;
+  typeCourseId?: number | null;
+  search?: string | null;
+}
+
+function createEmptyPagination(): CentralFinanceFacultyReportPagination {
+  return { page: 1, pageSize: 10, total: 0, totalPages: 0 };
+}
+
+function createEmptySummary(): CentralFinanceFacultyReportSummary {
+  return { totalCourses: 0, totalLearners: 0, totalRegistrationFees: 0 };
+}
+
+function createEmptyFilterOptions(): CentralFinanceFacultyReportFilterOptions {
+  return { faculties: [], courseTypes: [] };
+}
+
+function extractErrorMessage(error: unknown): string {
+  if (error instanceof AxiosError) {
+    const message = error.response?.data?.message;
+    if (Array.isArray(message)) return message.join(', ');
+    if (typeof message === 'string') return message;
+  }
+  if (error instanceof Error) return error.message;
+  return 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+}
+
+export function useCentralFinanceFacultyReport() {
+  const groups = ref<CentralFinanceFacultyReportFacultyGroup[]>([]);
+  const filterOptions = ref<CentralFinanceFacultyReportFilterOptions>(createEmptyFilterOptions());
+  const summary = ref<CentralFinanceFacultyReportSummary>(createEmptySummary());
+  const pagination = ref<CentralFinanceFacultyReportPagination>(createEmptyPagination());
+  const generatedAt = ref<string | null>(null);
+  const isLoading = ref(false);
+  const error = ref<string | null>(null);
+  let latestRequestId = 0;
+
+  const hasRows = computed(() => groups.value.some((group) => group.items.length > 0));
+
+  async function fetchData(options: FetchReportOptions = {}): Promise<void> {
+    const requestId = ++latestRequestId;
+    isLoading.value = true;
+    error.value = null;
+
+    const page = options.page ?? pagination.value.page ?? 1;
+    const pageSize = options.pageSize ?? pagination.value.pageSize ?? 10;
+
+    try {
+      const { data } = await api.get<CentralFinanceFacultyReportResponse>(
+        '/api/centralfinance/reports/registration-statistics',
+        {
+          params: {
+            page,
+            pageSize,
+            startDate: options.startDate || undefined,
+            endDate: options.endDate || undefined,
+            facultyId: options.facultyId ?? undefined,
+            typeCourseId: options.typeCourseId ?? undefined,
+            search: options.search || undefined,
+          },
+        },
+      );
+
+      if (requestId !== latestRequestId) return;
+
+      groups.value = data.groups;
+      filterOptions.value = data.filterOptions;
+      summary.value = data.summary;
+      pagination.value = data.pagination;
+      generatedAt.value = data.generatedAt;
+    } catch (caughtError: unknown) {
+      if (requestId !== latestRequestId) return;
+
+      groups.value = [];
+      summary.value = createEmptySummary();
+      pagination.value = { ...createEmptyPagination(), page, pageSize };
+      generatedAt.value = null;
+      error.value = extractErrorMessage(caughtError);
+      throw caughtError;
+    } finally {
+      if (requestId === latestRequestId) isLoading.value = false;
+    }
+  }
+
+  return {
+    groups,
+    filterOptions,
+    summary,
+    pagination,
+    generatedAt,
+    isLoading,
+    error,
+    hasRows,
+    fetchData,
+  };
+}

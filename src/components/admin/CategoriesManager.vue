@@ -1,0 +1,1170 @@
+<template>
+  <div class="categories-manager">
+    <div class="row q-col-gutter-md categories-manager__stats">
+      <div v-for="stat in categoryStats" :key="stat.label" class="col-12 col-sm-6 col-md-4">
+        <BaseInfoCard
+          variant="stat"
+          :tone="stat.tone"
+          :icon="stat.icon"
+          :value="stat.value"
+          :title="stat.label"
+          :description="stat.description"
+        />
+      </div>
+    </div>
+
+    <AppSurfaceCard
+      eyebrow="Category Manager"
+      title="รายการหมวด/หมู่วิชา"
+      subtitle="ข้อมูลหน้านี้เชื่อมกับ LLTCATEGORY และ LLTSUBCATEGORY โดยตรง"
+      body-padding="none"
+    >
+      <template #header-actions>
+        <AppSearchInput
+          v-model="search"
+          placeholder="ค้นหาหมวด/หมู่..."
+          :debounce="200"
+          class="categories-manager__search"
+        />
+        <AppActionButton
+          variant="primary"
+          icon="add"
+          label="เพิ่มหมวด"
+          class="categories-manager__add-btn"
+          @click="openCreateCategoryDialog"
+        />
+      </template>
+
+      <BaseTable
+        :columns="tableColumns"
+        :rows="paginatedRows"
+        row-key="key"
+        :row-class="rowVariant"
+        :loading="isLoading"
+        :rows-per-page="rowsPerPage"
+        :row-height="76"
+        :header-height="57"
+        min-width="960px"
+        :page="currentPage"
+        :total-pages="totalPages"
+        :on-page-change="goToPage"
+        show-rows-per-page
+        :on-rows-per-page-change="onRowsPerPageChange"
+        :empty-text="search ? 'ไม่พบหมวด/หมู่ที่ตรงกับคำค้นหา' : 'ยังไม่มีหมวด/หมู่ในระบบ'"
+      >
+        <template #cell-index="{ row }">
+          <span class="categories-index">{{ row.displayIndex }}</span>
+        </template>
+        <template #skeleton-index>
+          <q-skeleton type="text" width="28px" class="q-mx-auto" />
+        </template>
+
+        <template #cell-name="{ row }">
+          <div
+            :class="['category-cell', { 'category-cell--subcategory': row.kind === 'subcategory' }]"
+          >
+            <span
+              :class="[
+                'category-cell__icon',
+                row.kind === 'category'
+                  ? 'category-cell__icon--category'
+                  : 'category-cell__icon--subcategory',
+              ]"
+              :style="
+                row.kind === 'category' && row.category.color
+                  ? { background: `${row.category.color}1a`, color: row.category.color }
+                  : {}
+              "
+            >
+              <q-icon
+                :name="
+                  row.kind === 'category'
+                    ? row.category.icon || 'category'
+                    : 'subdirectory_arrow_right'
+                "
+              />
+            </span>
+            <div class="category-cell__copy">
+              <span class="category-cell__name">
+                {{
+                  row.kind === 'category' ? row.category.name || '-' : row.subcategory.name || '-'
+                }}
+              </span>
+              <span v-if="row.kind === 'category'" class="category-cell__meta">
+                หมวด {{ row.displayIndex }} · {{ row.category.subcategories.length }} หมู่
+              </span>
+            </div>
+          </div>
+        </template>
+        <template #skeleton-name>
+          <div class="category-cell">
+            <q-skeleton type="QAvatar" size="36px" />
+            <div class="category-cell__copy category-cell__copy--skeleton">
+              <q-skeleton type="text" width="82%" />
+              <q-skeleton type="text" width="44%" />
+            </div>
+          </div>
+        </template>
+
+        <template #cell-courses="{ row }">
+          <div class="category-cell__courses">
+            <strong>{{
+              row.kind === 'category' ? row.category.courseCount : row.subcategory.courseCount
+            }}</strong>
+            <span>
+              เปิดรับ
+              {{
+                row.kind === 'category'
+                  ? `${row.category.activeCourseCount}/${row.category.courseCount}`
+                  : `${row.subcategory.activeCourseCount}/${row.subcategory.courseCount}`
+              }}
+            </span>
+          </div>
+        </template>
+        <template #skeleton-courses>
+          <div class="category-cell__courses">
+            <q-skeleton type="text" width="34px" class="categories-manager__metric-skeleton" />
+            <q-skeleton type="text" width="74px" class="categories-manager__metric-skeleton" />
+          </div>
+        </template>
+
+        <template #cell-trend="{ row }">
+          <div class="categories-manager__progress">
+            <q-linear-progress
+              rounded
+              size="7px"
+              :value="getTrendValue(row.kind === 'category' ? row.category : row.subcategory)"
+              :color="
+                (row.kind === 'category'
+                  ? row.category.activeCourseCount
+                  : row.subcategory.activeCourseCount) > 0
+                  ? 'primary'
+                  : 'grey-5'
+              "
+            />
+            <span>
+              {{
+                Math.round(
+                  getTrendValue(row.kind === 'category' ? row.category : row.subcategory) * 100,
+                )
+              }}%
+            </span>
+          </div>
+        </template>
+        <template #skeleton-trend>
+          <div class="categories-manager__progress">
+            <q-skeleton type="rect" height="7px" />
+            <q-skeleton type="text" width="28px" />
+          </div>
+        </template>
+
+        <template #cell-status="{ row }">
+          <div class="category-cell__status">
+            <BaseToggle
+              :model-value="
+                row.kind === 'category'
+                  ? row.category.activeFlag === 'Y'
+                  : row.subcategory.activeFlag === 'Y'
+              "
+              color="positive"
+              dense
+              @update:model-value="
+                (value) =>
+                  row.kind === 'category'
+                    ? toggleCategoryStatus(row.category, Boolean(value))
+                    : toggleSubcategoryStatus(row.subcategory, Boolean(value))
+              "
+            />
+            <BaseStatusBadge
+              :active="
+                (row.kind === 'category' ? row.category.activeFlag : row.subcategory.activeFlag) ===
+                'Y'
+              "
+              active-label="เผยแพร่"
+              inactive-label="ซ่อน"
+              active-color="positive"
+              inactive-color="grey-6"
+              class="category-cell__status-badge"
+            />
+          </div>
+        </template>
+        <template #skeleton-status>
+          <div class="category-cell__status">
+            <q-skeleton type="QToggle" width="42px" />
+            <q-skeleton type="QChip" width="64px" />
+          </div>
+        </template>
+
+        <template #cell-actions="{ row }">
+          <div class="category-cell__actions">
+            <template v-if="row.kind === 'category'">
+              <AppActionButton
+                variant="primary"
+                icon="add"
+                label="เพิ่มหมู่"
+                class="categories-manager__sub-add-btn"
+                @click="openCreateSubcategoryDialog(row.category)"
+              />
+              <AppIconButton
+                icon="edit"
+                size="sm"
+                tone="edit"
+                class="categories-manager-action-btn categories-manager-action-btn--edit"
+                aria-label="แก้ไขหมวด"
+                @click="openEditCategoryDialog(row.category)"
+              >
+                <q-tooltip>แก้ไขหมวด</q-tooltip>
+              </AppIconButton>
+              <AppIconButton
+                icon="delete"
+                size="sm"
+                tone="delete"
+                class="categories-manager-action-btn categories-manager-action-btn--delete"
+                :disable="!canDeleteCategory(row.category)"
+                aria-label="ลบหมวด"
+                @click="askDeleteCategory(row.category)"
+              >
+                <q-tooltip>ลบหมวด</q-tooltip>
+              </AppIconButton>
+            </template>
+            <template v-else>
+              <AppIconButton
+                icon="edit"
+                size="sm"
+                tone="edit"
+                class="categories-manager-action-btn categories-manager-action-btn--edit"
+                aria-label="แก้ไขหมู่"
+                @click="openEditSubcategoryDialog(row.subcategory)"
+              >
+                <q-tooltip>แก้ไขหมู่</q-tooltip>
+              </AppIconButton>
+              <AppIconButton
+                icon="delete"
+                size="sm"
+                tone="delete"
+                class="categories-manager-action-btn categories-manager-action-btn--delete"
+                :disable="row.subcategory.courseCount > 0"
+                aria-label="ลบหมู่"
+                @click="askDeleteSubcategory(row.subcategory)"
+              >
+                <q-tooltip>ลบหมู่</q-tooltip>
+              </AppIconButton>
+            </template>
+          </div>
+        </template>
+        <template #skeleton-actions>
+          <div class="category-cell__actions">
+            <q-skeleton type="QBtn" width="82px" height="34px" />
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+            <q-skeleton type="QBtn" width="34px" height="34px" />
+          </div>
+        </template>
+      </BaseTable>
+    </AppSurfaceCard>
+
+    <AppDialog
+      v-model="formDialogOpen"
+      :title="dialogTitle"
+      :icon="dialogIcon"
+      :icon-color="dialogIconColor"
+      :icon-background="dialogIconBackground"
+      width="520px"
+    >
+      <q-form
+        id="taxonomy-dialog-form"
+        ref="formRef"
+        greedy
+        class="taxonomy-dialog__form"
+        @submit.prevent="submitForm"
+      >
+        <BaseInput
+          v-model="form.name"
+          label="ชื่อ"
+          required
+          :rules="nameRules"
+          class="admin-editor-field"
+          hide-bottom-space
+        />
+
+        <template v-if="dialogMode === 'category'">
+          <BaseInput
+            v-model="form.nameEn"
+            label="ชื่อภาษาอังกฤษ (English name)"
+            class="admin-editor-field q-mt-sm"
+            hide-bottom-space
+          />
+
+          <!-- Icon picker -->
+          <div class="taxonomy-field-label q-mt-md q-mb-xs">Icon</div>
+          <div class="taxonomy-icon-grid">
+            <button
+              v-for="ic in PRESET_ICONS"
+              :key="ic"
+              type="button"
+              class="taxonomy-icon-cell"
+              :class="{ 'taxonomy-icon-cell--active': form.icon === ic }"
+              @click="form.icon = ic"
+            >
+              <q-icon :name="ic" size="20px" />
+            </button>
+          </div>
+
+          <!-- Color picker -->
+          <ColorPickerInput v-model="form.color" label="สี" :allow-alpha="false" class="q-mt-md" />
+        </template>
+
+        <BaseToggle
+          v-model="form.isActive"
+          color="positive"
+          :label="form.isActive ? 'เผยแพร่' : 'ซ่อน'"
+          class="q-mt-sm"
+        />
+      </q-form>
+
+      <template #actions>
+        <div class="taxonomy-dialog__actions-inner">
+          <AppActionButton
+            variant="secondary"
+            label="ยกเลิก"
+            no-caps
+            type="button"
+            @click="formDialogOpen = false"
+          />
+          <AppActionButton
+            variant="primary"
+            no-caps
+            :loading="isSaving"
+            :label="editingNode ? 'บันทึก' : 'สร้าง'"
+            :icon="editingNode ? 'save' : 'add'"
+            type="submit"
+            form="taxonomy-dialog-form"
+          />
+        </div>
+      </template>
+    </AppDialog>
+
+    <AppConfirmDialog
+      v-model="confirmDeleteOpen"
+      :title="deleteTitle"
+      :message="deleteConfirmMessage"
+      confirm-label="ลบ"
+      cancel-label="ยกเลิก"
+      confirm-color="negative"
+      icon-color="negative"
+      @confirm="confirmDelete"
+      @cancel="pendingDelete = null"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref, watch } from 'vue';
+import type { QForm, ValidationRule } from 'quasar';
+import { useQuasar } from 'quasar';
+import AppIconButton from 'components/common/AppIconButton.vue';
+import AppDialog from 'components/common/AppDialog.vue';
+import AppActionButton from 'components/common/AppActionButton.vue';
+import AppConfirmDialog from 'components/common/AppConfirmDialog.vue';
+import AppSearchInput from 'components/common/AppSearchInput.vue';
+import AppSurfaceCard from 'components/common/AppSurfaceCard.vue';
+import BaseInfoCard from 'components/base/BaseInfoCard.vue';
+import BaseInput from 'components/base/BaseInput.vue';
+import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
+import BaseStatusBadge from 'components/base/BaseStatusBadge.vue';
+import BaseToggle from 'components/base/BaseToggle.vue';
+import { useAdminCourseTaxonomy } from 'src/composables/use-admin-course-taxonomy';
+import ColorPickerInput from 'src/components/common/ColorPickerInput.vue';
+import type { AdminCourseCategory, AdminCourseSubcategory } from 'src/types/admin-course-taxonomy';
+
+type StatTone = 'primary' | 'positive' | 'indigo';
+type DialogMode = 'category' | 'subcategory';
+type DeleteTarget =
+  | { type: 'category'; item: AdminCourseCategory }
+  | { type: 'subcategory'; item: AdminCourseSubcategory };
+
+interface CategoryStat {
+  icon: string;
+  value: string;
+  label: string;
+  description: string;
+  tone: StatTone;
+}
+
+interface CountableNode {
+  courseCount: number;
+  activeCourseCount: number;
+}
+
+interface TaxonomyFormState {
+  name: string;
+  nameEn: string;
+  isActive: boolean;
+  icon: string;
+  color: string;
+}
+
+type CategoryTableRow =
+  | {
+      kind: 'category';
+      key: string;
+      displayIndex: string;
+      category: AdminCourseCategory;
+    }
+  | {
+      kind: 'subcategory';
+      key: string;
+      displayIndex: string;
+      subcategory: AdminCourseSubcategory;
+    };
+
+const $q = useQuasar();
+const formRef = ref<QForm | null>(null);
+const search = ref('');
+const currentPage = ref(1);
+const rowsPerPage = ref(10);
+const formDialogOpen = ref(false);
+const confirmDeleteOpen = ref(false);
+const dialogMode = ref<DialogMode>('category');
+const editingNode = ref<AdminCourseCategory | AdminCourseSubcategory | null>(null);
+const selectedParentCategory = ref<AdminCourseCategory | null>(null);
+const pendingDelete = ref<DeleteTarget | null>(null);
+
+const PRESET_ICONS = [
+  'category',
+  'translate',
+  'computer',
+  'school',
+  'self_improvement',
+  'functions',
+  'health_and_safety',
+  'restaurant',
+  'engineering',
+  'public',
+  'business_center',
+  'eco',
+  'palette',
+  'gavel',
+  'agriculture',
+  'science',
+  'psychology',
+  'music_note',
+  'sports',
+  'build',
+] as const;
+
+const form = reactive<TaxonomyFormState>({
+  name: '',
+  nameEn: '',
+  isActive: true,
+  icon: 'category',
+  color: '#6B7280',
+});
+
+const {
+  categories,
+  isLoading,
+  isSaving,
+  totalSubcategories,
+  totalCourseCount,
+  activeNodeCount,
+  fetchData,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  createSubcategory,
+  updateSubcategory,
+  deleteSubcategory,
+} = useAdminCourseTaxonomy();
+
+onMounted(() => {
+  void loadCategories();
+});
+
+const filteredCategories = computed<AdminCourseCategory[]>(() => {
+  const keyword = search.value.trim().toLowerCase();
+  if (!keyword) return categories.value;
+
+  return categories.value
+    .map((category) => {
+      const categoryMatched = category.name.toLowerCase().includes(keyword);
+      const matchedSubcategories = category.subcategories.filter((subcategory) =>
+        subcategory.name.toLowerCase().includes(keyword),
+      );
+
+      if (categoryMatched) {
+        return category;
+      }
+
+      if (matchedSubcategories.length > 0) {
+        return { ...category, subcategories: matchedSubcategories };
+      }
+
+      return null;
+    })
+    .filter((category): category is AdminCourseCategory => category !== null);
+});
+
+const flattenedRows = computed<CategoryTableRow[]>(() => {
+  let categoryNumber = 0;
+
+  return filteredCategories.value.flatMap((category) => {
+    categoryNumber += 1;
+
+    const categoryRow: CategoryTableRow = {
+      kind: 'category',
+      key: `cat-${category.id}`,
+      displayIndex: `${categoryNumber}`,
+      category,
+    };
+
+    const subcategoryRows: CategoryTableRow[] = category.subcategories.map(
+      (subcategory, subcategoryIndex) => ({
+        kind: 'subcategory',
+        key: `sub-${subcategory.id}`,
+        displayIndex: `${categoryNumber}.${subcategoryIndex + 1}`,
+        subcategory,
+      }),
+    );
+
+    return [categoryRow, ...subcategoryRows];
+  });
+});
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(flattenedRows.value.length / rowsPerPage.value)),
+);
+
+const paginatedRows = computed<CategoryTableRow[]>(() => {
+  const start = (currentPage.value - 1) * rowsPerPage.value;
+  return flattenedRows.value.slice(start, start + rowsPerPage.value);
+});
+
+const tableColumns: BaseTableColumn[] = [
+  {
+    key: 'index',
+    label: 'ลำดับ',
+    align: 'center',
+    width: '88px',
+    sortable: true,
+    sortKey: 'displayIndex',
+  },
+  { key: 'name', label: 'หมวด/หมู่วิชา', width: 'auto', sortable: true },
+  { key: 'courses', label: 'รายวิชา', align: 'right', width: '132px', sortable: true },
+  { key: 'trend', label: 'อัตราเปิดรับ', width: '160px', sortable: true },
+  { key: 'status', label: 'สถานะ', align: 'center', width: '144px', sortable: true },
+  { key: 'actions', label: 'จัดการ', align: 'right', width: '214px' },
+];
+
+function rowVariant(row: CategoryTableRow): string {
+  return row.kind === 'category' ? 'categories-row--category' : 'categories-row--subcategory';
+}
+
+function goToPage(page: number): void {
+  currentPage.value = page;
+}
+
+function onRowsPerPageChange(newSize: number): void {
+  rowsPerPage.value = newSize;
+  currentPage.value = 1;
+}
+
+const categoryStats = computed<CategoryStat[]>(() => [
+  {
+    icon: 'category',
+    value: categories.value.length.toString(),
+    label: 'หมวดทั้งหมด',
+    description: 'จำนวนหมวดวิชาในฐานข้อมูล',
+    tone: 'primary',
+  },
+  {
+    icon: 'account_tree',
+    value: totalSubcategories.value.toString(),
+    label: 'หมู่ทั้งหมด',
+    description: 'จำนวนหมู่วิชาภายใต้หมวด',
+    tone: 'positive',
+  },
+  {
+    icon: 'library_books',
+    value: totalCourseCount.value.toString(),
+    label: 'รายวิชาที่ผูกอยู่',
+    description: `รายการเผยแพร่ ${activeNodeCount.value} หมวด/หมู่`,
+    tone: 'indigo',
+  },
+]);
+
+const dialogTitle = computed(() => {
+  if (dialogMode.value === 'category') {
+    return editingNode.value ? 'แก้ไขหมวดวิชา' : 'เพิ่มหมวดวิชา';
+  }
+
+  return editingNode.value ? 'แก้ไขหมู่วิชา' : 'เพิ่มหมู่วิชา';
+});
+
+const dialogIcon = computed(() =>
+  dialogMode.value === 'category'
+    ? form.icon || 'category'
+    : selectedParentCategory.value?.icon || 'account_tree',
+);
+
+const dialogIconColor = computed(() => {
+  if (dialogMode.value === 'category' && form.color) return form.color;
+  return selectedParentCategory.value?.color || '#f5a623';
+});
+
+const dialogIconBackground = computed(() => `${dialogIconColor.value}22`);
+
+const deleteTitle = computed(() =>
+  pendingDelete.value?.type === 'subcategory' ? 'ลบหมู่วิชา' : 'ลบหมวดวิชา',
+);
+
+const deleteConfirmMessage = computed(() => {
+  const target = pendingDelete.value;
+  if (!target) return '';
+  return `ต้องการลบ "${target.item.name}" ใช่หรือไม่ การดำเนินการนี้ไม่สามารถย้อนกลับได้`;
+});
+
+const nameRules: ValidationRule[] = [
+  (value) => (typeof value === 'string' && value.trim().length > 0) || 'กรุณาระบุชื่อ',
+  (value) => !isNameDuplicated(String(value ?? '')) || 'มีชื่อนี้อยู่แล้ว',
+];
+
+watch(formDialogOpen, (isOpen) => {
+  if (!isOpen) {
+    editingNode.value = null;
+    selectedParentCategory.value = null;
+    resetForm();
+  }
+});
+
+watch(search, () => {
+  currentPage.value = 1;
+});
+
+watch(totalPages, (maxPage) => {
+  if (currentPage.value > maxPage) {
+    currentPage.value = maxPage;
+  }
+});
+
+function getTrendValue(node: CountableNode): number {
+  if (node.courseCount === 0) return 0;
+  return node.activeCourseCount / node.courseCount;
+}
+
+function canDeleteCategory(category: AdminCourseCategory): boolean {
+  const subcategoryCourseCount = category.subcategories.reduce(
+    (sum, subcategory) => sum + subcategory.courseCount,
+    0,
+  );
+
+  return category.courseCount + subcategoryCourseCount === 0;
+}
+
+async function loadCategories(): Promise<void> {
+  try {
+    await fetchData();
+  } catch (error: unknown) {
+    notifyError(error, 'ไม่สามารถโหลดหมวด/หมู่วิชาได้');
+  }
+}
+
+function resetForm(): void {
+  form.name = '';
+  form.nameEn = '';
+  form.isActive = true;
+  form.icon = 'category';
+  form.color = '#6B7280';
+}
+
+function fillForm(
+  name: string,
+  activeFlag: string,
+  icon?: string | null,
+  color?: string | null,
+  nameEn?: string | null,
+): void {
+  form.name = name;
+  form.nameEn = nameEn ?? '';
+  form.isActive = activeFlag === 'Y';
+  form.icon = icon ?? 'category';
+  form.color = color ?? '#6B7280';
+}
+
+function openCreateCategoryDialog(): void {
+  resetForm();
+  dialogMode.value = 'category';
+  editingNode.value = null;
+  selectedParentCategory.value = null;
+  formDialogOpen.value = true;
+}
+
+function openEditCategoryDialog(category: AdminCourseCategory): void {
+  dialogMode.value = 'category';
+  editingNode.value = category;
+  selectedParentCategory.value = null;
+  fillForm(category.name, category.activeFlag, category.icon, category.color, category.nameEn);
+  formDialogOpen.value = true;
+}
+
+function openCreateSubcategoryDialog(category: AdminCourseCategory): void {
+  resetForm();
+  dialogMode.value = 'subcategory';
+  editingNode.value = null;
+  selectedParentCategory.value = category;
+  formDialogOpen.value = true;
+}
+
+function openEditSubcategoryDialog(subcategory: AdminCourseSubcategory): void {
+  dialogMode.value = 'subcategory';
+  editingNode.value = subcategory;
+  selectedParentCategory.value =
+    categories.value.find((category) => category.id === subcategory.categoryId) ?? null;
+  fillForm(subcategory.name, subcategory.activeFlag);
+  formDialogOpen.value = true;
+}
+
+async function submitForm(): Promise<void> {
+  const valid = await formRef.value?.validate();
+  if (!valid) return;
+
+  try {
+    const activeFlag = form.isActive ? 'Y' : 'N';
+
+    if (dialogMode.value === 'category') {
+      if (editingNode.value) {
+        await updateCategory(editingNode.value.id, {
+          name: form.name.trim(),
+          nameEn: form.nameEn.trim() || undefined,
+          activeFlag,
+          icon: form.icon.trim() || undefined,
+          color: form.color.trim() || undefined,
+        });
+      } else {
+        await createCategory({
+          name: form.name.trim(),
+          nameEn: form.nameEn.trim() || undefined,
+          activeFlag,
+          icon: form.icon.trim() || undefined,
+          color: form.color.trim() || undefined,
+        });
+      }
+    } else {
+      const parentCategoryId = selectedParentCategory.value?.id;
+      if (!parentCategoryId) {
+        $q.notify({ type: 'negative', message: 'ไม่พบหมวดหลักของหมู่วิชา', position: 'top' });
+        return;
+      }
+
+      if (editingNode.value) {
+        await updateSubcategory(editingNode.value.id, {
+          categoryId: parentCategoryId,
+          name: form.name.trim(),
+          activeFlag,
+        });
+      } else {
+        await createSubcategory({
+          categoryId: parentCategoryId,
+          name: form.name.trim(),
+          activeFlag,
+        });
+      }
+    }
+
+    $q.notify({ type: 'positive', message: 'บันทึกข้อมูลเรียบร้อย', position: 'top' });
+    formDialogOpen.value = false;
+  } catch (error: unknown) {
+    notifyError(error, 'บันทึกข้อมูลไม่สำเร็จ');
+  }
+}
+
+function toggleCategoryStatus(category: AdminCourseCategory, isActive: boolean): void {
+  const previousActiveFlag = category.activeFlag;
+  const nextActiveFlag = isActive ? 'Y' : 'N';
+  category.activeFlag = nextActiveFlag;
+
+  void updateCategory(category.id, {
+    name: category.name,
+    activeFlag: nextActiveFlag,
+  })
+    .then(() => {
+      $q.notify({ type: 'positive', message: 'อัปเดตสถานะหมวดแล้ว', position: 'top' });
+    })
+    .catch((error: unknown) => {
+      category.activeFlag = previousActiveFlag;
+      notifyError(error, 'อัปเดตสถานะไม่สำเร็จ');
+    });
+}
+
+function toggleSubcategoryStatus(subcategory: AdminCourseSubcategory, isActive: boolean): void {
+  const previousActiveFlag = subcategory.activeFlag;
+  const nextActiveFlag = isActive ? 'Y' : 'N';
+  subcategory.activeFlag = nextActiveFlag;
+
+  void updateSubcategory(subcategory.id, {
+    categoryId: subcategory.categoryId,
+    name: subcategory.name,
+    activeFlag: nextActiveFlag,
+  })
+    .then(() => {
+      $q.notify({ type: 'positive', message: 'อัปเดตสถานะหมู่แล้ว', position: 'top' });
+    })
+    .catch((error: unknown) => {
+      subcategory.activeFlag = previousActiveFlag;
+      notifyError(error, 'อัปเดตสถานะไม่สำเร็จ');
+    });
+}
+
+function askDeleteCategory(category: AdminCourseCategory): void {
+  pendingDelete.value = { type: 'category', item: category };
+  confirmDeleteOpen.value = true;
+}
+
+function askDeleteSubcategory(subcategory: AdminCourseSubcategory): void {
+  pendingDelete.value = { type: 'subcategory', item: subcategory };
+  confirmDeleteOpen.value = true;
+}
+
+async function confirmDelete(): Promise<void> {
+  const target = pendingDelete.value;
+  if (!target) return;
+
+  try {
+    if (target.type === 'category') {
+      await deleteCategory(target.item.id);
+    } else {
+      await deleteSubcategory(target.item.id);
+    }
+
+    $q.notify({ type: 'positive', message: 'ลบข้อมูลเรียบร้อย', position: 'top' });
+  } catch (error: unknown) {
+    notifyError(error, 'ลบข้อมูลไม่สำเร็จ');
+  } finally {
+    pendingDelete.value = null;
+  }
+}
+
+function isNameDuplicated(name: string): boolean {
+  const normalized = name.trim().toLowerCase();
+  if (!normalized) return false;
+
+  if (dialogMode.value === 'category') {
+    return categories.value.some(
+      (category) =>
+        category.id !== editingNode.value?.id && category.name.trim().toLowerCase() === normalized,
+    );
+  }
+
+  const category = selectedParentCategory.value;
+  if (!category) return false;
+
+  return category.subcategories.some(
+    (subcategory) =>
+      subcategory.id !== editingNode.value?.id &&
+      subcategory.name.trim().toLowerCase() === normalized,
+  );
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return '';
+}
+
+function notifyError(error: unknown, fallbackMessage: string): void {
+  $q.notify({
+    type: 'negative',
+    message: getErrorMessage(error) || fallbackMessage,
+    position: 'top',
+  });
+}
+</script>
+
+<style lang="scss" scoped>
+.categories-manager__stats {
+  margin-bottom: 18px;
+  align-items: stretch;
+}
+
+.categories-manager__stats > [class*='col-'] {
+  display: flex;
+}
+
+.categories-manager__stats :deep(.base-info-card) {
+  width: 100%;
+}
+
+.categories-manager__search {
+  width: min(280px, 100%);
+}
+
+.categories-manager__add-btn {
+  min-height: 40px !important;
+  padding: 0 16px !important;
+  font-size: 0.875rem !important;
+  white-space: nowrap;
+}
+
+.categories-manager__sub-add-btn {
+  min-height: 32px !important;
+  padding: 0 12px !important;
+  font-size: 0.8rem !important;
+  white-space: nowrap;
+}
+
+.categories-manager__progress {
+  display: grid;
+  grid-template-columns: minmax(90px, 1fr) 42px;
+  gap: 8px;
+  align-items: center;
+  color: var(--admin-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+// Hierarchy row variants — drive BaseTable's row colour tokens per level.
+.categories-manager :deep(.categories-row--category) {
+  --base-table-row-hover: rgba(245, 166, 35, 0.05);
+}
+
+.categories-manager :deep(.categories-row--subcategory) {
+  --base-table-row-bg: #f8fafc;
+  --base-table-row-hover: #f1f5f9;
+}
+
+.categories-index {
+  color: var(--q-primary);
+  font-weight: 800;
+}
+
+.category-cell {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.category-cell--subcategory {
+  padding-left: 18px;
+}
+
+.category-cell__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.category-cell__icon--category {
+  color: #b7791f;
+  background: rgba(245, 166, 35, 0.14);
+}
+
+.category-cell__icon--subcategory {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.category-cell__copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  min-height: 56px;
+  align-content: center;
+}
+
+.category-cell__copy--skeleton {
+  width: 100%;
+}
+
+.category-cell__name {
+  display: -webkit-box;
+  min-width: 0;
+  color: var(--admin-navy);
+  font-size: 0.95rem;
+  font-weight: 850;
+  line-height: 1.42;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  min-height: calc(1.42em * 2);
+  text-wrap: pretty;
+}
+
+.category-cell__meta,
+.category-cell__courses span {
+  color: var(--admin-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.category-cell__meta {
+  display: block;
+  min-height: 1.2em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-cell__courses {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.categories-manager__metric-skeleton {
+  margin-left: auto;
+}
+
+.category-cell__status {
+  display: inline-grid;
+  grid-template-columns: 42px 64px;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  width: 114px;
+}
+
+.category-cell__status :deep(.q-toggle) {
+  width: 42px;
+  min-width: 42px;
+}
+
+.category-cell__status-badge {
+  justify-content: center;
+  width: 64px;
+  min-width: 64px;
+}
+
+.category-cell__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.categories-manager-action-btn {
+  --admin-action-color: var(--admin-info-ink);
+  --admin-action-border: rgba(16, 35, 63, 0.12);
+  --admin-action-ring: rgba(16, 35, 63, 0.08);
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  margin: 0;
+  background: #ffffff !important;
+  color: var(--admin-action-color) !important;
+  border: 1px solid var(--admin-action-border) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+
+  :deep(.q-icon) {
+    font-size: 18px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: var(--admin-action-border) !important;
+    box-shadow:
+      0 8px 18px rgba(15, 23, 42, 0.12),
+      0 0 0 1px var(--admin-action-ring) !important;
+  }
+
+  &.disabled,
+  &[disabled] {
+    box-shadow: none !important;
+    background: #f1f5f9 !important;
+    color: #94a3b8 !important;
+    transform: none;
+  }
+}
+
+.categories-manager-action-btn--edit {
+  --admin-action-color: var(--admin-gold);
+  --admin-action-border: rgba(245, 166, 35, 0.28);
+  --admin-action-ring: rgba(245, 166, 35, 0.1);
+}
+
+.categories-manager-action-btn--delete {
+  --admin-action-color: var(--admin-danger-ink);
+  --admin-action-border: rgba(225, 29, 72, 0.18);
+  --admin-action-ring: rgba(225, 29, 72, 0.08);
+}
+
+.taxonomy-dialog__form {
+  display: grid;
+  gap: 16px;
+}
+
+.taxonomy-dialog__actions-inner {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.taxonomy-dialog__actions-inner > * {
+  width: 100%;
+}
+
+@media (max-width: 760px) {
+  .categories-manager__search {
+    width: 100%;
+  }
+
+  .category-cell--subcategory {
+    padding-left: 8px;
+  }
+
+  .taxonomy-dialog__actions-inner {
+    grid-template-columns: 1fr;
+  }
+}
+
+.taxonomy-field-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.taxonomy-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.taxonomy-icon-cell {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(17, 24, 39, 0.1);
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.18s ease;
+
+  &:hover {
+    border-color: rgba(17, 24, 39, 0.3);
+    background: #f1f5f9;
+  }
+
+  &--active {
+    background: rgba(245, 166, 35, 0.1);
+    border-width: 2px;
+  }
+}
+</style>

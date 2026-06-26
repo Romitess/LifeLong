@@ -1,0 +1,123 @@
+// app global css
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import './App/admin-family/admin-theme.scss';
+@import './App/centralfinance/central-finance-theme.scss';
+@import './App/lifelong2/lifelong2-theme.scss';
+@import './App/theme-tokens/colors.scss';
+@import './App/theme-tokens/shadows.scss';
+@import './App/theme-tokens/radius.scss';
+@import './App/theme-tokens/typography.scss';
+@import './App/theme-tokens/grain.scss';
+@import './App/theme-tokens/motion.scss';
+
+*,
+body,
+.q-app {
+  font-family:
+    'Noto Sans Thai',
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+// ── GOLDEN TEXT SELECTION ──
+*::selection {
+  background-color: #f6e073;
+  color: #ffffff;
+}
+
+*::-moz-selection {
+  background-color: #f6e073;
+  color: #ffffff;
+}
+
+body {
+  background-color: #f8f6f1;
+}
+
+.section-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.section-title-underline {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 800;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  display: inline-block;
+}
+
+// ── GLOBAL BUTTON STYLES ────────────────────────────────────
+// ── GLOBAL BUTTON & COMPONENT STYLES ────────────────────────
+// บังคับสไตล์ให้ "ทุกปุ่ม" มีขอบและเด้งตามที่กำหนด
+body .q-btn {
+  border-radius: var(--radius-md) !important; // token กลาง (radius.scss) = 12px
+  text-transform: none !important;
+  font-weight: 600 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+  // สถานะปกติ: สีเทาอมน้ำเงินจางๆ
+  border: 1px solid rgba(17, 24, 39, 0.12) !important;
+  box-shadow: none !important; // ปิดเงาเดิมเพื่อให้ขอบชัด
+
+  // สถานะ Hover: ยก + เงานุ่ม เหมือนกันทุกปุ่ม (primary/secondary ต่างแค่สี)
+  // ไม่เปลี่ยนขอบเป็นสีส้ม เพื่อไม่ให้ปุ่ม solid/secondary hover แปลกๆ
+  &:not(:disabled):not(.disabled):hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 16px 32px rgba(17, 24, 39, 0.12) !important;
+  }
+
+  &:active {
+    transform: translateY(-1px) !important;
+  }
+}
+
+// ปุ่ม outline/flat: ตอน hover Quasar ใส่ tint = currentColor (สีของปุ่ม เช่นส้ม)
+// ทำให้ปุ่ม secondary "กลายเป็นส้ม". ปรับ tint เป็นเทากลางๆ ให้ hover เหมือนกันทุกปุ่ม
+// (ต่างกันแค่สีพื้น/ตัวอักษร ไม่ใช่สี hover)
+body .q-btn--outline .q-focus-helper,
+body .q-btn--flat .q-focus-helper {
+  background: rgb(15, 23, 42) !important;
+}
+
+// Input/field ขอบมน 12px ให้เท่ากับปุ่ม/การ์ด/admin ทั้งระบบ
+// (เลี่ยง pill 28px ของ prop `rounded` ที่มนเกิน)
+.q-field--outlined .q-field__control,
+.q-field--outlined .q-field__control::before,
+.q-field--outlined .q-field__control::after {
+  border-radius: var(--radius-md); // token กลาง (radius.scss) = 12px ให้เท่าปุ่ม/การ์ด
+}
+
+// ข้อยกเว้นสำหรับปุ่มในปฏิทิน (Reset Calendar Buttons)
+.q-date .q-btn {
+  border: none !important;
+  border-radius: 50% !important;
+  transform: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+
+  &:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+  }
+}
+
+// บังคับสไตล์ให้การ์ดและกล่องข้อมูลต่างๆ
+.q-card:not(.base-info-strip),
+.profile-stat-card,
+.feature-strip-item,
+.course-reg-card {
+  border: none !important;
+  border-radius: 14px !important;
+  // ใช้ box-shadow สร้างขอบแทน เพื่อความคมชัด
+  box-shadow:
+    0 0 0 1px rgba(17, 24, 39, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.02) !important;
+}
