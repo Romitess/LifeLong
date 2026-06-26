@@ -6,36 +6,6 @@
 # =============================================================================
 
 services:
-  backend:
-    build:
-      context: ./lifelong2-back
-    container_name: lll_backend
-    restart: unless-stopped
-    env_file:
-      - ./.env
-    expose:
-      - '3000'
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - backend_uploads:/app/uploads
-      - backend_uploaded_file:/app/uploaded_file
-
-  frontend:
-    build:
-      context: ./lifelong-front
-      args:
-        VITE_API_URL: ${VITE_API_URL:-}
-        VITE_BACKEND_PUBLIC_URL: ${VITE_BACKEND_PUBLIC_URL:-http://localhost:3000}
-        VITE_MOODLE_URL: ${VITE_MOODLE_URL:-http://localhost:8080}
-    container_name: lll_frontend
-    restart: unless-stopped
-    ports:
-      - '80:80'
-    depends_on:
-      - backend
-
   # ============================================================
   # BACKEND DATABASE (NestJS)
   # Adminer → http://localhost:8081
@@ -168,10 +138,6 @@ services:
   # NGINX REVERSE PROXY — port 80
   # ============================================================
 volumes:
-  backend_uploads:
-    driver: local
-  backend_uploaded_file:
-    driver: local
   db_data:
   moodle_mariadb_data:
     driver: local
