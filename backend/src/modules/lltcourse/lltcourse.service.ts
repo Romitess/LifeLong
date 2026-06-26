@@ -1485,7 +1485,7 @@ export class LltcourseService {
     }
 
     const backendPublicUrl =
-      this.configService.get<string>('BACKEND_PUBLIC_URL') ||
+      this.configService.get<string>('BACKEND_URL') ||
       `http://localhost:${this.configService.get<number>('PORT') ?? 3000}`;
 
     try {

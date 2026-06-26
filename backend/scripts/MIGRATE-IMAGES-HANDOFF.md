@@ -52,7 +52,7 @@ npm run migrate:platform-gateway-images -- --only=course --apply
 - [ ] **CBS PDF → UUID** — ตอนนี้ `uploads/course-cbs/*.pdf` ตั้งชื่อ `timestamp-name.pdf`
       (`buildCbsFilename` / `createCbsFilename` ใน `admin-courses.controller.ts` + `lltcourse.controller.ts`)
       อนาคตเปลี่ยนเป็น UUID ให้เหมือน flow รูป
-- [ ] **CBS PDF เก็บบน gateway?** — ตอนนี้ยังเก็บ local + serve ผ่าน BACKEND_PUBLIC_URL
+- [ ] **CBS PDF เก็บบน gateway?** — ตอนนี้ยังเก็บ local + serve ผ่าน BACKEND_URL
       **ต้องคุยกับทีมก่อน** ว่าจะย้ายขึ้น gateway เหมือนรูปไหม (ยังไม่ตัดสินใจ)
 - [ ] **profile images** — ยังไม่ได้ทำ migration ฝั่ง profile (flow upload ใหม่ใช้ gateway แล้ว)
 - [ ] cert-signer / cert-template — flow ใหม่ขึ้น gateway แล้ว, ไม่มีไฟล์ local ค้าง (โฟลเดอร์ว่าง) → ไม่ต้อง migrate

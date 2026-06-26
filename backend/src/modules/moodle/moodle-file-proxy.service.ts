@@ -31,7 +31,7 @@ export class MoodleFileProxyService {
   // หา public base URL ของ backend นี้ (ใช้ต่อ URL proxy)
   private getBackendPublicUrl(): string {
     return (
-      this.configService.get<string>('BACKEND_PUBLIC_URL') ||
+      this.configService.get<string>('BACKEND_URL') ||
       `http://localhost:${this.configService.get<number>('PORT') ?? 3000}`
     ).replace(/\/+$/, '');
   }

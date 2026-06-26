@@ -188,9 +188,7 @@ export function useProfileChat(
     }
 
     const baseUrl =
-      (import.meta.env.VITE_API_URL as string) ||
-      (import.meta.env.VITE_BACKEND_URL as string) ||
-      '';
+      (import.meta.env.BACKEND_URL as string) || (import.meta.env.VITE_BACKEND_URL as string) || '';
     const origin = baseUrl.startsWith('http') ? new URL(baseUrl).origin : window.location.origin;
 
     socket = io(`${origin}/chat`, {

@@ -273,7 +273,7 @@ export class CertificatesService {
   // ── private helpers ─────────────────────────────────────────────────────────
 
   private backendUrl(): string {
-    return process.env['BACKEND_PUBLIC_URL'] ?? 'http://localhost:3000';
+    return process.env['BACKEND_URL'] ?? 'http://localhost:3000';
   }
 
   private deriveCertUrl(certCode: string): string {

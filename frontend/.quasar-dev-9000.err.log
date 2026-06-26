@@ -55,8 +55,8 @@
    [90m 347 |[39m }[33m;[39m
   [31m[1m>[22m[39m[90m 348 |[39m [36mconst[39m heroPublicBaseUrl [33m=[39m (
    [90m     |[39m       [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
-   [90m 349 |[39m   [36mimport[39m[33m.[39mmeta[33m.[39menv[33m.[39m[33mVITE_BACKEND_PUBLIC_URL[39m [33m||[39m
-   [90m 350 |[39m   [36mimport[39m[33m.[39mmeta[33m.[39menv[33m.[39m[33mVITE_API_URL[39m [33m||[39m
+   [90m 349 |[39m   [36mimport[39m[33m.[39mmeta[33m.[39menv[33m.[39m[33mBACKEND_URL[39m [33m||[39m
+   [90m 350 |[39m   [36mimport[39m[33m.[39mmeta[33m.[39menv[33m.[39m[33mBACKEND_URL[39m [33m||[39m
    [90m 351 |[39m   [32m'http://localhost:3000'[39m[0m
 
 [1m[30m[101m ERROR(ESLint) [49m[39m[22m 'createHeroAvatar' is defined but never used. (@typescript-eslint/no-unused-vars)

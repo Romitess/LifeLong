@@ -84,9 +84,7 @@ export default defineConfig((ctx) => {
       // publicPath: '/'
       // analyze: true
       env: {
-        VITE_API_URL: process.env.VITE_API_URL ?? process.env.BACKEND_URL ?? '',
-        VITE_BACKEND_PUBLIC_URL:
-          process.env.VITE_BACKEND_PUBLIC_URL ?? process.env.BACKEND_PUBLIC_URL ?? '',
+        BACKEND_URL: process.env.BACKEND_URL ?? process.env.BACKEND_URL ?? '',
         VITE_MOODLE_URL: process.env.VITE_MOODLE_URL ?? process.env.MOODLE_PUBLIC_URL ?? '',
       },
       // rawDefine: {}
@@ -140,15 +138,15 @@ export default defineConfig((ctx) => {
       host: '0.0.0.0', // เครื่องอื่นในวงแลนเข้าได้
       proxy: {
         '/api': {
-          target: process.env.BACKEND_URL ?? process.env.BACKEND_PUBLIC_URL ?? 'http://localhost:3000',
+          target: process.env.BACKEND_URL ?? process.env.BACKEND_URL ?? 'http://localhost:3000',
           changeOrigin: true,
         },
         '/uploads': {
-          target: process.env.BACKEND_URL ?? process.env.BACKEND_PUBLIC_URL ?? 'http://localhost:3000',
+          target: process.env.BACKEND_URL ?? process.env.BACKEND_URL ?? 'http://localhost:3000',
           changeOrigin: true,
         },
         '/socket.io': {
-          target: process.env.BACKEND_URL ?? process.env.BACKEND_PUBLIC_URL ?? 'http://localhost:3000',
+          target: process.env.BACKEND_URL ?? process.env.BACKEND_URL ?? 'http://localhost:3000',
           changeOrigin: true,
           ws: true,
         },
