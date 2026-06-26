@@ -513,6 +513,12 @@ const courseStore = useCourseStore();
 const categoryStore = useCategoryStore();
 const authStore = useAuthStore();
 const { t, locale } = useI18n({ useScope: 'global' });
+
+function navLabel(key: string, fallback: string): string {
+  const translated = t(key);
+  return translated === key ? fallback : translated;
+}
+
 const { fetchCategories } = useCategoryList();
 categoryStore.init();
 
@@ -788,6 +794,12 @@ const navItems = computed<NavItem[]>(() => {
         label: t('instructor.nav.studentsList'),
         icon: 'fact_check',
         to: '/instructor/students',
+      },
+      {
+        name: 'registrant-emails',
+        label: navLabel('instructor.nav.registrantEmails', 'ส่งอีเมลถึงผู้ลงทะเบียน'),
+        icon: 'mail',
+        to: '/instructor/registrant-emails',
       },
       {
         name: 'learning-results',
@@ -1105,6 +1117,8 @@ function syncActiveNavWithRoute(path: string) {
     activeNav.value = route.query.status === 'active' ? 'active-courses-mgmt' : 'my-courses-mgmt';
   } else if (path.includes('/instructor/results')) {
     activeNav.value = 'learning-results';
+  } else if (path.includes('/instructor/registrant-emails')) {
+    activeNav.value = 'registrant-emails';
   } else if (path.includes('/instructor/students')) {
     activeNav.value = 'students-mgmt';
   } else if (path.includes('/instructor/chat')) {
@@ -1296,6 +1310,7 @@ async function onNavClick(nav: NavItem, event?: Event) {
         '/instructor/dashboard',
         '/instructor/courses',
         '/instructor/students',
+        '/instructor/registrant-emails',
         '/instructor/results',
         '/instructor/certificates',
         '/instructor/chat',

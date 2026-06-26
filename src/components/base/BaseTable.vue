@@ -644,7 +644,8 @@ function cellValue(row: T, key: string): unknown {
   .base-table__pagination {
     margin-left: 0;
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
+    overflow-x: auto;
   }
 }
 </style>

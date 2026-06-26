@@ -65,16 +65,6 @@
                   <q-icon name="search" color="grey-5" />
                 </template>
               </q-input>
-
-              <q-btn
-                outline
-                color="primary"
-                icon="filter_alt"
-                :label="t('instructor.table.filterBtn')"
-                no-caps
-                class="course-table-filter-btn"
-                @click="goToActiveInstructorCoursesTable"
-              />
             </div>
           </div>
 
@@ -2562,13 +2552,6 @@ function onGradeWorkClick(event: Event) {
   void router.push('/instructor/students');
 }
 
-function goToActiveInstructorCoursesTable(): void {
-  void router.push({
-    path: '/instructor/courses',
-    query: { view: 'table', status: 'active' },
-  });
-}
-
 function previewCourse(): void {
   if (!selectedCourse.value) return;
   void router.push(`/course/${selectedCourse.value.id}`);
@@ -3162,17 +3145,12 @@ function openQuickDialog(title: string): void {
   width: min(300px, 34vw);
 }
 
-.course-table-filter-btn,
 .course-table-create-btn {
   min-height: 40px;
   padding: 0 16px !important;
   border-radius: 8px !important;
   font-size: 0.78rem;
   font-weight: 900 !important;
-}
-
-.course-table-filter-btn {
-  background: #ffffff !important;
 }
 
 .course-table-create-btn {

@@ -543,6 +543,7 @@ export function useInstructorBackend() {
     courseId: number;
     title: string;
     content: string;
+    recipientUserIds?: number[];
   }): Promise<CreateAnnouncementResponse> {
     const { data } = await api.post<CreateAnnouncementResponse>('/api/announcements', dto);
     return data;

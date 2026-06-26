@@ -108,8 +108,8 @@ const props = withDefaults(defineProps<Props>(), {
   activeTextColor: 'white',
   iconPrev: 'chevron_left',
   iconNext: 'chevron_right',
-  iconFirst: 'first_page',
-  iconLast: 'last_page',
+  iconFirst: 'keyboard_double_arrow_left',
+  iconLast: 'keyboard_double_arrow_right',
   disable: false,
 });
 
@@ -238,23 +238,24 @@ function resolveColor(color: string): string {
 
 .base-pagination__btn {
   display: inline-flex;
-  flex: 0 0 40px;
+  flex: 0 0 48px;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  min-height: 40px;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
   padding: 0;
   appearance: none;
   border-radius: 50% !important;
   font: inherit;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 800;
   transform: none !important;
   cursor: pointer;
   background-color: #ffffff !important;
   color: var(--base-pagination-ink) !important;
-  border: 1px solid #dce4ee !important;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+  border: 1px solid #e5edf5 !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06) !important;
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease,
@@ -262,10 +263,10 @@ function resolveColor(color: string): string {
     color 0.2s ease;
 
   &:not([aria-current='true']):hover {
-    background-color: #ffffff !important;
-    color: inherit !important;
+    background-color: #fffaf1 !important;
+    color: var(--base-pagination-active-bg) !important;
     transform: translateY(-2px) !important;
-    border-color: rgba(245, 166, 35, 0.24) !important;
+    border-color: rgba(245, 166, 35, 0.34) !important;
     box-shadow:
       0 12px 24px rgba(17, 24, 39, 0.08),
       0 0 0 1px rgba(245, 166, 35, 0.08) !important;
@@ -275,14 +276,19 @@ function resolveColor(color: string): string {
     background-color: var(--base-pagination-active-bg) !important;
     color: var(--base-pagination-active-ink) !important;
     border-color: var(--base-pagination-active-bg) !important;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 10px 20px rgba(245, 166, 35, 0.24) !important;
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.45;
+    opacity: 1;
+    color: #8a96a8 !important;
     transform: none !important;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04) !important;
+  }
+
+  :deep(.q-icon) {
+    font-size: 18px;
   }
 }
 
@@ -292,7 +298,7 @@ function resolveColor(color: string): string {
   align-items: center;
   justify-content: center;
   width: 24px;
-  height: 40px;
+  height: 48px;
   color: #667085;
   font-weight: 700;
   user-select: none;

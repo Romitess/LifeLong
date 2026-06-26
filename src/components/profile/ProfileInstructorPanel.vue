@@ -9,18 +9,6 @@
         </div>
         <div class="text-caption text-grey-6 q-mt-xs"></div>
       </div>
-      <q-select
-        v-model="selectedCourseId"
-        :options="courseFilterOptions"
-        emit-value
-        map-options
-        option-label="label"
-        option-value="value"
-        dense
-        outlined
-        class="instructor-home-header__filter"
-        popup-content-class="instructor-course-filter-menu"
-      />
     </div>
 
     <div class="instructor-overview-grid">
@@ -188,11 +176,6 @@ import { useCourseStore } from 'src/stores/course-store';
 import { useProfileNavigation } from 'src/composables/use-profile-navigation';
 import type { Course } from 'src/types/course';
 
-interface CourseFilterOption {
-  label: string;
-  value: string;
-}
-
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
 const { goToInstructorStudents, goToInstructorLearningResults, goToInstructorCertificates } =
@@ -211,17 +194,6 @@ const selectedCourse = computed<Course | null>(
 const scopedInstructorCourses = computed<Course[]>(() =>
   selectedCourse.value ? [selectedCourse.value] : instructorCourses.value,
 );
-
-const courseFilterOptions = computed<CourseFilterOption[]>(() => [
-  {
-    label: `ทุกวิชา (${instructorCourses.value.length.toLocaleString('th-TH')})`,
-    value: 'all',
-  },
-  ...instructorCourses.value.map((course) => ({
-    label: `${course.code} - ${course.titleEn || course.title}`,
-    value: course.id,
-  })),
-]);
 
 watch(instructorCourses, (courses) => {
   if (selectedCourseId.value === 'all') return;

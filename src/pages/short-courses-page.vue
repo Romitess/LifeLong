@@ -9,12 +9,6 @@
               :placeholder="$t('searchPlaceholder')"
               class="col"
             />
-            <ShortCourseFilterMenu
-              v-model="filter"
-              :type-options="typeOptions"
-              :date-locale="dateLocale"
-              @reset="resetFilter"
-            />
           </div>
         </div>
       </div>
@@ -102,7 +96,6 @@ import BaseCourseCard from 'components/base/BaseCourseCard.vue';
 import BasePagination from 'components/base/BasePagination.vue';
 import BaseSpinner from 'components/base/BaseSpinner.vue';
 import BaseSearchInput from 'components/base/BaseSearchInput.vue';
-import ShortCourseFilterMenu from 'components/short-courses/ShortCourseFilterMenu.vue';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 
 const router = useRouter();
@@ -112,47 +105,6 @@ const categoryStore = useCategoryStore();
 categoryStore.init();
 
 const { courses, isLoading, fetchCourses } = useCourseList();
-
-const dateLocale = computed(() => {
-  if (locale.value === 'th') {
-    return {
-      days: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'],
-      daysShort: ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'],
-      months: [
-        'มกราคม',
-        'กุมภาพันธ์',
-        'มีนาคม',
-        'เมษายน',
-        'พฤษภาคม',
-        'มิถุนายน',
-        'กรกฎาคม',
-        'สิงหาคม',
-        'กันยายน',
-        'ตุลาคม',
-        'พฤศจิกายน',
-        'ธันวาคม',
-      ],
-      monthsShort: [
-        'ม.ค.',
-        'ก.พ.',
-        'มี.ค.',
-        'เม.ย.',
-        'พ.ค.',
-        'มิ.ย.',
-        'ก.ค.',
-        'ส.ค.',
-        'ก.ย.',
-        'ต.ค.',
-        'พ.ย.',
-        'ธ.ค.',
-      ],
-      firstDayOfWeek: 0,
-      format24h: true,
-      pluralDay: 'วัน',
-    };
-  }
-  return undefined;
-});
 
 const categoryMap: Record<string, string> = {
   ภาษาและการสื่อสาร: 'langComm',
@@ -215,13 +167,6 @@ const activeFilter = ref({
   startDate: null as string | null,
   endDate: null as string | null,
 });
-
-const typeOptions = computed(() => [
-  { label: t('all'), value: null },
-  { label: t('statusCert'), value: 'ประกาศนียบัตร' },
-  { label: t('statusCredit'), value: 'สะสมหน่วยกิต' },
-  { label: t('statusOpen'), value: 'เปิดรับสมัคร' },
-]);
 
 function parseDateString(dateStr: string | null): string | null {
   if (!dateStr || dateStr.length !== 10) return null;

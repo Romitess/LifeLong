@@ -10,12 +10,6 @@
           {{ $t('profile.courses.totalCount', { count: myRegistrationsCount }) }}
         </div>
       </div>
-      <BaseSearchInput
-        :model-value="courseSearch"
-        :placeholder="$t('profile.courses.search')"
-        class="profile-search-input"
-        @update:model-value="$emit('update:courseSearch', $event)"
-      />
     </div>
 
     <!-- Registered Courses Table Header -->
@@ -186,7 +180,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import BaseSearchInput from 'components/base/BaseSearchInput.vue';
 import ProfileCourseCard from 'components/profile/ProfileCourseCard.vue';
 import { useCourseBookmarkStore } from 'src/stores/course-bookmark-store';
 import type { RegisteredCourseEntry } from 'src/composables/use-my-registered-courses';

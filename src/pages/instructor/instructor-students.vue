@@ -58,137 +58,114 @@
               }}
             </h2>
             <span
-              >{{ instructorCourses.length.toLocaleString() }}
+              >{{ filteredInstructorCourses.length.toLocaleString() }}
               {{ t('instructor.students.coursesUnit') }}</span
             >
           </div>
+          <BaseSearchInput
+            v-model="courseSearch"
+            :placeholder="t('instructor.students.searchPlaceholder')"
+            class="student-course-list-search"
+          />
         </div>
 
-        <div v-if="activeStudentTab === 'results'" class="learning-result-table-scroll">
-          <table class="learning-result-course-table">
-            <colgroup>
-              <col class="learning-result-col-index" />
-              <col class="learning-result-col-title" />
-              <col class="learning-result-col-fee" />
-              <col class="learning-result-col-schedule" />
-              <col class="learning-result-col-seat" />
-              <col class="learning-result-col-enrolled" />
-              <col class="learning-result-col-pass" />
-              <col class="learning-result-col-fail" />
-              <col class="learning-result-col-actions" />
-              <col class="learning-result-col-download" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th>{{ t('instructor.students.col.no') }}</th>
-                <th>{{ t('instructor.students.col.courseName') }}</th>
-                <th>{{ t('instructor.students.col.fee') }}</th>
-                <th>{{ t('instructor.students.col.schedule') }}</th>
-                <th>{{ t('instructor.students.col.capacity') }}</th>
-                <th>{{ t('instructor.students.col.enrolled') }}</th>
-                <th>{{ t('instructor.students.col.passed') }}</th>
-                <th>{{ t('instructor.students.col.failed') }}</th>
-                <th>{{ t('instructor.students.col.actions') }}</th>
-                <th>{{ t('instructor.students.col.download') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(course, index) in instructorCourses" :key="course.id">
-                <td class="text-center">{{ index + 1 }}</td>
-                <td class="learning-result-title-cell">
-                  <button type="button" @click="selectCourse(course.id)">
-                    {{ course.code }} : {{ course.title }}
-                  </button>
-                  <span v-if="course.titleEn">{{ course.titleEn }}</span>
-                </td>
-                <td class="text-center">
-                  {{
-                    course.isFree ? t('instructor.students.noFee') : formatCurrency(course.price)
-                  }}
-                </td>
-                <td class="learning-result-schedule-cell">
-                  <span>{{ t('instructor.students.enrollmentLabel') }}</span>
-                  <strong>{{ formatCourseDateRange(course) }}</strong>
-                </td>
-                <td class="text-center">{{ course.maxSeats?.toLocaleString() ?? '-' }}</td>
-                <td class="text-center">{{ course.enrolledCount.toLocaleString() }}</td>
-                <td class="text-center text-positive">
-                  {{ getCoursePassedCount(course).toLocaleString() }}
-                </td>
-                <td class="text-center text-negative">
-                  {{ getCourseFailedCount(course).toLocaleString() }}
-                </td>
-                <td class="text-center">
-                  <q-btn
-                    dense
-                    round
-                    flat
-                    color="primary"
-                    icon="edit"
-                    class="learning-result-icon-btn"
-                    tag="a"
-                    :href="resolveFullUrl(`/instructor/results?courseId=${course.id}`)"
-                    @click="onSelectCourseClick(course.id, $event)"
-                  >
-                    <q-tooltip>{{ t('instructor.students.recordResultTooltip') }}</q-tooltip>
-                  </q-btn>
-                </td>
-                <td class="text-center">
-                  <button
-                    type="button"
-                    class="learning-result-download-link"
-                    @click.stop="printCbs003(course)"
-                  >
-                    {{ getLearningResultDownloadCode() }}
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="instructorCourses.length === 0">
-                <td colspan="10" class="learning-result-empty-cell">
-                  {{ t('instructor.table.noCourseFound') }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-else class="student-course-list">
-          <button
-            v-for="course in instructorCourses"
-            :key="course.id"
-            type="button"
-            class="student-course-row"
-            @click="selectCourse(course.id)"
-          >
-            <img :src="course.imageUrl" :alt="course.titleEn || course.title" />
-            <div class="student-course-row__body">
-              <div class="student-course-row__code">{{ course.code }}</div>
-              <h3>{{ course.titleEn || course.title }}</h3>
-              <p v-if="course.titleEn && course.titleEn !== course.title">{{ course.title }}</p>
+        <BaseTable
+          :rows="paginatedInstructorCourses"
+          :columns="studentCourseColumns"
+          row-key="id"
+          show-index
+          :rows-per-page="courseListRowsPerPage"
+          :index-offset="(courseListPage - 1) * courseListRowsPerPage"
+          :page="courseListPage"
+          :total-pages="courseListPageCount"
+          min-width="1120px"
+          :row-height="104"
+          height-mode="stable"
+          :empty-text="t('instructor.table.noCourseFound')"
+          class="student-course-table"
+          :on-page-change="setCourseListPage"
+        >
+          <template #cell-course="{ row: course }">
+            <div class="student-course-table__title-layout">
+              <img
+                :src="course.imageUrl"
+                :alt="course.titleEn || course.title"
+                class="student-course-table__image"
+              />
+              <div class="student-course-table__copy">
+                <button
+                  type="button"
+                  class="student-course-table__link"
+                  @click="selectCourse(course.id)"
+                >
+                  {{ course.code }} : {{ course.title }}
+                </button>
+                <div v-if="course.titleEn" class="student-course-table__subtitle">
+                  {{ course.titleEn }}
+                </div>
+              </div>
             </div>
-            <div class="student-course-row__metric">
-              <span>{{ t('instructor.students.learnerUnit') }}</span>
-              <strong>{{ course.enrolledCount.toLocaleString() }}</strong>
+          </template>
+          <template #cell-fee="{ row: course }">
+            {{ course.isFree ? t('instructor.students.noFee') : formatCurrency(course.price) }}
+          </template>
+          <template #cell-schedule="{ row: course }">
+            <div class="student-course-table__schedule">
+              <div>{{ t('instructor.students.enrollmentLabel') }}</div>
+              <strong>{{ formatCourseDateRange(course) }}</strong>
             </div>
-            <div class="student-course-row__metric">
-              <span>{{ t('instructor.students.capacityLabel') }}</span>
-              <strong>{{
-                course.maxSeats?.toLocaleString() ?? t('instructor.students.unlimited')
-              }}</strong>
+          </template>
+          <template #cell-seats="{ row: course }">
+            {{
+              course.maxSeats?.toLocaleString() ??
+              (activeStudentTab === 'results' ? '-' : t('instructor.students.unlimited'))
+            }}
+          </template>
+          <template #cell-enrolled="{ row: course }">
+            {{ course.enrolledCount.toLocaleString() }}
+          </template>
+          <template v-if="activeStudentTab === 'results'" #cell-passed="{ row: course }">
+            <span class="text-positive">{{ getCoursePassedCount(course).toLocaleString() }}</span>
+          </template>
+          <template v-if="activeStudentTab === 'results'" #cell-failed="{ row: course }">
+            <span class="text-negative">{{ getCourseFailedCount(course).toLocaleString() }}</span>
+          </template>
+          <template #cell-action="{ row: course }">
+            <div class="student-course-table__actions">
+              <AppActionButton
+                v-if="activeStudentTab === 'roster'"
+                variant="primary"
+                color="primary"
+                icon="fact_check"
+                :label="t('instructor.students.checkRosterBtn')"
+                no-caps
+                class="student-course-table__action-btn"
+                tag="a"
+                :href="resolveFullUrl(`/instructor/students?courseId=${course.id}`)"
+                @click="onSelectCourseClick(course.id, $event)"
+              />
+              <AppIconButton
+                v-else
+                icon="edit"
+                tone="edit"
+                tag="a"
+                :href="resolveFullUrl(`/instructor/results?courseId=${course.id}`)"
+                @click="onSelectCourseClick(course.id, $event)"
+              />
             </div>
-            <BaseButton
-              unelevated
-              color="primary"
-              icon="fact_check"
-              :label="t('instructor.students.checkRosterBtn')"
-              no-caps
-              class="student-course-row__action"
-              tag="a"
-              :href="resolveFullUrl(`/instructor/students?courseId=${course.id}`)"
-              @click="onSelectCourseClick(course.id, $event)"
-            />
-          </button>
-        </div>
+          </template>
+          <template v-if="activeStudentTab === 'results'" #cell-download="{ row: course }">
+            <div class="student-course-table__actions">
+              <button
+                type="button"
+                class="student-course-table__download-link"
+                @click.stop="printCbs003(course)"
+              >
+                {{ getLearningResultDownloadCode() }}
+              </button>
+            </div>
+          </template>
+        </BaseTable>
       </section>
 
       <section v-else class="student-roster-panel">
@@ -705,21 +682,11 @@
           </q-tabs>
 
           <div class="student-roster-filters row items-center q-gutter-md q-mb-md">
-            <q-input
+            <BaseSearchInput
               v-model="searchQuery"
               :placeholder="t('instructor.students.searchPlaceholder')"
-              outlined
-              dense
-              bg-color="white"
-              class="col-grow custom-filter-input"
-            >
-              <template v-slot:prepend>
-                <q-icon name="search" />
-              </template>
-              <template v-slot:append v-if="searchQuery">
-                <q-icon name="close" @click="searchQuery = ''" class="cursor-pointer" />
-              </template>
-            </q-input>
+              class="student-roster-search"
+            />
 
             <q-select
               v-model="statusFilter"
@@ -1130,7 +1097,10 @@ import type { Course } from 'src/types/course';
 import buuLogoUrl from 'src/assets/buu-logo-receipt.png';
 import BaseDateInput from 'src/components/base/BaseDateInput.vue';
 import BaseButton from 'src/components/base/BaseButton.vue';
+import AppActionButton from 'src/components/common/AppActionButton.vue';
+import AppIconButton from 'src/components/common/AppIconButton.vue';
 import BaseTable, { type BaseTableColumn } from 'src/components/base/BaseTable.vue';
+import BaseSearchInput from 'src/components/base/BaseSearchInput.vue';
 import InstructorPageHero from 'src/components/instructor/InstructorPageHero.vue';
 
 interface LearnerRow {
@@ -1214,6 +1184,7 @@ const studentHeroDescription = computed(() => {
 const learnerDetailDialogOpen = ref(false);
 const selectedLearner = ref<LearnerRow | null>(null);
 const searchQuery = ref('');
+const courseSearch = ref('');
 const statusFilter = ref('');
 const resultImportText = ref('');
 const gradeImportFileInput = ref<HTMLInputElement | null>(null);
@@ -1235,6 +1206,8 @@ const panelOpen = ref(false);
 const panelRow = ref<LearnerRow | null>(null);
 
 const instructorTableRowsPerPage = 10;
+const courseListRowsPerPage = 10;
+const courseListPage = ref(1);
 const rosterTablePage = ref(1);
 const learningResultTablePage = ref(1);
 
@@ -1293,6 +1266,25 @@ const instructorCourses = computed<Course[]>(() =>
     }
     return left.code.localeCompare(right.code);
   }),
+);
+const filteredInstructorCourses = computed<Course[]>(() => {
+  const query = courseSearch.value.trim().toLowerCase();
+  if (!query) return instructorCourses.value;
+
+  return instructorCourses.value.filter((course) =>
+    [course.code, course.title, course.titleEn]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query)),
+  );
+});
+const courseListPageCount = computed(() =>
+  Math.max(1, Math.ceil(filteredInstructorCourses.value.length / courseListRowsPerPage)),
+);
+const paginatedInstructorCourses = computed<Course[]>(() =>
+  filteredInstructorCourses.value.slice(
+    (courseListPage.value - 1) * courseListRowsPerPage,
+    courseListPage.value * courseListRowsPerPage,
+  ),
 );
 const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
@@ -1784,6 +1776,84 @@ function getLearningResultDownloadCode(): string {
   return 'CBS 003';
 }
 
+const studentCourseColumns = computed<BaseTableColumn[]>(() =>
+  activeStudentTab.value === 'results'
+    ? [
+        { key: 'course', label: t('instructor.students.col.courseName'), width: '30%' },
+        { key: 'fee', label: t('instructor.students.col.fee'), width: '96px', align: 'center' },
+        {
+          key: 'schedule',
+          label: t('instructor.students.col.schedule'),
+          width: '170px',
+          align: 'center',
+        },
+        {
+          key: 'seats',
+          label: t('instructor.students.col.capacity'),
+          width: '86px',
+          align: 'center',
+        },
+        {
+          key: 'enrolled',
+          label: t('instructor.students.col.enrolled'),
+          width: '92px',
+          align: 'center',
+        },
+        {
+          key: 'passed',
+          label: t('instructor.students.col.passed'),
+          width: '92px',
+          align: 'center',
+        },
+        {
+          key: 'failed',
+          label: t('instructor.students.col.failed'),
+          width: '92px',
+          align: 'center',
+        },
+        {
+          key: 'action',
+          label: t('instructor.students.col.actions'),
+          width: '88px',
+          align: 'center',
+        },
+        {
+          key: 'download',
+          label: t('instructor.students.col.download'),
+          width: '96px',
+          align: 'center',
+        },
+      ]
+    : [
+        { key: 'course', label: t('instructor.students.col.courseName'), width: '30%' },
+        { key: 'fee', label: t('instructor.students.col.fee'), width: '96px', align: 'center' },
+        {
+          key: 'schedule',
+          label: t('instructor.students.col.schedule'),
+          width: '170px',
+          align: 'center',
+        },
+        {
+          key: 'seats',
+          label: t('instructor.students.col.capacity'),
+          width: '86px',
+          align: 'center',
+        },
+        {
+          key: 'enrolled',
+          label: t('instructor.students.col.enrolled'),
+          width: '92px',
+          align: 'center',
+        },
+        {
+          key: 'action',
+          label: t('instructor.students.col.actions'),
+          width: '148px',
+          align: 'center',
+        },
+      ],
+);
+
 const learnerColumns: BaseTableColumn[] = [
   { key: 'name', label: 'นิสิต', width: '280px', sortable: true },
   { key: 'email', label: 'อีเมล', width: '240px' },
@@ -1811,9 +1881,21 @@ function setLearningResultTablePage(page: number): void {
   learningResultTablePage.value = page;
 }
 
+function setCourseListPage(page: number): void {
+  courseListPage.value = page;
+}
+
 watch(filteredLearners, () => {
   rosterTablePage.value = 1;
   learningResultTablePage.value = 1;
+});
+
+watch([courseSearch, activeStudentTab], () => {
+  courseListPage.value = 1;
+});
+
+watch(courseListPageCount, (pageCount) => {
+  courseListPage.value = Math.min(courseListPage.value, pageCount);
 });
 
 watch(rosterPageCount, (pageCount) => {
@@ -2517,9 +2599,6 @@ function exportLearnersPdf(): void {
             background: #e7e7e7;
             font-weight: 800;
           }
-          tbody tr:nth-child(even) {
-            background: #fffaf1;
-          }
         </style>
       </head>
       <body>
@@ -2568,6 +2647,8 @@ function exportLearnersPdf(): void {
 }
 
 .instructor-students {
+  width: 100%;
+  max-width: none;
   padding-block: 0 54px;
 }
 
@@ -2618,6 +2699,30 @@ function exportLearnersPdf(): void {
   border-radius: 14px;
   background: #fff;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+}
+
+.student-roster-search {
+  flex: 1 1 320px;
+  min-width: min(320px, 100%);
+}
+
+.student-course-list-search {
+  width: min(320px, 100%);
+}
+
+.student-course-list__empty {
+  padding: 28px 16px;
+  color: #64748b;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.student-course-list-pagination {
+  justify-content: flex-end;
+  padding: 18px 22px 22px;
+  border-top: 1px solid rgba(17, 24, 39, 0.08);
+  overflow-x: auto;
 }
 
 .student-breadcrumb-nav {
@@ -2803,6 +2908,108 @@ function exportLearnersPdf(): void {
   color: #ffffff;
 }
 
+.student-course-table__title-layout {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  min-width: 320px;
+}
+
+.student-course-table__image {
+  display: block;
+  width: 108px;
+  max-width: 108px;
+  height: 76px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.09);
+}
+
+.student-course-table__copy {
+  min-width: 0;
+}
+
+.student-course-table__link {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #172033;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 900;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.18s ease;
+
+  &:hover {
+    color: #d97706;
+  }
+}
+
+.student-course-table__subtitle {
+  display: block;
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.student-course-table__schedule {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  color: #26364d;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.42;
+
+  > div {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  > strong {
+    color: #172033;
+    font-size: 0.78rem;
+    font-weight: 900;
+  }
+}
+
+.student-course-table__actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.student-course-table__action-btn {
+  min-width: 132px;
+}
+
+.student-course-table__download-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #d97706;
+  font-size: 0.8rem;
+  font-weight: 900;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: color 0.18s ease;
+
+  &:hover {
+    color: #b45309;
+  }
+}
+
 .learning-result-table-scroll {
   display: block;
   overflow-x: auto;
@@ -2841,12 +3048,8 @@ function exportLearnersPdf(): void {
     transition: background-color 0.16s ease;
   }
 
-  tbody tr:nth-child(even) {
-    background: #fffaf1;
-  }
-
   tbody tr:hover {
-    background: #fff4dd;
+    background: rgba(37, 99, 235, 0.03);
   }
 }
 
@@ -2995,7 +3198,7 @@ function exportLearnersPdf(): void {
     box-shadow 0.2s ease;
 
   &:hover {
-    background: #fffaf1;
+    background: rgba(37, 99, 235, 0.03);
     box-shadow: inset 4px 0 0 $primary;
   }
 
@@ -3058,10 +3261,7 @@ function exportLearnersPdf(): void {
 }
 
 .student-course-row__action {
-  min-height: 38px;
-  border-radius: 999px !important;
-  font-size: 0.78rem;
-  font-weight: 900 !important;
+  min-height: 44px;
 }
 
 .student-roster-panel {
@@ -3731,12 +3931,8 @@ function exportLearnersPdf(): void {
     text-align: center;
   }
 
-  tbody tr:nth-child(even) {
-    background: #fffaf1;
-  }
-
   tbody tr:hover {
-    background: #fff4dd;
+    background: rgba(37, 99, 235, 0.03);
   }
 }
 
