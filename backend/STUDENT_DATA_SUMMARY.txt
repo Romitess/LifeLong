@@ -42,7 +42,7 @@
 
 #### 📚 เอกสาร
 
-- **STUDENT_DATA_IMPORT.md** (ใน root `lifelong2-back/`)
+- **STUDENT_DATA_IMPORT.md** (ใน root `backend/`)
   - เอกสารการใช้งานละเอียด
   - ข้อมูลทั้ง 15 นักเรียน
   - วิธีการต่างๆ 3 แบบ
@@ -53,7 +53,7 @@
 
 #### วิธี 1️⃣ : Python Script (⭐ แนะนำ)
 ```bash
-cd c:\Users\ntpkim\lifelong\lifelong2-back
+cd c:\Users\ntpkim\lifelong\backend
 pip install mysql-connector-python  # ครั้งแรกเท่านั้น
 python scripts/add_student_data.py
 ```
@@ -138,7 +138,7 @@ mysql -h localhost -P 3307 -u bn_moodle -pmoodle_password "LLLv.2" -e \
 ### 📂 ที่อยู่ไฟล์
 
 ```
-c:\Users\ntpkim\lifelong\lifelong2-back\
+c:\Users\ntpkim\lifelong\backend\
 ├── scripts/
 │   ├── README.md                      ← เริ่มจากที่นี่!
 │   ├── add_student_data.sql

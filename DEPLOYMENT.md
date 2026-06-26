@@ -2,8 +2,8 @@
 
 This folder is the deploy root for both apps:
 
-- `lifelong-front` - Quasar frontend
-- `lifelong2-back` - NestJS backend
+- `frontend` - Quasar frontend
+- `backend` - NestJS backend
 
 Shared runtime configuration now lives in the root `.env`. Use `.env.example` as the template for new machines.
 

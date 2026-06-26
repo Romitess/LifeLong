@@ -12,7 +12,7 @@
 ## 2. รัน Docker
 
 ```bash
-cd lifelong2-back/moodle-docker
+cd backend/moodle-docker
 docker compose up -d
 ```
 

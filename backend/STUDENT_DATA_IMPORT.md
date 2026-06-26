@@ -80,7 +80,7 @@ Password@123
 ### ตัวเลือก 1: ใช้ Python Script (แนะนำ)
 
 ```bash
-cd c:\Users\ntpkim\lifelong\lifelong2-back
+cd c:\Users\ntpkim\lifelong\backend
 python scripts/add_student_data.py
 ```
 

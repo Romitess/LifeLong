@@ -34,7 +34,7 @@ context, validation, and core token generation — so it can pass security revie
 ## Install
 1. Copy this folder into the Moodle codebase as `local/usertoken`:
    ```bash
-   docker cp lifelong2-back/moodle-local_usertoken \
+   docker cp backend/moodle-local_usertoken \
      moodle_web:/opt/bitnami/moodle/local/usertoken
    ```
 2. Run the upgrade (installs capability + service):

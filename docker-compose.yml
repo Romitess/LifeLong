@@ -56,7 +56,7 @@ services:
       - '3307:3306'
     volumes:
       - moodle_mariadb_data:/bitnami/mariadb
-      - ./lifelong2-back/moodle_seed.sql:/docker-entrypoint-initdb.d/moodle_seed.sql:ro
+      - ./backend/moodle_seed.sql:/docker-entrypoint-initdb.d/moodle_seed.sql:ro
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
       interval: 10s
@@ -125,11 +125,11 @@ services:
       - MOODLE_SKIP_BOOTSTRAP=yes
     volumes:
       - moodle_data_persistence:/bitnami/moodle_data
-      - ./lifelong2-back/moodle-config.php:/moodle-config-src.php:ro
-      - ./lifelong2-back/moodle-auth_userkey:/moodle-auth-userkey-src:ro
-      - ./lifelong2-back/moodle-local_wstools:/moodle-local-wstools-src:ro
-      - ./lifelong2-back/moodle-local_usertoken:/moodle-local-usertoken-src:ro
-      - ./lifelong2-back/moodle-theme:/moodle-theme-src:ro
+      - ./backend/moodle-config.php:/moodle-config-src.php:ro
+      - ./backend/moodle-auth_userkey:/moodle-auth-userkey-src:ro
+      - ./backend/moodle-local_wstools:/moodle-local-wstools-src:ro
+      - ./backend/moodle-local_usertoken:/moodle-local-usertoken-src:ro
+      - ./backend/moodle-theme:/moodle-theme-src:ro
     depends_on:
       moodle_mariadb:
         condition: service_healthy

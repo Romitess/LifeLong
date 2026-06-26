@@ -20,7 +20,7 @@
 **ขั้นตอน:**
 
 ```bash
-cd c:\Users\ntpkim\lifelong\lifelong2-back
+cd c:\Users\ntpkim\lifelong\backend
 
 # ครั้งแรกติดตั้ง dependency
 pip install mysql-connector-python
@@ -67,7 +67,7 @@ python scripts/fix_student_roster.py
 ### ตัวเลือก 3️⃣: ใช้ MySQL Command Line
 
 ```bash
-cd c:\Users\ntpkim\lifelong\lifelong2-back
+cd c:\Users\ntpkim\lifelong\backend
 mysql -h localhost -u root -ppassword lifelong2 < scripts/fix_student_roster_c2601001.sql
 ```
 

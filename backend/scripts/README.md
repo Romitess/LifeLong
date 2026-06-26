@@ -48,7 +48,7 @@ STUDENT_DATA_IMPORT.md                # Documentation (งาน README)
 
 ```bash
 # 1. ไปที่ directory backend
-cd c:\Users\ntpkim\lifelong\lifelong2-back
+cd c:\Users\ntpkim\lifelong\backend
 
 # 2. ติดตั้ง dependency (ถ้ายังไม่ได้)
 pip install mysql-connector-python
@@ -121,7 +121,7 @@ python scripts/add_student_data.py
 
 ```bash
 # Backend Database
-cd c:\Users\ntpkim\lifelong\lifelong2-back
+cd c:\Users\ntpkim\lifelong\backend
 mysql -h localhost -u root -ppassword lifelong2 < scripts/add_student_data.sql
 
 # Moodle Database
@@ -207,7 +207,7 @@ DELETE FROM mdl_user WHERE username LIKE 's%_student';
 ### รีเซ็ต Docker (ลบทั้งหมด):
 
 ```bash
-cd c:\Users\ntpkim\lifelong\lifelong2-back
+cd c:\Users\ntpkim\lifelong\backend
 docker compose down -v  # ลบข้อมูลทั้งหมด
 docker compose up -d    # สร้าง containers ใหม่
 ```
@@ -243,7 +243,7 @@ docker logs moodle_mariadb
 ## 📋 สรุปโครงสร้าง
 
 ```
-lifelong2-back/
+backend/
 ├── scripts/
 │   ├── add_student_data.sql           (15 นักเรียน - Backend)
 │   ├── add_moodle_student_data.sql    (15 นักเรียน - Moodle)
