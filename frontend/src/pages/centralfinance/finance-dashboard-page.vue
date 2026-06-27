@@ -115,7 +115,7 @@ const trendData = ref<{ months: string[]; revenue: number[] }>({
   revenue: [],
 });
 
-const facultyData = ref<{ faculty: string; totalAmount: number }[]>([]);
+const facultyData = ref<{ faculty: string; facultyEn: string | null; totalAmount: number }[]>([]);
 
 async function fetchDashboardData() {
   const { preset, dateFrom, dateTo } = period.value;
@@ -132,7 +132,7 @@ async function fetchDashboardData() {
     api.get('/api/centralfinance/dashboard-stats', { params }),
     api.get('/api/centralfinance/dashboard-trend', { params }),
     api.get<ReceiptUsageResponse>('/api/centralfinance/receipt-usage', { params: receiptParams }),
-    api.get<{ faculty: string; totalAmount: number }[]>(
+    api.get<{ faculty: string; facultyEn: string | null; totalAmount: number }[]>(
       '/api/centralfinance/dashboard-faculty-breakdown',
       { params },
     ),
@@ -259,27 +259,13 @@ function formatCurrency(value: number | string | undefined | null): string {
 // ── Faculty Revenue Pie Chart ─────────────────────────────────
 const FACULTY_COLORS = ['#1d4ed8', '#047857', '#7c3aed', '#0891b2', '#b45309', '#dc2626'];
 
-const FACULTY_I18N_MAP: Record<string, string> = {
-  คณะวิทยาการสารสนเทศ: 'informatics',
-  คณะวิทยาศาสตร์: 'science',
-  คณะพยาบาลศาสตร์: 'nursing',
-  คณะบริหารธุรกิจ: 'business',
-  คณะวิศวกรรมศาสตร์: 'engineering',
-  สำนักคอมพิวเตอร์: 'computerCenter',
-  คณะมนุษยศาสตร์และสังคมศาสตร์: 'humanities',
-};
-
 const facultyDonutData = computed<DonutChartSegment[]>(() =>
-  facultyData.value.map((item, i) => {
-    const i18nKey = FACULTY_I18N_MAP[item.faculty];
-    const label = i18nKey ? t(`common.faculties.${i18nKey}`) : item.faculty;
-    return {
-      id: item.faculty,
-      label,
-      value: item.totalAmount,
-      color: FACULTY_COLORS[i % FACULTY_COLORS.length] ?? '#1d4ed8',
-    };
-  }),
+  facultyData.value.map((item, i) => ({
+    id: item.faculty,
+    label: locale.value === 'th' ? item.faculty : (item.facultyEn || item.faculty),
+    value: item.totalAmount,
+    color: FACULTY_COLORS[i % FACULTY_COLORS.length] ?? '#1d4ed8',
+  })),
 );
 </script>
 

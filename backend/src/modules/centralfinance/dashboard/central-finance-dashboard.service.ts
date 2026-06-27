@@ -149,30 +149,31 @@ export class CentralFinanceDashboardService {
 
   async getFacultyBreakdown(
     query: DashboardQueryDto,
-  ): Promise<{ faculty: string; totalAmount: number }[]> {
+  ): Promise<{ faculty: string; facultyEn: string | null; totalAmount: number }[]> {
     try {
       const { conditions, params } = this.buildDateConditions(query, false);
-      conditions.push("RECEIPT_STATUS = 'Y'");
+      conditions.push("e.RECEIPT_STATUS = 'Y'");
       const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
       const sql = `
         SELECT
-          COALESCE(FAC_NAME, '-')                          AS faculty,
-          COALESCE(SUM(CAST(AMOUNT AS DECIMAL(15,2))), 0)  AS totalAmount
-        FROM LLTENROLLRECEIPT
+          COALESCE(e.FAC_NAME, '-')                          AS faculty,
+          lf.FAC_NAMEEN                                      AS facultyEn,
+          COALESCE(SUM(CAST(e.AMOUNT AS DECIMAL(15,2))), 0)  AS totalAmount
+        FROM LLTENROLLRECEIPT e
+        LEFT JOIN LLTFACULTY lf ON lf.FAC_NAME = e.FAC_NAME
         ${whereClause}
-        GROUP BY FAC_NAME
+        GROUP BY e.FAC_NAME, lf.FAC_NAMEEN
         ORDER BY totalAmount DESC
         LIMIT 6
       `;
 
-      const rows: { faculty: string; totalAmount: string }[] = await this.dataSource.query(
-        sql,
-        params,
-      );
+      const rows: { faculty: string; facultyEn: string | null; totalAmount: string }[] =
+        await this.dataSource.query(sql, params);
 
       return rows.map((r) => ({
         faculty: r.faculty ?? '-',
+        facultyEn: r.facultyEn?.trim() || null,
         totalAmount: Number(r.totalAmount ?? 0),
       }));
     } catch (error: unknown) {
