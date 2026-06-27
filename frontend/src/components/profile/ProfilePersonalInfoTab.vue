@@ -753,7 +753,7 @@ async function savePersonalInfo(): Promise<void> {
   isSavingProfile.value = true;
 
   try {
-    await authStore.updateProfile(payload);
+    await Promise.resolve(authStore.updateProfile(payload));
     syncFormWithUser(authStore.user);
     $q.notify({
       type: 'positive',

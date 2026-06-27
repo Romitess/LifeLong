@@ -192,7 +192,7 @@
                       "
                     />
                     <span v-if="course.isActive"
-                      >{{ instructorDisplayName }} เธขเธ— {{ course.registrationEnd }}</span
+                      >{{ instructorDisplayName }} - {{ course.registrationEnd }}</span
                     >
                   </div>
 
@@ -614,27 +614,12 @@
                       folder="course"
                       :alt="selectedCourse.titleEn || selectedCourse.title"
                     />
-                    <q-file
+                    <q-input
+                      v-model="courseSettings.coverImageUrl"
                       dense
                       outlined
-                      accept=".jpg,.jpeg,.png,.webp"
-                      max-file-size="2097152"
-                      :model-value="coverUploadFile"
-                      label="อัปโหลดรูปปก"
-                      bottom-slots
-                      :loading="coverUploading"
-                      :disable="coverUploading"
-                      @update:model-value="uploadCoverImage"
-                      @rejected="onCoverUploadRejected"
-                    >
-                      <template #prepend>
-                        <q-icon name="image" />
-                      </template>
-                      <template #hint>
-                        แนะนำขนาด 1280x720px (สัดส่วน 16:9) · ไฟล์ jpg / png / webp · ไม่เกิน
-                        2MB
-                      </template>
-                    </q-file>
+                      :label="t('instructor.overview.coverUrlLabel')"
+                    />
                     <div class="row q-gutter-sm">
                       <q-btn
                         outline
@@ -723,7 +708,6 @@
                     </div>
                   </div>
                 </div>
-
               </div>
             </q-tab-panel>
 
@@ -1178,7 +1162,7 @@
           <div>
             <div class="text-h6 text-weight-bold">{{ selectedLearner.name }}</div>
             <div class="text-body2 text-grey-7">
-              {{ selectedLearner.studentId }} เธขเธ— {{ selectedLearner.email }}
+              {{ selectedLearner.studentId }} - {{ selectedLearner.email }}
             </div>
             <q-badge
               rounded
@@ -1472,7 +1456,7 @@ courseStore.init();
 onMounted(() => {
   const email = authStore.user?.email;
   if (email) {
-    void authStore.fetchProfile();
+    void instructorBackend.fetchProfile(email);
     void instructorBackend.fetchSummary(email);
     void courseStore.fetchInstructorCourses(email);
   }
@@ -1504,6 +1488,13 @@ const defaultDeliveryMode: DeliveryMode = 'Online';
 const requestedCourseId = typeof route.query.courseId === 'string' ? route.query.courseId : '';
 
 const deliveryModeOptions: DeliveryMode[] = ['Online', 'Onsite', 'Self-Paced Learning'];
+const defaultCoverImage =
+  'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80';
+const sampleCoverImages = [
+  defaultCoverImage,
+  'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80',
+];
 
 const learnerPricing = reactive<LearnerPriceRule[]>([]);
 const learnerPricingBaseline = ref<LearnerPriceSnapshot[]>([]);
@@ -1512,15 +1503,21 @@ const instructorCourses = computed<Course[]>(() =>
   courseStore.getInstructorCourses(authStore.user),
 );
 const instructorDisplayName = computed(() => {
-  const nameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
+  const profile = instructorBackend.profile.value;
+  const nameTh = [profile?.prefix, profile?.firstNameTh, profile?.lastNameTh]
     .filter(Boolean)
     .join(' ')
     .trim();
-  const nameEn = [authStore.user?.firstNameEn, authStore.user?.lastNameEn]
+  const nameEn = [profile?.firstNameEn, profile?.lastNameEn].filter(Boolean).join(' ').trim();
+  const authNameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
     .filter(Boolean)
     .join(' ')
     .trim();
-  return nameTh || nameEn || authStore.user?.username || '-';
+  const authNameEn = [authStore.user?.firstNameEn, authStore.user?.lastNameEn]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  return nameTh || nameEn || authNameTh || authNameEn || authStore.user?.username || '-';
 });
 const instructorIdentifier = computed(
   () => authStore.user?.studentId || authStore.user?.username || authStore.user?.email || '-',
@@ -1530,17 +1527,6 @@ const selectedCourseId = ref(
     ? requestedCourseId
     : (instructorCourses.value[0]?.id ?? ''),
 );
-const sampleCoverImages = computed(() => {
-  const seen = new Set<string>();
-  return [...instructorCourses.value, ...courseStore.courses]
-    .filter((course) => course.id !== selectedCourseId.value)
-    .map((course) => course.imageUrl?.trim())
-    .filter((imageUrl): imageUrl is string => {
-      if (!imageUrl || seen.has(imageUrl)) return false;
-      seen.add(imageUrl);
-      return true;
-    });
-});
 const courseSettings = reactive<CourseSettingsForm>({
   published: true,
   registrationOpen: true,
@@ -1550,27 +1536,6 @@ const courseSettings = reactive<CourseSettingsForm>({
   deliveryMode: defaultDeliveryMode,
   registrationStartDate: '',
   registrationEndDate: '',
-});
-const coverUploadFile = ref<File | null>(null);
-const coverUploading = ref(false);
-const defaultFacultyStaff: FacultyStaffMember[] = [
-  {
-    name: 'เจ้าหน้าที่คณะตัวอย่าง',
-    email: 'faculty.staff@buu.ac.th',
-    permission: 'edit-and-verify',
-  },
-];
-const facultyStaffByCourseId = ref<Record<string, FacultyStaffMember[]>>({});
-const facultyStaffDialogOpen = ref(false);
-const facultyStaffPermissionOptions = computed(() => [
-  { label: t('instructor.dialog.permEditInfo'), value: 'edit-info' },
-  { label: t('instructor.dialog.permEditAndVerify'), value: 'edit-and-verify' },
-  { label: t('instructor.dialog.permVerifyOnly'), value: 'verify-only' },
-]);
-const facultyStaffForm = reactive<FacultyStaffForm>({
-  name: '',
-  email: '',
-  permission: 'edit-info',
 });
 const courseStatusFilter = computed<'all' | 'active'>(() =>
   route.query.status === 'active' ? 'active' : 'all',
@@ -1614,10 +1579,17 @@ function resolveDisplayedCoursePrice(course: Course, prices: LearnerPriceRule[])
         matchesStutypeName(price.stutypeName || price.label, ['บุคลากร', 'staff']),
       ) ??
       enabledRules.find((price) =>
-        matchesStutypeName(price.stutypeName || price.label, ['ศิษย์เก่า', 'alumni']),
+        matchesStutypeName(price.stutypeName || price.label, [
+          'ศิษย์เก่า',
+          'alumni',
+        ]),
       ) ??
       enabledRules.find((price) =>
-        matchesStutypeName(price.stutypeName || price.label, ['บุคคลทั่วไป', 'ทั่วไป', 'general']),
+        matchesStutypeName(price.stutypeName || price.label, [
+          'บุคคลทั่วไป',
+          'ทั่วไป',
+          'general',
+        ]),
       ) ??
       enabledRules[0];
 
@@ -1630,7 +1602,11 @@ function resolveDisplayedCoursePrice(course: Course, prices: LearnerPriceRule[])
 function resolveBaseCoursePrice(course: Course, prices: LearnerPriceRule[]): number {
   const enabledRules = getEnabledLearnerRules(prices);
   const generalRule = enabledRules.find((price) =>
-    matchesStutypeName(price.stutypeName || price.label, ['บุคคลทั่วไป', 'ทั่วไป', 'general']),
+    matchesStutypeName(price.stutypeName || price.label, [
+      'บุคคลทั่วไป',
+      'ทั่วไป',
+      'general',
+    ]),
   );
   if (generalRule) {
     return Math.max(0, Number(generalRule.amount) || 0);
@@ -1692,7 +1668,7 @@ async function fetchMoodleContents(moodleId: number | null | undefined): Promise
     const { data } = await api.get<MoodleSection[]>(`/api/moodle/moodle-contents/${moodleId}`);
     moodleSections.value = data.filter((s) => s.modules && s.modules.length > 0);
   } catch {
-    // silent fail โ€” Moodle unavailable
+    // silent fail - Moodle unavailable
   } finally {
     isMoodleLoading.value = false;
   }
@@ -1929,10 +1905,7 @@ function formatPaymentStatus(value: string | null | undefined, isFree: boolean):
 }
 
 function getInitials(name: string | null | undefined): string {
-  const parts = (name ?? '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return '?';
   return parts
     .slice(0, 2)
@@ -1992,8 +1965,8 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
   });
 }
 
-function stripHtml(html: string | null | undefined): string {
-  return (html ?? '')
+function stripHtml(html: string): string {
+  return html
     .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
     .trim();
@@ -2200,9 +2173,9 @@ const readinessChecklist = computed(() => {
   const hasAnnouncements = announcements.value.length > 0;
   const hasCourseInfo = Boolean(
     course?.code &&
-      course?.title &&
-      (courseSettings.coverImageUrl || course?.imageUrl) &&
-      authStore.user?.email,
+    course?.title &&
+    (courseSettings.coverImageUrl || course?.imageUrl) &&
+    authStore.user?.email,
   );
 
   return [
@@ -2301,55 +2274,13 @@ function openLearnerDetail(_event: Event | null, learner: LearnerRow): void {
 }
 
 function useSampleCover(): void {
-  const images = sampleCoverImages.value;
-  if (images.length === 0) return;
-
-  const currentIndex = images.indexOf(courseSettings.coverImageUrl);
-  courseSettings.coverImageUrl = images[(currentIndex + 1) % images.length] ?? images[0] ?? '';
-  coverUploadFile.value = null;
+  const currentIndex = sampleCoverImages.indexOf(courseSettings.coverImageUrl);
+  courseSettings.coverImageUrl =
+    sampleCoverImages[(currentIndex + 1) % sampleCoverImages.length] ?? defaultCoverImage;
 }
 
 function resetCoverImage(): void {
   courseSettings.coverImageUrl = selectedCourse.value?.imageUrl ?? '';
-  coverUploadFile.value = null;
-}
-
-function onCoverUploadRejected(): void {
-  $q.notify({
-    type: 'warning',
-    icon: 'warning',
-    message: 'กรุณาใช้ไฟล์ jpg, png หรือ webp ขนาดไม่เกิน 2MB',
-    position: 'top',
-  });
-}
-
-async function uploadCoverImage(file: File | null): Promise<void> {
-  coverUploadFile.value = file;
-  const course = selectedCourse.value;
-  if (!file || !course) return;
-
-  coverUploading.value = true;
-  try {
-    const result = await instructorBackend.uploadCourseCoverImage(course.id, file);
-    if (!result?.imageUrl) throw new Error('Upload response does not include imageUrl');
-    courseSettings.coverImageUrl = result.imageUrl;
-    coverUploadFile.value = null;
-    $q.notify({
-      type: 'positive',
-      icon: 'check_circle',
-      message: 'อัปโหลดรูปปกสำเร็จ กดบันทึกเพื่อใช้รูปนี้กับรายวิชา',
-      position: 'top',
-    });
-  } catch {
-    $q.notify({
-      type: 'negative',
-      icon: 'error',
-      message: 'อัปโหลดรูปปกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
-      position: 'top',
-    });
-  } finally {
-    coverUploading.value = false;
-  }
 }
 
 function resolveCourseImage(imageUrl: string | null | undefined): string {
@@ -2449,7 +2380,7 @@ async function submitAnnouncement(): Promise<void> {
       $q.notify({
         type: 'positive',
         icon: 'campaign',
-        message: `${t('instructor.notify.announcementCreated')} โ€” ${parts.join(', ')}`,
+        message: `${t('instructor.notify.announcementCreated')} - ${parts.join(', ')}`,
         position: 'top',
         timeout: 5000,
       });
@@ -2637,7 +2568,6 @@ function formatCompactDateRange(startIso: string, endIso: string): string {
 }
 
 function buildCourseUpdatePayload(course: Course): Partial<Course> {
-  // ใช้ราคาของ "บุคคลทั่วไป" (STUTYPE_ID สูงสุด = ทั่วไป) เป็น base price
   const nextPrice = resolveBaseCoursePrice(course, learnerPricing);
 
   return {
@@ -2734,7 +2664,8 @@ async function saveCourseChanges(courseId: string, changes: Partial<Course>): Pr
   if (changes.maxSeats !== undefined) settingsPayload.maxSeats = changes.maxSeats;
   if (changes.imageUrl !== undefined) settingsPayload.coverImageUrl = changes.imageUrl;
   if (changes.price !== undefined) settingsPayload.price = changes.price;
-  if (changes.deliveryModes?.[0] !== undefined) settingsPayload.deliveryMode = changes.deliveryModes[0];
+  if (changes.deliveryModes?.[0] !== undefined)
+    settingsPayload.deliveryMode = changes.deliveryModes[0];
   const settingsResult = await instructorBackend.updateCourseSettings(courseId, settingsPayload);
   if (!settingsResult?.updated) {
     $q.notify({
@@ -2766,19 +2697,12 @@ async function saveCourseChanges(courseId: string, changes: Partial<Course>): Pr
     }
   }
 
-  learnerPricingBaseline.value = getLearnerPricingSnapshot();
-
-  if (
-    changes.registrationStartDate !== undefined ||
-    changes.registrationEndDate !== undefined ||
-    changes.imageUrl !== undefined
-  ) {
+  if (changes.registrationStartDate !== undefined || changes.registrationEndDate !== undefined) {
     const openclasspayload: UpdateOpenclassPayload = {};
     if (changes.registrationStartDate !== undefined)
       openclasspayload.registrationStartDate = changes.registrationStartDate;
     if (changes.registrationEndDate !== undefined)
       openclasspayload.registrationEndDate = changes.registrationEndDate;
-    if (changes.imageUrl !== undefined) openclasspayload.imageUrl = changes.imageUrl;
     const result = await instructorBackend.updateOpenclass(courseId, openclasspayload);
     if (!result?.updated) {
       $q.notify({

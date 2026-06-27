@@ -387,9 +387,6 @@ const totalInstructorLearners = computed<number>(() =>
   instructorBackend.summary.value?.totalStudents ??
   instructorCourses.value.reduce((sum, c) => sum + c.enrolledCount, 0),
 );
-const instructorConversationsCount = computed<number>(
-  () => instructorBackend.summary.value?.conversations ?? 0,
-);
 
 // Learner computed (for profileStats)
 const inProgressCoursesCount = computed<number>(
