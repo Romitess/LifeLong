@@ -65,29 +65,6 @@ defineProps<{
   color: #ffffff;
 }
 
-.instructor-page-hero::before {
-  content: '';
-  position: absolute;
-  z-index: 1;
-  top: -42%;
-  left: -34%;
-  width: 34%;
-  height: 184%;
-  background: linear-gradient(
-    105deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.08) 32%,
-    rgba(255, 255, 255, 0.34) 48%,
-    rgba(255, 246, 199, 0.24) 56%,
-    rgba(255, 255, 255, 0) 74%
-  );
-  filter: blur(1px);
-  opacity: 0.88;
-  pointer-events: none;
-  transform: rotate(10deg);
-  animation: instructorPageHeroShine 9.5s ease-in-out infinite;
-}
-
 .instructor-page-hero__overlay {
   position: absolute;
   inset: 0;
@@ -160,6 +137,7 @@ defineProps<{
   font-size: clamp(2rem, 3vw, 2.6rem);
   font-weight: 800;
   line-height: 1.12;
+  white-space: pre-line;
 }
 
 .instructor-page-hero__meta {
@@ -190,17 +168,6 @@ defineProps<{
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 14px;
-}
-
-@keyframes instructorPageHeroShine {
-  0% {
-    transform: translateX(0) rotate(10deg);
-  }
-
-  42%,
-  100% {
-    transform: translateX(440%) rotate(10deg);
-  }
 }
 
 @media (max-width: 1180px) {

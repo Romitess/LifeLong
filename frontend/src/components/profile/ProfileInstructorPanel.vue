@@ -552,11 +552,12 @@ defineExpose({
   overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 96px;
-  padding: 18px 20px;
+  gap: 12px;
+  min-height: 78px;
+  padding: 14px;
   border-color: rgba(17, 24, 39, 0.08) !important;
-  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.055);
+  border-radius: 14px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
 }
 
 .instructor-overview-card::before {
@@ -588,10 +589,10 @@ defineExpose({
 .instructor-overview-card__icon {
   display: inline-grid;
   place-items: center;
-  width: 50px;
-  height: 50px;
-  flex: 0 0 50px;
-  border-radius: 15px;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 12px;
   color: #ffffff;
   background: var(--card-icon-bg, #f59e0b);
   box-shadow: 0 12px 22px color-mix(in srgb, var(--card-icon-bg, #f59e0b) 24%, transparent);
@@ -621,15 +622,17 @@ defineExpose({
 
 .instructor-overview-card strong {
   color: #101828;
-  font-size: 1.55rem;
-  line-height: 1;
+  font-size: 1.48rem;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
 .instructor-overview-card span {
-  margin-top: 5px;
+  margin-top: 4px;
   color: #667085;
-  font-size: 0.84rem;
-  font-weight: 800;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .instructor-report-grid {

@@ -7,15 +7,36 @@
         :description="studentHeroDescription"
       >
         <template #actions>
-          <div class="student-hero-actions">
-            <div class="student-roster-hero-summary">
+          <div
+            :class="[
+              activeStudentTab === 'results' ? 'certificate-hero-actions' : 'student-hero-actions',
+            ]"
+          >
+            <div
+              :class="[
+                activeStudentTab === 'results'
+                  ? 'certificate-hero-summary'
+                  : 'student-roster-hero-summary',
+              ]"
+            >
               <div
                 v-for="card in studentHeroSummaryCards"
                 :key="card.label"
-                class="student-roster-summary-card student-roster-summary-card--hero"
+                :class="[
+                  activeStudentTab === 'results'
+                    ? 'certificate-summary-card'
+                    : 'student-roster-summary-card',
+                  activeStudentTab === 'results' ? '' : 'student-roster-summary-card--hero',
+                ]"
                 :style="{ '--summary-accent': card.color, '--summary-soft': card.softColor }"
               >
-                <div class="student-roster-summary-card__icon">
+                <div
+                  :class="
+                    activeStudentTab === 'results'
+                      ? 'certificate-summary-card__icon'
+                      : 'student-roster-summary-card__icon'
+                  "
+                >
                   <q-icon :name="card.icon" />
                 </div>
                 <div>
@@ -1146,7 +1167,7 @@ interface RosterSummaryCard {
   softColor: string;
 }
 
-const { t } = useI18n();
+const { locale, t } = useI18n();
 const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
@@ -1161,7 +1182,9 @@ const activeStudentTab = computed<'roster' | 'results'>(() =>
 );
 const studentHeroTitle = computed(() =>
   activeStudentTab.value === 'results'
-    ? t('instructor.students.heroGradesTitle')
+    ? locale.value === 'th'
+      ? 'บันทึก\nผลการเรียน'
+      : 'Record Learning\nResults'
     : t('instructor.students.heroRosterTitle'),
 );
 const studentHeroDescription = computed(() => {
@@ -2691,7 +2714,7 @@ function exportLearnersPdf(): void {
 .instructor-students {
   width: 100%;
   max-width: none;
-  padding-block: 0 54px;
+  padding: 0 24px 56px;
 }
 
 .students-hero,
@@ -2948,6 +2971,66 @@ function exportLearnersPdf(): void {
 
 .student-roster-summary-card--hero strong {
   color: #ffffff;
+}
+
+.certificate-hero-actions {
+  display: grid;
+  gap: 14px;
+  width: min(720px, 100%);
+}
+
+.certificate-hero-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(132px, 1fr));
+  gap: 14px;
+  width: min(720px, 100%);
+}
+
+.certificate-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 78px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(4px);
+}
+
+.certificate-summary-card__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--summary-accent);
+  font-size: 23px;
+}
+
+.certificate-summary-card div:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.certificate-summary-card strong {
+  color: #ffffff;
+  font-size: 1.48rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.certificate-summary-card span {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .student-course-table__title-layout {
@@ -3322,7 +3405,7 @@ function exportLearnersPdf(): void {
   max-width: 720px;
   margin: 0 auto;
   color: #172033;
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 800;
 
   div,
@@ -3359,7 +3442,7 @@ function exportLearnersPdf(): void {
 .learning-result-import-label {
   padding-top: 8px;
   color: #475569;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 800;
   text-align: right;
 }
@@ -3382,12 +3465,12 @@ function exportLearnersPdf(): void {
 }
 
 .learning-result-import-tool-btn {
-  font-size: 0.74rem;
+  font-size: 0.82rem;
 }
 
 .learning-result-import-action-btn {
   width: 100%;
-  font-size: 0.74rem;
+  font-size: 0.82rem;
 }
 
 .learning-result-import-input :deep(textarea) {
@@ -3409,7 +3492,7 @@ function exportLearnersPdf(): void {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  font-size: 0.8rem;
+  font-size: 0.86rem;
   font-weight: 900;
 }
 
@@ -3424,7 +3507,7 @@ function exportLearnersPdf(): void {
   gap: 8px;
   align-items: center;
   color: #166534;
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: 800;
 
   span,
@@ -3448,7 +3531,7 @@ function exportLearnersPdf(): void {
   padding: 14px 16px;
   background: #c7f5d9;
   color: #14532d;
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   font-weight: 700;
   line-height: 1.45;
 
@@ -3480,7 +3563,7 @@ function exportLearnersPdf(): void {
     color: #d97706;
     background: transparent;
     font: inherit;
-    font-size: 0.78rem;
+    font-size: 0.84rem;
     font-weight: 800;
     cursor: pointer;
 
@@ -3501,7 +3584,7 @@ function exportLearnersPdf(): void {
   color: #475569;
   background: #fff;
   font: inherit;
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   font-weight: 800;
   cursor: pointer;
   transition:
@@ -3826,7 +3909,7 @@ function exportLearnersPdf(): void {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 900;
 }
 
@@ -3836,7 +3919,7 @@ function exportLearnersPdf(): void {
   border-radius: 999px;
   background: #d97706;
   color: #fff;
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   font-weight: 900;
 }
 
@@ -3850,7 +3933,7 @@ function exportLearnersPdf(): void {
 
 .detail-unmatched-label {
   color: #dc2626;
-  font-size: 0.74rem;
+  font-size: 0.8rem;
   font-weight: 800;
 }
 
@@ -3858,7 +3941,7 @@ function exportLearnersPdf(): void {
   display: inline-block;
   padding: 2px 8px;
   border-radius: 6px;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 900;
 }
 
@@ -3954,7 +4037,7 @@ function exportLearnersPdf(): void {
   border-collapse: separate;
   border-spacing: 0;
   color: #172033;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
 
   th,
   td {
@@ -3968,7 +4051,7 @@ function exportLearnersPdf(): void {
   th {
     color: #0f172a;
     background: #e7e7e7;
-    font-size: 0.76rem;
+    font-size: 0.82rem;
     font-weight: 900;
     text-align: center;
   }
@@ -4012,7 +4095,7 @@ function exportLearnersPdf(): void {
 
   span {
     color: #64748b;
-    font-size: 0.8rem;
+    font-size: 0.86rem;
     font-weight: 800;
   }
 
@@ -4173,17 +4256,20 @@ function exportLearnersPdf(): void {
 }
 
 @media (max-width: 1180px) {
-  .student-hero-actions {
-    width: min(720px, 100%);
-  }
-
-  .student-roster-hero-summary {
-    width: min(720px, 100%);
+  .student-hero-actions,
+  .certificate-hero-actions {
+    width: 100%;
   }
 }
 
 @media (max-width: 900px) {
   .student-roster-hero-summary,
+  .certificate-hero-summary {
+    width: 100%;
+  }
+
+  .student-roster-hero-summary,
+  .certificate-hero-summary,
   .student-roster-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

@@ -3082,7 +3082,7 @@ function openQuickDialog(title: string): void {
   gap: 12px;
   min-height: 78px;
   padding: 14px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.14);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
@@ -3106,11 +3106,18 @@ function openQuickDialog(title: string): void {
   line-height: 1.1;
 }
 
+.metric-tile > div:last-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
 .metric-tile__label {
   margin-top: 4px;
   color: rgba(255, 255, 255, 0.72);
   font-size: 0.82rem;
   font-weight: 700;
+  line-height: 1.25;
 }
 
 .course-table-layout {
