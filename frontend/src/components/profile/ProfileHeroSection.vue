@@ -68,6 +68,13 @@
               style="display: none"
               @change="onAvatarSelected"
             />
+            <input
+              ref="viewerPhotoInput"
+              type="file"
+              accept="image/*"
+              style="display: none"
+              @change="onViewerPhotoSelected"
+            />
           </div>
           <div class="profile-hero__identity-copy">
             <div class="text-overline text-white" style="opacity: 0.7; letter-spacing: 0.12em">
@@ -119,24 +126,124 @@
   />
 
   <!-- Full Avatar Dialog -->
-  <q-dialog v-model="showFullAvatar" transition-show="scale" transition-hide="scale">
-    <q-card class="full-avatar-dialog">
+  <q-dialog
+    v-model="showFullAvatar"
+    transition-show="fade"
+    transition-hide="fade"
+    maximized
+    class="profile-avatar-viewer-dialog"
+    @show="resetSelectedAvatar"
+  >
+    <q-card class="profile-avatar-viewer">
       <q-btn
         flat
         round
         dense
         icon="close"
         color="white"
-        class="full-avatar-dialog__close"
+        class="profile-avatar-viewer__close"
         v-close-popup
       />
+
       <img
-        v-if="displayAvatarUrl"
-        :src="displayAvatarUrl"
-        class="full-avatar-dialog__image"
-        alt="Profile image"
+        v-if="selectedAvatarPreviewUrl"
+        :src="selectedAvatarPreviewUrl"
+        class="profile-avatar-viewer__backdrop-image"
+        alt=""
+        aria-hidden="true"
       />
-      <q-icon v-else name="person" size="160px" color="white" class="q-pa-xl" />
+      <div v-else class="profile-avatar-viewer__fallback-backdrop" aria-hidden="true" />
+
+      <div class="profile-avatar-viewer__shade" aria-hidden="true" />
+
+      <div class="profile-avatar-viewer__stage">
+        <button
+          type="button"
+          class="profile-avatar-viewer__add"
+          aria-label="Add profile photo"
+          @click.stop.prevent="showAddChoice = !showAddChoice"
+          @mousedown.stop.prevent
+        >
+          <q-icon name="add" size="32px" color="white" />
+        </button>
+
+        <div v-if="showAddChoice" class="profile-avatar-viewer__add-menu">
+          <button
+            type="button"
+            class="profile-avatar-viewer__add-option"
+            @click.stop.prevent="addAccountAvatarOption"
+            @mousedown.stop.prevent
+          >
+            เพิ่มอวตาร
+          </button>
+          <button
+            type="button"
+            class="profile-avatar-viewer__add-option"
+            @click.stop.prevent="chooseViewerPhotoUpload"
+            @mousedown.stop.prevent
+          >
+            เพิ่มรูปภาพ
+          </button>
+        </div>
+
+        <TransitionGroup
+          v-if="viewerPhotoOptions.length > 0"
+          name="profile-avatar-option"
+          tag="div"
+          class="profile-avatar-viewer__photo-row"
+          :class="{ 'profile-avatar-viewer__photo-row--swapping': isAvatarSwapping }"
+        >
+          <button
+            v-for="(photoUrl, index) in viewerPhotoOptions"
+            :key="`${photoUrl}-${index}`"
+            type="button"
+            class="profile-avatar-viewer__photo-option"
+            :class="{ 'profile-avatar-viewer__photo-option--active': photoUrl === selectedAvatarUrl }"
+            aria-label="Preview added profile photo"
+            @click.stop.prevent="selectViewerPhoto(photoUrl)"
+            @mousedown.stop.prevent
+          >
+            <img :src="photoUrl" alt="" />
+          </button>
+        </TransitionGroup>
+
+        <div class="profile-avatar-viewer__main-wrap">
+          <Transition name="profile-avatar-main" mode="out-in">
+            <div
+              :key="selectedAvatarPreviewUrl || 'empty-profile-avatar'"
+              class="profile-avatar-viewer__main"
+              :class="{ 'profile-avatar-viewer__main--swapping': isAvatarSwapping }"
+            >
+              <img
+                v-if="selectedAvatarPreviewUrl"
+                :src="selectedAvatarPreviewUrl"
+                class="profile-avatar-viewer__image"
+                alt="Profile image"
+              />
+              <q-icon v-else name="person" size="132px" color="white" />
+            </div>
+          </Transition>
+          <button
+            type="button"
+            class="profile-avatar-viewer__edit"
+            aria-label="Change profile photo"
+            @click.stop.prevent="triggerAvatarUpload"
+            @mousedown.stop.prevent
+          >
+            <q-icon name="edit" size="18px" color="white" />
+          </button>
+        </div>
+
+        <button
+          type="button"
+          class="profile-avatar-viewer__confirm"
+          :disabled="!selectedAvatarPreviewUrl || selectedAvatarPreviewUrl === currentAvatarUrl"
+          @click.stop.prevent="applySelectedAvatar"
+          @mousedown.stop.prevent
+        >
+          แสดงเป็นโปรไฟล์หลัก
+        </button>
+      </div>
     </q-card>
   </q-dialog>
 
@@ -165,6 +272,13 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useProfileAvatar } from 'src/composables/use-profile-avatar';
 import { useAvatarCrop } from 'src/composables/use-avatar-crop';
 import type { CropBox } from 'src/composables/use-image-cropper';
+import {
+  getProfileAvatarOptions,
+  saveProfileAvatarOptions,
+  saveProfileAvatarUrl,
+  uploadProfileAvatarOption,
+  uploadProfileAvatarDataUrl,
+} from 'src/services/profile-avatar.service';
 
 interface ProfileStatCardItem {
   label: string;
@@ -182,16 +296,27 @@ defineProps<{
 const authStore = useAuthStore();
 const $q = useQuasar();
 const { t } = useI18n();
-const { fullAvatarUrl } = useProfileAvatar();
+const { fullAvatarUrl, avatarPortraitUrl } = useProfileAvatar();
 
 const pendingFullAvatarSrc = ref<string | null>(null);
 const showFullAvatar = ref(false);
 const showDeleteAvatarDialog = ref(false);
 const isSavingAvatar = ref(false);
 const isDeletingAvatar = ref(false);
+const selectedAvatarUrl = ref('');
+const mainAvatarBeforeSelection = ref('');
+const isAvatarSwapping = ref(false);
+const showAddChoice = ref(false);
+const viewerPhotoInput = ref<HTMLInputElement | null>(null);
+const viewerPhotoOptions = ref<string[]>([]);
+let avatarSwapTimer: number | null = null;
+const AVATAR_SWAP_ANIMATION_MS = 620;
+const DEFAULT_PROFILE_AVATAR_FILE_NAME = 'profile-avatar.png';
+const DEFAULT_PROFILE_PHOTO_FILE_NAME = 'profile-photo.png';
 
 const currentAvatarUrl = computed<string>(() => authStore.user?.avatar || '');
 const displayAvatarUrl = computed<string>(() => fullAvatarUrl.value || currentAvatarUrl.value);
+const selectedAvatarPreviewUrl = computed<string>(() => selectedAvatarUrl.value || displayAvatarUrl.value);
 const displayName = computed(() => {
   const nameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
     .filter(Boolean)
@@ -269,6 +394,159 @@ async function deleteAvatar(): Promise<void> {
   } finally {
     isDeletingAvatar.value = false;
   }
+}
+
+function getUniqueViewerPhotoOptions(photoUrls: string[]): string[] {
+  return Array.from(new Set(photoUrls.filter(Boolean)));
+}
+
+async function loadStoredViewerPhotoOptions(): Promise<void> {
+  try {
+    const storedOptions = await getProfileAvatarOptions();
+    viewerPhotoOptions.value = getUniqueViewerPhotoOptions(storedOptions).filter(
+      (photoUrl) => photoUrl !== currentAvatarUrl.value,
+    );
+  } catch (error) {
+    console.warn('Failed to load profile viewer photo options from backend', error);
+  }
+}
+
+function saveViewerPhotoOptions(): void {
+  const nextStoredOptions = getUniqueViewerPhotoOptions([
+    ...viewerPhotoOptions.value,
+    selectedAvatarUrl.value,
+  ]).filter((photoUrl) => photoUrl !== currentAvatarUrl.value);
+
+  void saveProfileAvatarOptions(nextStoredOptions).catch((error: unknown) => {
+    console.warn('Failed to save profile viewer photo options to backend', error);
+  });
+}
+
+function resetSelectedAvatar(): void {
+  selectedAvatarUrl.value = currentAvatarUrl.value;
+  mainAvatarBeforeSelection.value = currentAvatarUrl.value;
+  void loadStoredViewerPhotoOptions();
+  isAvatarSwapping.value = false;
+  if (avatarSwapTimer) {
+    window.clearTimeout(avatarSwapTimer);
+    avatarSwapTimer = null;
+  }
+}
+
+async function applySelectedAvatar(): Promise<void> {
+  if (!selectedAvatarPreviewUrl.value || selectedAvatarPreviewUrl.value === currentAvatarUrl.value) {
+    return;
+  }
+
+  try {
+    $q.loading.show({ message: t('profile.notifications.processing') || 'Uploading avatar...' });
+    const previousAvatarUrl = mainAvatarBeforeSelection.value || currentAvatarUrl.value;
+    const savedAvatar = /^data:image\//i.test(selectedAvatarPreviewUrl.value)
+      ? await uploadProfileAvatarDataUrl(
+          selectedAvatarPreviewUrl.value,
+          DEFAULT_PROFILE_AVATAR_FILE_NAME,
+        )
+      : await saveProfileAvatarUrl(selectedAvatarPreviewUrl.value);
+    const nextAvatarUrl = savedAvatar.avatarUrl;
+
+    authStore.setAvatar(nextAvatarUrl);
+    fullAvatarUrl.value = nextAvatarUrl;
+    isAvatarSwapping.value = true;
+    selectedAvatarUrl.value = nextAvatarUrl;
+    mainAvatarBeforeSelection.value = nextAvatarUrl;
+    viewerPhotoOptions.value = [
+      ...(previousAvatarUrl ? [previousAvatarUrl] : []),
+      ...viewerPhotoOptions.value.filter(
+        (photoUrl) => photoUrl !== nextAvatarUrl && photoUrl !== previousAvatarUrl,
+      ),
+    ];
+    saveViewerPhotoOptions();
+    if (avatarSwapTimer) {
+      window.clearTimeout(avatarSwapTimer);
+    }
+    avatarSwapTimer = window.setTimeout(() => {
+      isAvatarSwapping.value = false;
+      avatarSwapTimer = null;
+    }, AVATAR_SWAP_ANIMATION_MS);
+
+    $q.notify({
+      type: 'positive',
+      message: t('profile.notifications.avatarSaved'),
+      position: 'top',
+    });
+  } catch (error) {
+    console.error('Failed to apply selected profile avatar', error);
+    $q.notify({
+      type: 'negative',
+      message: t('profile.notifications.profileSaveFailed'),
+      position: 'top',
+    });
+  } finally {
+    $q.loading.hide();
+  }
+}
+
+function addAccountAvatarOption(): void {
+  const accountAvatarUrl = avatarPortraitUrl.value || currentAvatarUrl.value;
+  if (!accountAvatarUrl) return;
+
+  viewerPhotoOptions.value = [
+    accountAvatarUrl,
+    ...viewerPhotoOptions.value.filter(
+      (photoUrl) => photoUrl !== accountAvatarUrl && photoUrl !== selectedAvatarPreviewUrl.value,
+    ),
+  ];
+  saveViewerPhotoOptions();
+  showAddChoice.value = false;
+}
+
+function chooseViewerPhotoUpload(): void {
+  showAddChoice.value = false;
+  viewerPhotoInput.value?.click();
+}
+
+async function onViewerPhotoSelected(event: Event): Promise<void> {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  target.value = '';
+  if (!file) return;
+
+  try {
+    $q.loading.show({ message: t('profile.notifications.processing') || 'Uploading avatar...' });
+    const uploadedPhoto = await uploadProfileAvatarOption(
+      file,
+      file.name || DEFAULT_PROFILE_PHOTO_FILE_NAME,
+    );
+    viewerPhotoOptions.value = [
+      uploadedPhoto.avatarUrl,
+      ...viewerPhotoOptions.value.filter(
+        (photoUrl) =>
+          photoUrl !== uploadedPhoto.avatarUrl && photoUrl !== selectedAvatarPreviewUrl.value,
+      ),
+    ];
+    saveViewerPhotoOptions();
+  } catch (error) {
+    console.error('Failed to upload profile photo option', error);
+    $q.notify({
+      type: 'negative',
+      message: t('profile.notifications.profileSaveFailed'),
+      position: 'top',
+    });
+  } finally {
+    $q.loading.hide();
+  }
+}
+
+function selectViewerPhoto(photoUrl: string): void {
+  const previousPreviewUrl = selectedAvatarPreviewUrl.value;
+  selectedAvatarUrl.value = photoUrl;
+  viewerPhotoOptions.value = [
+    ...(previousPreviewUrl ? [previousPreviewUrl] : []),
+    ...viewerPhotoOptions.value.filter(
+      (optionUrl) => optionUrl !== photoUrl && optionUrl !== previousPreviewUrl,
+    ),
+  ];
+  saveViewerPhotoOptions();
 }
 </script>
 
@@ -476,33 +754,337 @@ async function deleteAvatar(): Promise<void> {
 }
 
 // Full Avatar Dialog
-.full-avatar-dialog {
+.profile-avatar-viewer {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  max-width: 92vw;
-  max-height: 92vh;
-  padding: 16px;
-  border-radius: var(--radius-2xl) !important; // token = 24px
-  background: rgba(15, 23, 42, 0.88) !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35) !important;
-  overflow: visible;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100svh;
+  border-radius: 0 !important;
+  background: #16191d !important;
+  overflow: hidden;
+
+  &__backdrop-image,
+  &__fallback-backdrop,
+  &__shade {
+    position: absolute;
+    inset: 0;
+  }
+
+  &__backdrop-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(28px);
+    transform: scale(1.14);
+    opacity: 0.46;
+  }
+
+  &__fallback-backdrop {
+    background:
+      radial-gradient(circle at 28% 22%, rgba($primary, 0.28), transparent 32%),
+      linear-gradient(145deg, #1f2937, #111827 58%, #20242b);
+  }
+
+  &__shade {
+    background:
+      linear-gradient(180deg, rgba(10, 13, 18, 0.34), rgba(10, 13, 18, 0.08) 42%, rgba(10, 13, 18, 0.52)),
+      rgba(22, 25, 29, 0.28);
+  }
 
   &__close {
     position: absolute;
-    top: -12px;
-    right: -12px;
+    top: max(18px, env(safe-area-inset-top));
+    right: max(18px, env(safe-area-inset-right));
+    z-index: 4;
+    background: rgba(11, 15, 21, 0.62);
+    backdrop-filter: blur(10px);
+  }
+
+  &__stage {
+    position: relative;
     z-index: 2;
-    background: rgba(17, 24, 39, 0.82);
+    width: min(396px, 100vw);
+    height: min(552px, 100vh);
+    min-height: min(552px, 100svh);
+    margin: 0 auto;
+  }
+
+  &__add {
+    position: absolute;
+    top: clamp(32px, 6.2vh, 58px);
+    left: clamp(76px, 24vw, 112px);
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    border: 1.5px dashed rgba(255, 255, 255, 0.72);
+    background: rgba(13, 17, 23, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  &__add-menu {
+    position: absolute;
+    top: clamp(116px, 18vh, 140px);
+    left: 50%;
+    z-index: 3;
+    width: 180px;
+    transform: translateX(-50%);
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 16px;
+    background: rgba(14, 18, 24, 0.86);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+  }
+
+  &__add-option {
+    min-height: 40px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    font-size: 0.92rem;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 8px 14px;
+    text-align: center;
+    transition:
+      background 0.18s ease,
+      transform 0.18s ease;
+
+    &:hover,
+    &:focus-visible {
+      background: rgba(255, 255, 255, 0.22);
+      outline: none;
+      transform: translateY(-1px);
+    }
+  }
+
+  &__photo-row {
+    position: absolute;
+    top: clamp(118px, 18vh, 146px);
+    left: 24px;
+    right: 24px;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  &__photo-row--swapping {
+    animation: profile-avatar-option-row-pop 0.62s cubic-bezier(0.2, 0.9, 0.24, 1);
+  }
+
+  &__photo-option {
+    width: 76px;
+    height: 76px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba($primary, 0.56);
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+    transition:
+      box-shadow 0.18s ease,
+      transform 0.18s ease;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    &:hover,
+    &:focus-visible {
+      transform: translateY(-2px) scale(1.04);
+      box-shadow:
+        0 0 0 4px rgba(255, 255, 255, 0.18),
+        0 20px 40px rgba(0, 0, 0, 0.28);
+      outline: none;
+    }
+  }
+
+  &__photo-option--active {
+    box-shadow:
+      0 0 0 4px rgba(255, 255, 255, 0.88),
+      0 18px 36px rgba(0, 0, 0, 0.24);
+  }
+
+  &__main-wrap {
+    position: absolute;
+    left: 52px;
+    top: 204px;
+    width: 292px;
+    height: 292px;
+  }
+
+  &__main {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba($primary, 0.72), rgba(35, 78, 112, 0.76));
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 26px 54px rgba(0, 0, 0, 0.28);
+  }
+
+  &__main--swapping {
+    animation: profile-avatar-main-confirm 0.62s cubic-bezier(0.2, 0.9, 0.24, 1);
   }
 
   &__image {
-    display: block;
-    max-width: min(720px, 86vw);
-    max-height: 86vh;
-    border-radius: 0;
-    object-fit: contain;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__edit {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    width: 46px;
+    height: 46px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(11, 15, 21, 0.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.26);
+  }
+
+  &__confirm {
+    position: absolute;
+    left: 52px;
+    top: 516px;
+    width: 292px;
+    min-height: 46px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #111827;
+    font-size: 0.96rem;
+    font-weight: 800;
+    padding: 10px 18px;
+    cursor: pointer;
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease,
+      background 0.18s ease;
+
+    &:hover:not(:disabled),
+    &:focus-visible:not(:disabled) {
+      transform: translateY(-1px);
+      background: white;
+      outline: none;
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.5;
+      box-shadow: none;
+    }
+  }
+}
+
+.profile-avatar-main-enter-active,
+.profile-avatar-main-leave-active {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease,
+    filter 0.22s ease;
+}
+
+.profile-avatar-main-enter-from {
+  opacity: 0;
+  transform: scale(0.88) translateY(-10px);
+  filter: blur(8px);
+}
+
+.profile-avatar-main-leave-to {
+  opacity: 0;
+  transform: scale(1.08) translateY(10px);
+  filter: blur(8px);
+}
+
+.profile-avatar-option-move,
+.profile-avatar-option-enter-active,
+.profile-avatar-option-leave-active {
+  transition:
+    opacity 0.36s ease,
+    transform 0.36s cubic-bezier(0.2, 0.9, 0.24, 1);
+}
+
+.profile-avatar-option-enter-from {
+  opacity: 0;
+  transform: translateY(42px) scale(1.75);
+}
+
+.profile-avatar-option-leave-to {
+  opacity: 0;
+  transform: translateY(-28px) scale(0.72);
+}
+
+@keyframes profile-avatar-main-confirm {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 26px 54px rgba(0, 0, 0, 0.28);
+  }
+
+  42% {
+    transform: scale(1.045);
+    box-shadow:
+      0 0 0 8px rgba(255, 255, 255, 0.16),
+      0 32px 64px rgba(0, 0, 0, 0.32);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 26px 54px rgba(0, 0, 0, 0.28);
+  }
+}
+
+@keyframes profile-avatar-option-row-pop {
+  0% {
+    transform: translateY(0);
+  }
+
+  36% {
+    transform: translateY(-8px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 430px) {
+  .profile-avatar-viewer {
+    &__stage {
+      width: 100vw;
+    }
+
+    &__main-wrap {
+      left: 13.2vw;
+      width: 73.6vw;
+      height: 73.6vw;
+    }
+
+    &__confirm {
+      left: 13.2vw;
+      top: calc(204px + 73.6vw + 20px);
+      width: 73.6vw;
+    }
   }
 }
 

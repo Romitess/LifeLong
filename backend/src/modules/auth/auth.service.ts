@@ -29,6 +29,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 const BCRYPT_ROUNDS = 12;
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
+const MAX_AVATAR_OPTIONS = 12;
 
 @Injectable()
 export class AuthService {
@@ -333,6 +334,50 @@ export class AuthService {
     return { imageUrl: null };
   }
 
+  async saveProfileImageUrl(
+    user: JwtPayload,
+    imageUrl: string,
+  ): Promise<ProfileImageResponseDto> {
+    const lltumUser = await this.getLltumUserForProfile(user);
+    const normalizedImageUrl = this.normalizeProfileImageUrl(imageUrl);
+    await this.lltumUserRepository.update(lltumUser.id, { imageUrl: normalizedImageUrl });
+    return { imageUrl: normalizedImageUrl };
+  }
+
+  async uploadAvatarOption(
+    user: JwtPayload,
+    file: Express.Multer.File,
+  ): Promise<{ imageUrl: string }> {
+    const lltumUser = await this.getLltumUserForProfile(user);
+    const uploaded = await this.platformGatewayService.uploadByCategory(
+      'profile',
+      file,
+      lltumUser.id,
+    );
+
+    return { imageUrl: uploaded.url };
+  }
+
+  async getAvatarOptions(user: JwtPayload): Promise<{ avatarOptions: string[] }> {
+    const lltumUser = await this.getLltumUserForProfile(user);
+
+    return { avatarOptions: this.parseAvatarOptions(lltumUser.avatarOptionsJson) };
+  }
+
+  async saveAvatarOptions(
+    user: JwtPayload,
+    avatarOptions: string[],
+  ): Promise<{ avatarOptions: string[] }> {
+    const lltumUser = await this.getLltumUserForProfile(user);
+
+    const nextAvatarOptions = this.normalizeAvatarOptions(avatarOptions);
+    await this.lltumUserRepository.update(lltumUser.id, {
+      avatarOptionsJson: JSON.stringify(nextAvatarOptions),
+    });
+
+    return { avatarOptions: nextAvatarOptions };
+  }
+
   /**
    * Generate a Moodle password that always satisfies Moodle's password policy
    * (>=8 chars, upper, lower, digit, special). The Moodle account password is
@@ -634,6 +679,35 @@ export class AuthService {
     };
   }
 
+  private normalizeProfileImageUrl(imageUrl: string): string {
+    const normalizedUrl = imageUrl.trim();
+    if (!normalizedUrl) {
+      throw new UnauthorizedException('Profile image URL is required');
+    }
+    return normalizedUrl;
+  }
+
+  private parseAvatarOptions(rawOptions: string | null | undefined): string[] {
+    if (!rawOptions) return [];
+    try {
+      const parsed = JSON.parse(rawOptions) as unknown;
+      if (!Array.isArray(parsed)) return [];
+      return this.normalizeAvatarOptions(parsed);
+    } catch {
+      return [];
+    }
+  }
+
+  private normalizeAvatarOptions(avatarOptions: unknown[]): string[] {
+    return Array.from(
+      new Set(
+        avatarOptions.filter(
+          (avatarOption): avatarOption is string =>
+            typeof avatarOption === 'string' && avatarOption.trim().length > 0,
+        ),
+      ),
+    ).slice(0, MAX_AVATAR_OPTIONS);
+  }
 }
 
 function toGatewayFilePath(filePath: string): string | null {

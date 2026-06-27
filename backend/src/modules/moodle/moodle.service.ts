@@ -2,14 +2,21 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { redactParams } from 'src/common/utils/redact.utils';
 import { SectionOwnershipInfo } from './interfaces/moodle.interfaces';
+import { getMoodleModuleTypeInfo } from './moodle-module-registry';
 
 /** Minimal shape of a section from core_course_get_contents used by subsection sync. */
+interface RawContentModule {
+  id: number;
+  modname: string;
+  customdata?: string;
+}
+
 interface RawContentSection {
   id: number;
   section: number;
   name: string;
   component?: string | null;
-  modules?: Array<{ id: number; modname: string; customdata?: string }>;
+  modules?: RawContentModule[];
 }
 
 @Injectable()
@@ -645,6 +652,14 @@ export class MoodleService {
     moodleUserId: number,
   ): Promise<{ total: number; done: number }> {
     const COUNTED_MODULES = ['assign', 'quiz'];
+    const countableModuleIds = await this.getCountableCompletionModuleIds(
+      moodleCourseId,
+      COUNTED_MODULES,
+    );
+
+    if (countableModuleIds.size === 0) {
+      return { total: 0, done: 0 };
+    }
 
     try {
       const params = new URLSearchParams();
@@ -654,12 +669,15 @@ export class MoodleService {
       const result = (await this.callMoodleApi(
         'core_completion_get_activities_completion_status',
         params,
-      )) as { statuses: Array<{ state: number; modname: string }> };
+      )) as { statuses: Array<{ cmid?: number; id?: number; state: number; modname: string }> };
 
-      const statuses = (result.statuses ?? []).filter((s) => COUNTED_MODULES.includes(s.modname));
+      const statuses = (result.statuses ?? []).filter((s) => {
+        const cmid = Number(s.cmid ?? s.id ?? 0);
+        return COUNTED_MODULES.includes(s.modname) && countableModuleIds.has(cmid);
+      });
       if (statuses.length > 0) {
         return {
-          total: statuses.length,
+          total: countableModuleIds.size,
           done: statuses.filter((s) => s.state >= 1).length,
         };
       }
@@ -692,9 +710,30 @@ export class MoodleService {
       (g) => g.itemtype === 'mod' && COUNTED_MODULES.includes(g.itemmodule ?? ''),
     );
     return {
-      total: activityItems.length,
-      done: activityItems.filter((g) => g.graderaw !== null).length,
+      total: countableModuleIds.size,
+      done: Math.min(
+        activityItems.filter((g) => g.graderaw !== null).length,
+        countableModuleIds.size,
+      ),
     };
+  }
+
+  private async getCountableCompletionModuleIds(
+    moodleCourseId: number,
+    countedModules: string[],
+  ): Promise<Set<number>> {
+    const sections = await this.getCourseContents(moodleCourseId);
+    const ids = new Set<number>();
+
+    sections.forEach((section) => {
+      (section.modules ?? []).forEach((module) => {
+        if (!countedModules.includes(module.modname)) return;
+        if (getMoodleModuleTypeInfo(module.modname).decision === 'skip') return;
+        ids.add(Number(module.id));
+      });
+    });
+
+    return ids;
   }
 
   /**

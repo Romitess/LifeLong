@@ -275,7 +275,15 @@ export class CertificatesService {
   // ── private helpers ─────────────────────────────────────────────────────────
 
   private backendUrl(): string {
-    return this.configService.getOrThrow<string>('BACKEND_PUBLIC_URL').replace(/\/+$/, '');
+    const configuredUrl =
+      this.configService.get<string>('BACKEND_PUBLIC_URL') ||
+      this.configService.get<string>('BACKEND_URL');
+    if (configuredUrl) {
+      return configuredUrl.replace(/\/+$/, '');
+    }
+
+    const port = this.configService.get<number>('PORT') ?? 3000;
+    return `http://localhost:${port}`;
   }
 
   private deriveCertUrl(certCode: string): string {

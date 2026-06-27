@@ -837,29 +837,6 @@ function formatThaiDateTime(date: Date): string {
   return isTh ? `${dateLabel} at ${timeLabel}` : `${dateLabel} ${timeLabel}`;
 }
 
-async function autoGenerateCertsForCompletedCourses(): Promise<void> {
-  const completed = myRegisteredCourseEntries.value.filter((e) => e.progress.isCompleted);
-  if (completed.length === 0) return;
-
-  let anyGenerated = false;
-  for (const entry of completed) {
-    const enrollId = entry.registration.enrollId;
-    if (!enrollId) continue;
-    try {
-      const { data } = await api.post<{ cert: object; alreadyExisted: boolean }>(
-        `/api/certificates/generate/${enrollId}?force=true`,
-      );
-      if (!data.alreadyExisted) anyGenerated = true;
-    } catch {
-      // Not truly complete in Moodle yet, or cert already exists — skip silently
-    }
-  }
-
-  if (anyGenerated && authStore.user?.username) {
-    await courseRegistrationStore.fetchMyEnrollments(authStore.user.username);
-  }
-}
-
 onMounted(async () => {
   const username = authStore.user?.username;
   if (username && !isTeachingRole.value) {
@@ -868,7 +845,6 @@ onMounted(async () => {
       .map((r) => r.enrollId)
       .filter((id): id is number => id != null);
     await enrollmentProgressStore.fetchAllCompletions(enrollIds);
-    void autoGenerateCertsForCompletedCourses();
   }
   void fetchBenefits();
 });

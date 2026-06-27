@@ -909,12 +909,6 @@
           <div>
             <span>{{ t('instructor.learnerDetail.progress') }}</span>
             <strong>{{ selectedLearner.progress }}%</strong>
-            <q-linear-progress
-              rounded
-              size="8px"
-              :value="selectedLearner.progress / 100"
-              color="primary"
-            />
           </div>
           <div>
             <span>{{ t('instructor.learnerDetail.totalScore') }}</span>
@@ -981,8 +975,10 @@
               t('instructor.learnerDetail.totalScore')
             }}</span>
             <span class="student-grade-panel__total-value">
-              {{ panelRow?.lmsFinalscore ?? '—' }}
-              <span v-if="panelRow?.lmsFinalscore !== null"> / 100</span>
+              {{ formatScoreValue(panelRow?.lmsFinalscore) }}
+              <span v-if="panelRow?.lmsFinalscore != null && panelRow?.maxScore != null">
+                / {{ formatMaxScoreValue(panelRow?.maxScore) }}</span
+              >
             </span>
             <span v-if="panelRow?.importedGradeName" class="student-grade-panel__grade-badge">
               {{ panelRow.importedGradeName }}
@@ -1016,7 +1012,9 @@
               <div class="student-grade-panel__item-right">
                 <span v-if="item.score !== null" class="student-grade-panel__score">
                   {{ item.score }}
-                  <span class="student-grade-panel__score-max">/ {{ item.maxScore ?? 100 }}</span>
+                  <span class="student-grade-panel__score-max"
+                    >/ {{ formatMaxScoreValue(item.maxScore) }}</span
+                  >
                 </span>
                 <span v-else class="student-grade-panel__no-score">—</span>
                 <a
@@ -1111,7 +1109,7 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { getCourseStructure } from 'src/data/course-structure';
 import { useInstructorBackend } from 'src/composables/use-instructor-backend';
-import type { GradeItemBreakdown } from 'src/composables/use-instructor-backend';
+import type { GradeItemBreakdown, InstructorGrade } from 'src/composables/use-instructor-backend';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
@@ -1135,6 +1133,7 @@ interface LearnerRow {
   progress: number;
   lastActive: string;
   score: string;
+  maxScore: number | null;
   status: string;
   statusColor: string;
   enrolledAt: string;
@@ -1473,6 +1472,37 @@ function formatPaymentStatus(value: string | null | undefined, isFree: boolean):
   return value || '-';
 }
 
+function formatScoreValue(value: number | string | null | undefined): string {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue.toFixed(2) : '-';
+}
+
+function formatMaxScoreValue(value: number | string | null | undefined): string {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '-';
+  return Number.isInteger(numericValue) ? String(numericValue) : numericValue.toFixed(2);
+}
+
+function resolveGradeMaxScore(grade: InstructorGrade | null | undefined): number | null {
+  const directMaxScore = Number(grade?.maxScore);
+  if (Number.isFinite(directMaxScore) && directMaxScore > 0) return directMaxScore;
+
+  const itemMaxScore = (grade?.gradeItems ?? []).reduce((total, item) => {
+    const maxScore = Number(item.maxScore);
+    return Number.isFinite(maxScore) && maxScore > 0 ? total + maxScore : total;
+  }, 0);
+
+  return itemMaxScore > 0 ? itemMaxScore : null;
+}
+
+function formatScoreSummary(
+  score: number | string | null | undefined,
+  maxScore: number | null,
+): string {
+  if (score === null || score === undefined) return t('instructor.status.noScore');
+  return `${formatScoreValue(score)}/${formatMaxScoreValue(maxScore)}`;
+}
+
 function getInitials(name: string | null | undefined): string {
   const parts = (name ?? '')
     .trim()
@@ -1508,6 +1538,7 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
     const grade = gradesByUserId.get(learner.userId) || gradesByStudentId.get(learner.studentId);
     const importedResult = importedLearningResults.value[learner.studentId];
     const score = importedResult?.score ?? grade?.score ?? 0;
+    const maxScore = resolveGradeMaxScore(grade);
     const importedGradeName = grade?.importedGradeName ?? null;
     const resultStatus = getResultStatusFromGrade(importedGradeName);
     const progress = grade?.status === 'passed' ? 100 : 0;
@@ -1526,7 +1557,8 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
       score:
         grade?.score === null || grade?.score === undefined
           ? t('instructor.status.noScore')
-          : `${grade.score}/${grade.maxScore ?? 100}`,
+          : formatScoreSummary(grade.score, maxScore),
+      maxScore,
       ...status,
       enrolledAt: formatBackendDate(learner.enrolledAt),
       paymentStatus: formatPaymentStatus(learner.paymentStatus, course.isFree),

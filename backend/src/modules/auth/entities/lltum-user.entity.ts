@@ -52,4 +52,7 @@ export class LltumUser {
 
   @Column({ name: 'USER_IMAGE_URL', type: 'varchar', length: 2048, nullable: true })
   imageUrl: string | null;
+
+  @Column({ name: 'AVATAR_OPTIONS_JSON', type: 'text', nullable: true })
+  avatarOptionsJson: string | null;
 }

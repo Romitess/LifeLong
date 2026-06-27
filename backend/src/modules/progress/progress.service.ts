@@ -84,14 +84,10 @@ export class ProgressService {
   }
 
   async checkCompletion(enrollId: number): Promise<CompletionResult> {
-    // If enrollment is already marked complete in the DB, treat it as 100% regardless of progress rows.
     const statusRows = await this.dataSource.query<Array<{ enrollStatus: string | null }>>(
       `SELECT ENROLL_STATUS AS enrollStatus FROM LLTENROLL WHERE ENROLL_ID = ?`,
       [enrollId],
     );
-    if (statusRows[0]?.enrollStatus === 'C') {
-      return { completed: true, total: 1, done: 1, percent: 100 };
-    }
 
     const rows = await this.dataSource.query<CompletionRow[]>(
       `SELECT
@@ -108,7 +104,9 @@ export class ProgressService {
     );
 
     const total = Number(rows[0]?.total ?? 0);
-    const done = Number(rows[0]?.done ?? 0);
+    const progressDone = Number(rows[0]?.done ?? 0);
+    const isEnrollmentCompleted = statusRows[0]?.enrollStatus === 'C';
+    const done = total > 0 && isEnrollmentCompleted ? total : progressDone;
     const completed = total > 0 && done >= total;
     const percent = total > 0 ? Math.round((done / total) * 100) : 0;
 

@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Patch,
+  Post,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -26,6 +27,7 @@ import { ProfileResponseDto } from './dto/profile-response.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 const profileImageUploadDir = './uploaded_file/profile-image';
+const PROFILE_IMAGE_MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 mkdirSync(profileImageUploadDir, { recursive: true });
 
@@ -69,7 +71,7 @@ export class ProfileController {
       fileFilter: (_req, file, cb) => {
         cb(null, /^image\/(jpeg|png|webp)$/.test(file.mimetype));
       },
-      limits: { fileSize: 5 * 1024 * 1024 },
+      limits: { fileSize: PROFILE_IMAGE_MAX_FILE_SIZE },
     }),
   )
   async updateImage(
@@ -97,5 +99,68 @@ export class ProfileController {
   @ApiOperation({ summary: 'Remove current user profile image' })
   deleteImage(@CurrentUser() user: JwtPayload): Promise<ProfileImageResponseDto> {
     return this.authService.deleteProfileImage(user);
+  }
+
+  @Patch('image-url')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Use an existing profile image URL as current profile image' })
+  saveImageUrl(
+    @Body() body: { imageUrl?: string },
+    @CurrentUser() user: JwtPayload,
+  ): Promise<ProfileImageResponseDto> {
+    if (!body.imageUrl) {
+      throw new BadRequestException('imageUrl is required');
+    }
+    return this.authService.saveProfileImageUrl(user, body.imageUrl);
+  }
+
+  @Post('avatar-options/upload')
+  @HttpCode(HttpStatus.OK)
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload a profile viewer image option without changing current image' })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: profileImageStorage,
+      fileFilter: (_req, file, cb) => {
+        cb(null, /^image\/(jpeg|png|webp)$/.test(file.mimetype));
+      },
+      limits: { fileSize: PROFILE_IMAGE_MAX_FILE_SIZE },
+    }),
+  )
+  async uploadAvatarOption(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<{ imageUrl: string }> {
+    if (!file) {
+      throw new BadRequestException(
+        'No file uploaded. Please send multipart/form-data with a file field named "file".',
+      );
+    }
+
+    try {
+      await assertFileMagic(file.path, ['jpeg', 'png', 'webp']);
+    } catch (error) {
+      await unlink(file.path).catch(() => undefined);
+      throw error;
+    }
+
+    return this.authService.uploadAvatarOption(user, file);
+  }
+
+  @Get('avatar-options')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get profile viewer image options' })
+  getAvatarOptions(@CurrentUser() user: JwtPayload): Promise<{ avatarOptions: string[] }> {
+    return this.authService.getAvatarOptions(user);
+  }
+
+  @Patch('avatar-options')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Save profile viewer image options' })
+  saveAvatarOptions(
+    @Body() body: { avatarOptions?: string[] },
+    @CurrentUser() user: JwtPayload,
+  ): Promise<{ avatarOptions: string[] }> {
+    return this.authService.saveAvatarOptions(user, body.avatarOptions ?? []);
   }
 }
