@@ -89,6 +89,7 @@
                 <div>{{ (row as ReceiptUsageItem).cancelDate }}</div>
               </div>
             </div>
+            <span v-else>-</span>
           </template>
 
           <template #cell-customerName="{ row }">
