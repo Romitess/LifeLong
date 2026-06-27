@@ -66,7 +66,7 @@ import CentralFinancePageHero from 'components/centralfinance/CentralFinancePage
 import CentralFinanceScopeCard from 'components/centralfinance/CentralFinanceScopeCard.vue';
 import RegistrationStatisticsReportManager from 'components/reports/RegistrationStatisticsReportManager.vue';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const { isLoading: isFacultyLoading, fetchFaculties } = useFacultyList();
 
 const faculties = ref<ApiFaculty[]>([]);
@@ -75,7 +75,10 @@ const appliedFacultyId = ref<number | null>(null);
 
 const facultyOptions = computed(() => [
   { label: t('centralFinance.receiptSummary.allFaculties'), value: '' as const },
-  ...faculties.value.map((f) => ({ label: f.name ?? '', value: f.id })),
+  ...faculties.value.map((f) => ({
+    label: locale.value === 'th' ? (f.name ?? '') : ((f.nameEn || f.name) ?? ''),
+    value: f.id,
+  })),
 ]);
 
 const activeFacultyLabel = computed<string>(() => {

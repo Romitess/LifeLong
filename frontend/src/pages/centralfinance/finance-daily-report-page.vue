@@ -175,20 +175,23 @@ interface DailyReportItem {
 const tableRows = ref<DailyReportItem[]>([]);
 
 // ── Faculty Options ──────────────────────────────────────────
-const departmentOptions = ref<{ label: string; value: string }[]>([
+const rawFacultyData = ref<{ id: number; name: string; nameEn: string | null }[]>([]);
+
+const departmentOptions = computed(() => [
   { label: t('centralFinance.receiptSummary.allFaculties'), value: '' },
+  ...rawFacultyData.value.map((f) => ({
+    label: locale.value === 'th' ? (f.name ?? '') : ((f.nameEn || f.name) ?? ''),
+    value: f.name ?? '',
+  })),
 ]);
 
 async function fetchFacultyOptions(): Promise<void> {
   isFacultyLoading.value = true;
   try {
-    const { data } = await api.get<{ id: number; name: string }[]>(
+    const { data } = await api.get<{ id: number; name: string; nameEn: string | null }[]>(
       '/api/centralfinance/daily-report/faculty-options',
     );
-    departmentOptions.value = [
-      { label: t('centralFinance.receiptSummary.allFaculties'), value: '' },
-      ...data.map((f) => ({ label: f.name, value: f.name })),
-    ];
+    rawFacultyData.value = data;
   } catch {
     // use default when load fails
   } finally {
@@ -197,12 +200,12 @@ async function fetchFacultyOptions(): Promise<void> {
 }
 const activeFacultyLabel = computed<string>(() => {
   if (!selectedFaculty.value) return t('centralFinance.receiptSummary.allFaculties');
-  return selectedFaculty.value;
+  return translateFaculty(selectedFaculty.value);
 });
 
 function getDepartmentLabel(val: string): string {
   if (!val) return t('centralFinance.receiptSummary.allFaculties');
-  return val;
+  return translateFaculty(val);
 }
 
 // ── Columns ──────────────────────────────────────────────────

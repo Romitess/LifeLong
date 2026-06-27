@@ -34,6 +34,7 @@ function createEmptyFilters(): ReceiptUsageFilters {
 export interface FacultyOption {
   id: number;
   name: string;
+  nameEn: string | null;
 }
 
 export function useReceiptUsageReport() {

@@ -129,13 +129,14 @@ export class FinanceDailyReportService {
     }
   }
 
-  async getFacultyOptions(): Promise<{ id: number; name: string }[]> {
+  async getFacultyOptions(): Promise<{ id: number; name: string; nameEn: string | null }[]> {
     const sql = `
-      SELECT FAC_ID AS id, COALESCE(FAC_NAME, '') AS name
+      SELECT FAC_ID AS id, COALESCE(FAC_NAME, '') AS name, FAC_NAMEEN AS nameEn
       FROM LLTFACULTY
       ORDER BY FAC_SEQ ASC, FAC_ID ASC
     `;
-    const rows: { id: number; name: string }[] = await this.dataSource.query(sql);
+    const rows: { id: number; name: string; nameEn: string | null }[] =
+      await this.dataSource.query(sql);
     return rows;
   }
 

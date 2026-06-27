@@ -14,7 +14,7 @@ export class ReceiptUsageReportController {
 
   @Get('receipt-usage/faculty-options')
   @ApiOperation({ summary: 'ดึงรายชื่อคณะ/ส่วนงานทั้งหมดสำหรับ dropdown (Central Finance)' })
-  getFacultyOptions(): Promise<{ id: number; name: string }[]> {
+  getFacultyOptions(): Promise<{ id: number; name: string; nameEn: string | null }[]> {
     return this.receiptUsageReportService.getFacultyOptions();
   }
 

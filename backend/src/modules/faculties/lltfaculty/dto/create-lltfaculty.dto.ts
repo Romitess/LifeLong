@@ -12,6 +12,15 @@ export class CreateLltfacultyDto {
   @MaxLength(255)
   name?: string;
 
+  @ApiPropertyOptional({
+    example: 'Faculty of Science',
+    description: 'English name of the faculty',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  nameEn?: string;
+
   @ApiPropertyOptional({ example: 'SCI', description: 'รหัสคณะ/ส่วนงานฝั่งระบบบุคลากร' })
   @IsOptional()
   @IsString()

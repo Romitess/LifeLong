@@ -20,6 +20,15 @@ export class Lltfaculty {
   name: string | null;
 
   @Column({
+    name: 'FAC_NAMEEN',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+    comment: 'English name of the faculty',
+  })
+  nameEn: string | null;
+
+  @Column({
     name: 'FAC_ID_PSN',
     type: 'varchar',
     length: 3,

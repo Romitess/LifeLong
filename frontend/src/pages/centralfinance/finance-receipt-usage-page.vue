@@ -204,7 +204,10 @@ const datePresetOptions = computed(() => [
 
 const facultyOptions = computed(() => [
   { label: t('centralFinance.receiptSummary.allFaculties'), value: '' },
-  ...apiFacultyOptions.value.map((f) => ({ label: f.name, value: f.name })),
+  ...apiFacultyOptions.value.map((f) => ({
+    label: locale.value === 'th' ? (f.name ?? '') : ((f.nameEn || f.name) ?? ''),
+    value: f.name ?? '',
+  })),
 ]);
 
 const activeFacultyScopeLabel = computed<string>(() => {

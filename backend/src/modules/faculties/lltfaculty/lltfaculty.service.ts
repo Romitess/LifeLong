@@ -5,6 +5,18 @@ import { CreateLltfacultyDto } from './dto/create-lltfaculty.dto';
 import { UpdateLltfacultyDto } from './dto/update-lltfaculty.dto';
 import { Lltfaculty } from './entities/lltfaculty.entity';
 
+interface FacultyOption {
+  id: number;
+  name: string | null;
+  nameEn: string | null;
+}
+
+function trimOrNull(value: string | undefined | null): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 @Injectable()
 export class LltfacultyService {
   constructor(
@@ -20,15 +32,16 @@ export class LltfacultyService {
 
     const lltfaculty = this.lltfacultyRepository.create({
       id: dto.id,
-      name: dto.name?.trim() || null,
-      facIdPsn: dto.facIdPsn?.trim() || null,
+      name: trimOrNull(dto.name),
+      nameEn: trimOrNull(dto.nameEn),
+      facIdPsn: trimOrNull(dto.facIdPsn),
       campusId: dto.campusId ?? null,
-      campusName: dto.campusName?.trim() || null,
+      campusName: trimOrNull(dto.campusName),
       facSeq: dto.facSeq ?? null,
-      facActive: dto.facActive?.trim() || null,
-      facType: dto.facType?.trim() || null,
-      compCode: dto.compCode?.trim() || null,
-      suffix: dto.suffix?.trim() || null,
+      facActive: trimOrNull(dto.facActive),
+      facType: trimOrNull(dto.facType),
+      compCode: trimOrNull(dto.compCode),
+      suffix: trimOrNull(dto.suffix),
     });
 
     return await this.lltfacultyRepository.save(lltfaculty);
@@ -40,13 +53,18 @@ export class LltfacultyService {
     });
   }
 
-  async findOptions(): Promise<{ id: number; name: string | null }[]> {
+  async findOptions(): Promise<FacultyOption[]> {
     const rows = await this.lltfacultyRepository.find({
-      select: { id: true, name: true },
       where: { facActive: 'Y' },
       order: { facSeq: 'ASC', id: 'ASC' },
     });
-    return rows.map((f) => ({ id: f.id, name: f.name }));
+    return rows.map(
+      (f): FacultyOption => ({
+        id: f.id,
+        name: f.name,
+        nameEn: f.nameEn,
+      }),
+    );
   }
 
   async findOne(id: number): Promise<Lltfaculty> {
@@ -61,31 +79,34 @@ export class LltfacultyService {
     const lltfaculty = await this.findOne(id);
 
     if (dto.name !== undefined) {
-      lltfaculty.name = dto.name?.trim() || null;
+      lltfaculty.name = trimOrNull(dto.name);
+    }
+    if (dto.nameEn !== undefined) {
+      lltfaculty.nameEn = trimOrNull(dto.nameEn);
     }
     if (dto.facIdPsn !== undefined) {
-      lltfaculty.facIdPsn = dto.facIdPsn?.trim() || null;
+      lltfaculty.facIdPsn = trimOrNull(dto.facIdPsn);
     }
     if (dto.campusId !== undefined) {
       lltfaculty.campusId = dto.campusId ?? null;
     }
     if (dto.campusName !== undefined) {
-      lltfaculty.campusName = dto.campusName?.trim() || null;
+      lltfaculty.campusName = trimOrNull(dto.campusName);
     }
     if (dto.facSeq !== undefined) {
       lltfaculty.facSeq = dto.facSeq ?? null;
     }
     if (dto.facActive !== undefined) {
-      lltfaculty.facActive = dto.facActive?.trim() || null;
+      lltfaculty.facActive = trimOrNull(dto.facActive);
     }
     if (dto.facType !== undefined) {
-      lltfaculty.facType = dto.facType?.trim() || null;
+      lltfaculty.facType = trimOrNull(dto.facType);
     }
     if (dto.compCode !== undefined) {
-      lltfaculty.compCode = dto.compCode?.trim() || null;
+      lltfaculty.compCode = trimOrNull(dto.compCode);
     }
     if (dto.suffix !== undefined) {
-      lltfaculty.suffix = dto.suffix?.trim() || null;
+      lltfaculty.suffix = trimOrNull(dto.suffix);
     }
 
     return await this.lltfacultyRepository.save(lltfaculty);
