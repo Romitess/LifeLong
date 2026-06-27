@@ -42,6 +42,7 @@ interface AdminCourseRow {
   courseCode: string | null;
   titleTh: string | null;
   titleEn: string | null;
+  imageUrl: string | null;
   facultyId: number | string | null;
   facultyName: string | null;
   typeCourseId: number | string | null;
@@ -49,6 +50,15 @@ interface AdminCourseRow {
   responsibleName: string | null;
   startDate: Date | string | null;
   endDate: Date | string | null;
+  registrationStart: Date | string | null;
+  registrationEnd: Date | string | null;
+  classFee: number | string | null;
+  maxSeats: number | string | null;
+  enrolledCount: number | string | null;
+  status: string | null;
+  published: string | null;
+  moodleSyncStatus: string | null;
+  moodleCourseId: number | string | null;
 }
 
 interface CountRow {
@@ -153,6 +163,7 @@ export class AdminCoursesService {
         c.COSE_CODE                                                            AS courseCode,
         COALESCE(NULLIF(c.COSE_NAMETH, ''), NULLIF(c.COSE_NAMEEN, ''), CONCAT('Course #', c.COSE_ID)) AS titleTh,
         c.COSE_NAMEEN                                                          AS titleEn,
+        c.COSE_IMAGE_URL                                                       AS imageUrl,
         COALESCE(f.FAC_ID, 0)                                                  AS facultyId,
         COALESCE(NULLIF(f.FAC_NAME, ''), 'ไม่ระบุคณะ/ส่วนงาน')                AS facultyName,
         COALESCE(tc.TYPECOSE_ID, 0)                                            AS typeCourseId,
@@ -160,11 +171,24 @@ export class AdminCoursesService {
         rc.responsibleNames                                                    AS responsibleName,
         c.COSE_STARTDATE                                                       AS startDate,
         c.COSE_ENDDATE                                                         AS endDate,
-        COALESCE(oc.OPENCLASS_AMOUNT, 0)                                       AS classFee
+        oc.OPENCLASS_REGSTARTDATE                                              AS registrationStart,
+        oc.OPENCLASS_REGENDDATE                                                AS registrationEnd,
+        COALESCE(oc.OPENCLASS_AMOUNT, 0)                                       AS classFee,
+        oc.OPENCLASS_NUMOPEN                                                   AS maxSeats,
+        COALESCE(ec.enrolledCount, 0)                                          AS enrolledCount,
+        COALESCE(c.COSE_STATUS, 'N')                                           AS status,
+        COALESCE(oc.OPENCLASS_PUBLIC, 'N')                                     AS published,
+        COALESCE(oc.LMS_STATUS, 'N')                                           AS moodleSyncStatus,
+        oc.LMS_ID                                                              AS moodleCourseId
       FROM LLTCOURSE c
       LEFT JOIN LLTFACULTY f      ON f.FAC_ID        = c.FAC_ID
       LEFT JOIN LLTTYPECOURSE tc  ON tc.TYPECOSE_ID  = c.TYPECOSE_ID
       LEFT JOIN LLTOPENCLASS oc   ON oc.COSE_ID       = c.COSE_ID
+      LEFT JOIN (
+        SELECT OPENCLASS_ID, COUNT(*) AS enrolledCount
+        FROM LLTENROLL
+        GROUP BY OPENCLASS_ID
+      ) ec ON ec.OPENCLASS_ID = oc.OPENCLASS_ID
       LEFT JOIN (
         SELECT
           ci.COSE_ID,
@@ -2300,6 +2324,7 @@ export class AdminCoursesService {
       courseCode: row.courseCode,
       titleTh: row.titleTh,
       titleEn: row.titleEn,
+      imageUrl: row.imageUrl,
       facultyId: Number(row.facultyId ?? 0),
       facultyName: row.facultyName ?? 'ไม่ระบุคณะ/ส่วนงาน',
       typeCourseId: Number(row.typeCourseId ?? 0),
@@ -2307,6 +2332,15 @@ export class AdminCoursesService {
       responsibleName: row.responsibleName,
       startDate: (row.startDate as string | null) ?? null,
       endDate: (row.endDate as string | null) ?? null,
+      registrationStart: (row.registrationStart as string | null) ?? null,
+      registrationEnd: (row.registrationEnd as string | null) ?? null,
+      classFee: Number(row.classFee ?? 0),
+      maxSeats: row.maxSeats === null ? null : Number(row.maxSeats),
+      enrolledCount: Number(row.enrolledCount ?? 0),
+      status: row.status === 'Y' ? 'Y' : 'N',
+      published: row.published === 'Y' ? 'Y' : 'N',
+      moodleSyncStatus: row.moodleSyncStatus === 'Y' ? 'Y' : 'N',
+      moodleCourseId: row.moodleCourseId === null ? null : Number(row.moodleCourseId),
     };
   }
 

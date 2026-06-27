@@ -3,6 +3,7 @@ export class AdminCourseItemDto {
   courseCode: string | null;
   titleTh: string | null;
   titleEn: string | null;
+  imageUrl: string | null;
   facultyId: number;
   facultyName: string;
   typeCourseId: number;
@@ -10,6 +11,15 @@ export class AdminCourseItemDto {
   responsibleName: string | null;
   startDate: string | null;
   endDate: string | null;
+  registrationStart: string | null;
+  registrationEnd: string | null;
+  classFee: number;
+  maxSeats: number | null;
+  enrolledCount: number;
+  status: 'Y' | 'N';
+  published: 'Y' | 'N';
+  moodleSyncStatus: 'Y' | 'N';
+  moodleCourseId: number | null;
 }
 
 export class AdminCoursesFilterOptionDto {
