@@ -396,7 +396,7 @@ async function onLogin(): Promise<void> {
 
   :deep(.q-field--focused .q-field__prepend),
   :deep(.q-field--focused .q-field__append) {
-    color: $secondary;
+    color: $primary;
   }
 }
 
