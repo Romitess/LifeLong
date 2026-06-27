@@ -227,7 +227,7 @@ export class PlatformGatewayController {
       return;
     }
 
-    let fetchResponse: any = null;
+    let fetchResponse: globalThis.Response | null = null;
     try {
       fetchResponse = await fetch(fileUrl);
     } catch (err) {
