@@ -14,7 +14,7 @@ function requiredEnv(name: string): string {
 
 export default new DataSource({
   type: 'mysql',
-  host: process.env.DB_HOST ?? 'localhost',
+  host: requiredEnv('DB_HOST'),
   port: Number(process.env.DB_PORT ?? 3306),
   username: process.env.DB_USER ?? 'root',
   password: requiredEnv('DB_PASSWORD'),

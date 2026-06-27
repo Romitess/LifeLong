@@ -1513,7 +1513,7 @@ export class LltcourseService {
     let extension = 'jpg';
 
     try {
-      const pathname = new URL(imageUrl, 'http://localhost').pathname;
+      const pathname = new URL(imageUrl, 'http://placeholder.local').pathname;
       const match = pathname.match(/\.([a-zA-Z0-9]+)$/);
       if (match?.[1]) {
         extension = match[1].toLowerCase();
