@@ -140,7 +140,7 @@ export function useAvatarCrop(
     if (!cropImageSrc.value) return;
 
     const img = new Image();
-    img.onload = async () => {
+    img.onload = () => {
       const canvas = document.createElement('canvas');
       const outputSize = 400;
       canvas.width = outputSize;
