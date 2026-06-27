@@ -47,6 +47,9 @@ export class LltAuthUser {
   @UpdateDateColumn({ name: 'UPDATEDATE', type: 'datetime' })
   updateDate: Date;
 
+  @Column({ name: 'AVATAR_PATH', type: 'varchar', length: 255, nullable: true })
+  avatarPath: string | null;
+
   @ManyToOne(() => Lltfaculty, { nullable: true })
   @JoinColumn({ name: 'FAC_ID' })
   faculty: Lltfaculty | null;

@@ -235,6 +235,15 @@ function findAuthAccountByEmail(email: string): StoredAuthAccount | null {
   return getAllAuthAccounts().find((account) => account.email === normalizedEmail) ?? null;
 }
 
+function persistAccountAvatar(email: string, avatar: string): void {
+  const normalizedEmail = normalizeEmail(email);
+  const accounts = readStoredAuthAccounts();
+  const nextAccounts = accounts.map((account) =>
+    account.email === normalizedEmail ? { ...account, avatar } : account,
+  );
+  writeStoredAuthAccounts(nextAccounts);
+}
+
 function getStoredAvatar(): string | null {
   return readLocalStorage(PROFILE_AVATAR_STORAGE_KEY);
 }
@@ -400,7 +409,7 @@ export const useAuthStore = defineStore('auth', {
             return 'student';
           })(),
           username: apiUser.username,
-          avatar: createDefaultAvatar(apiUser.email),
+          avatar: apiUser.avatarUrl || createDefaultAvatar(apiUser.email),
           createdAt: new Date().toISOString(),
           source: 'registered',
         };
@@ -509,6 +518,7 @@ export const useAuthStore = defineStore('auth', {
           ...this.user,
           avatar,
         };
+        persistAccountAvatar(this.user.email, avatar);
       }
     },
 

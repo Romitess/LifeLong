@@ -13,6 +13,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { MoodleService } from '../moodle/moodle.service';
 import { Role } from './enums/role.enum';
+import { PlatformGatewayService } from '../platform-gateway/platform-gateway.service';
 
 const BCRYPT_ROUNDS = 12;
 const MAX_FAILED_ATTEMPTS = 5;
@@ -32,6 +33,7 @@ export class AuthService {
     @InjectRepository(LltUmtlog)
     private readonly umtlogRepository: Repository<LltUmtlog>,
     private moodleService: MoodleService,
+    private readonly platformGatewayService: PlatformGatewayService,
     private jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {
@@ -125,6 +127,7 @@ export class AuthService {
       role: string;
       facId?: number | null;
       facName?: string | null;
+      avatarUrl?: string | null;
     };
   }> {
     const { username, password } = loginDto;
@@ -222,7 +225,41 @@ export class AuthService {
         role: user.role,
         facId: user.facId,
         facName: (user.faculty as { name?: string } | null)?.name ?? null,
+        avatarUrl: this.buildAvatarUrl(user.avatarPath),
       },
+    };
+  }
+
+  async uploadAvatar(
+    authUserId: number,
+    file: Express.Multer.File,
+  ): Promise<{ avatarPath: string; avatarUrl: string }> {
+    const user = await this.authUserRepository.findOne({ where: { id: authUserId } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const uploaded = await this.platformGatewayService.uploadByCategory('profile', file, authUserId);
+    const avatarPath = uploaded.path;
+    const previousAvatarPath = user.avatarPath;
+
+    user.avatarPath = avatarPath;
+    await this.authUserRepository.save(user);
+
+    if (
+      previousAvatarPath &&
+      previousAvatarPath !== avatarPath &&
+      previousAvatarPath.startsWith('/uploads/profile/')
+    ) {
+      void this.platformGatewayService.deleteFile(previousAvatarPath).catch((error: unknown) => {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Failed to delete previous avatar for ${user.username}: ${errorMessage}`);
+      });
+    }
+
+    return {
+      avatarPath,
+      avatarUrl: this.buildAvatarUrl(avatarPath) ?? '',
     };
   }
 
@@ -373,5 +410,12 @@ export class AuthService {
       remaining,
       failures,
     };
+  }
+
+  private buildAvatarUrl(avatarPath: string | null | undefined): string | null {
+    if (!avatarPath) return null;
+    if (/^https?:\/\//i.test(avatarPath)) return avatarPath;
+    const normalizedPath = avatarPath.startsWith('/') ? avatarPath : `/${avatarPath}`;
+    return `/api${normalizedPath}`.replace(/\/{2,}/g, '/');
   }
 }

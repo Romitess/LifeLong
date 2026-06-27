@@ -661,7 +661,7 @@ const isSavingProfile = ref(false);
 const showSaveConfirmDialog = ref(false);
 const saveConfirmTitle = ref('');
 const saveConfirmMessage = ref('');
-const pendingSaveAction = ref<(() => void) | null>(null);
+const pendingSaveAction = ref<(() => void | Promise<void>) | null>(null);
 
 const form = reactive<UserProfileUpdate>({
   firstNameTh: '',
@@ -689,7 +689,11 @@ onMounted(() => {
   void fetchUserSkills();
 });
 
-function openSaveConfirmationDialog(title: string, message: string, onConfirm: () => void): void {
+function openSaveConfirmationDialog(
+  title: string,
+  message: string,
+  onConfirm: () => void | Promise<void>,
+): void {
   saveConfirmTitle.value = title;
   saveConfirmMessage.value = message;
   pendingSaveAction.value = onConfirm;
@@ -705,7 +709,7 @@ function confirmSaveConfirmation(): void {
   const action = pendingSaveAction.value;
   showSaveConfirmDialog.value = false;
   pendingSaveAction.value = null;
-  action?.();
+  void action?.();
 }
 
 function confirmSaveCartoonAvatar(): void {

@@ -9,12 +9,14 @@ import { LltumUser } from './entities/lltum-user.entity';
 import { LltUmtlog } from './entities/llt-umtlog.entity';
 import { MoodleModule } from '../moodle/moodle.module';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { PlatformGatewayModule } from '../platform-gateway/platform-gateway.module';
 import type { AppConfig } from '../../config/configuration';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([LltAuthUser, LltumUser, LltUmtlog]),
     MoodleModule,
+    PlatformGatewayModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService<AppConfig>) => ({

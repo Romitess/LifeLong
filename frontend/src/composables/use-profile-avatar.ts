@@ -2,6 +2,7 @@ import { ref, computed, reactive } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
+import { uploadProfileAvatarDataUrl } from 'src/services/profile-avatar.service';
 
 export interface AvatarOption {
   label: string;
@@ -319,7 +320,7 @@ export function useProfileAvatar() {
     cartoonAvatar.accessoryColor = pickRandomAvatarOption(accessoryColorOptions);
   }
 
-  function saveCartoonAvatar(): void {
+  async function saveCartoonAvatar(): Promise<void> {
     const snapshot: CartoonAvatarConfig = {
       body: cartoonAvatar.body,
       face: cartoonAvatar.face,
@@ -335,14 +336,32 @@ export function useProfileAvatar() {
     };
 
     persistCartoonAvatar(snapshot);
-    authStore.setAvatar(avatarPortraitUrl.value);
-    fullAvatarUrl.value = avatarPreviewUrl.value;
+    $q.loading.show({ message: t('profile.notifications.processing') || 'Uploading avatar...' });
 
-    $q.notify({
-      type: 'positive',
-      message: t('profile.notifications.avatarSaved'),
-      position: 'top',
-    });
+    try {
+      const uploadedAvatar = await uploadProfileAvatarDataUrl(
+        avatarPortraitUrl.value,
+        'profile-avatar.png',
+      );
+      authStore.setAvatar(uploadedAvatar.avatarUrl);
+      fullAvatarUrl.value = uploadedAvatar.avatarUrl;
+
+      $q.notify({
+        type: 'positive',
+        message: t('profile.notifications.avatarSaved'),
+        position: 'top',
+      });
+    } catch (error) {
+      console.error('Failed to save cartoon avatar', error);
+      $q.notify({
+        type: 'negative',
+        message: t('profile.notifications.profileSaveFailed'),
+        position: 'top',
+      });
+      throw error;
+    } finally {
+      $q.loading.hide();
+    }
   }
 
   function createPlayfulAvatarDataUrl(
