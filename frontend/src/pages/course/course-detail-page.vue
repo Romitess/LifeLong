@@ -459,8 +459,8 @@
                       <span class="text-body2">
                         {{
                           locale === 'th'
-                            ? 'สิทธิประโยชน์จะประกาศให้ทราบในภายหลัง'
-                            : 'Benefits of completing this course will be announced soon'
+                            ? 'ไม่มีสิทธิประโยชน์เพิ่มเติมสำหรับหลักสูตรนี้'
+                            : 'No additional benefits are available for this course'
                         }}
                       </span>
                     </div>
