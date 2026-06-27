@@ -77,6 +77,7 @@ export interface InstructorGrade {
   updatedAt: Date | null;
   lmsFinalscore: number | null;
   lmsSyncedAt: Date | null;
+  gradeUpdatedAt: Date | null;
   gradeItems: GradeItemBreakdown[];
   importedGradeId: number | null;
   importedGradeName: string | null;
@@ -894,6 +895,9 @@ export class InstructorService {
     const cmidMap = moodleCourseId
       ? await this.getCmidMap(moodleCourseId)
       : new Map<string, number>();
+    const courseBreakdownItems = moodleCourseId
+      ? await this.getCourseBreakdownItems(moodleCourseId, cmidMap)
+      : [];
 
     const moodleUserIds = learners
       .map((l) => l.moodleUserId)
@@ -931,10 +935,11 @@ export class InstructorService {
         }>;
 
         for (const row of dbRows) {
-          let userResult = moodleGradesByUserId.get(row.userid);
+          const moodleUserId = Number(row.userid);
+          let userResult = moodleGradesByUserId.get(moodleUserId);
           if (!userResult) {
             userResult = { usergrades: [{ gradeitems: [] }] };
-            moodleGradesByUserId.set(row.userid, userResult);
+            moodleGradesByUserId.set(moodleUserId, userResult);
           }
           userResult.usergrades![0].gradeitems!.push({
             itemtype: row.itemtype,
@@ -972,6 +977,7 @@ export class InstructorService {
 
       const dbScore = enroll?.lmsFinalscore ?? null;
       const result = moodleGradesByUserId.get(learner.moodleUserId);
+      const localGradeUpdatedAt = enroll?.updateDate ?? enroll?.updateDateGrade ?? null;
 
       if (!result) {
         return {
@@ -985,10 +991,11 @@ export class InstructorService {
           maxScore: null,
           grade: null,
           status: dbScore === null ? 'pending' : 'passed',
-          updatedAt: enroll?.lmsUpdateDate ?? null,
+          updatedAt: enroll?.lmsUpdateDate ?? localGradeUpdatedAt,
           lmsFinalscore: dbScore,
           lmsSyncedAt: enroll?.lmsUpdateDate ?? null,
-          gradeItems: [],
+          gradeUpdatedAt: enroll?.gradeItemId ? localGradeUpdatedAt : null,
+          gradeItems: courseBreakdownItems,
           importedGradeId: enroll?.gradeItemId ?? null,
           importedGradeName: enroll?.gradeItemId
             ? (gradeItemById.get(enroll.gradeItemId) ?? null)
@@ -1012,10 +1019,16 @@ export class InstructorService {
         maxScore,
         grade: gradeItem?.gradeformatted ?? null,
         status: score === null ? 'pending' : score >= (maxScore ?? 100) * 0.6 ? 'passed' : 'failed',
-        updatedAt: dateGraded ? new Date(dateGraded * 1000) : null,
+        updatedAt: dateGraded
+          ? new Date(dateGraded * 1000)
+          : (enroll?.lmsUpdateDate ?? localGradeUpdatedAt),
         lmsFinalscore: enroll?.lmsFinalscore ?? null,
         lmsSyncedAt: enroll?.lmsUpdateDate ?? null,
-        gradeItems: this.extractAllGradeItems(result, cmidMap),
+        gradeUpdatedAt: enroll?.gradeItemId ? localGradeUpdatedAt : null,
+        gradeItems: this.mergeGradeBreakdownItems(
+          courseBreakdownItems,
+          this.extractAllGradeItems(result, cmidMap),
+        ),
         importedGradeId: enroll?.gradeItemId ?? null,
         importedGradeName: enroll?.gradeItemId
           ? (gradeItemById.get(enroll.gradeItemId) ?? null)
@@ -1360,10 +1373,11 @@ export class InstructorService {
         }>;
 
         for (const row of dbRows) {
-          let userResult = moodleGradesByUserId.get(row.userid);
+          const moodleUserId = Number(row.userid);
+          let userResult = moodleGradesByUserId.get(moodleUserId);
           if (!userResult) {
             userResult = { usergrades: [{ gradeitems: [] }] };
-            moodleGradesByUserId.set(row.userid, userResult);
+            moodleGradesByUserId.set(moodleUserId, userResult);
           }
           userResult.usergrades![0].gradeitems!.push({
             itemtype: row.itemtype,
@@ -1781,9 +1795,12 @@ export class InstructorService {
       maxScore: null,
       grade: null,
       status: 'pending',
-      updatedAt: null,
+      updatedAt: enroll?.lmsUpdateDate ?? enroll?.updateDate ?? enroll?.updateDateGrade ?? null,
       lmsFinalscore: enroll?.lmsFinalscore ?? null,
       lmsSyncedAt: enroll?.lmsUpdateDate ?? null,
+      gradeUpdatedAt: enroll?.gradeItemId
+        ? (enroll?.updateDate ?? enroll?.updateDateGrade ?? null)
+        : null,
       gradeItems: [],
       importedGradeId: enroll?.gradeItemId ?? null,
       importedGradeName:
@@ -1806,6 +1823,7 @@ export class InstructorService {
     const items = result.usergrades?.[0]?.gradeitems ?? result.gradeitems ?? [];
     return items
       .filter((item) => item.itemtype !== 'course')
+      .filter((item) => (this.toNullableNumber(item.grademax) ?? 0) > 0)
       .map((item) => {
         const key = `${item.itemmodule ?? ''}:${item.iteminstance ?? ''}`;
         return {
@@ -1817,6 +1835,68 @@ export class InstructorService {
           cmid: cmidMap.get(key) ?? null,
         };
       });
+  }
+
+  private mergeGradeBreakdownItems(
+    courseItems: GradeItemBreakdown[],
+    scoredItems: GradeItemBreakdown[],
+  ): GradeItemBreakdown[] {
+    const itemByKey = new Map<string, GradeItemBreakdown>();
+    for (const item of courseItems) {
+      itemByKey.set(this.gradeBreakdownKey(item), item);
+    }
+    for (const item of scoredItems) {
+      itemByKey.set(this.gradeBreakdownKey(item), item);
+    }
+    return [...itemByKey.values()];
+  }
+
+  private gradeBreakdownKey(item: GradeItemBreakdown): string {
+    return `${item.itemmodule ?? ''}:${item.itemname ?? ''}:${item.cmid ?? ''}`;
+  }
+
+  private async getCourseBreakdownItems(
+    moodleCourseId: number,
+    cmidMap: Map<string, number>,
+  ): Promise<GradeItemBreakdown[]> {
+    try {
+      const pool = this.getMoodlePool();
+      interface CourseGradeItemRow extends RowDataPacket {
+        itemtype: string;
+        itemmodule: string | null;
+        itemname: string | null;
+        iteminstance: number | null;
+        grademax: number | string | null;
+      }
+      const [rows] = await pool.query<CourseGradeItemRow[]>(
+        `SELECT itemtype, itemmodule, itemname, iteminstance, grademax
+           FROM mdl_grade_items
+          WHERE courseid = ?
+            AND itemtype <> 'course'
+            AND itemmodule IN ('assign', 'quiz')
+            AND grademax > 0
+          ORDER BY sortorder, id`,
+        [moodleCourseId],
+      );
+
+      return rows.map((item) => {
+        const key = `${item.itemmodule ?? ''}:${item.iteminstance ?? ''}`;
+        return {
+          itemtype: item.itemtype ?? 'mod',
+          itemmodule: item.itemmodule ?? null,
+          itemname: item.itemname ?? null,
+          score: null,
+          maxScore: this.toNullableNumber(item.grademax),
+          cmid: cmidMap.get(key) ?? null,
+        };
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Failed to load Moodle grade item breakdown for course ${moodleCourseId}: ${message}`,
+      );
+      return [];
+    }
   }
 
   private async getCmidMap(moodleCourseId: number): Promise<Map<string, number>> {
@@ -1870,7 +1950,9 @@ export class InstructorService {
       return true;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      this.logger.warn(`Moodle course image sync failed for ${course.code ?? course.id}: ${message}`);
+      this.logger.warn(
+        `Moodle course image sync failed for ${course.code ?? course.id}: ${message}`,
+      );
       return false;
     }
   }
@@ -1907,10 +1989,7 @@ export class InstructorService {
     return imageUrl;
   }
 
-  private getMoodleImageFilename(
-    course: Pick<Lltcourse, 'id' | 'code'>,
-    imageUrl: string,
-  ): string {
+  private getMoodleImageFilename(course: Pick<Lltcourse, 'id' | 'code'>, imageUrl: string): string {
     const code = course.code?.trim() || `course-${course.id}`;
     let extension = 'jpg';
 
@@ -1940,9 +2019,9 @@ export class InstructorService {
       return this.moodlePool;
     }
 
-    const host = this.configService.get<string>('MOODLE_DB_HOST');
-    const user = this.configService.get<string>('MOODLE_DB_USER');
-    const database = this.configService.get<string>('MOODLE_DB_NAME');
+    const host = this.configService.get<string>('MOODLE_DB_HOST') ?? '127.0.0.1';
+    const user = this.configService.get<string>('MOODLE_DB_USER') ?? 'bn_moodle';
+    const database = this.configService.get<string>('MOODLE_DB_NAME') ?? 'LLLv.2';
 
     if (!host || !user || !database) {
       throw new Error(
@@ -1954,7 +2033,7 @@ export class InstructorService {
       host,
       port: Number(this.configService.get<number>('MOODLE_DB_PORT') ?? 3306),
       user,
-      password: this.configService.get<string>('MOODLE_DB_PASSWORD') ?? '',
+      password: this.configService.get<string>('MOODLE_DB_PASSWORD') ?? 'moodle_password',
       database,
       waitForConnections: true,
       connectionLimit: 4,

@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 
 export class ImportGradeItemDto {
   @IsString()
-  @MaxLength(10)
+  @MaxLength(150)
   userCode: string;
 
   @IsString()

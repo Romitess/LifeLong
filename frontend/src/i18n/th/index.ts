@@ -2308,6 +2308,7 @@ export default {
       saveBtn: 'บันทึก',
       updatedMsg: 'อัปเดตผลการเรียนแล้ว',
       noImportDataMsg: 'ยังไม่มีข้อมูลที่นำเข้าได้ กรุณาตรวจสอบรหัสผู้เรียนและเลือกผลการเรียน',
+      importErrorMsg: 'นำเข้าผลการเรียนไม่สำเร็จ กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง',
       importSavedMsg: 'บันทึกผลการเรียน {count} รายการแล้ว',
       importFailedMsg: 'ไม่สำเร็จ {count} รายการ: {codes}',
       approvedMsg: 'อนุมัติผลการเรียนแล้ว {count} ราย',

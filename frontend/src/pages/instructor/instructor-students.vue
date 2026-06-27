@@ -635,46 +635,37 @@
               </div>
             </div>
 
-            <div class="learning-result-table-scroll">
-              <table class="learning-result-entry-table">
-                <thead>
-                  <tr>
-                    <th>{{ t('instructor.students.col.no') }}</th>
-                    <th>{{ t('instructor.students.col.studentId') }}</th>
-                    <th>{{ t('instructor.students.col.nameSurname') }}</th>
-                    <th>{{ t('instructor.students.col.lmsScore') }}</th>
-                    <th>{{ t('instructor.students.col.result') }}</th>
-                    <th>{{ t('instructor.students.col.updateDate') }}</th>
-                    <th>{{ t('instructor.students.col.detail') }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(learner, index) in learners" :key="learner.id">
-                    <td class="text-center">{{ index + 1 }}</td>
-                    <td class="text-center">{{ learner.studentId }}</td>
-                    <td>{{ learner.name }}</td>
-                    <td class="text-center">{{ getLearnerLmsScore(learner) }}</td>
-                    <td class="text-center">{{ learner.importedGradeName ?? '' }}</td>
-                    <td class="text-center">{{ getLearnerLmsUpdatedAt(learner) }}</td>
-                    <td class="text-center">
-                      <button
-                        type="button"
-                        class="learning-result-breakdown-btn"
-                        @click="openGradePanel(learner)"
-                      >
-                        <q-icon name="assignment" size="13px" />
-                        ดูรายละเอียด
-                      </button>
-                    </td>
-                  </tr>
-                  <tr v-if="learners.length === 0">
-                    <td colspan="7" class="learning-result-empty-cell">
-                      {{ emptyLearnerStateMessage }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <BaseTable
+              :rows="paginatedLearningResultLearners"
+              :columns="learningResultEntryColumns"
+              row-key="id"
+              show-index
+              :index-offset="(learningResultTablePage - 1) * instructorTableRowsPerPage"
+              :rows-per-page="instructorTableRowsPerPage"
+              :page="learningResultTablePage"
+              :total-pages="learningResultPageCount"
+              min-width="1040px"
+              :empty-text="emptyLearnerStateMessage"
+              height-mode="stable"
+              class="learning-result-entry-base-table"
+              :on-page-change="setLearningResultTablePage"
+            >
+              <template #cell-lmsScore="{ row }">
+                {{ getLearnerLmsScore(row) }}
+              </template>
+              <template #cell-gradeUpdatedAt="{ row }">
+                {{ row.resultUpdatedAt ?? '' }}
+              </template>
+              <template #cell-lmsSyncedAt="{ row }">
+                {{ row.lmsSyncedAt ?? '' }}
+              </template>
+              <template #cell-detail="{ row }">
+                <button type="button" class="learning-result-breakdown-btn" @click="openGradePanel(row)">
+                  <q-icon name="assignment" size="13px" />
+                  ดูรายละเอียด
+                </button>
+              </template>
+            </BaseTable>
           </div>
         </template>
 
@@ -1016,20 +1007,29 @@
                     >/ {{ formatMaxScoreValue(item.maxScore) }}</span
                   >
                 </span>
-                <span v-else class="student-grade-panel__no-score">—</span>
-                <a
+                <span v-else class="student-grade-panel__no-score">
+                  — <span class="student-grade-panel__score-max">/ {{ item.maxScore ?? 100 }}</span>
+                </span>
+                <button
                   v-if="
                     item.itemmodule === 'assign' &&
-                    moodleGraderUrl(item.cmid, panelRow?.moodleUserId ?? null)
+                    canOpenMoodleGrader(item, panelRow)
                   "
-                  :href="moodleGraderUrl(item.cmid, panelRow?.moodleUserId ?? null)!"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  type="button"
                   class="student-grade-panel__grade-link"
+                  :disabled="openingMoodleGraderKey === moodleGraderKey(item, panelRow)"
+                  @click="openMoodleGrader(item, panelRow)"
                 >
-                  <q-icon name="rate_review" size="13px" />
+                  <q-icon
+                    :name="
+                      openingMoodleGraderKey === moodleGraderKey(item, panelRow)
+                        ? 'hourglass_empty'
+                        : 'rate_review'
+                    "
+                    size="13px"
+                  />
                   {{ t('instructor.grading.gradeBtn') }}
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -1110,6 +1110,7 @@ import { useCourseStore } from 'src/stores/course-store';
 import { getCourseStructure } from 'src/data/course-structure';
 import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import type { GradeItemBreakdown, InstructorGrade } from 'src/composables/use-instructor-backend';
+import { useMoodleSso } from 'src/composables/use-moodle-sso';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
 import { api } from 'src/boot/axios';
 import type { Course } from 'src/types/course';
@@ -1146,6 +1147,7 @@ interface LearnerRow {
   importedGradeName: string | null;
   lmsFinalscore: number | null;
   lmsSyncedAt: string | null;
+  resultUpdatedAt: string | null;
   moodleUserId: number | null;
   gradeItems: GradeItemBreakdown[];
 }
@@ -1172,6 +1174,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
 const instructorBackend = useInstructorBackend();
+const { getMoodleActivityUrl } = useMoodleSso();
 courseStore.init();
 
 const selectedCourseId = ref(typeof route.query.courseId === 'string' ? route.query.courseId : '');
@@ -1225,15 +1228,13 @@ const approveForm = ref({
 const approvalStatus = ref<{ approvedBy: string; approvedAt: string } | null>(null);
 const panelOpen = ref(false);
 const panelRow = ref<LearnerRow | null>(null);
+const openingMoodleGraderKey = ref<string | null>(null);
 
 const instructorTableRowsPerPage = 10;
 const courseListRowsPerPage = 10;
 const courseListPage = ref(1);
 const rosterTablePage = ref(1);
 const learningResultTablePage = ref(1);
-
-const MOODLE_BASE_URL =
-  (import.meta.env.VITE_MOODLE_URL as string | undefined) ?? '';
 
 interface DetailPreviewRow {
   studentId: string;
@@ -1570,6 +1571,7 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
       importedGradeName,
       lmsFinalscore: grade?.lmsFinalscore != null ? Number(grade.lmsFinalscore) : null,
       lmsSyncedAt: grade?.lmsSyncedAt ? formatBackendDate(grade.lmsSyncedAt) : null,
+      resultUpdatedAt: grade?.gradeUpdatedAt ? formatBackendDate(grade.gradeUpdatedAt) : null,
       moodleUserId: grade?.moodleUserId ?? null,
       gradeItems: grade?.gradeItems ?? [],
     };
@@ -1641,8 +1643,8 @@ const rosterSummaryCards = computed<RosterSummaryCard[]>(() => {
       value: counts.total.toLocaleString('th-TH'),
       caption: counts.scope,
       icon: 'groups',
-      color: '#2563eb',
-      softColor: 'rgba(37, 99, 235, 0.12)',
+      color: '#f5a623',
+      softColor: 'rgba(245, 166, 35, 0.14)',
     },
     {
       label: t('instructor.students.summaryCards.verified'),
@@ -1732,8 +1734,8 @@ const learningResultSummaryCards = computed<RosterSummaryCard[]>(() => {
       value: counts.total.toLocaleString('th-TH'),
       caption: '',
       icon: 'groups',
-      color: '#2563eb',
-      softColor: 'rgba(37, 99, 235, 0.12)',
+      color: '#f5a623',
+      softColor: 'rgba(245, 166, 35, 0.14)',
     },
     {
       label: t('instructor.students.summaryCards.recorded'),
@@ -1980,6 +1982,42 @@ const learningResultColumns: BaseTableColumn[] = [
   { key: 'note', label: 'หมายเหตุ', width: '220px', sortable: true },
 ];
 
+const learningResultEntryColumns: BaseTableColumn[] = [
+  { key: 'studentId', label: 'รหัสผู้เรียน', width: '150px', align: 'center', sortable: true },
+  { key: 'name', label: 'ชื่อ-สกุล', width: '220px', sortable: true },
+  {
+    key: 'lmsScore',
+    label: 'คะแนน LMS',
+    width: '130px',
+    align: 'center',
+    sortable: true,
+    sortValue: (row) => Number((row as LearnerRow).lmsFinalscore ?? (row as LearnerRow).score ?? -1),
+  },
+  {
+    key: 'importedGradeName',
+    label: 'ผลการเรียน',
+    width: '120px',
+    align: 'center',
+    sortable: true,
+  },
+  {
+    key: 'lmsSyncedAt',
+    label: 'วันที่ sync คะแนน',
+    width: '170px',
+    align: 'center',
+    sortable: true,
+  },
+  {
+    key: 'gradeUpdatedAt',
+    label: 'วันที่อัปเดตเกรด',
+    width: '170px',
+    align: 'center',
+    sortable: true,
+    sortValue: (row) => (row as LearnerRow).resultUpdatedAt,
+  },
+  { key: 'detail', label: 'รายละเอียด', width: '140px', align: 'center' },
+];
+
 function setRosterTablePage(page: number): void {
   rosterTablePage.value = page;
 }
@@ -2070,9 +2108,47 @@ function closeGradePanel(): void {
   panelOpen.value = false;
 }
 
-function moodleGraderUrl(cmid: number | null, moodleUserId: number | null): string | null {
+function moodleGraderPath(cmid: number | null, moodleUserId: number | null): string | null {
   if (!cmid || !moodleUserId) return null;
-  return `${MOODLE_BASE_URL}/mod/assign/view.php?id=${cmid}&action=grader&userid=${moodleUserId}`;
+  return `/mod/assign/view.php?id=${cmid}&action=grader&userid=${moodleUserId}`;
+}
+
+function moodleGraderKey(item: GradeItemBreakdown, learner: LearnerRow | null | undefined): string {
+  return `${item.cmid ?? 'none'}:${learner?.moodleUserId ?? 'none'}`;
+}
+
+function canOpenMoodleGrader(
+  item: GradeItemBreakdown,
+  learner: LearnerRow | null | undefined,
+): boolean {
+  return Boolean(selectedCourse.value?.moodleId && item.cmid && learner?.moodleUserId);
+}
+
+async function openMoodleGrader(
+  item: GradeItemBreakdown,
+  learner: LearnerRow | null | undefined,
+): Promise<void> {
+  const course = selectedCourse.value;
+  const username = authStore.user?.username ?? authStore.user?.email ?? '';
+  const wantsurl = moodleGraderPath(item.cmid, learner?.moodleUserId ?? null);
+  if (!course?.moodleId || !username || !wantsurl) return;
+
+  const key = moodleGraderKey(item, learner);
+  openingMoodleGraderKey.value = key;
+  try {
+    const url = await getMoodleActivityUrl(course.moodleId, username, wantsurl);
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    $q.notify({
+      type: 'negative',
+      icon: 'error',
+      message: 'ไม่สามารถเปิดหน้า Moodle สำหรับตรวจงานได้',
+    });
+  } finally {
+    if (openingMoodleGraderKey.value === key) openingMoodleGraderKey.value = null;
+  }
 }
 
 async function saveLearningResults(): Promise<void> {
@@ -2110,39 +2186,46 @@ async function importLearningResults(): Promise<void> {
   const email = authStore.user?.email;
   if (!course || !email) return;
 
+  const gradeNameById = new Map(gradeItemOptions.value.map((option) => [option.id, option.name]));
   const items = readyRows.map((row) => ({
     userCode: row.studentId,
-    gradeText: row.gradeText,
+    gradeText: gradeNameById.get(row.gradeItemId as number) ?? row.gradeText,
     gradeItemId: row.gradeItemId as number,
   }));
 
   savingGrades.value = true;
   try {
     const result = await instructorBackend.importGrades(email, course.id, items);
-    if (result) {
-      resultImportText.value = '';
-      detailPreviewRows.value = [];
-      if (result.saved > 0) {
-        $q.notify({
-          type: 'positive',
-          icon: 'upload_file',
-          message: t('instructor.students.importSavedMsg', {
-            count: result.saved.toLocaleString('th-TH'),
-          }),
-        });
-      }
-      if (result.failed > 0) {
-        $q.notify({
-          type: 'warning',
-          message: t('instructor.students.importFailedMsg', {
-            count: result.failed,
-            codes: result.errors.map((e) => e.userCode).join(', '),
-          }),
-          timeout: 6000,
-        });
-      }
-      await instructorBackend.fetchGrades(email, course.id);
+    if (!result) {
+      $q.notify({
+        type: 'negative',
+        icon: 'error',
+        message: t('instructor.students.importErrorMsg'),
+      });
+      return;
     }
+    resultImportText.value = '';
+    detailPreviewRows.value = [];
+    if (result.saved > 0) {
+      $q.notify({
+        type: 'positive',
+        icon: 'upload_file',
+        message: t('instructor.students.importSavedMsg', {
+          count: result.saved.toLocaleString('th-TH'),
+        }),
+      });
+    }
+    if (result.failed > 0) {
+      $q.notify({
+        type: 'warning',
+        message: t('instructor.students.importFailedMsg', {
+          count: result.failed,
+          codes: result.errors.map((e) => e.userCode).join(', '),
+        }),
+        timeout: 6000,
+      });
+    }
+    await instructorBackend.fetchGrades(email, course.id);
   } finally {
     savingGrades.value = false;
   }
@@ -2264,10 +2347,6 @@ function getLearnerLmsScore(learner: LearnerRow): string {
   const savedResult = importedLearningResults.value[learner.studentId];
   const score = pendingResult?.score ?? savedResult?.score;
   return score === undefined ? '' : score.toFixed(2);
-}
-
-function getLearnerLmsUpdatedAt(learner: LearnerRow): string {
-  return learner.lmsSyncedAt ?? '';
 }
 
 function exportLearnerListCsv(course: Course | undefined): void {
@@ -3115,7 +3194,7 @@ function exportLearnersPdf(): void {
   transition: color 0.18s ease;
 
   &:hover {
-    color: #d97706;
+    color: $primary;
   }
 }
 
@@ -3168,7 +3247,7 @@ function exportLearnersPdf(): void {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #d97706;
+  color: #475569;
   font-size: 0.8rem;
   font-weight: 900;
   line-height: 1.2;
@@ -3176,7 +3255,7 @@ function exportLearnersPdf(): void {
   transition: color 0.18s ease;
 
   &:hover {
-    color: #b45309;
+    color: $primary;
   }
 }
 
@@ -3256,7 +3335,7 @@ function exportLearnersPdf(): void {
     display: block;
     padding: 0;
     border: 0;
-    color: #d97706;
+      color: #172033;
     background: transparent;
     font: inherit;
     font-size: 0.86rem;
@@ -3266,14 +3345,14 @@ function exportLearnersPdf(): void {
     cursor: pointer;
 
     &:hover {
-      color: #b45309;
+      color: $primary;
     }
   }
 
   span {
     display: block;
     margin-top: 4px;
-    color: #ea7a00;
+    color: #64748b;
     font-size: 0.74rem;
     font-weight: 700;
     line-height: 1.4;
@@ -3330,7 +3409,7 @@ function exportLearnersPdf(): void {
 .learning-result-download-link {
   padding: 0;
   border: 0;
-  color: #d97706;
+  color: #475569;
   background: transparent;
   font: inherit;
   font-size: 0.78rem;
@@ -3338,7 +3417,7 @@ function exportLearnersPdf(): void {
   cursor: pointer;
 
   &:hover {
-    color: #b45309;
+    color: $primary;
     text-decoration: underline;
   }
 }
@@ -3605,7 +3684,7 @@ function exportLearnersPdf(): void {
   button {
     padding: 0;
     border: 0;
-    color: #d97706;
+    color: #475569;
     background: transparent;
     font: inherit;
     font-size: 0.84rem;
@@ -3613,7 +3692,7 @@ function exportLearnersPdf(): void {
     cursor: pointer;
 
     &:hover {
-      color: #b45309;
+      color: $primary;
       text-decoration: underline;
     }
   }
@@ -3637,9 +3716,9 @@ function exportLearnersPdf(): void {
     color 0.15s ease;
 
   &:hover {
-    background: #fffaf1;
+    background: rgba(245, 166, 35, 0.08);
     color: $primary;
-    border-color: $primary;
+    border-color: rgba(245, 166, 35, 0.32);
   }
 }
 
@@ -3801,13 +3880,13 @@ function exportLearnersPdf(): void {
   font-weight: 900;
 
   &--assign {
-    background: #dbeafe;
-    color: #1e40af;
+    background: rgba(245, 166, 35, 0.14);
+    color: #9a5f00;
   }
 
   &--quiz {
-    background: #f3e8ff;
-    color: #7e22ce;
+    background: #eef2f7;
+    color: #475569;
   }
 }
 
@@ -3849,16 +3928,23 @@ function exportLearnersPdf(): void {
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
+  border: 0;
   border-radius: 6px;
-  background: #09213f;
+  background: $primary;
   color: #fff;
+  cursor: pointer;
   font-size: 0.72rem;
   font-weight: 800;
   text-decoration: none;
   transition: background-color 0.15s ease;
 
   &:hover {
-    background: $primary;
+    background: #e18f13;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.72;
   }
 }
 
@@ -3962,7 +4048,7 @@ function exportLearnersPdf(): void {
   display: inline-block;
   padding: 2px 10px;
   border-radius: 999px;
-  background: #d97706;
+  background: $primary;
   color: #fff;
   font-size: 0.8rem;
   font-weight: 900;

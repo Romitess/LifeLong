@@ -73,6 +73,7 @@ export interface InstructorGrade {
   updatedAt: string | null;
   lmsFinalscore: number | null;
   lmsSyncedAt: string | null;
+  gradeUpdatedAt: string | null;
   gradeItems: GradeItemBreakdown[];
   importedGradeId: number | null;
   importedGradeName: string | null;

@@ -2294,6 +2294,7 @@ export default {
       saveBtn: 'Save',
       updatedMsg: 'Learning results updated',
       noImportDataMsg: 'No importable data found. Please check student IDs and select results.',
+      importErrorMsg: 'Unable to import learning results. Please check the data and try again.',
       importSavedMsg: 'Saved {count} learning results',
       importFailedMsg: 'Failed {count} items: {codes}',
       approvedMsg: 'Approved {count} learning results',
