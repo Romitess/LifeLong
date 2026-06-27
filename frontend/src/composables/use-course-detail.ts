@@ -81,7 +81,7 @@ export function useCourseDetail(courseId: CourseIdSource): UseCourseDetailReturn
     error.value = null;
 
     try {
-      await courseStore.fetchBackendCourses();
+      await courseStore.fetchBackendCourses(true);
 
       const currentId = readCourseId(courseId);
       const detail = courseStore.getCourseDetailById(currentId);

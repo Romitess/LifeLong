@@ -3,8 +3,9 @@
     <!-- PROFILE HERO  -->
     <ProfileHeroSection
       :hero-role-label="heroRoleLabel"
-      :profile-stats="isTeachingRole ? [] : profileStats"
+      :profile-stats="profileStats"
       :id-label="profileHeroIdLabel"
+      :stat-card-variant="isTeachingRole ? 'surface' : 'glass'"
     />
 
     <!-- CONTENT -->
@@ -274,6 +275,7 @@ import {
 } from 'src/composables/use-my-registered-courses';
 import { useProfileChat } from 'src/composables/use-profile-chat';
 import { useProfileNavigation } from 'src/composables/use-profile-navigation';
+import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import type { Course } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
 import { api } from 'src/boot/axios';
@@ -303,6 +305,7 @@ courseStore.init();
 const { myRegistrations, myRegisteredCourseEntries } = useMyRegisteredCourses();
 const { unreadChatCount } = useProfileChat(myRegistrations, myRegisteredCourseEntries);
 const { goToCourse } = useProfileNavigation();
+const instructorBackend = useInstructorBackend();
 const route = useRoute();
 const router = useRouter();
 
@@ -376,10 +379,16 @@ const instructorCourses = computed<Course[]>(() =>
   courseStore.getInstructorCourses(authStore.user),
 );
 const activeInstructorCoursesCount = computed<number>(
-  () => instructorCourses.value.filter((c) => c.isActive).length,
+  () =>
+    instructorBackend.summary.value?.activeCourses ??
+    instructorCourses.value.filter((c) => c.isActive).length,
 );
 const totalInstructorLearners = computed<number>(() =>
+  instructorBackend.summary.value?.totalStudents ??
   instructorCourses.value.reduce((sum, c) => sum + c.enrolledCount, 0),
+);
+const instructorConversationsCount = computed<number>(
+  () => instructorBackend.summary.value?.conversations ?? 0,
 );
 
 // Learner computed (for profileStats)
@@ -426,20 +435,20 @@ const profileStats = computed<ProfileStatCardItem[]>(() => {
       {
         label: t('profile.instructor.metrics.totalCourses'),
         value: instructorCourses.value.length,
-        icon: 'app_registration',
+        icon: 'menu_book',
         tone: buildProfileStatTone('#F5A623'),
       },
       {
         label: t('profile.instructor.metrics.teachingNow'),
         value: activeInstructorCoursesCount.value,
-        icon: 'auto_stories',
-        tone: buildProfileStatTone('#31B7C8'),
+        icon: 'campaign',
+        tone: buildProfileStatTone('#4F7DF3'),
       },
       {
         label: t('profile.instructor.metrics.totalLearners'),
         value: totalInstructorLearners.value,
         icon: 'groups',
-        tone: buildProfileStatTone('#49B37D'),
+        tone: buildProfileStatTone('#18B65A'),
       },
       {
         label: t('profile.instructor.metrics.averageScore'),
@@ -839,6 +848,10 @@ function formatThaiDateTime(date: Date): string {
 
 onMounted(async () => {
   const username = authStore.user?.username;
+  if (isTeachingRole.value && authStore.user?.email) {
+    void instructorBackend.fetchSummary(authStore.user.email);
+    void courseStore.fetchInstructorCourses(authStore.user.email);
+  }
   if (username && !isTeachingRole.value) {
     await courseRegistrationStore.fetchMyEnrollments(username);
     const enrollIds = courseRegistrationStore.myRegistrations

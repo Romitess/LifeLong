@@ -145,6 +145,14 @@ interface CourseCoverUploadResponse {
   imageUrl: string;
 }
 
+export interface UpdateCourseSettingsPayload {
+  published?: boolean;
+  maxSeats?: number | null;
+  coverImageUrl?: string | null;
+  price?: number | null;
+  deliveryMode?: string | null;
+}
+
 const summary = ref<InstructorSummary | null>(null);
 const profile = ref<InstructorProfile | null>(null);
 const learnersByCourseId = ref<Record<string, InstructorLearner[]>>({});
@@ -155,6 +163,7 @@ const courseAnnouncements = ref<CourseAnnouncement[]>([]);
 const dbAnnouncementsByCourseId = ref<Record<number, DbAnnouncement[]>>({});
 const loading = ref(false);
 const isSavingOpenclass = ref(false);
+const isSavingCourseSettings = ref(false);
 
 let socket: Socket | null = null;
 
@@ -523,6 +532,28 @@ export function useInstructorBackend() {
     return data;
   }
 
+  async function updateCourseSettings(
+    courseId: string | number,
+    data: UpdateCourseSettingsPayload,
+  ): Promise<{ updated: boolean; moodleImageSynced: boolean } | null> {
+    const backendCourseId = getBackendCourseId(courseId);
+    if (!backendCourseId) return null;
+
+    isSavingCourseSettings.value = true;
+    try {
+      const { data: result } = await api.patch<{ updated: boolean; moodleImageSynced: boolean }>(
+        `/api/instructor/courses/${backendCourseId}/settings`,
+        data,
+      );
+      return result;
+    } catch (error) {
+      console.warn('Failed to update course settings', error);
+      return null;
+    } finally {
+      isSavingCourseSettings.value = false;
+    }
+  }
+
   async function fetchCourseFees(
     courseId: string | number,
   ): Promise<{ stutypeId: number; stutypeName: string | null; amount: number }[]> {
@@ -638,7 +669,9 @@ export function useInstructorBackend() {
     dbAnnouncementsByCourseId,
     loading,
     isSavingOpenclass,
+    isSavingCourseSettings,
     updateOpenclass,
+    updateCourseSettings,
     uploadCourseCoverImage,
     fetchProfile,
     fetchSummary,

@@ -106,11 +106,18 @@
                 <div>
                   <div class="quick-info-item__label">{{ $t('price') }}</div>
                   <div class="quick-info-item__value">
-                    <span v-if="course.isFree" class="text-positive text-weight-bold">{{
+                    <span
+                      v-if="effectivePrice !== null ? effectiveIsFree : course.isFree"
+                      class="text-positive text-weight-bold"
+                    >{{
                       $t('free')
                     }}</span>
                     <span v-else class="text-negative text-weight-bold"
-                      >{{ course.price.toLocaleString(locale === 'th' ? 'th-TH' : 'en-US') }}
+                      >{{
+                        (effectivePrice ?? course.price).toLocaleString(
+                          locale === 'th' ? 'th-TH' : 'en-US',
+                        )
+                      }}
                       {{ $t('thb') }}</span
                     >
                   </div>
@@ -512,11 +519,18 @@
               <!-- Enroll CTA Card -->
               <q-card flat bordered class="enroll-card q-mb-lg">
                 <q-card-section class="enroll-card__top">
-                  <div v-if="course.isFree" class="enroll-card__price text-positive">
+                  <div
+                    v-if="effectivePrice !== null ? effectiveIsFree : course.isFree"
+                    class="enroll-card__price text-positive"
+                  >
                     {{ $t('free') }}
                   </div>
                   <div v-else class="enroll-card__price">
-                    {{ course.price.toLocaleString(locale === 'th' ? 'th-TH' : 'en-US') }}
+                    {{
+                      (effectivePrice ?? course.price).toLocaleString(
+                        locale === 'th' ? 'th-TH' : 'en-US',
+                      )
+                    }}
                     <span class="enroll-card__currency">{{ $t('thb') }}</span>
                   </div>
                   <div class="enroll-card__seats q-mt-xs">
@@ -842,6 +856,7 @@ import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { useCourseRegistrationStore } from 'src/stores/course-registration-store';
 import { useCourseBookmarkStore } from 'src/stores/course-bookmark-store';
+import { useEffectiveCoursePrice } from 'src/composables/use-effective-course-price';
 import type { Course, DeliveryMode } from 'src/types/course';
 import type {
   CourseDetail,
@@ -1010,6 +1025,7 @@ const numericCourseId = computed<number | null>(() => {
 });
 const { course, recommendedCourses, isLoading, error, fetchCourseDetail } =
   useCourseDetail(courseId);
+const { effectivePrice, effectiveIsFree } = useEffectiveCoursePrice(course);
 
 // ดึงข้อมูลรูปจาก router state เพื่อแสดง hero ทันทีก่อน API โหลด
 const { chapters: dbChapters, fetchChapters } = useCourseChapers();

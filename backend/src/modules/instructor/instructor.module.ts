@@ -14,6 +14,7 @@ import { LltchatModule } from '../chat/lltchat/lltchat.module';
 import { InstructorController } from './instructor.controller';
 import { InstructorService } from './instructor.service';
 import { LltcourseskillModule } from '../courses/lltcourseskill/lltcourseskill.module';
+import { Llttypestudy } from '../users/llttypestudy/entities/llttypestudy.entity';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { LltcourseskillModule } from '../courses/lltcourseskill/lltcourseskill.m
       LltEnroll,
       LltumUser,
       Lltcoursein,
+      Llttypestudy,
       Lltchat,
       LltGradeItem,
       LltImportGrade,

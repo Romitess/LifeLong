@@ -5,6 +5,7 @@ import type { Course, DeliveryMode } from 'src/types/course';
 import type { CourseDetail } from 'src/types/course-detail';
 import { getMockCourseInstructorOwner } from 'src/data/mock-courses';
 import { useCategoryStore } from './category-store';
+import { getImageUrl } from 'src/services/image.service';
 
 const STORAGE_KEY = 'lll-courses';
 const DETAIL_STORAGE_KEY = 'lll-course-details';
@@ -76,6 +77,8 @@ interface BackendInstructorCourse {
   amount?: number | null;
   categoryId?: number | null;
   updatedAt?: string | null;
+  typestudyId?: number | null;
+  typestudyName?: string | null;
 }
 
 function normalizeInstructorEmail(email?: string): string {
@@ -176,7 +179,7 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     titleEn: course.titleEn ?? course.titleTh,
     instructorId: '',
     instructorEmail: course.instructorEmail ?? '',
-    imageUrl: course.imageUrl ?? '',
+    imageUrl: getImageUrl(course.imageUrl ?? ''),
     cover: {
       icon: 'school',
       accentColor: '#f5a623',
@@ -432,8 +435,12 @@ export const useCourseStore = defineStore('course', {
       writeStoredCourseDetails(this.courseDetails);
       void this.fetchBackendCourses();
     },
-    async fetchBackendCourses() {
-      if (this.backendCoursesLoaded) {
+    async fetchBackendCourses(force = false) {
+      if (force) {
+        this.backendCoursesLoaded = false;
+      }
+
+      if (this.backendCoursesLoaded && !force) {
         return;
       }
 
@@ -523,6 +530,13 @@ export const useCourseStore = defineStore('course', {
               amount: course.amount ?? null,
               categoryId: course.categoryId ?? null,
               updatedAt: course.updatedAt ?? null,
+              typestudyDetail:
+                course.typestudyId != null
+                  ? {
+                      id: course.typestudyId,
+                      name: course.typestudyName ?? null,
+                    }
+                  : null,
             }),
           )
           .filter((c): c is Course => Boolean(c));

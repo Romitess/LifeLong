@@ -63,12 +63,12 @@ export function getDefaultAvatarUrl(seed: string): string {
 
 function normalizeUploadPath(response: ImageUploadResponse): string {
   const direct =
+    response.url ||
+    response.result?.url ||
     response.path ||
     response.filePath ||
-    response.url ||
     response.result?.path ||
-    response.result?.filePath ||
-    response.result?.url;
+    response.result?.filePath;
 
   if (direct) return direct;
 

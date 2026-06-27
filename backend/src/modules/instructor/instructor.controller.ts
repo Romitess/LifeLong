@@ -36,6 +36,7 @@ import {
 } from './instructor.service';
 import { ImportGradesDto, ImportGradesResult } from './dto/import-grades.dto';
 import { UpdateOpenclassDto } from './dto/update-openclass.dto';
+import { UpdateCourseSettingsDto } from './dto/update-course-settings.dto';
 import { ApproveGradesDto, ApproveGradesResult } from './dto/approve-grades.dto';
 import { ActiveCertTemplateDto } from './dto/active-cert-template.dto';
 import { Lltchat } from '../chat/lltchat/entities/lltchat.entity';
@@ -258,6 +259,16 @@ export class InstructorController {
       file as Express.Multer.File,
     );
     return { imageUrl: uploaded.url };
+  }
+
+  @Patch('courses/:courseId/settings')
+  @ApiOperation({ summary: 'Update instructor-manageable course settings' })
+  updateCourseSettings(
+    @CurrentUser() user: JwtPayload,
+    @Param('courseId', ParseIntPipe) courseId: number,
+    @Body() body: UpdateCourseSettingsDto,
+  ): Promise<{ updated: boolean; moodleImageSynced: boolean }> {
+    return this.instructorService.updateCourseSettings(user.email, courseId, body);
   }
 
   @Get('courses/:courseId/fees')

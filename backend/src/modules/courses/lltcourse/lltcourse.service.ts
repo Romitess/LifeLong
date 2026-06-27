@@ -522,7 +522,7 @@ export class LltcourseService {
       FROM LLTCOURSE c
       INNER JOIN LLTOPENCLASS oc
         ON oc.OPENCLASS_ID = (
-          SELECT MIN(oc2.OPENCLASS_ID)
+          SELECT MAX(oc2.OPENCLASS_ID)
           FROM LLTOPENCLASS oc2
           WHERE oc2.COSE_ID = c.COSE_ID AND oc2.OPENCLASS_PUBLIC = 'Y'
         )
@@ -614,7 +614,7 @@ export class LltcourseService {
       FROM LLTCOURSE c
       INNER JOIN LLTOPENCLASS oc
         ON oc.OPENCLASS_ID = (
-          SELECT MIN(oc2.OPENCLASS_ID)
+          SELECT MAX(oc2.OPENCLASS_ID)
           FROM LLTOPENCLASS oc2
           WHERE oc2.COSE_ID = c.COSE_ID AND oc2.OPENCLASS_PUBLIC = 'Y'
         )
@@ -840,7 +840,7 @@ export class LltcourseService {
 
     const openclass = await this.openclassRepository.findOne({
       where: { courseId: id, isPublic: 'Y' },
-      order: { id: 'ASC' },
+      order: { id: 'DESC' },
     });
 
     return {

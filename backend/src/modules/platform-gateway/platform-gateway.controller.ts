@@ -53,7 +53,8 @@ const normalizeFileList = (value: unknown): { fileName: string; downloadName?: s
     .filter((item) => item.fileName !== '');
 };
 
-const genericImageCategories = new Set(['profile', 'page-builder']);
+// These categories use the shared generic image-upload endpoint.
+const genericImageCategories = new Set(['profile', 'course', 'page-builder']);
 
 @Controller()
 export class PlatformGatewayController {

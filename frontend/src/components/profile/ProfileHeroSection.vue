@@ -2,7 +2,7 @@
   <section class="profile-hero">
     <GoldenUnderline />
     <div class="section-container profile-hero__content">
-      <div class="profile-hero__layout">
+      <div class="profile-hero__layout" :class="`profile-hero__layout--${statCardVariant}`">
         <!-- Avatar and Name Info -->
         <div class="profile-hero__identity-row">
           <div class="profile-hero__avatar-wrap">
@@ -75,19 +75,24 @@
         </div>
 
         <!-- Stats Cards -->
-        <div v-if="profileStats.length > 0" class="profile-hero__stats">
+        <div
+          v-if="profileStats.length > 0"
+          class="profile-hero__stats"
+          :class="`profile-hero__stats--${statCardVariant}`"
+        >
           <div
             v-for="stat in profileStats"
             :key="stat.label"
             class="profile-stat-card"
+            :class="`profile-stat-card--${statCardVariant}`"
             :style="stat.tone"
           >
             <div class="profile-stat-card__icon-wrap">
               <q-icon :name="stat.icon" size="24px" color="white" />
             </div>
             <div class="profile-stat-card__info">
-              <div class="profile-stat-card__value">{{ stat.value }}</div>
-              <div class="profile-stat-card__label">{{ stat.label }}</div>
+              <div class="profile-stat-card__value">{{ formatStatValue(stat.value) }}</div>
+              <div class="profile-stat-card__label">{{ formatStatLabel(stat) }}</div>
             </div>
           </div>
         </div>
@@ -290,11 +295,14 @@ interface ProfileStatCardItem {
   tone: Record<string, string>;
 }
 
-defineProps<{
+withDefaults(defineProps<{
   heroRoleLabel: string;
   profileStats: ProfileStatCardItem[];
   idLabel: string;
-}>();
+  statCardVariant?: 'glass' | 'surface';
+}>(), {
+  statCardVariant: 'glass',
+});
 
 const authStore = useAuthStore();
 const $q = useQuasar();
@@ -570,6 +578,15 @@ function selectViewerPhoto(photoUrl: string): void {
   ];
   saveViewerPhotoOptions();
 }
+
+function formatStatValue(value: number): string {
+  return value.toLocaleString('th-TH');
+}
+
+function formatStatLabel(stat: ProfileStatCardItem): string {
+  if (stat.icon === 'forum') return 'ห้องสนทนา';
+  return stat.label;
+}
 </script>
 
 <style lang="scss" scoped>
@@ -596,6 +613,11 @@ function selectViewerPhoto(photoUrl: string): void {
     grid-template-columns: minmax(0, auto) minmax(0, 1fr);
     gap: 28px;
     align-items: center;
+
+    &--surface {
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
   }
 
   &__identity-row {
@@ -616,6 +638,14 @@ function selectViewerPhoto(photoUrl: string): void {
     align-items: center;
     justify-content: flex-end;
     min-width: 0;
+
+    &--surface {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      width: 100%;
+      justify-content: stretch;
+    }
   }
 
   @media (max-width: 900px) {
@@ -772,6 +802,79 @@ function selectViewerPhoto(photoUrl: string): void {
     color: rgba(255, 255, 255, 0.72);
     font-weight: 600;
     margin-top: 4px;
+  }
+}
+
+.profile-stat-card--surface {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 78px;
+  padding: 14px;
+  gap: 12px;
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 14px;
+  background:
+    radial-gradient(
+      circle at 100% 100%,
+      var(--profile-stat-surface, rgba(245, 166, 35, 0.14)),
+      transparent 52%
+    ),
+    rgba(255, 255, 255, 0.96);
+  backdrop-filter: none;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+
+  &:first-child {
+    border-color: var(--profile-stat-border, rgba(245, 166, 35, 0.52));
+    box-shadow:
+      0 10px 22px rgba(15, 23, 42, 0.08),
+      0 0 0 1px var(--profile-stat-border, rgba(245, 166, 35, 0.32));
+  }
+
+  &:hover {
+    background:
+      radial-gradient(
+        circle at 100% 100%,
+        var(--profile-stat-surface-hover, rgba(245, 166, 35, 0.22)),
+        transparent 52%
+      ),
+      rgba(255, 255, 255, 0.98);
+    transform: translateY(-2px);
+  }
+
+  .profile-stat-card__icon-wrap {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 12px;
+    background: var(--profile-stat-accent, #f5a623);
+    box-shadow: 0 12px 22px var(--profile-stat-shadow, rgba(245, 166, 35, 0.18));
+  }
+
+  .profile-stat-card__value {
+    color: #101828;
+    font-size: 1.48rem;
+    line-height: 1.1;
+  }
+
+  .profile-stat-card__label {
+    margin-top: 4px;
+    color: #667085;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+}
+
+@media (max-width: 1100px) {
+  .profile-hero__stats--surface {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .profile-hero__stats--surface {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -2023,6 +2023,7 @@ export default {
       staffAdded: 'Staff member added',
       datesSaved: 'Dates saved',
       datesSaveFailed: 'Failed to save dates, please try again',
+      courseSaveFailed: 'Failed to save course settings, please try again',
       noChanges: 'No changes detected',
       courseSaved: 'Course settings saved',
       courseDeleted: 'Course deleted',

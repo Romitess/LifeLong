@@ -18,6 +18,7 @@ import { ChatGateway } from '../chat/lltchat/chat-gateway';
 import { ImportGradesDto, ImportGradesResult } from './dto/import-grades.dto';
 import { ApproveGradesDto, ApproveGradesResult } from './dto/approve-grades.dto';
 import { ActiveCertTemplateDto, CertLayoutDto } from './dto/active-cert-template.dto';
+import { Llttypestudy } from '../users/llttypestudy/entities/llttypestudy.entity';
 
 export interface InstructorCourseSummary {
   id: number;
@@ -38,6 +39,8 @@ export interface InstructorCourseSummary {
   regStartDate: string | null;
   regEndDate: string | null;
   updatedAt: Date | null;
+  typestudyId: number | null;
+  typestudyName: string | null;
 }
 
 export interface InstructorLearner {
@@ -144,6 +147,8 @@ interface CourseRow {
   reg_start_date: Date | string | null;
   reg_end_date: Date | string | null;
   updated_at: Date | string | null;
+  typestudy_id: number | null;
+  typestudy_name: string | null;
 }
 
 interface LearnerRow {
@@ -237,6 +242,8 @@ export class InstructorService {
     private readonly userRepository: Repository<LltumUser>,
     @InjectRepository(Lltcoursein)
     private readonly instructorRepository: Repository<Lltcoursein>,
+    @InjectRepository(Llttypestudy)
+    private readonly typestudyRepository: Repository<Llttypestudy>,
     @InjectRepository(Lltchat)
     private readonly lltchatRepository: Repository<Lltchat>,
     @InjectRepository(LltGradeItem)
@@ -335,9 +342,12 @@ export class InstructorService {
         'openclass.amount AS amount',
         'openclass.regStartDate AS reg_start_date',
         'openclass.regEndDate AS reg_end_date',
+        'course.typestudyId AS typestudy_id',
         'COALESCE(course.updateDate, course.createDate) AS updated_at',
         'COUNT(DISTINCT enroll.id) AS enrolled_count',
       ])
+      .leftJoin(Llttypestudy, 'typestudy', 'typestudy.id = course.typestudyId')
+      .addSelect('typestudy.name', 'typestudy_name')
       .addSelect(
         (subQuery) =>
           subQuery
@@ -384,6 +394,8 @@ export class InstructorService {
         ? new Date(row.reg_end_date).toISOString().substring(0, 10)
         : null,
       updatedAt: row.updated_at ? new Date(row.updated_at) : null,
+      typestudyId: row.typestudy_id != null ? Number(row.typestudy_id) : null,
+      typestudyName: row.typestudy_name ?? null,
     }));
   }
 
@@ -422,6 +434,124 @@ export class InstructorService {
 
   async verifyCourseAccess(email: string, courseId: number): Promise<void> {
     await this.assertCourseAccess(email, courseId);
+  }
+
+  async updateCourseSettings(
+    email: string,
+    courseId: number,
+    data: {
+      published?: boolean;
+      maxSeats?: number | null;
+      coverImageUrl?: string | null;
+      price?: number | null;
+      deliveryMode?: string | null;
+    },
+  ): Promise<{ updated: boolean; moodleImageSynced: boolean }> {
+    await this.assertCourseAccess(email, courseId);
+
+    const course = await this.courseRepository.findOne({ where: { id: courseId } });
+    if (!course) {
+      throw new NotFoundException(`Course ${courseId} not found`);
+    }
+
+    const openclass = await this.openclassRepository.findOne({
+      where: { courseId },
+      order: { id: 'DESC' },
+    });
+
+    const courseUpdates: Partial<Lltcourse> = {};
+    const openclassUpdates: Partial<LltOpenclass> = {};
+
+    if (data.published !== undefined) {
+      courseUpdates.status = data.published ? 'Y' : 'N';
+      if (openclass) {
+        openclassUpdates.isPublic = data.published ? 'Y' : 'N';
+      }
+    }
+
+    if (data.maxSeats !== undefined && openclass) {
+      openclassUpdates.numOpen = Number(data.maxSeats ?? 0);
+    }
+
+    if (data.price !== undefined && openclass) {
+      openclassUpdates.amount =
+        data.price === null || data.price === undefined ? 0 : Number(data.price);
+    }
+
+    if (data.coverImageUrl !== undefined) {
+      const trimmed = data.coverImageUrl?.trim() ?? '';
+      courseUpdates.imageUrl = trimmed.length > 0 ? trimmed : null;
+    }
+
+    if (data.deliveryMode !== undefined) {
+      const resolvedTypestudyId = await this.resolveTypestudyId(data.deliveryMode);
+      courseUpdates.typestudyId = resolvedTypestudyId ?? undefined;
+    }
+
+    if (Object.keys(courseUpdates).length > 0) {
+      courseUpdates.updateUser = email;
+      courseUpdates.updateDate = new Date();
+    }
+
+    const runner = this.dataSource.createQueryRunner();
+    await runner.connect();
+    await runner.startTransaction();
+    try {
+      if (Object.keys(courseUpdates).length > 0) {
+        await runner.manager.update(Lltcourse, courseId, courseUpdates);
+      }
+      if (openclass && Object.keys(openclassUpdates).length > 0) {
+        await runner.manager.update(LltOpenclass, openclass.id, openclassUpdates);
+      }
+      await runner.commitTransaction();
+    } catch (error) {
+      await runner.rollbackTransaction();
+      throw error;
+    } finally {
+      await runner.release();
+    }
+
+    let moodleImageSynced = false;
+    if (data.coverImageUrl !== undefined && openclass?.lmsId && courseUpdates.imageUrl) {
+      moodleImageSynced = await this.syncCourseImageToMoodle(
+        { ...course, ...courseUpdates },
+        openclass.lmsId,
+      );
+    }
+
+    return { updated: true, moodleImageSynced };
+  }
+
+  private async resolveTypestudyId(deliveryMode?: string | null): Promise<number | null> {
+    const normalizedMode = deliveryMode?.trim();
+    if (!normalizedMode) {
+      return null;
+    }
+
+    const typestudy = await this.typestudyRepository.findOne({
+      where: { name: normalizedMode },
+    });
+
+    if (typestudy) {
+      return typestudy.id;
+    }
+
+    const fallbackMap: Record<string, string> = {
+      Online: 'Online',
+      Onsite: 'Onsite',
+      'Self-Paced Learning': 'Self-Paced Learning',
+    };
+
+    const fallbackName = fallbackMap[normalizedMode];
+    if (!fallbackName) {
+      throw new NotFoundException(`Delivery mode "${normalizedMode}" not found`);
+    }
+
+    const fallback = await this.typestudyRepository.findOne({
+      where: { name: fallbackName },
+    });
+
+    return fallback?.id ?? null;
   }
 
   async getCourseFees(
@@ -1722,6 +1852,79 @@ export class InstructorService {
 
   private normalizeEmail(email: string | undefined): string {
     return (email ?? '').trim().toLowerCase();
+  }
+
+  private async syncCourseImageToMoodle(
+    course: Pick<Lltcourse, 'id' | 'code' | 'imageUrl'>,
+    moodleCourseId: number,
+  ): Promise<boolean> {
+    const imageUrl = course.imageUrl?.trim();
+    if (!imageUrl) return false;
+
+    try {
+      await this.moodleService.updateCourseImage(
+        moodleCourseId,
+        this.toMoodleFetchableImageUrl(imageUrl),
+        this.getMoodleImageFilename(course, imageUrl),
+      );
+      return true;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Moodle course image sync failed for ${course.code ?? course.id}: ${message}`);
+      return false;
+    }
+  }
+
+  private toMoodleFetchableImageUrl(imageUrl: string): string {
+    const port = this.configService.get<number>('PORT') ?? 3000;
+    const backendPublicUrl = (
+      this.configService.get<string>('BACKEND_PUBLIC_URL') || `http://localhost:${port}`
+    ).replace(/\/+$/, '');
+    const backendInternalUrl = (
+      this.configService.get<string>('BACKEND_INTERNAL_URL') || backendPublicUrl
+    ).replace(/\/+$/, '');
+    const internalBase = new URL(backendInternalUrl);
+
+    if (imageUrl.startsWith('/api/uploads/') || imageUrl.startsWith('/uploads/')) {
+      return `${internalBase.origin}${imageUrl}`;
+    }
+
+    try {
+      const image = new URL(imageUrl);
+      const publicBase = new URL(backendPublicUrl);
+      if (
+        image.origin === publicBase.origin &&
+        (image.pathname.startsWith('/uploads/') || image.pathname.startsWith('/api/uploads/'))
+      ) {
+        image.protocol = internalBase.protocol;
+        image.host = internalBase.host;
+        return image.toString();
+      }
+    } catch {
+      return imageUrl;
+    }
+
+    return imageUrl;
+  }
+
+  private getMoodleImageFilename(
+    course: Pick<Lltcourse, 'id' | 'code'>,
+    imageUrl: string,
+  ): string {
+    const code = course.code?.trim() || `course-${course.id}`;
+    let extension = 'jpg';
+
+    try {
+      const pathname = new URL(imageUrl, 'http://localhost').pathname;
+      const match = pathname.match(/\.([a-zA-Z0-9]+)$/);
+      if (match?.[1]) {
+        extension = match[1].toLowerCase();
+      }
+    } catch {
+      // ignore filename parsing errors
+    }
+
+    return `${code}.${extension}`;
   }
 
   private async getMoodleCourseIdByCourseId(courseId: number): Promise<number | null> {

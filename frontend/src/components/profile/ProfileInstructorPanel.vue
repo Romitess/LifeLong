@@ -13,7 +13,7 @@
       </div>
     </div>
 
-    <div class="instructor-overview-grid">
+    <div v-if="false" class="instructor-overview-grid">
       <q-card
         v-for="item in instructorOverviewCards"
         :key="item.label"

@@ -3,6 +3,7 @@ import { useCourseStore, mapDeliveryModes } from 'src/stores/course-store';
 import { useCategoryStore } from 'src/stores/category-store';
 import type { Course } from 'src/types/course';
 import { api } from 'src/boot/axios';
+import { getImageUrl } from 'src/services/image.service';
 
 interface UseCourseListReturn {
   courses: ComputedRef<Course[]>;
@@ -73,7 +74,7 @@ function mapApiCourse(raw: ApiLltcourse): Course {
     code: raw.code ?? '',
     title: raw.titleTh ?? '',
     ...(raw.titleEn ? { titleEn: raw.titleEn } : {}),
-    imageUrl: raw.imageUrl?.trim() ?? '',
+    imageUrl: getImageUrl(raw.imageUrl?.trim() ?? ''),
     imageCrop: raw.imageCrop ?? null,
     cover: { icon: coverIcon, accentColor: '#f5a623', backgroundColor: '#1e3a5f' },
     registrationStart: regStart,

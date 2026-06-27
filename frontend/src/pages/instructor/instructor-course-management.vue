@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-page class="instructor-dashboard">
     <div v-if="isTeachingRole" class="section-container instructor-dashboard__inner">
       <section class="instructor-hero">
@@ -192,7 +192,7 @@
                       "
                     />
                     <span v-if="course.isActive"
-                      >{{ instructorDisplayName }} ยท {{ course.registrationEnd }}</span
+                      >{{ instructorDisplayName }} เธขเธ— {{ course.registrationEnd }}</span
                     >
                   </div>
 
@@ -439,7 +439,7 @@
           <section class="course-summary">
             <div class="course-summary__media">
               <img
-                :src="courseSettings.coverImageUrl || selectedCourse.imageUrl"
+                :src="resolveCourseImage(courseSettings.coverImageUrl || selectedCourse.imageUrl)"
                 :alt="selectedCourse.titleEn || selectedCourse.title"
               />
             </div>
@@ -476,9 +476,9 @@
                 <span
                   ><q-icon name="payments" />
                   {{
-                    selectedCourse.isFree
+                    selectedCourseDisplayIsFree
                       ? t('instructor.course.freeLabel')
-                      : formatCurrency(selectedCourse.price)
+                      : formatCurrency(selectedCourseDisplayPrice)
                   }}</span
                 >
                 <span
@@ -528,6 +528,7 @@
                 :label="t('instructor.course.saveChanges')"
                 no-caps
                 :disable="!hasCourseChanges"
+                :loading="savingCourseSettings"
                 @click="confirmSaveCourseChanges"
               />
               <q-btn
@@ -608,8 +609,9 @@
                     </div>
                   </div>
                   <div class="cover-editor q-mt-md">
-                    <img
-                      :src="courseSettings.coverImageUrl || selectedCourse.imageUrl"
+                    <ImageUpload
+                      v-model="courseSettings.coverImageUrl"
+                      folder="course"
                       :alt="selectedCourse.titleEn || selectedCourse.title"
                     />
                     <q-file
@@ -692,17 +694,6 @@
                       class="course-settings-field"
                     />
                   </div>
-                  <div class="q-mt-md">
-                    <q-btn
-                      unelevated
-                      color="primary"
-                      icon="save"
-                      :label="t('instructor.overview.saveDatesBtn')"
-                      no-caps
-                      :loading="savingDates"
-                      @click="saveRegistrationDates"
-                    />
-                  </div>
                 </div>
 
                 <div class="panel-block">
@@ -733,73 +724,6 @@
                   </div>
                 </div>
 
-                <div class="panel-block">
-                  <div class="panel-heading">
-                    <div>
-                      <h3>{{ t('instructor.overview.staffTitle') }}</h3>
-                      <p>{{ t('instructor.overview.staffSub') }}</p>
-                    </div>
-                    <q-btn
-                      outline
-                      color="primary"
-                      icon="person_add"
-                      :label="t('instructor.overview.addStaffBtn')"
-                      no-caps
-                      @click="openFacultyStaffDialog"
-                    />
-                  </div>
-                  <div class="staff-list q-mt-md">
-                    <div v-for="staff in facultyStaff" :key="staff.email" class="staff-row">
-                      <q-avatar color="primary" text-color="white" icon="badge" />
-                      <div>
-                        <strong>{{ staff.name }}</strong>
-                        <span>{{ staff.email }} - {{ staff.permission }}</span>
-                      </div>
-                      <q-btn
-                        flat
-                        round
-                        dense
-                        icon="delete"
-                        color="negative"
-                        @click="removeFacultyStaff(staff.email)"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div class="panel-block">
-                  <div class="panel-heading">
-                    <div>
-                      <h3>{{ t('instructor.overview.urgentTitle') }}</h3>
-                      <p>{{ t('instructor.overview.urgentSub') }}</p>
-                    </div>
-                    <q-btn flat round dense icon="more_horiz" color="grey-7" />
-                  </div>
-                  <div class="task-list">
-                    <div v-if="priorityTasks.length === 0" class="task-row task-row--empty">
-                      <q-icon name="check_circle" color="positive" size="22px" />
-                      <div>
-                        <strong>{{ t('instructor.overview.noUrgentTask') }}</strong>
-                        <span>{{ t('instructor.overview.noUrgentTaskSub') }}</span>
-                      </div>
-                    </div>
-                    <div v-for="task in priorityTasks" :key="task.id" class="task-row">
-                      <q-icon :name="task.icon" :color="task.color" size="22px" />
-                      <div>
-                        <strong>{{ localizedTaskTitle(task) }}</strong>
-                        <span>{{ localizedTaskDetail(task) }}</span>
-                      </div>
-                      <q-btn
-                        flat
-                        dense
-                        color="primary"
-                        :label="t('instructor.overview.manageBtn')"
-                        no-caps
-                        @click="openPriorityTask(task)"
-                      />
-                    </div>
-                  </div>
-                </div>
               </div>
             </q-tab-panel>
 
@@ -1214,56 +1138,6 @@
       </section>
     </div>
 
-    <q-dialog v-model="facultyStaffDialogOpen" persistent>
-      <q-card class="staff-dialog">
-        <q-card-section class="row items-center q-pb-sm">
-          <div>
-            <div class="text-h6 text-weight-bold">{{ t('instructor.dialog.addStaffTitle') }}</div>
-            <div class="text-body2 text-grey-7 q-mt-xs">
-              {{ t('instructor.dialog.addStaffSub') }}
-            </div>
-          </div>
-          <q-space />
-          <q-btn flat round dense icon="close" v-close-popup />
-        </q-card-section>
-
-        <q-card-section class="staff-dialog__form">
-          <q-input
-            v-model="facultyStaffForm.name"
-            outlined
-            :label="t('instructor.dialog.staffNameLabel')"
-          />
-          <q-input
-            v-model="facultyStaffForm.email"
-            outlined
-            type="email"
-            :label="t('instructor.dialog.emailLabel')"
-            placeholder="name@buu.ac.th"
-          />
-          <q-select
-            v-model="facultyStaffForm.permission"
-            outlined
-            emit-value
-            map-options
-            :label="t('instructor.dialog.permissionLabel')"
-            :options="facultyStaffPermissionOptions"
-          />
-        </q-card-section>
-
-        <q-card-actions align="right" class="q-pa-md q-pt-none">
-          <q-btn flat color="grey-7" :label="t('instructor.common.cancel')" no-caps v-close-popup />
-          <q-btn
-            unelevated
-            color="primary"
-            icon="person_add"
-            :label="t('instructor.dialog.addStaffBtn')"
-            no-caps
-            @click="addFacultyStaff"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
     <q-dialog v-model="deleteCourseDialogOpen" persistent>
       <q-card class="delete-course-dialog">
         <q-card-section class="row items-start no-wrap q-gutter-md">
@@ -1304,7 +1178,7 @@
           <div>
             <div class="text-h6 text-weight-bold">{{ selectedLearner.name }}</div>
             <div class="text-body2 text-grey-7">
-              {{ selectedLearner.studentId }} ยท {{ selectedLearner.email }}
+              {{ selectedLearner.studentId }} เธขเธ— {{ selectedLearner.email }}
             </div>
             <q-badge
               rounded
@@ -1379,17 +1253,6 @@
             :label="t('instructor.dialog.sendMessage')"
             no-caps
             @click="openQuickDialog(`ส่งข้อความถึง ${selectedLearner.name}`)"
-          />
-          <q-btn
-            unelevated
-            color="primary"
-            icon="assignment"
-            :label="t('instructor.dialog.viewGrades')"
-            no-caps
-            @click="
-              activeWorkspaceTab = 'grading';
-              learnerDetailDialogOpen = false;
-            "
           />
         </q-card-actions>
       </q-card>
@@ -1521,15 +1384,17 @@ import { useCourseStore } from 'src/stores/course-store';
 import { getCourseStructure } from 'src/data/course-structure';
 import {
   useInstructorBackend,
-  type InstructorPriorityTask,
+  type UpdateCourseSettingsPayload,
   type UpdateOpenclassPayload,
 } from 'src/composables/use-instructor-backend';
 import type { Course, DeliveryMode } from 'src/types/course';
 import BaseDateInput from 'components/base/BaseDateInput.vue';
+import ImageUpload from 'components/base/image-upload.vue';
 import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import BaseTable, { type BaseTableColumn } from 'components/base/BaseTable.vue';
 import { api } from 'src/boot/axios';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
+import { getImageUrl } from 'src/services/image.service';
 
 type WorkspaceTab =
   | 'overview'
@@ -1568,18 +1433,6 @@ interface LearnerPriceRule {
 }
 
 type LearnerPriceSnapshot = Pick<LearnerPriceRule, 'stutypeId' | 'enabled' | 'amount'>;
-
-interface FacultyStaffMember {
-  name: string;
-  email: string;
-  permission: string;
-}
-
-interface FacultyStaffForm {
-  name: string;
-  email: string;
-  permission: string;
-}
 
 interface CourseSettingsForm {
   published: boolean;
@@ -1634,7 +1487,7 @@ const managementLearnerTablePage = ref(1);
 const deleteCourseDialogOpen = ref(false);
 const pendingDeleteCourse = ref<Course | null>(null);
 const saveCourseDialogOpen = ref(false);
-const savingDates = computed(() => instructorBackend.isSavingOpenclass.value);
+const savingCourseSettings = computed(() => instructorBackend.isSavingCourseSettings.value);
 const pendingCourseSaveId = ref('');
 const pendingCourseChanges = ref<Partial<Course>>({});
 const pendingCourseChangeLabels = ref<string[]>([]);
@@ -1737,37 +1590,75 @@ const instructorHeroTitle = computed(() =>
 const selectedCourse = computed<Course | undefined>(() =>
   instructorCourses.value.find((course) => course.id === selectedCourseId.value),
 );
-const facultyStaff = computed<FacultyStaffMember[]>({
-  get() {
-    const courseId = selectedCourseId.value;
-    if (!courseId) return [];
-    return facultyStaffByCourseId.value[courseId] ?? [];
-  },
-  set(value) {
-    const courseId = selectedCourseId.value;
-    if (!courseId) return;
-    facultyStaffByCourseId.value = {
-      ...facultyStaffByCourseId.value,
-      [courseId]: value,
-    };
-  },
+function normalizeStutypeName(value: string | null | undefined): string {
+  return (value ?? '').trim().toLowerCase();
+}
+
+function matchesStutypeName(value: string | null | undefined, keywords: string[]): boolean {
+  const normalized = normalizeStutypeName(value);
+  return keywords.some((keyword) => normalized.includes(keyword));
+}
+
+function getEnabledLearnerRules(prices: LearnerPriceRule[]): LearnerPriceRule[] {
+  return prices.filter((price) => price.enabled);
+}
+
+function resolveDisplayedCoursePrice(course: Course, prices: LearnerPriceRule[]): number {
+  const enabledRules = getEnabledLearnerRules(prices);
+  if (enabledRules.length > 0) {
+    const preferredRule =
+      enabledRules.find((price) =>
+        matchesStutypeName(price.stutypeName || price.label, ['นิสิต', 'student']),
+      ) ??
+      enabledRules.find((price) =>
+        matchesStutypeName(price.stutypeName || price.label, ['บุคลากร', 'staff']),
+      ) ??
+      enabledRules.find((price) =>
+        matchesStutypeName(price.stutypeName || price.label, ['ศิษย์เก่า', 'alumni']),
+      ) ??
+      enabledRules.find((price) =>
+        matchesStutypeName(price.stutypeName || price.label, ['บุคคลทั่วไป', 'ทั่วไป', 'general']),
+      ) ??
+      enabledRules[0];
+
+    return Math.max(0, Number(preferredRule?.amount) || 0);
+  }
+
+  return Number(course.price) || 0;
+}
+
+function resolveBaseCoursePrice(course: Course, prices: LearnerPriceRule[]): number {
+  const enabledRules = getEnabledLearnerRules(prices);
+  const generalRule = enabledRules.find((price) =>
+    matchesStutypeName(price.stutypeName || price.label, ['บุคคลทั่วไป', 'ทั่วไป', 'general']),
+  );
+  if (generalRule) {
+    return Math.max(0, Number(generalRule.amount) || 0);
+  }
+
+  if (enabledRules.length > 0) {
+    return Math.max(0, Number(enabledRules[0]?.amount) || 0);
+  }
+
+  return Number(course.price) || 0;
+}
+
+const selectedCourseDisplayPrice = computed<number>(() => {
+  const course = selectedCourse.value;
+  if (!course) return 0;
+
+  return resolveDisplayedCoursePrice(course, learnerPricing);
 });
+const selectedCourseDisplayIsFree = computed<boolean>(() => selectedCourseDisplayPrice.value <= 0);
 
 watch(
   selectedCourse,
   (course) => {
     const email = authStore.user?.email;
     if (!course) return;
-    if (!facultyStaffByCourseId.value[course.id]) {
-      facultyStaffByCourseId.value = {
-        ...facultyStaffByCourseId.value,
-        [course.id]: defaultFacultyStaff.map((staff) => ({ ...staff })),
-      };
-    }
     if (!email) return;
     void instructorBackend.fetchLearners(email, course.id);
     void instructorBackend.fetchGrades(email, course.id);
-    void instructorBackend.fetchPriorityTasks(email, course.id);
   },
   { immediate: true },
 );
@@ -1801,7 +1692,7 @@ async function fetchMoodleContents(moodleId: number | null | undefined): Promise
     const { data } = await api.get<MoodleSection[]>(`/api/moodle/moodle-contents/${moodleId}`);
     moodleSections.value = data.filter((s) => s.modules && s.modules.length > 0);
   } catch {
-    // silent fail — Moodle unavailable
+    // silent fail โ€” Moodle unavailable
   } finally {
     isMoodleLoading.value = false;
   }
@@ -2005,7 +1896,6 @@ const workspaceTabs = computed<Array<{ name: WorkspaceTab; label: string; icon: 
   { name: 'overview', label: t('instructor.tabs.overview'), icon: 'dashboard' },
   { name: 'content', label: t('instructor.tabs.content'), icon: 'view_list' },
   { name: 'learners', label: t('instructor.tabs.learners'), icon: 'groups' },
-  { name: 'grading', label: t('instructor.tabs.grading'), icon: 'grading' },
   { name: 'announcements', label: t('instructor.tabs.announcements'), icon: 'campaign' },
   { name: 'settings', label: t('instructor.tabs.settings'), icon: 'settings' },
   { name: 'reports', label: t('instructor.tabs.reports'), icon: 'analytics' },
@@ -2281,31 +2171,57 @@ const reports = computed(() => {
   ];
 });
 
-const selectedHealth = computed(() => getCourseHealth(selectedCourseId.value));
+function countStructuredLessons(): number {
+  return selectedStructure.value.reduce((sum, module) => sum + module.lessons.length, 0);
+}
 
-const readinessChecklist = computed(() => {
-  const hasStructure = selectedStructure.value.length > 0;
-  const hasQuiz = selectedStructure.value.some((module) =>
+function countMoodleModules(): number {
+  return moodleSections.value.reduce((sum, section) => sum + (section.modules?.length ?? 0), 0);
+}
+
+function hasStructuredAssessment(): boolean {
+  return selectedStructure.value.some((module) =>
     module.lessons.some((lesson) => lesson.type === 'quiz'),
   );
+}
+
+function hasMoodleAssessment(): boolean {
+  return moodleSections.value.some((section) =>
+    section.modules.some((module) => ['quiz', 'assign', 'feedback'].includes(module.modname)),
+  );
+}
+
+const readinessChecklist = computed(() => {
+  const course = selectedCourse.value;
+  const totalStructuredLessons = countStructuredLessons();
+  const totalMoodleModules = countMoodleModules();
+  const hasRealContent = totalMoodleModules > 0 || totalStructuredLessons > 0;
+  const hasAssessment = hasMoodleAssessment() || hasStructuredAssessment();
   const hasAnnouncements = announcements.value.length > 0;
+  const hasCourseInfo = Boolean(
+    course?.code &&
+      course?.title &&
+      (courseSettings.coverImageUrl || course?.imageUrl) &&
+      authStore.user?.email,
+  );
+
   return [
     {
       label: t('instructor.readiness.courseInfoComplete'),
       detail: t('instructor.readiness.courseInfoCompleteSub'),
-      done: Boolean(selectedCourse.value?.title),
+      done: hasCourseInfo,
     },
     {
       label: t('instructor.readiness.hasLessons'),
-      detail: hasStructure
-        ? `${selectedStructure.value.length} ${t('instructor.content.itemsUnit')}`
+      detail: hasRealContent
+        ? `${totalMoodleModules || totalStructuredLessons} ${t('instructor.content.itemsUnit')}`
         : t('instructor.readiness.noLessons'),
-      done: hasStructure,
+      done: hasRealContent,
     },
     {
       label: t('instructor.readiness.hasAssessment'),
       detail: t('instructor.readiness.hasAssessmentSub'),
-      done: hasQuiz,
+      done: hasAssessment,
     },
     {
       label: t('instructor.readiness.hasCourseAnnouncement'),
@@ -2315,11 +2231,15 @@ const readinessChecklist = computed(() => {
   ];
 });
 
-const priorityTasks = computed<InstructorPriorityTask[]>(() => {
-  const course = selectedCourse.value;
-  if (!course) return [];
+const selectedHealth = computed(() => {
+  const total = readinessChecklist.value.length;
+  const completed = readinessChecklist.value.filter((item) => item.done).length;
+  const readiness = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-  return instructorBackend.priorityTasksByCourseId.value[course.id] ?? [];
+  return {
+    readiness,
+    completion: readiness,
+  };
 });
 
 const qualityChecks = computed(() => [
@@ -2432,19 +2352,8 @@ async function uploadCoverImage(file: File | null): Promise<void> {
   }
 }
 
-function openPriorityTask(task: InstructorPriorityTask): void {
-  activeWorkspaceTab.value = task.actionTab;
-}
-
-function resetFacultyStaffForm(): void {
-  facultyStaffForm.name = '';
-  facultyStaffForm.email = '';
-  facultyStaffForm.permission = facultyStaffPermissionOptions.value[0]?.value ?? 'edit-info';
-}
-
-function openFacultyStaffDialog(): void {
-  resetFacultyStaffForm();
-  facultyStaffDialogOpen.value = true;
+function resolveCourseImage(imageUrl: string | null | undefined): string {
+  return getImageUrl(imageUrl);
 }
 
 function openAnnouncementDialog(): void {
@@ -2540,7 +2449,7 @@ async function submitAnnouncement(): Promise<void> {
       $q.notify({
         type: 'positive',
         icon: 'campaign',
-        message: `${t('instructor.notify.announcementCreated')} — ${parts.join(', ')}`,
+        message: `${t('instructor.notify.announcementCreated')} โ€” ${parts.join(', ')}`,
         position: 'top',
         timeout: 5000,
       });
@@ -2557,48 +2466,6 @@ async function submitAnnouncement(): Promise<void> {
   } finally {
     announcementSubmitting.value = false;
   }
-}
-
-function addFacultyStaff(): void {
-  const name = facultyStaffForm.name.trim();
-  const email = facultyStaffForm.email.trim().toLowerCase();
-  const permission = facultyStaffForm.permission.trim();
-
-  if (!selectedCourseId.value) {
-    $q.notify({ type: 'warning', message: t('instructor.notify.courseNotSelected') });
-    return;
-  }
-
-  if (!name) {
-    $q.notify({ type: 'warning', message: t('instructor.notify.staffNameRequired') });
-    return;
-  }
-
-  if (!/.+@.+\..+/.test(email)) {
-    $q.notify({ type: 'warning', message: t('instructor.notify.emailInvalid') });
-    return;
-  }
-
-  if (facultyStaff.value.some((staff) => staff.email.toLowerCase() === email)) {
-    $q.notify({ type: 'warning', message: t('instructor.notify.emailAlreadyAdded') });
-    return;
-  }
-
-  facultyStaff.value = [
-    ...facultyStaff.value,
-    {
-      name,
-      email,
-      permission,
-    },
-  ];
-  facultyStaffDialogOpen.value = false;
-  resetFacultyStaffForm();
-  $q.notify({ type: 'positive', message: t('instructor.notify.staffAdded') });
-}
-
-function removeFacultyStaff(email: string): void {
-  facultyStaff.value = facultyStaff.value.filter((staff) => staff.email !== email);
 }
 
 function getCourseHealth(courseId: string) {
@@ -2647,18 +2514,6 @@ function translateStutypeName(thaiName: string): string {
   return enMap[thaiName] ?? thaiName;
 }
 
-function localizedTaskTitle(task: { id: string; title: string }): string {
-  const key = `instructor.priorityTask.${task.id}.title`;
-  const translated = t(key);
-  return translated !== key ? translated : task.title;
-}
-
-function localizedTaskDetail(task: { id: string; detail: string; count: number }): string {
-  const key = `instructor.priorityTask.${task.id}.detail`;
-  const translated = t(key, { count: task.count });
-  return translated !== key ? translated : task.detail;
-}
-
 function moodleModLabel(modname: string): string {
   const map: Record<string, string> = {
     quiz: t('instructor.moodleModLabel.quiz'),
@@ -2700,7 +2555,18 @@ function getRemainingSeats(course: Course): number {
   return Math.max(0, (course.maxSeats ?? 0) - course.enrolledCount);
 }
 
-function setCoursePublished(courseId: string, isPublished: boolean): void {
+async function setCoursePublished(courseId: string, isPublished: boolean): Promise<void> {
+  const result = await instructorBackend.updateCourseSettings(courseId, { published: isPublished });
+  if (!result?.updated) {
+    $q.notify({
+      type: 'negative',
+      icon: 'error',
+      message: t('failed'),
+      position: 'top',
+    });
+    return;
+  }
+
   courseStore.updateCourse(courseId, { isActive: isPublished });
 }
 
@@ -2772,11 +2638,7 @@ function formatCompactDateRange(startIso: string, endIso: string): string {
 
 function buildCourseUpdatePayload(course: Course): Partial<Course> {
   // ใช้ราคาของ "บุคคลทั่วไป" (STUTYPE_ID สูงสุด = ทั่วไป) เป็น base price
-  const generalPrice = learnerPricing.reduce<LearnerPriceRule | undefined>(
-    (prev, cur) => (!prev || cur.stutypeId > prev.stutypeId ? cur : prev),
-    undefined,
-  );
-  const nextPrice = generalPrice?.enabled ? generalPrice.amount : course.price;
+  const nextPrice = resolveBaseCoursePrice(course, learnerPricing);
 
   return {
     imageUrl: courseSettings.coverImageUrl || course.imageUrl,
@@ -2842,36 +2704,6 @@ const hasCourseChanges = computed(() => {
   return getCourseChangeLabels(course, buildCourseUpdatePayload(course)).length > 0;
 });
 
-async function saveRegistrationDates(): Promise<void> {
-  const course = selectedCourse.value;
-  if (!course) return;
-
-  const result = await instructorBackend.updateOpenclass(course.id, {
-    registrationStartDate: courseSettings.registrationStartDate,
-    registrationEndDate: courseSettings.registrationEndDate,
-  });
-
-  if (result?.updated) {
-    courseStore.updateCourse(course.id, {
-      registrationStartDate: courseSettings.registrationStartDate,
-      registrationEndDate: courseSettings.registrationEndDate,
-    });
-    $q.notify({
-      type: 'positive',
-      icon: 'check_circle',
-      message: t('instructor.notify.datesSaved'),
-      position: 'top',
-    });
-  } else {
-    $q.notify({
-      type: 'negative',
-      icon: 'error',
-      message: t('instructor.notify.datesSaveFailed'),
-      position: 'top',
-    });
-  }
-}
-
 function confirmSaveCourseChanges(): void {
   const course = selectedCourse.value;
   if (!course) return;
@@ -2897,15 +2729,41 @@ function confirmSaveCourseChanges(): void {
 }
 
 async function saveCourseChanges(courseId: string, changes: Partial<Course>): Promise<void> {
-  courseStore.updateCourse(courseId, changes);
+  const settingsPayload: UpdateCourseSettingsPayload = {};
+  if (changes.isActive !== undefined) settingsPayload.published = changes.isActive;
+  if (changes.maxSeats !== undefined) settingsPayload.maxSeats = changes.maxSeats;
+  if (changes.imageUrl !== undefined) settingsPayload.coverImageUrl = changes.imageUrl;
+  if (changes.price !== undefined) settingsPayload.price = changes.price;
+  if (changes.deliveryModes?.[0] !== undefined) settingsPayload.deliveryMode = changes.deliveryModes[0];
+  const settingsResult = await instructorBackend.updateCourseSettings(courseId, settingsPayload);
+  if (!settingsResult?.updated) {
+    $q.notify({
+      type: 'negative',
+      icon: 'error',
+      message: t('failed'),
+      position: 'top',
+    });
+    return;
+  }
 
   // บันทึก stutype fees ลง backend
   const numericId = parseInt(String(courseId).replace('db-', ''), 10);
   if (!isNaN(numericId) && learnerPricing.length > 0) {
-    await instructorBackend.saveCourseFees(
+    const feeSaved = await instructorBackend.saveCourseFees(
       numericId,
-      learnerPricing.map((p) => ({ stutypeId: p.stutypeId, amount: Number(p.amount) || 0 })),
+      learnerPricing
+        .filter((price) => price.enabled)
+        .map((price) => ({ stutypeId: price.stutypeId, amount: Number(price.amount) || 0 })),
     );
+    if (!feeSaved) {
+      $q.notify({
+        type: 'negative',
+        icon: 'error',
+        message: t('failed'),
+        position: 'top',
+      });
+      return;
+    }
   }
 
   learnerPricingBaseline.value = getLearnerPricingSnapshot();
@@ -2932,6 +2790,15 @@ async function saveCourseChanges(courseId: string, changes: Partial<Course>): Pr
       return;
     }
   }
+
+  courseStore.updateCourse(courseId, changes);
+  learnerPricingBaseline.value = getLearnerPricingSnapshot();
+
+  if (authStore.user?.email) {
+    await courseStore.fetchInstructorCourses(authStore.user.email);
+  }
+
+  await courseStore.fetchBackendCourses(true);
 
   notifySaved();
 }
