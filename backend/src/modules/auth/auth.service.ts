@@ -334,10 +334,7 @@ export class AuthService {
     return { imageUrl: null };
   }
 
-  async saveProfileImageUrl(
-    user: JwtPayload,
-    imageUrl: string,
-  ): Promise<ProfileImageResponseDto> {
+  async saveProfileImageUrl(user: JwtPayload, imageUrl: string): Promise<ProfileImageResponseDto> {
     const lltumUser = await this.getLltumUserForProfile(user);
     const normalizedImageUrl = this.normalizeProfileImageUrl(imageUrl);
     await this.lltumUserRepository.update(lltumUser.id, { imageUrl: normalizedImageUrl });
@@ -461,9 +458,18 @@ export class AuthService {
   }
 
   private async saveLmsId(username: string, email: string, moodleUserId: number): Promise<void> {
-    const lltumUser = await this.lltumUserRepository.findOne({
-      where: [{ username }, { email }],
-    });
+    let lltumUser = await this.lltumUserRepository.findOne({ where: { username } });
+    if (!lltumUser && email) {
+      const emailMatches = await this.lltumUserRepository.find({ where: { email } });
+      if (emailMatches.length === 1) {
+        lltumUser = emailMatches[0];
+      } else if (emailMatches.length > 1) {
+        this.logger.warn(
+          `Skipped LMS_ID link for ${username}: email ${email} matches ${emailMatches.length} LLT users`,
+        );
+        return;
+      }
+    }
     if (!lltumUser || lltumUser.lmsId) return;
     lltumUser.lmsId = moodleUserId;
     await this.lltumUserRepository.save(lltumUser);
@@ -678,7 +684,6 @@ export class AuthService {
       failures,
     };
   }
-
   private normalizeProfileImageUrl(imageUrl: string): string {
     const normalizedUrl = imageUrl.trim();
     if (!normalizedUrl) {
