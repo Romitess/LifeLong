@@ -21,8 +21,13 @@
               <div class="instructor-hero__eyebrow">Instructor Workspace</div>
               <h1>{{ instructorHeroTitle }}</h1>
               <div class="instructor-hero__meta">
-                <q-badge rounded color="positive" label="Teacher" class="text-weight-bold" />
-                <span>{{ authStore.user?.studentId }}</span>
+                <q-badge
+                  rounded
+                  color="positive"
+                  :label="t('profile.roles.instructor')"
+                  class="text-weight-bold"
+                />
+                <span>{{ instructorIdentifier }}</span>
               </div>
             </div>
           </div>
@@ -186,7 +191,9 @@
                           : t('instructor.table.moodleNotSent')
                       "
                     />
-                    <span v-if="course.isActive">sukanya ยท {{ course.registrationEnd }}</span>
+                    <span v-if="course.isActive"
+                      >{{ instructorDisplayName }} ยท {{ course.registrationEnd }}</span
+                    >
                   </div>
 
                   <div class="instructor-profile-course-card__actions">
@@ -318,7 +325,7 @@
                   "
                 />
                 <div v-if="course.isActive" class="moodle-status__meta">
-                  <span>sukanya</span>
+                  <span>{{ instructorDisplayName }}</span>
                   <span>{{
                     formatCourseDateLabel(course.registrationEndDate, course.registrationEnd)
                   }}</span>
@@ -908,8 +915,8 @@
               >
                 <template #cell-name="{ row }">
                   <div class="learner-name-cell">
-                    <q-avatar size="34px">
-                      <img :src="row.avatarUrl" :alt="row.name" />
+                    <q-avatar size="34px" color="primary" text-color="white">
+                      {{ getInitials(row.name) }}
                     </q-avatar>
                     <div>
                       <strong>{{ row.name }}</strong>
@@ -1276,8 +1283,8 @@
     <q-dialog v-model="learnerDetailDialogOpen">
       <q-card class="learner-detail-dialog" v-if="selectedLearner">
         <q-card-section class="learner-detail-header">
-          <q-avatar size="64px">
-            <img :src="selectedLearner.avatarUrl" :alt="selectedLearner.name" />
+          <q-avatar size="64px" color="primary" text-color="white">
+            {{ getInitials(selectedLearner.name) }}
           </q-avatar>
           <div>
             <div class="text-h6 text-weight-bold">{{ selectedLearner.name }}</div>
@@ -1523,7 +1530,6 @@ interface LearnerRow {
   studentId: string;
   name: string;
   email: string;
-  avatarUrl: string;
   faculty: string;
   department: string;
   phone: string;
@@ -1598,6 +1604,8 @@ courseStore.init();
 onMounted(() => {
   const email = authStore.user?.email;
   if (email) {
+    void instructorBackend.fetchProfile(email);
+    void instructorBackend.fetchSummary(email);
     void courseStore.fetchInstructorCourses(email);
   }
 });
@@ -1641,6 +1649,26 @@ const learnerPricingBaseline = ref<LearnerPriceSnapshot[]>([]);
 
 const instructorCourses = computed<Course[]>(() =>
   courseStore.getInstructorCourses(authStore.user),
+);
+const instructorDisplayName = computed(() => {
+  const profile = instructorBackend.profile.value;
+  const nameTh = [profile?.prefix, profile?.firstNameTh, profile?.lastNameTh]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const nameEn = [profile?.firstNameEn, profile?.lastNameEn].filter(Boolean).join(' ').trim();
+  const authNameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const authNameEn = [authStore.user?.firstNameEn, authStore.user?.lastNameEn]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  return nameTh || nameEn || authNameTh || authNameEn || authStore.user?.username || '-';
+});
+const instructorIdentifier = computed(
+  () => authStore.user?.studentId || authStore.user?.username || authStore.user?.email || '-',
 );
 const selectedCourseId = ref(
   instructorCourses.value.some((course) => course.id === requestedCourseId)
@@ -1725,6 +1753,20 @@ watch(
     void instructorBackend.fetchLearners(email, course.id);
     void instructorBackend.fetchGrades(email, course.id);
     void instructorBackend.fetchPriorityTasks(email, course.id);
+  },
+  { immediate: true },
+);
+
+watch(
+  instructorCourses,
+  (courses) => {
+    const email = authStore.user?.email;
+    if (!email) return;
+    for (const course of courses) {
+      if (!instructorBackend.learnersByCourseId.value[course.id]) {
+        void instructorBackend.fetchLearners(email, course.id, course.moodleId ?? null);
+      }
+    }
   },
   { immediate: true },
 );
@@ -1903,13 +1945,14 @@ watch(
 );
 
 const dashboardMetrics = computed(() => {
-  const totalLearners = instructorCourses.value.reduce(
-    (sum, course) => sum + course.enrolledCount,
-    0,
-  );
-  const activeCourses = instructorCourses.value.filter((course) => course.isActive).length;
-  const pendingReviews = assignments.value.reduce((sum, item) => sum + item.pending, 0);
-  const totalViews = instructorCourses.value.reduce((sum, course) => sum + course.views, 0);
+  const summary = instructorBackend.summary.value;
+  const totalLearners =
+    summary?.totalStudents ??
+    instructorCourses.value.reduce((sum, course) => sum + course.enrolledCount, 0);
+  const activeCourses =
+    summary?.activeCourses ?? instructorCourses.value.filter((course) => course.isActive).length;
+  const averageScore = summary?.averageScore;
+  const conversations = summary?.conversations ?? 0;
 
   return [
     {
@@ -1927,16 +1970,16 @@ const dashboardMetrics = computed(() => {
       background: '#e8f5e9',
     },
     {
-      label: t('instructor.metrics.pendingReview'),
-      value: String(pendingReviews),
-      icon: 'assignment_late',
+      label: t('instructor.reportLabels.avgScore'),
+      value: averageScore != null ? averageScore.toFixed(2) : '-',
+      icon: 'star',
       color: '#c77700',
       background: '#fff7df',
     },
     {
-      label: t('instructor.metrics.totalViews'),
-      value: totalViews.toLocaleString(),
-      icon: 'visibility',
+      label: t('instructor.dashboard.chatRoomsMetric'),
+      value: conversations.toLocaleString(),
+      icon: 'forum',
       color: '#6a1b9a',
       background: '#f3e5f5',
     },
@@ -1980,6 +2023,18 @@ function formatPaymentStatus(value: string | null | undefined, isFree: boolean):
   return value || '-';
 }
 
+function getInitials(name: string | null | undefined): string {
+  const parts = (name ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return '?';
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+}
+
 function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
   if (!course) return [];
 
@@ -2014,7 +2069,6 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
       studentId: learner.studentId,
       name: learner.fullName,
       email: learner.email ?? '-',
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(`${course.id}-${learner.userId}`)}`,
       faculty: '-',
       department: '-',
       phone: learner.phone ?? '-',
@@ -2572,12 +2626,17 @@ function formatCurrency(value: number): string {
 }
 
 function getPaidLearnerCount(course: Course): number {
-  return Math.max(0, course.enrolledCount - getUnpaidLearnerCount(course));
+  if (course.isFree) return course.enrolledCount;
+  const backendLearners = instructorBackend.learnersByCourseId.value[course.id] ?? [];
+  if (backendLearners.length === 0) return 0;
+  return backendLearners.filter((learner) => learner.paymentStatus === 'Y').length;
 }
 
 function getUnpaidLearnerCount(course: Course): number {
   if (course.isFree) return 0;
-  return Math.min(course.enrolledCount, Math.max(0, Math.round(course.enrolledCount * 0.12)));
+  const backendLearners = instructorBackend.learnersByCourseId.value[course.id] ?? [];
+  if (backendLearners.length === 0) return 0;
+  return backendLearners.filter((learner) => learner.paymentStatus === 'N').length;
 }
 
 function getRemainingSeats(course: Course): number {

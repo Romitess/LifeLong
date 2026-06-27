@@ -33,6 +33,8 @@ export interface InstructorCourseSummary {
   maxSeats: number | null;
   amount: number;
   enrolledCount: number;
+  reviewAverage: number;
+  reviewCount: number;
   regStartDate: string | null;
   regEndDate: string | null;
   updatedAt: Date | null;
@@ -137,6 +139,8 @@ interface CourseRow {
   max_seats: number | null;
   amount: number | null;
   enrolled_count: string | number | null;
+  review_average: string | number | null;
+  review_count: string | number | null;
   reg_start_date: Date | string | null;
   reg_end_date: Date | string | null;
   updated_at: Date | string | null;
@@ -328,6 +332,24 @@ export class InstructorService {
         'COALESCE(course.updateDate, course.createDate) AS updated_at',
         'COUNT(DISTINCT enroll.id) AS enrolled_count',
       ])
+      .addSelect(
+        (subQuery) =>
+          subQuery
+            .select('COALESCE(ROUND(AVG(review.REVIEW_RATING), 2), 0)')
+            .from('LLTCOURSEREVIEW', 'review')
+            .where('review.COSE_ID = course.id')
+            .andWhere("review.REVIEW_STATUS = 'A'"),
+        'review_average',
+      )
+      .addSelect(
+        (subQuery) =>
+          subQuery
+            .select('COUNT(*)')
+            .from('LLTCOURSEREVIEW', 'review')
+            .where('review.COSE_ID = course.id')
+            .andWhere("review.REVIEW_STATUS = 'A'"),
+        'review_count',
+      )
       .groupBy('course.id')
       .orderBy('course.updateDate', 'DESC')
       .addOrderBy('course.createDate', 'DESC')
@@ -347,6 +369,8 @@ export class InstructorService {
       maxSeats: row.max_seats != null ? Number(row.max_seats) : null,
       amount: Number(row.amount ?? 0),
       enrolledCount: Number(row.enrolled_count ?? 0),
+      reviewAverage: Number(row.review_average ?? 0),
+      reviewCount: Number(row.review_count ?? 0),
       regStartDate: row.reg_start_date
         ? new Date(row.reg_start_date).toISOString().substring(0, 10)
         : null,
@@ -520,17 +544,15 @@ export class InstructorService {
         courseCode: row.courseCode || null,
       }));
 
-      // 2. Average Score: Compute directly from LMS_FINALSCORE in DB
-      const scoreRows = await this.enrollRepository
-        .createQueryBuilder('enroll')
-        .where('enroll.courseId IN (:...courseIds)', { courseIds })
-        .andWhere('enroll.lmsFinalscore IS NOT NULL')
-        .select('AVG(enroll.lmsFinalscore)', 'avgScore')
-        .getRawOne<{ avgScore: string | null }>();
+      // 2. Average Score: real student course reviews across this instructor's courses
+      const reviewRows = await this.dataSource.query<Array<{ avgScore: string | null }>>(
+        `SELECT ROUND(AVG(REVIEW_RATING), 2) AS avgScore
+         FROM LLTCOURSEREVIEW
+         WHERE COSE_ID IN (?) AND REVIEW_STATUS = 'A'`,
+        [courseIds],
+      );
 
-      averageScore = scoreRows?.avgScore
-        ? Math.round(Number(scoreRows.avgScore) * 100) / 100
-        : null;
+      averageScore = reviewRows[0]?.avgScore != null ? Number(reviewRows[0].avgScore) : null;
 
       // 3. Conversations Count: Count learners with LMS_ID (Moodle ID)
       const convRows = await this.enrollRepository

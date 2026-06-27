@@ -778,8 +778,8 @@
             >
               <template #cell-name="{ row }">
                 <div class="student-name-cell">
-                  <q-avatar size="36px">
-                    <img :src="row.avatarUrl" :alt="row.name" />
+                  <q-avatar size="36px" color="primary" text-color="white">
+                    {{ getInitials(row.name) }}
                   </q-avatar>
                   <div>
                     <strong>{{ row.name }}</strong>
@@ -833,8 +833,8 @@
           >
             <template #cell-name="{ row }">
               <div class="student-name-cell">
-                <q-avatar size="36px">
-                  <img :src="row.avatarUrl" :alt="row.name" />
+                <q-avatar size="36px" color="primary" text-color="white">
+                  {{ getInitials(row.name) }}
                 </q-avatar>
                 <div>
                   <strong>{{ row.name }}</strong>
@@ -884,8 +884,8 @@
     <q-dialog v-model="learnerDetailDialogOpen">
       <q-card class="student-detail-dialog" v-if="selectedLearner">
         <q-card-section class="student-detail-header">
-          <q-avatar size="64px">
-            <img :src="selectedLearner.avatarUrl" :alt="selectedLearner.name" />
+          <q-avatar size="64px" color="primary" text-color="white">
+            {{ getInitials(selectedLearner.name) }}
           </q-avatar>
           <div>
             <div class="text-h6 text-weight-bold">{{ selectedLearner.name }}</div>
@@ -1129,7 +1129,6 @@ interface LearnerRow {
   studentId: string;
   name: string;
   email: string;
-  avatarUrl: string;
   faculty: string;
   department: string;
   phone: string;
@@ -1474,6 +1473,18 @@ function formatPaymentStatus(value: string | null | undefined, isFree: boolean):
   return value || '-';
 }
 
+function getInitials(name: string | null | undefined): string {
+  const parts = (name ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) return '?';
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+}
+
 function getResultStatusFromGrade(importedGradeName: string | null | undefined): string {
   if (!importedGradeName) return 'ไม่ผ่าน';
   const name = importedGradeName.trim().toLowerCase();
@@ -1507,7 +1518,6 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
       studentId: learner.studentId,
       name: learner.fullName,
       email: learner.email ?? '-',
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(`${course.id}-${learner.userId}`)}`,
       faculty: '-',
       department: '-',
       phone: learner.phone ?? '-',

@@ -134,15 +134,10 @@
                   v-if="message.sender === 'learner'"
                   size="34px"
                   class="chat-message__avatar--learner"
+                  color="primary"
+                  text-color="white"
                 >
-                  <img
-                    v-if="selectedConversation.learnerEmail"
-                    :src="`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(selectedConversation.learnerEmail)}`"
-                    alt="learner avatar"
-                    loading="eager"
-                    decoding="sync"
-                  />
-                  <span v-else>{{ selectedConversation.learnerInitials }}</span>
+                  {{ selectedConversation.learnerInitials }}
                 </q-avatar>
 
                 <div class="chat-message__bubble">
@@ -169,13 +164,10 @@
                   v-if="message.sender === 'system'"
                   size="34px"
                   class="chat-message__avatar--self"
+                  color="secondary"
+                  text-color="white"
                 >
-                  <img
-                    :src="`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authStore.user?.email ?? '')}`"
-                    alt="instructor avatar"
-                    loading="eager"
-                    decoding="sync"
-                  />
+                  <q-icon name="support_agent" size="18px" />
                 </q-avatar>
               </div>
             </div>

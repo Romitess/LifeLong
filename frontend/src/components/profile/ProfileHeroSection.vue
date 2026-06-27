@@ -44,12 +44,12 @@
               {{ heroRoleLabel }}
             </div>
             <div class="text-h4 text-weight-bolder text-white q-mt-xs">
-              {{ authStore.user?.firstNameTh }} {{ authStore.user?.lastNameTh }}
+              {{ displayName }}
             </div>
             <div class="row items-center q-gutter-sm q-mt-xs">
               <q-badge rounded color="primary" label="Active" class="text-weight-bold" />
               <span class="text-body2 text-white" style="opacity: 0.75">
-                {{ idLabel }} : {{ authStore.user?.studentId }}
+                {{ idLabel }} : {{ displayIdentifier }}
               </span>
             </div>
           </div>
@@ -110,12 +110,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import BaseImageCropperDialog from 'src/components/base/BaseImageCropperDialog.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useProfileAvatar } from 'src/composables/use-profile-avatar';
 import { useAvatarCrop } from 'src/composables/use-avatar-crop';
+import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 
 interface ProfileStatCardItem {
   label: string;
@@ -131,6 +132,7 @@ defineProps<{
 }>();
 
 const authStore = useAuthStore();
+const instructorBackend = useInstructorBackend();
 const { fullAvatarUrl } = useProfileAvatar();
 
 const pendingFullAvatarSrc = ref<string | null>(null);
@@ -138,6 +140,35 @@ const showFullAvatar = ref(false);
 
 const currentAvatarUrl = computed<string>(() => authStore.user?.avatar || '');
 const displayAvatarUrl = computed<string>(() => fullAvatarUrl.value || currentAvatarUrl.value);
+const isTeachingRole = computed(
+  () => authStore.user?.role === 'teach' || authStore.user?.role === 'instructor',
+);
+const displayName = computed(() => {
+  const profile = instructorBackend.profile.value;
+  const nameTh = [profile?.prefix, profile?.firstNameTh, profile?.lastNameTh]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const nameEn = [profile?.firstNameEn, profile?.lastNameEn].filter(Boolean).join(' ').trim();
+  const authNameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const authNameEn = [authStore.user?.firstNameEn, authStore.user?.lastNameEn]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  return nameTh || nameEn || authNameTh || authNameEn || authStore.user?.username || '-';
+});
+const displayIdentifier = computed(
+  () => authStore.user?.studentId || authStore.user?.username || authStore.user?.email || '-',
+);
+
+onMounted(() => {
+  if (isTeachingRole.value && authStore.user?.email) {
+    void instructorBackend.fetchProfile(authStore.user.email);
+  }
+});
 
 const {
   showCropDialog,

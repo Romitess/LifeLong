@@ -47,6 +47,8 @@ interface BackendCourse {
   typestudyDetail?: { id: number; name: string | null } | null;
   maxSeats?: number | null;
   enrolledCount?: number | null;
+  reviewAverage?: number | null;
+  reviewCount?: number | null;
   topEnrollmentRank?: number | null;
   amount?: number | null;
   clickCount?: number | null;
@@ -69,6 +71,8 @@ interface BackendInstructorCourse {
   moodleId?: number | null;
   maxSeats?: number | null;
   enrolledCount?: number | null;
+  reviewAverage?: number | null;
+  reviewCount?: number | null;
   amount?: number | null;
   categoryId?: number | null;
   updatedAt?: string | null;
@@ -199,6 +203,8 @@ function mapBackendCourse(course: BackendCourse): Course | null {
     categoryId: course.categoryId ?? undefined,
     maxSeats: course.maxSeats ?? null,
     enrolledCount: course.enrolledCount ?? 0,
+    reviewAverage: course.reviewAverage ?? 0,
+    reviewCount: course.reviewCount ?? 0,
     totalHours: course.hours ?? 0,
     evaluationText: course.evaluationText ?? null,
     ...(course.updatedAt ? { updatedAt: course.updatedAt } : {}),
@@ -345,6 +351,8 @@ function mergeCourseIntoDetail(detail: CourseDetail, course: Course): CourseDeta
     ...(departmentEn ? { departmentEn } : {}),
     maxSeats: course.maxSeats ?? null,
     enrolledCount: course.enrolledCount,
+    reviewAverage: course.reviewAverage ?? detail.reviewAverage ?? 0,
+    reviewCount: course.reviewCount ?? detail.reviewCount ?? 0,
     certificateType: course.status,
     certificateTypeEn: course.status,
     ...(previewPosterUrl ? { previewPosterUrl } : {}),
@@ -360,6 +368,8 @@ function mergeCourseOwnerData(baseCourse: Course, ownerCourse?: Partial<Course> 
     ...baseCourse,
     ...(ownerCourse.instructorId ? { instructorId: ownerCourse.instructorId } : {}),
     ...(ownerCourse.instructorEmail ? { instructorEmail: ownerCourse.instructorEmail } : {}),
+    reviewAverage: baseCourse.reviewAverage ?? ownerCourse.reviewAverage ?? 0,
+    reviewCount: baseCourse.reviewCount ?? ownerCourse.reviewCount ?? 0,
   });
 }
 
@@ -508,6 +518,8 @@ export const useCourseStore = defineStore('course', {
               instructorEmail: email,
               maxSeats: course.maxSeats ?? null,
               enrolledCount: course.enrolledCount ?? null,
+              reviewAverage: course.reviewAverage ?? null,
+              reviewCount: course.reviewCount ?? null,
               amount: course.amount ?? null,
               categoryId: course.categoryId ?? null,
               updatedAt: course.updatedAt ?? null,

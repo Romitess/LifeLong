@@ -116,14 +116,14 @@
             <q-icon name="fact_check" />
             <div>
               <strong>ตรวจสอบรายชื่อผู้เรียน</strong>
-              <span>{{ totalInstructorLearners.toLocaleString('th-TH') }} คนในระบบ mockup</span>
+              <span>{{ totalInstructorLearners.toLocaleString('th-TH') }} คนที่สมัครจริง</span>
             </div>
           </button>
           <button type="button" class="instructor-task-item" @click="goToInstructorLearningResults">
             <q-icon name="grading" />
             <div>
               <strong>บันทึกผลการเรียน</strong>
-              <span>{{ pendingResultCourses.toLocaleString('th-TH') }} รายวิชายังต้องตรวจผล</span>
+              <span>{{ pendingResultCourses.toLocaleString('th-TH') }} รายวิชาที่มีผู้สมัครให้ติดตาม</span>
             </div>
           </button>
           <button type="button" class="instructor-task-item" @click="goToInstructorCertificates">
@@ -131,7 +131,7 @@
             <div>
               <strong>สร้าง Certificate</strong>
               <span>
-                {{ certificateReadyLearners.toLocaleString('th-TH') }} คนผ่านเกณฑ์พร้อมออกเอกสาร
+                คะแนนรีวิวเฉลี่ย {{ averageReviewLabel }} จากข้อมูลนักเรียนจริง
               </span>
             </div>
           </button>
@@ -141,24 +141,24 @@
       <q-card flat bordered class="instructor-work-card">
         <div class="instructor-work-card__head">
           <div>
-            <h2>สถานะ Certificate</h2>
-            <span>ประเมินจากคะแนน mockup สำหรับเตรียม flow เชื่อมต่อ backend</span>
+            <h2>สรุปจากระบบจริง</h2>
+            <span>ข้อมูลเดียวกับหน้าหลักของผู้สอน</span>
           </div>
           <q-icon name="workspace_premium" size="30px" color="amber-8" />
         </div>
 
         <div class="certificate-status-row">
           <div>
-            <strong>{{ certificateReadyLearners.toLocaleString('th-TH') }}</strong>
-            <span>พร้อมสร้าง</span>
+            <strong>{{ totalInstructorLearners.toLocaleString('th-TH') }}</strong>
+            <span>ผู้สมัครทั้งหมด</span>
           </div>
           <div>
-            <strong>{{ generatedCertificateCount.toLocaleString('th-TH') }}</strong>
-            <span>สร้างแล้ว</span>
+            <strong>{{ activeInstructorCoursesCount.toLocaleString('th-TH') }}</strong>
+            <span>รายวิชาที่เปิดสอน</span>
           </div>
           <div>
-            <strong>{{ pendingCertificateCount.toLocaleString('th-TH') }}</strong>
-            <span>ยังไม่ได้สร้าง</span>
+            <strong>{{ conversationsCount.toLocaleString('th-TH') }}</strong>
+            <span>ห้องสนทนา</span>
           </div>
         </div>
       </q-card>
@@ -167,23 +167,33 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
 import AppBarChart, { type BarChartItem } from 'components/common/AppBarChart.vue';
 import AppDonutChart, { type DonutChartSegment } from 'components/common/AppDonutChart.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useCourseStore } from 'src/stores/course-store';
 import { useProfileNavigation } from 'src/composables/use-profile-navigation';
+import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import type { Course } from 'src/types/course';
 
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
+const instructorBackend = useInstructorBackend();
 const { goToInstructorStudents, goToInstructorLearningResults, goToInstructorCertificates } =
   useProfileNavigation();
 
 const instructorCourses = computed<Course[]>(() =>
   courseStore.getInstructorCourses(authStore.user),
 );
+
+onMounted(() => {
+  const email = authStore.user?.email;
+  if (!email) return;
+  void instructorBackend.fetchProfile(email);
+  void instructorBackend.fetchSummary(email);
+  void courseStore.fetchInstructorCourses(email);
+});
 
 const selectedCourseId = ref('all');
 
@@ -207,32 +217,28 @@ const activeInstructorCoursesCount = computed<number>(
 );
 
 const totalInstructorLearners = computed<number>(() =>
-  scopedInstructorCourses.value.reduce((sum, course) => sum + course.enrolledCount, 0),
+  selectedCourse.value
+    ? selectedCourse.value.enrolledCount
+    : (instructorBackend.summary.value?.totalStudents ??
+      scopedInstructorCourses.value.reduce((sum, course) => sum + course.enrolledCount, 0)),
 );
 
 const pendingResultCourses = computed<number>(
   () => scopedInstructorCourses.value.filter((course) => course.enrolledCount > 0).length,
 );
 
-function getCertificateReadyCount(course: Course): number {
-  if (course.enrolledCount <= 0) return 0;
-  return Array.from({ length: course.enrolledCount }, (_, index): number => {
-    const score = (course.id.charCodeAt(0) * 13 + index * 11) % 101;
-    return score >= 60 ? 1 : 0;
-  }).reduce((sum, value) => sum + value, 0);
-}
-
-const certificateReadyLearners = computed<number>(() =>
-  scopedInstructorCourses.value.reduce((sum, course) => sum + getCertificateReadyCount(course), 0),
+const averageReviewScore = computed<number | null>(() =>
+  selectedCourse.value
+    ? selectedCourse.value.reviewCount
+      ? (selectedCourse.value.reviewAverage ?? 0)
+      : null
+    : instructorBackend.summary.value?.averageScore ?? null,
 );
 
-const generatedCertificateCount = computed<number>(() =>
-  Math.floor(certificateReadyLearners.value * 0.35),
+const averageReviewLabel = computed(() =>
+  averageReviewScore.value != null ? averageReviewScore.value.toFixed(2) : '-',
 );
-
-const pendingCertificateCount = computed<number>(() =>
-  Math.max(0, certificateReadyLearners.value - generatedCertificateCount.value),
-);
+const conversationsCount = computed(() => instructorBackend.summary.value?.conversations ?? 0);
 
 const reportMonthLabels = computed<string[]>(() => {
   const formatter = new Intl.DateTimeFormat('th-TH', { month: 'short' });
@@ -267,9 +273,9 @@ const instructorOverviewCards = computed(() => [
     iconBg: '#18B65A',
   },
   {
-    label: 'พร้อมออก Certificate',
-    value: certificateReadyLearners.value,
-    icon: 'workspace_premium',
+    label: 'ห้องสนทนา',
+    value: conversationsCount.value,
+    icon: 'forum',
     color: '#D94A00',
     iconBg: '#D94A00',
   },
@@ -302,12 +308,12 @@ const instructorTrendSeries = computed<AreaChartSeries[]>(() => [
     unit: 'คน',
   },
   {
-    id: 'certificates',
-    label: 'พร้อม Certificate',
+    id: 'reviews',
+    label: 'คะแนนรีวิวเฉลี่ย',
     color: '#F5A623',
-    values: buildTrendValues(certificateReadyLearners.value, 0.8),
-    totalLabel: `${certificateReadyLearners.value.toLocaleString('th-TH')} คน`,
-    unit: 'คน',
+    values: buildTrendValues(averageReviewScore.value ?? 0, 0.2),
+    totalLabel: averageReviewLabel.value,
+    unit: 'คะแนน',
   },
 ]);
 
@@ -357,10 +363,9 @@ const barChartSubtitle = computed<string>(() =>
 );
 
 function buildSelectedCourseBars(course: Course): BarChartItem[] {
-  const readyCount = getCertificateReadyCount(course);
-  const generatedCount = Math.floor(readyCount * 0.35);
-  const pendingCount = Math.max(0, readyCount - generatedCount);
   const availableSeats = course.maxSeats ? Math.max(0, course.maxSeats - course.enrolledCount) : 0;
+  const reviewCount = course.reviewCount ?? 0;
+  const reviewAverage = course.reviewAverage ?? 0;
 
   return [
     {
@@ -375,28 +380,12 @@ function buildSelectedCourseBars(course: Course): BarChartItem[] {
       icon: 'groups',
     },
     {
-      id: `${course.id}-ready`,
-      label: 'พร้อมออก Certificate',
-      value: readyCount,
-      helperLabel: `${Math.round(
-        (readyCount / Math.max(course.enrolledCount, 1)) * 100,
-      ).toLocaleString('th-TH')}% ของผู้เรียน`,
+      id: `${course.id}-reviews`,
+      label: 'จำนวนรีวิว',
+      value: reviewCount,
+      helperLabel: reviewCount > 0 ? `คะแนนเฉลี่ย ${reviewAverage.toFixed(2)}` : 'ยังไม่มีรีวิว',
       color: '#F5A623',
-      icon: 'workspace_premium',
-    },
-    {
-      id: `${course.id}-generated`,
-      label: 'สร้าง Certificate แล้ว',
-      value: generatedCount,
-      color: '#49B37D',
-      icon: 'verified',
-    },
-    {
-      id: `${course.id}-pending`,
-      label: 'ยังไม่ได้สร้าง Certificate',
-      value: pendingCount,
-      color: '#E05F2C',
-      icon: 'pending_actions',
+      icon: 'star',
     },
     ...(course.maxSeats
       ? [
@@ -414,11 +403,9 @@ function buildSelectedCourseBars(course: Course): BarChartItem[] {
 
 const reportSummaryItems = computed(() => [
   {
-    label: 'อัตราพร้อม Certificate',
-    value: `${Math.round(
-      (certificateReadyLearners.value / Math.max(totalInstructorLearners.value, 1)) * 100,
-    ).toLocaleString('th-TH')}%`,
-    icon: 'workspace_premium',
+    label: 'คะแนนรีวิวเฉลี่ย',
+    value: averageReviewLabel.value,
+    icon: 'star',
     color: '#F5A623',
   },
   {
@@ -443,8 +430,8 @@ defineExpose({
   scopedInstructorCourses,
   activeInstructorCoursesCount,
   totalInstructorLearners,
-  pendingCertificateCount,
-  certificateReadyLearners,
+  averageReviewScore,
+  conversationsCount,
 });
 </script>
 

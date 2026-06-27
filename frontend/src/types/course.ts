@@ -43,6 +43,8 @@ export interface Course {
   categoryId?: number | undefined;
   maxSeats: number | null;
   enrolledCount: number;
+  reviewAverage?: number;
+  reviewCount?: number;
   openclassId?: number | null;
   totalHours?: number;
   evaluationText?: string | null;

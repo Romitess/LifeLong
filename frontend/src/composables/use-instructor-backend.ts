@@ -17,6 +17,15 @@ export interface InstructorSummary {
   recentActivities: InstructorActivity[];
 }
 
+export interface InstructorProfile {
+  email: string;
+  prefix: string | null;
+  firstNameTh: string | null;
+  lastNameTh: string | null;
+  firstNameEn: string | null;
+  lastNameEn: string | null;
+}
+
 export interface InstructorActivity {
   id: string;
   learnerName: string;
@@ -132,6 +141,7 @@ export interface UpdateOpenclassPayload {
 }
 
 const summary = ref<InstructorSummary | null>(null);
+const profile = ref<InstructorProfile | null>(null);
 const learnersByCourseId = ref<Record<string, InstructorLearner[]>>({});
 const gradesByCourseId = ref<Record<string, InstructorGrade[]>>({});
 const priorityTasksByCourseId = ref<Record<string, InstructorPriorityTask[]>>({});
@@ -180,6 +190,14 @@ export function useInstructorBackend() {
     } finally {
       loading.value = false;
     }
+  }
+
+  async function fetchProfile(email?: string): Promise<void> {
+    if (!email?.trim()) return;
+    const { data } = await api.get<InstructorProfile>(
+      `/api/instructor/profile?email=${encodeURIComponent(email.trim())}`,
+    );
+    profile.value = data;
   }
 
   async function fetchLearners(
@@ -587,6 +605,7 @@ export function useInstructorBackend() {
 
   return {
     summary,
+    profile,
     hasSummary,
     learnersByCourseId,
     gradesByCourseId,
@@ -597,6 +616,7 @@ export function useInstructorBackend() {
     loading,
     isSavingOpenclass,
     updateOpenclass,
+    fetchProfile,
     fetchSummary,
     fetchLearners,
     fetchGrades,

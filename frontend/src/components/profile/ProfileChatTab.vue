@@ -123,14 +123,7 @@
                 size="34px"
                 class="chat-message__avatar--instructor"
               >
-                <img
-                  v-if="instructorAvatarSeed"
-                  :src="`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(instructorAvatarSeed)}`"
-                  alt="instructor avatar"
-                  loading="eager"
-                  decoding="sync"
-                />
-                <q-icon v-else name="support_agent" size="20px" color="blue-grey-8" />
+                <q-icon name="support_agent" size="20px" color="blue-grey-8" />
               </q-avatar>
 
               <div class="chat-message__bubble">
@@ -248,7 +241,6 @@ const {
   canSendChatMessage,
   unreadByEnrollId,
   lastMessageAt,
-  instructorEmailByCourseId,
   sendChatMessage,
   selectChatCourse,
   formatChatMessageTime,
@@ -256,15 +248,6 @@ const {
   getChatStatusIcon,
   isLatestLearnerMessage,
 } = useProfileChat(myRegistrations, myRegisteredCourseEntries);
-
-const instructorAvatarSeed = computed(() => {
-  const courseId = selectedChatEntry.value?.course.id;
-  return (
-    selectedChatEntry.value?.course.instructorEmail ||
-    (courseId ? instructorEmailByCourseId.value[courseId] : undefined) ||
-    null
-  );
-});
 
 const sortedCourseEntries = computed(() =>
   [...myRegisteredCourseEntries.value].sort((a, b) => {

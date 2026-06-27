@@ -176,7 +176,7 @@
                     </div>
                     <div class="row items-center">
                       <q-icon name="star" class="q-mr-xs text-amber" />
-                      4.8 (124 {{ t('instructor.dashboard.reviews') }})
+                      {{ formatCourseReviewSummary(course) }}
                     </div>
                     <div class="row items-center">
                       <q-icon name="update" class="q-mr-xs" />
@@ -740,6 +740,16 @@ function formatCoursePrice(course: Course): string {
   }
 
   return `${course.price.toLocaleString('th-TH')} บาท`;
+}
+
+function formatCourseReviewSummary(course: Course): string {
+  const reviewCount = course.reviewCount ?? 0;
+  if (reviewCount <= 0) {
+    return `- (0 ${t('instructor.dashboard.reviews')})`;
+  }
+
+  const reviewAverage = course.reviewAverage ?? 0;
+  return `${reviewAverage.toFixed(1)} (${reviewCount.toLocaleString('th-TH')} ${t('instructor.dashboard.reviews')})`;
 }
 
 function getDaysAgoText(updatedAt?: string): string {

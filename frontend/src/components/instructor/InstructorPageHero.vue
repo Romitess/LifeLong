@@ -23,7 +23,7 @@
               :label="t('profile.roles.instructor')"
               class="text-weight-bold"
             />
-            <span>{{ authStore.user?.studentId || authStore.user?.username || '-' }}</span>
+            <span>{{ instructorIdentifier }}</span>
           </div>
           <p v-if="description">{{ description }}</p>
         </div>
@@ -37,17 +37,29 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
+import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
+const instructorBackend = useInstructorBackend();
 
 defineProps<{
   description?: string;
   eyebrow: string;
   title: string;
 }>();
+
+const instructorIdentifier = computed(
+  () => authStore.user?.studentId || authStore.user?.username || authStore.user?.email || '-',
+);
+
+onMounted(() => {
+  const email = authStore.user?.email;
+  if (email) void instructorBackend.fetchProfile(email);
+});
 </script>
 
 <style lang="scss" scoped>

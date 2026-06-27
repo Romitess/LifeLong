@@ -381,19 +381,6 @@ const activeInstructorCoursesCount = computed<number>(
 const totalInstructorLearners = computed<number>(() =>
   instructorCourses.value.reduce((sum, c) => sum + c.enrolledCount, 0),
 );
-function getCertificateReadyCount(course: Course): number {
-  if (course.enrolledCount <= 0) return 0;
-  return Array.from({ length: course.enrolledCount }, (_, i): number => {
-    const score = (course.id.charCodeAt(0) * 13 + i * 11) % 101;
-    return score >= 60 ? 1 : 0;
-  }).reduce((sum, v) => sum + v, 0);
-}
-const certificateReadyLearners = computed<number>(() =>
-  instructorCourses.value.reduce((sum, c) => sum + getCertificateReadyCount(c), 0),
-);
-const pendingCertificateCount = computed<number>(() =>
-  Math.max(0, certificateReadyLearners.value - Math.floor(certificateReadyLearners.value * 0.35)),
-);
 
 // Learner computed (for profileStats)
 const inProgressCoursesCount = computed<number>(
@@ -455,9 +442,12 @@ const profileStats = computed<ProfileStatCardItem[]>(() => {
         tone: buildProfileStatTone('#49B37D'),
       },
       {
-        label: 'รอออก Certificate',
-        value: pendingCertificateCount.value,
-        icon: 'workspace_premium',
+        label: 'คะแนนเฉลี่ย',
+        value: Math.round(
+          instructorCourses.value.reduce((sum, c) => sum + (c.reviewAverage ?? 0), 0) /
+            Math.max(instructorCourses.value.filter((c) => (c.reviewCount ?? 0) > 0).length, 1),
+        ),
+        icon: 'star',
         tone: buildProfileStatTone('#5B7CFA'),
       },
     ];
