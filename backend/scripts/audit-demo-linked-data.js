@@ -95,6 +95,29 @@ async function main() {
        ORDER BY count DESC
     `);
 
+    const [completionAccessRows] = await moodle.execute(`
+      SELECT EXISTS(
+               SELECT 1
+                 FROM mdl_role r
+                 JOIN mdl_role_capabilities rc ON rc.roleid = r.id
+                WHERE r.shortname = 'student'
+                  AND rc.capability = 'moodle/course:view'
+                  AND rc.permission = 1
+             ) AS studentCourseView,
+             EXISTS(
+               SELECT 1
+                 FROM mdl_external_services s
+                 JOIN mdl_external_services_functions sf ON sf.externalserviceid = s.id
+                WHERE s.shortname = 'lll_quizassign'
+                  AND s.enabled = 1
+                  AND sf.functionname = 'core_completion_get_activities_completion_status'
+             ) AS completionFunctionEnabled
+    `);
+    const completionAccess = completionAccessRows[0] || {
+      studentCourseView: 0,
+      completionFunctionEnabled: 0,
+    };
+
     console.log(
       JSON.stringify(
         {
@@ -105,11 +128,18 @@ async function main() {
           missingActivities,
           lowData,
           duplicateUserLmsIds: duplicateUsers,
+          moodleCompletionAccess: {
+            studentCourseView: Boolean(completionAccess.studentCourseView),
+            completionFunctionEnabled: Boolean(completionAccess.completionFunctionEnabled),
+          },
         },
         null,
         2,
       ),
     );
+    if (!completionAccess.studentCourseView || !completionAccess.completionFunctionEnabled) {
+      process.exitCode = 1;
+    }
   } finally {
     await app.end();
     await moodle.end();
