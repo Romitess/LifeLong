@@ -2942,29 +2942,6 @@ function openQuickDialog(title: string): void {
   }
 }
 
-.instructor-hero::before {
-  content: '';
-  position: absolute;
-  z-index: 1;
-  top: -42%;
-  left: -34%;
-  width: 34%;
-  height: 184%;
-  background: linear-gradient(
-    105deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.08) 32%,
-    rgba(255, 255, 255, 0.34) 48%,
-    rgba(255, 246, 199, 0.24) 56%,
-    rgba(255, 255, 255, 0) 74%
-  );
-  filter: blur(1px);
-  opacity: 0.88;
-  pointer-events: none;
-  transform: rotate(10deg);
-  animation: instructorHeroShine 9.5s ease-in-out infinite;
-}
-
 .instructor-hero__particles,
 .instructor-hero__overlay {
   position: absolute;
@@ -3006,17 +2983,6 @@ function openQuickDialog(title: string): void {
   margin: 0 auto;
   min-height: 200px;
   padding: 32px 24px;
-}
-
-@keyframes instructorHeroShine {
-  0% {
-    transform: translateX(0) rotate(10deg);
-  }
-
-  42%,
-  100% {
-    transform: translateX(440%) rotate(10deg);
-  }
 }
 
 .instructor-hero__identity {
