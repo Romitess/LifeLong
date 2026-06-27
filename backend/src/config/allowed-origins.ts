@@ -15,7 +15,7 @@ if (originsEnv) {
 } else {
   origins = [
     'http://localhost:8080',
-    'http://localhost:9000', 
+    'http://localhost:9000',
     'http://lll.localhost',
     'http://moodle.localhost',
   ];
