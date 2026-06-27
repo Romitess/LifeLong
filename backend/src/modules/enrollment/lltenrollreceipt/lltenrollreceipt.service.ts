@@ -42,12 +42,17 @@ export interface ReceiptSummaryItem {
   receiptFilename?: string;
   receiptType?: 'R' | 'D';
   customerName: string;
+  customerNameEn: string | null;
   amount: number | string;
   effectiveDate: string;
   learnerName: string;
   courseName: string;
+  courseNameEn: string | null;
   collector: string;
+  collectorNameEn: string | null;
   status: string;
+  cancelBy?: string;
+  cancelDate?: string;
 }
 
 @Injectable()
@@ -436,6 +441,8 @@ export class LltenrollreceiptService {
         .createQueryBuilder('e')
         .leftJoin(Lltreceipt, 'r', 'r.RECEIPT_ID = e.RECEIPT_ID_COPY')
         .leftJoin('LLTUMUSER', 'u', 'u.USER_USERNAME = e.CREATEUSER')
+        .leftJoin('LLTUMUSER', 'uCust', 'uCust.USER_ID = e.USER_ID')
+        .leftJoin('LLTCOURSE', 'lc', 'lc.COSE_ID = e.COSE_ID')
         .select('e.id', 'id')
         .addSelect('e.ENROLLRECEIPT_ID', 'receiptNo')
         .addSelect('r.RECEIPT_FILENAME', 'receiptFilename')
@@ -444,6 +451,10 @@ export class LltenrollreceiptService {
           "NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(e.USER_FNAMETH, ''), ' ', COALESCE(e.USER_LNAMETH, '')))), '')",
           'customerName',
         )
+        .addSelect(
+          "NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(uCust.USER_FNAMEEN, ''), ' ', COALESCE(uCust.USER_LNAMEEN, '')))), '')",
+          'customerNameEn',
+        )
         .addSelect('e.amount', 'amount')
         .addSelect('e.payDate', 'effectiveDate')
         .addSelect(
@@ -451,14 +462,21 @@ export class LltenrollreceiptService {
           'learnerName',
         )
         .addSelect('e.coseNameTh', 'courseName')
+        .addSelect("NULLIF(lc.COSE_NAMEEN, '')", 'courseNameEn')
         .addSelect(
           "CONCAT(COALESCE(NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(u.USER_FNAMETH, ''), ' ', COALESCE(u.USER_LNAMETH, '')))), ''), e.CREATEUSER, '-'), CHAR(10), COALESCE(DATE_FORMAT(e.CREATEDATE, '%Y-%m-%d %H:%i:%s'), '-'))",
           'collector',
         )
         .addSelect(
+          "NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(u.USER_FNAMEEN, ''), ' ', COALESCE(u.USER_LNAMEEN, '')))), '')",
+          'collectorNameEn',
+        )
+        .addSelect(
           "CASE e.RECEIPT_STATUS WHEN 'Y' THEN 'ใช้งาน' WHEN 'C' THEN 'ยกเลิก' ELSE NULL END",
           'status',
-        );
+        )
+        .addSelect('e.receiptCancleUserName', 'cancelBy')
+        .addSelect("DATE_FORMAT(e.RECEIPT_CANCLEDATE, '%d/%m/%Y')", 'cancelDate');
 
       const allFacultiesRequested = query.allFaculties === true;
       const shouldFilterByFaculty = !allFacultiesRequested;
@@ -514,12 +532,21 @@ export class LltenrollreceiptService {
           ...(receiptFilenameRaw !== '-' ? { receiptFilename: receiptFilenameRaw } : {}),
           ...(receiptType ? { receiptType } : {}),
           customerName: this.valueOrDash(row.customerName),
+          customerNameEn: (row.customerNameEn as string | null)?.trim() || null,
           amount: this.numberOrDash(row.amount),
           effectiveDate: this.valueOrDash(row.effectiveDate),
           learnerName: this.valueOrDash(row.learnerName),
           courseName: this.valueOrDash(row.courseName),
+          courseNameEn: (row.courseNameEn as string | null)?.trim() || null,
           collector: this.valueOrDash(row.collector),
+          collectorNameEn: (row.collectorNameEn as string | null)?.trim() || null,
           status: this.valueOrDash(row.status),
+          ...(this.valueOrDash(row.cancelBy) !== '-'
+            ? { cancelBy: this.valueOrDash(row.cancelBy) }
+            : {}),
+          ...(this.valueOrDash(row.cancelDate) !== '-'
+            ? { cancelDate: this.valueOrDash(row.cancelDate) }
+            : {}),
         };
       });
 
