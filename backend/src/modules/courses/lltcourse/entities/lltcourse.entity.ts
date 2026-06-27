@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { DB_FIELD_LENGTHS } from '../../../common/constants';
+import { DB_FIELD_LENGTHS } from '../../../../common/constants';
 
 @Entity('LLTCOURSE')
 export class Lltcourse {

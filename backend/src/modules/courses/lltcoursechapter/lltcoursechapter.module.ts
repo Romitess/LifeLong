@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { LltcoursechapterService } from './lltcoursechapter.service';
 import { LltcoursechapterController } from './lltcoursechapter.controller';
 import { Lltcoursechapter } from './entities/lltcoursechapter.entity';
-import { Lltcourse } from '../../lltcourse/entities/lltcourse.entity';
+import { Lltcourse } from '../lltcourse/entities/lltcourse.entity';
 import { Lltcoursesubchapter } from '../lltcoursesubchapter/entities/lltcoursesubchapter.entity';
 
 @Module({

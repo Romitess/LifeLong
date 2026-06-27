@@ -30,23 +30,23 @@ import {
   type CourseTypeClassDetail,
 } from './lltcourse.service';
 import { assertFileMagic } from 'src/common/utils/file-magic.validator';
-import { PlatformGatewayService } from '../platform-gateway/platform-gateway.service';
+import { PlatformGatewayService } from '../../platform-gateway/platform-gateway.service';
 import { CreateLltcourseDto } from './dto/create-lltcourse.dto';
 import { UpdateLltcourseDto } from './dto/update-lltcourse.dto';
-import { EnrollCourseDto } from '../enrollment/lltenroll/dto/enroll-course.dto';
+import { EnrollCourseDto } from '../../enrollment/lltenroll/dto/enroll-course.dto';
 import { Lltcourse } from './entities/lltcourse.entity';
-import { Public } from '../auth/public.decorator';
-import { Roles } from '../auth/roles.decorator';
-import { Role } from '../auth/enums/role.enum';
-import { CurrentUser } from '../auth/current-user.decorator';
-import type { JwtPayload } from '../auth/jwt-auth.guard';
-import { Llttypestudy } from '../users/llttypestudy/entities/llttypestudy.entity';
+import { Public } from '../../auth/public.decorator';
+import { Roles } from '../../auth/roles.decorator';
+import { Role } from '../../auth/enums/role.enum';
+import { CurrentUser } from '../../auth/current-user.decorator';
+import type { JwtPayload } from '../../auth/jwt-auth.guard';
+import { Llttypestudy } from '../../users/llttypestudy/entities/llttypestudy.entity';
 import {
   MoodleAnnouncement,
   MoodleModule,
   MoodleModuleContent,
   MoodleSection,
-} from '../moodle/interfaces/moodle.interfaces';
+} from '../../moodle/interfaces/moodle.interfaces';
 
 const courseUploadDir = join(process.cwd(), 'uploads', 'courses');
 const cbsUploadDir = join(process.cwd(), 'uploads', 'course-cbs');

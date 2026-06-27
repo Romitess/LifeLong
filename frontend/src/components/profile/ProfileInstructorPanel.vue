@@ -2,10 +2,12 @@
   <div class="instructor-home-panel">
     <div class="instructor-home-header">
       <div class="instructor-home-header__copy">
-        <div class="instructor-home-header__eyebrow">รายงานของการสอน</div>
+        <div class="instructor-home-header__eyebrow">{{ t('profile.instructor.header.eyebrow') }}</div>
         <div class="instructor-home-header__title-row">
-          <div class="text-h5 text-weight-bolder text-primary">Instructor Overview</div>
-          <span>Live overview</span>
+          <div class="text-h5 text-weight-bolder text-primary">
+            {{ t('profile.instructor.header.title') }}
+          </div>
+          <span>{{ t('profile.instructor.header.badge') }}</span>
         </div>
         <div class="text-caption text-grey-6 q-mt-xs"></div>
       </div>
@@ -36,8 +38,8 @@
       <q-card flat bordered class="instructor-report-card instructor-report-card--wide">
         <div class="instructor-report-card__head">
           <div>
-            <h2>รายงานภาพรวมการสอน</h2>
-            <span>แนวโน้มผู้เรียนและ Certificate ในช่วง 6 เดือนล่าสุด</span>
+            <h2>{{ t('profile.instructor.reports.overviewTitle') }}</h2>
+            <span>{{ t('profile.instructor.reports.overviewSubtitle') }}</span>
           </div>
           <q-icon name="insights" size="30px" color="primary" />
         </div>
@@ -54,17 +56,17 @@
       <q-card flat bordered class="instructor-report-card">
         <div class="instructor-report-card__head">
           <div>
-            <h2>รูปแบบการเรียน</h2>
-            <span>สัดส่วนรายวิชาตามช่องทางการสอน</span>
+            <h2>{{ t('profile.instructor.reports.deliveryTitle') }}</h2>
+            <span>{{ t('profile.instructor.reports.deliverySubtitle') }}</span>
           </div>
           <q-icon name="donut_large" size="30px" color="teal-5" />
         </div>
 
         <AppDonutChart
           :data="deliveryModeSegments"
-          :center-label="'รวม'"
+          :center-label="t('profile.instructor.reports.total')"
           :center-value="scopedInstructorCourses.length.toLocaleString('th-TH')"
-          center-hint="รายวิชา"
+          :center-hint="t('profile.instructor.units.courses')"
           :size="190"
           :stroke-width="22"
         />
@@ -85,8 +87,8 @@
       <q-card flat bordered class="instructor-report-card">
         <div class="instructor-report-card__head">
           <div>
-            <h2>สรุปรายงาน</h2>
-            <span>ตัวชี้วัดที่ควรตรวจสอบเร็ว</span>
+            <h2>{{ t('profile.instructor.reports.summaryTitle') }}</h2>
+            <span>{{ t('profile.instructor.reports.summarySubtitle') }}</span>
           </div>
           <q-icon name="summarize" size="30px" color="amber-8" />
         </div>
@@ -105,8 +107,8 @@
       <q-card flat bordered class="instructor-work-card">
         <div class="instructor-work-card__head">
           <div>
-            <h2>งานที่ต้องทำต่อ</h2>
-            <span>รายการที่ควรจัดการจากรายวิชาที่คุณรับผิดชอบ</span>
+            <h2>{{ t('profile.instructor.tasks.title') }}</h2>
+            <span>{{ t('profile.instructor.tasks.subtitle') }}</span>
           </div>
           <q-icon name="task_alt" size="30px" color="primary" />
         </div>
@@ -115,23 +117,39 @@
           <button type="button" class="instructor-task-item" @click="goToInstructorStudents">
             <q-icon name="fact_check" />
             <div>
-              <strong>ตรวจสอบรายชื่อผู้เรียน</strong>
-              <span>{{ totalInstructorLearners.toLocaleString('th-TH') }} คนที่สมัครจริง</span>
+              <strong>{{ t('profile.instructor.tasks.checkRoster') }}</strong>
+              <span>
+                {{
+                  t('profile.instructor.tasks.registeredLearners', {
+                    count: totalInstructorLearners.toLocaleString('th-TH'),
+                  })
+                }}
+              </span>
             </div>
           </button>
           <button type="button" class="instructor-task-item" @click="goToInstructorLearningResults">
             <q-icon name="grading" />
             <div>
-              <strong>บันทึกผลการเรียน</strong>
-              <span>{{ pendingResultCourses.toLocaleString('th-TH') }} รายวิชาที่มีผู้สมัครให้ติดตาม</span>
+              <strong>{{ t('profile.instructor.tasks.recordResults') }}</strong>
+              <span>
+                {{
+                  t('profile.instructor.tasks.pendingCourses', {
+                    count: pendingResultCourses.toLocaleString('th-TH'),
+                  })
+                }}
+              </span>
             </div>
           </button>
           <button type="button" class="instructor-task-item" @click="goToInstructorCertificates">
             <q-icon name="workspace_premium" />
             <div>
-              <strong>สร้าง Certificate</strong>
+              <strong>{{ t('profile.instructor.tasks.createCertificate') }}</strong>
               <span>
-                คะแนนรีวิวเฉลี่ย {{ averageReviewLabel }} จากข้อมูลนักเรียนจริง
+                {{
+                  t('profile.instructor.tasks.reviewAverage', {
+                    score: averageReviewLabel,
+                  })
+                }}
               </span>
             </div>
           </button>
@@ -141,8 +159,8 @@
       <q-card flat bordered class="instructor-work-card">
         <div class="instructor-work-card__head">
           <div>
-            <h2>สรุปจากระบบจริง</h2>
-            <span>ข้อมูลเดียวกับหน้าหลักของผู้สอน</span>
+            <h2>{{ t('profile.instructor.systemSummary.title') }}</h2>
+            <span>{{ t('profile.instructor.systemSummary.subtitle') }}</span>
           </div>
           <q-icon name="workspace_premium" size="30px" color="amber-8" />
         </div>
@@ -150,15 +168,15 @@
         <div class="certificate-status-row">
           <div>
             <strong>{{ totalInstructorLearners.toLocaleString('th-TH') }}</strong>
-            <span>ผู้สมัครทั้งหมด</span>
+            <span>{{ t('profile.instructor.systemSummary.totalRegistrants') }}</span>
           </div>
           <div>
             <strong>{{ activeInstructorCoursesCount.toLocaleString('th-TH') }}</strong>
-            <span>รายวิชาที่เปิดสอน</span>
+            <span>{{ t('profile.instructor.metrics.activeCourses') }}</span>
           </div>
           <div>
             <strong>{{ conversationsCount.toLocaleString('th-TH') }}</strong>
-            <span>ห้องสนทนา</span>
+            <span>{{ t('profile.instructor.metrics.chatRooms') }}</span>
           </div>
         </div>
       </q-card>
@@ -168,6 +186,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppAreaChart, { type AreaChartSeries } from 'components/common/AppAreaChart.vue';
 import AppBarChart, { type BarChartItem } from 'components/common/AppBarChart.vue';
 import AppDonutChart, { type DonutChartSegment } from 'components/common/AppDonutChart.vue';
@@ -180,6 +199,7 @@ import type { Course } from 'src/types/course';
 const authStore = useAuthStore();
 const courseStore = useCourseStore();
 const instructorBackend = useInstructorBackend();
+const { t, locale } = useI18n();
 const { goToInstructorStudents, goToInstructorLearningResults, goToInstructorCertificates } =
   useProfileNavigation();
 
@@ -240,7 +260,9 @@ const averageReviewLabel = computed(() =>
 const conversationsCount = computed(() => instructorBackend.summary.value?.conversations ?? 0);
 
 const reportMonthLabels = computed<string[]>(() => {
-  const formatter = new Intl.DateTimeFormat('th-TH', { month: 'short' });
+  const formatter = new Intl.DateTimeFormat(locale.value === 'th' ? 'th-TH' : 'en-US', {
+    month: 'short',
+  });
   const now = new Date();
 
   return Array.from({ length: 6 }, (_, index) => {
@@ -251,28 +273,28 @@ const reportMonthLabels = computed<string[]>(() => {
 
 const instructorOverviewCards = computed(() => [
   {
-    label: 'รายวิชาทั้งหมด',
+    label: t('profile.instructor.metrics.totalCourses'),
     value: scopedInstructorCourses.value.length,
     icon: 'menu_book',
     color: '#F5A623',
     iconBg: '#F59E0B',
   },
   {
-    label: 'รายวิชาที่เปิดสอน',
+    label: t('profile.instructor.metrics.activeCourses'),
     value: activeInstructorCoursesCount.value,
     icon: 'campaign',
     color: '#4F7DF3',
     iconBg: '#4F7DF3',
   },
   {
-    label: 'ผู้เรียนรวม',
+    label: t('profile.instructor.metrics.totalLearners'),
     value: totalInstructorLearners.value,
     icon: 'groups',
     color: '#18B65A',
     iconBg: '#18B65A',
   },
   {
-    label: 'ห้องสนทนา',
+    label: t('profile.instructor.metrics.chatRooms'),
     value: conversationsCount.value,
     icon: 'forum',
     color: '#D94A00',
@@ -300,19 +322,21 @@ function formatReportNumber(value: number): string {
 const instructorTrendSeries = computed<AreaChartSeries[]>(() => [
   {
     id: 'learners',
-    label: 'ผู้เรียนเข้าเรียน',
+    label: t('profile.instructor.chart.learners'),
     color: '#31B7C8',
     values: buildTrendValues(totalInstructorLearners.value, 1.4),
-    totalLabel: `${totalInstructorLearners.value.toLocaleString('th-TH')} คน`,
-    unit: 'คน',
+    totalLabel: t('profile.instructor.units.peopleCount', {
+      count: totalInstructorLearners.value.toLocaleString('th-TH'),
+    }),
+    unit: t('profile.instructor.units.people'),
   },
   {
     id: 'reviews',
-    label: 'คะแนนรีวิวเฉลี่ย',
+    label: t('profile.instructor.metrics.averageReview'),
     color: '#F5A623',
     values: buildTrendValues(averageReviewScore.value ?? 0, 0.2),
     totalLabel: averageReviewLabel.value,
-    unit: 'คะแนน',
+    unit: t('profile.instructor.units.score'),
   },
 ]);
 
@@ -344,7 +368,9 @@ const topCourseLearnerBars = computed<BarChartItem[]>(() =>
           sublabel: course.code,
           value: course.enrolledCount,
           helperLabel: course.maxSeats
-            ? `จาก ${course.maxSeats.toLocaleString('th-TH')} ที่นั่ง`
+            ? t('profile.instructor.chart.fromSeats', {
+                count: course.maxSeats.toLocaleString('th-TH'),
+              })
             : '',
           color: ['#F5A623', '#31B7C8', '#49B37D', '#5B7CFA', '#E05F2C'][index] ?? '#F5A623',
           icon: 'groups',
@@ -352,13 +378,15 @@ const topCourseLearnerBars = computed<BarChartItem[]>(() =>
 );
 
 const barChartTitle = computed<string>(() =>
-  selectedCourse.value ? 'ข้อมูลรายวิชาที่เลือก' : 'รายวิชาที่มีผู้เรียนสูงสุด',
+  selectedCourse.value
+    ? t('profile.instructor.chart.selectedCourseTitle')
+    : t('profile.instructor.chart.topCoursesTitle'),
 );
 
 const barChartSubtitle = computed<string>(() =>
   selectedCourse.value
-    ? 'ดูผู้เรียน ที่นั่ง และสถานะ Certificate ของรายวิชานี้'
-    : 'ใช้ติดตามภาระงานและความหนาแน่นของผู้เรียน',
+    ? t('profile.instructor.chart.selectedCourseSubtitle')
+    : t('profile.instructor.chart.topCoursesSubtitle'),
 );
 
 function buildSelectedCourseBars(course: Course): BarChartItem[] {
@@ -369,20 +397,25 @@ function buildSelectedCourseBars(course: Course): BarChartItem[] {
   return [
     {
       id: `${course.id}-learners`,
-      label: 'ผู้เรียนในรายวิชา',
+      label: t('profile.instructor.chart.courseLearners'),
       sublabel: course.code,
       value: course.enrolledCount,
       helperLabel: course.maxSeats
-        ? `จาก ${course.maxSeats.toLocaleString('th-TH')} ที่นั่ง`
-        : 'ไม่จำกัดที่นั่ง',
+        ? t('profile.instructor.chart.fromSeats', {
+            count: course.maxSeats.toLocaleString('th-TH'),
+          })
+        : t('profile.instructor.chart.unlimitedSeats'),
       color: '#31B7C8',
       icon: 'groups',
     },
     {
       id: `${course.id}-reviews`,
-      label: 'จำนวนรีวิว',
+      label: t('profile.instructor.chart.reviewCount'),
       value: reviewCount,
-      helperLabel: reviewCount > 0 ? `คะแนนเฉลี่ย ${reviewAverage.toFixed(2)}` : 'ยังไม่มีรีวิว',
+      helperLabel:
+        reviewCount > 0
+          ? t('profile.instructor.chart.averageScoreValue', { score: reviewAverage.toFixed(2) })
+          : t('profile.instructor.chart.noReviews'),
       color: '#F5A623',
       icon: 'star',
     },
@@ -390,7 +423,7 @@ function buildSelectedCourseBars(course: Course): BarChartItem[] {
       ? [
           {
             id: `${course.id}-available`,
-            label: 'ที่นั่งคงเหลือ',
+            label: t('profile.instructor.chart.availableSeats'),
             value: availableSeats,
             color: '#5B7CFA',
             icon: 'event_seat',
@@ -402,13 +435,13 @@ function buildSelectedCourseBars(course: Course): BarChartItem[] {
 
 const reportSummaryItems = computed(() => [
   {
-    label: 'คะแนนรีวิวเฉลี่ย',
+    label: t('profile.instructor.metrics.averageReview'),
     value: averageReviewLabel.value,
     icon: 'star',
     color: '#F5A623',
   },
   {
-    label: 'ผู้เรียนเฉลี่ยต่อรายวิชา',
+    label: t('profile.instructor.metrics.averageLearnersPerCourse'),
     value: Math.round(
       totalInstructorLearners.value / Math.max(scopedInstructorCourses.value.length, 1),
     ).toLocaleString('th-TH'),
@@ -416,7 +449,7 @@ const reportSummaryItems = computed(() => [
     color: '#31B7C8',
   },
   {
-    label: 'รายวิชาที่เปิดสอน',
+    label: t('profile.instructor.metrics.activeCourses'),
     value: activeInstructorCoursesCount.value.toLocaleString('th-TH'),
     icon: 'campaign',
     color: '#49B37D',

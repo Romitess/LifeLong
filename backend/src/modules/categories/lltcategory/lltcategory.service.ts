@@ -11,7 +11,7 @@ import { CreateLltcategoryDto } from './dto/create-lltcategory.dto';
 import { UpdateLltcategoryDto } from './dto/update-lltcategory.dto';
 import { Lltcategory } from './entities/lltcategory.entity';
 import { Lltsubcategory } from '../lltsubcategory/entities/lltsubcategory.entity';
-import { Lltcourse } from '../../lltcourse/entities/lltcourse.entity';
+import { Lltcourse } from '../../courses/lltcourse/entities/lltcourse.entity';
 import { MoodleService } from '../../moodle/moodle.service';
 
 interface CourseCountMapValue {

@@ -1,31 +1,31 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TIME_CONSTANTS, DEFAULT_URLS } from '../../common/constants';
+import { TIME_CONSTANTS, DEFAULT_URLS } from '../../../common/constants';
 import { Repository, DeleteResult, In, DataSource } from 'typeorm';
 import { Readable } from 'node:stream';
 import { Lltcourse } from './entities/lltcourse.entity';
 import { LltOpenclass } from './entities/llt-openclass.entity';
 import { LltOpenclassIns } from './entities/llt-openclassins.entity';
-import { LltEnroll } from '../enrollment/lltenroll/entities/llt-enroll.entity';
+import { LltEnroll } from '../../enrollment/lltenroll/entities/llt-enroll.entity';
 import { LltOpenclassClick } from './entities/llt-openclass-click.entity';
-import { LltumUser } from '../auth/entities/lltum-user.entity';
-import { Lltevaluation } from '../evaluations/lltevaluation/entities/lltevaluation.entity';
-import { Lltcategory } from '../categories/lltcategory/entities/lltcategory.entity';
-import { Lltsubcategory } from '../categories/lltsubcategory/entities/lltsubcategory.entity';
-import { Lltcoursein } from '../courses/lltcourseins/entities/lltcoursein.entity';
-import { Lltcoursetarget } from '../courses/lltcoursetarget/entities/lltcoursetarget.entity';
-import { PlatformGatewayService } from '../platform-gateway/platform-gateway.service';
-import { Llttarget } from '../targets/llttarget/entities/llttarget.entity';
-import { Lltsubtarget } from '../targets/lltsubtarget/entities/lltsubtarget.entity';
-import { Llttypestudy } from '../users/llttypestudy/entities/llttypestudy.entity';
+import { LltumUser } from '../../auth/entities/lltum-user.entity';
+import { Lltevaluation } from '../../evaluations/lltevaluation/entities/lltevaluation.entity';
+import { Lltcategory } from '../../categories/lltcategory/entities/lltcategory.entity';
+import { Lltsubcategory } from '../../categories/lltsubcategory/entities/lltsubcategory.entity';
+import { Lltcoursein } from '../lltcourseins/entities/lltcoursein.entity';
+import { Lltcoursetarget } from '../lltcoursetarget/entities/lltcoursetarget.entity';
+import { PlatformGatewayService } from '../../platform-gateway/platform-gateway.service';
+import { Llttarget } from '../../targets/llttarget/entities/llttarget.entity';
+import { Lltsubtarget } from '../../targets/lltsubtarget/entities/lltsubtarget.entity';
+import { Llttypestudy } from '../../users/llttypestudy/entities/llttypestudy.entity';
 import { CreateLltcourseDto } from './dto/create-lltcourse.dto';
 import { UpdateLltcourseDto } from './dto/update-lltcourse.dto';
-import { EnrollCourseDto } from '../enrollment/lltenroll/dto/enroll-course.dto';
+import { EnrollCourseDto } from '../../enrollment/lltenroll/dto/enroll-course.dto';
 import { ConfigService } from '@nestjs/config';
-import { MoodleService } from '../moodle/moodle.service';
-import { MoodleFileProxyService } from '../moodle/moodle-file-proxy.service';
-import { ChatGateway } from '../chat/lltchat/chat-gateway';
-import { LltenrollService } from '../enrollment/lltenroll/lltenroll.service';
+import { MoodleService } from '../../moodle/moodle.service';
+import { MoodleFileProxyService } from '../../moodle/moodle-file-proxy.service';
+import { ChatGateway } from '../../chat/lltchat/chat-gateway';
+import { LltenrollService } from '../../enrollment/lltenroll/lltenroll.service';
 import { getCourseImageUrl } from './course-image-catalog';
 import {
   MoodleModule,
@@ -34,8 +34,8 @@ import {
   MoodleCreateCourseResult,
   MoodleAnnouncement,
   MoodleModuleContent,
-} from '../moodle/interfaces/moodle.interfaces';
-import { annotateMoodleSections } from '../moodle/moodle-module-registry';
+} from '../../moodle/interfaces/moodle.interfaces';
+import { annotateMoodleSections } from '../../moodle/moodle-module-registry';
 
 /** Raw shape of core_course_get_contents (parsing-only — not exposed to clients). */
 interface RawMoodleContent {

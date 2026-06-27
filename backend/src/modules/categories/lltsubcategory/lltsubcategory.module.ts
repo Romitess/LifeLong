@@ -4,7 +4,7 @@ import { LltsubcategoryService } from './lltsubcategory.service';
 import { LltsubcategoryController } from './lltsubcategory.controller';
 import { Lltsubcategory } from './entities/lltsubcategory.entity';
 import { Lltcategory } from '../lltcategory/entities/lltcategory.entity';
-import { Lltcourse } from '../../lltcourse/entities/lltcourse.entity';
+import { Lltcourse } from '../../courses/lltcourse/entities/lltcourse.entity';
 import { MoodleModule } from '../../moodle/moodle.module';
 
 @Module({

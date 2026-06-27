@@ -4,7 +4,7 @@ import { Repository, In } from 'typeorm';
 import { CreateLltcoursechapterDto } from './dto/create-lltcoursechapter.dto';
 import { UpdateLltcoursechapterDto } from './dto/update-lltcoursechapter.dto';
 import { Lltcoursechapter } from './entities/lltcoursechapter.entity';
-import { Lltcourse } from '../../lltcourse/entities/lltcourse.entity';
+import { Lltcourse } from '../lltcourse/entities/lltcourse.entity';
 import { Lltcoursesubchapter } from '../lltcoursesubchapter/entities/lltcoursesubchapter.entity';
 
 export interface CourseChapterWithSubchapters extends Lltcoursechapter {

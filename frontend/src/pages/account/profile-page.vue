@@ -358,7 +358,7 @@ const heroRoleLabel = computed(() => {
 });
 
 const profileHeroIdLabel = computed(() =>
-  isTeachingRole.value ? 'รหัสประจำตัวผู้สอน' : t('profile.hero.studentId'),
+  isTeachingRole.value ? t('profile.instructor.instructorId') : t('profile.hero.studentId'),
 );
 
 const receiptId = computed(() => selectedPayment.value?.receiptId || '');
@@ -424,25 +424,25 @@ const profileStats = computed<ProfileStatCardItem[]>(() => {
   if (isTeachingRole.value) {
     return [
       {
-        label: 'รายวิชาทั้งหมด',
+        label: t('profile.instructor.metrics.totalCourses'),
         value: instructorCourses.value.length,
         icon: 'app_registration',
         tone: buildProfileStatTone('#F5A623'),
       },
       {
-        label: 'กำลังเปิดสอน',
+        label: t('profile.instructor.metrics.teachingNow'),
         value: activeInstructorCoursesCount.value,
         icon: 'auto_stories',
         tone: buildProfileStatTone('#31B7C8'),
       },
       {
-        label: 'ผู้เรียนรวม',
+        label: t('profile.instructor.metrics.totalLearners'),
         value: totalInstructorLearners.value,
         icon: 'groups',
         tone: buildProfileStatTone('#49B37D'),
       },
       {
-        label: 'คะแนนเฉลี่ย',
+        label: t('profile.instructor.metrics.averageScore'),
         value: Math.round(
           instructorCourses.value.reduce((sum, c) => sum + (c.reviewAverage ?? 0), 0) /
             Math.max(instructorCourses.value.filter((c) => (c.reviewCount ?? 0) > 0).length, 1),

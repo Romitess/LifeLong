@@ -11,7 +11,7 @@ import { CreateLltsubcategoryDto } from './dto/create-lltsubcategory.dto';
 import { UpdateLltsubcategoryDto } from './dto/update-lltsubcategory.dto';
 import { Lltsubcategory } from './entities/lltsubcategory.entity';
 import { Lltcategory } from '../lltcategory/entities/lltcategory.entity';
-import { Lltcourse } from '../../lltcourse/entities/lltcourse.entity';
+import { Lltcourse } from '../../courses/lltcourse/entities/lltcourse.entity';
 import { MoodleService } from '../../moodle/moodle.service';
 
 export interface AdminSubcategoryDetailResponse {

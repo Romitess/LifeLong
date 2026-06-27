@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Lltevaluation } from './entities/lltevaluation.entity';
 import { LltevaluationController } from './lltevaluation.controller';
 import { LltevaluationService } from './lltevaluation.service';
-import { Lltcourse } from 'src/modules/lltcourse/entities/lltcourse.entity';
+import { Lltcourse } from 'src/modules/courses/lltcourse/entities/lltcourse.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Lltevaluation, Lltcourse])],

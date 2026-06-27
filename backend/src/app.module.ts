@@ -10,7 +10,7 @@ import { configuration } from './config/configuration';
 import { envFilePaths } from './config/env-loader';
 import { envValidationSchema } from './config/env.validation';
 import { typeOrmModuleOptions } from './database/typeorm.config';
-import { LltcourseModule } from './modules/lltcourse/lltcourse.module';
+import { LltcourseModule } from './modules/courses/lltcourse/lltcourse.module';
 import { LltcourseinsModule } from './modules/courses/lltcourseins/lltcourseins.module';
 import { LltcoursechapterModule } from './modules/courses/lltcoursechapter/lltcoursechapter.module';
 import { LltcoursetargetModule } from './modules/courses/lltcoursetarget/lltcoursetarget.module';
@@ -42,7 +42,7 @@ import { LltannouncementModule } from './modules/announcements/lltannouncement/l
 import { LltnotificationModule } from './modules/notifications/lltnotification/lltnotification.module';
 import { LltumforgotpassModule } from './modules/auth/lltumforgotpass/lltumforgotpass.module';
 import { LltopenclassModule } from './modules/courses/lltopenclass/lltopenclass.module';
-import { CentralFinanceModule } from './modules/centralfinance/central-finance.module';
+import { CentralFinanceModule } from './modules/central-finance/central-finance.module';
 import { LltcertificatelogModule } from './modules/certificates/lltcertificatelog/lltcertificatelog.module';
 import { LltcoursereviewModule } from './modules/courses/lltcoursereview/lltcoursereview.module';
 import { PlatformGatewayModule } from './modules/platform-gateway/platform-gateway.module';
