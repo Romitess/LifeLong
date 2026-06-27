@@ -138,6 +138,11 @@ export interface InstructorPriorityTask {
 export interface UpdateOpenclassPayload {
   registrationStartDate?: string;
   registrationEndDate?: string;
+  imageUrl?: string;
+}
+
+interface CourseCoverUploadResponse {
+  imageUrl: string;
 }
 
 const summary = ref<InstructorSummary | null>(null);
@@ -500,6 +505,24 @@ export function useInstructorBackend() {
     }
   }
 
+  async function uploadCourseCoverImage(
+    courseId: string | number,
+    file: File,
+  ): Promise<CourseCoverUploadResponse | null> {
+    const backendCourseId = getBackendCourseId(courseId);
+    if (!backendCourseId) return null;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const { data } = await api.post<CourseCoverUploadResponse>(
+      `/api/instructor/courses/${backendCourseId}/cover-image`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return data;
+  }
+
   async function fetchCourseFees(
     courseId: string | number,
   ): Promise<{ stutypeId: number; stutypeName: string | null; amount: number }[]> {
@@ -616,6 +639,7 @@ export function useInstructorBackend() {
     loading,
     isSavingOpenclass,
     updateOpenclass,
+    uploadCourseCoverImage,
     fetchProfile,
     fetchSummary,
     fetchLearners,

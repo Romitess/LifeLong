@@ -869,6 +869,13 @@ function getCategoryDisplayName(name: string, nameEn?: string): string {
   return name;
 }
 
+function stripHtml(html: string | null | undefined): string {
+  return (html ?? '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim();
+}
+
 const categories = computed(() => {
   return categoryStore.activeCategories.map((category) => ({
     id: category.id,
@@ -944,10 +951,7 @@ const announcementNotifications = computed(() =>
     ? instructorBackend.courseAnnouncements.value.map((a) => ({
         id: a.id,
         title: a.subject,
-        message: a.body
-          .replace(/<[^>]*>/g, '')
-          .trim()
-          .slice(0, 80),
+        message: stripHtml(a.body).slice(0, 80),
         time: new Date(a.createdAt * 1000).toLocaleDateString('th-TH', {
           day: 'numeric',
           month: 'short',

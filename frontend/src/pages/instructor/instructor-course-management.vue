@@ -612,12 +612,27 @@
                       :src="courseSettings.coverImageUrl || selectedCourse.imageUrl"
                       :alt="selectedCourse.titleEn || selectedCourse.title"
                     />
-                    <q-input
-                      v-model="courseSettings.coverImageUrl"
+                    <q-file
                       dense
                       outlined
-                      :label="t('instructor.overview.coverUrlLabel')"
-                    />
+                      accept=".jpg,.jpeg,.png,.webp"
+                      max-file-size="2097152"
+                      :model-value="coverUploadFile"
+                      label="อัปโหลดรูปปก"
+                      bottom-slots
+                      :loading="coverUploading"
+                      :disable="coverUploading"
+                      @update:model-value="uploadCoverImage"
+                      @rejected="onCoverUploadRejected"
+                    >
+                      <template #prepend>
+                        <q-icon name="image" />
+                      </template>
+                      <template #hint>
+                        แนะนำขนาด 1280x720px (สัดส่วน 16:9) · ไฟล์ jpg / png / webp · ไม่เกิน
+                        2MB
+                      </template>
+                    </q-file>
                     <div class="row q-gutter-sm">
                       <q-btn
                         outline
@@ -1636,13 +1651,6 @@ const defaultDeliveryMode: DeliveryMode = 'Online';
 const requestedCourseId = typeof route.query.courseId === 'string' ? route.query.courseId : '';
 
 const deliveryModeOptions: DeliveryMode[] = ['Online', 'Onsite', 'Self-Paced Learning'];
-const defaultCoverImage =
-  'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80';
-const sampleCoverImages = [
-  defaultCoverImage,
-  'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80',
-];
 
 const learnerPricing = reactive<LearnerPriceRule[]>([]);
 const learnerPricingBaseline = ref<LearnerPriceSnapshot[]>([]);
@@ -1675,6 +1683,17 @@ const selectedCourseId = ref(
     ? requestedCourseId
     : (instructorCourses.value[0]?.id ?? ''),
 );
+const sampleCoverImages = computed(() => {
+  const seen = new Set<string>();
+  return [...instructorCourses.value, ...courseStore.courses]
+    .filter((course) => course.id !== selectedCourseId.value)
+    .map((course) => course.imageUrl?.trim())
+    .filter((imageUrl): imageUrl is string => {
+      if (!imageUrl || seen.has(imageUrl)) return false;
+      seen.add(imageUrl);
+      return true;
+    });
+});
 const courseSettings = reactive<CourseSettingsForm>({
   published: true,
   registrationOpen: true,
@@ -1685,6 +1704,8 @@ const courseSettings = reactive<CourseSettingsForm>({
   registrationStartDate: '',
   registrationEndDate: '',
 });
+const coverUploadFile = ref<File | null>(null);
+const coverUploading = ref(false);
 const defaultFacultyStaff: FacultyStaffMember[] = [
   {
     name: 'เจ้าหน้าที่คณะตัวอย่าง',
@@ -2087,8 +2108,8 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
   });
 }
 
-function stripHtml(html: string): string {
-  return html
+function stripHtml(html: string | null | undefined): string {
+  return (html ?? '')
     .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
     .trim();
@@ -2366,13 +2387,55 @@ function openLearnerDetail(_event: Event | null, learner: LearnerRow): void {
 }
 
 function useSampleCover(): void {
-  const currentIndex = sampleCoverImages.indexOf(courseSettings.coverImageUrl);
-  courseSettings.coverImageUrl =
-    sampleCoverImages[(currentIndex + 1) % sampleCoverImages.length] ?? defaultCoverImage;
+  const images = sampleCoverImages.value;
+  if (images.length === 0) return;
+
+  const currentIndex = images.indexOf(courseSettings.coverImageUrl);
+  courseSettings.coverImageUrl = images[(currentIndex + 1) % images.length] ?? images[0] ?? '';
+  coverUploadFile.value = null;
 }
 
 function resetCoverImage(): void {
   courseSettings.coverImageUrl = selectedCourse.value?.imageUrl ?? '';
+  coverUploadFile.value = null;
+}
+
+function onCoverUploadRejected(): void {
+  $q.notify({
+    type: 'warning',
+    icon: 'warning',
+    message: 'กรุณาใช้ไฟล์ jpg, png หรือ webp ขนาดไม่เกิน 2MB',
+    position: 'top',
+  });
+}
+
+async function uploadCoverImage(file: File | null): Promise<void> {
+  coverUploadFile.value = file;
+  const course = selectedCourse.value;
+  if (!file || !course) return;
+
+  coverUploading.value = true;
+  try {
+    const result = await instructorBackend.uploadCourseCoverImage(course.id, file);
+    if (!result?.imageUrl) throw new Error('Upload response does not include imageUrl');
+    courseSettings.coverImageUrl = result.imageUrl;
+    coverUploadFile.value = null;
+    $q.notify({
+      type: 'positive',
+      icon: 'check_circle',
+      message: 'อัปโหลดรูปปกสำเร็จ กดบันทึกเพื่อใช้รูปนี้กับรายวิชา',
+      position: 'top',
+    });
+  } catch {
+    $q.notify({
+      type: 'negative',
+      icon: 'error',
+      message: 'อัปโหลดรูปปกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
+      position: 'top',
+    });
+  } finally {
+    coverUploading.value = false;
+  }
 }
 
 function openPriorityTask(task: InstructorPriorityTask): void {
@@ -2853,12 +2916,17 @@ async function saveCourseChanges(courseId: string, changes: Partial<Course>): Pr
 
   learnerPricingBaseline.value = getLearnerPricingSnapshot();
 
-  if (changes.registrationStartDate !== undefined || changes.registrationEndDate !== undefined) {
+  if (
+    changes.registrationStartDate !== undefined ||
+    changes.registrationEndDate !== undefined ||
+    changes.imageUrl !== undefined
+  ) {
     const openclasspayload: UpdateOpenclassPayload = {};
     if (changes.registrationStartDate !== undefined)
       openclasspayload.registrationStartDate = changes.registrationStartDate;
     if (changes.registrationEndDate !== undefined)
       openclasspayload.registrationEndDate = changes.registrationEndDate;
+    if (changes.imageUrl !== undefined) openclasspayload.imageUrl = changes.imageUrl;
     const result = await instructorBackend.updateOpenclass(courseId, openclasspayload);
     if (!result?.updated) {
       $q.notify({

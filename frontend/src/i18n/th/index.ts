@@ -1714,6 +1714,7 @@ export default {
       recordGrades: 'บันทึกผลการเรียน',
       certificate: 'สร้าง Certificate',
       chat: 'สนทนากับผู้เรียน',
+      registrantEmails: 'ส่งอีเมลถึงผู้ลงทะเบียน',
     },
     metrics: {
       totalLearners: 'ผู้เรียนทั้งหมด',

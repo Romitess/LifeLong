@@ -1699,6 +1699,7 @@ export default {
       recordGrades: 'Record Grades',
       certificate: 'Create Certificate',
       chat: 'Chat with Learners',
+      registrantEmails: 'Email Registrants',
     },
     metrics: {
       totalLearners: 'Total Learners',

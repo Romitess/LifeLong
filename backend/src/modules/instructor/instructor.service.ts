@@ -414,6 +414,10 @@ export class InstructorService {
     return { updated: true };
   }
 
+  async verifyCourseAccess(email: string, courseId: number): Promise<void> {
+    await this.assertCourseAccess(email, courseId);
+  }
+
   async getCourseFees(
     email: string,
     courseId: number,

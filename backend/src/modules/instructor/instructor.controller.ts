@@ -1,9 +1,28 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Put,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { existsSync, mkdirSync } from 'node:fs';
+import { extname, join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import * as multer from 'multer';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../auth/enums/role.enum';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt-auth.guard';
+import { assertFileMagic } from 'src/common/utils/file-magic.validator';
+import { PlatformGatewayService } from '../platform-gateway/platform-gateway.service';
 import {
   GradeItemDto,
   InstructorConversation,
@@ -21,11 +40,47 @@ import { ApproveGradesDto, ApproveGradesResult } from './dto/approve-grades.dto'
 import { ActiveCertTemplateDto } from './dto/active-cert-template.dto';
 import { Lltchat } from '../chat/lltchat/entities/lltchat.entity';
 
+const courseImageUploadDir = join(process.cwd(), 'uploads', 'courses');
+
+interface UploadedCourseImage {
+  filename: string;
+  originalname: string;
+  mimetype: string;
+  size: number;
+  fieldname: string;
+}
+
+function ensureCourseImageDir(): void {
+  if (!existsSync(courseImageUploadDir)) mkdirSync(courseImageUploadDir, { recursive: true });
+}
+
+function buildCourseImageFilename(file: { originalname: string }): string {
+  const ext = extname(file.originalname).toLowerCase() || '.png';
+  return `${randomUUID()}${ext}`;
+}
+
+const courseCoverImageInterceptor = FileInterceptor('file', {
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      ensureCourseImageDir();
+      cb(null, courseImageUploadDir);
+    },
+    filename: (_req, file, cb) => cb(null, buildCourseImageFilename(file)),
+  }),
+  fileFilter: (_req, file, cb) => {
+    cb(null, /^image\/(jpeg|png|webp)$/.test(file.mimetype));
+  },
+  limits: { fileSize: 2 * 1024 * 1024 },
+});
+
 @ApiTags('instructor')
 @Roles(Role.Instructor)
 @Controller('instructor')
 export class InstructorController {
-  constructor(private readonly instructorService: InstructorService) {}
+  constructor(
+    private readonly instructorService: InstructorService,
+    private readonly platformGatewayService: PlatformGatewayService,
+  ) {}
 
   @Get('profile')
   @ApiOperation({ summary: 'Get instructor profile from JWT identity' })
@@ -181,6 +236,28 @@ export class InstructorController {
     @Body() body: UpdateOpenclassDto,
   ): Promise<{ updated: boolean }> {
     return this.instructorService.updateOpenclass(user.email, courseId, body);
+  }
+
+  @Post('courses/:courseId/cover-image')
+  @UseInterceptors(courseCoverImageInterceptor)
+  @ApiOperation({ summary: 'Upload a course cover image for an instructor-owned course' })
+  async uploadCourseCoverImage(
+    @CurrentUser() user: JwtPayload,
+    @Param('courseId', ParseIntPipe) courseId: number,
+    @UploadedFile() file: UploadedCourseImage,
+  ): Promise<{ imageUrl: string }> {
+    if (!file) {
+      throw new BadRequestException(
+        'No file uploaded. Please send multipart/form-data with a file field named "file".',
+      );
+    }
+    await this.instructorService.verifyCourseAccess(user.email, courseId);
+    await assertFileMagic(join(courseImageUploadDir, file.filename), ['jpeg', 'png', 'webp']);
+    const uploaded = await this.platformGatewayService.uploadByCategory(
+      'course',
+      file as Express.Multer.File,
+    );
+    return { imageUrl: uploaded.url };
   }
 
   @Get('courses/:courseId/fees')
