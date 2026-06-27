@@ -192,6 +192,8 @@ export class AuthService {
     // Reset lockout on successful login
     this.loginAttempts.delete(user.username);
 
+    let lltumUser = await this.ensureLltumUserProfile(user);
+
     // 3. Sync with Moodle (Ensure user exists and has correct info)
     try {
       await this.syncWithMoodle(user, password);
@@ -200,9 +202,8 @@ export class AuthService {
       this.logger.error(`Moodle sync failed for ${user.username}: ${errorMsg}`);
     }
 
-    const lltumUser = await this.lltumUserRepository.findOne({
-      where: { username: user.username },
-    });
+    lltumUser =
+      (await this.lltumUserRepository.findOne({ where: { id: lltumUser.id } })) ?? lltumUser;
 
     const profile = lltumUser ? this.toProfileResponse(lltumUser) : null;
 
@@ -345,7 +346,7 @@ export class AuthService {
 
   private async syncWithMoodle(user: LltAuthUser, plainPassword: string): Promise<number | null> {
     const lltumUser = await this.lltumUserRepository.findOne({
-      where: { username: user.username },
+      where: [{ username: user.username }, { email: user.email }],
     });
     const moodleProfile = this.buildMoodleProfileNames(lltumUser, user);
 
@@ -384,7 +385,7 @@ export class AuthService {
         this.logger.log(`User ${user.username} successfully updated in Moodle.`);
       }
 
-      await this.saveLmsId(user.username, moodleUser.id);
+      await this.saveLmsId(user.username, user.email, moodleUser.id);
       return moodleUser.id;
     }
 
@@ -408,18 +409,70 @@ export class AuthService {
     this.logger.log(`User ${user.username} successfully created in Moodle.`);
 
     if (Array.isArray(createResult) && createResult[0]?.id) {
-      await this.saveLmsId(user.username, createResult[0].id);
+      await this.saveLmsId(user.username, user.email, createResult[0].id);
       return createResult[0].id;
     }
     return null;
   }
 
-  private async saveLmsId(username: string, moodleUserId: number): Promise<void> {
-    const lltumUser = await this.lltumUserRepository.findOne({ where: { username } });
+  private async saveLmsId(username: string, email: string, moodleUserId: number): Promise<void> {
+    const lltumUser = await this.lltumUserRepository.findOne({
+      where: [{ username }, { email }],
+    });
     if (!lltumUser || lltumUser.lmsId) return;
     lltumUser.lmsId = moodleUserId;
     await this.lltumUserRepository.save(lltumUser);
     this.logger.log(`Linked LLTUMUSER.LMS_ID=${moodleUserId} for ${username}`);
+  }
+
+  private async ensureLltumUserProfile(user: LltAuthUser): Promise<LltumUser> {
+    const existing = await this.lltumUserRepository.findOne({
+      where: [{ username: user.username }, { email: user.email }],
+    });
+    if (existing) return existing;
+
+    const names = await this.resolveInitialProfileNames(user);
+    const profile = this.lltumUserRepository.create({
+      ...names,
+      username: user.username,
+      email: user.email,
+      password: user.password,
+      status: 'A',
+      createUser: 'AUTH_PROFILE_LINK',
+      userCitizenId: null,
+    });
+    const saved = await this.lltumUserRepository.save(profile);
+    this.logger.log(`Created LLTUMUSER profile link for ${user.username} (${user.role})`);
+    return saved;
+  }
+
+  private async resolveInitialProfileNames(user: LltAuthUser): Promise<{
+    firstNameTh: string;
+    lastNameTh: string;
+    firstNameEn: string;
+    lastNameEn: string;
+  }> {
+    const defaults = getRoleProfileDefaults(user.role);
+    try {
+      const rows = await this.lltumUserRepository.manager.query<
+        Array<{ firstNameTh: string | null; lastNameTh: string | null }>
+      >(
+        `SELECT PSN_FNAMETH AS firstNameTh, PSN_LNAMETH AS lastNameTh
+         FROM PSNTPERSON
+         WHERE LOWER(PSN_EMAIL) = LOWER(?)
+         LIMIT 1`,
+        [user.email],
+      );
+      const person = rows[0];
+      return {
+        firstNameTh: person?.firstNameTh?.trim() || defaults.firstNameTh,
+        lastNameTh: person?.lastNameTh?.trim() || defaults.lastNameTh,
+        firstNameEn: defaults.firstNameEn,
+        lastNameEn: defaults.lastNameEn,
+      };
+    } catch {
+      return defaults;
+    }
   }
 
   private async getLltumUserForProfile(user: JwtPayload): Promise<LltumUser> {
@@ -588,4 +641,54 @@ function toGatewayFilePath(filePath: string): string | null {
   const match = withoutQuery.match(/\/uploads\/.+$/);
   if (match) return match[0].replace(/^\/+/, '');
   return null;
+}
+
+function getRoleProfileDefaults(role: string): {
+  firstNameTh: string;
+  lastNameTh: string;
+  firstNameEn: string;
+  lastNameEn: string;
+} {
+  const normalizedRole = role
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  if (normalizedRole === 'admin') {
+    return {
+      firstNameTh: 'ผู้ดูแล',
+      lastNameTh: 'ระบบ',
+      firstNameEn: 'SYSTEM',
+      lastNameEn: 'ADMINISTRATOR',
+    };
+  }
+  if (normalizedRole === 'finance') {
+    return {
+      firstNameTh: 'เจ้าหน้าที่การเงิน',
+      lastNameTh: 'ระบบ',
+      firstNameEn: 'FINANCE',
+      lastNameEn: 'OFFICER',
+    };
+  }
+  if (normalizedRole === 'central_finance') {
+    return {
+      firstNameTh: 'เจ้าหน้าที่การเงินส่วนกลาง',
+      lastNameTh: 'ระบบ',
+      firstNameEn: 'CENTRAL FINANCE',
+      lastNameEn: 'OFFICER',
+    };
+  }
+  if (normalizedRole === 'instructor' || normalizedRole === 'teach') {
+    return {
+      firstNameTh: 'อาจารย์',
+      lastNameTh: 'ผู้สอน',
+      firstNameEn: 'INSTRUCTOR',
+      lastNameEn: 'USER',
+    };
+  }
+  return {
+    firstNameTh: 'ผู้เรียน',
+    lastNameTh: 'ระบบ',
+    firstNameEn: 'STUDENT',
+    lastNameEn: 'USER',
+  };
 }

@@ -80,7 +80,7 @@ async function main() {
       {
         username: 'test.student',
         email: 'test.student@buu.ac.th',
-        firstNameTh: 'ทดสอบ', lastNameTh: 'นิสิต',
+        firstNameTh: 'ผู้เรียน', lastNameTh: 'ระบบทดสอบ',
         firstNameEn: 'TEST', lastNameEn: 'STUDENT',
         role: 'Student',
         stutypeId: STUTYPE.student,
@@ -89,7 +89,7 @@ async function main() {
       {
         username: 'test.staff',
         email: 'test.staff@buu.ac.th',
-        firstNameTh: 'ทดสอบ', lastNameTh: 'บุคลากร',
+        firstNameTh: 'บุคลากร', lastNameTh: 'ระบบทดสอบ',
         firstNameEn: 'TEST', lastNameEn: 'STAFF',
         role: 'Student',
         stutypeId: STUTYPE.staff,
@@ -98,7 +98,7 @@ async function main() {
       {
         username: 'test.alumni',
         email: 'test.alumni@buu.ac.th',
-        firstNameTh: 'ทดสอบ', lastNameTh: 'ศิษย์เก่า',
+        firstNameTh: 'ศิษย์เก่า', lastNameTh: 'ระบบทดสอบ',
         firstNameEn: 'TEST', lastNameEn: 'ALUMNI',
         role: 'Student',
         stutypeId: STUTYPE.alumni,
@@ -107,7 +107,7 @@ async function main() {
       {
         username: 'test.general',
         email: 'test.general@buu.ac.th',
-        firstNameTh: 'ทดสอบ', lastNameTh: 'ทั่วไป',
+        firstNameTh: 'ผู้ใช้งาน', lastNameTh: 'ระบบทดสอบ',
         firstNameEn: 'TEST', lastNameEn: 'GENERAL',
         role: 'Student',
         stutypeId: null, // ไม่มีสิทธิ์
@@ -116,7 +116,7 @@ async function main() {
       {
         username: 'test.instructor',
         email: 'test.instructor@buu.ac.th',
-        firstNameTh: 'ทดสอบ', lastNameTh: 'ผู้สอน',
+        firstNameTh: 'อาจารย์', lastNameTh: 'ระบบทดสอบ',
         firstNameEn: 'TEST', lastNameEn: 'INSTRUCTOR',
         role: 'Instructor',
         stutypeId: STUTYPE.staff,
@@ -125,9 +125,27 @@ async function main() {
       {
         username: 'test.admin2',
         email: 'test.admin2@buu.ac.th',
-        firstNameTh: 'ทดสอบ', lastNameTh: 'แอดมิน',
-        firstNameEn: 'TEST', lastNameEn: 'ADMIN',
+        firstNameTh: 'ผู้ดูแล', lastNameTh: 'ระบบทดสอบ',
+        firstNameEn: 'TEST', lastNameEn: 'ADMINISTRATOR',
         role: 'Admin',
+        stutypeId: STUTYPE.staff,
+        addToStaff: false,
+      },
+      {
+        username: 'test.finance',
+        email: 'test.finance@buu.ac.th',
+        firstNameTh: 'เจ้าหน้าที่การเงิน', lastNameTh: 'ระบบทดสอบ',
+        firstNameEn: 'TEST', lastNameEn: 'FINANCE OFFICER',
+        role: 'Finance',
+        stutypeId: STUTYPE.staff,
+        addToStaff: false,
+      },
+      {
+        username: 'test.centralfinance',
+        email: 'test.centralfinance@buu.ac.th',
+        firstNameTh: 'เจ้าหน้าที่การเงินส่วนกลาง', lastNameTh: 'ระบบทดสอบ',
+        firstNameEn: 'TEST', lastNameEn: 'CENTRAL FINANCE',
+        role: 'central_finance',
         stutypeId: STUTYPE.staff,
         addToStaff: false,
       },
