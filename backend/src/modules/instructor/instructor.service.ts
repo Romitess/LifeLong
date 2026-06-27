@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LltcourseskillService } from '../courses/lltcourseskill/lltcourseskill.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { Brackets, DataSource, In, Repository } from 'typeorm';
 import { createPool, Pool, RowDataPacket } from 'mysql2/promise';
 import { LltEnroll } from '../enrollment/lltenroll/entities/llt-enroll.entity';
 import { LltOpenclass } from '../courses/lltcourse/entities/llt-openclass.entity';
@@ -312,8 +312,14 @@ export class InstructorService {
         'openclass.id = (SELECT MAX(oc2.OPENCLASS_ID) FROM LLTOPENCLASS oc2 WHERE oc2.COSE_ID = course.id)',
       )
       .leftJoin(LltEnroll, 'enroll', 'enroll.courseId = course.id')
-      .where('LOWER(coursein.email) = :email', { email: normalizedEmail })
-      .orWhere('LOWER(course.createUser) = :email', { email: normalizedEmail })
+      .where(
+        new Brackets((qb) => {
+          qb.where('LOWER(coursein.email) = :email').andWhere(
+            '(coursein.isTeacher = :yes OR coursein.isAdmin = :yes)',
+          );
+        }),
+        { email: normalizedEmail, yes: 'Y' },
+      )
       .select([
         'course.id AS course_id',
         'course.code AS code',
@@ -1546,9 +1552,14 @@ export class InstructorService {
       .createQueryBuilder('course')
       .leftJoin(Lltcoursein, 'coursein', 'coursein.courseId = course.id')
       .where('course.id = :courseId', { courseId })
-      .andWhere('(LOWER(coursein.email) = :email OR LOWER(course.createUser) = :email)', {
-        email: normalizedEmail,
-      })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('LOWER(coursein.email) = :email').andWhere(
+            '(coursein.isTeacher = :yes OR coursein.isAdmin = :yes)',
+          );
+        }),
+        { email: normalizedEmail, yes: 'Y' },
+      )
       .getOne();
 
     if (!course) {
@@ -1714,7 +1725,10 @@ export class InstructorService {
   }
 
   private async getMoodleCourseIdByCourseId(courseId: number): Promise<number | null> {
-    const openclass = await this.openclassRepository.findOne({ where: { courseId } });
+    const openclass = await this.openclassRepository.findOne({
+      where: { courseId },
+      order: { id: 'DESC' },
+    });
     return openclass?.lmsId ?? null;
   }
 

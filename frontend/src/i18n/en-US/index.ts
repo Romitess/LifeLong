@@ -2070,7 +2070,23 @@ export default {
       syllabusTopics: 'Lesson Topics',
       noSyllabusTopics: 'No lesson topics in the system yet',
       recentActivities: 'Recent Activities',
+      todoTitle: 'Tasks',
       viewAllActivities: 'View All Activities',
+      viewAllTasks: 'View All Tasks',
+      todo: {
+        gradeWork: {
+          title: 'Grade Work',
+          detail: '{count} items waiting for grading',
+        },
+        certificates: {
+          title: 'Certificate Review',
+          detail: 'Review eligible learners and issue certificates',
+        },
+        messages: {
+          title: 'Reply to Learners',
+          detail: '{count} unread messages',
+        },
+      },
       systemAnnouncement: 'System Announcement',
       chatRoomsMetric: 'Chat Rooms',
       hoursAbbr: 'hrs.',

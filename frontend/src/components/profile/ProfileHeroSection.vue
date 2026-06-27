@@ -42,24 +42,6 @@
                   {{ $t('profile.avatar.change') }}
                 </q-tooltip>
               </q-btn>
-              <q-btn
-                v-if="canRemoveAvatar"
-                round
-                dense
-                unelevated
-                icon="delete"
-                text-color="negative"
-                class="profile-hero__avatar-action profile-hero__avatar-action--delete"
-                :loading="isDeletingAvatar"
-                :disable="isDeletingAvatar || isSavingAvatar"
-                :aria-label="$t('profile.avatar.delete')"
-                @click.stop.prevent="showDeleteAvatarDialog = true"
-                @mousedown.stop.prevent
-              >
-                <q-tooltip anchor="center right" self="center left" :offset="[10, 0]">
-                  {{ $t('profile.avatar.delete') }}
-                </q-tooltip>
-              </q-btn>
             </div>
             <input
               ref="avatarInput"
@@ -204,6 +186,17 @@
             @mousedown.stop.prevent
           >
             <img :src="photoUrl" alt="" />
+            <span
+              class="profile-avatar-viewer__photo-delete"
+              role="button"
+              tabindex="0"
+              :aria-label="$t('profile.avatar.delete')"
+              @click.stop.prevent="promptDeleteViewerAvatar(photoUrl)"
+              @keydown.enter.stop.prevent="promptDeleteViewerAvatar(photoUrl)"
+              @keydown.space.stop.prevent="promptDeleteViewerAvatar(photoUrl)"
+            >
+              <q-icon name="delete" size="15px" color="white" />
+            </span>
           </button>
         </TransitionGroup>
 
@@ -231,6 +224,16 @@
             @mousedown.stop.prevent
           >
             <q-icon name="edit" size="18px" color="white" />
+          </button>
+          <button
+            v-if="canDeleteSelectedAvatar"
+            type="button"
+            class="profile-avatar-viewer__delete"
+            :aria-label="$t('profile.avatar.delete')"
+            @click.stop.prevent="promptDeleteViewerAvatar(selectedAvatarPreviewUrl)"
+            @mousedown.stop.prevent
+          >
+            <q-icon name="delete" size="18px" color="white" />
           </button>
         </div>
 
@@ -303,6 +306,7 @@ const showFullAvatar = ref(false);
 const showDeleteAvatarDialog = ref(false);
 const isSavingAvatar = ref(false);
 const isDeletingAvatar = ref(false);
+const pendingDeleteAvatarUrl = ref('');
 const selectedAvatarUrl = ref('');
 const mainAvatarBeforeSelection = ref('');
 const isAvatarSwapping = ref(false);
@@ -317,6 +321,10 @@ const DEFAULT_PROFILE_PHOTO_FILE_NAME = 'profile-photo.png';
 const currentAvatarUrl = computed<string>(() => authStore.user?.avatar || '');
 const displayAvatarUrl = computed<string>(() => fullAvatarUrl.value || currentAvatarUrl.value);
 const selectedAvatarPreviewUrl = computed<string>(() => selectedAvatarUrl.value || displayAvatarUrl.value);
+const canDeleteSelectedAvatar = computed<boolean>(() => {
+  const selectedUrl = selectedAvatarPreviewUrl.value;
+  return Boolean(selectedUrl && !selectedUrl.includes('api.dicebear.com'));
+});
 const displayName = computed(() => {
   const nameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
     .filter(Boolean)
@@ -336,11 +344,6 @@ onMounted(() => {
   void authStore.fetchProfile().catch((error: unknown) => {
     console.error('Failed to refresh profile identity', error);
   });
-});
-
-const canRemoveAvatar = computed<boolean>(() => {
-  const avatar = authStore.user?.avatar || '';
-  return Boolean(avatar && !avatar.includes('api.dicebear.com'));
 });
 
 const {
@@ -377,9 +380,22 @@ async function deleteAvatar(): Promise<void> {
   if (isDeletingAvatar.value) return;
   isDeletingAvatar.value = true;
   try {
-    await authStore.deleteAvatar();
-    fullAvatarUrl.value = '';
+    const deleteUrl = pendingDeleteAvatarUrl.value || selectedAvatarPreviewUrl.value;
+    const isDeletingCurrentAvatar = deleteUrl === currentAvatarUrl.value;
+    viewerPhotoOptions.value = viewerPhotoOptions.value.filter((photoUrl) => photoUrl !== deleteUrl);
+
+    if (isDeletingCurrentAvatar) {
+      await authStore.deleteAvatar();
+      fullAvatarUrl.value = '';
+      selectedAvatarUrl.value = authStore.user?.avatar || '';
+      mainAvatarBeforeSelection.value = selectedAvatarUrl.value;
+    } else if (selectedAvatarUrl.value === deleteUrl) {
+      selectedAvatarUrl.value = currentAvatarUrl.value;
+    }
+
+    saveViewerPhotoOptions();
     showDeleteAvatarDialog.value = false;
+    pendingDeleteAvatarUrl.value = '';
     $q.notify({
       type: 'positive',
       message: t('profile.notifications.avatarDeleted'),
@@ -394,6 +410,12 @@ async function deleteAvatar(): Promise<void> {
   } finally {
     isDeletingAvatar.value = false;
   }
+}
+
+function promptDeleteViewerAvatar(photoUrl: string): void {
+  if (!photoUrl || photoUrl.includes('api.dicebear.com')) return;
+  pendingDeleteAvatarUrl.value = photoUrl;
+  showDeleteAvatarDialog.value = true;
 }
 
 function getUniqueViewerPhotoOptions(photoUrls: string[]): string[] {
@@ -880,6 +902,7 @@ function selectViewerPhoto(photoUrl: string): void {
   }
 
   &__photo-option {
+    position: relative;
     width: 76px;
     height: 76px;
     padding: 0;
@@ -907,6 +930,33 @@ function selectViewerPhoto(photoUrl: string): void {
         0 20px 40px rgba(0, 0, 0, 0.28);
       outline: none;
     }
+  }
+
+  &__photo-delete {
+    position: absolute;
+    right: -1px;
+    bottom: -1px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #d92d20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+    opacity: 0;
+    transform: scale(0.86);
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  &__photo-option:hover &__photo-delete,
+  &__photo-option:focus-visible &__photo-delete,
+  &__photo-delete:focus-visible {
+    opacity: 1;
+    transform: scale(1);
+    outline: none;
   }
 
   &__photo-option--active {
@@ -954,6 +1004,23 @@ function selectViewerPhoto(photoUrl: string): void {
     border: 0;
     border-radius: 50%;
     background: rgba(11, 15, 21, 0.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.26);
+  }
+
+  &__delete {
+    position: absolute;
+    right: 20px;
+    bottom: 74px;
+    width: 46px;
+    height: 46px;
+    border: 0;
+    border-radius: 50%;
+    background: #d92d20;
     display: flex;
     align-items: center;
     justify-content: center;
