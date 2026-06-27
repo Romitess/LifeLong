@@ -35,6 +35,9 @@ loadDotEnv(resolve(frontendRoot, '..', '.env'));
 loadDotEnv(resolve(frontendRoot, '.env'));
 
 export default defineConfig((ctx) => {
+  const backendUrl = process.env.BACKEND_URL ?? '';
+  const backendProxyTarget = backendUrl || 'http://localhost:3000';
+
   return {
     // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
     // preFetch: true,
@@ -84,7 +87,7 @@ export default defineConfig((ctx) => {
       // publicPath: '/'
       // analyze: true
       env: {
-        BACKEND_URL: process.env.BACKEND_URL ?? process.env.BACKEND_URL ?? '',
+        BACKEND_URL: backendUrl,
         VITE_MOODLE_URL: process.env.VITE_MOODLE_URL ?? process.env.MOODLE_PUBLIC_URL ?? '',
       },
       // rawDefine: {}
@@ -138,15 +141,15 @@ export default defineConfig((ctx) => {
       host: '0.0.0.0', // เครื่องอื่นในวงแลนเข้าได้
       proxy: {
         '/api': {
-          target: process.env.BACKEND_URL ?? process.env.BACKEND_URL ?? 'http://localhost:3000',
+          target: backendProxyTarget,
           changeOrigin: true,
         },
         '/uploads': {
-          target: process.env.BACKEND_URL ?? process.env.BACKEND_URL ?? 'http://localhost:3000',
+          target: backendProxyTarget,
           changeOrigin: true,
         },
         '/socket.io': {
-          target: process.env.BACKEND_URL ?? process.env.BACKEND_URL ?? 'http://localhost:3000',
+          target: backendProxyTarget,
           changeOrigin: true,
           ws: true,
         },

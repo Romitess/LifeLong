@@ -13,10 +13,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'node:path';
+import { extname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
-import { unlink } from 'node:fs/promises';
+import { unlink, readFile } from 'node:fs/promises';
 import type { Request, Response } from 'express';
 import { assertFileMagic } from 'src/common/utils/file-magic.validator';
 import { Public } from '../auth/public.decorator';
@@ -226,14 +226,56 @@ export class PlatformGatewayController {
       return;
     }
 
-    const response = await fetch(fileUrl);
-    if (!response.ok) {
-      res.status(response.status).send('Error retrieving file from gateway');
+    let fetchResponse: any = null;
+    try {
+      fetchResponse = await fetch(fileUrl);
+    } catch (err) {
+      console.error('Failed to fetch file from gateway:', fileUrl, err);
+    }
+
+    if (fetchResponse && fetchResponse.ok) {
+      const contentType = fetchResponse.headers.get('content-type') || 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
+      res.send(Buffer.from(await fetchResponse.arrayBuffer()));
       return;
     }
 
-    const contentType = response.headers.get('content-type') || 'application/octet-stream';
-    res.setHeader('Content-Type', contentType);
-    res.send(Buffer.from(await response.arrayBuffer()));
+    // Fallback: try to serve local file from ./uploads/** when gateway isn't reachable
+    try {
+      const localPath = join(process.cwd(), filePath.replace(/^\/+/, ''));
+      const fileBuf = await readFile(localPath);
+      const ext = extname(localPath).toLowerCase();
+      const contentType = this.getContentTypeFromExt(ext);
+      res.setHeader('Content-Type', contentType);
+      res.send(fileBuf);
+      return;
+    } catch (err) {
+      console.error('Failed to read local fallback file:', filePath, err);
+      if (fetchResponse) {
+        const status = fetchResponse.status || 502;
+        res.status(status).send('Error retrieving file from gateway');
+      } else {
+        res.status(502).send('Error retrieving file from gateway and local storage');
+      }
+      return;
+    }
+  }
+
+  private getContentTypeFromExt(ext: string): string {
+    switch (ext) {
+      case '.png':
+        return 'image/png';
+      case '.jpg':
+      case '.jpeg':
+        return 'image/jpeg';
+      case '.webp':
+        return 'image/webp';
+      case '.svg':
+        return 'image/svg+xml';
+      case '.pdf':
+        return 'application/pdf';
+      default:
+        return 'application/octet-stream';
+    }
   }
 }
