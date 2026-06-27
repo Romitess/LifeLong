@@ -24,6 +24,7 @@ export default {
     subtitleStudent: 'ข่าวสารและกิจกรรมการเรียนของคุณ',
   },
   language: 'เปลี่ยนภาษา',
+  logoTooltip: 'คลิกเพื่อกลับหน้าหลัก',
   home: 'หน้าหลัก',
   category: 'หมวดหมู่',
   about: 'เกี่ยวกับเรา',

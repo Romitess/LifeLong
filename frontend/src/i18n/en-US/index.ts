@@ -24,6 +24,7 @@ export default {
     subtitleStudent: 'Your news and learning activities',
   },
   language: 'Change language',
+  logoTooltip: 'Click to go back to home',
   home: 'Home',
   category: 'Category',
   about: 'About Us',

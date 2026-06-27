@@ -25,7 +25,7 @@
             loading="eager"
             decoding="sync"
           />
-          <q-tooltip>คลิกเพื่อกลับหน้าหลัก</q-tooltip>
+          <q-tooltip>{{ $t('logoTooltip') }}</q-tooltip>
         </a>
 
         <q-space />
