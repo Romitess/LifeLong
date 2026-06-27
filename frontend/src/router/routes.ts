@@ -6,69 +6,69 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/main-layout.vue'),
     children: [
       { path: '', redirect: '/main', meta: { public: true } },
-      { path: 'main', component: () => import('pages/main-page.vue'), meta: { public: true } },
+      { path: 'main', component: () => import('pages/public/main-page.vue'), meta: { public: true } },
       {
         path: 'course/:id',
-        component: () => import('pages/course-detail-page.vue'),
+        component: () => import('pages/course/course-detail-page.vue'),
         meta: { public: true },
       },
       {
         path: 'course/:id/learn',
-        component: () => import('pages/course-learning-page.vue'),
+        component: () => import('pages/course/course-learning-page.vue'),
       },
       {
         path: 'course/:id/learn/:moduleId',
-        component: () => import('pages/course-content-page.vue'),
+        component: () => import('pages/course/course-content-page.vue'),
       },
       {
         path: 'course/:id/moodle-quiz/:moduleId',
-        component: () => import('pages/course-moodle-quiz-page.vue'),
+        component: () => import('pages/course/course-moodle-quiz-page.vue'),
       },
       {
         path: 'course/:id/moodle-assign/:moduleId',
-        component: () => import('pages/course-moodle-assign-page.vue'),
+        component: () => import('pages/course/course-moodle-assign-page.vue'),
       },
       {
         path: 'course/:id/moodle-feedback/:moduleId',
-        component: () => import('pages/course-moodle-feedback-page.vue'),
+        component: () => import('pages/course/course-moodle-feedback-page.vue'),
       },
       {
         path: 'course/:id/moodle-forum/:moduleId',
-        component: () => import('pages/course-moodle-forum-page.vue'),
+        component: () => import('pages/course/course-moodle-forum-page.vue'),
       },
       {
         path: 'course/:id/moodle-unsupported/:moduleId',
-        component: () => import('pages/course-moodle-unsupported-page.vue'),
+        component: () => import('pages/course/course-moodle-unsupported-page.vue'),
       },
       {
         path: 'course/:id/video/:videoId',
-        component: () => import('pages/course-video-page.vue'),
+        component: () => import('pages/course/course-video-page.vue'),
       },
       {
         path: 'course/:id/grades',
-        component: () => import('pages/course-grades-page.vue'),
+        component: () => import('pages/course/course-grades-page.vue'),
       },
       {
         path: 'course/:id/quiz/:quizId',
-        component: () => import('pages/course-quiz-page.vue'),
+        component: () => import('pages/course/course-quiz-page.vue'),
       },
       {
         path: 'course/:id/assign/:moduleId',
-        component: () => import('pages/course-assignment-page.vue'),
+        component: () => import('pages/course/course-assignment-page.vue'),
       },
       {
         path: 'course-home',
-        component: () => import('pages/course-home-page.vue'),
+        component: () => import('pages/course/course-home-page.vue'),
       },
       {
         path: 'short-courses',
-        component: () => import('pages/short-courses-page.vue'),
+        component: () => import('pages/public/short-courses-page.vue'),
         meta: { public: true },
       },
       {
         path: 'profile/:tab?',
         name: 'profile',
-        component: () => import('pages/profile-page.vue'),
+        component: () => import('pages/account/profile-page.vue'),
       },
       { path: 'admin', redirect: '/admin/dashboard', meta: { role: 'admin' } },
       {
@@ -244,35 +244,35 @@ const routes: RouteRecordRaw[] = [
     path: '/login',
     component: () => import('layouts/fullscreen-layout.vue'),
     meta: { public: true },
-    children: [{ path: '', component: () => import('pages/login-page.vue') }],
+    children: [{ path: '', component: () => import('pages/auth/login-page.vue') }],
   },
   {
     path: '/login-forget',
     component: () => import('layouts/fullscreen-layout.vue'),
     meta: { public: true },
-    children: [{ path: '', component: () => import('pages/login-user-forget.vue') }],
+    children: [{ path: '', component: () => import('pages/auth/login-user-forget.vue') }],
   },
 
   {
     path: '/reset-password',
     component: () => import('layouts/fullscreen-layout.vue'),
     meta: { public: true },
-    children: [{ path: '', component: () => import('pages/reset-password-page.vue') }],
+    children: [{ path: '', component: () => import('pages/auth/reset-password-page.vue') }],
   },
   {
     path: '/register',
     component: () => import('layouts/fullscreen-layout.vue'),
     meta: { public: true },
-    children: [{ path: '', component: () => import('pages/register-page.vue') }],
+    children: [{ path: '', component: () => import('pages/auth/register-page.vue') }],
   },
   {
     path: '/403',
-    component: () => import('pages/Error403Forbidden.vue'),
+    component: () => import('pages/errors/Error403Forbidden.vue'),
     meta: { public: true },
   },
   {
     path: '/:catchAll(.*)*',
-    component: () => import('pages/ErrorNotFound.vue'),
+    component: () => import('pages/errors/ErrorNotFound.vue'),
   },
 ];
 
