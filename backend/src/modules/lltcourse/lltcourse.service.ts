@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TIME_CONSTANTS, BATCH_SIZES, DEFAULT_URLS } from '../../common/constants';
+import { TIME_CONSTANTS, DEFAULT_URLS } from '../../common/constants';
 import { Repository, DeleteResult, In, DataSource } from 'typeorm';
 import { Readable } from 'node:stream';
 import { Lltcourse } from './entities/lltcourse.entity';
@@ -1486,10 +1486,9 @@ export class LltcourseService {
       return `${internalBase.origin}${imageUrl}`;
     }
 
-    const backendPublicUrl = (
-      this.configService.get<string>('BACKEND_PUBLIC_URL') ||
-      `http://localhost:${this.configService.get<number>('PORT') ?? DEFAULT_URLS.BACKEND_PORT}`
-    ).replace(/\/+$/, '');
+    const backendPublicUrl = this.configService
+      .getOrThrow<string>('BACKEND_PUBLIC_URL')
+      .replace(/\/+$/, '');
 
     try {
       const image = new URL(imageUrl);

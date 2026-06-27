@@ -21,7 +21,7 @@ $CFG->dboptions = array (
   'dbcollation' => 'utf8mb4_unicode_ci',
 );
 
-$CFG->wwwroot   = getenv('MOODLE_SITE_URL') ?: 'http://localhost:8080';
+$CFG->wwwroot   = getenv('MOODLE_SITE_URL') ?: getenv('MOODLE_PUBLIC_URL');
 $CFG->dataroot  = '/bitnami/moodle_data';
 $CFG->admin     = 'admin';
 

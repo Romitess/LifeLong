@@ -30,10 +30,7 @@ export class MoodleFileProxyService {
 
   // หา public base URL ของ backend นี้ (ใช้ต่อ URL proxy)
   private getBackendPublicUrl(): string {
-    return (
-      this.configService.get<string>('BACKEND_URL') ||
-      `http://localhost:${this.configService.get<number>('PORT') ?? 3000}`
-    ).replace(/\/+$/, '');
+    return this.configService.getOrThrow<string>('BACKEND_PUBLIC_URL').replace(/\/+$/, '');
   }
 
   // คืน jwtSecret สำหรับ HMAC signing (throw ถ้ายังไม่ตั้งค่า)

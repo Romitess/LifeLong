@@ -229,10 +229,9 @@ export class AdminCoursesController {
   }
 
   private buildFileData(file: UploadedCbsFile): CourseFileData {
-    const publicBase = (
-      this.configService.get<string>('BACKEND_PUBLIC_URL') ??
-      `http://localhost:${this.configService.get<number>('PORT') ?? 3000}`
-    ).replace(/\/+$/, '');
+    const publicBase = this.configService
+      .getOrThrow<string>('BACKEND_PUBLIC_URL')
+      .replace(/\/+$/, '');
     const relativePath = `uploads/course-cbs/${file.filename}`;
     return {
       filename: file.originalname,

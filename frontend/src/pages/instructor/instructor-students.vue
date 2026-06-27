@@ -1234,7 +1234,7 @@ const rosterTablePage = ref(1);
 const learningResultTablePage = ref(1);
 
 const MOODLE_BASE_URL =
-  (import.meta.env.VITE_MOODLE_URL as string | undefined) ?? 'http://localhost:8080';
+  (import.meta.env.VITE_MOODLE_URL as string | undefined) ?? '';
 
 interface DetailPreviewRow {
   studentId: string;

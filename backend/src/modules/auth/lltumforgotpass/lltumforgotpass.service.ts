@@ -60,9 +60,7 @@ export class LltumforgotpassService {
       });
       const saved = await this.forgotpassRepo.save(record);
 
-      const frontendUrl = (
-        this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:9000'
-      ).replace(/\/+$/, '');
+      const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL').replace(/\/+$/, '');
       const resetLink = `${frontendUrl}/#/reset-password?key=${key}`;
 
       try {
