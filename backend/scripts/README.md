@@ -2,6 +2,18 @@
 
 > ฉันได้สร้างชุดข้อมูลนักเรียน 15 คน พร้อมจำนวนหลักสูตรต่างๆ สำหรับทั้ง Backend และ Moodle Database
 
+## ชุดข้อมูลสาธิต LLL + Moodle
+
+สคริปต์ชุดนี้ปรับข้อมูลสาธิตให้เชื่อมโยงกันทั้งสองระบบ โดยทุกหลักสูตรจะมีผู้สอน ผู้เรียน แบบทดสอบ งานมอบหมาย คะแนน Moodle และผลการเรียนฝั่ง LLL ที่สอดคล้องกัน สคริปต์จะคง username และ password เดิมไว้
+
+```bash
+cd backend
+node scripts/seed-demo-linked-data.js --export
+node scripts/audit-demo-linked-data.js
+```
+
+ก่อนรันให้ตั้งค่าการเชื่อมต่อ LLL และ Moodle ใน `.env` ให้ครบ ผล audit ต้องไม่มี course/user LMS ID ซ้ำ ไม่มีหลักสูตรที่ขาด Moodle activity และไม่มี enrollment ที่ขาดข้อมูลคะแนน คำสั่ง export จะเขียนทับ `moodle_seed.sql` และ `moodle_seed_utf8.sql` หลังสร้างไฟล์ `.tmp` สำเร็จแล้วเท่านั้น
+
 ## 🎯 ที่ทำ
 
 ### ✅ สิ่งที่เพิ่มขึ้นมา
