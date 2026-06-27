@@ -384,14 +384,14 @@ export class InstructorService {
   async updateOpenclass(
     email: string,
     courseId: number,
-    data: { registrationStartDate?: string; registrationEndDate?: string },
+    data: { registrationStartDate?: string; registrationEndDate?: string; imageUrl?: string },
   ): Promise<{ updated: boolean }> {
     await this.assertCourseAccess(email, courseId);
     const openclass = await this.openclassRepository.findOne({
       where: { courseId },
       order: { id: 'DESC' },
     });
-    if (!openclass) return { updated: false };
+    if (!openclass && data.imageUrl === undefined) return { updated: false };
 
     const updates: Partial<LltOpenclass> = {};
     if (data.registrationStartDate) {
@@ -401,7 +401,16 @@ export class InstructorService {
       updates.regEndDate = new Date(data.registrationEndDate);
     }
 
-    await this.openclassRepository.update(openclass.id, updates);
+    if (openclass && Object.keys(updates).length > 0) {
+      await this.openclassRepository.update(openclass.id, updates);
+    }
+
+    if (data.imageUrl !== undefined) {
+      await this.courseRepository.update(courseId, {
+        imageUrl: data.imageUrl.trim() || null,
+      });
+    }
+
     return { updated: true };
   }
 
