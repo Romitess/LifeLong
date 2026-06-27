@@ -15,6 +15,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt-auth.guard';
 import { ProgressService, ProgressRow, CompletionResult } from './progress.service';
 import { MarkProgressDto } from './dto/mark-progress.dto';
+import { GetCompletionsDto } from './dto/get-completions.dto';
 import { CertificatesService, CertRow } from '../certificates/certificates.service';
 
 @Roles(Role.Student, Role.Admin)
@@ -77,5 +78,20 @@ export class ProgressController {
       await this.progressService.verifyEnrollmentOwnership(enrollId, user.lltumSub, user.username);
     }
     return this.progressService.getMoodleCompletion(enrollId);
+  }
+
+  @Post('completions')
+  async completions(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: GetCompletionsDto,
+  ): Promise<{ items: Record<string, CompletionResult> }> {
+    if (user.role.toLowerCase() !== Role.Admin.toLowerCase()) {
+      await this.progressService.verifyEnrollmentsOwnership(
+        dto.enrollIds,
+        user.lltumSub,
+        user.username,
+      );
+    }
+    return { items: await this.progressService.getMoodleCompletions(dto.enrollIds) };
   }
 }

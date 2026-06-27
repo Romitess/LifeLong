@@ -329,7 +329,7 @@ async function pollGrade(): Promise<void> {
     stopGradePolling();
     assignPassed.value = true;
     progressStore.markLessonComplete(courseId.value, assignTitle.value);
-    if (enrollId.value != null) void enrollmentProgressStore.fetchCompletion(enrollId.value);
+    if (enrollId.value != null) void enrollmentProgressStore.fetchCompletion(enrollId.value, true);
     $q.notify({
       type: 'positive',
       message: 'มีผลการตรวจงานแล้ว',
@@ -375,7 +375,7 @@ async function load(): Promise<void> {
   // Already graded on load → silently mark as done (covers noSubmissions + online assignments revisited after grading)
   if (res.submission.grade != null) {
     progressStore.markLessonComplete(courseId.value, assignTitle.value);
-    if (enrollId.value != null) void enrollmentProgressStore.fetchCompletion(enrollId.value);
+    if (enrollId.value != null) void enrollmentProgressStore.fetchCompletion(enrollId.value, true);
   }
 }
 
@@ -421,7 +421,7 @@ async function submit(): Promise<void> {
   assignPassed.value = res.passed;
   if (res.passed) {
     progressStore.markLessonComplete(courseId.value, assignTitle.value);
-    if (enrollId.value != null) void enrollmentProgressStore.fetchCompletion(enrollId.value);
+    if (enrollId.value != null) void enrollmentProgressStore.fetchCompletion(enrollId.value, true);
   }
   if (res.submission.grade == null && res.submission.status === 'submitted') {
     startGradePolling();

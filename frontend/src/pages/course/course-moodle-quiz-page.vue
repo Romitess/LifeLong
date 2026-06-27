@@ -752,7 +752,7 @@ async function handlePassedResult(passed: boolean): Promise<void> {
   if (passed) {
     progressStore.markLessonComplete(courseId.value, quizTitle.value);
     if (enrollId.value != null) {
-      await enrollmentProgressStore.fetchCompletion(enrollId.value);
+      await enrollmentProgressStore.fetchCompletion(enrollId.value, true);
     }
   }
 }

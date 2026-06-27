@@ -13,6 +13,10 @@ interface EnrollmentProgressState {
   loadingByEnrollId: Record<number, boolean>;
 }
 
+interface MoodleCompletionBatchResponse {
+  items: Record<string, MoodleCompletion>;
+}
+
 export const useEnrollmentProgressStore = defineStore('enrollment-progress', {
   state: (): EnrollmentProgressState => ({
     completionByEnrollId: {},
@@ -27,7 +31,8 @@ export const useEnrollmentProgressStore = defineStore('enrollment-progress', {
   },
 
   actions: {
-    async fetchCompletion(enrollId: number): Promise<void> {
+    async fetchCompletion(enrollId: number, force = false): Promise<void> {
+      if (!force && this.completionByEnrollId[enrollId]) return;
       if (this.loadingByEnrollId[enrollId]) return;
       this.loadingByEnrollId[enrollId] = true;
       try {
@@ -40,8 +45,38 @@ export const useEnrollmentProgressStore = defineStore('enrollment-progress', {
       }
     },
 
-    async fetchAllCompletions(enrollIds: number[]): Promise<void> {
-      await Promise.all(enrollIds.map((id) => this.fetchCompletion(id)));
+    async fetchAllCompletions(enrollIds: number[], force = false): Promise<void> {
+      const pendingIds = [...new Set(enrollIds)].filter(
+        (id) =>
+          Number.isInteger(id) &&
+          id > 0 &&
+          !this.loadingByEnrollId[id] &&
+          (force || !this.completionByEnrollId[id]),
+      );
+      if (pendingIds.length === 0) return;
+
+      pendingIds.forEach((id) => {
+        this.loadingByEnrollId[id] = true;
+      });
+      try {
+        for (let index = 0; index < pendingIds.length; index += 100) {
+          const chunk = pendingIds.slice(index, index + 100);
+          const { data } = await api.post<MoodleCompletionBatchResponse>(
+            '/api/progress/completions',
+            { enrollIds: chunk },
+          );
+          chunk.forEach((id) => {
+            const completion = data.items[String(id)];
+            if (completion) this.completionByEnrollId[id] = completion;
+          });
+        }
+      } catch {
+        // Keep existing values when Moodle is temporarily unavailable.
+      } finally {
+        pendingIds.forEach((id) => {
+          this.loadingByEnrollId[id] = false;
+        });
+      }
     },
   },
 });

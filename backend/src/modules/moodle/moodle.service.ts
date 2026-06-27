@@ -22,6 +22,11 @@ interface RawContentSection {
 @Injectable()
 export class MoodleService {
   private readonly logger = new Logger(MoodleService.name);
+  private readonly completionModuleCache = new Map<
+    string,
+    { expiresAt: number; ids: Promise<ReadonlySet<number>> }
+  >();
+  private readonly completionModuleCacheTtlMs = 60_000;
 
   constructor(private configService: ConfigService) {}
 
@@ -650,6 +655,7 @@ export class MoodleService {
   async getActivityCompletionStatus(
     moodleCourseId: number,
     moodleUserId: number,
+    userToken: string,
   ): Promise<{ total: number; done: number }> {
     const COUNTED_MODULES = ['assign', 'quiz'];
     const countableModuleIds = await this.getCountableCompletionModuleIds(
@@ -661,58 +667,23 @@ export class MoodleService {
       return { total: 0, done: 0 };
     }
 
-    try {
-      const params = new URLSearchParams();
-      params.append('courseid', moodleCourseId.toString());
-      params.append('userid', moodleUserId.toString());
+    const params = new URLSearchParams();
+    params.append('courseid', moodleCourseId.toString());
+    params.append('userid', moodleUserId.toString());
+    const result = (await this.callMoodleApi(
+      'core_completion_get_activities_completion_status',
+      params,
+      userToken,
+    )) as { statuses?: Array<{ cmid?: number; id?: number; state: number; modname: string }> };
+    const statuses = (result.statuses ?? []).filter((status) => {
+      const cmid = Number(status.cmid ?? status.id ?? 0);
+      return COUNTED_MODULES.includes(status.modname) && countableModuleIds.has(cmid);
+    });
 
-      const result = (await this.callMoodleApi(
-        'core_completion_get_activities_completion_status',
-        params,
-      )) as { statuses: Array<{ cmid?: number; id?: number; state: number; modname: string }> };
-
-      const statuses = (result.statuses ?? []).filter((s) => {
-        const cmid = Number(s.cmid ?? s.id ?? 0);
-        return COUNTED_MODULES.includes(s.modname) && countableModuleIds.has(cmid);
-      });
-      if (statuses.length > 0) {
-        return {
-          total: countableModuleIds.size,
-          done: statuses.filter((s) => s.state >= 1).length,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      this.logger.warn(
-        `core_completion_get_activities_completion_status failed (courseId=${moodleCourseId}): ${msg} — falling back to grade items`,
-      );
-    }
-
-    const gradeParams = new URLSearchParams();
-    gradeParams.append('courseid', moodleCourseId.toString());
-    gradeParams.append('userid', moodleUserId.toString());
-
-    const gradeResult = (await this.callMoodleApi(
-      'gradereport_user_get_grade_items',
-      gradeParams,
-    )) as {
-      usergrades: Array<{
-        gradeitems: Array<{
-          itemtype: string;
-          itemmodule: string | null;
-          graderaw: number | null;
-        }>;
-      }>;
-    };
-
-    const gradeItems = gradeResult.usergrades?.[0]?.gradeitems ?? [];
-    const activityItems = gradeItems.filter(
-      (g) => g.itemtype === 'mod' && COUNTED_MODULES.includes(g.itemmodule ?? ''),
-    );
     return {
       total: countableModuleIds.size,
       done: Math.min(
-        activityItems.filter((g) => g.graderaw !== null).length,
+        statuses.filter((status) => status.state >= 1).length,
         countableModuleIds.size,
       ),
     };
@@ -721,7 +692,31 @@ export class MoodleService {
   private async getCountableCompletionModuleIds(
     moodleCourseId: number,
     countedModules: string[],
-  ): Promise<Set<number>> {
+  ): Promise<ReadonlySet<number>> {
+    const cacheKey = `${moodleCourseId}:${[...countedModules].sort().join(',')}`;
+    const now = Date.now();
+    const cached = this.completionModuleCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) return cached.ids;
+
+    const ids = this.loadCountableCompletionModuleIds(moodleCourseId, countedModules);
+    this.completionModuleCache.set(cacheKey, {
+      expiresAt: now + this.completionModuleCacheTtlMs,
+      ids,
+    });
+    try {
+      return await ids;
+    } catch (error) {
+      if (this.completionModuleCache.get(cacheKey)?.ids === ids) {
+        this.completionModuleCache.delete(cacheKey);
+      }
+      throw error;
+    }
+  }
+
+  private async loadCountableCompletionModuleIds(
+    moodleCourseId: number,
+    countedModules: string[],
+  ): Promise<ReadonlySet<number>> {
     const sections = await this.getCourseContents(moodleCourseId);
     const ids = new Set<number>();
 
