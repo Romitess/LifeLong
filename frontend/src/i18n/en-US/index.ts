@@ -880,6 +880,9 @@ export default {
     },
     notifications: {
       avatarSaved: 'Avatar look saved successfully.',
+      avatarSaveError: 'Failed to save profile avatar.',
+      avatarDeleted: 'Profile avatar removed.',
+      avatarDeleteError: 'Failed to remove profile avatar.',
       benefitsRefreshed: 'Benefits have been refreshed.',
       privilegeChecked: 'Privilege check completed.',
       citizenIdSaved: 'Citizen ID saved and privilege checked.',
@@ -909,6 +912,9 @@ export default {
       confirmProfileSub: 'Please confirm that you want to save the updated personal information.',
       confirmAvatarTitle: 'Save avatar changes?',
       confirmAvatarSub: 'Please confirm that you want to save this avatar design.',
+      deleteAvatarTitle: 'Delete profile avatar?',
+      deleteAvatarSub:
+        'The current profile avatar will be removed from the system and replaced with the default avatar.',
 
       cropAvatar: 'Crop Profile Picture',
       saveAvatar: 'Save Profile Picture',
@@ -918,6 +924,8 @@ export default {
       bioRequired: 'Bio is required',
     },
     avatar: {
+      change: 'Change profile avatar',
+      delete: 'Delete profile avatar',
       body: 'Skin tone',
       skinSun: 'Warm Sun',
       skinHoney: 'Honey Glow',

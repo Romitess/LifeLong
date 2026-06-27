@@ -2,7 +2,13 @@
   <div class="review-card" :class="{ 'review-card--mine': isMine }">
     <div class="review-card__header">
       <q-avatar size="40px" class="review-card__avatar" :aria-label="review.reviewer.name">
-        <span class="review-card__avatar-text">{{ initial }}</span>
+        <img
+          v-if="reviewerAvatarUrl"
+          :src="reviewerAvatarUrl"
+          class="review-card__avatar-image"
+          :alt="review.reviewer.name"
+        />
+        <span v-else class="review-card__avatar-text">{{ initial }}</span>
       </q-avatar>
       <div class="review-card__meta">
         <div class="review-card__name text-weight-bold">
@@ -52,6 +58,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import BaseRatingStars from 'components/base/BaseRatingStars.vue';
 import BaseButton from 'components/base/BaseButton.vue';
+import { getDefaultAvatarUrl, getImageUrl } from 'src/services/image.service';
 import type { Review } from 'src/types/course-review';
 
 interface Props {
@@ -75,6 +82,12 @@ const { locale } = useI18n({ useScope: 'global' });
 const initial = computed(() => {
   const name = props.review.reviewer.name ?? '';
   return name.charAt(0).toUpperCase() || '?';
+});
+
+const reviewerAvatarUrl = computed<string>(() => {
+  const imageUrl = getImageUrl(props.review.reviewer.imageUrl ?? props.review.reviewer.avatar);
+  if (imageUrl) return imageUrl;
+  return getDefaultAvatarUrl(props.review.reviewer.avatarSeed || props.review.reviewer.name);
 });
 
 const formattedDate = computed(() => {
@@ -115,6 +128,14 @@ const formattedDate = computed(() => {
 .review-card__avatar {
   background: var(--grad-brand);
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.review-card__avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .review-card__avatar-text {

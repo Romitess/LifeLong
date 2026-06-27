@@ -24,12 +24,42 @@
               />
               <q-icon v-else name="person" size="56px" color="white" />
             </q-avatar>
-            <div
-              class="profile-hero__camera cursor-pointer"
-              @click.stop.prevent="triggerAvatarUpload"
-              @mousedown.stop.prevent
-            >
-              <q-icon name="photo_camera" size="16px" color="white" />
+            <div class="profile-hero__avatar-actions">
+              <q-btn
+                round
+                dense
+                unelevated
+                icon="photo_camera"
+                color="primary"
+                class="profile-hero__avatar-action profile-hero__avatar-action--edit"
+                :loading="isSavingAvatar"
+                :disable="isSavingAvatar || isDeletingAvatar"
+                :aria-label="$t('profile.avatar.change')"
+                @click.stop.prevent="triggerAvatarUpload"
+                @mousedown.stop.prevent
+              >
+                <q-tooltip anchor="center right" self="center left" :offset="[10, 0]">
+                  {{ $t('profile.avatar.change') }}
+                </q-tooltip>
+              </q-btn>
+              <q-btn
+                v-if="canRemoveAvatar"
+                round
+                dense
+                unelevated
+                icon="delete"
+                text-color="negative"
+                class="profile-hero__avatar-action profile-hero__avatar-action--delete"
+                :loading="isDeletingAvatar"
+                :disable="isDeletingAvatar || isSavingAvatar"
+                :aria-label="$t('profile.avatar.delete')"
+                @click.stop.prevent="showDeleteAvatarDialog = true"
+                @mousedown.stop.prevent
+              >
+                <q-tooltip anchor="center right" self="center left" :offset="[10, 0]">
+                  {{ $t('profile.avatar.delete') }}
+                </q-tooltip>
+              </q-btn>
             </div>
             <input
               ref="avatarInput"
@@ -82,8 +112,10 @@
     :image-src="cropImageSrc"
     :aspect="1"
     mask-shape="circle"
+    :output-width="400"
+    :output-height="400"
     :title="$t('profile.dialogs.cropAvatar')"
-    @save="onCropDialogSave()"
+    @save="onCropDialogSave"
   />
 
   <!-- Full Avatar Dialog -->
@@ -107,16 +139,32 @@
       <q-icon v-else name="person" size="160px" color="white" class="q-pa-xl" />
     </q-card>
   </q-dialog>
+
+  <BaseSystemDialog
+    v-model="showDeleteAvatarDialog"
+    variant="danger"
+    icon="delete"
+    confirm-icon="delete"
+    :title="$t('profile.dialogs.deleteAvatarTitle')"
+    :message="$t('profile.dialogs.deleteAvatarSub')"
+    :confirm-label="$t('profile.avatar.delete')"
+    :cancel-label="$t('profile.dialogs.notNow')"
+    :loading="isDeletingAvatar"
+    @confirm="deleteAvatar"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import GoldenUnderline from 'src/components/common/GoldenUnderline.vue';
 import BaseImageCropperDialog from 'src/components/base/BaseImageCropperDialog.vue';
+import BaseSystemDialog from 'src/components/base/BaseSystemDialog.vue';
 import { useAuthStore } from 'src/stores/auth-store';
 import { useProfileAvatar } from 'src/composables/use-profile-avatar';
 import { useAvatarCrop } from 'src/composables/use-avatar-crop';
-import { useInstructorBackend } from 'src/composables/use-instructor-backend';
+import type { CropBox } from 'src/composables/use-image-cropper';
 
 interface ProfileStatCardItem {
   label: string;
@@ -132,42 +180,42 @@ defineProps<{
 }>();
 
 const authStore = useAuthStore();
-const instructorBackend = useInstructorBackend();
+const $q = useQuasar();
+const { t } = useI18n();
 const { fullAvatarUrl } = useProfileAvatar();
 
 const pendingFullAvatarSrc = ref<string | null>(null);
 const showFullAvatar = ref(false);
+const showDeleteAvatarDialog = ref(false);
+const isSavingAvatar = ref(false);
+const isDeletingAvatar = ref(false);
 
 const currentAvatarUrl = computed<string>(() => authStore.user?.avatar || '');
 const displayAvatarUrl = computed<string>(() => fullAvatarUrl.value || currentAvatarUrl.value);
-const isTeachingRole = computed(
-  () => authStore.user?.role === 'teach' || authStore.user?.role === 'instructor',
-);
 const displayName = computed(() => {
-  const profile = instructorBackend.profile.value;
-  const nameTh = [profile?.prefix, profile?.firstNameTh, profile?.lastNameTh]
+  const nameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
     .filter(Boolean)
     .join(' ')
     .trim();
-  const nameEn = [profile?.firstNameEn, profile?.lastNameEn].filter(Boolean).join(' ').trim();
-  const authNameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
+  const nameEn = [authStore.user?.firstNameEn, authStore.user?.lastNameEn]
     .filter(Boolean)
     .join(' ')
     .trim();
-  const authNameEn = [authStore.user?.firstNameEn, authStore.user?.lastNameEn]
-    .filter(Boolean)
-    .join(' ')
-    .trim();
-  return nameTh || nameEn || authNameTh || authNameEn || authStore.user?.username || '-';
+  return nameTh || nameEn || authStore.user?.username || '-';
 });
 const displayIdentifier = computed(
   () => authStore.user?.studentId || authStore.user?.username || authStore.user?.email || '-',
 );
 
 onMounted(() => {
-  if (isTeachingRole.value && authStore.user?.email) {
-    void instructorBackend.fetchProfile(authStore.user.email);
-  }
+  void authStore.fetchProfile().catch((error: unknown) => {
+    console.error('Failed to refresh profile identity', error);
+  });
+});
+
+const canRemoveAvatar = computed<boolean>(() => {
+  const avatar = authStore.user?.avatar || '';
+  return Boolean(avatar && !avatar.includes('api.dicebear.com'));
 });
 
 const {
@@ -179,9 +227,48 @@ const {
   saveCroppedAvatar,
 } = useAvatarCrop(fullAvatarUrl, pendingFullAvatarSrc);
 
-// Avatar stays as baked canvas dataURL until backend persist is ready
-function onCropDialogSave(): void {
-  saveCroppedAvatar();
+async function onCropDialogSave(_cropBox: CropBox, file?: File): Promise<void> {
+  if (isSavingAvatar.value) return;
+  isSavingAvatar.value = true;
+  try {
+    await saveCroppedAvatar(file);
+    $q.notify({
+      type: 'positive',
+      message: t('profile.notifications.avatarSaved'),
+      position: 'top',
+    });
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message: t('profile.notifications.avatarSaveError'),
+      position: 'top',
+    });
+  } finally {
+    isSavingAvatar.value = false;
+  }
+}
+
+async function deleteAvatar(): Promise<void> {
+  if (isDeletingAvatar.value) return;
+  isDeletingAvatar.value = true;
+  try {
+    await authStore.deleteAvatar();
+    fullAvatarUrl.value = '';
+    showDeleteAvatarDialog.value = false;
+    $q.notify({
+      type: 'positive',
+      message: t('profile.notifications.avatarDeleted'),
+      position: 'top',
+    });
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message: t('profile.notifications.avatarDeleteError'),
+      position: 'top',
+    });
+  } finally {
+    isDeletingAvatar.value = false;
+  }
 }
 </script>
 
@@ -267,11 +354,6 @@ function onCropDialogSave(): void {
 
     &:hover {
       transform: scale(1.05);
-
-      .profile-hero__camera {
-        opacity: 1;
-        transform: scale(1);
-      }
     }
   }
 
@@ -290,23 +372,40 @@ function onCropDialogSave(): void {
     object-fit: cover;
   }
 
-  &__camera {
+  &__avatar-actions {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
+    right: -12px;
+    bottom: 6px;
     z-index: 3;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: $primary;
-    border: 2px solid white;
-    display: flex;
+    display: grid;
+    gap: 8px;
     align-items: center;
-    justify-content: center;
-    opacity: 0.85;
-    transform: scale(0.9);
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  &__avatar-action {
+    width: 34px;
+    height: 34px;
+    border: 2px solid rgba(255, 255, 255, 0.96);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.28);
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      background-color 0.18s ease;
+
+    &:hover,
+    &:focus-visible {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.34);
+    }
+
+    &--edit {
+      background: var(--color-gold) !important;
+      color: white;
+    }
+
+    &--delete {
+      background: white !important;
+    }
   }
 }
 

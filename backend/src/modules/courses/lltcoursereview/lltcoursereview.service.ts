@@ -18,11 +18,13 @@ interface EligibilityResult {
 
 interface ReviewRow {
   reviewId: number | string;
+  userId: number | string;
   rating: number | string;
   comment: string | null;
   createDate: Date | string | null;
   firstNameTh: string | null;
   lastNameTh: string | null;
+  imageUrl: string | null;
 }
 
 interface SummaryRow {
@@ -107,11 +109,13 @@ export class LltcoursereviewService {
     const rows = await this.dataSource.query<ReviewRow[]>(
       `SELECT
          r.REVIEW_ID      AS reviewId,
+         r.USER_ID        AS userId,
          r.REVIEW_RATING  AS rating,
          r.REVIEW_COMMENT AS comment,
          r.CREATEDATE     AS createDate,
-         u.USER_FNAMETH   AS firstNameTh,
-         u.USER_LNAMETH   AS lastNameTh
+         COALESCE(NULLIF(TRIM(u.USER_FNAMETH), ''), u.USER_FNAMEEN) AS firstNameTh,
+         COALESCE(NULLIF(TRIM(u.USER_LNAMETH), ''), u.USER_LNAMEEN) AS lastNameTh,
+         u.USER_IMAGE_URL AS imageUrl
        FROM LLTCOURSEREVIEW r
        JOIN LLTUMUSER u ON u.USER_ID = r.USER_ID
        WHERE r.COSE_ID = ? AND r.REVIEW_STATUS = 'A' ${ratingFilter}
@@ -149,11 +153,13 @@ export class LltcoursereviewService {
     const rows = await this.dataSource.query<ReviewRow[]>(
       `SELECT
          r.REVIEW_ID      AS reviewId,
+         r.USER_ID        AS userId,
          r.REVIEW_RATING  AS rating,
          r.REVIEW_COMMENT AS comment,
          r.CREATEDATE     AS createDate,
-         u.USER_FNAMETH   AS firstNameTh,
-         u.USER_LNAMETH   AS lastNameTh
+         COALESCE(NULLIF(TRIM(u.USER_FNAMETH), ''), u.USER_FNAMEEN) AS firstNameTh,
+         COALESCE(NULLIF(TRIM(u.USER_LNAMETH), ''), u.USER_LNAMEEN) AS lastNameTh,
+         u.USER_IMAGE_URL AS imageUrl
        FROM LLTCOURSEREVIEW r
        JOIN LLTUMUSER u ON u.USER_ID = r.USER_ID
        WHERE r.COSE_ID = ? AND r.USER_ID = ?`,
@@ -228,11 +234,13 @@ export class LltcoursereviewService {
     const rows = await this.dataSource.query<ReviewRow[]>(
       `SELECT
          r.REVIEW_ID      AS reviewId,
+         r.USER_ID        AS userId,
          r.REVIEW_RATING  AS rating,
          r.REVIEW_COMMENT AS comment,
          r.CREATEDATE     AS createDate,
-         u.USER_FNAMETH   AS firstNameTh,
-         u.USER_LNAMETH   AS lastNameTh
+         COALESCE(NULLIF(TRIM(u.USER_FNAMETH), ''), u.USER_FNAMEEN) AS firstNameTh,
+         COALESCE(NULLIF(TRIM(u.USER_LNAMETH), ''), u.USER_LNAMEEN) AS lastNameTh,
+         u.USER_IMAGE_URL AS imageUrl
        FROM LLTCOURSEREVIEW r
        JOIN LLTUMUSER u ON u.USER_ID = r.USER_ID
        WHERE r.COSE_ID = ? AND r.USER_ID = ?`,
@@ -325,13 +333,15 @@ export class LltcoursereviewService {
     const rows = await this.dataSource.query<ModerationRow[]>(
       `SELECT
          r.REVIEW_ID      AS reviewId,
+         r.USER_ID        AS userId,
          r.REVIEW_RATING  AS rating,
          r.REVIEW_COMMENT AS comment,
          r.REVIEW_STATUS  AS status,
          r.COSE_ID        AS courseId,
          r.CREATEDATE     AS createDate,
-         u.USER_FNAMETH   AS firstNameTh,
-         u.USER_LNAMETH   AS lastNameTh
+         COALESCE(NULLIF(TRIM(u.USER_FNAMETH), ''), u.USER_FNAMEEN) AS firstNameTh,
+         COALESCE(NULLIF(TRIM(u.USER_LNAMETH), ''), u.USER_LNAMEEN) AS lastNameTh,
+         u.USER_IMAGE_URL AS imageUrl
        FROM LLTCOURSEREVIEW r
        JOIN LLTUMUSER u ON u.USER_ID = r.USER_ID
        WHERE 1=1 ${statusFilter}
@@ -362,6 +372,8 @@ export class LltcoursereviewService {
               : null,
         reviewer: {
           name: this.buildName(r.firstNameTh, r.lastNameTh),
+          imageUrl: r.imageUrl ?? null,
+          avatarSeed: `lll-user-${r.userId}`,
         },
       })),
       total: Number(countRows[0]?.total ?? 0),
@@ -439,6 +451,8 @@ export class LltcoursereviewService {
             : null,
       reviewer: {
         name: LltcoursereviewService.buildNameStatic(row.firstNameTh, row.lastNameTh),
+        imageUrl: row.imageUrl ?? null,
+        avatarSeed: `lll-user-${row.userId}`,
       },
     };
   }
@@ -462,5 +476,5 @@ export interface ModerationReviewDto {
   status: string;
   courseId: number;
   createDate: Date | null;
-  reviewer: { name: string };
+  reviewer: { name: string; imageUrl: string | null; avatarSeed: string };
 }

@@ -1619,7 +1619,7 @@ courseStore.init();
 onMounted(() => {
   const email = authStore.user?.email;
   if (email) {
-    void instructorBackend.fetchProfile(email);
+    void authStore.fetchProfile();
     void instructorBackend.fetchSummary(email);
     void courseStore.fetchInstructorCourses(email);
   }
@@ -1659,21 +1659,15 @@ const instructorCourses = computed<Course[]>(() =>
   courseStore.getInstructorCourses(authStore.user),
 );
 const instructorDisplayName = computed(() => {
-  const profile = instructorBackend.profile.value;
-  const nameTh = [profile?.prefix, profile?.firstNameTh, profile?.lastNameTh]
+  const nameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
     .filter(Boolean)
     .join(' ')
     .trim();
-  const nameEn = [profile?.firstNameEn, profile?.lastNameEn].filter(Boolean).join(' ').trim();
-  const authNameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
+  const nameEn = [authStore.user?.firstNameEn, authStore.user?.lastNameEn]
     .filter(Boolean)
     .join(' ')
     .trim();
-  const authNameEn = [authStore.user?.firstNameEn, authStore.user?.lastNameEn]
-    .filter(Boolean)
-    .join(' ')
-    .trim();
-  return nameTh || nameEn || authNameTh || authNameEn || authStore.user?.username || '-';
+  return nameTh || nameEn || authStore.user?.username || '-';
 });
 const instructorIdentifier = computed(
   () => authStore.user?.studentId || authStore.user?.username || authStore.user?.email || '-',

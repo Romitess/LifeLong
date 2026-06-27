@@ -874,6 +874,9 @@ export default {
     },
     notifications: {
       avatarSaved: 'บันทึกลุคตัวละครเรียบร้อยแล้ว',
+      avatarSaveError: 'บันทึกรูปโปรไฟล์ไม่สำเร็จ',
+      avatarDeleted: 'ลบรูปโปรไฟล์เรียบร้อยแล้ว',
+      avatarDeleteError: 'ลบรูปโปรไฟล์ไม่สำเร็จ',
       benefitsRefreshed: 'ตรวจสอบสิทธิประโยชน์ล่าสุดแล้ว',
       privilegeChecked: 'ตรวจสอบสิทธิ์เรียบร้อยแล้ว',
       citizenIdSaved: 'บันทึกเลขบัตรและตรวจสอบสิทธิ์เรียบร้อยแล้ว',
@@ -908,8 +911,12 @@ export default {
       confirmProfileSub: 'กรุณายืนยันว่าต้องการบันทึกข้อมูลส่วนตัวที่แก้ไข',
       confirmAvatarTitle: 'ยืนยันการบันทึก Avatar?',
       confirmAvatarSub: 'กรุณายืนยันว่าต้องการบันทึก Avatar ที่ออกแบบนี้',
+      deleteAvatarTitle: 'ลบรูปโปรไฟล์?',
+      deleteAvatarSub: 'รูปโปรไฟล์ปัจจุบันจะถูกลบออกจากระบบ และจะแสดงรูปเริ่มต้นแทน',
     },
     avatar: {
+      change: 'เปลี่ยนรูปโปรไฟล์',
+      delete: 'ลบรูปโปรไฟล์',
       body: 'ผิว',
       skinLight: 'ผิวใส',
       skinDark: 'ผิวเข้ม',

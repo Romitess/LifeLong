@@ -1,9 +1,5 @@
 import { ref, computed, watch, type Ref } from 'vue';
-import { useQuasar } from 'quasar';
-import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
-import { FULL_AVATAR_STORAGE_KEY } from 'src/composables/use-profile-avatar';
-import { uploadProfileAvatar } from 'src/services/profile-avatar.service';
 
 export const VIEWPORT_SIZE = 280;
 
@@ -12,8 +8,6 @@ export function useAvatarCrop(
   pendingFullAvatarSrc: Ref<string | null>,
 ) {
   const authStore = useAuthStore();
-  const $q = useQuasar();
-  const { t } = useI18n();
 
   const showCropDialog = ref(false);
   const cropImageSrc = ref<string | null>(null);
@@ -133,19 +127,16 @@ export function useAvatarCrop(
     pendingFullAvatarSrc.value = null;
   }
 
-  function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          resolve(blob);
-          return;
-        }
-        reject(new Error('Unable to prepare avatar image'));
-      }, 'image/png');
-    });
-  }
+  async function saveCroppedAvatar(croppedFile?: File): Promise<void> {
+    if (croppedFile) {
+      await authStore.uploadAvatar(croppedFile);
+      fullAvatarUrl.value = authStore.user?.avatar || '';
+      showCropDialog.value = false;
+      cropImageSrc.value = null;
+      pendingFullAvatarSrc.value = null;
+      return;
+    }
 
-  function saveCroppedAvatar(): void {
     if (!cropImageSrc.value) return;
 
     const img = new Image();
@@ -187,34 +178,9 @@ export function useAvatarCrop(
 
       ctx.drawImage(img, canvasImgX, canvasImgY, canvasImgW, canvasImgH);
 
-      try {
-        $q.loading.show({ message: t('profile.notifications.processing') || 'Uploading avatar...' });
-        const blob = await canvasToBlob(canvas);
-        const uploadedAvatar = await uploadProfileAvatar(blob, 'profile-avatar.png');
-        authStore.setAvatar(uploadedAvatar.avatarUrl);
-        fullAvatarUrl.value = uploadedAvatar.avatarUrl;
-
-        if (typeof window !== 'undefined') {
-          window.localStorage.removeItem(FULL_AVATAR_STORAGE_KEY);
-        }
-
-        $q.notify({
-          type: 'positive',
-          message: t('profile.notifications.avatarSaved'),
-          position: 'top',
-        });
-      } catch (error) {
-        console.error('Failed to upload avatar', error);
-        $q.notify({
-          type: 'negative',
-          message: t('profile.notifications.profileSaveFailed'),
-          position: 'top',
-        });
-        return;
-      } finally {
-        $q.loading.hide();
-      }
-
+      const dataUrl = canvas.toDataURL('image/png');
+      authStore.setAvatar(dataUrl);
+      fullAvatarUrl.value = dataUrl;
       showCropDialog.value = false;
       cropImageSrc.value = null;
       pendingFullAvatarSrc.value = null;

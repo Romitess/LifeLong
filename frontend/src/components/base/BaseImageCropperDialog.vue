@@ -88,6 +88,8 @@
           icon="check"
           no-caps
           padding="sm lg"
+          :loading="isSaving"
+          :disable="isSaving"
           @click="save"
         />
       </q-card-actions>
@@ -96,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useImageCropper, type CropBox } from 'src/composables/use-image-cropper';
 
 interface Props {
@@ -106,6 +108,8 @@ interface Props {
   maskShape?: 'circle' | 'rect';
   title?: string;
   initialCropBox?: CropBox | null;
+  outputWidth?: number | null;
+  outputHeight?: number | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -113,11 +117,13 @@ const props = withDefaults(defineProps<Props>(), {
   maskShape: 'circle',
   title: 'ปรับรูปภาพ',
   initialCropBox: null,
+  outputWidth: null,
+  outputHeight: null,
 });
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
-  save: [cropBox: CropBox];
+  save: [cropBox: CropBox, file?: File];
 }>();
 
 // Viewport size: wider for rect (16:9), square for circle
@@ -150,6 +156,7 @@ const isOpen = computed({
   get: () => props.modelValue,
   set: (v) => emit('update:modelValue', v),
 });
+const isSaving = ref(false);
 
 const {
   cropZoom,
@@ -170,6 +177,7 @@ const {
   onWheel,
   toCropBox,
   fromCropBox,
+  bake,
 } = useImageCropper({ viewportW: viewportW.value, viewportH: viewportH.value });
 
 watch(
@@ -205,11 +213,20 @@ function cancel(): void {
   emit('update:modelValue', false);
 }
 
-function save(): void {
+async function save(): Promise<void> {
   const box = toCropBox();
   if (!box) return;
-  emit('save', box);
-  emit('update:modelValue', false);
+  isSaving.value = true;
+  try {
+    const file =
+      props.imageSrc && props.outputWidth && props.outputHeight
+        ? await bake(props.imageSrc, props.outputWidth, props.outputHeight)
+        : undefined;
+    emit('save', box, file);
+    emit('update:modelValue', false);
+  } finally {
+    isSaving.value = false;
+  }
 }
 </script>
 

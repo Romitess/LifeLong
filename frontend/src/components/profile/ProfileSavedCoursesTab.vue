@@ -240,8 +240,9 @@ function getHydratedBookmarkCourse(bookmark: CourseBookmark) {
   return {
     ...realCourse,
     title: bookmark.courseTitle,
-    imageUrl: bookmark.courseImageUrl || realCourse?.imageUrl || '',
-    cover: bookmark.courseCover || realCourse?.cover || DEFAULT_COVER,
+    imageUrl: realCourse?.imageUrl || bookmark.courseImageUrl || '',
+    imageCrop: realCourse?.imageCrop ?? null,
+    cover: realCourse?.cover || bookmark.courseCover || DEFAULT_COVER,
     status: realCourse?.status || '',
     deliveryModes: realCourse?.deliveryModes || ([] as string[]),
     isFree: realCourse?.isFree ?? false,

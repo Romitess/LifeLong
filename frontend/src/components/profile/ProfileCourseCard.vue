@@ -183,6 +183,7 @@ const { t } = useI18n({ useScope: 'global' });
 interface ProfileCourseCardCourse {
   title: string;
   imageUrl: string;
+  imageCrop?: string | null;
   cover: CourseCover;
 }
 

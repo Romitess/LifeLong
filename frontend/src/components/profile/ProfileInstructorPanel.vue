@@ -190,7 +190,6 @@ const instructorCourses = computed<Course[]>(() =>
 onMounted(() => {
   const email = authStore.user?.email;
   if (!email) return;
-  void instructorBackend.fetchProfile(email);
   void instructorBackend.fetchSummary(email);
   void courseStore.fetchInstructorCourses(email);
 });

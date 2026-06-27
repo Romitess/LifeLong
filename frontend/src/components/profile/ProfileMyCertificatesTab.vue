@@ -30,7 +30,7 @@
           <div class="cert-card__cover-wrap">
             <img
               v-if="entry.course.imageUrl"
-              :src="entry.course.imageUrl"
+              :src="getImageUrl(entry.course.imageUrl)"
               :alt="entry.course.title"
               class="cert-card__cover"
             />
@@ -140,6 +140,7 @@ import { useRouter } from 'vue-router';
 import { api } from 'src/boot/axios';
 import CourseCompletionDocumentActions from 'components/course/CourseCompletionDocumentActions.vue';
 import type { RegisteredCourseEntry } from 'src/composables/use-my-registered-courses';
+import { getImageUrl } from 'src/services/image.service';
 
 interface ApiCertItem {
   certId: number;

@@ -560,41 +560,19 @@
     </section>
   </div>
 
-  <!-- Save Confirmation Dialog -->
-  <q-dialog
+  <BaseSystemDialog
     v-model="showSaveConfirmDialog"
-    persistent
-    transition-show="scale"
-    transition-hide="scale"
-  >
-    <q-card class="modern-card unregister-dialog-card">
-      <q-card-section class="q-pa-xl text-center">
-        <div class="unregister-icon-wrap q-mx-auto q-mb-lg">
-          <q-icon name="save" size="36px" color="amber-8" />
-        </div>
-        <div class="text-h6 text-weight-bolder text-dark">{{ saveConfirmTitle }}</div>
-        <div class="text-grey-7 q-mt-sm">{{ saveConfirmMessage }}</div>
-      </q-card-section>
-
-      <q-card-actions class="unregister-dialog-card__actions q-px-lg q-pb-lg">
-        <BaseButton
-          outline
-          :label="$t('profile.dialogs.notNow')"
-          color="grey-7"
-          no-caps
-          class="unregister-dialog-card__button"
-          @click="cancelSaveConfirmation"
-        />
-        <BaseButton
-          :label="$t('profile.personal.save')"
-          color="amber-6"
-          no-caps
-          class="unregister-dialog-card__button"
-          @click="confirmSaveConfirmation"
-        />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+    variant="confirm"
+    icon="save"
+    confirm-icon="save"
+    :title="saveConfirmTitle"
+    :message="saveConfirmMessage"
+    :confirm-label="$t('profile.personal.save')"
+    :cancel-label="$t('profile.dialogs.notNow')"
+    :loading="isSavingProfile"
+    @cancel="cancelSaveConfirmation"
+    @confirm="confirmSaveConfirmation"
+  />
 </template>
 
 <script setup lang="ts">
@@ -602,6 +580,7 @@ import { ref, reactive, watch, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import BaseButton from 'components/base/BaseButton.vue';
+import BaseSystemDialog from 'components/base/BaseSystemDialog.vue';
 import { useAuthStore, type User, type UserProfileUpdate } from 'src/stores/auth-store';
 import { useProfileAvatar } from 'src/composables/use-profile-avatar';
 import {
@@ -686,6 +665,9 @@ function syncFormWithUser(user: User | null): void {
 }
 
 onMounted(() => {
+  void authStore.fetchProfile().catch((error: unknown) => {
+    console.error('Failed to fetch profile', error);
+  });
   void fetchUserSkills();
 });
 
@@ -716,7 +698,7 @@ function confirmSaveCartoonAvatar(): void {
   openSaveConfirmationDialog(
     t('profile.dialogs.confirmAvatarTitle'),
     t('profile.dialogs.confirmAvatarSub'),
-    () => saveCartoonAvatar(),
+    () => void saveCartoonAvatar(),
   );
 }
 
@@ -730,7 +712,7 @@ function confirmSavePersonalInfo(): void {
     !form.firstNameEn.trim() ||
     !form.lastNameEn.trim()
   ) {
-    savePersonalInfo();
+    void savePersonalInfo();
     return;
   }
 
@@ -741,7 +723,7 @@ function confirmSavePersonalInfo(): void {
   );
 }
 
-function savePersonalInfo(): void {
+async function savePersonalInfo(): Promise<void> {
   if (!authStore.user) {
     $q.notify({
       type: 'negative',
@@ -771,7 +753,7 @@ function savePersonalInfo(): void {
   isSavingProfile.value = true;
 
   try {
-    authStore.updateProfile(payload);
+    await authStore.updateProfile(payload);
     syncFormWithUser(authStore.user);
     $q.notify({
       type: 'positive',

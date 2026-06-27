@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { MoodleService } from '../moodle.service';
 import { MoodleUserTokenService } from '../moodle-user-token.service';
 import { MoodleFileProxyService } from '../moodle-file-proxy.service';
@@ -16,6 +18,7 @@ export interface ForumDiscussionSummary {
   subject: string;
   authorName: string;
   authorPictureUrl: string | null;
+  authorAvatarSeed: string | null;
   created: number;
   numReplies: number;
   pinned: boolean;
@@ -31,6 +34,7 @@ export interface ForumPost {
   message: string | null;
   authorName: string;
   authorPictureUrl: string | null;
+  authorAvatarSeed: string | null;
   created: number;
   canReply: boolean;
 }
@@ -51,6 +55,7 @@ interface RawForum {
 
 interface RawDiscussion {
   discussion: number;
+  userid?: number;
   subject?: string;
   name?: string;
   message?: string;
@@ -64,6 +69,7 @@ interface RawDiscussion {
 }
 
 interface RawPostAuthor {
+  id?: number;
   fullname?: string;
   urls?: { profileimage?: string };
 }
@@ -79,12 +85,19 @@ interface RawPost {
   capabilities?: { reply?: boolean };
 }
 
+interface LocalProfile {
+  name: string | null;
+  imageUrl: string | null;
+  avatarSeed: string;
+}
+
 @Injectable()
 export class MoodleForumService {
   constructor(
     private readonly moodleService: MoodleService,
     private readonly tokenService: MoodleUserTokenService,
     private readonly fileProxy: MoodleFileProxyService,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   // ดึง per-user token ของนักเรียนจาก username
@@ -130,7 +143,11 @@ export class MoodleForumService {
       token,
     )) as { posts?: RawPost[] };
 
-    const posts = (result?.posts ?? []).map((post) => this.mapPost(post));
+    const rawPosts = result?.posts ?? [];
+    const profileByMoodleId = await this.getLocalProfilesByMoodleIds(
+      rawPosts.map((post) => post.author?.id).filter(isNumber),
+    );
+    const posts = rawPosts.map((post) => this.mapPost(post, profileByMoodleId));
     const subject = posts.find((post) => !post.hasParent)?.subject ?? posts[0]?.subject ?? '';
     return { discussionId, subject, posts };
   }
@@ -234,31 +251,88 @@ export class MoodleForumService {
       token,
     )) as { discussions?: RawDiscussion[] };
 
-    return (result?.discussions ?? []).map((discussion) => ({
-      id: discussion.discussion,
-      subject: discussion.subject ?? discussion.name ?? '',
-      authorName: discussion.userfullname ?? '',
-      authorPictureUrl: discussion.userpictureurl ?? null,
-      created: discussion.created,
-      numReplies: discussion.numreplies ?? 0,
-      pinned: discussion.pinned === true,
-      locked: discussion.locked === true,
-      canReply: discussion.canreply === true,
-    }));
+    const discussions = result?.discussions ?? [];
+    const profileByMoodleId = await this.getLocalProfilesByMoodleIds(
+      discussions.map((discussion) => discussion.userid).filter(isNumber),
+    );
+
+    return discussions.map((discussion) => {
+      const localProfile =
+        discussion.userid != null ? profileByMoodleId.get(discussion.userid) : undefined;
+      return {
+        id: discussion.discussion,
+        subject: discussion.subject ?? discussion.name ?? '',
+        authorName: localProfile?.name || discussion.userfullname || '',
+        authorPictureUrl: localProfile ? localProfile.imageUrl : discussion.userpictureurl || null,
+        authorAvatarSeed: localProfile?.avatarSeed ?? null,
+        created: discussion.created,
+        numReplies: discussion.numreplies ?? 0,
+        pinned: discussion.pinned === true,
+        locked: discussion.locked === true,
+        canReply: discussion.canreply === true,
+      };
+    });
   }
 
   // แปลง raw post จาก Moodle และเปลี่ยน embedded pluginfile URL เป็น signed proxy URL
-  private mapPost(post: RawPost): ForumPost {
+  private mapPost(post: RawPost, profileByMoodleId: Map<number, LocalProfile>): ForumPost {
+    const localProfile =
+      post.author?.id != null ? profileByMoodleId.get(post.author.id) : undefined;
     return {
       id: post.id,
       parentId: post.parentid ?? null,
       hasParent: post.hasparent === true,
       subject: post.subject ?? '',
       message: post.message ? this.fileProxy.rewriteEmbeddedFileUrls(post.message) : null,
-      authorName: post.author?.fullname ?? '',
-      authorPictureUrl: post.author?.urls?.profileimage ?? null,
+      authorName: localProfile?.name || post.author?.fullname || '',
+      authorPictureUrl: localProfile
+        ? localProfile.imageUrl
+        : post.author?.urls?.profileimage || null,
+      authorAvatarSeed: localProfile?.avatarSeed ?? null,
       created: post.timecreated,
       canReply: post.capabilities?.reply === true,
     };
   }
+
+  private async getLocalProfilesByMoodleIds(
+    moodleUserIds: number[],
+  ): Promise<Map<number, LocalProfile>> {
+    const uniqueIds = [...new Set(moodleUserIds.filter((id) => Number.isFinite(id) && id > 0))];
+    if (uniqueIds.length === 0) return new Map();
+
+    const rows = await this.dataSource.query<
+      Array<{
+        userId: number | string;
+        lmsId: number | string;
+        firstNameTh: string | null;
+        lastNameTh: string | null;
+        imageUrl: string | null;
+      }>
+    >(
+      `SELECT
+         USER_ID AS userId,
+         LMS_ID AS lmsId,
+         COALESCE(NULLIF(TRIM(USER_FNAMETH), ''), USER_FNAMEEN) AS firstNameTh,
+         COALESCE(NULLIF(TRIM(USER_LNAMETH), ''), USER_LNAMEEN) AS lastNameTh,
+         USER_IMAGE_URL AS imageUrl
+       FROM LLTUMUSER
+       WHERE LMS_ID IN (?)`,
+      [uniqueIds],
+    );
+
+    return new Map(
+      rows.map((row) => [
+        Number(row.lmsId),
+        {
+          name: [row.firstNameTh, row.lastNameTh].filter(Boolean).join(' ') || null,
+          imageUrl: row.imageUrl ?? null,
+          avatarSeed: `lll-user-${row.userId}`,
+        },
+      ]),
+    );
+  }
+}
+
+function isNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
 }

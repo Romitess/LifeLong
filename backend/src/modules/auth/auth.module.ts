@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { ProfileController } from './profile.controller';
 import { LltAuthUser } from './entities/llt-auth-user.entity';
 import { LltumUser } from './entities/lltum-user.entity';
 import { LltUmtlog } from './entities/llt-umtlog.entity';
@@ -27,7 +28,7 @@ import type { AppConfig } from '../../config/configuration';
     }),
   ],
   providers: [AuthService, JwtAuthGuard],
-  controllers: [AuthController],
+  controllers: [AuthController, ProfileController],
   exports: [AuthService, JwtAuthGuard, JwtModule],
 })
 export class AuthModule {}

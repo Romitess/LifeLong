@@ -1,8 +1,8 @@
 <template>
   <div class="course-cover" :class="{ 'course-cover--fill': fill }" :style="coverStyle">
     <q-img
-      v-if="course.imageUrl"
-      :src="course.imageUrl"
+      v-if="normalizedImageUrl"
+      :src="normalizedImageUrl"
       :ratio="imageRatio"
       fit="cover"
       class="course-cover__image"
@@ -13,7 +13,7 @@
       <!-- Crop overlay — only when cropBox is set; fills q-img via absolute-full -->
       <BaseCroppedImage
         v-if="parsedCropBox"
-        :src="course.imageUrl"
+        :src="normalizedImageUrl"
         :crop-box="parsedCropBox"
         :aspect="ratio"
         class="absolute-full"
@@ -45,6 +45,7 @@ import { computed } from 'vue';
 import type { Course } from 'src/types/course';
 import BaseCroppedImage from 'components/base/BaseCroppedImage.vue';
 import type { CropBox } from 'src/composables/use-image-cropper';
+import { getImageUrl } from 'src/services/image.service';
 
 type ImageFit = 'cover' | 'fill' | 'contain' | 'none' | 'scale-down';
 type ImageLoading = 'eager' | 'lazy';
@@ -67,6 +68,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const imageRatio = computed<number | undefined>(() => (props.fill ? undefined : props.ratio));
+const normalizedImageUrl = computed<string>(() => getImageUrl(props.course.imageUrl));
 
 const parsedCropBox = computed<CropBox | null>(() => {
   if (!props.course.imageCrop) return null;

@@ -62,7 +62,7 @@
               >
                 <div class="row items-center q-gutter-sm">
                   <q-avatar size="32px" color="primary" text-color="white">
-                    <img v-if="post.authorPictureUrl" :src="post.authorPictureUrl" alt="" />
+                    <img v-if="getAuthorAvatarUrl(post)" :src="getAuthorAvatarUrl(post)" alt="" />
                     <span v-else>{{ initial(post.authorName) }}</span>
                   </q-avatar>
                   <div>
@@ -216,10 +216,12 @@ import BaseSpinner from 'components/base/BaseSpinner.vue';
 import CourseActivityNavigation from 'components/course/CourseActivityNavigation.vue';
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import { useCourseStore } from 'src/stores/course-store';
+import { getDefaultAvatarUrl, getImageUrl } from 'src/services/image.service';
 import {
   useMoodleForum,
   type ForumInfo,
   type ForumDiscussionSummary,
+  type ForumPost,
   type ForumDiscussionThread,
 } from 'src/composables/use-moodle-forum';
 
@@ -279,6 +281,12 @@ function sanitize(html: string | null): string {
 
 function initial(name: string): string {
   return name?.trim()?.charAt(0)?.toUpperCase() || '?';
+}
+
+function getAuthorAvatarUrl(author: ForumPost): string {
+  const imageUrl = getImageUrl(author.authorPictureUrl);
+  if (imageUrl) return imageUrl;
+  return author.authorAvatarSeed ? getDefaultAvatarUrl(author.authorAvatarSeed) : '';
 }
 
 function formatDate(unixSeconds: number): string {

@@ -430,6 +430,7 @@ const greetingBannerTimers: ReturnType<typeof setTimeout>[] = [];
 
 onMounted(() => {
   courseStore.init();
+  void authStore.fetchProfile();
   const email = authStore.user?.email;
   if (email) {
     void courseStore.fetchInstructorCourses(email);

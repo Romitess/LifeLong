@@ -40,11 +40,9 @@
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
-import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
-const instructorBackend = useInstructorBackend();
 
 defineProps<{
   description?: string;
@@ -57,8 +55,9 @@ const instructorIdentifier = computed(
 );
 
 onMounted(() => {
-  const email = authStore.user?.email;
-  if (email) void instructorBackend.fetchProfile(email);
+  void authStore.fetchProfile().catch((error: unknown) => {
+    console.error('Failed to refresh instructor identity', error);
+  });
 });
 </script>
 

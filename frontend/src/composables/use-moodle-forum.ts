@@ -14,6 +14,7 @@ export interface ForumDiscussionSummary {
   subject: string;
   authorName: string;
   authorPictureUrl: string | null;
+  authorAvatarSeed: string | null;
   created: number;
   numReplies: number;
   pinned: boolean;
@@ -29,6 +30,7 @@ export interface ForumPost {
   message: string | null;
   authorName: string;
   authorPictureUrl: string | null;
+  authorAvatarSeed: string | null;
   created: number;
   canReply: boolean;
 }

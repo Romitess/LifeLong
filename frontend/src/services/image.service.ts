@@ -57,6 +57,10 @@ export function getImageUrl(imagePath?: string | null): string {
   return `${PLATFORM_GATEWAY.BASE_PATH}${normalizedPath}`.replace(/\/{2,}/g, '/');
 }
 
+export function getDefaultAvatarUrl(seed: string): string {
+  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed)}`;
+}
+
 function normalizeUploadPath(response: ImageUploadResponse): string {
   const direct =
     response.path ||

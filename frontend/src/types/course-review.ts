@@ -3,6 +3,9 @@
 
 export interface ReviewerInfo {
   name: string;
+  imageUrl?: string | null;
+  avatar?: string | null;
+  avatarSeed?: string | null;
 }
 
 export interface Review {

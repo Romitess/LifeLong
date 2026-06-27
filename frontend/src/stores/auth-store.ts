@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 import { api } from 'src/boot/axios';
+import { getDefaultAvatarUrl, getImageUrl, validateImageFile } from 'src/services/image.service';
 
 export interface User {
   id: string;
@@ -27,6 +28,7 @@ export interface User {
     | 'lifelong2';
   username?: string;
   avatar: string;
+  avatarSeed?: string;
 }
 
 export interface RegisterLearnerPayload {
@@ -104,7 +106,18 @@ export type UserProfileUpdate = Pick<
   'firstNameTh' | 'lastNameTh' | 'firstNameEn' | 'lastNameEn' | 'phone'
 >;
 
-type StoredUserProfile = UserProfileUpdate;
+interface ProfileResponse {
+  id: number;
+  studentCode: string | null;
+  userCode: string | null;
+  firstNameTh: string | null;
+  lastNameTh: string | null;
+  firstNameEn: string | null;
+  lastNameEn: string | null;
+  phone: string | null;
+  imageUrl: string | null;
+  avatarSeed: string;
+}
 
 // removed: AUTH_DEMO_ACCOUNTS — no longer used; kept export to avoid breaking imports temporarily
 export const AUTH_DEMO_ACCOUNTS: AuthDemoAccount[] = [];
@@ -152,8 +165,14 @@ function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
-function createDefaultAvatar(email: string): string {
-  return `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}`;
+function createDefaultAvatar(seed: string): string {
+  return getDefaultAvatarUrl(seed);
+}
+
+function resolveAvatar(imageUrl: unknown, fallbackSeed: string): string {
+  return typeof imageUrl === 'string' && imageUrl.trim()
+    ? getImageUrl(imageUrl.trim())
+    : createDefaultAvatar(fallbackSeed);
 }
 
 function isUserRole(value: unknown): value is User['role'] {
@@ -235,99 +254,36 @@ function findAuthAccountByEmail(email: string): StoredAuthAccount | null {
   return getAllAuthAccounts().find((account) => account.email === normalizedEmail) ?? null;
 }
 
-function persistAccountAvatar(email: string, avatar: string): void {
-  const normalizedEmail = normalizeEmail(email);
-  const accounts = readStoredAuthAccounts();
-  const nextAccounts = accounts.map((account) =>
-    account.email === normalizedEmail ? { ...account, avatar } : account,
-  );
-  writeStoredAuthAccounts(nextAccounts);
-}
-
-function getStoredAvatar(): string | null {
-  return readLocalStorage(PROFILE_AVATAR_STORAGE_KEY);
-}
-
-function getProfileFields(
-  user: Pick<User, 'firstNameTh' | 'lastNameTh' | 'firstNameEn' | 'lastNameEn' | 'phone'>,
-): StoredUserProfile {
-  return {
-    firstNameTh: user.firstNameTh,
-    lastNameTh: user.lastNameTh,
-    firstNameEn: user.firstNameEn,
-    lastNameEn: user.lastNameEn,
-    phone: user.phone,
-  };
-}
-
-function getStoredProfile(): StoredUserProfile | null {
-  const stored = readLocalStorage(USER_PROFILE_STORAGE_KEY);
-
-  if (!stored) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(stored) as Partial<User> | null;
-
-    if (!parsed || typeof parsed !== 'object') {
-      return null;
-    }
-
-    return {
-      firstNameTh: typeof parsed.firstNameTh === 'string' ? parsed.firstNameTh : '',
-      lastNameTh: typeof parsed.lastNameTh === 'string' ? parsed.lastNameTh : '',
-      firstNameEn: typeof parsed.firstNameEn === 'string' ? parsed.firstNameEn : '',
-      lastNameEn: typeof parsed.lastNameEn === 'string' ? parsed.lastNameEn : '',
-      phone: typeof parsed.phone === 'string' ? parsed.phone : '',
-    };
-  } catch (error) {
-    console.warn('Failed to parse stored user profile', error);
-    removeLocalStorage(USER_PROFILE_STORAGE_KEY);
-    return null;
-  }
-}
-
-function persistUserProfile(profile: StoredUserProfile): void {
-  const serializedProfile = JSON.stringify(profile);
-
-  if (writeLocalStorage(USER_PROFILE_STORAGE_KEY, serializedProfile)) {
-    return;
-  }
-
-  removeLocalStorage(FULL_PROFILE_AVATAR_STORAGE_KEY);
-  if (writeLocalStorage(USER_PROFILE_STORAGE_KEY, serializedProfile)) {
-    return;
-  }
-
-  removeLocalStorage(USER_PROFILE_STORAGE_KEY);
-  if (writeLocalStorage(USER_PROFILE_STORAGE_KEY, serializedProfile)) {
-    return;
-  }
-
-  console.warn('Unable to persist user profile. In-memory state was updated only.');
-}
-
 function createUserFromAccount(account: StoredAuthAccount): User {
-  const storedProfile = getStoredProfile();
-
   return {
     id: account.id,
     studentId: account.studentId,
-    firstNameTh: storedProfile?.firstNameTh || account.firstNameTh,
-    lastNameTh: storedProfile?.lastNameTh || account.lastNameTh,
-    firstNameEn: storedProfile?.firstNameEn || account.firstNameEn,
-    lastNameEn: storedProfile?.lastNameEn || account.lastNameEn,
+    firstNameTh: account.firstNameTh,
+    lastNameTh: account.lastNameTh,
+    firstNameEn: account.firstNameEn,
+    lastNameEn: account.lastNameEn,
     email: account.email,
-    phone: storedProfile?.phone || account.phone,
+    phone: account.phone,
     faculty: account.faculty,
     facName: account.facName ?? null,
     facId: account.facId ?? null,
     department: account.department,
     role: account.role,
     ...(account.username !== undefined ? { username: account.username } : {}),
-    avatar: getStoredAvatar() || account.avatar || createDefaultAvatar(account.email),
+    ...(account.avatarSeed !== undefined ? { avatarSeed: account.avatarSeed } : {}),
+    avatar: account.avatar || createDefaultAvatar(account.avatarSeed || account.email),
   };
+}
+
+function updateStoredAccount(email: string, updates: Partial<StoredAuthAccount>): void {
+  const normalizedEmail = normalizeEmail(email);
+  const accounts = readStoredAuthAccounts();
+  const index = accounts.findIndex((account) => account.email === normalizedEmail);
+  if (index === -1) return;
+  const existing = accounts[index];
+  if (!existing) return;
+  accounts[index] = { ...existing, ...updates };
+  writeStoredAuthAccounts(accounts);
 }
 
 function getInitialLoginState(): boolean {
@@ -366,7 +322,6 @@ export const useAuthStore = defineStore('auth', {
 
       this.isLoggedIn = true;
       this.user = createUserFromAccount(account);
-      persistUserProfile(getProfileFields(this.user));
     },
 
     async login(
@@ -383,17 +338,19 @@ export const useAuthStore = defineStore('auth', {
         });
 
         const apiUser = response.data.user;
+        const avatarSeed = apiUser.avatarSeed || `lll-user-${apiUser.id}`;
 
         // Map API User to Frontend User model
         const account: StoredAuthAccount = {
           id: String(apiUser.id),
-          studentId: 'EXT' + String(apiUser.id).padStart(7, '0'),
-          firstNameTh: apiUser.username,
-          lastNameTh: '',
-          firstNameEn: apiUser.username.toUpperCase(),
-          lastNameEn: apiUser.role.toUpperCase(),
+          studentId:
+            apiUser.studentCode || apiUser.userCode || 'EXT' + String(apiUser.id).padStart(7, '0'),
+          firstNameTh: apiUser.firstNameTh || apiUser.username,
+          lastNameTh: apiUser.lastNameTh || '',
+          firstNameEn: apiUser.firstNameEn || apiUser.username.toUpperCase(),
+          lastNameEn: apiUser.lastNameEn || apiUser.role.toUpperCase(),
           email: apiUser.email,
-          phone: '',
+          phone: apiUser.phone || '',
           faculty: 'Lifelong Learning',
           facName: apiUser.facName ?? null,
           facId: apiUser.facId ?? null,
@@ -409,7 +366,8 @@ export const useAuthStore = defineStore('auth', {
             return 'student';
           })(),
           username: apiUser.username,
-          avatar: apiUser.avatarUrl || createDefaultAvatar(apiUser.email),
+          avatarSeed,
+          avatar: resolveAvatar(apiUser.imageUrl ?? apiUser.avatar, avatarSeed),
           createdAt: new Date().toISOString(),
           source: 'registered',
         };
@@ -476,7 +434,8 @@ export const useAuthStore = defineStore('auth', {
           department: 'Lifelong Learning',
           role: 'external',
           username: apiUser.username,
-          avatar: createDefaultAvatar(email),
+          avatarSeed: `lll-user-${apiUser.id}`,
+          avatar: createDefaultAvatar(`lll-user-${apiUser.id}`),
           createdAt,
           source: 'registered',
         };
@@ -518,20 +477,83 @@ export const useAuthStore = defineStore('auth', {
           ...this.user,
           avatar,
         };
-        persistAccountAvatar(this.user.email, avatar);
+        updateStoredAccount(this.user.email, { avatar });
       }
     },
 
-    updateProfile(profile: UserProfileUpdate): void {
+    async uploadAvatar(file: File): Promise<void> {
+      if (!this.user) {
+        return;
+      }
+      validateImageFile(file);
+
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await api.patch<{ imageUrl: string | null }>(
+        '/api/profile/image',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        },
+      );
+      this.setAvatar(resolveAvatar(data.imageUrl, this.user.avatarSeed || this.user.email));
+    },
+
+    async deleteAvatar(): Promise<void> {
+      if (!this.user) {
+        return;
+      }
+      await api.delete('/api/profile/image');
+      this.setAvatar(createDefaultAvatar(this.user.avatarSeed || this.user.email));
+    },
+
+    async fetchProfile(): Promise<void> {
       if (!this.user) {
         return;
       }
 
+      const { data } = await api.get<ProfileResponse>('/api/profile');
+      this.applyProfileResponse(data);
+    },
+
+    async updateProfile(profile: UserProfileUpdate): Promise<void> {
+      if (!this.user) {
+        return;
+      }
+
+      const { data } = await api.patch<ProfileResponse>('/api/profile', profile);
+      this.applyProfileResponse(data);
+    },
+
+    applyProfileResponse(profile: ProfileResponse): void {
+      if (!this.user) {
+        return;
+      }
+
+      const avatarSeed = profile.avatarSeed || this.user.avatarSeed || this.user.email;
+      const avatar = resolveAvatar(profile.imageUrl, avatarSeed);
       this.user = {
         ...this.user,
-        ...profile,
+        avatarSeed,
+        studentId: profile.studentCode || profile.userCode || this.user.studentId,
+        firstNameTh: profile.firstNameTh ?? '',
+        lastNameTh: profile.lastNameTh ?? '',
+        firstNameEn: profile.firstNameEn ?? '',
+        lastNameEn: profile.lastNameEn ?? '',
+        phone: profile.phone ?? '',
+        avatar,
       };
-      persistUserProfile(getProfileFields(this.user));
+      removeLocalStorage(USER_PROFILE_STORAGE_KEY);
+      updateStoredAccount(this.user.email, {
+        studentId: this.user.studentId,
+        firstNameTh: this.user.firstNameTh,
+        lastNameTh: this.user.lastNameTh,
+        firstNameEn: this.user.firstNameEn,
+        lastNameEn: this.user.lastNameEn,
+        phone: this.user.phone,
+        avatarSeed,
+        avatar,
+      });
     },
   },
 });

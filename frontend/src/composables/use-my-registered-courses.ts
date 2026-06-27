@@ -78,8 +78,8 @@ export function useMyRegisteredCourses() {
       code: registration.courseCode,
       title: matchedCourse.title,
       titleEn: matchedCourse.titleEn || registration.courseTitle,
-      imageUrl: registration.courseImageUrl || matchedCourse.imageUrl,
-      cover: registration.courseCover || matchedCourse.cover,
+      imageUrl: matchedCourse.imageUrl || registration.courseImageUrl,
+      cover: matchedCourse.cover || registration.courseCover,
     };
   };
 

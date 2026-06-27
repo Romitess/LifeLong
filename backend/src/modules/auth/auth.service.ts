@@ -1,4 +1,11 @@
-import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -11,9 +18,13 @@ import { LltumUser } from './entities/lltum-user.entity';
 import { LltUmtlog } from './entities/llt-umtlog.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ProfileResponseDto } from './dto/profile-response.dto';
 import { MoodleService } from '../moodle/moodle.service';
-import { Role } from './enums/role.enum';
 import { PlatformGatewayService } from '../platform-gateway/platform-gateway.service';
+import { Role } from './enums/role.enum';
+import type { JwtPayload } from './jwt-auth.guard';
+import { ProfileImageResponseDto } from './dto/profile-image-response.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 const BCRYPT_ROUNDS = 12;
 const MAX_FAILED_ATTEMPTS = 5;
@@ -127,7 +138,15 @@ export class AuthService {
       role: string;
       facId?: number | null;
       facName?: string | null;
-      avatarUrl?: string | null;
+      firstNameTh?: string | null;
+      lastNameTh?: string | null;
+      firstNameEn?: string | null;
+      lastNameEn?: string | null;
+      phone?: string | null;
+      studentCode?: string | null;
+      userCode?: string | null;
+      imageUrl?: string | null;
+      avatarSeed?: string;
     };
   }> {
     const { username, password } = loginDto;
@@ -185,6 +204,8 @@ export class AuthService {
       where: { username: user.username },
     });
 
+    const profile = lltumUser ? this.toProfileResponse(lltumUser) : null;
+
     const token = this.jwtService.sign({
       sub: user.id,
       lltumSub: lltumUser?.id ?? null,
@@ -225,42 +246,90 @@ export class AuthService {
         role: user.role,
         facId: user.facId,
         facName: (user.faculty as { name?: string } | null)?.name ?? null,
-        avatarUrl: this.buildAvatarUrl(user.avatarPath),
+        firstNameTh: profile?.firstNameTh ?? null,
+        lastNameTh: profile?.lastNameTh ?? null,
+        firstNameEn: profile?.firstNameEn ?? null,
+        lastNameEn: profile?.lastNameEn ?? null,
+        phone: profile?.phone ?? null,
+        studentCode: profile?.studentCode ?? null,
+        userCode: profile?.userCode ?? null,
+        imageUrl: profile?.imageUrl ?? null,
+        avatarSeed: profile?.avatarSeed ?? `lll-user-${user.id}`,
       },
     };
   }
 
-  async uploadAvatar(
-    authUserId: number,
+  async getProfile(user: JwtPayload): Promise<ProfileResponseDto> {
+    const lltumUser = await this.getLltumUserForProfile(user);
+    return this.toProfileResponse(lltumUser);
+  }
+
+  async updateProfile(user: JwtPayload, dto: UpdateProfileDto): Promise<ProfileResponseDto> {
+    const lltumUser = await this.getLltumUserForProfile(user);
+    const updates: Partial<LltumUser> = {};
+
+    const firstNameTh = this.normalizeRequiredProfileName(dto.firstNameTh, 'firstNameTh');
+    if (firstNameTh !== undefined) updates.firstNameTh = firstNameTh;
+
+    const lastNameTh = this.normalizeRequiredProfileName(dto.lastNameTh, 'lastNameTh');
+    if (lastNameTh !== undefined) updates.lastNameTh = lastNameTh;
+
+    const firstNameEn = this.normalizeOptionalProfileText(dto.firstNameEn);
+    if (firstNameEn !== undefined) updates.firstNameEn = firstNameEn;
+
+    const lastNameEn = this.normalizeOptionalProfileText(dto.lastNameEn);
+    if (lastNameEn !== undefined) updates.lastNameEn = lastNameEn;
+
+    const phone = this.normalizeOptionalProfileText(dto.phone);
+    if (phone !== undefined) updates.tel = phone;
+
+    if (Object.keys(updates).length > 0) {
+      await this.lltumUserRepository.update(lltumUser.id, updates);
+    }
+
+    const updated = await this.getLltumUserForProfile(user);
+    await this.syncProfileToMoodle(updated, user).catch((error: unknown) => {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Profile saved locally but Moodle profile sync failed: ${msg}`);
+    });
+
+    return this.toProfileResponse(updated);
+  }
+
+  async updateProfileImage(
+    user: JwtPayload,
     file: Express.Multer.File,
-  ): Promise<{ avatarPath: string; avatarUrl: string }> {
-    const user = await this.authUserRepository.findOne({ where: { id: authUserId } });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
+  ): Promise<ProfileImageResponseDto> {
+    const lltumUser = await this.getLltumUserForProfile(user);
+    const previousImageUrl = lltumUser.imageUrl;
+    const uploaded = await this.platformGatewayService.uploadByCategory(
+      'profile',
+      file,
+      user.lltumSub,
+    );
 
-    const uploaded = await this.platformGatewayService.uploadByCategory('profile', file, authUserId);
-    const avatarPath = uploaded.path;
-    const previousAvatarPath = user.avatarPath;
-
-    user.avatarPath = avatarPath;
-    await this.authUserRepository.save(user);
-
-    if (
-      previousAvatarPath &&
-      previousAvatarPath !== avatarPath &&
-      previousAvatarPath.startsWith('/uploads/profile/')
-    ) {
-      void this.platformGatewayService.deleteFile(previousAvatarPath).catch((error: unknown) => {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        this.logger.warn(`Failed to delete previous avatar for ${user.username}: ${errorMessage}`);
+    try {
+      await this.lltumUserRepository.update(lltumUser.id, { imageUrl: uploaded.url });
+    } catch (error) {
+      await this.platformGatewayService.deleteFile(uploaded.path).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Failed to delete newly uploaded profile image after DB error: ${msg}`);
       });
+      throw error;
     }
 
-    return {
-      avatarPath,
-      avatarUrl: this.buildAvatarUrl(avatarPath) ?? '',
-    };
+    await this.deleteGatewayFileFromUrl(previousImageUrl);
+    return { imageUrl: uploaded.url };
+  }
+
+  async deleteProfileImage(user: JwtPayload): Promise<ProfileImageResponseDto> {
+    const lltumUser = await this.getLltumUserForProfile(user);
+    const previousImageUrl = lltumUser.imageUrl;
+    if (!previousImageUrl) return { imageUrl: null };
+
+    await this.lltumUserRepository.update(lltumUser.id, { imageUrl: null });
+    await this.deleteGatewayFileFromUrl(previousImageUrl);
+    return { imageUrl: null };
   }
 
   /**
@@ -275,6 +344,11 @@ export class AuthService {
   }
 
   private async syncWithMoodle(user: LltAuthUser, plainPassword: string): Promise<number | null> {
+    const lltumUser = await this.lltumUserRepository.findOne({
+      where: { username: user.username },
+    });
+    const moodleProfile = this.buildMoodleProfileNames(lltumUser, user);
+
     // Check if user exists in Moodle using core_user_get_users with criteria
     const searchParams = new URLSearchParams();
     searchParams.append('criteria[0][key]', 'username');
@@ -283,20 +357,23 @@ export class AuthService {
     const searchResult = (await this.moodleService.callMoodleApi(
       'core_user_get_users',
       searchParams,
-    )) as { users: { id: number; lastname?: string; email?: string }[] };
+    )) as { users: { id: number; firstname?: string; lastname?: string; email?: string }[] };
 
     if (searchResult.users && searchResult.users.length > 0) {
       const moodleUser = searchResult.users[0];
       this.logger.log(`User ${user.username} already exists in Moodle (ID: ${moodleUser.id}).`);
 
-      // Sync role/email if changed in LLT_AUTH_USERS; password only when explicitly enabled
-      if (moodleUser.lastname !== user.role || moodleUser.email !== user.email) {
-        this.logger.log(
-          `Syncing user ${user.username} (role: ${user.role}, email: ${user.email}) in Moodle...`,
-        );
+      // Sync display name/email if changed in LLL; password only when explicitly enabled.
+      if (
+        moodleUser.firstname !== moodleProfile.firstname ||
+        moodleUser.lastname !== moodleProfile.lastname ||
+        moodleUser.email !== user.email
+      ) {
+        this.logger.log(`Syncing user ${user.username} profile/email in Moodle...`);
         const updateParams = new URLSearchParams();
         updateParams.append('users[0][id]', moodleUser.id.toString());
-        updateParams.append('users[0][lastname]', user.role);
+        updateParams.append('users[0][firstname]', moodleProfile.firstname);
+        updateParams.append('users[0][lastname]', moodleProfile.lastname);
         updateParams.append('users[0][email]', user.email);
         if (this.moodlePasswordSyncEnabled) {
           updateParams.append('users[0][password]', plainPassword);
@@ -319,8 +396,8 @@ export class AuthService {
     const createParams = new URLSearchParams();
     createParams.append('users[0][username]', user.username);
     createParams.append('users[0][password]', moodlePassword);
-    createParams.append('users[0][firstname]', user.username);
-    createParams.append('users[0][lastname]', user.role); // Use Role as Lastname for identification
+    createParams.append('users[0][firstname]', moodleProfile.firstname);
+    createParams.append('users[0][lastname]', moodleProfile.lastname);
     createParams.append('users[0][email]', user.email);
     createParams.append('users[0][auth]', 'manual');
 
@@ -343,6 +420,98 @@ export class AuthService {
     lltumUser.lmsId = moodleUserId;
     await this.lltumUserRepository.save(lltumUser);
     this.logger.log(`Linked LLTUMUSER.LMS_ID=${moodleUserId} for ${username}`);
+  }
+
+  private async getLltumUserForProfile(user: JwtPayload): Promise<LltumUser> {
+    if (!user.lltumSub) {
+      throw new BadRequestException('User profile is not linked');
+    }
+    const lltumUser = await this.lltumUserRepository.findOne({ where: { id: user.lltumSub } });
+    if (!lltumUser) {
+      throw new NotFoundException('User profile not found');
+    }
+    return lltumUser;
+  }
+
+  private toProfileResponse(lltumUser: LltumUser): ProfileResponseDto {
+    return {
+      id: lltumUser.id,
+      studentCode: lltumUser.studentCode ?? null,
+      userCode: lltumUser.userCode ?? null,
+      firstNameTh: lltumUser.firstNameTh ?? null,
+      lastNameTh: lltumUser.lastNameTh ?? null,
+      firstNameEn: lltumUser.firstNameEn ?? null,
+      lastNameEn: lltumUser.lastNameEn ?? null,
+      phone: lltumUser.tel ?? null,
+      imageUrl: lltumUser.imageUrl ?? null,
+      avatarSeed: `lll-user-${lltumUser.id}`,
+    };
+  }
+
+  private normalizeRequiredProfileName(
+    value: string | undefined,
+    field: string,
+  ): string | undefined {
+    if (value === undefined) return undefined;
+    const trimmed = value.trim();
+    if (!trimmed) {
+      throw new BadRequestException(`${field} is required`);
+    }
+    return trimmed;
+  }
+
+  private normalizeOptionalProfileText(
+    value: string | null | undefined,
+  ): string | null | undefined {
+    if (value === undefined) return undefined;
+    const trimmed = value?.trim() ?? '';
+    return trimmed || null;
+  }
+
+  private buildMoodleProfileNames(
+    lltumUser: LltumUser | null,
+    authUser: Pick<LltAuthUser, 'username' | 'role'>,
+  ): { firstname: string; lastname: string } {
+    const firstname =
+      lltumUser?.firstNameTh?.trim() || lltumUser?.firstNameEn?.trim() || authUser.username;
+    const lastname =
+      lltumUser?.lastNameTh?.trim() || lltumUser?.lastNameEn?.trim() || authUser.role;
+
+    return {
+      firstname,
+      lastname,
+    };
+  }
+
+  private async syncProfileToMoodle(lltumUser: LltumUser, user: JwtPayload): Promise<void> {
+    if (!lltumUser.lmsId) {
+      this.logger.warn(
+        `Skipping Moodle profile sync for ${user.username}: LLTUMUSER.LMS_ID is empty`,
+      );
+      return;
+    }
+
+    const moodleProfile = this.buildMoodleProfileNames(lltumUser, {
+      username: user.username,
+      role: user.role,
+    });
+    const params = new URLSearchParams();
+    params.append('users[0][id]', lltumUser.lmsId.toString());
+    params.append('users[0][firstname]', moodleProfile.firstname);
+    params.append('users[0][lastname]', moodleProfile.lastname);
+    params.append('users[0][email]', lltumUser.email || user.email);
+
+    await this.moodleService.callMoodleApi('core_user_update_users', params);
+  }
+
+  private async deleteGatewayFileFromUrl(fileUrl: string | null): Promise<void> {
+    if (!fileUrl) return;
+    const gatewayPath = toGatewayFilePath(fileUrl);
+    if (!gatewayPath) return;
+    await this.platformGatewayService.deleteFile(gatewayPath).catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Failed to delete old profile image from gateway: ${msg}`);
+    });
   }
 
   /**
@@ -412,10 +581,11 @@ export class AuthService {
     };
   }
 
-  private buildAvatarUrl(avatarPath: string | null | undefined): string | null {
-    if (!avatarPath) return null;
-    if (/^https?:\/\//i.test(avatarPath)) return avatarPath;
-    const normalizedPath = avatarPath.startsWith('/') ? avatarPath : `/${avatarPath}`;
-    return `/api${normalizedPath}`.replace(/\/{2,}/g, '/');
-  }
+}
+
+function toGatewayFilePath(filePath: string): string | null {
+  const withoutQuery = filePath.split('?')[0] ?? filePath;
+  const match = withoutQuery.match(/\/uploads\/.+$/);
+  if (match) return match[0].replace(/^\/+/, '');
+  return null;
 }

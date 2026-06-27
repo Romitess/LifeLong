@@ -2267,22 +2267,36 @@ function exportLearnerListCsv(course: Course | undefined): void {
   URL.revokeObjectURL(url);
 }
 
-async function printGradeForm(course: Course | undefined): Promise<void> {
-  if (!course) return;
-  const email = authStore.user?.email ?? '';
-  let instructorPrefix = '';
-  let instructorName = '';
+function getAuthUserDisplayName(): string {
+  const nameTh = [authStore.user?.firstNameTh, authStore.user?.lastNameTh]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const nameEn = [authStore.user?.firstNameEn, authStore.user?.lastNameEn]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  return nameTh || nameEn || authStore.user?.username || authStore.user?.email || '';
+}
+
+async function getInstructorDocumentIdentity(): Promise<{ prefix: string; name: string }> {
+  await authStore.fetchProfile().catch(() => undefined);
+  let prefix = '';
   try {
     const { data } = await api.get<{
       prefix: string | null;
-      firstNameTh: string | null;
-      lastNameTh: string | null;
-    }>(`/api/instructor/profile?email=${encodeURIComponent(email)}`);
-    instructorPrefix = data.prefix ?? '';
-    instructorName = `${data.firstNameTh ?? ''} ${data.lastNameTh ?? ''}`.trim();
+    }>('/api/instructor/profile');
+    prefix = data.prefix ?? '';
   } catch {
-    instructorName = authStore.user?.email ?? '';
+    prefix = '';
   }
+  return { prefix, name: getAuthUserDisplayName() };
+}
+
+async function printGradeForm(course: Course | undefined): Promise<void> {
+  if (!course) return;
+  const { prefix: instructorPrefix, name: instructorName } =
+    await getInstructorDocumentIdentity();
   const learnerList = getCourseResultLearners(course);
   const printDate = new Date().toLocaleString('th-TH', {
     day: '2-digit',
@@ -2380,19 +2394,8 @@ async function printGradeForm(course: Course | undefined): Promise<void> {
 async function printCbs003(course: Course | undefined): Promise<void> {
   if (!course) return;
   const email = authStore.user?.email ?? '';
-  let instructorName = '';
-  let instructorPrefix = '';
-  try {
-    const { data } = await api.get<{
-      prefix: string | null;
-      firstNameTh: string | null;
-      lastNameTh: string | null;
-    }>(`/api/instructor/profile?email=${encodeURIComponent(email)}`);
-    instructorPrefix = data.prefix ?? '';
-    instructorName = `${data.firstNameTh ?? ''} ${data.lastNameTh ?? ''}`.trim();
-  } catch {
-    instructorName = email;
-  }
+  const { prefix: instructorPrefix, name: instructorName } =
+    await getInstructorDocumentIdentity();
 
   // Ensure data is loaded before printing
   const courseKey = String(course.id).startsWith('db-') ? course.id : `db-${course.id}`;

@@ -2,7 +2,6 @@ import { ref, computed, reactive } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from 'src/stores/auth-store';
-import { uploadProfileAvatarDataUrl } from 'src/services/profile-avatar.service';
 
 export interface AvatarOption {
   label: string;
@@ -336,31 +335,21 @@ export function useProfileAvatar() {
     };
 
     persistCartoonAvatar(snapshot);
-    $q.loading.show({ message: t('profile.notifications.processing') || 'Uploading avatar...' });
-
     try {
-      const uploadedAvatar = await uploadProfileAvatarDataUrl(
-        avatarPortraitUrl.value,
-        'profile-avatar.png',
-      );
-      authStore.setAvatar(uploadedAvatar.avatarUrl);
-      fullAvatarUrl.value = uploadedAvatar.avatarUrl;
+      await authStore.uploadAvatar(await dataUrlToPngFile(avatarPortraitUrl.value));
+      fullAvatarUrl.value = authStore.user?.avatar || avatarPreviewUrl.value;
 
       $q.notify({
         type: 'positive',
         message: t('profile.notifications.avatarSaved'),
         position: 'top',
       });
-    } catch (error) {
-      console.error('Failed to save cartoon avatar', error);
+    } catch {
       $q.notify({
         type: 'negative',
-        message: t('profile.notifications.profileSaveFailed'),
+        message: t('profile.notifications.avatarSaveError'),
         position: 'top',
       });
-      throw error;
-    } finally {
-      $q.loading.hide();
     }
   }
 
@@ -856,6 +845,32 @@ export function useProfileAvatar() {
     createAnimeAvatarDataUrl,
     createAnimeAvatarSvg,
   };
+}
+
+function dataUrlToPngFile(dataUrl: string): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Unable to create avatar canvas'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('Unable to render avatar image'));
+          return;
+        }
+        resolve(new File([blob], 'avatar.png', { type: 'image/png' }));
+      }, 'image/png');
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
 }
 
 function getStoredFullAvatar(): string {
