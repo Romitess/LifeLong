@@ -181,16 +181,6 @@ const { t, locale } = useI18n();
 const authStore = useAuthStore();
 const userFacName = computed(() => authStore.user?.facName || authStore.user?.faculty || 'All');
 
-const FACULTY_I18N_MAP: Record<string, string> = {
-  คณะวิทยาการสารสนเทศ: 'informatics',
-  คณะวิทยาศาสตร์: 'science',
-  คณะพยาบาลศาสตร์: 'nursing',
-  คณะบริหารธุรกิจ: 'business',
-  คณะวิศวกรรมศาสตร์: 'engineering',
-  สำนักคอมพิวเตอร์: 'computerCenter',
-  คณะมนุษยศาสตร์และสังคมศาสตร์: 'humanities',
-};
-
 const stats = computed<
   {
     label: string;
@@ -231,6 +221,7 @@ interface FlatCourseRow {
   responsibleName: string | null;
   responsibleNameEn: string | null;
   facultyName: string;
+  facultyNameEn: string | null;
   startDate: string | null;
   endDate: string | null;
   learnerCount: number;
@@ -249,10 +240,8 @@ const flatRows = computed<FlatCourseRow[]>(() => {
         courseNameEn: item.courseNameEn ?? null,
         responsibleName: item.responsibleName,
         responsibleNameEn: item.responsibleNameEn ?? null,
-        facultyName: (() => {
-          const key = FACULTY_I18N_MAP[group.facultyName];
-          return key ? t(`common.faculties.${key}`) : group.facultyName;
-        })(),
+        facultyName: locale.value === 'th' ? group.facultyName : (group.facultyNameEn || group.facultyName),
+        facultyNameEn: group.facultyNameEn,
         startDate: item.startDate,
         endDate: item.endDate,
         learnerCount: item.learnerCount,

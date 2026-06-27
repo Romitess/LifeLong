@@ -7,6 +7,7 @@ export interface CentralReceiptSummaryItem {
   id: number;
   no: number;
   faculty: string;
+  facultyEn: string | null;
   receiptNo: string;
   customerName: string;
   customerNameEn: string | null;
@@ -25,6 +26,7 @@ export interface CentralReceiptSummaryItem {
 interface RawReceiptRow {
   id: string | number | null;
   faculty: string | null;
+  facultyEn: string | null;
   receiptNo: string | number | null;
   customerName: string | null;
   customerNameEn: string | null;
@@ -89,6 +91,7 @@ export class ReceiptSummaryReportService {
         LEFT JOIN LLTCOURSE c ON c.COSE_ID = en.COSE_ID
         LEFT JOIN LLTUMUSER u ON u.USER_ID = e.USER_ID
         LEFT JOIN LLTUMUSER cu ON cu.USER_USERNAME = e.CREATEUSER
+        LEFT JOIN LLTFACULTY lf ON lf.FAC_NAME = e.FAC_NAME
         ${whereClause}
       `;
 
@@ -96,6 +99,7 @@ export class ReceiptSummaryReportService {
         SELECT
           e.ENROLLRECEIPT_ID                                                                              AS id,
           COALESCE(e.FAC_NAME, '-')                                                                      AS faculty,
+          lf.FAC_NAMEEN                                                                                  AS facultyEn,
           e.ENROLLRECEIPT_ID                                                                              AS receiptNo,
           NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(e.USER_FNAMETH, ''), ' ', COALESCE(e.USER_LNAMETH, '')))), '') AS customerName,
           NULLIF(LTRIM(RTRIM(CONCAT(COALESCE(u.USER_FNAMEEN, ''), ' ', COALESCE(u.USER_LNAMEEN, '')))), '') AS customerNameEn,
@@ -147,7 +151,8 @@ export class ReceiptSummaryReportService {
         const item: CentralReceiptSummaryItem = {
           id: Number(row.id),
           no: offset + index + 1,
-          faculty: row.faculty ?? '-',
+          faculty: row.faculty?.trim() ?? '-',
+          facultyEn: row.facultyEn?.trim() || null,
           receiptNo: String(row.receiptNo ?? '-'),
           customerName: row.customerName ?? '-',
           customerNameEn: row.customerNameEn?.trim() || null,

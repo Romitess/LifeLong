@@ -77,8 +77,8 @@
           :on-rows-per-page-change="onRowsPerPageChange"
           min-width="0"
         >
-          <template #cell-faculty="{ value }">
-            {{ translateFaculty(value as string) }}
+          <template #cell-faculty="{ row }">
+            {{ getFacultyDisplayName(row as ReceiptUsageItem) }}
           </template>
 
           <template #cell-cancelDoc="{ row }">
@@ -158,19 +158,9 @@ function getCollectorDisplayName(row: ReceiptUsageItem): string {
   return row.collector;
 }
 
-const FACULTY_I18N_MAP: Record<string, string> = {
-  คณะวิทยาการสารสนเทศ: 'informatics',
-  คณะวิทยาศาสตร์: 'science',
-  คณะพยาบาลศาสตร์: 'nursing',
-  คณะบริหารธุรกิจ: 'business',
-  คณะวิศวกรรมศาสตร์: 'engineering',
-  สำนักคอมพิวเตอร์: 'computerCenter',
-  คณะมนุษยศาสตร์และสังคมศาสตร์: 'humanities',
-};
-
-function translateFaculty(name: string): string {
-  const key = FACULTY_I18N_MAP[name];
-  return key ? t(`common.faculties.${key}`) : name;
+function getFacultyDisplayName(row: ReceiptUsageItem): string {
+  if (locale.value !== 'th' && row.facultyEn) return row.facultyEn;
+  return row.faculty;
 }
 const $q = useQuasar();
 const {
@@ -373,7 +363,7 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
     body: filteredRows.value.map((row) => [
       row.no,
       row.departmentCode,
-      translateFaculty(row.faculty),
+      getFacultyDisplayName(row),
       row.receiptNo,
       row.status === 'ยกเลิก'
         ? `${t('centralFinance.receiptUsage.export.statusCancelled')}\n${row.cancelBy ?? ''}\n${row.cancelDate ?? ''}`
@@ -431,7 +421,7 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
     data: filteredRows.value.map((row) => [
       row.no,
       row.departmentCode,
-      translateFaculty(row.faculty),
+      getFacultyDisplayName(row),
       row.receiptNo,
       row.status === 'ยกเลิก'
         ? `${t('centralFinance.receiptUsage.export.statusCancelled')} | ${row.cancelBy ?? ''} | ${row.cancelDate ?? ''}`

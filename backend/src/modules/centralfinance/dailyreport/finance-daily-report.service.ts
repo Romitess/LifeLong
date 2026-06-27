@@ -13,6 +13,7 @@ export interface FinanceDailyReportItem {
   fundName: string | null;
   amount: number;
   faculty: string;
+  facultyEn: string | null;
   receiptDate: string | null;
   receiptStatus: string;
 }
@@ -26,6 +27,7 @@ interface RawDailyReportRow {
   fundName: string | null;
   amount: string | number | null;
   faculty: string | null;
+  facultyEn: string | null;
   receiptDate: string | null;
   receiptStatus: string | null;
 }
@@ -84,6 +86,7 @@ export class FinanceDailyReportService {
           NULL                                                                 AS fundName,
           SUM(COALESCE(CAST(en.ENROLL_AMOUNT AS DECIMAL(15,2)), CAST(e.AMOUNT AS DECIMAL(15,2)), 0)) AS amount,
           COALESCE(e.FAC_NAME, '-')                                            AS faculty,
+          MAX(lf.FAC_NAMEEN)                                                   AS facultyEn,
           MAX(DATE_FORMAT(${PAYDATE_EXPR}, '%d/%m/%Y'))                        AS receiptDate,
           MAX(CASE e.RECEIPT_STATUS
             WHEN 'Y' THEN 'ใช้งาน'
@@ -95,6 +98,7 @@ export class FinanceDailyReportService {
         LEFT JOIN LLTOPENCLASS oc ON oc.OPENCLASS_ID = en.OPENCLASS_ID
         LEFT JOIN LLTCOURSE c ON c.COSE_ID = en.COSE_ID
         LEFT JOIN LLTCOSTPLAN cp ON cp.COSTPLAN_ID = oc.COSTPLAN_ID
+        LEFT JOIN LLTFACULTY lf ON lf.FAC_NAME = e.FAC_NAME
         ${whereClause}
         GROUP BY
           COALESCE(e.FAC_NAME, '-'),
@@ -115,6 +119,7 @@ export class FinanceDailyReportService {
         fundName: row.fundName?.trim() ?? null,
         amount: row.amount !== null && row.amount !== undefined ? Number(row.amount) : 0,
         faculty: row.faculty ?? '-',
+        facultyEn: row.facultyEn?.trim() || null,
         receiptDate: row.receiptDate ?? null,
         receiptStatus: row.receiptStatus ?? '-',
       }));

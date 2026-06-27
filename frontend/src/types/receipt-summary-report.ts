@@ -2,6 +2,7 @@ export interface ReceiptSummaryItem {
   id: number;
   no: number;
   faculty: string;
+  facultyEn: string | null;
   receiptNo: string;
   customerName: string;
   customerNameEn: string | null;

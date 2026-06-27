@@ -55,6 +55,7 @@ interface RegistrationStatisticsCourseRow {
   courseNameEn: string | null;
   facultyId: number | string | null;
   facultyName: string | null;
+  facultyNameEn: string | null;
   responsibleName: string | null;
   responsibleNameEn: string | null;
   startDate: Date | string | null;
@@ -99,6 +100,7 @@ export class AdminReportsService {
         NULLIF(c.COSE_NAMEEN, '') AS courseNameEn,
         COALESCE(f.FAC_ID, 0) AS facultyId,
         COALESCE(NULLIF(f.FAC_NAME, ''), 'ไม่ระบุคณะ/ส่วนงาน') AS facultyName,
+        NULLIF(f.FAC_NAMEEN, '') AS facultyNameEn,
         COALESCE(tc.TYPECOSE_ID, 0) AS typeCourseId,
         COALESCE(NULLIF(tc.TYPECOSE_NAME, ''), 'ไม่ระบุประเภท') AS typeCourseName,
         responsibleCourses.responsibleNames AS responsibleName,
@@ -234,6 +236,7 @@ export class AdminReportsService {
               base.courseNameEn,
               base.facultyId,
               base.facultyName,
+              base.facultyNameEn,
               base.responsibleName,
               base.responsibleNameEn,
               base.startDate,
@@ -342,6 +345,7 @@ export class AdminReportsService {
         NULLIF(c.COSE_NAMEEN, '') AS courseNameEn,
         COALESCE(f.FAC_ID, 0) AS facultyId,
         COALESCE(NULLIF(f.FAC_NAME, ''), 'ไม่ระบุคณะ/ส่วนงาน') AS facultyName,
+        NULLIF(f.FAC_NAMEEN, '') AS facultyNameEn,
         COALESCE(tc.TYPECOSE_ID, 0) AS typeCourseId,
         COALESCE(NULLIF(tc.TYPECOSE_NAME, ''), 'ไม่ระบุประเภท') AS typeCourseName,
         responsibleCourses.responsibleNames AS responsibleName,
@@ -477,6 +481,7 @@ export class AdminReportsService {
               base.courseNameEn,
               base.facultyId,
               base.facultyName,
+              base.facultyNameEn,
               base.responsibleName,
               base.responsibleNameEn,
               base.startDate,
@@ -550,6 +555,7 @@ export class AdminReportsService {
         ({
           facultyId: fId,
           facultyName: row.facultyName?.trim() || 'ไม่ระบุคณะ/ส่วนงาน',
+          facultyNameEn: row.facultyNameEn?.trim() || null,
           totalCourses: this.toNumber(totals?.totalCourses),
           totalLearners: this.toNumber(totals?.totalLearners),
           totalRegistrationFees: this.toNumber(totals?.totalRegistrationFees),
@@ -761,6 +767,7 @@ export class AdminReportsService {
         ({
           facultyId,
           facultyName: row.facultyName?.trim() || 'ไม่ระบุคณะ/ส่วนงาน',
+          facultyNameEn: row.facultyNameEn?.trim() || null,
           totalCourses: this.toNumber(totals?.totalCourses),
           totalLearners: this.toNumber(totals?.totalLearners),
           totalRegistrationFees: this.toNumber(totals?.totalRegistrationFees),

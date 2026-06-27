@@ -8,6 +8,7 @@ export interface ReceiptUsageItem {
   no: number;
   departmentCode: number;
   faculty: string;
+  facultyEn: string | null;
   receiptNo: string;
   receiptFilename: string | null;
   receiptType: string | null;
@@ -29,6 +30,7 @@ interface RawReceiptUsageRow {
   id: string | number | null;
   departmentCode: string | number | null;
   faculty: string | null;
+  facultyEn: string | null;
   receiptNo: string | number | null;
   receiptFilename: string | null;
   receiptType: string | null;
@@ -131,6 +133,7 @@ export class ReceiptUsageReportService {
         LEFT JOIN LLTCOURSE c ON c.COSE_ID = en.COSE_ID
         LEFT JOIN LLTUMUSER u ON u.USER_ID = e.USER_ID
         LEFT JOIN LLTUMUSER cu ON cu.USER_USERNAME = e.CREATEUSER
+        LEFT JOIN LLTFACULTY lf ON lf.FAC_NAME = e.FAC_NAME
         ${whereClause}
       `;
 
@@ -139,6 +142,7 @@ export class ReceiptUsageReportService {
           e.ENROLLRECEIPT_ID                                                                                AS id,
           COALESCE(e.FAC_ID, 0)                                                                            AS departmentCode,
           COALESCE(e.FAC_NAME, '-')                                                                        AS faculty,
+          lf.FAC_NAMEEN                                                                                    AS facultyEn,
           COALESCE(CAST(e.RECEIPT_NO AS CHAR), CAST(e.ENROLLRECEIPT_ID AS CHAR))                          AS receiptNo,
           r.RECEIPT_FILENAME                                                                                AS receiptFilename,
           r.RECEIPT_TYPE                                                                                    AS receiptType,
@@ -190,6 +194,7 @@ export class ReceiptUsageReportService {
           no: offset + index + 1,
           departmentCode: Number(row.departmentCode ?? 0),
           faculty: row.faculty ?? '-',
+          facultyEn: row.facultyEn?.trim() || null,
           receiptNo: String(row.receiptNo ?? '-'),
           receiptFilename: row.receiptFilename ?? null,
           receiptType: row.receiptType ?? null,

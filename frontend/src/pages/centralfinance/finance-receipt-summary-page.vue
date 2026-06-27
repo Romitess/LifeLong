@@ -166,8 +166,8 @@
           :on-rows-per-page-change="onRowsPerPageChange"
           min-width="900px"
         >
-          <template #cell-faculty="{ value }">
-            {{ translateFaculty(value as string) }}
+          <template #cell-faculty="{ row }">
+            {{ getFacultyDisplayName(row as ReceiptSummaryItem) }}
           </template>
 
           <template #cell-status="{ value, row }">
@@ -257,19 +257,9 @@ import ReceiptCard from 'components/receipt/receipt-card.vue';
 
 const { t, locale } = useI18n();
 
-const FACULTY_I18N_MAP: Record<string, string> = {
-  คณะวิทยาการสารสนเทศ: 'informatics',
-  คณะวิทยาศาสตร์: 'science',
-  คณะพยาบาลศาสตร์: 'nursing',
-  คณะบริหารธุรกิจ: 'business',
-  คณะวิศวกรรมศาสตร์: 'engineering',
-  สำนักคอมพิวเตอร์: 'computerCenter',
-  คณะมนุษยศาสตร์และสังคมศาสตร์: 'humanities',
-};
-
-function translateFaculty(name: string): string {
-  const key = FACULTY_I18N_MAP[name];
-  return key ? t(`common.faculties.${key}`) : name;
+function getFacultyDisplayName(row: ReceiptSummaryItem): string {
+  if (locale.value !== 'th' && row.facultyEn) return row.facultyEn;
+  return row.faculty;
 }
 
 function getCourseDisplayName(row: ReceiptSummaryItem): string {
@@ -467,7 +457,7 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
     ],
     body: items.value.map((row) => [
       row.no,
-      translateFaculty(row.faculty ?? ''),
+      getFacultyDisplayName(row),
       row.receiptNo,
       getCustomerDisplayName(row) ?? '',
       row.amount,
@@ -514,7 +504,7 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
     ],
     data: items.value.map((row) => [
       row.no,
-      translateFaculty(row.faculty ?? ''),
+      getFacultyDisplayName(row),
       row.receiptNo,
       getCustomerDisplayName(row) ?? '',
       row.amount,

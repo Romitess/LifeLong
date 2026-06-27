@@ -12,6 +12,9 @@ export class AdminRegistrationStatisticsExportFacultyGroupDto {
   @ApiProperty({ example: 'คณะวิทยาการสารสนเทศ' })
   facultyName: string;
 
+  @ApiProperty({ example: 'Faculty of Informatics', nullable: true })
+  facultyNameEn: string | null;
+
   @ApiProperty({ example: 6 })
   totalCourses: number;
 

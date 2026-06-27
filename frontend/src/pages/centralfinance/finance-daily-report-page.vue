@@ -85,8 +85,8 @@
           :on-rows-per-page-change="onRowsPerPageChange"
           min-width="800px"
         >
-          <template #cell-faculty="{ value }">
-            {{ translateFaculty(value as string) }}
+          <template #cell-faculty="{ row }">
+            {{ getFacultyDisplayName(row as DailyReportItem) }}
           </template>
 
           <template #cell-courseName="{ row }">
@@ -122,19 +122,9 @@ import { api } from 'src/boot/axios';
 const $q = useQuasar();
 const { t, locale } = useI18n();
 
-const FACULTY_I18N_MAP: Record<string, string> = {
-  คณะวิทยาการสารสนเทศ: 'informatics',
-  คณะวิทยาศาสตร์: 'science',
-  คณะพยาบาลศาสตร์: 'nursing',
-  คณะบริหารธุรกิจ: 'business',
-  คณะวิศวกรรมศาสตร์: 'engineering',
-  สำนักคอมพิวเตอร์: 'computerCenter',
-  คณะมนุษยศาสตร์และสังคมศาสตร์: 'humanities',
-};
-
-function translateFaculty(name: string): string {
-  const key = FACULTY_I18N_MAP[name];
-  return key ? t(`common.faculties.${key}`) : name;
+function getFacultyDisplayName(row: DailyReportItem): string {
+  if (locale.value !== 'th' && row.facultyEn) return row.facultyEn;
+  return row.faculty;
 }
 
 function getCourseDisplayName(row: DailyReportItem): string {
@@ -164,6 +154,7 @@ interface DailyReportItem {
   id: number;
   no: number;
   faculty: string;
+  facultyEn: string | null;
   courseName: string;
   courseNameEn: string | null;
   fundCode: string | null;
@@ -200,12 +191,14 @@ async function fetchFacultyOptions(): Promise<void> {
 }
 const activeFacultyLabel = computed<string>(() => {
   if (!selectedFaculty.value) return t('centralFinance.receiptSummary.allFaculties');
-  return translateFaculty(selectedFaculty.value);
+  const option = departmentOptions.value.find((o) => o.value === selectedFaculty.value);
+  return option?.label ?? selectedFaculty.value;
 });
 
 function getDepartmentLabel(val: string): string {
   if (!val) return t('centralFinance.receiptSummary.allFaculties');
-  return translateFaculty(val);
+  const option = departmentOptions.value.find((o) => o.value === val);
+  return option?.label ?? val;
 }
 
 // ── Columns ──────────────────────────────────────────────────
@@ -358,7 +351,7 @@ const pdfExportConfig = computed<PdfExportConfig | null>(() => {
     ],
     body: tableRows.value.map((row) => [
       row.no,
-      translateFaculty(row.faculty),
+      getFacultyDisplayName(row),
       getCourseDisplayName(row),
       row.fundCode ?? '-',
       row.receiptDate ?? '-',
@@ -396,7 +389,7 @@ const csvExportConfig = computed<CsvExportConfig | null>(() => {
     ],
     data: tableRows.value.map((row) => [
       row.no,
-      translateFaculty(row.faculty),
+      getFacultyDisplayName(row),
       getCourseDisplayName(row).replace(/\n/g, ' '),
       (row.fundCode ?? '-').replace(/\n/g, ' '),
       row.receiptDate ?? '-',

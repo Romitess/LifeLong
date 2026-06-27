@@ -39,6 +39,7 @@ export interface AdminRegistrationStatisticsReportCourseItem {
 export interface AdminRegistrationStatisticsReportFacultyGroup {
   facultyId: number;
   facultyName: string;
+  facultyNameEn: string | null;
   totalCourses: number;
   totalLearners: number;
   totalRegistrationFees: number;

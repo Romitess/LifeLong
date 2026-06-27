@@ -3,6 +3,7 @@ export interface ReceiptUsageItem {
   no: number;
   departmentCode: number;
   faculty: string;
+  facultyEn: string | null;
   receiptNo: string;
   receiptFilename: string | null;
   receiptType: string | null;
