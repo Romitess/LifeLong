@@ -474,12 +474,18 @@
                   }}</span
                 >
                 <span
+                  class="course-summary__fee"
+                  :class="{ 'course-summary__fee--hint': selectedCourseFeeTooltipLines.length > 0 }"
                   ><q-icon name="payments" />
-                  {{
-                    selectedCourseDisplayIsFree
-                      ? t('instructor.course.freeLabel')
-                      : formatCurrency(selectedCourseDisplayPrice)
-                  }}</span
+                  {{ selectedCourseFeeSummaryLabel }}
+                  <q-tooltip
+                    v-if="selectedCourseFeeTooltipLines.length > 0"
+                    class="course-fee-tooltip"
+                  >
+                    <div v-for="line in selectedCourseFeeTooltipLines" :key="line">
+                      {{ line }}
+                    </div>
+                  </q-tooltip></span
                 >
                 <span
                   ><q-icon name="visibility" /> {{ selectedCourse.views.toLocaleString() }}
@@ -1418,6 +1424,11 @@ interface LearnerPriceRule {
 
 type LearnerPriceSnapshot = Pick<LearnerPriceRule, 'stutypeId' | 'enabled' | 'amount'>;
 
+interface FeeBreakdownItem {
+  label: string;
+  amount: number;
+}
+
 interface CourseSettingsForm {
   published: boolean;
   registrationOpen: boolean;
@@ -1619,6 +1630,15 @@ function resolveBaseCoursePrice(course: Course, prices: LearnerPriceRule[]): num
   return Number(course.price) || 0;
 }
 
+function buildFeeBreakdown(prices: LearnerPriceRule[]): FeeBreakdownItem[] {
+  return getEnabledLearnerRules(prices)
+    .map((price) => ({
+      label: translateStutypeName(price.stutypeName || price.label),
+      amount: Math.max(0, Number(price.amount) || 0),
+    }))
+    .filter((price) => price.amount > 0);
+}
+
 const selectedCourseDisplayPrice = computed<number>(() => {
   const course = selectedCourse.value;
   if (!course) return 0;
@@ -1626,6 +1646,17 @@ const selectedCourseDisplayPrice = computed<number>(() => {
   return resolveDisplayedCoursePrice(course, learnerPricing);
 });
 const selectedCourseDisplayIsFree = computed<boolean>(() => selectedCourseDisplayPrice.value <= 0);
+const selectedCourseFeeBreakdown = computed<FeeBreakdownItem[]>(() => buildFeeBreakdown(learnerPricing));
+const selectedCourseFeeTooltipLines = computed<string[]>(() =>
+  selectedCourseFeeBreakdown.value.map(
+    (price) => `${price.label}: ${formatCurrency(price.amount)}`,
+  ),
+);
+const selectedCourseFeeSummaryLabel = computed<string>(() => {
+  if (selectedCourseDisplayIsFree.value) return t('instructor.course.freeLabel');
+  if (selectedCourseFeeBreakdown.value.length > 0) return t('paid');
+  return formatCurrency(selectedCourseDisplayPrice.value);
+});
 
 watch(
   selectedCourse,
@@ -3809,6 +3840,17 @@ function openQuickDialog(title: string): void {
     align-items: center;
     gap: 6px;
   }
+}
+
+.course-summary__fee--hint {
+  cursor: help;
+  text-decoration: underline dotted rgba(100, 116, 139, 0.8);
+  text-underline-offset: 3px;
+}
+
+.course-fee-tooltip {
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .course-summary__learner-link {

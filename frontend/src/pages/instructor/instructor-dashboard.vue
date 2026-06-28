@@ -223,6 +223,7 @@
                         transition-show="jump-down"
                         transition-hide="jump-up"
                         class="course-syllabus-menu"
+                        @before-show="loadRealCourseDetail(course)"
                       >
                         <q-card class="course-syllabus-card">
                           <q-card-section class="course-syllabus-card__header">
@@ -239,12 +240,20 @@
                               </div>
                             </div>
                             <div class="course-syllabus-card__hours">
-                              <strong>{{ course.totalHours ?? 0 }}</strong>
+                              <strong>{{ getCourseDetail(course.id)?.totalHours ?? course.totalHours ?? 0 }}</strong>
                               <span>{{ t('instructor.dashboard.hoursAbbr') }}</span>
                             </div>
                           </q-card-section>
 
                           <q-card-section class="course-syllabus-card__body">
+                            <div
+                              v-if="courseDetailLoadingById[course.id]"
+                              class="course-syllabus-card__loading"
+                            >
+                              <q-spinner size="18px" color="primary" />
+                              <span>กำลังโหลดรายละเอียดจริง...</span>
+                            </div>
+
                             <div class="course-syllabus-card__quick-row">
                               <q-chip dense square class="course-syllabus-card__chip">
                                 <q-icon name="confirmation_number" />
@@ -276,21 +285,21 @@
                             </div>
 
                             <div
-                              v-if="getCourseDetail(course.id)?.descriptionFull"
+                              v-if="getCourseDescription(course.id)"
                               class="course-syllabus-card__description"
                             >
-                              {{ getCourseDetail(course.id)?.descriptionFull }}
+                              {{ getCourseDescription(course.id) }}
                             </div>
 
                             <div class="course-syllabus-card__section-label">
                               {{ t('instructor.dashboard.syllabusTopics') }}
                             </div>
                             <div
-                              v-if="getCourseDetail(course.id)?.syllabus?.length"
+                              v-if="getCourseSyllabus(course.id).length"
                               class="course-syllabus-card__timeline"
                             >
                               <div
-                                v-for="lesson in getCourseDetail(course.id)?.syllabus.slice(0, 4)"
+                                v-for="lesson in getCourseSyllabus(course.id).slice(0, 4)"
                                 :key="lesson.week"
                                 class="course-syllabus-card__timeline-item"
                               >
@@ -391,16 +400,45 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from 'src/stores/auth-store';
-import { useCourseStore } from 'src/stores/course-store';
+import { useCourseStore, mapDeliveryModes } from 'src/stores/course-store';
 import { useInstructorBackend } from 'src/composables/use-instructor-backend';
 import StatCard from 'src/components/base/StatCard.vue';
 import type { Course, CourseStatus } from 'src/types/course';
-import type { CourseDetail } from 'src/types/course-detail';
+import type { CourseDetail, CourseTarget, CourseTypeClass } from 'src/types/course-detail';
 import heroOverviewImageUrl from 'src/assets/we1.png';
 import heroCourseImageUrl from 'src/assets/homepicture1.png';
 import heroClassroomImageUrl from 'src/assets/homepicture2.png';
 import heroInstructorImageUrl from 'src/assets/in.png';
 import { isNewTabClick, resolveFullUrl } from 'src/composables/use-nav-link';
+import { api } from 'src/boot/axios';
+
+interface BackendCourseDetailResponse {
+  hours?: number | null;
+  objective?: string | null;
+  description?: string | null;
+  evaluationText?: string | null;
+  typestudyDetail?: { id: number; name: string | null } | null;
+  targets?: CourseTarget[] | null;
+  precondition?: string | null;
+  property?: string | null;
+  contractName?: string | null;
+  contractTel?: string | null;
+  contractEmail?: string | null;
+  contractUrl?: string | null;
+  typeClasses?: CourseTypeClass[] | null;
+  privilege?: string | null;
+  vdo?: string | null;
+  teachTime?: string | null;
+  creditBank?: number | null;
+  syllabus?: { seq: number; subject: string | null; hour: number | null }[];
+  instructorInfo?: {
+    nameTh?: string | null;
+    nameEn?: string | null;
+    email?: string | null;
+    titleTh?: string | null;
+    titleEn?: string | null;
+  } | null;
+}
 
 const { t, locale } = useI18n();
 const router = useRouter();
@@ -427,6 +465,8 @@ const typedHeroText = ref({
 const activeTypingKey = ref('');
 const heroTypingTimers: ReturnType<typeof setTimeout>[] = [];
 const greetingBannerTimers: ReturnType<typeof setTimeout>[] = [];
+const courseDetailById = ref<Record<string, CourseDetail>>({});
+const courseDetailLoadingById = ref<Record<string, boolean>>({});
 
 onMounted(() => {
   courseStore.init();
@@ -700,8 +740,119 @@ function getTypeLineClass(key: string) {
   };
 }
 
+function getBackendCourseId(courseId: string): number | null {
+  const numericId = Number(courseId.replace('db-', ''));
+  return Number.isNaN(numericId) ? null : numericId;
+}
+
 function getCourseDetail(courseId: string): CourseDetail | undefined {
-  return courseStore.getCourseDetailById(courseId);
+  return courseDetailById.value[courseId] ?? courseStore.getCourseDetailById(courseId);
+}
+
+function getCourseDescription(courseId: string): string {
+  const detail = getCourseDetail(courseId);
+  const text = locale.value === 'th' ? detail?.descriptionFull : detail?.descriptionFullEn;
+  return text?.trim() || detail?.descriptionFull?.trim() || '';
+}
+
+function getCourseSyllabus(courseId: string) {
+  return getCourseDetail(courseId)?.syllabus ?? [];
+}
+
+function mergeBackendCourseDetail(
+  course: Course,
+  detail: CourseDetail,
+  data: BackendCourseDetailResponse,
+): CourseDetail {
+  const objectiveLines = (data.objective ?? '')
+    .split(/\n|;/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  const realTotalHours = Number(data.hours ?? course.totalHours ?? detail.totalHours ?? 0) || 0;
+
+  return {
+    ...detail,
+    ...course,
+    totalHours: realTotalHours,
+    ...(data.description
+      ? { descriptionFull: data.description, descriptionFullEn: data.description }
+      : {}),
+    objectives: objectiveLines,
+    objectivesEn: objectiveLines,
+    targets: data.targets ?? [],
+    evaluationText: data.evaluationText ?? null,
+    precondition: data.precondition ?? null,
+    ...(data.precondition ? { prerequisites: data.precondition } : {}),
+    property: data.property ?? null,
+    ...(data.property ? { targetAudience: data.property } : {}),
+    ...(data.typestudyDetail ? { deliveryModes: mapDeliveryModes(data.typestudyDetail.name) } : {}),
+    contractName: data.contractName ?? null,
+    contractTel: data.contractTel ?? null,
+    contractEmail: data.contractEmail ?? null,
+    contractUrl: data.contractUrl ?? null,
+    typeClasses: data.typeClasses ?? null,
+    privilege: data.privilege ?? null,
+    ...(data.vdo ? { previewVideoUrl: data.vdo } : {}),
+    teachTime: data.teachTime ?? null,
+    creditHours: data.creditBank != null ? Number(data.creditBank) : detail.creditHours,
+    ...(data.syllabus?.length
+      ? {
+          syllabus: data.syllabus.map((chapter) => ({
+            week: chapter.seq,
+            topic: chapter.subject ?? '',
+            description: chapter.hour ? `${Number(chapter.hour)} ชั่วโมง` : '',
+          })),
+        }
+      : { syllabus: [] }),
+    ...(data.instructorInfo
+      ? {
+          instructor: {
+            ...detail.instructor,
+            title: data.instructorInfo.titleTh ?? detail.instructor.title,
+            ...(data.instructorInfo.email ? { email: data.instructorInfo.email } : {}),
+            ...(data.instructorInfo.nameTh ? { name: data.instructorInfo.nameTh } : {}),
+            ...(data.instructorInfo.titleEn ?? detail.instructor.titleEn
+              ? { titleEn: data.instructorInfo.titleEn ?? detail.instructor.titleEn }
+              : {}),
+            ...(data.instructorInfo.nameEn
+              ? { nameEn: data.instructorInfo.nameEn }
+              : data.instructorInfo.nameTh
+                ? { nameEn: data.instructorInfo.nameTh }
+                : {}),
+          },
+        }
+      : {}),
+  };
+}
+
+async function loadRealCourseDetail(course: Course): Promise<void> {
+  if (courseDetailById.value[course.id] || courseDetailLoadingById.value[course.id]) return;
+
+  const backendCourseId = getBackendCourseId(course.id);
+  const fallbackDetail = courseStore.getCourseDetailById(course.id);
+  if (!backendCourseId || !fallbackDetail) return;
+
+  courseDetailLoadingById.value = {
+    ...courseDetailLoadingById.value,
+    [course.id]: true,
+  };
+
+  try {
+    const { data } = await api.get<BackendCourseDetailResponse>(
+      `/api/moodle/courses/${backendCourseId}`,
+    );
+    courseDetailById.value = {
+      ...courseDetailById.value,
+      [course.id]: mergeBackendCourseDetail(course, fallbackDetail, data),
+    };
+  } catch (error) {
+    console.warn('Failed to fetch real instructor course detail', error);
+  } finally {
+    courseDetailLoadingById.value = {
+      ...courseDetailLoadingById.value,
+      [course.id]: false,
+    };
+  }
 }
 
 function getTranslatedCourseTitle(course: Course): string {
@@ -729,10 +880,6 @@ function getStatusColor(status: CourseStatus): string {
     เร็วๆนี้: 'orange-8',
   };
   return colorMap[status] ?? 'grey-7';
-}
-
-function formatDeliveryModes(course: Course): string {
-  return course.deliveryModes.length > 0 ? course.deliveryModes.join(', ') : '-';
 }
 
 function formatCoursePrice(course: Course): string {
@@ -767,11 +914,15 @@ function getDaysAgoText(updatedAt?: string): string {
 }
 
 function getCourseSyllabusMeta(course: Course) {
+  const detail = getCourseDetail(course.id);
+  const deliveryModes = detail?.deliveryModes ?? course.deliveryModes;
+  const totalHours = detail?.totalHours ?? course.totalHours ?? 0;
+
   return [
     {
       icon: 'account_balance',
       label: t('instructor.dashboard.syllabusMetaFaculty'),
-      value: course.faculty || '-',
+      value: detail?.department || course.faculty || '-',
     },
     {
       icon: 'category',
@@ -781,12 +932,12 @@ function getCourseSyllabusMeta(course: Course) {
     {
       icon: 'schedule',
       label: t('instructor.dashboard.syllabusMetaHours'),
-      value: `${course.totalHours ?? 0} ${t('instructor.dashboard.syllabusHoursUnit')}`,
+      value: `${totalHours} ${t('instructor.dashboard.syllabusHoursUnit')}`,
     },
     {
       icon: 'devices',
       label: t('instructor.dashboard.syllabusMetaMode'),
-      value: formatDeliveryModes(course),
+      value: deliveryModes.length > 0 ? deliveryModes.join(', ') : '-',
     },
     {
       icon: 'event',

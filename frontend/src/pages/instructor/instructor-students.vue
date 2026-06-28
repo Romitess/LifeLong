@@ -1048,21 +1048,6 @@
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
         <q-card-section class="q-gutter-y-sm">
-          <div>
-            <div class="text-caption text-grey-7 q-mb-xs">
-              {{ t('instructor.students.approveMode') }}
-            </div>
-            <q-option-group
-              v-model="approveForm.mode"
-              :options="[
-                { label: t('instructor.students.approveOption'), value: 'specify' },
-                { label: t('instructor.students.rejectOption'), value: 'none' },
-              ]"
-              color="primary"
-              inline
-              dense
-            />
-          </div>
           <q-input
             v-model="approveForm.detail"
             type="textarea"
@@ -1070,7 +1055,6 @@
             dense
             rows="3"
             :label="t('instructor.students.approveDetailLabel')"
-            :disable="approveForm.mode === 'none'"
           />
           <BaseDateInput
             v-model="approveForm.date"
@@ -1088,8 +1072,8 @@
           />
           <BaseButton
             unelevated
-            color="primary"
-            :label="t('instructor.students.saveBtn')"
+            color="positive"
+            :label="approveLearningResultLabel"
             no-caps
             :loading="approvingGrades"
             @click="confirmApproveGrades"
@@ -1183,11 +1167,17 @@ const activeStudentTab = computed<'roster' | 'results'>(() =>
 );
 const studentHeroTitle = computed(() =>
   activeStudentTab.value === 'results'
-    ? locale.value === 'th'
-      ? 'บันทึก\nผลการเรียน'
-      : 'Record Learning\nResults'
+    ? formatHeroTitle(t('instructor.students.heroGradesTitle'))
     : t('instructor.students.heroRosterTitle'),
 );
+const approveLearningResultLabel = computed(() =>
+  locale.value === 'th' ? 'อนุมัติผลการเรียน' : 'Approve Learning Results',
+);
+
+function formatHeroTitle(title: string): string {
+  return title.includes(' ') ? title.replace(/\s+(?=\S+$)/, '\n') : title;
+}
+
 const studentHeroDescription = computed(() => {
   if (activeStudentTab.value === 'roster') {
     return '';
@@ -1221,7 +1211,6 @@ const syncingResults = ref(false);
 const approvingGrades = ref(false);
 const approveDialogOpen = ref(false);
 const approveForm = ref({
-  mode: 'specify',
   detail: '',
   date: new Date().toISOString().slice(0, 10),
 });
@@ -2296,7 +2285,6 @@ async function pullScoresFromLms(): Promise<void> {
 
 function openApproveDialog(): void {
   approveForm.value = {
-    mode: 'specify',
     detail: '',
     date: new Date().toISOString().slice(0, 10),
   };
@@ -2308,7 +2296,7 @@ async function confirmApproveGrades(): Promise<void> {
   const email = authStore.user?.email;
   if (!course || !email) return;
 
-  const detail = approveForm.value.mode === 'none' ? 'ไม่อนุมัติ' : approveForm.value.detail.trim();
+  const detail = approveForm.value.detail.trim();
 
   approvingGrades.value = true;
   try {
