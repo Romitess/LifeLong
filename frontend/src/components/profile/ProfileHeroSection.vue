@@ -885,7 +885,7 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
   height: 100vh;
   min-height: 100svh;
   border-radius: 0 !important;
-  background: #16191d !important;
+  background: #1f2228 !important;
   overflow: hidden;
 
   &__backdrop-image,
@@ -899,21 +899,27 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: blur(28px);
-    transform: scale(1.14);
-    opacity: 0.46;
+    filter: blur(24px);
+    transform: scale(1.18);
+    opacity: 0.5;
   }
 
   &__fallback-backdrop {
     background:
-      radial-gradient(circle at 28% 22%, rgba($primary, 0.28), transparent 32%),
-      linear-gradient(145deg, #1f2937, #111827 58%, #20242b);
+      radial-gradient(circle at 28% 22%, rgba(86, 104, 125, 0.3), transparent 34%),
+      radial-gradient(circle at 76% 16%, rgba(107, 84, 96, 0.24), transparent 28%),
+      linear-gradient(145deg, #2a2f35, #171b20 58%, #2b3036);
   }
 
   &__shade {
     background:
-      linear-gradient(180deg, rgba(10, 13, 18, 0.34), rgba(10, 13, 18, 0.08) 42%, rgba(10, 13, 18, 0.52)),
-      rgba(22, 25, 29, 0.28);
+      linear-gradient(
+        180deg,
+        rgba(16, 18, 22, 0.56),
+        rgba(16, 18, 22, 0.16) 42%,
+        rgba(16, 18, 22, 0.44)
+      ),
+      rgba(22, 25, 29, 0.18);
   }
 
   &__close {
@@ -928,21 +934,21 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
   &__stage {
     position: relative;
     z-index: 2;
-    width: min(396px, 100vw);
-    height: min(552px, 100vh);
-    min-height: min(552px, 100svh);
+    width: min(385px, 100vw);
+    height: min(623px, 100vh);
+    min-height: min(623px, 100svh);
     margin: 0 auto;
   }
 
   &__add {
     position: absolute;
-    top: clamp(32px, 6.2vh, 58px);
-    left: clamp(76px, 24vw, 112px);
+    top: clamp(74px, 13vh, 88px);
+    left: clamp(72px, 18.7vw, 72px);
     width: 76px;
     height: 76px;
     border-radius: 50%;
-    border: 1.5px dashed rgba(255, 255, 255, 0.72);
-    background: rgba(13, 17, 23, 0.14);
+    border: 1.5px dashed rgba(255, 255, 255, 0.68);
+    background: rgba(13, 17, 23, 0.08);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -952,7 +958,7 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
 
   &__add-menu {
     position: absolute;
-    top: clamp(116px, 18vh, 140px);
+    top: clamp(160px, 26vh, 176px);
     left: 50%;
     z-index: 3;
     width: 180px;
@@ -992,11 +998,11 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
 
   &__photo-row {
     position: absolute;
-    top: clamp(118px, 18vh, 146px);
-    left: 24px;
-    right: 24px;
+    top: clamp(145px, 24vh, 176px);
+    left: 20px;
+    right: 20px;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 14px;
   }
 
@@ -1006,8 +1012,8 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
 
   &__photo-option {
     position: relative;
-    width: 76px;
-    height: 76px;
+    width: 84px;
+    height: 84px;
     padding: 0;
     border: 0;
     border-radius: 50%;
@@ -1070,10 +1076,10 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
 
   &__main-wrap {
     position: absolute;
-    left: 52px;
-    top: 204px;
-    width: 292px;
-    height: 292px;
+    left: 51px;
+    top: 260px;
+    width: 282px;
+    height: 282px;
   }
 
   &__main {
@@ -1085,7 +1091,7 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 26px 54px rgba(0, 0, 0, 0.28);
+    box-shadow: 0 26px 54px rgba(0, 0, 0, 0.22);
   }
 
   &__main--swapping {
@@ -1100,13 +1106,13 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
 
   &__edit {
     position: absolute;
-    right: 20px;
+    right: 12px;
     bottom: 20px;
-    width: 46px;
-    height: 46px;
+    width: 42px;
+    height: 42px;
     border: 0;
     border-radius: 50%;
-    background: rgba(11, 15, 21, 0.94);
+    background: rgba(11, 15, 21, 0.96);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1117,10 +1123,10 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
 
   &__delete {
     position: absolute;
-    right: 20px;
-    bottom: 74px;
-    width: 46px;
-    height: 46px;
+    right: 12px;
+    bottom: 70px;
+    width: 42px;
+    height: 42px;
     border: 0;
     border-radius: 50%;
     background: #d92d20;
@@ -1134,9 +1140,9 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
 
   &__confirm {
     position: absolute;
-    left: 52px;
-    top: 516px;
-    width: 292px;
+    left: 51px;
+    top: 560px;
+    width: 282px;
     min-height: 46px;
     border: 0;
     border-radius: 999px;
@@ -1161,8 +1167,9 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
 
     &:disabled {
       cursor: default;
-      opacity: 0.5;
+      opacity: 0;
       box-shadow: none;
+      pointer-events: none;
     }
   }
 }
@@ -1242,18 +1249,31 @@ function formatStatLabel(stat: ProfileStatCardItem): string {
   .profile-avatar-viewer {
     &__stage {
       width: 100vw;
+      height: 100svh;
+    }
+
+    &__add {
+      top: 88px;
+      left: 18.7vw;
+    }
+
+    &__photo-row {
+      top: 176px;
+      left: 5.2vw;
+      right: 5.2vw;
     }
 
     &__main-wrap {
       left: 13.2vw;
-      width: 73.6vw;
-      height: 73.6vw;
+      top: 260px;
+      width: 73.2vw;
+      height: 73.2vw;
     }
 
     &__confirm {
       left: 13.2vw;
-      top: calc(204px + 73.6vw + 20px);
-      width: 73.6vw;
+      top: calc(260px + 73.2vw + 18px);
+      width: 73.2vw;
     }
   }
 }
