@@ -1195,10 +1195,6 @@
             />
           </div>
           <div class="learner-detail-stat">
-            <span>{{ t('instructor.learnerDetail.totalScore') }}</span>
-            <strong>{{ selectedLearner.score }}</strong>
-          </div>
-          <div class="learner-detail-stat">
             <span>{{ t('instructor.learnerDetail.completedWork') }}</span>
             <strong>{{
               selectedLearner.totalLessons > 0
@@ -2028,7 +2024,6 @@ const managementLearnerColumns = computed<BaseTableColumn[]>(() => [
   { key: 'name', label: t('instructor.learners.colName'), sortable: true },
   { key: 'email', label: t('instructor.learners.colEmail'), width: '220px', sortable: true },
   { key: 'progress', label: t('instructor.learners.colProgress'), width: '190px', sortable: true },
-  { key: 'score', label: t('instructor.learners.colScore'), width: '140px', sortable: true },
   {
     key: 'lastActive',
     label: t('instructor.learners.colLastActive'),
@@ -4147,7 +4142,7 @@ function openQuickDialog(title: string): void {
 
 .learner-detail-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 

@@ -902,10 +902,6 @@
             <strong>{{ selectedLearner.progress }}%</strong>
           </div>
           <div>
-            <span>{{ t('instructor.learnerDetail.totalScore') }}</span>
-            <strong>{{ selectedLearner.score }}</strong>
-          </div>
-          <div>
             <span>{{ t('instructor.learnerDetail.completedWork') }}</span>
             <strong
               >{{ selectedLearner.completedLessons }}/{{ selectedLearner.totalLessons }}</strong
@@ -1956,7 +1952,6 @@ const learnerColumns: BaseTableColumn[] = [
   { key: 'name', label: 'นิสิต', width: '280px', sortable: true },
   { key: 'email', label: 'อีเมล', width: '240px', sortable: true },
   { key: 'progress', label: 'ความก้าวหน้า', width: '190px', sortable: true },
-  { key: 'score', label: 'คะแนน', align: 'center', width: '140px', sortable: true },
   { key: 'lastActive', label: 'เข้าเรียนล่าสุด', align: 'center', width: '150px', sortable: true },
   { key: 'status', label: 'สถานะ', align: 'center', width: '150px', sortable: true },
   { key: 'actions', label: 'จัดการ', align: 'center', width: '92px' },
@@ -4300,7 +4295,7 @@ function exportLearnersPdf(): void {
 
 .student-detail-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 
   div {
