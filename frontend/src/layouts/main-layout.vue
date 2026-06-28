@@ -443,7 +443,7 @@
       </q-list>
     </q-drawer>
 
-    <q-page-container>
+    <q-page-container class="route-page-container">
       <!-- Global decorative background blobs -->
       <div class="page-blobs" aria-hidden="true">
         <span class="page-blob page-blob--gold-l" />
@@ -453,8 +453,8 @@
         <span class="page-blob page-blob--gold-r2" />
       </div>
 
+      <router-view />
       <BaseSpinner v-if="isPageSwitchLoading" class="route-page-loading" />
-      <router-view v-else />
 
       <!-- Footer -->
       <AppFooter />
@@ -931,20 +931,8 @@ function onDrawerMouseLeave() {
     drawerOpen.value = false;
   }
 }
-let pageSwitchLoadingTimer: ReturnType<typeof setTimeout> | null = null;
-
 const PAGE_SWITCH_LOADING_MS = 450;
-const pageSwitchLoadingPaths = new Set(['/main', '/profile']);
-const adminTabRouteSlugs = new Set([
-  'categories',
-  'cert-template',
-  'cert-signer',
-  'slides',
-  'interested-courses',
-  'registration-statistics',
-  'info',
-  'chapters',
-]);
+let pageSwitchLoadingTimer: ReturnType<typeof setTimeout> | null = null;
 
 const announcementNotifications = computed(() =>
   isTeachingRole.value
@@ -1030,31 +1018,18 @@ function scheduleNotificationAttention(): void {
 
 type AuthPath = '/login' | '/register';
 
-function getPathWithoutQuery(fullPath: string): string {
-  return fullPath.split(/[?#]/)[0] || '/';
+function getPrimaryRouteComponent(fullPath: string) {
+  const matched = router.resolve(fullPath).matched;
+  const routeRecord = matched.at(-1);
+  return routeRecord?.components?.default ?? null;
 }
 
-function getAdminTabBasePath(path: string): string {
-  const segments = path.split('/').filter(Boolean);
-  const lastSegment = segments.at(-1);
-  if (lastSegment && adminTabRouteSlugs.has(lastSegment)) {
-    segments.pop();
-  }
-  return `/${segments.join('/')}`;
-}
-
-function isSameAdminTabRouteChange(path: string, previousPath?: string): boolean {
-  if (!previousPath || !path.startsWith('/admin') || !previousPath.startsWith('/admin')) {
+function shouldShowPageSwitchLoading(fullPath: string, previousFullPath?: string): boolean {
+  if (!previousFullPath || fullPath === previousFullPath) {
     return false;
   }
-  return getAdminTabBasePath(path) === getAdminTabBasePath(previousPath);
-}
 
-function shouldShowPageSwitchLoading(path: string, previousPath?: string): boolean {
-  if (isSameAdminTabRouteChange(path, previousPath)) {
-    return false;
-  }
-  return pageSwitchLoadingPaths.has(path) || path.startsWith('/admin');
+  return getPrimaryRouteComponent(fullPath) !== getPrimaryRouteComponent(previousFullPath);
 }
 
 function showPageSwitchLoading(): void {
@@ -1070,13 +1045,6 @@ function showPageSwitchLoading(): void {
 }
 
 async function navigateWithPageLoading(path: string): Promise<void> {
-  if (
-    router.currentRoute.value.path !== path &&
-    shouldShowPageSwitchLoading(path, router.currentRoute.value.path)
-  ) {
-    showPageSwitchLoading();
-  }
-
   await router.push(path);
 }
 
@@ -1166,8 +1134,7 @@ watch(
       return;
     }
 
-    const previousPath = getPathWithoutQuery(previousFullPath);
-    if (!shouldShowPageSwitchLoading(path, previousPath)) {
+    if (!shouldShowPageSwitchLoading(fullPath, previousFullPath)) {
       return;
     }
 
@@ -1796,9 +1763,17 @@ async function onCategoryClick(category: string, event?: Event) {
   text-overflow: ellipsis;
 }
 
+.route-page-container {
+  position: relative;
+}
+
 .route-page-loading {
-  min-height: calc(100vh - 112px);
-  background: #f6f8f8;
+  position: absolute;
+  inset: 0;
+  min-height: 100%;
+  z-index: 20;
+  background: rgba(246, 248, 248, 0.86);
+  backdrop-filter: blur(2px);
 }
 
 .mobile-language-wrapper {
