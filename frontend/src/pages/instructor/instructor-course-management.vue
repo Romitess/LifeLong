@@ -620,30 +620,6 @@
                       folder="course"
                       :alt="selectedCourse.titleEn || selectedCourse.title"
                     />
-                    <q-input
-                      v-model="courseSettings.coverImageUrl"
-                      dense
-                      outlined
-                      :label="t('instructor.overview.coverUrlLabel')"
-                    />
-                    <div class="row q-gutter-sm">
-                      <q-btn
-                        outline
-                        color="primary"
-                        icon="image"
-                        :label="t('instructor.overview.useSampleCover')"
-                        no-caps
-                        @click="useSampleCover"
-                      />
-                      <q-btn
-                        flat
-                        color="grey-7"
-                        icon="restart_alt"
-                        :label="t('instructor.overview.resetCover')"
-                        no-caps
-                        @click="resetCoverImage"
-                      />
-                    </div>
                   </div>
                 </div>
 
@@ -1495,14 +1471,6 @@ const defaultDeliveryMode: DeliveryMode = 'Online';
 const requestedCourseId = typeof route.query.courseId === 'string' ? route.query.courseId : '';
 
 const deliveryModeOptions: DeliveryMode[] = ['Online', 'Onsite', 'Self-Paced Learning'];
-const defaultCoverImage =
-  'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80';
-const sampleCoverImages = [
-  defaultCoverImage,
-  'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80',
-];
-
 const learnerPricing = reactive<LearnerPriceRule[]>([]);
 const learnerPricingBaseline = ref<LearnerPriceSnapshot[]>([]);
 
@@ -2297,16 +2265,6 @@ function openLearnerRoster(courseId: string): void {
 function openLearnerDetail(_event: Event | null, learner: LearnerRow): void {
   selectedLearner.value = learner;
   learnerDetailDialogOpen.value = true;
-}
-
-function useSampleCover(): void {
-  const currentIndex = sampleCoverImages.indexOf(courseSettings.coverImageUrl);
-  courseSettings.coverImageUrl =
-    sampleCoverImages[(currentIndex + 1) % sampleCoverImages.length] ?? defaultCoverImage;
-}
-
-function resetCoverImage(): void {
-  courseSettings.coverImageUrl = selectedCourse.value?.imageUrl ?? '';
 }
 
 function resolveCourseImage(imageUrl: string | null | undefined): string {
