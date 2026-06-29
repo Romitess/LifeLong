@@ -1960,17 +1960,26 @@ function buildLearnersForCourse(course: Course | undefined): LearnerRow[] {
   });
 }
 
-function stripHtml(html: string): string {
-  return html
+function stripHtml(html?: string | null): string {
+  return (html ?? '')
     .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
     .trim();
 }
 
-function formatUnixDate(ts: number): string {
+function formatUnixDate(ts?: number | null): string {
+  if (!ts) return '-';
   const d = new Date(ts * 1000);
   const lang = locale.value === 'th' ? 'th-TH' : 'en-US';
   return `${t('instructor.course.announcedOn')} ${d.toLocaleDateString(lang, { day: 'numeric', month: 'long', year: 'numeric' })}`;
+}
+
+function getAnnouncementBody(announcement: { body?: string | null; message?: string | null }) {
+  return announcement.body ?? announcement.message ?? '';
+}
+
+function getAnnouncementCreatedAt(announcement: { createdAt?: number | null; created?: number | null }) {
+  return announcement.createdAt ?? announcement.created ?? null;
 }
 
 const isKnownCourse = computed(() => Boolean(selectedCourse.value));
@@ -2071,8 +2080,8 @@ const announcements = computed(() => {
   const moodleItems = instructorBackend.courseAnnouncements.value.map((a) => ({
     id: a.id,
     title: a.subject,
-    body: stripHtml(a.body),
-    date: formatUnixDate(a.createdAt),
+    body: stripHtml(getAnnouncementBody(a)),
+    date: formatUnixDate(getAnnouncementCreatedAt(a)),
     pinned: a.pinned,
     isDb: false as const,
   }));

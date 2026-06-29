@@ -104,8 +104,10 @@ export interface InstructorConversation {
 export interface CourseAnnouncement {
   id: number;
   subject: string;
-  body: string;
-  createdAt: number;
+  body?: string | null;
+  message?: string | null;
+  createdAt?: number | null;
+  created?: number | null;
   author: string;
   pinned: boolean;
 }

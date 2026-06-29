@@ -939,11 +939,13 @@ const announcementNotifications = computed(() =>
     ? instructorBackend.courseAnnouncements.value.map((a) => ({
         id: a.id,
         title: a.subject,
-        message: stripHtml(a.body).slice(0, 80),
-        time: new Date(a.createdAt * 1000).toLocaleDateString('th-TH', {
-          day: 'numeric',
-          month: 'short',
-        }),
+        message: stripHtml(a.body ?? a.message ?? '').slice(0, 80),
+        time: (a.createdAt ?? a.created)
+          ? new Date((a.createdAt ?? a.created ?? 0) * 1000).toLocaleDateString('th-TH', {
+              day: 'numeric',
+              month: 'short',
+            })
+          : '-',
         icon: 'campaign',
         iconBg: 'rgba(245, 166, 35, 0.15)',
         iconColor: '#f5a623',
