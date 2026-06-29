@@ -223,6 +223,9 @@ onMounted(fetchApiCerts);
 }
 
 .cert-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   border-radius: 16px !important;
   border: 1px solid rgba(17, 24, 39, 0.1) !important;
   overflow: hidden;
@@ -273,6 +276,7 @@ onMounted(fetchApiCerts);
   }
 
   &__body {
+    flex: 1 1 auto;
     padding: 14px 16px 8px;
   }
 
@@ -297,6 +301,7 @@ onMounted(fetchApiCerts);
   }
 
   &__actions {
+    margin-top: auto;
     padding: 8px 16px 16px;
   }
 }

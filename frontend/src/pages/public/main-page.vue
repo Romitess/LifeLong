@@ -257,16 +257,8 @@
               :src="selectedTopCourse.imageUrl"
               :alt="selectedTopCourse.title"
             />
-            <span class="top-course-preview__rank">
-              #{{ selectedTopCourse.topEnrollmentRank ?? getTopCourseRank(selectedTopCourse) }}
-            </span>
           </div>
           <div class="top-course-preview__content">
-            <div class="top-course-preview__eyebrow">
-              <q-icon name="leaderboard" size="18px" />
-              {{ t('topCourses.rank') }}
-              {{ selectedTopCourse.topEnrollmentRank ?? getTopCourseRank(selectedTopCourse) }}
-            </div>
             <h3>
               {{
                 locale === 'th'
@@ -337,22 +329,13 @@
           @wheel="onTopCoursesWheel"
         >
           <a
-            v-for="(course, index) in topEnrolledCourses"
+            v-for="course in topEnrolledCourses"
             :key="course.id"
             :href="resolveFullUrl(`/course/${course.id}`)"
             class="top-course-card"
             style="text-decoration: none"
             @click.prevent="selectTopCourse(course, $event)"
           >
-            <span
-              class="top-course-card__rank"
-              :class="{
-                'top-course-card__rank--double': (course.topEnrollmentRank ?? index + 1) >= 10,
-              }"
-              aria-hidden="true"
-            >
-              {{ course.topEnrollmentRank ?? index + 1 }}
-            </span>
             <span class="top-course-card__poster">
               <CourseCoverImage :course="course" fill class="absolute-full" />
               <span class="top-course-card__shade" />
@@ -634,11 +617,6 @@ function formatLearnerCount(value?: number | null): string {
 
 function formatTopCoursePrice(course: Course): string {
   return formatPriceLabel(course, locale.value === 'th' ? 'th' : 'en');
-}
-
-function getTopCourseRank(course: Course): number {
-  const courseIndex = topEnrolledCourses.value.findIndex((candidate) => candidate.id === course.id);
-  return courseIndex >= 0 ? courseIndex + 1 : 1;
 }
 
 function selectTopCourse(course: Course, event?: Event): void {
@@ -2298,30 +2276,6 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, transparent 42%, rgba(38, 54, 77, 0.74) 100%);
 }
 
-.top-course-card__rank {
-  position: absolute;
-  z-index: 0;
-  right: calc(100% - 108px);
-  top: 42%;
-  transform: translateY(-50%);
-  color: rgba($primary, 0.1);
-  -webkit-text-stroke: 2.6px rgba($primary, 0.64);
-  font-size: clamp(8.5rem, 12vw, 12rem);
-  font-weight: 1000;
-  line-height: 0.78;
-  letter-spacing: 0;
-  opacity: 1;
-  pointer-events: none;
-  user-select: none;
-  text-shadow: 0 10px 26px rgba($primary, 0.1);
-}
-
-.top-course-card__rank--double {
-  right: calc(100% - 104px);
-  letter-spacing: -0.1em;
-  font-size: clamp(7.4rem, 10.4vw, 10.4rem);
-}
-
 .top-course-card__badge {
   position: absolute;
   right: 10px;
@@ -2401,35 +2355,11 @@ onBeforeUnmount(() => {
   display: block;
 }
 
-.top-course-preview__rank {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba($primary, 0.94);
-  color: #ffffff;
-  font-size: 0.9rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
 .top-course-preview__content {
   display: flex;
   flex-direction: column;
   justify-content: center;
   min-width: 0;
-}
-
-.top-course-preview__eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: fit-content;
-  margin-bottom: 10px;
-  color: $primary;
-  font-size: 0.88rem;
-  font-weight: 900;
 }
 
 .top-course-preview__content h3 {
@@ -2900,16 +2830,6 @@ onBeforeUnmount(() => {
 
   .top-course-card__poster {
     min-height: 148px;
-  }
-
-  .top-course-card__rank {
-    -webkit-text-stroke-width: 1.8px;
-    right: calc(100% - 82px);
-    font-size: 7.4rem;
-  }
-
-  .top-course-card__rank--double {
-    right: calc(100% - 104px);
   }
 
   .top-course-preview {

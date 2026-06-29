@@ -57,7 +57,7 @@ export function useCourseCompletionDocuments() {
   const buildLearningResultDocument = (
     entry: RegisteredCourseEntry,
   ): LearningResultDocumentData | null => {
-    if (!authStore.user || !entry.courseDetail || !entry.progress.isCompleted) {
+    if (!authStore.user || !entry.progress.isCompleted) {
       return null;
     }
 
@@ -68,13 +68,13 @@ export function useCourseCompletionDocuments() {
     };
 
     const courseHours =
-      (entry.courseDetail.totalHours ?? 0) > 0
-        ? entry.courseDetail.totalHours!
-        : entry.courseDetail.creditHours > 0
-          ? entry.courseDetail.creditHours
+      (entry.courseDetail?.totalHours ?? entry.course.totalHours ?? 0) > 0
+        ? (entry.courseDetail?.totalHours ?? entry.course.totalHours)!
+        : (entry.courseDetail?.creditHours ?? 0) > 0
+          ? entry.courseDetail!.creditHours
           : entry.progress.totalLessons;
 
-    const learningOutcomes = entry.courseDetail.objectives.slice(0, 4);
+    const learningOutcomes = entry.courseDetail?.objectives.slice(0, 4) ?? [];
 
     return {
       learnerNameTh: learnerNameTh.value,

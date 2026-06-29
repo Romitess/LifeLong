@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="learningResultDocument"
+    v-if="entry.progress.isCompleted"
     class="course-document-actions"
     :class="{
       'course-document-actions--stacked': layout === 'stacked',
@@ -8,6 +8,7 @@
     }"
   >
     <BaseButton
+      v-if="learningResultDocument"
       outline
       color="primary"
       icon="description"
@@ -36,13 +37,14 @@
     />
 
     <CourseLearningResultDialog
+      v-if="learningResultDocument"
       v-model="showLearningResultDialog"
       :document-data="learningResultDocument"
     />
 
     <CertificateModal
       v-model="showCertificateDialog"
-      :course="entry.courseDetail"
+      :course="entry.courseDetail ?? entry.course"
       :userName="userName"
       :template="activeTemplate"
     />
