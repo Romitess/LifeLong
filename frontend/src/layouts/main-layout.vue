@@ -523,6 +523,16 @@ const { fetchCategories } = useCategoryList();
 categoryStore.init();
 
 onMounted(async () => {
+  removePageSwitchBeforeEach = router.beforeEach((to, from) => {
+    if (shouldShowPageSwitchLoading(to.fullPath, from.fullPath)) {
+      schedulePageSwitchLoading();
+    }
+  });
+
+  removePageSwitchAfterEach = router.afterEach(() => {
+    hidePageSwitchLoading();
+  });
+
   const apiCategories = await fetchCategories();
   if (apiCategories.length > 0) {
     categoryStore.loadFromApi(apiCategories);
@@ -876,12 +886,22 @@ function stripHtml(html: string | null | undefined): string {
     .trim();
 }
 
+const courseCountByCategory = computed(() => {
+  const counts = new Map<string, number>();
+
+  for (const course of courseStore.courses) {
+    counts.set(course.category, (counts.get(course.category) ?? 0) + 1);
+  }
+
+  return counts;
+});
+
 const categories = computed(() => {
   return categoryStore.activeCategories.map((category) => ({
     id: category.id,
     name: category.name,
     displayLabel: getCategoryDisplayName(category.name, category.nameEn),
-    count: courseStore.courses.filter((course) => course.category === category.name).length,
+    count: courseCountByCategory.value.get(category.name) ?? 0,
   }));
 });
 
@@ -931,8 +951,12 @@ function onDrawerMouseLeave() {
     drawerOpen.value = false;
   }
 }
-const PAGE_SWITCH_LOADING_MS = 450;
+const PAGE_SWITCH_LOADING_DELAY_MS = 180;
+const PAGE_SWITCH_LOADING_MIN_VISIBLE_MS = 180;
+let pageSwitchLoadingDelayTimer: ReturnType<typeof setTimeout> | null = null;
 let pageSwitchLoadingTimer: ReturnType<typeof setTimeout> | null = null;
+let removePageSwitchBeforeEach: (() => void) | null = null;
+let removePageSwitchAfterEach: (() => void) | null = null;
 
 const announcementNotifications = computed(() =>
   isTeachingRole.value
@@ -1034,16 +1058,42 @@ function shouldShowPageSwitchLoading(fullPath: string, previousFullPath?: string
   return getPrimaryRouteComponent(fullPath) !== getPrimaryRouteComponent(previousFullPath);
 }
 
-function showPageSwitchLoading(): void {
+function clearPageSwitchLoadingDelay(): void {
+  if (pageSwitchLoadingDelayTimer) {
+    clearTimeout(pageSwitchLoadingDelayTimer);
+    pageSwitchLoadingDelayTimer = null;
+  }
+}
+
+function hidePageSwitchLoading(): void {
+  clearPageSwitchLoadingDelay();
+
   if (pageSwitchLoadingTimer) {
     clearTimeout(pageSwitchLoadingTimer);
+    pageSwitchLoadingTimer = null;
   }
 
-  isPageSwitchLoading.value = true;
+  if (!isPageSwitchLoading.value) {
+    return;
+  }
+
   pageSwitchLoadingTimer = setTimeout(() => {
     isPageSwitchLoading.value = false;
     pageSwitchLoadingTimer = null;
-  }, PAGE_SWITCH_LOADING_MS);
+  }, PAGE_SWITCH_LOADING_MIN_VISIBLE_MS);
+}
+
+function schedulePageSwitchLoading(): void {
+  clearPageSwitchLoadingDelay();
+
+  if (isPageSwitchLoading.value) {
+    return;
+  }
+
+  pageSwitchLoadingDelayTimer = setTimeout(() => {
+    isPageSwitchLoading.value = true;
+    pageSwitchLoadingDelayTimer = null;
+  }, PAGE_SWITCH_LOADING_DELAY_MS);
 }
 
 async function navigateWithPageLoading(path: string): Promise<void> {
@@ -1136,11 +1186,7 @@ watch(
       return;
     }
 
-    if (!shouldShowPageSwitchLoading(fullPath, previousFullPath)) {
-      return;
-    }
-
-    showPageSwitchLoading();
+    hidePageSwitchLoading();
   },
   { immediate: true },
 );
@@ -1174,9 +1220,14 @@ watch(
 );
 
 onBeforeUnmount(() => {
+  clearPageSwitchLoadingDelay();
+
   if (pageSwitchLoadingTimer) {
     clearTimeout(pageSwitchLoadingTimer);
   }
+
+  removePageSwitchBeforeEach?.();
+  removePageSwitchAfterEach?.();
 
   clearNotificationAttentionTimers();
 });
@@ -1319,9 +1370,9 @@ async function onCategoryClick(category: string, event?: Event) {
 .top-toolbar {
   padding: 8px 24px;
   min-height: 72px;
-  background: rgba(247, 208, 70, 0.55);
-  backdrop-filter: blur(20px) saturate(1.8);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  background: rgba(247, 208, 70, 0.78);
+  backdrop-filter: blur(8px) saturate(1.2);
+  -webkit-backdrop-filter: blur(8px) saturate(1.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.38);
   box-shadow: 0 2px 24px rgba(17, 24, 39, 0.06);
   gap: 0;
@@ -2425,10 +2476,9 @@ async function onCategoryClick(category: string, event?: Event) {
 .page-blob {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(60px);
-  opacity: 0.55;
+  filter: blur(28px);
+  opacity: 0.28;
   pointer-events: none;
-  will-change: transform;
 
   &--gold-l {
     width: 480px;
@@ -2469,6 +2519,18 @@ async function onCategoryClick(category: string, event?: Event) {
     background: rgba(251, 192, 45, 1);
     top: 2100px;
     right: -160px;
+  }
+}
+
+@media (max-width: 768px), (prefers-reduced-motion: reduce) {
+  .top-toolbar {
+    background: rgba(247, 208, 70, 0.94);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .page-blobs {
+    display: none;
   }
 }
 </style>

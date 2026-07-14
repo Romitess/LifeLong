@@ -399,7 +399,7 @@
             />
           </div>
 
-          <div v-if="isLoading || isCategoryLoading" class="row justify-center q-py-xl">
+          <div v-if="isLoading" class="row justify-center q-py-xl">
             <BaseSpinner />
           </div>
 
@@ -412,17 +412,14 @@
               :label="$t('retry')"
               color="primary"
               class="q-mt-md"
-              @click="fetchCourses"
+              @click="retryFetchCourses"
             />
           </div>
 
-          <div v-else v-auto-animate class="row q-col-gutter-lg">
+          <div v-else class="row q-col-gutter-lg">
             <div
               v-for="course in displayedActiveCourses"
               :key="course.id"
-              v-motion
-              :initial="revealVariant(0).initial"
-              :visible-once="revealVariant(0).visibleOnce"
               class="col-xs-12 col-sm-6 col-md-4 col-lg-3"
             >
               <BaseCourseCard
@@ -480,17 +477,14 @@
             />
           </div>
 
-          <div v-if="isLoading || isCategoryLoading" class="row justify-center q-py-xl">
+          <div v-if="isLoading" class="row justify-center q-py-xl">
             <BaseSpinner />
           </div>
 
-          <div v-else v-auto-animate class="row q-col-gutter-lg">
+          <div v-else class="row q-col-gutter-lg">
             <div
               v-for="course in displayedAllCourses"
               :key="course.id"
-              v-motion
-              :initial="revealVariant(0).initial"
-              :visible-once="revealVariant(0).visibleOnce"
               class="col-xs-12 col-sm-6 col-md-4 col-lg-3"
             >
               <BaseCourseCard
@@ -510,7 +504,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { revealVariant, headingRevealVariant } from 'src/composables/use-scroll-reveal';
+import { headingRevealVariant } from 'src/composables/use-scroll-reveal';
 import HomeInfoStrip, { type HomeInfoItem } from 'src/components/home/HomeInfoStrip.vue';
 import CourseCoverImage from 'src/components/course/CourseCoverImage.vue';
 import HomeMarquee from 'src/components/home/HomeMarquee.vue';
@@ -587,7 +581,6 @@ type HomeHeroSlide =
 
 const { courses, isLoading, error, activeCourses, fetchCourses } = useCourseList();
 
-const isCategoryLoading = ref(false);
 const isTopCoursesLoading = ref(false);
 const topCoursesError = ref<string | null>(null);
 const selectedTopCourse = ref<Course | null>(null);
@@ -646,7 +639,7 @@ function onTopCoursesWheel(event: WheelEvent): void {
   }
 
   event.preventDefault();
-  rail.scrollBy({ left: event.deltaY, behavior: 'smooth' });
+  rail.scrollLeft += event.deltaY;
 }
 
 async function fetchTopEnrolledCourses(): Promise<void> {
@@ -661,15 +654,9 @@ async function fetchTopEnrolledCourses(): Promise<void> {
   }
 }
 
-watch(
-  () => courseStore.selectedCategory,
-  () => {
-    isCategoryLoading.value = true;
-    setTimeout(() => {
-      isCategoryLoading.value = false;
-    }, 800);
-  },
-);
+function retryFetchCourses(): void {
+  void fetchCourses(true);
+}
 
 watch(heroSlide, () => {
   if (currentHeroTypeLines.value.length > 0) {

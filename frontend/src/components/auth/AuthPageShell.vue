@@ -27,6 +27,7 @@
               v-for="item in visualItems"
               :key="`${item.icon}-${item.text}`"
               class="auth-visual-item"
+              :class="{ 'auth-visual-item--navy': item.iconVariant === 'navy' }"
             >
               <q-icon :name="item.icon" />
               <div>
@@ -35,11 +36,15 @@
               </div>
             </div>
           </div>
+
+          <div v-if="$slots['visual-footer']" class="auth-visual-footer">
+            <slot name="visual-footer" />
+          </div>
         </div>
       </aside>
 
       <main class="auth-panel">
-        <div class="auth-panel__header">
+        <div v-if="showPanelHeader" class="auth-panel__header">
           <div class="auth-panel__icon">
             <q-icon :name="panelIcon" />
           </div>
@@ -63,10 +68,11 @@ export interface AuthVisualItem {
   icon: string;
   title?: string;
   text: string;
+  iconVariant?: 'primary' | 'navy';
 }
 
 interface Props {
-  variant: 'login' | 'register';
+  variant: 'login' | 'register' | 'forgot' | 'reset';
   eyebrow?: string;
   title: string;
   subtitle?: string;
@@ -75,9 +81,12 @@ interface Props {
   panelSubtitle?: string;
   visualItems: AuthVisualItem[];
   switchingTo?: 'login' | 'register' | null;
+  showPanelHeader?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  showPanelHeader: true,
+});
 
 const authTransitionKey = 'lll-auth-content-transition';
 const isContentEntering = ref(false);
@@ -333,11 +342,42 @@ onBeforeUnmount(() => {
   z-index: 1;
 }
 
-.auth-shell--login .auth-panel__header {
+.auth-shell--login .auth-panel__header,
+.auth-shell--forgot .auth-panel__header,
+.auth-shell--reset .auth-panel__header {
   position: absolute;
   top: 61px;
   left: clamp(18px, 2.4vw, 30px);
   right: clamp(18px, 2.4vw, 30px);
+}
+
+.auth-page--forgot .auth-shell,
+.auth-page--reset .auth-shell {
+  width: min(1020px, 100%);
+  height: min(560px, calc(100dvh - 40px));
+}
+
+.auth-page--forgot .auth-panel,
+.auth-page--reset .auth-panel {
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 160px clamp(18px, 2.4vw, 30px) clamp(18px, 2.4vw, 30px);
+}
+
+.auth-page--reset .auth-panel--centered {
+  justify-content: center;
+  padding: clamp(18px, 2.4vw, 30px);
+}
+
+.auth-visual-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-visual-item--navy .q-icon {
+  background: linear-gradient(135deg, #1a237e, #3151b7);
+  box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3);
 }
 
 .auth-page--register .auth-panel {
@@ -507,7 +547,13 @@ onBeforeUnmount(() => {
   }
 
   .auth-panel,
-  .auth-page--register .auth-panel {
+  .auth-page--register .auth-panel,
+  .auth-page--forgot .auth-panel,
+  .auth-page--reset .auth-panel {
+    padding: 26px 20px 28px;
+  }
+
+  .auth-page--reset .auth-panel--centered {
     padding: 26px 20px 28px;
   }
 }

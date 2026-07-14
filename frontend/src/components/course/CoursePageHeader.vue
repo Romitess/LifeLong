@@ -1,24 +1,12 @@
 <template>
   <div class="course-page-header">
     <div class="course-page-header__inner section-container">
-      <q-btn
-        v-if="withBack"
-        flat
-        round
-        dense
-        icon="arrow_back"
-        color="grey-7"
-        aria-label="ย้อนกลับ"
-        class="course-page-header__back"
-        @click="goBack"
-      />
       <CourseBreadcrumb :course-id="courseId" :course-title="courseTitle" :current="current" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
 import CourseBreadcrumb from './CourseBreadcrumb.vue';
 
 interface Props {
@@ -28,16 +16,7 @@ interface Props {
   withBack?: boolean;
 }
 
-const props = withDefaults(defineProps<Props>(), { current: '', withBack: false });
-
-const router = useRouter();
-
-// Back = the breadcrumb node before the current leaf:
-//  - sub-page (has `current`) → course learn page
-//  - learn page (no `current`) → "วิชาของฉัน"
-function goBack(): void {
-  void router.push(props.current ? `/course/${props.courseId}/learn` : '/profile/courses');
-}
+withDefaults(defineProps<Props>(), { current: '', withBack: false });
 </script>
 
 <style lang="scss" scoped>
@@ -52,10 +31,6 @@ function goBack(): void {
     align-items: center;
     flex-wrap: nowrap;
     gap: 4px;
-  }
-
-  &__back {
-    flex-shrink: 0;
   }
 }
 

@@ -10,7 +10,7 @@ interface UseCourseListReturn {
   isLoading: Ref<boolean>;
   error: Ref<string | null>;
   activeCourses: ComputedRef<Course[]>;
-  fetchCourses: () => Promise<void>;
+  fetchCourses: (force?: boolean) => Promise<void>;
 }
 
 interface ApiLltcourse {
@@ -113,16 +113,29 @@ export function useCourseList(): UseCourseListReturn {
     });
   });
 
-  const fetchCourses = async (): Promise<void> => {
+  const fetchCourses = async (force = false): Promise<void> => {
+    if (!force && courseStore.backendCoursesLoaded) {
+      error.value = null;
+      return;
+    }
+
     isLoading.value = true;
     error.value = null;
 
     try {
+      if (!force && courseStore.backendCoursesLoading) {
+        await courseStore.fetchBackendCourses();
+        return;
+      }
+
+      courseStore.backendCoursesLoading = true;
       const { data } = await api.get<ApiLltcourse[]>('/api/moodle/courses');
       courseStore.loadFromApi(data.map(mapApiCourse));
+      courseStore.backendCoursesLoaded = true;
     } catch {
       error.value = 'ไม่สามารถโหลดข้อมูลคอร์สได้';
     } finally {
+      courseStore.backendCoursesLoading = false;
       isLoading.value = false;
     }
   };

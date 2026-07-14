@@ -1,6 +1,6 @@
 import { readonly, ref } from 'vue';
 
-export const AUTH_NAVIGATION_LOADING_DELAY_MS = 360;
+export const AUTH_NAVIGATION_LOADING_DELAY_MS = 120;
 
 const isAuthNavigationLoading = ref(false);
 
