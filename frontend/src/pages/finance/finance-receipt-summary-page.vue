@@ -252,6 +252,7 @@ import { Notify, date } from 'quasar';
 import { type CellHookData } from 'jspdf-autotable';
 import { useAuthStore } from 'stores/auth-store';
 import { api } from 'src/boot/axios';
+import { formatDateInput } from 'src/utils/date-format';
 import BaseTable from 'components/base/BaseTable.vue';
 import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 
@@ -313,13 +314,6 @@ const datePresetOptions = computed(() => [
   { label: t('finance.filters.allTime'), value: 'allTime' },
   { label: t('finance.filters.custom'), value: 'custom' },
 ]);
-
-function formatDateInput(date: Date): string {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-}
 
 const receiptDateModel = computed({
   get() {

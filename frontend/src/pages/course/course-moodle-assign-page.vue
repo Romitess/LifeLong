@@ -218,6 +218,7 @@ import {
   type AssignSubmission,
   type AssignFile,
 } from 'src/composables/use-moodle-assign';
+import { formatUnixTimestamp as formatDate } from 'src/utils/date-format';
 
 const route = useRoute();
 const $q = useQuasar();
@@ -347,12 +348,6 @@ function startGradePolling(): void {
 
 function sanitize(html: string): string {
   return DOMPurify.sanitize(html, { ADD_ATTR: ['target'] });
-}
-function formatDate(unixSeconds: number): string {
-  return new Date(unixSeconds * 1000).toLocaleString('th-TH', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
 }
 function openFile(f: AssignFile): void {
   if (f.fileurl) window.open(f.fileurl, '_blank');

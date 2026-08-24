@@ -219,6 +219,7 @@ import BaseTable from 'components/base/BaseTable.vue';
 import type { BaseTableColumn } from 'components/base/BaseTable.vue';
 import TableExportActions from 'components/common/TableExportActions.vue';
 import { api } from 'src/boot/axios';
+import { formatDateInput } from 'src/utils/date-format';
 import { computed, onMounted, ref, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Notify } from 'quasar';
@@ -275,13 +276,6 @@ const pagination = ref({
   page: 1,
   rowsPerPage: 10,
 });
-
-function formatDateInput(date: Date): string {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-}
 
 function todayFormatted(): string {
   return formatDateInput(new Date());

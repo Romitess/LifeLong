@@ -241,6 +241,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { date } from 'quasar';
+import { formatDateInput } from 'src/utils/date-format';
 import { useFacultyList } from 'src/composables/use-faculty-list';
 import BaseTable from 'components/base/BaseTable.vue';
 import type { BaseTableColumn } from 'components/base/BaseTable.vue';
@@ -298,13 +299,6 @@ const datePresetOptions = computed(() => [
   { label: t('finance.filters.allTime'), value: 'allTime' },
   { label: t('finance.filters.custom'), value: 'custom' },
 ]);
-
-function formatDateInput(d: Date): string {
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
 
 const receiptDateModel = computed({
   get() {

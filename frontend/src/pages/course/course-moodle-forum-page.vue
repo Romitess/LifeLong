@@ -217,6 +217,7 @@ import CourseActivityNavigation from 'components/course/CourseActivityNavigation
 import CoursePageHeader from 'components/course/CoursePageHeader.vue';
 import { useCourseStore } from 'src/stores/course-store';
 import { getDefaultAvatarUrl, getImageUrl } from 'src/services/image.service';
+import { formatUnixTimestamp as formatDate } from 'src/utils/date-format';
 import {
   useMoodleForum,
   type ForumInfo,
@@ -287,14 +288,6 @@ function getAuthorAvatarUrl(author: ForumPost): string {
   const imageUrl = getImageUrl(author.authorPictureUrl);
   if (imageUrl) return imageUrl;
   return author.authorAvatarSeed ? getDefaultAvatarUrl(author.authorAvatarSeed) : '';
-}
-
-function formatDate(unixSeconds: number): string {
-  if (!unixSeconds) return '';
-  return new Date(unixSeconds * 1000).toLocaleString('th-TH', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
 }
 
 async function loadForum(): Promise<void> {
