@@ -228,12 +228,16 @@ function readStoredAuthAccounts(): StoredAuthAccount[] {
       return [];
     }
 
-    return parsedValue.filter(isStoredAuthAccount).map(({ ...account }) => {
-      // Strip legacy password field if present from old localStorage data
-      const cleaned = account as Record<string, unknown>;
-      delete cleaned['password'];
-      return { ...cleaned, email: normalizeEmail(account.email) } as StoredAuthAccount;
-    });
+    const result: StoredAuthAccount[] = [];
+    for (const item of parsedValue) {
+      if (isStoredAuthAccount(item)) {
+        const { ...account } = item;
+        const cleaned = account as Record<string, unknown>;
+        delete cleaned['password'];
+        result.push({ ...cleaned, email: normalizeEmail(account.email) } as StoredAuthAccount);
+      }
+    }
+    return result;
   } catch (error) {
     console.warn('Failed to parse stored auth accounts', error);
     removeLocalStorage(AUTH_ACCOUNTS_STORAGE_KEY);

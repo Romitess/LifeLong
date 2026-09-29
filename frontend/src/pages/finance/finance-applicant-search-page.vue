@@ -245,7 +245,14 @@ async function handleSearch() {
     const { data } = await api.get<ApplicantSearchApiResponse>('/api/lltenroll', { params });
 
     if (searchId === latestSearchId) {
-      results.value = data.items.map(normalizeResult).filter((item) => item.amount > 0);
+      const normalized: ApplicantSearchResult[] = [];
+      for (const item of data.items) {
+        const mapped = normalizeResult(item);
+        if (mapped.amount > 0) {
+          normalized.push(mapped);
+        }
+      }
+      results.value = normalized;
     }
   } catch (error) {
     console.error('Failed to load applicant enrollment data', error);
